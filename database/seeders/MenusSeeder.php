@@ -55,6 +55,14 @@ class MenusSeeder extends Seeder
             'name' => 'Settings',
             'route' => 'hr_settings',
             'icon' => 'si si-cog',
+            ],[
+            'name' => 'Sales',
+            'route' => 'sales',
+            'icon' => 'si si-home',
+            ],[
+            'name' => 'purchases',
+            'route' => 'purchases',
+            'icon' => 'si si-home',
             ],
 
         ]);

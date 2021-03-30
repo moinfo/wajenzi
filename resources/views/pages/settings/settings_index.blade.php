@@ -3,7 +3,7 @@
 @section('content')
     <!-- Page Content -->
     <div class="content">
-        <h2 class="content-heading">HR Related Settings <small>| All</small>
+        <h2 class="content-heading">Financial Analysis Related Settings <small>| All</small>
             <div class="float-right">
 
             </div>

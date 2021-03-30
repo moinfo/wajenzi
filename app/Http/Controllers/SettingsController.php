@@ -7,6 +7,7 @@ use App\Models\Allowance;
 use App\Models\Bank;
 use App\Models\Deduction;
 use App\Models\Department;
+use App\Models\Efd;
 use App\Models\Permission;
 use App\Models\Position;
 use App\Models\Role;
@@ -23,6 +24,7 @@ class SettingsController extends Controller
             ['name'=>'Positions', 'route'=>'hr_settings_positions', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Roles', 'route'=>'hr_settings_roles', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Permissions', 'route'=>'hr_settings_permissions', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'EFD', 'route'=>'hr_settings_efd', 'icon' => 'si si-settings', 'badge' => 0],
         ];
         $data = [
             'settings' => $settings
@@ -93,5 +95,15 @@ class SettingsController extends Controller
             'permissions' => Permission::all()
         ];
         return view('pages.settings.settings_permissions')->with($data);
+    }
+
+    public function efd(Request $request){
+        if($this->handleCrud($request, 'Efd')) {
+            return back();
+        }
+        $data = [
+            'efd' => Efd::all()
+        ];
+        return view('pages.settings.settings_efds')->with($data);
     }
 }
