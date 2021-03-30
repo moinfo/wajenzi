@@ -38,7 +38,7 @@
                 <div class="content-header-item">
                     <a class="link-effect font-w700" href="/">
                         <i class="si si-users text-primary"></i>
-                        <span class="font-size-xl text-dual-primary-dark">Swift</span><span class="font-size-xl text-primary">CRMS</span>
+                        <span class="font-size-xl text-dual-primary-dark">Financial</span><span class="font-size-xl text-primary">Analysis</span>
                     </a>
                 </div>
                 <!-- END Logo -->
@@ -101,14 +101,14 @@
                     </li>
                 @endforeach
 
-                <li class="nav-main-heading">
-                    <span class="sidebar-mini-visible">MR</span><span class="sidebar-mini-hidden">More</span>
-                </li>
-                <li>
-                    <a href="/">
-                        <i class="si si-globe"></i><span class="sidebar-mini-hide">Landing</span>
-                    </a>
-                </li>
+{{--                <li class="nav-main-heading">--}}
+{{--                    <span class="sidebar-mini-visible">MR</span><span class="sidebar-mini-hidden">More</span>--}}
+{{--                </li>--}}
+{{--                <li>--}}
+{{--                    <a href="/">--}}
+{{--                        <i class="si si-globe"></i><span class="sidebar-mini-hide">Landing</span>--}}
+{{--                    </a>--}}
+{{--                </li>--}}
             </ul>
         </div>
         <!-- END Side Navigation -->
