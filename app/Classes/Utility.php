@@ -1,0 +1,30 @@
+<?php
+
+
+namespace App\Classes;
+
+
+class Utility
+{
+    /**
+     *Returns the session name
+     */
+    public static function sessionName() {
+        return $session_id = md5(env('APP_NAME', 'HRMS'));
+    }
+
+    /**
+     * Show UI Notification
+     * @param $text
+     * @param $type
+     * @param $title
+     */
+    public static function notify($text, $type, $title) {
+
+    }
+
+    public static function getMonthNames($start = 1, $end = 12) {
+        $months = [1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April', 5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August', 9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December'];
+        return array_slice($months, $start - 1, $end - 1);
+    }
+}
