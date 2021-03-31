@@ -6,11 +6,7 @@
             <select name="supplier_id" id="input-supplier-id" class="form-control">
                 <option value=""></option>
                 @foreach($suppliers as $supplier)
-                    @if($supplier->id = $object->supplier_id)
-                        <option value="{{$supplier->id ?? ''}}" selected>{{$supplier->name}}</option>
-                    @else
-                        <option value="{{$supplier->id ?? ''}}">{{$supplier->name}}</option>
-                    @endif
+                    <option value="{{ $supplier->id }}" {{ ( $supplier->id == $object->supplier_id) ? 'selected' : '' }}> {{ $supplier->name }} </option>
                 @endforeach
             </select>
         </div>
@@ -19,11 +15,7 @@
             <select name="item_id" id="input-item-id" class="form-control">
                 <option value=""></option>
                 @foreach($items as $item)
-                    @if($item->id = $object->item_id)
-                        <option value="{{$item->id ?? ''}}" selected>{{$item->name}}</option>
-                    @else
-                        <option value="{{$item->id ?? ''}}">{{$item->name}}</option>
-                    @endif
+                    <option value="{{ $item->id }}" {{ ( $item->id == $object->item_id) ? 'selected' : '' }}> {{ $item->name }} </option>
                 @endforeach
             </select>
         </div>
@@ -39,7 +31,7 @@
         </div>
         <div class="form-group">
             <label for="example-nf-invoice_date">Invoice Date</label>
-            <input type="date" class="form-control datepicker" data-date-format="Y-m-d" id="input-invoice_date" name="invoice_date"
+            <input type="text" value="<?=date('Y-m-d')?>" class="form-control datepicker" data-date-format="Y-m-d" id="input-invoice_date" name="invoice_date"
                    value="{{ $object->invoice_date ?? '' }}" required>
 {{--            <input type="text" class="js-flatpickr form-control bg-white js-flatpickr-enabled flatpickr-input active" id="example-flatpickr-custom" name="example-flatpickr-custom" placeholder="d-m-Y" data-date-format="d-m-Y" readonly="readonly">--}}
         </div>

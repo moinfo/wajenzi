@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sale;
+use App\Models\supplier;
 use Illuminate\Http\Request;
 
 class SaleController extends Controller
@@ -13,7 +14,14 @@ class SaleController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request) {
-        $data = [];
+        if($this->handleCrud($request, 'Sale')) {
+            return back();
+        }
+        $sales = Sale::all();
+
+        $data = [
+            'sales' => $sales
+        ];
         return view('pages.sales.sales_index')->with($data);
     }
 

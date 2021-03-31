@@ -5,7 +5,7 @@
         <div class="content">
             <div class="content-heading">EFD
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_edf_form', {className: 'Efd'}, 'Create New EFD', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New EFD</button>
+                    <button type="button" onclick="loadFormModal('settings_efd_form', {className: 'Efd'}, 'Create New EFD', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New EFD</button>
                 </div>
             </div>
             <div>
