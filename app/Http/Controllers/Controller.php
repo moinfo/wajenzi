@@ -31,6 +31,7 @@ class Controller extends BaseController
 
     public function handleCrud(Request $request, $class_name, $id = null) {
         if($request->isMethod('POST') || $request->isMethod('PUT')) {
+//            dd($request);
             if($request->has('addItem')) {
                 if($this->crudAdd($request, $class_name)) {
                     $this->notify($class_name .'Added Successfully', 'Added!', 'success');

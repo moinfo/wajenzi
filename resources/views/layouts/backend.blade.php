@@ -142,6 +142,8 @@
         <script src="{{ mix('js/codebase.app.js') }}"></script>
         <script src="{{ asset('js/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
         <script>
+
+
             var csrf_token = '{{csrf_token()}}';
             @foreach(Session::get('notifications') as $notification)
                 Swal.fire('{{$notification['title']}}', '{{$notification['text']}}', '{{$notification['type']}}').then((res) => {

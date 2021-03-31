@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Purchase;
+use App\Models\supplier;
 use Illuminate\Http\Request;
 
 class PurchaseController extends Controller
@@ -13,7 +14,15 @@ class PurchaseController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request) {
-        $data = [];
+        if($this->handleCrud($request, 'Purchase')) {
+            return back();
+        }
+        $suppliers = Supplier::all();
+        $purchases = Purchase::all();
+        $data = [
+            'suppliers' => $suppliers,
+            'purchases' => $purchases
+        ];
         return view('pages.Purchases.purchases_index')->with($data);
     }
 

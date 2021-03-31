@@ -10,4 +10,7 @@ class supplier extends Model
     use HasFactory;
     public $fillable = ['id', 'name', 'phone', 'address', 'email', 'vrn'];
 
+    public function purchases() {
+        return $this->hasMany(Purchase::class);
+    }
 }

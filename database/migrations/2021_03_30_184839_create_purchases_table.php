@@ -15,6 +15,13 @@ class CreatePurchasesTable extends Migration
     {
         Schema::create('purchases', function (Blueprint $table) {
             $table->id();
+            $table->integer('supplier_id');
+            $table->integer('item_id');
+            $table->string('tax_invoice');
+            $table->date('invoice_date');
+            $table->integer('total_amount');
+            $table->integer('amount_vat_exc');
+            $table->integer('vat_amount');
             $table->timestamps();
         });
     }

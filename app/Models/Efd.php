@@ -9,4 +9,8 @@ class Efd extends Model
 {
     use HasFactory;
     public $fillable = ['id', 'name'];
+
+//    public function efds() {
+//        return $this->hasMany(Purchase::class);
+//    }
 }

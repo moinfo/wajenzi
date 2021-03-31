@@ -1,10 +1,80 @@
 @extends('layouts.backend')
 
 @section('content')
-    <!-- Page Content -->
-    <div class="content">
-        <h2 class="content-heading">Purchases <small>All</small></h2>
-        <p></p>
+
+    <div class="main-container">
+        <div class="content">
+            <div class="content-heading">Purchases
+                <div class="float-right">
+                    <button type="button" onclick="loadFormModal('purchase_form', {className: 'Purchase'}, 'Create New Purchase', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Purchase</button>
+                </div>
+            </div>
+            <div>
+                <div class="block">
+                    <div class="block-header block-header-default">
+                        <h3 class="block-title">All Purchases</h3>
+                    </div>
+                    <div class="block-content">
+                        <p>This is a list containing all purchases</p>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-vcenter">
+                                <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th>Supplier Name</th>
+                                    <th>Supplier VRN</th>
+                                    <th>Tax Invoice</th>
+                                    <th>Invoice Date</th>
+                                    <th>Goods</th>
+                                    <th>Total Amount</th>
+                                    <th>Amount VAT EXC</th>
+                                    <th>VAT Amount</th>
+                                    <th class="text-center" style="width: 100px;">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach($purchases as $purchase)
+                                    <tr id="purchase-tr-{{$purchase->id}}">
+                                        <td class="text-center">
+                                            {{$loop->index + 1}}
+                                        </td>
+                                        <td class="font-w600">{{ $purchase->supplier->name }}</td>
+                                        <td class="font-w600">{{ $purchase->supplier->vrn }}</td>
+                                        <td class="font-w600">{{ $purchase->tax_invoice }}</td>
+                                        <td class="font-w600">{{ $purchase->invoice_date }}</td>
+                                        <td class="font-w600">{{ $purchase->item->name }}</td>
+                                        <td class="font-w600">{{ number_format($purchase->total_amount, 2) }}</td>
+                                        <td class="font-w600">{{ number_format($purchase->amount_vat_exc,2) }}</td>
+                                        <td class="font-w600">{{ number_format($purchase->vat_amount, 2) }}</td>
+
+                                        <td class="text-center">
+                                            <div class="btn-group">
+                                                <button type="button"
+                                                        onclick="loadFormModal('settings_purchase_form', {className: 'Purchase', id: {{$purchase->id}}}, 'Edit {{$purchase->name}}', 'modal-md');"
+                                                        class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                                <button type="button"
+                                                        onclick="deleteModelItem('Purchase', {{$purchase->id}}, 'purchase-tr-{{$purchase->id}}');"
+                                                        class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                        data-toggle="tooltip" title="Delete"
+                                                        data-original-title="Delete">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <!-- END Page Content -->
+
 @endsection
+

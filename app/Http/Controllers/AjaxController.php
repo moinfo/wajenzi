@@ -3,6 +3,8 @@
 
 namespace App\Http\Controllers;
 use App\Models\Division;
+use App\Models\Item;
+use App\Models\supplier;
 use Illuminate\Http\Request;
 
 
@@ -13,7 +15,12 @@ class AjaxController
         if ($fx) {
             switch ($fx) {
                 case 'form': // Load form from forms directory
-                    $data = $request->input('data') ?? [];
+                    $suppliers = Supplier::all();
+                    $items = Item::all();
+                    $data = $request->input('data') ?? [
+                            'suppliers' => $suppliers,
+                            'items' => $items
+                        ];
                     $object = $request->has('className') ? ucfirst($request->input('className')) : null;
                     $metadata = $request->has('metadata') ? $request->input('metadata') : [];
                     if($object) {
