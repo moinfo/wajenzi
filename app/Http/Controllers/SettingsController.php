@@ -8,22 +8,26 @@ use App\Models\Bank;
 use App\Models\Deduction;
 use App\Models\Department;
 use App\Models\Efd;
+use App\Models\Item;
 use App\Models\Permission;
 use App\Models\Position;
 use App\Models\Role;
+use App\Models\supplier;
 use Illuminate\Http\Request;
 
 class SettingsController extends Controller
 {
     public function index(Request $request){
         $settings = [
-            ['name'=>'Staff Allowances', 'route'=>'hr_settings_allowances', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Salary Deductions', 'route'=>'hr_settings_deductions', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Banks', 'route'=>'hr_settings_banks', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Positions', 'route'=>'hr_settings_positions', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Roles', 'route'=>'hr_settings_roles', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Permissions', 'route'=>'hr_settings_permissions', 'icon' => 'si si-settings', 'badge' => 0],
+//            ['name'=>'Staff Allowances', 'route'=>'hr_settings_allowances', 'icon' => 'si si-settings', 'badge' => 0],
+//            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
+//            ['name'=>'Salary Deductions', 'route'=>'hr_settings_deductions', 'icon' => 'si si-settings', 'badge' => 0],
+//            ['name'=>'Banks', 'route'=>'hr_settings_banks', 'icon' => 'si si-settings', 'badge' => 0],
+//            ['name'=>'Positions', 'route'=>'hr_settings_positions', 'icon' => 'si si-settings', 'badge' => 0],
+//            ['name'=>'Roles', 'route'=>'hr_settings_roles', 'icon' => 'si si-settings', 'badge' => 0],
+//            ['name'=>'Permissions', 'route'=>'hr_settings_permissions', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Suppliers', 'route'=>'hr_settings_suppliers', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Items', 'route'=>'hr_settings_items', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'EFD', 'route'=>'hr_settings_efd', 'icon' => 'si si-settings', 'badge' => 0],
         ];
         $data = [
@@ -96,7 +100,24 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_permissions')->with($data);
     }
-
+    public function suppliers(Request $request){
+        if($this->handleCrud($request, 'Supplier')) {
+            return back();
+        }
+        $data = [
+            'suppliers' => Supplier::all()
+        ];
+        return view('pages.settings.settings_suppliers')->with($data);
+    }
+    public function items(Request $request){
+        if($this->handleCrud($request, 'Item')) {
+            return back();
+        }
+        $data = [
+            'items' => Item::all()
+        ];
+        return view('pages.settings.settings_items')->with($data);
+    }
     public function efd(Request $request){
         if($this->handleCrud($request, 'Efd')) {
             return back();
