@@ -50,7 +50,7 @@
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"
-                                                        onclick="loadFormModal('settings_purchase_form', {className: 'Purchase', id: {{$purchase->id}}}, 'Edit {{$purchase->name}}', 'modal-md');"
+                                                        onclick="loadFormModal('purchase_form', {className: 'Purchase', id: {{$purchase->id}}}, 'Edit {{$purchase->name}}', 'modal-md');"
                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
                                                         data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>

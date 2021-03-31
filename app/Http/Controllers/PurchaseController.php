@@ -23,7 +23,7 @@ class PurchaseController extends Controller
             'suppliers' => $suppliers,
             'purchases' => $purchases
         ];
-        return view('pages.Purchases.purchases_index')->with($data);
+        return view('pages.purchases.purchases_index')->with($data);
     }
 
     /**
