@@ -60,8 +60,16 @@ class MenusSeeder extends Seeder
             'route' => 'sales',
             'icon' => 'si si-home',
             ],[
-            'name' => 'purchases',
+            'name' => 'Purchases',
             'route' => 'purchases',
+            'icon' => 'si si-home',
+            ],[
+            'name' => 'Expenses',
+            'route' => 'expenses',
+            'icon' => 'si si-home',
+            ],[
+            'name' => 'financial Charges',
+            'route' => 'financial_Charges',
             'icon' => 'si si-home',
             ],
 

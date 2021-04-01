@@ -4,6 +4,8 @@
 namespace App\Http\Controllers;
 use App\Models\Division;
 use App\Models\Efd;
+use App\Models\ExpensesCategory;
+use App\Models\FinancialChargeCategory;
 use App\Models\Item;
 use App\Models\supplier;
 use Illuminate\Http\Request;
@@ -19,10 +21,14 @@ class AjaxController
                     $suppliers = Supplier::all();
                     $items = Item::all();
                     $efds = Efd::all();
+                    $expenses_categories = ExpensesCategory::all();
+                    $financial_charge_categories = FinancialChargeCategory::all();
                     $data = $request->input('data') ?? [
                             'suppliers' => $suppliers,
                             'items' => $items,
                             'efds' => $efds,
+                            'expenses_categories' => $expenses_categories,
+                            'financial_charge_categories' => $financial_charge_categories,
                         ];
                     $object = $request->has('className') ? ucfirst($request->input('className')) : null;
                     $metadata = $request->has('metadata') ? $request->input('metadata') : [];
