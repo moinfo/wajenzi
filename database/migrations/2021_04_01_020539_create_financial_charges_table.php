@@ -17,7 +17,7 @@ class CreateFinancialChargesTable extends Migration
             $table->id();
             $table->integer('financial_charge_category_id');
             $table->string('description');
-            $table->integer('amount');
+            $table->decimal('amount',20,2);
             $table->date('date');
             $table->timestamps();
         });

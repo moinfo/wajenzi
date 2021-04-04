@@ -17,7 +17,7 @@ class CreateSalesTable extends Migration
             $table->id();
             $table->integer('efd_id');
             $table->date('date');
-            $table->string('amount');
+            $table->decimal('amount',20,2);
             $table->timestamps();
         });
     }

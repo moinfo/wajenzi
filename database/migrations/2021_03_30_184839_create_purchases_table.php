@@ -19,9 +19,9 @@ class CreatePurchasesTable extends Migration
             $table->integer('item_id');
             $table->string('tax_invoice');
             $table->date('invoice_date');
-            $table->integer('total_amount');
-            $table->integer('amount_vat_exc');
-            $table->integer('vat_amount');
+            $table->decimal('total_amount',20,2);
+            $table->decimal('amount_vat_exc',20,2);
+            $table->decimal('vat_amount',20,2);
             $table->timestamps();
         });
     }
