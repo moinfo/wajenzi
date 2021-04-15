@@ -14,7 +14,7 @@ use App\Models\Item;
 use App\Models\Permission;
 use App\Models\Position;
 use App\Models\Role;
-use App\Models\supplier;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 
 class SettingsController extends Controller

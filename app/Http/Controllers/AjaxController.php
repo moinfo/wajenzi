@@ -7,7 +7,7 @@ use App\Models\Efd;
 use App\Models\ExpensesCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
-use App\Models\supplier;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 
 
