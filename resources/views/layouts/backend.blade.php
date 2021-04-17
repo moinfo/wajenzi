@@ -23,6 +23,7 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,400i,600,700">
         <link rel="stylesheet" id="css-main" href="{{ mix('/css/codebase.css') }}">
         <link rel="stylesheet" id="css-sweetalert2" href="{{ asset('js/plugins/sweetalert2/sweetalert2.min.css') }}">
+        <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/bootstrap-datepicker/css/bootstrap-datepicker.css') }}">
         <!-- You can include a specific file from public/css/themes/ folder to alter the default color theme of the template. eg: -->
         <!-- <link rel="stylesheet" id="css-theme" href="{{ mix('/css/themes/corporate.css') }}"> -->
         @yield('css_after')
@@ -141,10 +142,10 @@
 
         <script src="{{ mix('js/codebase.app.js') }}"></script>
         <script src="{{ asset('js/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
+        <script src="{{ asset('js/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js') }}"></script>
 
 
         <script>
-
 
             var csrf_token = '{{csrf_token()}}';
             @foreach(Session::get('notifications') as $notification)
