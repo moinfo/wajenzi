@@ -21,7 +21,7 @@
         </div>
         <div class="form-group">
             <label for="example-nf-email">Purchase Type</label>
-            <select name="purchases_type" id="input-purchases_type" class="form-control">
+            <select name="purchase_type" id="input-purchases_type" class="form-control">
                 <option value="">Choose Purchases Type</option>
                 <option value="1">VAT</option>
                 <option value="2">EXEMPT</option>
