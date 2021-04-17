@@ -106,7 +106,7 @@
                         Crafted with <i class="fa fa-heart text-pulse"></i> by <a class="font-w600" href="https://kibahaonline.co.tz" target="_blank">KibahaOnline</a>
                     </div>
                     <div class="float-left">
-                        <a class="font-w600" href="#" target="_blank">Financial Analysis</a> &copy; <span class="js-year-copy"></span>
+                        <a class="font-w600" href="#" target="_blank">Transaction Analysis</a> &copy; <span class="js-year-copy"></span>
                     </div>
                 </div>
             </footer>

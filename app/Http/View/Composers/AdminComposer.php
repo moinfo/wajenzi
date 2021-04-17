@@ -39,7 +39,7 @@ class AdminComposer {
     public function compose(View $view)
     {
         $data = [
-            'page_title' => 'Financial Analysis',
+            'page_title' => 'Transaction Analysis',
             'user' => $this->user,
             'ui_notifications' => $this->getNotifications($view),
             'user_notifications' => $this->user_notifications,
@@ -60,8 +60,8 @@ class AdminComposer {
 
     private function getTheme() { // TODO this can be linked to user settings
         return [
-            'sidebar' => ['inverse' => true, 'fixed' => false, 'mini' => false],
-            'header' => ['inverse' => true, 'fixed' => true],
+            'sidebar' => ['inverse' => false, 'fixed' => false, 'mini' => false],
+            'header' => ['inverse' => false, 'fixed' => false],
         ];
     }
 }

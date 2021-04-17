@@ -22,9 +22,9 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/ajax/{fx}', [App\Http\Controllers\AjaxController::class, 'index'])->name('ajax_request');
 
 
-    Route::match(['get', 'post'], '/timesheet', [App\Http\Controllers\TimesheetController::class, 'index'])->name('timesheet');
-    Route::match(['get', 'post'], '/leave', [App\Http\Controllers\LeaveController::class, 'index'])->name('leave');
-    Route::match(['get', 'post'], '/loan', [App\Http\Controllers\LoanController::class, 'index'])->name('loan');
+    Route::match(['get', 'post'], '/collection', [App\Http\Controllers\CollectionController::class, 'index'])->name('collection');
+    Route::match(['get', 'post'], '/transaction_movement', [App\Http\Controllers\TransactionMovementController::class, 'index'])->name('transaction_movement');
+    Route::match(['get', 'post'], '/gross', [App\Http\Controllers\GrossController::class, 'index'])->name('gross');
     Route::match(['get', 'post'], '/recruitment', [App\Http\Controllers\RecruitmentController::class, 'index'])->name('recruitment');
     Route::match(['get', 'post'], '/staff', [App\Http\Controllers\StaffController::class, 'index'])->name('staff');
     Route::match(['get', 'post'], '/accounting', [App\Http\Controllers\AccoutingController::class, 'index'])->name('accounting');
@@ -43,7 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/user/notifications', [App\Http\Controllers\UserController::class, 'notifications'])->name('user_notifications');
 
     Route::match(['get', 'post'], '/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('hr_settings');
-    Route::match(['get', 'post'], '/settings/allowances', [App\Http\Controllers\SettingsController::class, 'allowances'])->name('hr_settings_allowances');
+    Route::match(['get', 'post'], '/settings/supervisor', [App\Http\Controllers\SettingsController::class, 'supervisor'])->name('supervisor');
     Route::match(['get', 'post'], '/settings/departments', [App\Http\Controllers\SettingsController::class, 'departments'])->name('hr_settings_departments');
     Route::match(['get', 'post'], '/settings/deductions', [App\Http\Controllers\SettingsController::class, 'deductions'])->name('hr_settings_deductions');
     Route::match(['get', 'post'], '/settings/banks', [App\Http\Controllers\SettingsController::class, 'banks'])->name('hr_settings_banks');
