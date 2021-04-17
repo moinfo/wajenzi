@@ -1,6 +1,19 @@
 <div class="block-content">
     <form method="post">
         @csrf
+
+        <div class="form-group">
+            <label for="example-nf-supervisor">Supervisor Name</label>
+            <select name="supervisor_id" id="input-ifd-id" class="form-control">
+
+                <option>Select Supervisor</option>
+
+                @foreach ($supervisors as $supervisor)
+                    <option value="{{ $supervisor->id }}" {{ ( $supervisor->id == $object->supervisor_id) ? 'selected' : '' }}> {{ $supervisor->name }} </option>
+                @endforeach
+
+            </select>
+        </div>
         <div class="form-group">
             <label for="example-nf-email">Expense Category</label>
             <select name="expenses_category_id" id="input-ifd-id" class="form-control">

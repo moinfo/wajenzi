@@ -13,4 +13,7 @@ class Supervisor extends Model
     public function grosses() {
         return $this->hasMany(Gross::class);
     }
+    public function expenses(){
+        return $this->hasMany(Expense::class);
+    }
 }

@@ -22,6 +22,7 @@
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
+                                    <th>Supervisor Name</th>
                                     <th>Expense Category Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
@@ -35,6 +36,7 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td class="font-w600">{{ $expense->date }}</td>
+                                        <td class="font-w600">{{ $expense->supervisor->name }}</td>
                                         <td class="font-w600">{{ $expense->expensesCategory->name }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $expense->description }}
                                         <td class="font-w600">{{ number_format($expense->amount, 2) }}</td>
