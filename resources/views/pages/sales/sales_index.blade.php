@@ -23,7 +23,10 @@
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
                                     <th>EFD Name</th>
-                                    <th>Amount</th>
+                                    <th>Turnover</th>
+                                    <th>NET (A+B+C)</th>
+                                    <th>Tax</th>
+                                    <th>Turnover (EX + SR)</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -35,7 +38,10 @@
                                         </td>
                                         <td class="font-w600">{{ $sale->date }}</td>
                                         <td class="font-w600">{{ $sale->efd->name }}</td>
-                                        <td class="font-w600">{{ number_format($sale->amount, 2) }}</td>
+                                        <td class="text-right">{{ number_format($sale->amount, 2) }}</td>
+                                        <td class="text-right">{{ number_format($sale->net, 2) }}</td>
+                                        <td class="text-right">{{ number_format($sale->tax, 2) }}</td>
+                                        <td class="text-right">{{ number_format($sale->turn_over, 2) }}</td>
 
                                         <td class="text-center">
                                             <div class="btn-group">

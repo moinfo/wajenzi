@@ -1,9 +1,6 @@
 <div class="block-content">
     <form method="post">
         @csrf
-        @foreach($efds as $efd)
-            {{$efd->id}}
-        @endforeach
         <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
             <select name="efd_id" id="input-ifd-id" class="form-control">
@@ -17,9 +14,24 @@
                     </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-amount">Amount</label>
+            <label for="example-nf-amount">Turnover</label>
             <input type="number" step=".01" class="form-control" id="input-amount" name="amount"
                    value="{{ $object->amount ?? '' }}" placeholder="Total Amount" required>
+        </div>
+        <div class="form-group">
+            <label for="example-nf-net">Net (A+B+C)</label>
+            <input type="number" step=".01" class="form-control" id="input-net" name="net"
+                   value="{{ $object->net ?? '' }}" placeholder="Total NET" required>
+        </div>
+        <div class="form-group">
+            <label for="example-nf-tax">Tax</label>
+            <input type="number" step=".01" class="form-control" id="input-tax" name="tax"
+                   value="{{ $object->tax ?? '' }}" placeholder="Total Tax" required>
+        </div>
+        <div class="form-group">
+            <label for="example-nf-turn_over">Turnover(EX + SR)</label>
+            <input type="number" step=".01" class="form-control" id="input-turn_over" name="turn_over"
+                   value="{{ $object->turn_over ?? '' }}" placeholder="Total Turnover" required>
         </div>
         <div class="form-group">
             <label for="example-nf-date">Date</label>
