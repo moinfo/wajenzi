@@ -1,5 +1,18 @@
 @extends('layouts.backend')
 
+@section('css_before')
+    <!-- Page JS Plugins CSS -->
+    <link rel="stylesheet" href="{{ asset('js/plugins/datatables/dataTables.bootstrap4.css') }}">
+@endsection
+
+@section('js_after')
+    <!-- Page JS Plugins -->
+    <script src="{{ asset('js/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('js/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
+
+    <!-- Page JS Code -->
+    <script src="{{ asset('js/pages/tables_datatables.js') }}"></script>
+@endsection
 @section('content')
 
     <div class="main-container">
@@ -17,7 +30,7 @@
                     <div class="block-content">
                         <p>This is a list containing all purchases</p>
                         <div class="table-responsive">
-                            <table class="table table-striped table-vcenter">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>

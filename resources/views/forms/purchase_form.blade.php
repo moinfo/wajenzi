@@ -20,6 +20,14 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-email">Purchase Type</label>
+            <select name="purchases_type" id="input-purchases_type" class="form-control">
+                <option value="">Choose Purchases Type</option>
+                <option value="1">VAT</option>
+                <option value="2">EXEMPT</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label for="example-nf-total_amount">Total Amount</label>
             <input type="number" step=".01" class="form-control" id="input-total_amount" name="total_amount"
                    value="{{ $object->total_amount ?? '' }}" placeholder="Total Amount" required>
@@ -35,12 +43,12 @@
                    value="{{ $object->invoice_date ?? date('Y-m-d') }}" required>
 {{--            <input type="text" class="js-flatpickr form-control bg-white js-flatpickr-enabled flatpickr-input active" id="example-flatpickr-custom" name="example-flatpickr-custom" placeholder="d-m-Y" data-date-format="d-m-Y" readonly="readonly">--}}
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display: none;" id="amount_vat_exc">
             <label for="example-nf-amount_vat_exc">Amount VAT Exc</label>
             <input type="text" class="form-control" id="input-amount_vat_exc" name="amount_vat_exc"
                    value="{{ $object->amount_vat_exc ?? '' }}" readonly>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display: none;" id="vat_amount">
             <label for="example-nf-vat_amount"> VAT Amount</label>
             <input type="text" class="form-control" id="input-vat_amount" name="vat_amount"
                    value="{{ $object->vat_amount ?? '' }}" readonly>
@@ -63,14 +71,31 @@
     });
 
     function calculate(e) {
-        $('#input-amount_vat_exc').val($('#input-total_amount').val() * 100 / 118);
-        $('#input-vat_amount').val($('#input-amount_vat_exc').val() * 18 / 100);
-
-
+        if($('#input-purchases_type').val() == '1') {
+            $('#input-amount_vat_exc').val($('#input-total_amount').val() * 100 / 118);
+            $('#input-vat_amount').val($('#input-amount_vat_exc').val() * 18 / 100);
+        }else{
+            $('#input-amount_vat_exc').val($('#input-total_amount').val() * 0);
+            $('#input-vat_amount').val($('#input-amount_vat_exc').val() * 0);
+        }
     }
 
     $('.datepicker').datepicker({
         format: 'yyyy-mm-dd'
     });
 
+    $(function() {
+        $('#amount_vat_exc').hide();
+        $('#vat_amount').hide();
+        $('#input-purchases_type').change(function(){
+            if($('#input-purchases_type').val() == '1') {
+                $('#amount_vat_exc').show();
+                $('#vat_amount').show();
+
+            } else {
+                $('#amount_vat_exc').hide();
+                $('#vat_amount').hide();
+            }
+        });
+    });
 </script>
