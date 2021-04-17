@@ -2,27 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Gross;
+use App\Models\Supervisor;
 use Illuminate\Http\Request;
 
-class GrossController extends Controller
+class SupervisorController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
-        if($this->handleCrud($request, 'Gross')) {
-            return back();
-        }
-        $grosses = Gross::all();
-
-        $data = [
-            'grosses' => $grosses
-        ];
-        return view('pages.gross.gross_index')->with($data);
+        //
     }
 
     /**
@@ -49,10 +41,10 @@ class GrossController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\Gross  $gross
+     * @param  \App\Models\Supervisor  $supervisor
      * @return \Illuminate\Http\Response
      */
-    public function show(Gross $gross)
+    public function show(Supervisor $supervisor)
     {
         //
     }
@@ -60,10 +52,10 @@ class GrossController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Gross  $gross
+     * @param  \App\Models\Supervisor  $supervisor
      * @return \Illuminate\Http\Response
      */
-    public function edit(Gross $gross)
+    public function edit(Supervisor $supervisor)
     {
         //
     }
@@ -72,10 +64,10 @@ class GrossController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Gross  $gross
+     * @param  \App\Models\Supervisor  $supervisor
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Gross $gross)
+    public function update(Request $request, Supervisor $supervisor)
     {
         //
     }
@@ -83,10 +75,10 @@ class GrossController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Gross  $gross
+     * @param  \App\Models\Supervisor  $supervisor
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Gross $gross)
+    public function destroy(Supervisor $supervisor)
     {
         //
     }

@@ -7,6 +7,7 @@ use App\Models\Efd;
 use App\Models\ExpensesCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
+use App\Models\Supervisor;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 
@@ -19,6 +20,7 @@ class AjaxController
             switch ($fx) {
                 case 'form': // Load form from forms directory
                     $suppliers = Supplier::all();
+                    $supervisors = Supervisor::all();
                     $items = Item::all();
                     $efds = Efd::all();
                     $expenses_categories = ExpensesCategory::all();
@@ -27,6 +29,7 @@ class AjaxController
                             'suppliers' => $suppliers,
                             'items' => $items,
                             'efds' => $efds,
+                            'supervisors' => $supervisors,
                             'expenses_categories' => $expenses_categories,
                             'financial_charge_categories' => $financial_charge_categories,
                         ];

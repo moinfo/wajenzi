@@ -14,6 +14,7 @@ use App\Models\Item;
 use App\Models\Permission;
 use App\Models\Position;
 use App\Models\Role;
+use App\Models\Supervisor;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 
@@ -23,7 +24,7 @@ class SettingsController extends Controller
         $settings = [
 //            ['name'=>'Staff Allowances', 'route'=>'hr_settings_allowances', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Supervisor', 'route'=>'supervisor', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Supervisor', 'route'=>'hr_settings_supervisors', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Banks', 'route'=>'hr_settings_banks', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Positions', 'route'=>'hr_settings_positions', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Roles', 'route'=>'hr_settings_roles', 'icon' => 'si si-settings', 'badge' => 0],
@@ -67,6 +68,15 @@ class SettingsController extends Controller
             'banks' => Bank::all()
         ];
         return view('pages.settings.settings_banks')->with($data);
+    }
+    public function supervisors(Request $request){
+        if($this->handleCrud($request, 'Supervisor')) {
+            return back();
+        }
+        $data = [
+            'supervisors' => Supervisor::all()
+        ];
+        return view('pages.settings.settings_supervisors')->with($data);
     }
     public function departments(Request $request){
         if($this->handleCrud($request, 'Department')) {
