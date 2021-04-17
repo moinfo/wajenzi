@@ -31,6 +31,10 @@ class MenusSeeder extends Seeder
             'name' => 'Transaction Movement',
             'route' => 'transaction_movement',
             'icon' => 'si si-home',
+            ],[
+            'name' => 'Supplier Receiving',
+            'route' => 'supplier_receiving',
+            'icon' => 'si si-home',
             ], [
             'name' => 'Gross Profit',
             'route' => 'loan',
