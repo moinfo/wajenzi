@@ -12,9 +12,17 @@ class CollectionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        if($this->handleCrud($request, 'Collection')) {
+            return back();
+        }
+        $collections = Collection::all();
+
+        $data = [
+            'collections' => $collections
+        ];
+        return view('pages.collection.collection_index')->with($data);
     }
 
     /**

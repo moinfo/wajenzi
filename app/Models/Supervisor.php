@@ -16,4 +16,7 @@ class Supervisor extends Model
     public function expenses(){
         return $this->hasMany(Expense::class);
     }
+    public function collections(){
+        return $this->hasMany(Collection::class);
+    }
 }

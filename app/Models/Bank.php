@@ -9,4 +9,7 @@ class Bank extends Model
 {
     use HasFactory;
     public $fillable = ['id', 'name', 'description'];
+    public function collections(){
+        return $this->hasMany(Collection::class);
+    }
 }

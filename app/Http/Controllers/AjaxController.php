@@ -2,6 +2,7 @@
 
 
 namespace App\Http\Controllers;
+use App\Models\Bank;
 use App\Models\Division;
 use App\Models\Efd;
 use App\Models\ExpensesCategory;
@@ -22,6 +23,7 @@ class AjaxController
                     $suppliers = Supplier::all();
                     $supervisors = Supervisor::all();
                     $items = Item::all();
+                    $banks = Bank::all();
                     $efds = Efd::all();
                     $expenses_categories = ExpensesCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
@@ -29,6 +31,7 @@ class AjaxController
                             'suppliers' => $suppliers,
                             'items' => $items,
                             'efds' => $efds,
+                            'banks' => $banks,
                             'supervisors' => $supervisors,
                             'expenses_categories' => $expenses_categories,
                             'financial_charge_categories' => $financial_charge_categories,
