@@ -12,9 +12,17 @@ class TransactionMovementController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        if($this->handleCrud($request, 'TransactionMovement')) {
+            return back();
+        }
+        $transaction_movements = TransactionMovement::all();
+
+        $data = [
+            'transaction_movements' => $transaction_movements
+        ];
+        return view('pages.transaction_movement.transaction_movement_index')->with($data);
     }
 
     /**
