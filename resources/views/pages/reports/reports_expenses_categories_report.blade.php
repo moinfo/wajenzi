@@ -27,13 +27,13 @@
             <div>
                 <div class="block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">Collection Report</h3>
+                        <h3 class="block-title">Expenses Categories Report</h3>
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form  name="collection_search" action="" id="filter-form" method="post" autocomplete="off">
+                                    <form  name="expense_search" action="" id="filter-form" method="post" autocomplete="off">
                                         @csrf
                                         <div class="row">
                                             <div class="class col-md-3">
@@ -68,18 +68,18 @@
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
-                                    @foreach ($supervisors as $supervisor)
-                                       <th> {{ $supervisor->name }} </th>
+                                    @foreach ($expenses_categories as $expenses_category)
+                                        <th> {{ $expenses_category->name }} </th>
                                     @endforeach
-                                    <th>Total Collection</th>
+                                    <th>Total Expense</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <?php
-                                    $start_date = $_POST['start_date'] ?? date('Y-m-01');
-                                    $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                                    $first_date = explode("-", $start_date);
-                                    $last_date = explode("-", $end_date);
+                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
+                                $end_date = $_POST['end_date'] ?? date('Y-m-d');
+                                $first_date = explode("-", $start_date);
+                                $last_date = explode("-", $end_date);
 
                                 use Illuminate\Support\Facades\DB;
                                 for($i = $first_date[2]; $i <=  $last_date[2]; $i++)
@@ -87,23 +87,23 @@
                                     // add the date to the dates array
                                     $dates[] = date('Y') . "-" . date('m') . "-" . str_pad($i, 2, '0', STR_PAD_LEFT);
                                 }
-                                    ?>
+                                ?>
                                 @foreach(array_reverse($dates) as $date)
                                     <tr>
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
                                         <td>{{ $date }}</td>
-                                        @foreach($supervisors as $supervisor)
+                                        @foreach($expenses_categories as $expenses_category)
                                             <?php
-                                            $id = $supervisor->id;
-                                           $collection = \App\Models\Collection::Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
-                                           $total_collection_per_day = \App\Models\Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                            $id = $expenses_category->id;
+                                            $expense = \App\Models\Expense::Where('date',$date)->Where('expenses_category_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                            $total_expense_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
-                                            <td class="text-right">{{number_format($collection['total_amount'])}}</td>
+                                            <td class="text-right">{{number_format($expense['total_amount'])}}</td>
                                         @endforeach
-                                        <td class="text-right">{{number_format($total_collection_per_day['total_amount'])}}</td>
+                                        <td class="text-right">{{number_format($total_expense_per_day['total_amount'])}}</td>
 
                                     </tr>
                                 @endforeach
@@ -111,16 +111,16 @@
                                 <tfoot>
                                 <tr>
                                     <th colspan="2"></th>
-                                    @foreach ($supervisors as $supervisor)
+                                    @foreach ($expenses_categories as $expenses_category)
                                         <?php
-                                        $total_collection_by_supervisor = \App\Models\Collection::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
+                                        $total_expense_by_expenses_category = \App\Models\Expense::Where('expenses_category_id',$expenses_category->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('expenses_category_id')->get()->first();
                                         ?>
-                                        <td class="text-right">{{number_format($total_collection_by_supervisor['total_amount'])}}</td>
+                                        <td class="text-right">{{number_format($total_expense_by_expenses_category['total_amount'])}}</td>
                                     @endforeach
                                     <?php
-                                    $total_collection_by_all_supervisor = \App\Models\Collection::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
+                                    $total_expense_by_all_expenses_category = \App\Models\Expense::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     ?>
-                                    <td class="text-right">{{number_format($total_collection_by_all_supervisor['total_amount'])}}</td>
+                                    <td class="text-right">{{number_format($total_expense_by_all_expenses_category['total_amount'])}}</td>
                                 </tr>
                                 </tfoot>
                             </table>

@@ -23,9 +23,6 @@
     <div class="main-container">
         <div class="content">
             <div class="content-heading">Reports
-                <div class="float-right">
-                    <button type="button" onclick="loadFormModal('gross_form', {className: 'Gross'}, 'Create New Gross', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Gross</button>
-                </div>
             </div>
             <div>
                 <div class="block">

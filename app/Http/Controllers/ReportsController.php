@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Models\Expense;
+use App\Models\ExpensesCategory;
 use App\Models\Gross;
 use App\Models\Supervisor;
 use Illuminate\Http\Request;
@@ -18,8 +20,8 @@ class ReportsController extends Controller
             ['name' => 'Supplier Report', 'route' => 'reports_supplier_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Collection Report', 'route' => 'reports_collection_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Gross Summary Report', 'route' => 'reports_gross_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
-
-
+            ['name' => 'Expenses Report', 'route' => 'reports_expenses_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Expenses Categories Report', 'route' => 'reports_expenses_categories_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
@@ -64,6 +66,29 @@ class ReportsController extends Controller
             'collections' => $collections
         ];
         return view('pages.reports.reports_collection_report')->with($data);
+    }
+
+    public function expenses_report(Request $request){
+        $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
+        $supervisors = Supervisor::all();
+        $supervisor_with_amount_of_expenses = DB::select('SELECT SUM(c.amount) as total_expenses, s.name as supervisor_name,c.date as expense_date FROM expenses c JOIN supervisors s ON (s.id = c.supervisor_id) GROUP BY c.supervisor_id,c.date');
+        $data = [
+            'supervisor_with_amount_of_expenses' => $supervisor_with_amount_of_expenses,
+            'supervisors' => $supervisors,
+            'expenses' => $expenses
+        ];
+        return view('pages.reports.reports_expenses_report')->with($data);
+    }
+    public function expenses_categories_report(Request $request){
+        $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
+        $categories = ExpensesCategory::all();
+        $categories_with_amount_of_expenses = DB::select('SELECT SUM(c.amount) as total_expenses, s.name as category_name,c.date as expense_date FROM expenses c JOIN expenses_categories s ON (s.id = c.expenses_category_id) GROUP BY c.expenses_category_id,c.date');
+        $data = [
+            'categories_with_amount_of_expenses' => $categories_with_amount_of_expenses,
+            'expenses_categories' => $categories,
+            'expenses' => $expenses
+        ];
+        return view('pages.reports.reports_expenses_categories_report')->with($data);
     }
 
 }
