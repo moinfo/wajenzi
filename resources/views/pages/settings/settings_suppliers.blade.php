@@ -1,5 +1,23 @@
 @extends('layouts.backend')
+@section('css_before')
+    <!-- Page JS Plugins CSS -->
+    <link rel="stylesheet" href="{{ asset('js/plugins/datatables/dataTables.bootstrap4.css') }}">
+@endsection
 
+@section('js_after')
+    <!-- Page JS Plugins -->
+    <script src="{{ asset('js/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('js/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
+
+    <!-- Page JS Code -->
+    <script src="{{ asset('js/pages/tables_datatables.js') }}"></script>
+
+    <script>
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd'
+        });
+    </script>
+@endsection
 @section('content')
     <div class="main-container">
         <div class="content">
@@ -14,8 +32,8 @@
                         <h3 class="block-title">SUPPLIER</h3>
                     </div>
                     <div class="block-content">
-                        <table class="table table-striped table-vcenter">
-                            <thead>
+                        <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                        <thead>
                             <tr>
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
