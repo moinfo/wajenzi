@@ -36,14 +36,15 @@
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form  name="filter" id="filter-form" method="post" autocomplete="off">
+                                    <form  name="collection_search" action="{{route('transaction_movement_search')}}" id="filter-form" method="post" autocomplete="off">
+                                        @csrf
                                         <div class="row">
                                             <div class="class col-md-3">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Start Date</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker" aria-describedby="basic-addon1">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -51,7 +52,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon2">End Date</span>
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker" aria-describedby="basic-addon2">
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-4">
@@ -60,7 +61,7 @@
                                                         <span class="input-group-text" id="basic-addon3">Supplier</span>
                                                     </div>
                                                     <select name="supplier_id" id="input-supplier-id" class="form-control" aria-describedby="basic-addon3">
-                                                        <option>All Supplier</option>
+                                                        <option value="0">All Supplier</option>
                                                         @foreach ($suppliers as $supplier)
                                                             <option value="{{ $supplier->id }}"> {{ $supplier->name }} </option>
                                                         @endforeach
@@ -69,7 +70,7 @@
                                             </div>
                                             <div class="class col-md-2">
                                                 <div>
-                                                    <button type="button"  class="btn btn-sm btn-primary">Show</button>
+                                                    <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -103,13 +104,13 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td>{{ $transaction_movement->date }}</td>
-                                        <td>{{ $transaction_movement->supplier->name }}</td>
+                                        <td>{{ $transaction_movement->supplier->name ?? $transaction_movement->supplier_name }}</td>
                                         <td class="font-w600">{{ $transaction_movement->description }}</td>
                                         <td class="text-right">{{ number_format($transaction_movement->amount, 2) }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"
-                                                        onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement', id: {{$transaction_movement->id}}}, 'Edit {{$transaction_movement->name}}', 'modal-md');"
+                                                        onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement', id: {{$transaction_movement->id}}}, 'Edit {{$transaction_movement->supplier->name ?? $transaction_movement->supplier_name}} Transcaction Movement', 'modal-md');"
                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
                                                         data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>

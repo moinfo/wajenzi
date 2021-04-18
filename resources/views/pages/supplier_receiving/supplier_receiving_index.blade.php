@@ -37,14 +37,15 @@
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form  name="filter" id="filter-form" method="post" autocomplete="off">
+                                    <form  name="supplier_receiving_search" action="{{route('supplier_receiving_search')}}" id="filter-form" method="post" autocomplete="off">
+                                        @csrf
                                         <div class="row">
                                             <div class="class col-md-3">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Start Date</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker" aria-describedby="basic-addon1">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -52,7 +53,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon2">End Date</span>
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker" aria-describedby="basic-addon2">
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-4">
@@ -70,7 +71,7 @@
                                             </div>
                                             <div class="class col-md-2">
                                                 <div>
-                                                    <button type="button"  class="btn btn-sm btn-primary">Show</button>
+                                                    <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -104,13 +105,13 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td>{{ $supplier_receiving->date }}</td>
-                                        <td>{{ $supplier_receiving->supplier->name }}</td>
+                                        <td>{{ $supplier_receiving->supplier->name ?? $supplier_receiving->supplier_name}}</td>
                                         <td class="font-w600">{{ $supplier_receiving->description }}</td>
                                         <td class="text-right">{{ number_format($supplier_receiving->amount, 2) }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"
-                                                        onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving', id: {{$supplier_receiving->id}}}, 'Edit {{$supplier_receiving->name}}', 'modal-md');"
+                                                        onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving', id: {{$supplier_receiving->id}}}, 'Edit {{$supplier_receiving->supplier->name ?? $supplier_receiving->supplier_name}}', 'modal-md');"
                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
                                                         data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>

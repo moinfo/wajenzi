@@ -36,14 +36,15 @@
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form  name="filter" id="filter-form" method="post" autocomplete="off">
+                                    <form  name="expenses_search" action="{{route('expenses_search')}}" id="filter-form" method="post" autocomplete="off">
+                                        @csrf
                                         <div class="row">
                                             <div class="class col-md-2">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Start</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker" aria-describedby="basic-addon1">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-2">
@@ -51,7 +52,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon2">End</span>
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker" aria-describedby="basic-addon2">
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -82,7 +83,7 @@
                                             </div>
                                             <div class="class col-md-2">
                                                 <div>
-                                                    <button type="button"  class="btn btn-sm btn-primary">Show</button>
+                                                    <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -116,15 +117,15 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td class="font-w600">{{ $expense->date }}</td>
-                                        <td class="font-w600">{{ $expense->supervisor->name }}</td>
-                                        <td class="font-w600">{{ $expense->expensesCategory->name }}</td>
+                                        <td class="font-w600">{{ $expense->supervisor->name ?? $expense->supervisor_name}}</td>
+                                        <td class="font-w600">{{ $expense->expensesCategory->name ?? $expense->category_name }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $expense->description }}
                                         <td class="font-w600">{{ number_format($expense->amount, 2) }}</td>
 
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"
-                                                        onclick="loadFormModal('expense_form', {className: 'Expense', id: {{$expense->id}}}, 'Edit {{$expense->name}}', 'modal-md');"
+                                                        onclick="loadFormModal('expense_form', {className: 'Expense', id: {{$expense->id}}}, 'Edit {{$expense->supervisor->name ?? $expense->supervisor_name}}', 'modal-md');"
                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
                                                         data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>

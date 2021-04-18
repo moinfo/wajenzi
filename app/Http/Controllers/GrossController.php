@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Gross;
 use App\Models\Supervisor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class GrossController extends Controller
 {
@@ -18,7 +19,7 @@ class GrossController extends Controller
         if($this->handleCrud($request, 'Gross')) {
             return back();
         }
-        $grosses = Gross::all();
+        $grosses = Gross::whereDate('date', DB::raw('CURDATE()'))->get();
         $supervisors = Supervisor::all();
 
         $data = [
@@ -92,5 +93,30 @@ class GrossController extends Controller
     public function destroy(Gross $gross)
     {
         //
+    }
+
+    public function search(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $supervisor_id = $request->input('supervisor_id');
+        if($supervisor_id == 0){
+            $grosses = DB::table('grosses')
+                ->join('supervisors', 'supervisors.id', '=', 'grosses.supervisor_id')
+                ->select('grosses.*','supervisors.name as supervisor_name')
+                ->where('date','>=',$start_date)
+                ->where('date','<=',$end_date)
+                ->get();
+        }else{
+            $grosses = DB::table('grosses')
+                ->join('supervisors', 'supervisors.id', '=', 'grosses.supervisor_id')
+                ->select('grosses.*','supervisors.name as supervisor_name')
+                ->where('date','>=',$start_date)
+                ->where('date','<=',$end_date)
+                ->where('supervisor_id','=',$supervisor_id)
+                ->get();
+        }
+
+        $supervisors = Supervisor::all();
+        return view('pages.gross.gross_index',compact('grosses','supervisors'));
     }
 }

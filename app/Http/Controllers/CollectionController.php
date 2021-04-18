@@ -19,7 +19,7 @@ class CollectionController extends Controller
         if($this->handleCrud($request, 'Collection')) {
             return back();
         }
-        $collections = Collection::whereDate('date', DB::raw('CURDATE()'))->get();;
+        $collections = Collection::whereDate('date', DB::raw('CURDATE()'))->get();
         $supervisors = Supervisor::all();
 
         $data = [
