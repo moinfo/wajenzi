@@ -1,94 +1,140 @@
 @extends('layouts.backend')
 @section('css_before')
-<!-- Page JS Plugins CSS -->
-<link rel="stylesheet" href="{{ asset('js/plugins/datatables/dataTables.bootstrap4.css') }}">
+    <!-- Page JS Plugins CSS -->
+    <link rel="stylesheet" href="{{ asset('js/plugins/datatables/dataTables.bootstrap4.css') }}">
 @endsection
 
 @section('js_after')
-<!-- Page JS Plugins -->
-<script src="{{ asset('js/plugins/datatables/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('js/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
+    <!-- Page JS Plugins -->
+    <script src="{{ asset('js/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('js/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
 
-<!-- Page JS Code -->
-<script src="{{ asset('js/pages/tables_datatables.js') }}"></script>
+    <!-- Page JS Code -->
+    <script src="{{ asset('js/pages/tables_datatables.js') }}"></script>
 
-<script>
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
-    });
-</script>
+    <script>
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd'
+        });
+    </script>
 @endsection
 @section('content')
-<div class="main-container">
-    <div class="content">
-        <div class="content-heading">Reports
-        </div>
-        <div>
-            <div class="block">
-                <div class="block-header block-header-default">
-                    <h3 class="block-title">Collection Report</h3>
+
+    <div class="main-container">
+        <div class="content">
+            <div class="content-heading">Reports
+                <div class="float-right">
+                    <button type="button" onclick="loadFormModal('collection_form', {className: 'Collection'}, 'Create New Collection', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Collection</button>
                 </div>
-                <div class="block-content">
-                    <div class="row no-print m-t-10">
-                        <div class="class col-md-12">
-                            <div class="class card-box">
-                                <form  name="filter" id="filter-form" method="post" autocomplete="off">
-                                    <div class="row">
-                                        <div class="class col-md-3">
-                                            <div class="input-group mb-3">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text" id="basic-addon1">Start Date</span>
+            </div>
+            <div>
+                <div class="block">
+                    <div class="block-header block-header-default">
+                        <h3 class="block-title">Collection Report</h3>
+                    </div>
+                    <div class="block-content">
+                        <div class="row no-print m-t-10">
+                            <div class="class col-md-12">
+                                <div class="class card-box">
+                                    <form  name="collection_search" action="" id="filter-form" method="post" autocomplete="off">
+                                        @csrf
+                                        <div class="row">
+                                            <div class="class col-md-3">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon1">Start Date</span>
+                                                    </div>
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
                                                 </div>
-                                                <input type="text" name="start_date" id="start_date" class="form-control datepicker" aria-describedby="basic-addon1">
                                             </div>
-                                        </div>
-                                        <div class="class col-md-3">
-                                            <div class="input-group mb-3">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text" id="basic-addon2">End Date</span>
+                                            <div class="class col-md-3">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon2">End Date</span>
+                                                    </div>
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
                                                 </div>
-                                                <input type="text" name="end_date" id="end_date" class="form-control datepicker" aria-describedby="basic-addon2">
                                             </div>
-                                        </div>
-                                        <div class="class col-md-4">
-                                            <div class="input-group mb-3">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text" id="basic-addon3">Supervisor</span>
+                                            <div class="class col-md-2">
+                                                <div>
+                                                    <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
                                                 </div>
-                                                <select name="supervisor_id" id="input-supervisor-id" class="form-control" aria-describedby="basic-addon3">
-                                                    <option>All Supervisor</option>
-{{--                                                    @foreach ($supervisors as $supervisor)--}}
-{{--                                                        <option value="{{ $supervisor->id }}"> {{ $supervisor->name }} </option>--}}
-{{--                                                    @endforeach--}}
-                                                </select>
                                             </div>
                                         </div>
-                                        <div class="class col-md-2">
-                                            <div>
-                                                <button type="button"  class="btn btn-sm btn-primary">Show</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </form>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
-                        <thead>
-                        <tr>
-                            <th class="text-center" style="width: 100px;">#</th>
-                            <th>Name</th>
-                            <th class="d-none d-sm-table-cell" style="width: 30%;">Description</th>
-                            <th class="text-center" style="width: 100px;">Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                                <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th>Date</th>
+                                    @foreach ($supervisors as $supervisor)
+                                       <th> {{ $supervisor->name }} </th>
+                                    @endforeach
+                                    <th>Total Collection</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <?php
+                                    $start_date = $_POST['start_date'] ?? date('Y-m-01');
+                                    $end_date = $_POST['end_date'] ?? date('Y-m-t');
+                                    $first_date = explode("-", $start_date);
+                                    $last_date = explode("-", $end_date);
 
-                        </tbody>
-                    </table>
+                                use Illuminate\Support\Facades\DB;
+                                for($i = $first_date[2]; $i <=  $last_date[2]; $i++)
+                                {
+                                    // add the date to the dates array
+                                    $dates[] = date('Y') . "-" . date('m') . "-" . str_pad($i, 2, '0', STR_PAD_LEFT);
+                                }
+                                    ?>
+                                @foreach(array_reverse($dates) as $date)
+                                    <tr>
+                                        <td class="text-center">
+                                            {{$loop->index + 1}}
+                                        </td>
+                                        <td>{{ $date }}</td>
+                                        @foreach($supervisors as $supervisor)
+                                            <?php
+                                            $id = $supervisor->id;
+                                           $collection = \App\Models\Collection::Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                           $total_collection_per_day = \App\Models\Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+
+                                            ?>
+                                            <td class="text-right">{{number_format($collection['total_amount'])}}</td>
+                                        @endforeach
+                                        <td class="text-right">{{number_format($total_collection_per_day['total_amount'])}}</td>
+
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <th colspan="2"></th>
+                                    @foreach ($supervisors as $supervisor)
+                                        <?php
+                                        $total_collection_by_supervisor = \App\Models\Collection::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
+                                        ?>
+                                        <td class="text-right">{{number_format($total_collection_by_supervisor['total_amount'])}}</td>
+                                    @endforeach
+                                    <?php
+                                    $total_collection_by_all_supervisor = \App\Models\Collection::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
+                                    ?>
+                                    <td class="text-right">{{number_format($total_collection_by_all_supervisor['total_amount'])}}</td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
 @endsection
+
+
+

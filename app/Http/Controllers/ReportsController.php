@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Collection;
+use App\Models\Supervisor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReportsController extends Controller
 {
@@ -44,7 +47,14 @@ class ReportsController extends Controller
     }
 
     public function collection_report(Request $request){
-        $data = [];
+        $collections = Collection::whereDate('date', DB::raw('CURDATE()'))->get();
+        $supervisors = Supervisor::all();
+        $supervisor_with_amount_of_collections = DB::select('SELECT SUM(c.amount) as total_collection, s.name as supervisor_name,c.date as collection_date FROM collections c JOIN supervisors s ON (s.id = c.supervisor_id) GROUP BY c.supervisor_id,c.date');
+        $data = [
+            'supervisor_with_amount_of_collections' => $supervisor_with_amount_of_collections,
+            'supervisors' => $supervisors,
+            'collections' => $collections
+        ];
         return view('pages.reports.reports_collection_report')->with($data);
     }
 
