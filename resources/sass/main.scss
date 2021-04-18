@@ -129,3 +129,7 @@
 
 // User styles (your own styles/overrides)
 @import 'custom/main';
+
+.datepicker-index-form {
+    z-index: 1 !important;
+}
