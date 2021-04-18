@@ -44,7 +44,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Start Date</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-01')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -80,7 +80,7 @@
                                 <tbody>
                                 <?php
                                     $start_date = $_POST['start_date'] ?? date('Y-m-01');
-                                    $end_date = $_POST['end_date'] ?? date('Y-m-t');
+                                    $end_date = $_POST['end_date'] ?? date('Y-m-d');
                                     $first_date = explode("-", $start_date);
                                     $last_date = explode("-", $end_date);
 
