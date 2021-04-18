@@ -1,5 +1,23 @@
 @extends('layouts.backend')
+@section('css_before')
+    <!-- Page JS Plugins CSS -->
+    <link rel="stylesheet" href="{{ asset('js/plugins/datatables/dataTables.bootstrap4.css') }}">
+@endsection
 
+@section('js_after')
+    <!-- Page JS Plugins -->
+    <script src="{{ asset('js/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('js/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
+
+    <!-- Page JS Code -->
+    <script src="{{ asset('js/pages/tables_datatables.js') }}"></script>
+
+    <script>
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd'
+        });
+    </script>
+@endsection
 @section('content')
 
     <div class="main-container">
@@ -15,9 +33,52 @@
                         <h3 class="block-title">All Transaction Movements</h3>
                     </div>
                     <div class="block-content">
-                        <p>This is a list containing all Transaction Movements</p>
+                        <div class="row no-print m-t-10">
+                            <div class="class col-md-12">
+                                <div class="class card-box">
+                                    <form  name="filter" id="filter-form" method="post" autocomplete="off">
+                                        <div class="row">
+                                            <div class="class col-md-3">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon1">Start Date</span>
+                                                    </div>
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker" aria-describedby="basic-addon1">
+                                                </div>
+                                            </div>
+                                            <div class="class col-md-3">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon2">End Date</span>
+                                                    </div>
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker" aria-describedby="basic-addon2">
+                                                </div>
+                                            </div>
+                                            <div class="class col-md-4">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon3">Supplier</span>
+                                                    </div>
+                                                    <select name="supplier_id" id="input-supplier-id" class="form-control" aria-describedby="basic-addon3">
+                                                        <option>All Supplier</option>
+                                                        @foreach ($suppliers as $supplier)
+                                                            <option value="{{ $supplier->id }}"> {{ $supplier->name }} </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="class col-md-2">
+                                                <div>
+                                                    <button type="button"  class="btn btn-sm btn-primary">Show</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                         <div class="table-responsive">
-                            <table class="table table-striped table-vcenter">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
@@ -29,7 +90,14 @@
                                 </tr>
                                 </thead>
                                 <tbody>
+                                <?php
+                                $sum = 0;
+                                ?>
                                 @foreach($transaction_movements as $transaction_movement)
+                                    <?php
+                                     $sum += $transaction_movement->amount;
+                                    ?>
+
                                     <tr id="transaction_movement-tr-{{$transaction_movement->id}}">
                                         <td class="text-center">
                                             {{$loop->index + 1}}
@@ -58,6 +126,12 @@
                                     </tr>
                                 @endforeach
                                 </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td class="text-right text-dark" colspan="5"><b>{{number_format($sum,2)}}</b></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
 

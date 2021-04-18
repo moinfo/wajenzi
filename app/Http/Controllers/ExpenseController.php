@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Expense;
+use App\Models\ExpensesCategory;
 use App\Models\Sale;
+use App\Models\Supervisor;
 use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
@@ -19,8 +21,12 @@ class ExpenseController extends Controller
             return back();
         }
         $expenses = Expense::all();
+        $supervisors = Supervisor::all();
+        $expense_categories = ExpensesCategory::all();
 
         $data = [
+            'expense_categories' => $expense_categories,
+            'supervisors' => $supervisors,
             'expenses' => $expenses
         ];
         return view('pages.expenses.expenses_index')->with($data);

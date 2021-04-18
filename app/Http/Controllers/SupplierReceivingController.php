@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Supplier;
 use App\Models\SupplierReceiving;
 use Illuminate\Http\Request;
 
@@ -18,8 +19,10 @@ class SupplierReceivingController extends Controller
             return back();
         }
         $supplier_receivings = SupplierReceiving::all();
+        $suppliers = Supplier::all();
 
         $data = [
+            'suppliers' => $suppliers,
             'supplier_receivings' => $supplier_receivings
         ];
         return view('pages.supplier_receiving.supplier_receiving_index')->with($data);

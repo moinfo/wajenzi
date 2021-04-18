@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Collection;
+use App\Models\Supervisor;
 use Illuminate\Http\Request;
 
 class CollectionController extends Controller
@@ -18,8 +19,10 @@ class CollectionController extends Controller
             return back();
         }
         $collections = Collection::all();
+        $supervisors = Supervisor::all();
 
         $data = [
+            'supervisors' => $supervisors,
             'collections' => $collections
         ];
         return view('pages.collection.collection_index')->with($data);

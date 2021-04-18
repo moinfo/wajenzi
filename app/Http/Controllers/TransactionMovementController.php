@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Supplier;
 use App\Models\TransactionMovement;
 use Illuminate\Http\Request;
 
@@ -18,8 +19,10 @@ class TransactionMovementController extends Controller
             return back();
         }
         $transaction_movements = TransactionMovement::all();
+        $suppliers = Supplier::all();
 
         $data = [
+            'suppliers' => $suppliers,
             'transaction_movements' => $transaction_movements
         ];
         return view('pages.transaction_movement.transaction_movement_index')->with($data);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Gross;
+use App\Models\Supervisor;
 use Illuminate\Http\Request;
 
 class GrossController extends Controller
@@ -18,8 +19,10 @@ class GrossController extends Controller
             return back();
         }
         $grosses = Gross::all();
+        $supervisors = Supervisor::all();
 
         $data = [
+            'supervisors' => $supervisors,
             'grosses' => $grosses
         ];
         return view('pages.gross.gross_index')->with($data);
