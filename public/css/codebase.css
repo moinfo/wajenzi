@@ -22077,3 +22077,7 @@ div.tagsinput span.tag a:hover {
 .datepicker-index-form {
   z-index: 1 !important;
 }
+
+.content-header {
+  min-height: 100px !important;
+}
