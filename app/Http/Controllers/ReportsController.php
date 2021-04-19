@@ -35,7 +35,14 @@ class ReportsController extends Controller
     }
 
     public function general_report(Request $request){
-        $data = [];
+        $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
+        $supervisors = Supervisor::all();
+        $supervisor_with_amount_of_expenses = DB::select('SELECT SUM(c.amount) as total_expenses, s.name as supervisor_name,c.date as expense_date FROM expenses c JOIN supervisors s ON (s.id = c.supervisor_id) GROUP BY c.supervisor_id,c.date');
+        $data = [
+            'supervisor_with_amount_of_expenses' => $supervisor_with_amount_of_expenses,
+            'supervisors' => $supervisors,
+            'expenses' => $expenses
+        ];
         return view('pages.reports.reports_general_report')->with($data);
     }
 
