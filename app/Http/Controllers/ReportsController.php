@@ -74,8 +74,22 @@ class ReportsController extends Controller
     }
 
     public function supplier_report(Request $request){
-        $data = [];
-        return view('pages.reports.reports_supplier_report')->with($data);
+        $start_date = $request->input('start_date') ?? date('Y-m-01');
+        $end_date = $request->input('end_date') ?? date('Y-m-t');
+        $supplier_id = $request->input('supplier_id') ?? 1;
+        $statements = DB::select("select id, date, description, debit, credit, sum( coalesce(debit, 0) - coalesce(credit, 0) ) over (order by date) as balance from ((select id, date,s.description as description, s.amount as debit, null as credit from supplier_receivings s WHERE s.supplier_id = '$supplier_id' ) union all (select id, date, t.description as description,  null as debit, t.amount from transaction_movements t WHERE t.supplier_id = '$supplier_id')) b WHERE b.date BETWEEN '$start_date' AND '$end_date' order by b.date ;");
+        $suppliers = Supplier::all();
+        return view('pages.reports.reports_supplier_report',compact('statements','suppliers'));
+    }
+
+
+    public function supplier_report_search(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-m-01');
+        $end_date = $request->input('end_date') ?? date('Y-m-t');
+        $supplier_id = $request->input('supplier_id') ?? 1;
+        $statements = DB::select("select id, date, description, debit, credit, sum( coalesce(debit, 0) - coalesce(credit, 0) ) over (order by date) as balance from ((select id, date,s.description as description, s.amount as debit, null as credit from supplier_receivings s WHERE s.supplier_id = '$supplier_id' ) union all (select id, date, t.description as description,  null as debit, t.amount from transaction_movements t WHERE t.supplier_id = '$supplier_id')) b WHERE b.date BETWEEN '$start_date' AND '$end_date' order by b.date ;");
+        $suppliers = Supplier::all();
+        return view('pages.reports.reports_supplier_report',compact('statements','suppliers'));
     }
 
     public function transaction_movement_report_search(Request $request){

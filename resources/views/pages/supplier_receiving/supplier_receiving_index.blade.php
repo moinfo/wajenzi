@@ -33,7 +33,7 @@
                     <div class="block-header block-header-default">
                         <h3 class="block-title">All Supplier Receivings</h3>
                     </div>
-                    <div class="block-content">$collection
+                    <div class="block-content">
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
