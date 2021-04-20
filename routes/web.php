@@ -28,7 +28,10 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/recruitment', [App\Http\Controllers\RecruitmentController::class, 'index'])->name('recruitment');
     Route::match(['get', 'post'], '/staff', [App\Http\Controllers\StaffController::class, 'index'])->name('staff');
     Route::match(['get', 'post'], '/accounting', [App\Http\Controllers\AccoutingController::class, 'index'])->name('accounting');
+
     Route::match(['get', 'post'], '/reports', [App\Http\Controllers\ReportsController::class, 'index'])->name('reports');
+    Route::match(['get', 'post'], '/reports/vat_analysis_report', [App\Http\Controllers\ReportsController::class, 'vat_analysis_report'])->name('reports_vat_analysis');
+
     Route::match(['get', 'post'], '/user', [App\Http\Controllers\UserController::class, 'index'])->name('user');
     Route::match(['get', 'post'], '/system', [App\Http\Controllers\SystemController::class, 'index'])->name('system');
     Route::match(['get', 'post'], '/sales', [App\Http\Controllers\SaleController::class, 'index'])->name('sales');
