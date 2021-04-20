@@ -15,6 +15,16 @@
             <textarea class="form-control" id="input-details" name="details" placeholder="Short Details" required>{{$object->details ?? ''}}</textarea>
         </div>
         <div class="form-group">
+            <label for="example-nf-details">Employee Type</label>
+            <select name="employee_id" id="input-employee-id" class="form-control">
+
+                <option>Select employee type</option>
+            @foreach ($employees as $employee)
+                <option value="{{ $employee['id'] }}" {{ ( $employee['id'] == $object->employee_id) ? 'selected' : '' }}> {{ $employee['name'] }} </option>
+            @endforeach
+            </select>
+        </div>
+        <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>

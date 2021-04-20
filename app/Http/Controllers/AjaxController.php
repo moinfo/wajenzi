@@ -25,10 +25,15 @@ class AjaxController
                     $items = Item::all();
                     $banks = Bank::all();
                     $efds = Efd::all();
+                    $employees = [
+                        ['id'=>'1','name'=>'Supervisor'],
+                        ['id'=>'2','name'=>'Driver']
+                    ];
                     $expenses_categories = ExpensesCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
                     $data = $request->input('data') ?? [
                             'suppliers' => $suppliers,
+                            'employees' => $employees,
                             'items' => $items,
                             'efds' => $efds,
                             'banks' => $banks,

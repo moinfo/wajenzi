@@ -38,18 +38,27 @@
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
                                 <th>Phone Number</th>
+                                <th>Employee_type</th>
                                 <th class="d-none d-sm-table-cell" style="width: 30%;">Other Details</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
                             @foreach($supervisors as $supervisor)
+                                <?php
+                                    if($supervisor->employee_id == 1){
+                                        $employee_type = 'Supervisor';
+                                    }else{
+                                        $employee_type = 'Driver';
+                                    }
+                                ?>
                                 <tr id="supervisor-tr-{{$supervisor->id}}">
                                     <td class="text-center">
                                         {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $supervisor->name }}</td>
                                     <td class="font-w600">{{ $supervisor->phone }}</td>
+                                    <td class="font-w600">{{ $employee_type }}</td>
                                     <td class="d-none d-sm-table-cell">{{ $supervisor->details }}
                                     </td>
                                     <td class="text-center" >

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Supervisor extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name', 'phone', 'details'];
+    public $fillable = ['id', 'name', 'phone', 'details', 'employee_id'];
 
     public function grosses() {
         return $this->hasMany(Gross::class);
