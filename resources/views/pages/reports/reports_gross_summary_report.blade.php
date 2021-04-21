@@ -101,9 +101,9 @@
                                             $total_gross_per_day = \App\Models\Gross::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
-                                            <td class="text-right">{{number_format($gross['total_amount'])}}</td>
+                                            <td class="text-right">{{number_format($gross['total_amount'] ?? 0)}}</td>
                                         @endforeach
-                                        <td class="text-right">{{number_format($total_gross_per_day['total_amount'])}}</td>
+                                        <td class="text-right">{{number_format($total_gross_per_day['total_amount'] ?? 0)}}</td>
 
                                     </tr>
                                 @endforeach
@@ -115,12 +115,12 @@
                                         <?php
                                         $total_gross_by_supervisor = \App\Models\Gross::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
                                         ?>
-                                        <td class="text-right">{{number_format($total_gross_by_supervisor['total_amount'])}}</td>
+                                        <td class="text-right">{{number_format($total_gross_by_supervisor['total_amount'] ?? 0)}}</td>
                                     @endforeach
                                     <?php
                                     $total_gross_by_all_supervisor = \App\Models\Gross::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     ?>
-                                    <td class="text-right">{{number_format($total_gross_by_all_supervisor['total_amount'])}}</td>
+                                    <td class="text-right">{{number_format($total_gross_by_all_supervisor['total_amount'] ?? 0)}}</td>
                                 </tr>
                                 </tfoot>
                             </table>

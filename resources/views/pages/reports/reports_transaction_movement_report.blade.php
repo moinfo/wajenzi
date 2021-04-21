@@ -105,16 +105,16 @@
                             <tr>
                                 <td>{{$loop->iteration}}</td>
                                 <td>{{$payment->name}}</td>
-                                <td class="text-right">{{number_format($payment->amount)}}</td>
+                                <td class="text-right">{{number_format($payment->amount  ?? 0)}}</td>
                             </tr>
                         @endforeach
                         <tr>
                             <th colspan="2" class="text-right">Total Payments</th>
-                            <th class="text-right"><b>{{number_format($payment_total)}}</b></th>
+                            <th class="text-right"><b>{{number_format($payment_total  ?? 0)}}</b></th>
                         </tr>
                         <tr>
                             <th colspan="2" class="text-right">Total Transactions - Total Payments</th>
-                            <th class="text-right"><b>{{number_format($transaction_total-$payment_total)}}</b></th>
+                            <th class="text-right"><b>{{number_format(($transaction_total  ?? 0 )-($payment_total  ?? 0))}}</b></th>
                         </tr>
                     </table>
                 </div>

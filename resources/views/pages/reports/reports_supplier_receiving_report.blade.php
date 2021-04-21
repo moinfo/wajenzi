@@ -101,9 +101,9 @@
                                            $total_supplier_receiving_per_day = \App\Models\SupplierReceiving::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
-                                            <td class="text-right">{{number_format($supplier_receiving['total_amount'])}}</td>
+                                            <td class="text-right">{{number_format($supplier_receiving['total_amount']  ?? 0)}}</td>
                                         @endforeach
-                                        <td class="text-right">{{number_format($total_supplier_receiving_per_day['total_amount'])}}</td>
+                                        <td class="text-right">{{number_format($total_supplier_receiving_per_day['total_amount']  ?? 0)}}</td>
 
                                     </tr>
                                 @endforeach
@@ -115,12 +115,12 @@
                                         <?php
                                         $total_supplier_receiving_by_supplier = \App\Models\SupplierReceiving::Where('supplier_id',$supplier->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supplier_id')->get()->first();
                                         ?>
-                                        <td class="text-right">{{number_format($total_supplier_receiving_by_supplier['total_amount'])}}</td>
+                                        <td class="text-right">{{number_format($total_supplier_receiving_by_supplier['total_amount'] ?? 0)}}</td>
                                     @endforeach
                                     <?php
                                     $total_supplier_receiving_by_all_supplier = \App\Models\SupplierReceiving::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     ?>
-                                    <td class="text-right">{{number_format($total_supplier_receiving_by_all_supplier['total_amount'])}}</td>
+                                    <td class="text-right">{{number_format($total_supplier_receiving_by_all_supplier['total_amount'] ?? 0)}}</td>
                                 </tr>
                                 </tfoot>
                             </table>

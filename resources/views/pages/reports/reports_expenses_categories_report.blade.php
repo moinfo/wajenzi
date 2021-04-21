@@ -101,9 +101,9 @@
                                             $total_expense_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
-                                            <td class="text-right">{{number_format($expense['total_amount'])}}</td>
+                                            <td class="text-right">{{number_format($expense['total_amount'] ?? 0)}}</td>
                                         @endforeach
-                                        <td class="text-right">{{number_format($total_expense_per_day['total_amount'])}}</td>
+                                        <td class="text-right">{{number_format($total_expense_per_day['total_amount']  ?? 0)}}</td>
 
                                     </tr>
                                 @endforeach
@@ -115,12 +115,12 @@
                                         <?php
                                         $total_expense_by_expenses_category = \App\Models\Expense::Where('expenses_category_id',$expenses_category->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('expenses_category_id')->get()->first();
                                         ?>
-                                        <td class="text-right">{{number_format($total_expense_by_expenses_category['total_amount'])}}</td>
+                                        <td class="text-right">{{number_format($total_expense_by_expenses_category['total_amount'] ?? 0)}}</td>
                                     @endforeach
                                     <?php
                                     $total_expense_by_all_expenses_category = \App\Models\Expense::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     ?>
-                                    <td class="text-right">{{number_format($total_expense_by_all_expenses_category['total_amount'])}}</td>
+                                    <td class="text-right">{{number_format($total_expense_by_all_expenses_category['total_amount']  ?? 0)}}</td>
                                 </tr>
                                 </tfoot>
                             </table>
