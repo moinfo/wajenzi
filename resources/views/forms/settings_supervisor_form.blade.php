@@ -3,20 +3,20 @@
     <form  method="post" >
         @csrf
         <div class="form-group">
-            <label for="example-nf-name">Name</label>
+            <label for="example-nf-name" class="control-label required">Name</label>
             <input type="text" class="form-control" id="input-allowance-name" name="name" value="{{ $object->name ?? '' }}" placeholder="Supervisor Name" required>
         </div>
         <div class="form-group">
-            <label for="example-nf-phone">Phone Number</label>
+            <label for="example-nf-phone" class="control-label required">Phone Number</label>
             <input type="text" class="form-control" id="input-allowance-phone" name="phone" value="{{ $object->phone ?? '' }}" placeholder="Phone Number" required>
         </div>
         <div class="form-group">
             <label for="example-nf-details">Other Details</label>
-            <textarea class="form-control" id="input-details" name="details" placeholder="Short Details" required>{{$object->details ?? ''}}</textarea>
+            <textarea class="form-control" id="input-details" name="details" placeholder="Short Details" >{{$object->details ?? ''}}</textarea>
         </div>
         <div class="form-group">
-            <label for="example-nf-details">Employee Type</label>
-            <select name="employee_id" id="input-employee-id" class="form-control">
+            <label for="example-nf-details" class="control-label required">Employee Type</label>
+            <select name="employee_id" id="input-employee-id" class="form-control" required>
 
                 <option>Select employee type</option>
             @foreach ($employees as $employee)

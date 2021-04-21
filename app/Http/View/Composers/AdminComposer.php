@@ -39,7 +39,7 @@ class AdminComposer {
     public function compose(View $view)
     {
         $data = [
-            'page_title' => 'Transaction Analysis',
+            'page_title' => 'Report Analysis',
             'user' => $this->user,
             'ui_notifications' => $this->getNotifications($view),
             'user_notifications' => $this->user_notifications,

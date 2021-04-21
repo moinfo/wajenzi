@@ -2,7 +2,7 @@
     <form method="post">
         @csrf
         <div class="form-group">
-            <label for="example-nf-supplier">Supplier Name</label>
+            <label for="example-nf-supplier" class="control-label required">Supplier Name</label>
             <select name="supplier_id" id="input-supplier-id" class="form-control">
 
                 <option>Select Supplier</option>
@@ -14,17 +14,17 @@
                     </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-amount">Amount</label>
+            <label for="example-nf-amount" class="control-label required">Amount</label>
             <input type="number" step=".01" class="form-control" id="input-amount" name="amount"
                    value="{{ $object->amount ?? '' }}" placeholder="Total Amount" required>
         </div>
         <div class="form-group">
             <label for="example-nf-description">Description</label>
             <input type="text" class="form-control" id="input-description" name="description"
-                   value="{{ $object->description ?? '' }}" placeholder="Description" required>
+                   value="{{ $object->description ?? '' }}" placeholder="Description">
         </div>
         <div class="form-group">
-            <label for="example-nf-date">Date</label>
+            <label for="example-nf-date" class="control-label required">Date</label>
             <input type="text" class="form-control datepicker"  id="input-date" name="date"
                    value="{{ $object->invoice_date ?? date('Y-m-d') }}" required>
             {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}

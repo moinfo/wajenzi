@@ -17,7 +17,7 @@ class AddTransactionMovementsFieldsToTransactionMovementsTable extends Migration
             $table->integer('supplier_id');
             $table->integer('amount');
             $table->date('date');
-            $table->text('description');
+            $table->text('description')->nullable();
         });
     }
 

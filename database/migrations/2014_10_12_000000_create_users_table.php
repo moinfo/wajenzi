@@ -21,12 +21,12 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->string('address')->nullable();
             $table->enum('type', ['STAFF', 'INTERN', 'EXTERNAL'])->default('STAFF');
-            $table->enum('gender', ['MALE', 'FEMALE', 'OTHER']);
+            $table->enum('gender', ['MALE', 'FEMALE', 'OTHER'])->default('MALE');
             $table->date('dob')->nullable();
-            $table->string('employee_number');
+            $table->string('employee_number')->nullable();
             $table->string('national_id')->nullable()->unique();
             $table->string('tin')->nullable()->unique();
-            $table->string('recruitment_date');
+            $table->string('recruitment_date')->nullable();
             $table->enum('marital_status', ['SINGLE', 'MARRIED', 'DIVORCED', 'OTHER'])->nullable();
             $table->integer('department_id')->nullable();
             $table->integer('supervisor_id')->nullable();

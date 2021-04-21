@@ -21,7 +21,8 @@ class AjaxController
             switch ($fx) {
                 case 'form': // Load form from forms directory
                     $suppliers = Supplier::all();
-                    $supervisors = Supervisor::all();
+                    $supervisors_and_drivers = Supervisor::all();
+                    $supervisors = Supervisor::where('employee_id',1)->get();
                     $items = Item::all();
                     $banks = Bank::all();
                     $efds = Efd::all();
@@ -29,14 +30,45 @@ class AjaxController
                         ['id'=>'1','name'=>'Supervisor'],
                         ['id'=>'2','name'=>'Driver']
                     ];
+                    $genders = [
+                        ['name'=>'MALE'],
+                        ['name'=>'FEMALE']
+                    ];
+                    $employee_types = [
+                        ['name'=>'STAFF'],
+                        ['name'=>'INTERN'],
+                        ['name'=>'EXTERNAL']
+                    ];
+                    $employment_types = [
+                        ['name'=>'FULL_TIME'],
+                        ['name'=>'CONTRACT'],
+                        ['name'=>'INTERN']
+                    ];
+                    $marital_status = [
+                        ['name'=>'SINGLE'],
+                        ['name'=>'MARRIED'],
+                        ['name'=>'DIVORCED'],
+                        ['name'=>'OTHER']
+                    ];
+                    $status = [
+                        ['name'=>'ACTIVE'],
+                        ['name'=>'INACTIVE'],
+                        ['name'=>'DORMANT']
+                    ];
                     $expenses_categories = ExpensesCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
                     $data = $request->input('data') ?? [
                             'suppliers' => $suppliers,
                             'employees' => $employees,
+                            'supervisors_and_drivers' => $supervisors_and_drivers,
                             'items' => $items,
+                            'employee_types' => $employee_types,
+                            'employment_types' => $employment_types,
+                            'statuses' => $status,
+                            'marital_status' => $marital_status,
                             'efds' => $efds,
                             'banks' => $banks,
+                            'genders' => $genders,
                             'supervisors' => $supervisors,
                             'expenses_categories' => $expenses_categories,
                             'financial_charge_categories' => $financial_charge_categories,

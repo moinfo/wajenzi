@@ -17,7 +17,7 @@ class CreateSupervisorsTable extends Migration
             $table->id();
             $table->string('name');
             $table->string('phone');
-            $table->text('details');
+            $table->text('details')->nullable();
             $table->timestamps();
         });
     }

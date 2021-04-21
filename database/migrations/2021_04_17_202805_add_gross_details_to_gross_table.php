@@ -17,7 +17,7 @@ class AddGrossDetailsToGrossTable extends Migration
             $table->integer('supervisor_id');
             $table->integer('amount');
             $table->date('date');
-            $table->text('description');
+            $table->text('description')->nullable();
         });
     }
 

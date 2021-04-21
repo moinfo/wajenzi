@@ -136,3 +136,17 @@
 .content-header{
     min-height: 100px!important;
 }
+
+form input[required=required]:after,
+form select[required=required]:after,
+form textarea[required=required]:after
+{
+    color: red;
+    content: " *";
+}
+
+form label.required:after
+{
+    color: red;
+    content: " *";
+}
