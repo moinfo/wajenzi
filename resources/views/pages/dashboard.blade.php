@@ -153,8 +153,8 @@
         </div>
         <!-- END Row #2 -->
     </div>
-    <div class="row invisible" data-toggle="appear">
-        <!-- Row #3 -->
+{{--    <div class="row invisible" data-toggle="appear">--}}
+{{--        <!-- Row #3 -->--}}
 {{--        <div class="col-md-6">--}}
 {{--            <div class="block block-rounded block-bordered">--}}
 {{--                <div class="block-header block-header-default border-b">--}}
@@ -550,42 +550,43 @@
 {{--                        </tr>--}}
 {{--                        </tbody>--}}
 {{--                    </table>--}}
-{{--                    <?php--}}
-{{--                    use App\Models\Collection;use Illuminate\Support\Facades\DB;--}}
-{{--                    $monday = strtotime("last monday");--}}
-{{--                    $monday = date('w', $monday)==date('w') ? $monday+7*86400 : $monday;--}}
-{{--                    $sunday = strtotime(date("Y-m-d",$monday)." +6 days");--}}
-{{--                    $this_week_sd = date("Y-m-d",$monday);--}}
-{{--                    $this_week_ed = date("Y-m-d",$sunday);--}}
-{{--                    //        echo "Current week range from $this_week_sd to $this_week_ed ";--}}
-
-{{--                    $first_date = explode("-", $this_week_sd);--}}
-{{--                    $last_date = explode("-", $this_week_ed);--}}
-
-{{--                    for($i = $first_date[2]; $i <=  $last_date[2]; $i++)--}}
-{{--                    {--}}
-{{--                        // add the date to the dates array--}}
-{{--                        $dates[] = date('Y') . "-" . date('m') . "-" . str_pad($i, 2, '0', STR_PAD_LEFT);--}}
-{{--                    }--}}
-{{--                    //dump($dates);--}}
-{{--//                    $no = 1;--}}
-{{--                    foreach ($dates as $index => $date) {--}}
-{{--                        // echo $date;--}}
-{{--                        $collections_per_week[] = Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;--}}
-{{--                        $expenses_per_week[] = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;--}}
-
-{{--                    }--}}
-{{--//                    dump($collections_per_week);--}}
-
-{{--                   $collection_in_a_day_per_week = implode (", ", $collections_per_week);--}}
-{{--                   $expense_in_a_day_per_week = implode (", ", $expenses_per_week);--}}
-
-{{--                    ?>--}}
+{{--                   --}}
 {{--                </div>--}}
 {{--            </div>--}}
 {{--        </div>--}}
-        <!-- END Row #3 -->
-    </div>
+{{--        <!-- END Row #3 -->--}}
+{{--    </div>--}}
+    <?php
+    use App\Models\Collection;use Illuminate\Support\Facades\DB;
+    $monday = strtotime("last monday");
+    $monday = date('w', $monday)==date('w') ? $monday+7*86400 : $monday;
+    $sunday = strtotime(date("Y-m-d",$monday)." +6 days");
+    $this_week_sd = date("Y-m-d",$monday);
+    $this_week_ed = date("Y-m-d",$sunday);
+    //        echo "Current week range from $this_week_sd to $this_week_ed ";
+
+    $first_date = explode("-", $this_week_sd);
+    $last_date = explode("-", $this_week_ed);
+
+    for($i = $first_date[2]; $i <=  $last_date[2]; $i++)
+    {
+        // add the date to the dates array
+        $dates[] = date('Y') . "-" . date('m') . "-" . str_pad($i, 2, '0', STR_PAD_LEFT);
+    }
+    //dump($dates);
+    //                    $no = 1;
+    foreach ($dates as $index => $date) {
+        // echo $date;
+        $collections_per_week[] = Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+        $expenses_per_week[] = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+
+    }
+    //                    dump($collections_per_week);
+
+    $collection_in_a_day_per_week = implode (", ", $collections_per_week);
+    $expense_in_a_day_per_week = implode (", ", $expenses_per_week);
+
+    ?>
 </div>
 <!-- END Page Content -->
 @endsection
