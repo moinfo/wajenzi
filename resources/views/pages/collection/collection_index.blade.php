@@ -16,6 +16,7 @@
         $('.datepicker').datepicker({
             format: 'yyyy-mm-dd'
         });
+
     </script>
 @endsection
 @section('content')
@@ -79,7 +80,7 @@
                         </div>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                            <table id="js-dataTable-full" class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
@@ -103,7 +104,7 @@
                                     <tr id="collection-tr-{{$collection->id}}">
                                         <td class="text-center">
                                             {{$loop->index + 1}}
-                                        </td>date
+                                        </td>
                                         <td>{{ $collection->date }}</td>
                                         <td>{{ $collection->supervisor->name ?? $collection->supervisor_name}}</td>
                                         <td>{{ $collection->bank->name ?? $collection->bank_name }}</td>
@@ -133,6 +134,7 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="6"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                                 </tfoot>
