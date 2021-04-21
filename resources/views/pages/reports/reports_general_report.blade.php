@@ -105,7 +105,7 @@
                                             $id = $supervisor->id;
                                             $expense = \App\Models\Expense::Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                             //$total_expense_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
-                                            $total_expense_per_day = \App\Models\Expense::select([DB::raw("SUM(amount) as total_amount")])->join('supervisors', 'supervisors.id', '=','expenses.supervisor_id')->Where('date',$date)->Where('employee_id',1)->groupBy('date')->get()->first();
+                                            $total_expense_per_day = \App\Models\Expense::select([DB::raw("SUM(amount) as total_amount")])->join('supervisors', 'supervisors.id', '=','expenses.supervisor_id')->Where('date',$date)->Where('employee_id',1)->groupBy('date')->get()->first() ?? 0;
                                             $total_gross_profit_per_day = \App\Models\Gross::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                             $total_collection_per_day = \App\Models\Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                             $total_transaction_per_day = \App\Models\TransactionMovement::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
