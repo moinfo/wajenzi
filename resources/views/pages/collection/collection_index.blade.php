@@ -88,6 +88,7 @@
                                     <th>Bank Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Attachment</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -108,6 +109,7 @@
                                         <td>{{ $collection->bank->name ?? $collection->bank_name }}</td>
                                         <td class="font-w600">{{ $collection->description }}</td>
                                         <td class="text-right">{{ number_format($collection->amount, 2) }}</td>
+                                        <td class="text-right"><a href="{{ url("$collection->file") }}">Attachment</a></td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"

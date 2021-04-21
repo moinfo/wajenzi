@@ -61,22 +61,61 @@ class Controller extends BaseController
     }
 
     private function crudAdd(Request $request, $class_name) {
-        $full_class_name = '\App\Models\\'. $class_name;
-        $newObj = new $full_class_name();
-        $newObj->fill($request->all());
-        if($newObj->save()) {
-            return $newObj;
-        } else {
-            return false;
+
+
+
+        if($request->hasFile('file')) {
+            $full_class_name = '\App\Models\\'. $class_name;
+            $newObj = new $full_class_name();
+            $request->validate([
+                'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,pdf|max:4048'
+            ]);
+            $newObj->fill($request->all());
+            $name = time().'_'.$request->file->getClientOriginalName();
+            $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
+            $newObj->file = '/storage/'. $filePath;
+            if($newObj->save()) {
+                return $newObj;
+            } else {
+                return false;
+            }
+        }else{
+            $full_class_name = '\App\Models\\'. $class_name;
+            $newObj = new $full_class_name();
+            $newObj->fill($request->all());
+            if($newObj->save()) {
+                return $newObj;
+            } else {
+                return false;
+            }
         }
+
+
     }
 
     private function crudUpdate(Request $request, $class_name, $id = null){
-        $full_class_name = '\App\Models\\'. $class_name;
-        $obj_id = $request->input('id') ?? $id; //TODO or the other way round
-        $obj = $full_class_name::find($request->input('id'));
-        $obj->fill($request->all());
-        return $obj->save();
+
+        if($request->hasFile('file')) {
+            $full_class_name = '\App\Models\\'. $class_name;
+            $obj_id = $request->input('id') ?? $id; //TODO or the other way round
+            $obj = $full_class_name::find($request->input('id'));
+
+            $request->validate([
+                'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,pdf|max:4048'
+            ]);
+            $obj->fill($request->all());
+            $name = time().'_'.$request->file->getClientOriginalName();
+            $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
+            $obj->file = '/storage/'. $filePath;
+            return $obj->save();
+        }else {
+            $full_class_name = '\App\Models\\'. $class_name;
+            $obj_id = $request->input('id') ?? $id; //TODO or the other way round
+            $obj = $full_class_name::find($request->input('id'));
+
+            $obj->fill($request->all());
+            return $obj->save();
+        }
     }
 
     public function delete(Request $request, $class_name, $id) {

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Collection extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'supervisor_id','bank_id', 'amount', 'date', 'description'];
+    public $fillable = ['id', 'supervisor_id','bank_id', 'amount', 'date', 'description', 'file'];
     public function supervisor(){
         return $this->belongsTo(Supervisor::class);
     }

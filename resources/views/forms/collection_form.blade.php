@@ -1,5 +1,5 @@
 <div class="block-content">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         @csrf
         <div class="form-group">
             <label for="example-nf-supervisor" class="control-label required">Supervisor Name</label>
@@ -34,6 +34,10 @@
             <label for="example-nf-description">Description</label>
             <input type="text" class="form-control" id="input-description" name="description"
                    value="{{ $object->description ?? '' }}" placeholder="Description">
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="chooseFile">Choose file</label>
+            <input type="file" name="file" class="form-control" id="chooseFile">
         </div>
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>
