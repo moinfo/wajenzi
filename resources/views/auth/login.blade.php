@@ -10,7 +10,7 @@
                 <div class="py-30 text-center">
                     <a class="link-effect font-w700" href="index.html">
                         <i class="si si-fire"></i>
-                        <span class="font-size-xl text-primary-dark">Transaction</span><span class="font-size-xl">Analysis</span>
+                        <span class="font-size-xl text-primary-dark">Reports</span><span class="font-size-xl">Analysis</span>
                     </a>
                     <h1 class="h4 font-w700 mt-30 mb-10">Welcome to Your Dashboard</h1>
                     <h2 class="h5 font-w400 text-muted mb-0">It’s a great day today!</h2>

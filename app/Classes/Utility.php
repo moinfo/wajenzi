@@ -10,7 +10,7 @@ class Utility
      *Returns the session name
      */
     public static function sessionName() {
-        return $session_id = md5(env('APP_NAME', 'Transaction Analysis'));
+        return $session_id = md5(env('APP_NAME', 'Reports Analysis'));
     }
 
     /**
