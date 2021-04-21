@@ -20,10 +20,6 @@ class MenusSeeder extends Seeder
             'route' => 'home',
             'icon' => 'si si-home',
             ], [
-            'name' => 'Dashboard',
-            'route' => 'dashboard',
-            'icon' => 'si si-home',
-            ], [
             'name' => 'Collection',
             'route' => 'collection',
             'icon' => 'si si-home',
@@ -37,12 +33,12 @@ class MenusSeeder extends Seeder
             'icon' => 'si si-home',
             ], [
             'name' => 'Gross Profit',
-            'route' => 'loan',
+            'route' => 'gross',
             'icon' => 'si si-home',
             ], [
-            'name' => 'Staff Management',
-            'route' => 'staff',
-            'icon' => 'si si-home',
+                'name' => 'Expenses',
+                'route' => 'expenses',
+                'icon' => 'si si-home',
             ],[
             'name' => 'Reports',
             'route' => 'reports',
@@ -51,19 +47,7 @@ class MenusSeeder extends Seeder
             'name' => 'Settings',
             'route' => 'hr_settings',
             'icon' => 'si si-cog',
-            ],[
-            'name' => 'Sales',
-            'route' => 'sales',
-            'icon' => 'si si-home',
-            ],[
-            'name' => 'Purchases',
-            'route' => 'purchases',
-            'icon' => 'si si-home',
-            ],[
-            'name' => 'Expenses',
-            'route' => 'expenses',
-            'icon' => 'si si-home',
-            ],
+            ]
 
         ]);
     }
