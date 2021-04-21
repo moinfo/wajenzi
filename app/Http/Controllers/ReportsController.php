@@ -48,7 +48,7 @@ class ReportsController extends Controller
 
     public function gross_summary_report(Request $request){
         $grosses = Gross::whereDate('date', DB::raw('CURDATE()'))->get();
-        $supervisors = Supervisor::all();
+        $supervisors = Supervisor::where('employee_id',1)->get();
         $supervisor_with_amount_of_grosses = DB::select('SELECT SUM(c.amount) as total_gross, s.name as supervisor_name,c.date as gross_date FROM grosses c JOIN supervisors s ON (s.id = c.supervisor_id) GROUP BY c.supervisor_id,c.date');
         $data = [
             'supervisor_with_amount_of_grosses' => $supervisor_with_amount_of_grosses,
@@ -106,7 +106,7 @@ class ReportsController extends Controller
 
     public function collection_report(Request $request){
         $collections = Collection::whereDate('date', DB::raw('CURDATE()'))->get();
-        $supervisors = Supervisor::all();
+        $supervisors = Supervisor::where('employee_id',1)->get();
         $supervisor_with_amount_of_collections = DB::select('SELECT SUM(c.amount) as total_collection, s.name as supervisor_name,c.date as collection_date FROM collections c JOIN supervisors s ON (s.id = c.supervisor_id) GROUP BY c.supervisor_id,c.date');
         $data = [
             'supervisor_with_amount_of_collections' => $supervisor_with_amount_of_collections,

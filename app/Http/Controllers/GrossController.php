@@ -20,7 +20,7 @@ class GrossController extends Controller
             return back();
         }
         $grosses = Gross::whereDate('date', DB::raw('CURDATE()'))->get();
-        $supervisors = Supervisor::all();
+        $supervisors = Supervisor::where('employee_id',1)->get();
 
         $data = [
             'supervisors' => $supervisors,

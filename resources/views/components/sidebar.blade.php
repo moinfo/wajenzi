@@ -89,15 +89,16 @@
                 </li>
                 @foreach($user_menu as $menu)
                     <li class="{{ request()->is( $menu['route'] .'/*') ? ' open' : '' }}">
-                        <a class="nav-submenu" data-toggle="nav-submenu" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i><span class="sidebar-mini-hide">{{$menu['name']}}</span></a>
-                        <ul>
-                            <li> <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}">{{$menu['name']}}</a> </li>
-                            @if(count($menu->subMenus))
-                                @foreach($menu->subMenus as $subMenu)
-                                    <li> <a class="{{ request()->is($subMenu['route']) ? ' active' : '' }}" href="{{ route($subMenu['route']) }}">{{$subMenu['name']}}</a> </li>
-                                @endforeach
-                            @endif
-                        </ul>
+                        <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i>{{$menu['name']}}</a>
+{{--                        <a class="nav-submenu" data-toggle="nav-submenu" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i><span class="sidebar-mini-hide">{{$menu['name']}}</span></a>--}}
+{{--                        <ul>--}}
+{{--                            <li> <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}">{{$menu['name']}}</a> </li>--}}
+{{--                            @if(count($menu->subMenus))--}}
+{{--                                @foreach($menu->subMenus as $subMenu)--}}
+{{--                                    <li> <a class="{{ request()->is($subMenu['route']) ? ' active' : '' }}" href="{{ route($subMenu['route']) }}">{{$subMenu['name']}}</a> </li>--}}
+{{--                                @endforeach--}}
+{{--                            @endif--}}
+{{--                        </ul>--}}
                     </li>
                 @endforeach
 

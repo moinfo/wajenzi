@@ -20,7 +20,7 @@ class CollectionController extends Controller
             return back();
         }
         $collections = Collection::whereDate('date', DB::raw('CURDATE()'))->get();
-        $supervisors = Supervisor::all();
+        $supervisors = Supervisor::where('employee_id',1)->get();
 
         $data = [
             'supervisors' => $supervisors,

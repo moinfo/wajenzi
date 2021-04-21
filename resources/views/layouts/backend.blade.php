@@ -6,7 +6,7 @@
 
         <title>{{  $page_title }}</title>
 
-        <meta name="description" content="HRMS - Bootstrap 4 Admin Template &amp; UI Framework created by pixelcave and published on Themeforest">
+        <meta name="description" content="Reports Analysis">
         <meta name="author" content="pixelcave">
         <meta name="robots" content="noindex, nofollow">
 
@@ -106,7 +106,7 @@
                         Crafted with <i class="fa fa-heart text-pulse"></i> by <a class="font-w600" href="https://kibahaonline.co.tz" target="_blank">KibahaOnline</a>
                     </div>
                     <div class="float-left">
-                        <a class="font-w600" href="#" target="_blank">Transaction Analysis</a> &copy; <span class="js-year-copy"></span>
+                        <a class="font-w600" href="#" target="_blank">Reports Analysis</a> &copy; <span class="js-year-copy"></span>
                     </div>
                 </div>
             </footer>
