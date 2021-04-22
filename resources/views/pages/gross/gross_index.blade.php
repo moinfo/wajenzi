@@ -27,8 +27,8 @@
                 </div>
             </div>
             <div>
-                <div class="block">
-                    <div class="block-header block-header-default">
+                <div class="block block-themed">
+                    <div class="block-header bg-gd-lake">
                         <h3 class="block-title">All Grosses Profit</h3>
                     </div>
                     <div class="block-content">
@@ -86,6 +86,7 @@
                                     <th>Supervisor Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Attachment</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -105,6 +106,13 @@
                                         <td>{{ $gross->supervisor->name ?? $gross->supervisor_name}}</td>
                                         <td class="font-w600">{{ $gross->description }}</td>
                                         <td class="text-right">{{ number_format($gross->amount, 2) }}</td>
+                                        <td class="text-center">
+                                            @if($gross->file != null)
+                                                <a href="{{ url("$gross->file") }}">Attachment</a>
+                                            @else
+                                                No File
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"
@@ -128,6 +136,7 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="5"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                                 </tfoot>

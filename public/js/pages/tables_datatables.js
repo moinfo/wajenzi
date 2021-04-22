@@ -30,14 +30,14 @@ var pageTablesDatatables = /*#__PURE__*/function () {
       // Override a few DataTable defaults
       jQuery.extend(jQuery.fn.dataTable.ext.classes, {
         sWrapper: "dataTables_wrapper dt-bootstrap4"
-      });
-      $.extend($.fn.dataTable.defaults, {
-        dom: 'Bfrtip'
-      }); // Init full DataTable
+      }); // $.extend($.fn.dataTable.defaults, {
+      //     dom: 'Bfrtip'
+      // });
+      // Init full DataTable
 
       jQuery('.js-dataTable-full').dataTable({
-        dom: 'Bfrtip',
-        buttons: ['copy', 'excel', 'pdf'],
+        // dom: 'Bfrtip',
+        // buttons: [ 'copy', 'excel', 'pdf' ],
         pageLength: 30,
         lengthMenu: [[30, 50, 90], [30, 50, 90]],
         autoWidth: false

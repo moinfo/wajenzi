@@ -29,8 +29,8 @@
                 </div>
             </div>
             <div>
-                <div class="block">
-                    <div class="block-header block-header-default">
+                <div class="block block-themed">
+                    <div class="block-header bg-gd-lake">
                         <h3 class="block-title">All Collections</h3>
                     </div>
                     <div class="block-content">
@@ -110,7 +110,13 @@
                                         <td>{{ $collection->bank->name ?? $collection->bank_name }}</td>
                                         <td class="font-w600">{{ $collection->description }}</td>
                                         <td class="text-right">{{ number_format($collection->amount, 2) }}</td>
-                                        <td class="text-right"><a href="{{ url("$collection->file") }}">Attachment</a></td>
+                                        <td class="text-center">
+                                            @if($collection->file != null)
+                                                <a href="{{ url("$collection->file") }}">Attachment</a>
+                                            @else
+                                                No File
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"

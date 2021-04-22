@@ -24,7 +24,7 @@
         <link rel="stylesheet" id="css-main" href="{{ mix('/css/codebase.css') }}">
         <link rel="stylesheet" id="css-sweetalert2" href="{{ asset('js/plugins/sweetalert2/sweetalert2.min.css') }}">
         <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/bootstrap-datepicker/css/bootstrap-datepicker.css') }}">
-        <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.css') }}">
+{{--        <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.css') }}">--}}
         <!-- You can include a specific file from public/css/themes/ folder to alter the default color theme of the template. eg: -->
 
         @yield('css_after')
@@ -119,8 +119,8 @@
         <div class="modal fade" id="ajax-loader-modal" tabindex="-1" role="dialog" aria-labelledby="ajax-loader-modal" aria-hidden="true">
             <div class="modal-dialog modal-dialog-popin" role="document">
                 <div class="modal-content">
-                    <div class="block block-themed block-transparent mb-0">
-                        <div class="block-header bg-primary-dark">
+                    <div class="block block-themed mb-0">
+                        <div class="block-header bg-gd-dusk">
                             <h3 class="block-title" id="ajax-loader-modal-title">New</h3>
                             <div class="block-options">
                                 <button type="button" class="btn-block-option" data-dismiss="modal" aria-label="Close">
@@ -144,7 +144,7 @@
         <script src="{{ mix('js/codebase.app.js') }}"></script>
         <script src="{{ asset('js/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
         <script src="{{ asset('js/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js') }}"></script>
-        <script src="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.min.js') }}"></script>
+{{--        <script src="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.min.js') }}"></script>--}}
 
 
 

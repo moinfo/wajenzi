@@ -28,8 +28,8 @@
                 </div>
             </div>
             <div>
-                <div class="block">
-                    <div class="block-header block-header-default">
+                <div class="block block-themed">
+                    <div class="block-header bg-gd-lake">
                         <h3 class="block-title">All Expenses</h3>
                     </div>
                     <div class="block-content">
@@ -101,6 +101,7 @@
                                     <th>Expense Category Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Attachment</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -121,7 +122,13 @@
                                         <td class="font-w600">{{ $expense->expensesCategory->name ?? $expense->category_name }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $expense->description }}
                                         <td class="font-w600">{{ number_format($expense->amount, 2) }}</td>
-
+                                        <td class="text-center">
+                                            @if($expense->file != null)
+                                                <a href="{{ url("$expense->file") }}">Attachment</a>
+                                            @else
+                                                No File
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"
@@ -145,6 +152,7 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="6"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                                 </tfoot>

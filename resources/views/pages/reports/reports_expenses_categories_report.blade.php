@@ -25,8 +25,8 @@
             <div class="content-heading">Reports
             </div>
             <div>
-                <div class="block">
-                    <div class="block-header block-header-default">
+                <div class="block block-themed">
+                    <div class="block-header bg-gd-dusk">
                         <h3 class="block-title">Expenses Categories Report</h3>
                     </div>
                     <div class="block-content">
