@@ -62,18 +62,17 @@ class Controller extends BaseController
 
     private function crudAdd(Request $request, $class_name) {
 
-
-
         if($request->hasFile('file')) {
             $full_class_name = '\App\Models\\'. $class_name;
             $newObj = new $full_class_name();
             $request->validate([
-                'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,pdf|max:4048'
+                'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048'
             ]);
             $newObj->fill($request->all());
             $name = time().'_'.$request->file->getClientOriginalName();
             $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
             $newObj->file = '/storage/'. $filePath;
+           // dd($newObj);
             if($newObj->save()) {
                 return $newObj;
             } else {
@@ -95,13 +94,13 @@ class Controller extends BaseController
 
     private function crudUpdate(Request $request, $class_name, $id = null){
 
-        if($request->hasFile('file')) {
+        if($request->file()) {
             $full_class_name = '\App\Models\\'. $class_name;
             $obj_id = $request->input('id') ?? $id; //TODO or the other way round
             $obj = $full_class_name::find($request->input('id'));
 
             $request->validate([
-                'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,pdf|max:4048'
+                'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048'
             ]);
             $obj->fill($request->all());
             $name = time().'_'.$request->file->getClientOriginalName();

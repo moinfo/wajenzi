@@ -1,5 +1,5 @@
 <div class="block-content">
-    <form method="post">
+    <form method="post"  enctype="multipart/form-data">
         @csrf
         <div class="form-group">
             <label for="example-nf-email">Supplier</label>
