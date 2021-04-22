@@ -78,6 +78,7 @@
                                     <th>Total Balance</th>
                                     <th>Total Gross Profits</th>
                                     <th>Total Net Profit/Loss</th>
+                                    <th>Total Actual Profit/Loss</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -106,6 +107,7 @@
                                             $expense = \App\Models\Expense::Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                             //$total_expense_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                             $total_expense_per_day = \App\Models\Expense::select([DB::raw("SUM(amount) as total_amount")])->join('supervisors', 'supervisors.id', '=','expenses.supervisor_id')->Where('date',$date)->Where('employee_id',1)->groupBy('date')->get()->first();
+                                            $total_expenses_for_all_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                             $total_gross_profit_per_day = \App\Models\Gross::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                             $total_collection_per_day = \App\Models\Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                             $total_transaction_per_day = \App\Models\TransactionMovement::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
@@ -122,6 +124,7 @@
                                         <td class="text-right">{{number_format(($total_collection_per_day['total_amount'] ?? 0)-($total_transaction_per_day['total_amount'] ?? 0))}}</td>
                                         <td class="text-right">{{number_format($total_gross_profit_per_day['total_amount'] ?? 0)}}</td>
                                         <td class="text-right">{{number_format(($total_gross_profit_per_day['total_amount'] ?? 0 )-($total_expense_per_day['total_amount'] ?? 0))}}</td>
+                                        <td class="text-right">{{number_format(($total_gross_profit_per_day['total_amount'] ?? 0 )-($total_expenses_for_all_per_day['total_amount'] ?? 0))}}</td>
 
                                     </tr>
                                 @endforeach
@@ -140,6 +143,7 @@
                                     $total_collection_by_supervisor = \App\Models\Collection::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     $total_transaction_by_supervisor = \App\Models\TransactionMovement::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     $total_supplier_receiving_by_supervisor = \App\Models\SupplierReceiving::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
+                                    $total_expenses_for_all_by_supervisor = \App\Models\expense::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     $total_expense_by_all_supervisor = \App\Models\Expense::select([DB::raw("SUM(amount) as total_amount")])->join('supervisors', 'supervisors.id', '=','expenses.supervisor_id')->Where('employee_id',1)->whereBetween('date', [$start_date, $end_date])->get()->first();
                                     ?>
                                     <td class="text-right">{{number_format($total_expense_by_all_supervisor['total_amount'])}}</td>
@@ -149,6 +153,7 @@
                                     <td class="text-right">{{number_format($total_collection_by_supervisor['total_amount']-$total_transaction_by_supervisor['total_amount'])}}</td>
                                     <td class="text-right">{{number_format($total_gross_profit_by_supervisor['total_amount'])}}</td>
                                     <td class="text-right">{{number_format($total_gross_profit_by_supervisor['total_amount']-$total_expense_by_all_supervisor['total_amount'])}}</td>
+                                    <td class="text-right">{{number_format($total_gross_profit_by_supervisor['total_amount']-$total_expenses_for_all_by_supervisor['total_amount'])}}</td>
                                 </tr>
                                 </tfoot>
                             </table>
