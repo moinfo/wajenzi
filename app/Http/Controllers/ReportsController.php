@@ -169,11 +169,11 @@ class ReportsController extends Controller
 
     public function expenses_per_system_report(Request $request){
         $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
-        $supervisors = System::all();
-        $supervisor_with_amount_of_expenses = DB::select('SELECT SUM(c.amount) as total_expenses, s.name as supervisor_name,c.date as expense_date FROM expenses c JOIN supervisors s ON (s.id = c.supervisor_id) JOIN systems sy ON (sy.id = s.system_id) GROUP BY c.supervisor_id,c.date');
+        $systems = System::all();
+        // $system_with_amount_of_expenses = DB::select('SELECT SUM(c.amount) as total_expense, s.name as system_name,c.date as expense_date FROM expenses c JOIN systems s ON (s.id = c.system_id) JOIN systems sy ON (sy.id = s.system_id) GROUP BY c.system_id,c.date');
         $data = [
-            'supervisor_with_amount_of_expenses' => $supervisor_with_amount_of_expenses,
-            'supervisors' => $supervisors,
+            //   'system_with_amount_of_expenses' => $system_with_amount_of_expenses,
+            'systems' => $systems,
             'expenses' => $expenses
         ];
         return view('pages.reports.reports_expenses_per_system_report')->with($data);

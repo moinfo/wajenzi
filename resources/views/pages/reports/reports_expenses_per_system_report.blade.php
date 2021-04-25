@@ -27,7 +27,7 @@
             <div>
                 <div class="block block-themed">
                     <div class="block-header bg-gd-dusk">
-                        <h3 class="block-title">Expenses Per System Report</h3>
+                        <h3 class="block-title">Expense Per System Report</h3>
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
@@ -68,18 +68,18 @@
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
-                                    @foreach ($supervisors as $supervisor)
-                                       <th> {{ $supervisor->name }} </th>
+                                    @foreach ($systems as $system)
+                                        <th> {{ $system->name }} </th>
                                     @endforeach
                                     <th>Total Expense</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <?php
-                                    $start_date = $_POST['start_date'] ?? date('Y-m-01');
-                                    $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                                    $first_date = explode("-", $start_date);
-                                    $last_date = explode("-", $end_date);
+                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
+                                $end_date = $_POST['end_date'] ?? date('Y-m-d');
+                                $first_date = explode("-", $start_date);
+                                $last_date = explode("-", $end_date);
 
                                 use Illuminate\Support\Facades\DB;
                                 for($i = $first_date[2]; $i <=  $last_date[2]; $i++)
@@ -87,18 +87,18 @@
                                     // add the date to the dates array
                                     $dates[] = date('Y') . "-" . date('m') . "-" . str_pad($i, 2, '0', STR_PAD_LEFT);
                                 }
-                                    ?>
+                                ?>
                                 @foreach(array_reverse($dates) as $date)
                                     <tr>
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
                                         <td>{{ $date }}</td>
-                                        @foreach($supervisors as $supervisor)
+                                        @foreach($systems as $system)
                                             <?php
-                                            $id = $supervisor->id;
-                                           $expense = \App\Models\Expense::Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
-                                           $total_expense_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                            $id = $system->id;
+                                            $expense = \App\Models\Expense::select([DB::raw("SUM(amount) as total_amount")])->join('supervisors','supervisors.id','=', 'expenses.supervisor_id')->join('systems','systems.id','=', 'supervisors.system_id')->Where('date',$date)->Where('supervisors.system_id',$id)->groupBy('date')->get()->first();
+                                            $total_expense_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
                                             <td class="text-right">{{number_format($expense['total_amount'] ?? 0)}}</td>
@@ -111,9 +111,11 @@
                                 <tfoot>
                                 <tr>
                                     <th colspan="2"></th>
-                                    @foreach ($supervisors as $supervisor)
+                                    @foreach ($systems as $system)date
                                         <?php
-                                        $total_expense_by_supervisor = \App\Models\Expense::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
+                                        $id = $system->id;
+                                        $total_expense_by_supervisor = \App\Models\Expense::select([DB::raw("SUM(expenses.amount) as total_amount")])->join('supervisors','supervisors.id','=', 'expenses.supervisor_id')->join('systems','systems.id','=', 'supervisors.system_id')->whereBetween('expenses.date', [$start_date, $end_date])->Where('supervisors.system_id',$id)->groupBy('supervisors.system_id')->get()->first();
+                                        //$total_expense_by_supervisor = \App\Models\Expense::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
                                         ?>
                                         <td class="text-right">{{number_format($total_expense_by_supervisor['total_amount'] ?? 0)}}</td>
                                     @endforeach
