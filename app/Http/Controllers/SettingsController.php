@@ -12,6 +12,7 @@ use App\Models\Efd;
 use App\Models\ExpensesCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
+use App\Models\Loan;
 use App\Models\Permission;
 use App\Models\Position;
 use App\Models\Role;
@@ -30,6 +31,7 @@ class SettingsController extends Controller
             ['name'=>'Staff Allowances', 'route'=>'hr_settings_allowances', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Staff Salary', 'route'=>'hr_settings_staff_salary', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Advance Salary', 'route'=>'hr_settings_advance_salary', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Staff Loan', 'route'=>'hr_settings_staff_loan', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Supervisor', 'route'=>'hr_settings_supervisors', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Banks', 'route'=>'hr_settings_banks', 'icon' => 'si si-settings', 'badge' => 0],
@@ -86,6 +88,15 @@ class SettingsController extends Controller
             'staff_salaries' => StaffSalary::all()
         ];
         return view('pages.settings.settings_staff_salaries')->with($data);
+    }
+    public function staff_loans(Request $request){
+        if($this->handleCrud($request, 'Loan')) {
+            return back();
+        }
+        $data = [
+            'staff_loans' => Loan::all()
+        ];
+        return view('pages.settings.settings_loans')->with($data);
     }
     public function advance_salaries(Request $request){
         if($this->handleCrud($request, 'AdvanceSalary')) {
