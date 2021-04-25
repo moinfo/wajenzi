@@ -8,6 +8,7 @@ use App\Models\Efd;
 use App\Models\ExpensesCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
+use App\Models\Staff;
 use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
@@ -27,6 +28,7 @@ class AjaxController
                     $items = Item::all();
                     $banks = Bank::all();
                     $efds = Efd::all();
+                    $staffs = Staff::getList();
                     $systems= System::all();
                     $employees = [
                         ['id'=>'1','name'=>'Supervisor'],
@@ -69,6 +71,7 @@ class AjaxController
                             'statuses' => $status,
                             'marital_status' => $marital_status,
                             'efds' => $efds,
+                            'staffs' => $staffs,
                             'banks' => $banks,
                             'systems' => $systems,
                             'genders' => $genders,

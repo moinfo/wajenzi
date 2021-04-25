@@ -14,6 +14,8 @@ use App\Models\Item;
 use App\Models\Permission;
 use App\Models\Position;
 use App\Models\Role;
+use App\Models\Staff;
+use App\Models\StaffSalary;
 use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
@@ -25,6 +27,7 @@ class SettingsController extends Controller
     public function index(Request $request){
         $settings = [
             ['name'=>'Staff Allowances', 'route'=>'hr_settings_allowances', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Staff Salary', 'route'=>'hr_settings_staff_salary', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Supervisor', 'route'=>'hr_settings_supervisors', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Banks', 'route'=>'hr_settings_banks', 'icon' => 'si si-settings', 'badge' => 0],
@@ -72,6 +75,15 @@ class SettingsController extends Controller
             'banks' => Bank::all()
         ];
         return view('pages.settings.settings_banks')->with($data);
+    }
+    public function staff_salaries(Request $request){
+        if($this->handleCrud($request, 'StaffSalary')) {
+            return back();
+        }
+        $data = [
+            'staff_salaries' => StaffSalary::all()
+        ];
+        return view('pages.settings.settings_staff_salaries')->with($data);
     }
     public function systems(Request $request){
         if($this->handleCrud($request, 'System')) {

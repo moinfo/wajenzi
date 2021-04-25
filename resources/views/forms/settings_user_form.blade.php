@@ -1,6 +1,6 @@
 
 <div class="block-content">
-    <form  method="post" >
+    <form  method="post"  autocomplete="off">
         @csrf
         <div class="row">
             <input type="hidden" id="recruitment_date" name="recruitment_date" value="<?=date('Y-m-d')?>">

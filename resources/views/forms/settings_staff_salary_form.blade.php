@@ -3,12 +3,18 @@
     <form  method="post"  autocomplete="off">
         @csrf
         <div class="form-group">
-            <label for="example-nf-email">Name</label>
-            <input type="text" class="form-control" id="input-allowance-name" name="name" value="{{ $object->name ?? '' }}" placeholder="Bank Name" required>
+            <label for="example-nf-details" class="control-label required">Staff</label>
+            <select name="staff_id" id="input-employee-id" class="form-control" required>
+
+                <option>Select Staff</option>
+                @foreach ($staffs as $staff)
+                    <option value="{{ $staff['id'] }}" {{ ( $staff['id'] == $object->staff_id) ? 'selected' : '' }}> {{ $staff['name'] }} </option>
+                @endforeach
+            </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-password">Description</label>
-            <textarea class="form-control" id="input-allowance-description" name="description" placeholder="Short Description" required>{{$object->description ?? ''}}</textarea>
+            <label for="example-nf-email">Amount</label>
+            <input type="text" class="form-control" id="input-amount" name="amount" value="{{ $object->amount ?? '' }}" placeholder="Amount" required>
         </div>
         <div class="form-group">
             @if($object->id ?? null)
