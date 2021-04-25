@@ -14,7 +14,7 @@
             <div class="col-sm-4">
                 <div class="form-group">
                     <label for="example-nf-email"  class="control-label required">Email</label>
-                    <input type="email" class="form-control" id="input-user-email" name="email" value="{{ $object->email ?? '' }}" placeholder="User Email"  required="required">
+                    <input type="email" class="form-control" id="input-user-email" name="email" value="{{ $object->email ?? '' }}" placeholder="User Email" >
                 </div>
             </div>
             <div class="col-sm-4">
@@ -37,8 +37,14 @@
             </div>
             <div class="col-sm-4">
                 <div class="form-group">
+                    <label for="example-nf-designation" >Designation</label>
+                    <input type="text" class="form-control" id="input-user-designation" name="designation" value="{{ $object->designation ?? '' }}" placeholder="User Destination">
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="form-group">
                     <label for="example-nf-employee_number"  class="control-label required">Employee No.</label>
-                    <input type="text" class="form-control" id="input-user-employee_number" name="employee_number" value="{{ $object->employee_number ?? '' }}" placeholder="HRM/0001"  required="required">
+                    <input type="text" class="form-control" id="input-user-employee_number" name="employee_number" value="{{ $object->employee_number ?? '' }}" placeholder="HRM/0001">
                 </div>
             </div>
             <div class="col-sm-4">

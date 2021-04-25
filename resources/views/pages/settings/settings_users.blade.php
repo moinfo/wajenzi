@@ -40,6 +40,7 @@
                                     <th>Name</th>
                                     <th class="d-none d-sm-table-cell" style="width: 30%;">Email</th>
                                     <th>Address</th>
+                                    <th>Designation</th>
                                     <th>Type</th>
                                     <th>Gender</th>
                                     <th>Employee No.</th>
@@ -62,6 +63,7 @@
                                         <td class="d-none d-sm-table-cell">{{ $user->email }}
                                         </td>
                                         <td>{{ $user->address }}</td>
+                                        <td>{{ $user->designation }}</td>
                                         <td>{{ $user->type }}</td>
                                         <td>{{ $user->gender }}</td>
                                         <td>{{ $user->employee_number }}</td>

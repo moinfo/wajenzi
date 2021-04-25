@@ -28,6 +28,7 @@ class User extends Authenticatable
         'dob',
         'status',
         'marital_status',
+        'designation',
     ];
 
     /**
