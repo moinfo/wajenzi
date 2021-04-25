@@ -111,9 +111,11 @@
                                 <tfoot>
                                 <tr>
                                     <th colspan="2"></th>
-                                    @foreach ($systems as $supervisor)
+                                    @foreach ($systems as $system)
                                         <?php
-                                        $total_collection_by_supervisor = \App\Models\Collection::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
+                                        $id = $system->id;
+                                        $total_collection_by_supervisor = \App\Models\Collection::select([DB::raw("SUM(amount) as total_amount")])->join('supervisors','supervisors.id','=', 'collections.supervisor_id')->join('systems','systems.id','=', 'supervisors.system_id')->whereBetween('date', [$start_date, $end_date])->Where('supervisors.system_id',$id)->groupBy('date')->get()->first();
+                                        //$total_collection_by_supervisor = \App\Models\Collection::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
                                         ?>
                                         <td class="text-right">{{number_format($total_collection_by_supervisor['total_amount'] ?? 0)}}</td>
                                     @endforeach
