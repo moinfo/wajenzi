@@ -121,11 +121,11 @@ class ReportsController extends Controller
 
     public function collection_per_system_report(Request $request){
         $collections = Collection::whereDate('date', DB::raw('CURDATE()'))->get();
-        $supervisors = System::all();
-        $supervisor_with_amount_of_collections = DB::select('SELECT SUM(c.amount) as total_collection, s.name as supervisor_name,c.date as collection_date FROM collections c JOIN supervisors s ON (s.id = c.supervisor_id) JOIN systems sy ON (sy.id = s.system_id) GROUP BY c.supervisor_id,c.date');
+        $systems = System::all();
+       // $system_with_amount_of_collections = DB::select('SELECT SUM(c.amount) as total_collection, s.name as system_name,c.date as collection_date FROM collections c JOIN systems s ON (s.id = c.system_id) JOIN systems sy ON (sy.id = s.system_id) GROUP BY c.system_id,c.date');
         $data = [
-            'supervisor_with_amount_of_collections' => $supervisor_with_amount_of_collections,
-            'supervisors' => $supervisors,
+         //   'system_with_amount_of_collections' => $system_with_amount_of_collections,
+            'systems' => $systems,
             'collections' => $collections
         ];
         return view('pages.reports.reports_collection_per_system_report')->with($data);

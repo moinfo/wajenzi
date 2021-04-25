@@ -8,7 +8,7 @@
         </div>
         <div class="form-group">
             <label for="example-nf-password">Description</label>
-            <textarea class="form-control" id="input-system-description" name="description" placeholder="Short Description" required>{{$object->description ?? ''}}</textarea>
+            <textarea class="form-control" id="input-system-description" name="description" placeholder="Short Description">{{$object->description ?? ''}}</textarea>
         </div>
         <div class="form-group">
             @if($object->id ?? null)

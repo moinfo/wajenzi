@@ -68,8 +68,8 @@
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
-                                    @foreach ($supervisors as $supervisor)
-                                       <th> {{ $supervisor->name }} </th>
+                                    @foreach ($systems as $system)
+                                       <th> {{ $system->name }} </th>
                                     @endforeach
                                     <th>Total Collection</th>
                                 </tr>
@@ -94,10 +94,10 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td>{{ $date }}</td>
-                                        @foreach($supervisors as $supervisor)
+                                        @foreach($systems as $system)
                                             <?php
-                                            $id = $supervisor->id;
-                                           $collection = \App\Models\Collection::Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                            $id = $system->id;
+                                           $collection = \App\Models\Collection::select([DB::raw("SUM(amount) as total_amount")])->join('supervisors','supervisors.id','=', 'collections.supervisor_id')->join('systems','systems.id','=', 'supervisors.system_id')->Where('date',$date)->Where('supervisors.system_id',$id)->groupBy('date')->get()->first();
                                            $total_collection_per_day = \App\Models\Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
@@ -111,7 +111,7 @@
                                 <tfoot>
                                 <tr>
                                     <th colspan="2"></th>
-                                    @foreach ($supervisors as $supervisor)
+                                    @foreach ($systems as $supervisor)
                                         <?php
                                         $total_collection_by_supervisor = \App\Models\Collection::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
                                         ?>
