@@ -2,6 +2,8 @@
 
 
 namespace App\Http\Controllers;
+use App\Models\Allowance;
+use App\Models\AllowanceSubscription;
 use App\Models\Bank;
 use App\Models\Division;
 use App\Models\Efd;
@@ -28,6 +30,7 @@ class AjaxController
                     $items = Item::all();
                     $banks = Bank::all();
                     $efds = Efd::all();
+                    $allowance_subscriptions = Allowance::all();
                     $staffs = Staff::getList();
                     $systems= System::all();
                     $employees = [
@@ -68,6 +71,7 @@ class AjaxController
                             'items' => $items,
                             'employee_types' => $employee_types,
                             'employment_types' => $employment_types,
+                            'allowance_subscriptions' => $allowance_subscriptions,
                             'statuses' => $status,
                             'marital_status' => $marital_status,
                             'efds' => $efds,

@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Allowance;
 use App\Models\Collection;
 use App\Models\Expense;
 use App\Models\ExpensesCategory;
 use App\Models\Gross;
+use App\Models\Staff;
 use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
@@ -18,6 +20,7 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $reports = [
+            ['name' => 'Allowance Subscriptions Report', 'route' => 'reports_allowance_subscriptions_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'General Report', 'route' => 'reports_general_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supervisor Report', 'route' => 'reports_supervisor_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Report', 'route' => 'reports_supplier_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -188,6 +191,15 @@ class ReportsController extends Controller
             'expenses' => $expenses
         ];
         return view('pages.reports.reports_expenses_categories_report')->with($data);
+    }
+    public function allowance_subscriptions_report(Request $request){
+        $allowances = Allowance::all();
+        $staffs = Staff::getList();
+        $data = [
+            'staffs' => $staffs,
+            'allowances' => $allowances,
+        ];
+        return view('pages.reports.reports_allowance_subscriptions_report')->with($data);
     }
 
 }

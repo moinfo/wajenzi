@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Classes\Utility;
 use App\Models\AdvanceSalary;
 use App\Models\Allowance;
+use App\Models\AllowanceSubscription;
 use App\Models\Bank;
 use App\Models\Deduction;
 use App\Models\Department;
@@ -29,6 +30,7 @@ class SettingsController extends Controller
     public function index(Request $request){
         $settings = [
             ['name'=>'Staff Allowances', 'route'=>'hr_settings_allowances', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Allowance Subscriptions', 'route'=>'allowance_subscriptions', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Staff Salary', 'route'=>'hr_settings_staff_salary', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Advance Salary', 'route'=>'hr_settings_advance_salary', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Staff Loan', 'route'=>'hr_settings_staff_loan', 'icon' => 'si si-settings', 'badge' => 0],
@@ -61,6 +63,15 @@ class SettingsController extends Controller
             'allowances' => Allowance::all()
         ];
         return view('pages.settings.settings_allowances')->with($data);
+    }
+    public function allowance_subscriptions(Request $request){
+        if($this->handleCrud($request, 'AllowanceSubscription')) {
+            return back();
+        }
+        $data = [
+            'allowance_subscriptions' => AllowanceSubscription::all()
+        ];
+        return view('pages.settings.settings_allowance_subscriptions')->with($data);
     }
     public function deductions(Request $request){
         if($this->handleCrud($request, 'Deduction')) {
