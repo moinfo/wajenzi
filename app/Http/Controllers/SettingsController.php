@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Classes\Utility;
+use App\Models\AdvanceSalary;
 use App\Models\Allowance;
 use App\Models\Bank;
 use App\Models\Deduction;
@@ -28,6 +29,7 @@ class SettingsController extends Controller
         $settings = [
             ['name'=>'Staff Allowances', 'route'=>'hr_settings_allowances', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Staff Salary', 'route'=>'hr_settings_staff_salary', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Advance Salary', 'route'=>'hr_settings_advance_salary', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Supervisor', 'route'=>'hr_settings_supervisors', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Banks', 'route'=>'hr_settings_banks', 'icon' => 'si si-settings', 'badge' => 0],
@@ -84,6 +86,15 @@ class SettingsController extends Controller
             'staff_salaries' => StaffSalary::all()
         ];
         return view('pages.settings.settings_staff_salaries')->with($data);
+    }
+    public function advance_salaries(Request $request){
+        if($this->handleCrud($request, 'AdvanceSalary')) {
+            return back();
+        }
+        $data = [
+            'advance_salaries' => AdvanceSalary::all()
+        ];
+        return view('pages.settings.settings_advance_salaries')->with($data);
     }
     public function systems(Request $request){
         if($this->handleCrud($request, 'System')) {
