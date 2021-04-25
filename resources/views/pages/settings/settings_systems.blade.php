@@ -23,13 +23,13 @@
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_supervisor_form', {className: 'Supervisor'}, 'Create New Supervisor', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Supervisor</button>
+                    <button type="button" onclick="loadFormModal('settings_system_form', {className: 'system'}, 'Create New system', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New system</button>
                 </div>
             </div>
             <div>
                 <div class="block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">Supervisors</h3>
+                        <h3 class="block-title">systems</h3>
                     </div>
                     <div class="block-content">
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
@@ -37,38 +37,25 @@
                             <tr>
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
-                                <th>Phone Number</th>
-                                <th>Employee_type</th>
-                                <th>System</th>
-                                <th class="d-none d-sm-table-cell" style="width: 30%;">Other Details</th>
+                                <th class="d-none d-sm-table-cell" style="width: 30%;">Description</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
-                            @foreach($supervisors as $supervisor)
-                                <?php
-                                    if($supervisor->employee_id == 1){
-                                        $employee_type = 'Supervisor';
-                                    }else{
-                                        $employee_type = 'Driver';
-                                    }
-                                ?>
-                                <tr id="supervisor-tr-{{$supervisor->id}}">
+                            @foreach($systems as $system)
+                                <tr id="system-tr-{{$system->id}}">
                                     <td class="text-center">
                                         {{$loop->index + 1}}
                                     </td>
-                                    <td class="font-w600">{{ $supervisor->name }}</td>
-                                    <td class="font-w600">{{ $supervisor->phone }}</td>
-                                    <td class="font-w600">{{ $employee_type }}</td>
-                                    <td class="font-w600">{{ $supervisor->system->name }}</td>
-                                    <td class="d-none d-sm-table-cell">{{ $supervisor->details }}
+                                    <td class="font-w600">{{ $system->name }}</td>
+                                    <td class="d-none d-sm-table-cell">{{ $system->description }}
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('settings_supervisor_form', {className: 'Supervisor', id: {{$supervisor->id}}}, 'Edit {{$supervisor->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                            <button type="button" onclick="loadFormModal('settings_system_form', {className: 'system', id: {{$system->id}}}, 'Edit {{$system->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                 <i class="fa fa-pencil"></i>
                                             </button>
-                                            <button type="button" onclick="deleteModelItem('Supervisor', {{$supervisor->id}}, 'supervisor-tr-{{$supervisor->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                            <button type="button" onclick="deleteModelItem('system', {{$system->id}}, 'system-tr-{{$system->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
                                                 <i class="fa fa-times"></i>
                                             </button>
                                         </div>

@@ -3,7 +3,7 @@
         @csrf
         <div class="form-group">
             <label for="example-nf-supervisor" class="control-label required">Supervisor Name</label>
-            <select name="supervisor_id" id="input-supervisor-id" class="form-control" required>
+            <select name="supervisor_id" id="input-supervisor-id" class="form-control" required autocomplete="off">
 
                 <option>Select Supervisor</option>
 

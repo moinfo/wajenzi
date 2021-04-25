@@ -152,6 +152,8 @@
 
 
             var csrf_token = '{{csrf_token()}}';
+           
+                @if(Session::get('notifications') != null)
             @foreach(Session::get('notifications') as $notification)
                 Swal.fire('{{$notification['title']}}', '{{$notification['text']}}', '{{$notification['type']}}').then((res) => {
             @endforeach
@@ -159,6 +161,7 @@
                 });
             @endforeach
             <?php  Session::put('notifications', []); ?>
+            @endif
         </script>
 
         <script>

@@ -10,6 +10,7 @@ use App\Models\FinancialChargeCategory;
 use App\Models\Item;
 use App\Models\Supervisor;
 use App\Models\Supplier;
+use App\Models\System;
 use Illuminate\Http\Request;
 
 
@@ -26,6 +27,7 @@ class AjaxController
                     $items = Item::all();
                     $banks = Bank::all();
                     $efds = Efd::all();
+                    $systems= System::all();
                     $employees = [
                         ['id'=>'1','name'=>'Supervisor'],
                         ['id'=>'2','name'=>'Driver']
@@ -68,6 +70,7 @@ class AjaxController
                             'marital_status' => $marital_status,
                             'efds' => $efds,
                             'banks' => $banks,
+                            'systems' => $systems,
                             'genders' => $genders,
                             'supervisors' => $supervisors,
                             'expenses_categories' => $expenses_categories,

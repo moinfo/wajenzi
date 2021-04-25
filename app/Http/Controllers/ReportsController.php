@@ -8,6 +8,7 @@ use App\Models\ExpensesCategory;
 use App\Models\Gross;
 use App\Models\Supervisor;
 use App\Models\Supplier;
+use App\Models\System;
 use App\Models\TransactionMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,8 +22,10 @@ class ReportsController extends Controller
             ['name' => 'Supervisor Report', 'route' => 'reports_supervisor_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Report', 'route' => 'reports_supplier_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Collection Report', 'route' => 'reports_collection_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Collection Per System Report', 'route' => 'reports_collection_per_system_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Gross Summary Report', 'route' => 'reports_gross_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Expenses Report', 'route' => 'reports_expenses_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Expenses Per System Report', 'route' => 'reports_expenses_per_system_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Expenses Categories Report', 'route' => 'reports_expenses_categories_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Transaction Report', 'route' => 'reports_supplier_transaction_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Receiving Report', 'route' => 'reports_supplier_receiving_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -116,6 +119,18 @@ class ReportsController extends Controller
         return view('pages.reports.reports_collection_report')->with($data);
     }
 
+    public function collection_per_system_report(Request $request){
+        $collections = Collection::whereDate('date', DB::raw('CURDATE()'))->get();
+        $supervisors = System::all();
+        $supervisor_with_amount_of_collections = DB::select('SELECT SUM(c.amount) as total_collection, s.name as supervisor_name,c.date as collection_date FROM collections c JOIN supervisors s ON (s.id = c.supervisor_id) JOIN systems sy ON (sy.id = s.system_id) GROUP BY c.supervisor_id,c.date');
+        $data = [
+            'supervisor_with_amount_of_collections' => $supervisor_with_amount_of_collections,
+            'supervisors' => $supervisors,
+            'collections' => $collections
+        ];
+        return view('pages.reports.reports_collection_per_system_report')->with($data);
+    }
+
     public function supplier_transaction_report(Request $request){
         $transaction_movements = TransactionMovement::whereDate('date', DB::raw('CURDATE()'))->get();
         $suppliers = Supplier::all();
@@ -150,6 +165,18 @@ class ReportsController extends Controller
             'expenses' => $expenses
         ];
         return view('pages.reports.reports_expenses_report')->with($data);
+    }
+
+    public function expenses_per_system_report(Request $request){
+        $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
+        $supervisors = System::all();
+        $supervisor_with_amount_of_expenses = DB::select('SELECT SUM(c.amount) as total_expenses, s.name as supervisor_name,c.date as expense_date FROM expenses c JOIN supervisors s ON (s.id = c.supervisor_id) JOIN systems sy ON (sy.id = s.system_id) GROUP BY c.supervisor_id,c.date');
+        $data = [
+            'supervisor_with_amount_of_expenses' => $supervisor_with_amount_of_expenses,
+            'supervisors' => $supervisors,
+            'expenses' => $expenses
+        ];
+        return view('pages.reports.reports_expenses_per_system_report')->with($data);
     }
     public function expenses_categories_report(Request $request){
         $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
