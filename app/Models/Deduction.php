@@ -8,4 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class Deduction extends Model
 {
     use HasFactory;
+    public $fillable = ['id', 'nature', 'name', 'abbreviation', 'description', 'registration_number'];
 }

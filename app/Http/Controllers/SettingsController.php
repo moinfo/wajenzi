@@ -8,6 +8,8 @@ use App\Models\Allowance;
 use App\Models\AllowanceSubscription;
 use App\Models\Bank;
 use App\Models\Deduction;
+use App\Models\DeductionSetting;
+use App\Models\DeductionSubscription;
 use App\Models\Department;
 use App\Models\Efd;
 use App\Models\ExpensesCategory;
@@ -34,6 +36,9 @@ class SettingsController extends Controller
             ['name'=>'Staff Salary', 'route'=>'hr_settings_staff_salary', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Advance Salary', 'route'=>'hr_settings_advance_salary', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Staff Loan', 'route'=>'hr_settings_staff_loan', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Deductions', 'route'=>'hr_settings_deductions', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Deduction Subscriptions', 'route'=>'hr_settings_deduction_subscriptions', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Deduction Settings', 'route'=>'hr_settings_deduction_settings', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Supervisor', 'route'=>'hr_settings_supervisors', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Banks', 'route'=>'hr_settings_banks', 'icon' => 'si si-settings', 'badge' => 0],
@@ -72,6 +77,24 @@ class SettingsController extends Controller
             'allowance_subscriptions' => AllowanceSubscription::all()
         ];
         return view('pages.settings.settings_allowance_subscriptions')->with($data);
+    }
+    public function deduction_subscriptions(Request $request){
+        if($this->handleCrud($request, 'DeductionSubscription')) {
+            return back();
+        }
+        $data = [
+            'deduction_subscriptions' => DeductionSubscription::all()
+        ];
+        return view('pages.settings.settings_deduction_subscriptions')->with($data);
+    }
+    public function deduction_settings(Request $request){
+        if($this->handleCrud($request, 'DeductionSetting')) {
+            return back();
+        }
+        $data = [
+            'deduction_settings' => DeductionSetting::all()
+        ];
+        return view('pages.settings.settings_deduction_settings')->with($data);
     }
     public function deductions(Request $request){
         if($this->handleCrud($request, 'Deduction')) {

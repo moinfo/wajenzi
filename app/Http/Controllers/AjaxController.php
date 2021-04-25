@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Allowance;
 use App\Models\AllowanceSubscription;
 use App\Models\Bank;
+use App\Models\Deduction;
 use App\Models\Division;
 use App\Models\Efd;
 use App\Models\ExpensesCategory;
@@ -31,6 +32,7 @@ class AjaxController
                     $banks = Bank::all();
                     $efds = Efd::all();
                     $allowance_subscriptions = Allowance::all();
+                    $deduction_subscriptions = Deduction::all();
                     $staffs = Staff::getList();
                     $systems= System::all();
                     $employees = [
@@ -45,6 +47,11 @@ class AjaxController
                         ['name'=>'STAFF'],
                         ['name'=>'INTERN'],
                         ['name'=>'EXTERNAL']
+                    ];
+                    $natures = [
+                        ['name'=>'GROSS'],
+                        ['name'=>'NET'],
+                        ['name'=>'TAXABLE']
                     ];
                     $employment_types = [
                         ['name'=>'FULL_TIME'],
@@ -67,10 +74,12 @@ class AjaxController
                     $data = $request->input('data') ?? [
                             'suppliers' => $suppliers,
                             'employees' => $employees,
+                            'natures' => $natures,
                             'supervisors_and_drivers' => $supervisors_and_drivers,
                             'items' => $items,
                             'employee_types' => $employee_types,
                             'employment_types' => $employment_types,
+                            'deduction_subscriptions' => $deduction_subscriptions,
                             'allowance_subscriptions' => $allowance_subscriptions,
                             'statuses' => $status,
                             'marital_status' => $marital_status,
