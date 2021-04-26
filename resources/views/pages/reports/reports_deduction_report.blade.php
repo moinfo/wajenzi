@@ -117,9 +117,9 @@
                                       //  dump($taxable_array);
                                     foreach ($payes as $paye){
                                         if ( in_array($taxable, range($paye->minimum_amount,$paye->maximum_amount)) ) {
-                                            $employee_percentage = $paye->employee_percentage;
-                                            $additional_amount = $paye->additional_amount;
-                                            $maximum_amount = $paye->maximum_amount;
+                                            $employee_percentage = $paye->employee_percentage ?? 0;
+                                            $additional_amount = $paye->additional_amount ?? 0;
+                                            $maximum_amount = $paye->maximum_amount ?? 0;
                                         }
                                     }
                                    // echo $employee_percentage;
