@@ -80,13 +80,19 @@
                                     <th>WCF</th>
                                     <th>SDL</th>
                                     <th>HESLB</th>
+                                    <th>Advance Salary</th>
+                                    <th>Loan</th>
+                                    <th>NET</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach($staffs as $staff)
                                     <?php
+                                        $start_date = date('Y-m-01');
+                                        $end_date = date('Y-m-t');
                                         $staff_id = $staff->id;
                                         $basic_salary = \App\Models\StaffSalary::Where('staff_id',$staff_id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('staff_id')->get()->first()['total_amount'] ?? 0;
+                                        $advance_salary = \App\Models\AdvanceSalary::Where('staff_id',$staff_id)->WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('staff_id')->get()->first()['total_amount'] ?? 0;
                                         $allowance = \App\Models\AllowanceSubscription::Where('staff_id',$staff_id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('staff_id')->get()->first()['total_amount'] ?? 0;
                                         $gross_pay = $basic_salary + $allowance;
                                         $pension = \App\Models\DeductionSubscription::select([DB::raw("deduction_settings.*, deductions.nature")])->join('deduction_settings','deduction_settings.deduction_id', '=', 'deduction_subscriptions.deduction_id')->join('deductions','deductions.id','=','deduction_settings.deduction_id')->Where('deductions.abbreviation','NSSF')->Where('deduction_subscriptions.staff_id',$staff_id)->get()->first();
@@ -113,21 +119,30 @@
                                         }
                                     $taxable = $gross_pay - ($employee_pension_amount+$employee_health_amount);
 
-                                       // $taxable_array[] = $gross_pay - ($employee_pension_amount+$employee_health_amount);
-                                      //  dump($taxable_array);
-                                    foreach ($payes as $paye){
-                                        if ( in_array($taxable, range($paye->minimum_amount,$paye->maximum_amount)) ) {
-                                            $employee_percentage = $paye->employee_percentage ?? 0;
-                                            $additional_amount = $paye->additional_amount ?? 0;
-                                            $maximum_amount = $paye->maximum_amount ?? 0;
+                                        if($taxable >= 0 && $taxable < 270000){
+                                            $employee_percentage = 0;
+                                            $additional_amount = 0;
+                                            $maximum_amount = 270000;
+                                        }elseif($taxable >= 270000 && $taxable < 520000){
+                                            $employee_percentage = 0.09;
+                                            $additional_amount = 0;
+                                            $maximum_amount = 520000;
+                                        }elseif($taxable >= 520000 && $taxable < 760000){
+                                            $employee_percentage = 0.2;
+                                            $additional_amount = 25000;
+                                            $maximum_amount = 760000;
+                                        }elseif($taxable >= 760000 && $taxable < 1000000){
+                                            $employee_percentage = 0.25;
+                                            $additional_amount = 70500;
+                                            $maximum_amount = 1000000;
+                                        }elseif($taxable >= 1000000){
+                                            $employee_percentage = 0.30;
+                                            $additional_amount = 130500;
+                                            $maximum_amount = 1000000;
                                         }
-                                    }
-                                   // echo $employee_percentage;
-                                   // echo $additional_amount;
-                                   // echo $maximum_amount;
 
-                                   // $paye_amount = ($additional_amount + $employee_percentage/100 * ($maximum_amount - $taxable));
-                                    $paye_amount = $taxable * (($employee_percentage ?? 0)/100);
+                                    $paye_amount = ($additional_amount + $employee_percentage* ($maximum_amount - $taxable));
+
 
                                     if($wcf['nature'] == 'GROSS'){
                                         $employer_wcf_amount = $gross_pay * ($wcf['employer_percentage']/100);
@@ -152,7 +167,7 @@
                                     } else{
                                         $employee_heslb_amount = $basic_salary * ($heslb['employee_percentage']/100);
                                     }
-
+                                    $net = $taxable - ($paye_amount+$employee_heslb_amount+$advance_salary);
                                     ?>
                                     <tr>
                                         <td>{{$loop->iteration}}</td>
@@ -169,6 +184,9 @@
                                         <td class="text-right">{{number_format($employer_wcf_amount,2,'.',',')}}</td>
                                         <td class="text-right">{{number_format($employer_sdl_amount,2,'.',',')}}</td>
                                         <td class="text-right">{{number_format($employee_heslb_amount,2,'.',',')}}</td>
+                                        <td class="text-right">{{number_format($advance_salary,2,'.',',')}}</td>
+                                        <td class="text-right">{{number_format(0,2,'.',',')}}</td>
+                                        <td class="text-right">{{number_format($net,2,'.',',')}}</td>
                                     </tr>
                                 @endforeach
 
