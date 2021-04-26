@@ -575,16 +575,21 @@
     }
     //dump($dates);
     //                    $no = 1;
-    foreach ($dates as $index => $date) {
-        // echo $date;
-        $collections_per_week[] = Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
-        $expenses_per_week[] = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+    if (isset($dates)) {
+        foreach ($dates as $index => $date) {
+            // echo $date;
+            $collections_per_week[] = Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+            $expenses_per_week[] = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
 
+        }
     }
-    //                    dump($collections_per_week);
 
-    $collection_in_a_day_per_week = implode (", ", $collections_per_week);
-    $expense_in_a_day_per_week = implode (", ", $expenses_per_week);
+    if (!empty($collections_per_week)) {
+        $collection_in_a_day_per_week = implode (", ", $collections_per_week);
+    }
+    if (!empty($expenses_per_week)) {
+        $expense_in_a_day_per_week = implode (", ", $expenses_per_week);
+    }
 
     ?>
 </div>
@@ -609,7 +614,7 @@
                         pointBorderColor: "#fff",
                         pointHoverBackgroundColor: "#fff",
                         pointHoverBorderColor: "rgba(66,165,245,1)",
-                        data: [<?=$collection_in_a_day_per_week?>],
+                        data: [<?=$collection_in_a_day_per_week ?? 0?>],
                     },
                 ],
             },
@@ -639,7 +644,7 @@
                         pointBorderColor: "#fff",
                         pointHoverBackgroundColor: "#fff",
                         pointHoverBorderColor: "rgba(156,204,101,1)",
-                        data: [<?=$expense_in_a_day_per_week?>],
+                        data: [<?=$expense_in_a_day_per_week ?? 0?>],
                     },
                 ],
             },

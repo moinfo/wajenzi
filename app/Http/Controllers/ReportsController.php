@@ -25,6 +25,7 @@ class ReportsController extends Controller
             ['name' => 'Supervisor Report', 'route' => 'reports_supervisor_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Report', 'route' => 'reports_supplier_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Collection Report', 'route' => 'reports_collection_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Deduction Report', 'route' => 'reports_deduction_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Collection Per System Report', 'route' => 'reports_collection_per_system_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Gross Summary Report', 'route' => 'reports_gross_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Expenses Report', 'route' => 'reports_expenses_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -67,6 +68,13 @@ class ReportsController extends Controller
     public function supervisor_report(Request $request){
         $data = [];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+    public function deduction_report(Request $request){
+        $staffs = Staff::getList();
+        $data = [
+            'staffs' => $staffs
+        ];
+        return view('pages.reports.reports_deduction_report')->with($data);
     }
 
     public function transaction_movement_report(Request $request){
