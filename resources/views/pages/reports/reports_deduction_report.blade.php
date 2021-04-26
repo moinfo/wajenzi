@@ -127,7 +127,7 @@
                                    // echo $maximum_amount;
 
                                    // $paye_amount = ($additional_amount + $employee_percentage/100 * ($maximum_amount - $taxable));
-                                    $paye_amount = $taxable * ($employee_percentage/100);
+                                    $paye_amount = $taxable * (($employee_percentage ?? 0)/100);
 
                                     if($wcf['nature'] == 'GROSS'){
                                         $employer_wcf_amount = $gross_pay * ($wcf['employer_percentage']/100);
