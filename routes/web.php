@@ -20,7 +20,7 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/lock', 'auth.lock');
 
     Route::match(['get', 'post'], '/ajax/{fx}', [App\Http\Controllers\AjaxController::class, 'index'])->name('ajax_request');
-
+    Route::match(['get', 'post'], '/AjaxController', [App\Http\Controllers\AjaxController::class, 'ajaxRequestPost'])->name('ajax_request.post');
 
     Route::match(['get', 'post'], '/collection', [App\Http\Controllers\CollectionController::class, 'index'])->name('collection');
     Route::match(['get', 'post'], '/collection_search', [App\Http\Controllers\CollectionController::class, 'search'])->name('collection_search');
@@ -40,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/system', [App\Http\Controllers\SystemController::class, 'index'])->name('system');
     Route::match(['get', 'post'], '/sales', [App\Http\Controllers\SaleController::class, 'index'])->name('sales');
     Route::match(['get', 'post'], '/purchases', [App\Http\Controllers\PurchaseController::class, 'index'])->name('purchases');
+    Route::match(['get', 'post'], '/payroll', [App\Http\Controllers\PayrollController::class, 'index'])->name('payroll');
 
     Route::match(['get', 'post'], '/expenses', [App\Http\Controllers\ExpenseController::class, 'index'])->name('expenses');
     Route::match(['get', 'post'], '/expenses_search', [App\Http\Controllers\ExpenseController::class, 'search'])->name('expenses_search');

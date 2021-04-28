@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use phpDocumentor\Reflection\Types\This;
 
 class StaffSalary extends Model
 {
@@ -13,4 +15,6 @@ class StaffSalary extends Model
     public function staff(){
         return $this->belongsTo(Staff::class);
     }
+
+
 }

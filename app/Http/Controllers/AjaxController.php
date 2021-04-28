@@ -16,12 +16,14 @@ use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 
 class AjaxController
 {
     public function index(Request $request, $fx = null) {
 //        $fx = $request->has('fx') ? $request->get('fx') : null;
+       // dd($fx);
         if ($fx) {
             switch ($fx) {
                 case 'form': // Load form from forms directory
@@ -130,4 +132,18 @@ class AjaxController
             return 'INVALID OPERATION';
         }
     }
+    public function ajaxRequestPost(Request $request)
+    {
+        $controller = new Controller();
+        $data = json_decode($request['TableData'],true);
+
+       $save = DB::table('payroll_records')->insert($data) ?? [];
+
+       return $save;
+//       if($save == true){
+//           $controller->notify(' Updated Successfully', 'Updated!', 'success');
+//       }
+
+    }
+
 }
