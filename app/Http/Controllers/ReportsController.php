@@ -34,6 +34,7 @@ class ReportsController extends Controller
             ['name' => 'Supplier Transaction Report', 'route' => 'reports_supplier_transaction_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Receiving Report', 'route' => 'reports_supplier_receiving_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Transaction Movement Report', 'route' => 'reports_transaction_movement_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Supplier Credit Report', 'route' => 'reports_supplier_credit_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
@@ -68,6 +69,14 @@ class ReportsController extends Controller
     public function supervisor_report(Request $request){
         $data = [];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+    public function supplier_credit_report(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-m-01');
+        $end_date = $request->input('end_date') ?? date('Y-m-t');
+        $supplier_id = $request->input('supplier_id') ?? 1;
+        $statements = DB::select("select id, date, description, debit, credit, sum( coalesce(debit, 0) - coalesce(credit, 0) ) over (order by date) as balance from ((select id, date,s.description as description, s.amount as debit, null as credit from supplier_receivings s WHERE s.supplier_id = '$supplier_id' ) union all (select id, date, t.description as description,  null as debit, t.amount from transaction_movements t WHERE t.supplier_id = '$supplier_id')) b WHERE b.date BETWEEN '$start_date' AND '$end_date' order by b.date ;");
+        $suppliers = Supplier::all();
+        return view('pages.reports.reports_supplier_credit_report',compact('statements','suppliers'));
     }
     public function deduction_report(Request $request){
         $staffs = Staff::getList();
