@@ -61,7 +61,7 @@
                                                         <span class="input-group-text" id="basic-addon3">Supervisor</span>
                                                     </div>
                                                     <select name="supervisor_id" id="input-supervisor-id" class="form-control" aria-describedby="basic-addon3">
-                                                        <option>All</option>
+                                                        <option value="">All</option>
                                                         @foreach ($supervisors as $supervisor)
                                                             <option value="{{ $supervisor->id }}"> {{ $supervisor->name }} </option>
                                                         @endforeach
@@ -74,7 +74,7 @@
                                                         <span class="input-group-text" id="basic-addon4">Category</span>
                                                     </div>
                                                     <select name="expenses_category_id" id="input-expenses-category-id" class="form-control" aria-describedby="basic-addon4">
-                                                        <option>All</option>
+                                                        <option value="">All</option>
                                                         @foreach ($expense_categories as $expense_category)
                                                             <option value="{{ $expense_category->id }}"> {{ $expense_category->name }} </option>
                                                         @endforeach

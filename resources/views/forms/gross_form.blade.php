@@ -4,7 +4,7 @@
         <div class="form-group">
             <label for="example-nf-supervisor" class="control-label required">Supervisor Name</label>
             <select name="supervisor_id" id="input-supervisor-id" class="form-control" required>
-                <option>Select Supervisor</option>
+                <option value="">Select Supervisor</option>
 
                 @foreach ($supervisors as $supervisor)
                     <option value="{{ $supervisor->id }}" {{ ( $supervisor->id == $object->supervisor_id) ? 'selected' : '' }}> {{ $supervisor->name }} </option>

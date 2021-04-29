@@ -18,7 +18,7 @@
             <label for="example-nf-details" class="control-label required">Employee Type</label>
             <select name="employee_id" id="input-employee-id" class="form-control" required>
 
-                <option>Select employee type</option>
+                <option value="">Select employee type</option>
             @foreach ($employees as $employee)
                 <option value="{{ $employee['id'] }}" {{ ( $employee['id'] == $object->employee_id) ? 'selected' : '' }}> {{ $employee['name'] }} </option>
             @endforeach
@@ -28,7 +28,7 @@
             <label for="example-nf-system" class="control-label required">System</label>
             <select name="system_id" id="input-system-id" class="form-control" required>
 
-                <option>Select System</option>
+                <option value="">Select System</option>
             @foreach ($systems as $system)
                 <option value="{{ $system['id'] }}" {{ ( $system['id'] == $object->system_id) ? 'selected' : '' }}> {{ $system['name'] }} </option>
             @endforeach

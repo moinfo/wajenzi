@@ -65,7 +65,10 @@
                 data:{TableData,"_token": "{{ csrf_token() }}"},
                 success:function(data){
                     if(data == 1){
-                        Swal.fire('Payroll Created!', 'You have successful created a Payroll for this Month', 'success')
+                        Swal.fire('Payroll Created!', 'You have successful created a Payroll for this Month', 'success');
+                        setTimeout(function(){// wait for 5 secs(2)
+                            location.reload(); // then reload the page.(3)
+                        }, 5000);
                     }else{
                         Swal.fire('Changes are not saved', 'There is a Problem', 'info')
                     }
@@ -80,14 +83,17 @@
 @section('content')
     <?php
          use Illuminate\Support\Facades\DB;
-         $start_date = date('Y-m-01');
-         $end_date = date('Y-m-t');
+         $start_date = $_POST['start_date'] ?? date('Y-m-01');
+         $end_date = $_POST['end_date'] ?? date('Y-m-t');
+         $payroll_record = new \App\Models\PayrollRecord();
+         $payroll_records = $payroll_record->getCurrentPayroll($start_date,$end_date);
+         $is_current_payroll_paid = \App\Models\Payroll::isCurrentPayrollPaid($start_date,$end_date);
      ?>
     <div class="main-container">
         <div class="content">
             <div class="content-heading">Payroll
                 <div class="float-right">
-                    @if(\App\Models\Payroll::isCurrentPayrollPaid($start_date,$end_date))
+                    @if($is_current_payroll_paid)
                     <button class="btn btn-rounded btn-outline-success min-width-125 mb-10"><i class="si si-clock">&nbsp;</i>Already Created Payroll This Month</button>
                     @else
                         <button type="button"  class="btn btn-rounded btn-outline-primary min-width-125 mb-10 btn-submit"><i class="si si-plus">&nbsp;</i>Create Payroll</button>
@@ -195,10 +201,14 @@
                                 $advance_salary_total = 0;
                                 $employee_heslb_amount_total = 0;
                                 $net_total = 0;
+                                $current_loan_total = 0;
+                                $current_loan_deduction_total = 0;
                                 $Staff = new \App\Models\Staff();
 
+
                                 ?>
-                                @foreach($staffs as $staff)
+                                @if(!$is_current_payroll_paid)
+                                    @foreach($staffs as $staff)
                                     <?php
 
                                     $staff_id = $staff->id;
@@ -215,6 +225,17 @@
                                     $wcf = \App\Models\Staff::getStaffDeduction($staff_id,'WCF');
                                     $sdl = \App\Models\Staff::getStaffDeduction($staff_id,'SDL');
                                     $heslb = \App\Models\Staff::getStaffDeduction($staff_id,'HESLB');
+                                    $loan = \App\Models\Staff::getStaffLoan($staff_id);
+                                    $loan_deduction = \App\Models\Staff::getStaffLoanDeductionForCurrentLoan($staff_id);
+                                    $check_if_staff_has_loan = \App\Models\Staff::isStaffHasLoan($staff_id);
+
+                                    if($check_if_staff_has_loan){
+                                        $current_loan = $loan;
+                                        $current_loan_deduction = $loan_deduction;
+                                    }else{
+                                        $current_loan = 0;
+                                        $current_loan_deduction = 0;
+                                    }
 
                                     if($pension['nature'] == 'GROSS'){
                                         $employer_pension_amount = $gross_pay * ($pension['employer_percentage']/100);
@@ -281,7 +302,7 @@
                                     } else{
                                         $employee_heslb_amount = $basic_salary * ($heslb['employee_percentage']/100);
                                     }
-                                    $net = $taxable - ($paye_amount+$employee_heslb_amount+$advance_salary);
+                                    $net = $taxable - ($paye_amount+$employee_heslb_amount+$advance_salary+$current_loan_deduction);
                                     $basic_salary_total += $basic_salary;
                                     $allowance_total += $allowance;
                                     $gross_pay_total += $gross_pay;
@@ -294,8 +315,13 @@
                                     $employer_sdl_amount_total += $employer_sdl_amount;
                                     $employer_wcf_amount_total += $employer_wcf_amount;
                                     $advance_salary_total += $advance_salary;
+                                    $current_loan_total += $current_loan;
+                                    $current_loan_deduction_total += $current_loan_deduction;
                                     $employee_heslb_amount_total += $employee_heslb_amount;
                                     $net_total += $net;
+
+
+
                                     ?>
                                     <tr>
                                         <td>{{$loop->iteration}}</td>
@@ -313,9 +339,9 @@
                                         <td class="text-right d-none">{{$employer_sdl_amount,2,'.',','}}</td>
                                         <td class="text-right d-none">{{$employee_heslb_amount,2,'.',','}}</td>
                                         <td class="text-right d-none">{{$advance_salary,2,'.',','}}</td>
-                                        <td class="text-right d-none">{{0,2,'.',','}}</td>
-                                        <td class="text-right d-none">{{0,2,'.',','}}</td>
-                                        <td class="text-right d-none">{{0,2,'.',','}}</td>
+                                        <td class="text-right d-none">{{$current_loan,2,'.',','}}</td>
+                                        <td class="text-right d-none">{{$current_loan_deduction,2,'.',','}}</td>
+                                        <td class="text-right d-none">{{($current_loan - $current_loan_deduction),2,'.',','}}</td>
                                         <td class="text-right d-none">{{$net,2,'.',','}}</td>
                                         <td class="text-right d-none">{{$staff_id}}</td>
                                         <td class="text-right">{{number_format($basic_salary)}}</td>
@@ -331,13 +357,94 @@
                                         <td class="text-right">{{number_format($employer_sdl_amount,2,'.',',')}}</td>
                                         <td class="text-right">{{number_format($employee_heslb_amount,2,'.',',')}}</td>
                                         <td class="text-right">{{number_format($advance_salary,2,'.',',')}}</td>
-                                        <td class="text-right">{{number_format(0,2,'.',',')}}</td>
-                                        <td class="text-right">{{number_format(0,2,'.',',')}}</td>
-                                        <td class="text-right">{{number_format(0,2,'.',',')}}</td>
+                                        <td class="text-right">{{number_format($current_loan,2,'.',',')}}</td>
+                                        <td class="text-right">{{number_format($current_loan_deduction,2,'.',',')}}</td>
+                                        <td class="text-right">{{number_format(($current_loan - $current_loan_deduction),2,'.',',')}}</td>
                                         <td class="text-right">{{number_format($net,2,'.',',')}}</td>
                                         <td class="text-right d-none">{{$staff_id}}</td>
                                     </tr>
                                 @endforeach
+                                @else
+                                  @foreach($payroll_records as $item)
+                                      <?php
+                                      $basic_salary =  $item->basicSalary;
+                                      $allowance = $item->allowance;
+                                      $gross_pay = $item->grossPay;
+                                      $employer_pension_amount = $item->employerPension;
+                                      $employee_pension_amount = $item->employeePension;
+                                      $employer_health_amount = $item->employerHealth;
+                                      $employee_health_amount = $item->employeeHealth;
+                                      $taxable = $item->taxable;
+                                      $paye_amount = $item->paye;
+                                      $employer_wcf_amount = $item->wcf;
+                                      $employer_sdl_amount = $item->sdl;
+                                      $employee_heslb_amount = $item->heslb;
+                                      $advance_salary = $item->advanceSalary;
+                                      $net = $item->net;
+                                      $name= $item->name;
+                                      $totalLoan= $item->totalLoan;
+                                      $loanBalance= $item->loanBalance;
+                                      $loanDeduction= $item->loanDeduction;
+                                      $staff_id = $item->staff_id;
+                                      $basic_salary_total += $basic_salary;
+                                      $allowance_total += $allowance;
+                                      $gross_pay_total += $gross_pay;
+                                      $employee_health_amount_total += $employee_health_amount;
+                                      $employee_pension_amount_total += $employee_pension_amount;
+                                      $employer_health_amount_total += $employer_health_amount;
+                                      $employer_pension_amount_total += $employer_pension_amount;
+                                      $taxable_total += $taxable;
+                                      $paye_amount_total += $paye_amount;
+                                      $employer_sdl_amount_total += $employer_sdl_amount;
+                                      $employer_wcf_amount_total += $employer_wcf_amount;
+                                      $advance_salary_total += $advance_salary;
+                                      $employee_heslb_amount_total += $employee_heslb_amount;
+                                      $net_total += $net;
+                                      $current_loan_total += $totalLoan;
+                                      $current_loan_deduction_total += $loanDeduction;
+                                      ?>
+                                      <tr>
+                                          <td>{{$loop->iteration}}</td>
+                                          <td>{{$name}}</td>
+                                          <td class="text-right d-none">{{$basic_salary}}</td>
+                                          <td class="text-right d-none">{{$allowance,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$gross_pay,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$employer_pension_amount,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$employee_pension_amount,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$employer_health_amount,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$employee_health_amount,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$taxable,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$paye_amount,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$employer_wcf_amount,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$employer_sdl_amount,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$employee_heslb_amount,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$advance_salary,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$totalLoan,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$loanDeduction,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{($totalLoan - $loanDeduction),2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$net,2,'.',','}}</td>
+                                          <td class="text-right d-none">{{$staff_id}}</td>
+                                          <td class="text-right">{{number_format($basic_salary)}}</td>
+                                          <td class="text-right">{{number_format($allowance,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($gross_pay,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($employer_pension_amount,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($employee_pension_amount,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($employer_health_amount,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($employee_health_amount,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($taxable,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($paye_amount,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($employer_wcf_amount,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($employer_sdl_amount,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($employee_heslb_amount,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($advance_salary,2,'.',',')}}</td>
+                                          <td class="text-right">{{number_format($totalLoan),2,'.',','}}</td>
+                                          <td class="text-right">{{number_format($loanDeduction),2,'.',','}}</td>
+                                          <td class="text-right">{{number_format($totalLoan - $loanDeduction),2,'.',','}}</td>
+                                          <td class="text-right">{{number_format($net,2,'.',',')}}</td>
+                                          <td class="text-right d-none">{{$staff_id}}</td>
+                                      </tr>
+                                  @endforeach
+                                @endif
 
                                 </tbody>
                                 <tfoot>
@@ -374,9 +481,9 @@
                                     <th class="text-right">{{number_format($employer_sdl_amount_total,2,'.',',')}}</th>
                                     <th class="text-right">{{number_format($employee_heslb_amount_total,2,'.',',')}}</th>
                                     <th class="text-right">{{number_format($advance_salary_total,2,'.',',')}}</th>
-                                    <th class="text-right">{{number_format(0,2,'.',',')}}</th>
-                                    <th class="text-right">{{number_format(0,2,'.',',')}}</th>
-                                    <th class="text-right">{{number_format(0,2,'.',',')}}</th>
+                                    <th class="text-right">{{number_format($current_loan_total,2,'.',',')}}</th>
+                                    <th class="text-right">{{number_format($current_loan_deduction_total,2,'.',',')}}</th>
+                                    <th class="text-right">{{number_format(($current_loan_total - $current_loan_deduction_total),2,'.',',')}}</th>
                                     <th class="text-right">{{number_format($net_total,2,'.',',')}}</th>
                                     <th class="d-none">ID</th>
                                 </tr>

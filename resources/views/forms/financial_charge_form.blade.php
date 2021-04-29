@@ -5,7 +5,7 @@
             <label for="example-nf-email">Financial Charge Category</label>
             <select name="financial_charge_category_id" id="input-ifd-id" class="form-control">
 
-                <option>Select Financial Charge Category</option>
+                <option value="">Select Financial Charge Category</option>
 
                 @foreach ($financial_charge_categories as $financial_charge_category)
                     <option value="{{ $financial_charge_category->id }}" {{ ( $financial_charge_category->id == $object->financial_charge_category_id) ? 'selected' : '' }}> {{ $financial_charge_category->name }} </option>

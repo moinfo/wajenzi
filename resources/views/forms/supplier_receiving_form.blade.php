@@ -5,7 +5,7 @@
             <label for="example-nf-supplier" class="control-label required">Supplier Name</label>
             <select name="supplier_id" id="input-supplier-id" class="form-control" required>
 
-                <option>Select Supplier</option>
+                <option value="">Select Supplier</option>
 
                 @foreach ($suppliers as $supplier)
                     <option value="{{ $supplier->id }}" {{ ( $supplier->id == $object->supplier_id) ? 'selected' : '' }}> {{ $supplier->name }} </option>

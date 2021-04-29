@@ -5,7 +5,7 @@
         <div class="form-group">
             <label for="example-nf-nature" class="control-label required">Nature</label>
             <select name="nature" id="input-nature-id" class="form-control" required>
-                <option>Select Nature</option>
+                <option value="">Select Nature</option>
                 @foreach ($natures as $nature)
                     <option value="{{ $nature['name'] }}" {{ ( $nature['name'] == $object->nature) ? 'selected' : '' }}> {{ $nature['name'] }} </option>
                 @endforeach

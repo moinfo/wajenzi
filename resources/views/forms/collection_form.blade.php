@@ -5,7 +5,7 @@
             <label for="example-nf-supervisor" class="control-label required">Supervisor Name</label>
             <select name="supervisor_id" id="input-supervisor-id" class="form-control" required autocomplete="off">
 
-                <option>Select Supervisor</option>
+                <option value="">Select Supervisor</option>
 
                 @foreach ($supervisors as $supervisor)
                     <option value="{{ $supervisor->id }}" {{ ( $supervisor->id == $object->supervisor_id) ? 'selected' : '' }}> {{ $supervisor->name }} </option>
@@ -17,7 +17,7 @@
             <label for="example-nf-bank" class="control-label required">Bank Name</label>
             <select name="bank_id" id="input-bank-id" class="form-control" required>
 
-                <option>Select Bank</option>
+                <option value="">Select Bank</option>
 
                 @foreach ($banks as $bank)
                     <option value="{{ $bank->id }}" {{ ( $bank->id == $object->bank_id) ? 'selected' : '' }}> {{ $bank->name }} </option>

@@ -6,7 +6,7 @@
             <label for="example-nf-supervisor" class="control-label required">Supervisor Name</label>
             <select name="supervisor_id" id="input-ifd-id" class="form-control" required>
 
-                <option>Select Supervisor</option>
+                <option value="">Select Supervisor</option>
 
                 @foreach ($supervisors_and_drivers as $supervisor)
                     <option value="{{ $supervisor->id }}" {{ ( $supervisor->id == $object->supervisor_id) ? 'selected' : '' }}> {{ $supervisor->name }} </option>
@@ -18,7 +18,7 @@
             <label for="example-nf-email" class="control-label required">Expense Category</label>
             <select name="expenses_category_id" id="input-ifd-id" class="form-control" required>
 
-                <option>Select Expense Category</option>
+                <option value="">Select Expense Category</option>
 
                 @foreach ($expenses_categories as $expenses_category)
                     <option value="{{ $expenses_category->id }}" {{ ( $expenses_category->id == $object->expenses_category_id) ? 'selected' : '' }}> {{ $expenses_category->name }} </option>

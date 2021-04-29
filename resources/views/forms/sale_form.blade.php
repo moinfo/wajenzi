@@ -5,7 +5,7 @@
             <label for="example-nf-email">Efd Name</label>
             <select name="efd_id" id="input-ifd-id" class="form-control">
 
-                <option>Select Efd</option>
+                <option value="">Select Efd</option>
 
                 @foreach ($efds as $efd)
                     <option value="{{ $efd->id }}" {{ ( $efd->id == $object->efd_id) ? 'selected' : '' }}> {{ $efd->name }} </option>

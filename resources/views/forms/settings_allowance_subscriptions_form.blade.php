@@ -6,7 +6,7 @@
             <label for="example-nf-details" class="control-label required">Staff</label>
             <select name="staff_id" id="input-employee-id" class="form-control" required>
 
-                <option>Select Staff</option>
+                <option value="">Select Staff</option>
                 @foreach ($staffs as $staff)
                     <option value="{{ $staff['id'] }}" {{ ( $staff['id'] == $object->staff_id) ? 'selected' : '' }}> {{ $staff['name'] }} </option>
                 @endforeach
@@ -16,7 +16,7 @@
             <label for="example-nf-details" class="control-label required">Allowance</label>
             <select name="allowance_id" id="input-allowance-id" class="form-control" required>
 
-                <option>Select Allowance</option>
+                <option value="">Select Allowance</option>
                 @foreach ($allowance_subscriptions as $allowance_subscription)
                     <option value="{{ $allowance_subscription['id'] }}" {{ ( $allowance_subscription['id'] == $object->allowance_subscription_id) ? 'selected' : '' }}> {{ $allowance_subscription['name'] }} </option>
                 @endforeach

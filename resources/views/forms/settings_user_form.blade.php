@@ -21,7 +21,7 @@
                 <div class="form-group">
                     <label for="example-nf-gender"  class="control-label required">Gender</label>
                     <select name="gender" id="input-gender" class="form-control"  required="required">
-                        <option>Select Gender</option>
+                        <option value="">Select Gender</option>
                         @foreach ($genders as $gender)
                             <option value="{{ $gender['name'] }}" {{ ( $gender['name'] == $object->gender_name) ? 'selected' : '' }}> {{ $gender['name'] }} </option>
                         @endforeach
@@ -51,7 +51,7 @@
                 <div class="form-group">
                     <label for="example-nf-type" class="control-label required">Employee Type</label>
                     <select name="type" id="input-type" class="form-control"  required="required">
-                        <option>Select Type</option>
+                        <option value="">Select Type</option>
                         @foreach ($employee_types as $employee_type)
                             <option value="{{ $employee_type['name'] }}" {{ ( $employee_type['name'] == $object->employee_type) ? 'selected' : '' }}> {{ $employee_type['name'] }} </option>
                         @endforeach
@@ -81,7 +81,7 @@
                 <div class="form-group">
                     <label for="example-nf-employment_type">Employment Type</label>
                     <select name="employment_type" id="input-employment_type" class="form-control">
-                        <option>Select Type</option>
+                        <option value="">Select Type</option>
                         @foreach ($employment_types as $employment_type)
                             <option value="{{ $employment_type['name'] }}" {{ ( $employment_type['name'] == $object->employment_type) ? 'selected' : '' }}> {{ $employment_type['name'] }} </option>
                         @endforeach
@@ -93,7 +93,7 @@
                 <div class="form-group">
                     <label for="example-nf-marital_status">Marital Status</label>
                     <select name="marital_status" id="input-marital_status" class="form-control">
-                        <option>Select Marital Status</option>
+                        <option value="">Select Marital Status</option>
                         @foreach ($marital_status as $status)
                             <option value="{{ $status['name'] }}" {{ ( $status['name'] == $object->marital_status) ? 'selected' : '' }}> {{ $status['name'] }} </option>
                         @endforeach
@@ -104,7 +104,7 @@
                 <div class="form-group">
                     <label for="example-nf-type"  class="control-label required">Status</label>
                     <select name="status" id="input-status" class="form-control"  required="required">
-                        <option>Select Status</option>
+                        <option value="">Select Status</option>
                         @foreach ($statuses as $status)
                             <option value="{{ $status['name'] }}" {{ ( $status['name'] == $object->status) ? 'selected' : '' }}> {{ $status['name'] }} </option>
                         @endforeach
