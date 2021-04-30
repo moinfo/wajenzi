@@ -98,6 +98,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/reports/expenses_per_system_report', [App\Http\Controllers\ReportsController::class, 'expenses_per_system_report'])->name('reports_expenses_per_system_report');
     Route::match(['get', 'post'], '/reports/expenses_categories_report', [App\Http\Controllers\ReportsController::class, 'expenses_categories_report'])->name('reports_expenses_categories_report');
     Route::match(['get', 'post'], '/reports/supplier_credit_report', [App\Http\Controllers\ReportsController::class, 'supplier_credit_report'])->name('reports_supplier_credit_report');
+    Route::match(['get', 'post'], '/reports/business_position_report', [App\Http\Controllers\ReportsController::class, 'business_position_report'])->name('reports_business_position_report');
 
 });
 

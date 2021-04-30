@@ -35,6 +35,7 @@ class ReportsController extends Controller
             ['name' => 'Supplier Receiving Report', 'route' => 'reports_supplier_receiving_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Transaction Movement Report', 'route' => 'reports_transaction_movement_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Credit Report', 'route' => 'reports_supplier_credit_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Business Position Report', 'route' => 'reports_business_position_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
@@ -69,6 +70,11 @@ class ReportsController extends Controller
     public function supervisor_report(Request $request){
         $data = [];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+
+    public function business_position_report(Request $request){
+        $data = [];
+        return view('pages.reports.reports_business_position_report')->with($data);
     }
     public function supplier_credit_report(Request $request){
         $start_date = $request->input('start_date') ?? date('Y-m-01');
