@@ -19,6 +19,11 @@ class TransactionMovement extends Model
         $start_date = '2020-01-01';
         return TransactionMovement::WhereBetween('date',[$start_date,$end_date])->Where('supplier_id',$supplier_id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supplier_id')->get()->first()['total_amount'] ?? 0;
     }
+    public static function getSystemSupplierTransactionAmount($system_id,$end_date)
+    {
+        $start_date = '2020-01-01';
+        return TransactionMovement::select([DB::raw("SUM(transaction_movements.amount) as total_amount")])->join('suppliers','suppliers.id', '=' , 'transaction_movements.supplier_id')->join('systems','systems.id', '=' , 'suppliers.system_id')->WhereBetween('transaction_movements.date',[$start_date,$end_date])->Where('suppliers.system_id',$system_id)->groupBy('suppliers.system_id')->get()->first()['total_amount'] ?? 0;
+    }
     public static function getAllSupplierTransactionAmount($end_date)
     {
         $start_date = '2020-01-01';
