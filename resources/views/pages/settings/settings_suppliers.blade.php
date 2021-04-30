@@ -41,6 +41,7 @@
                                 <th>Email</th>
                                 <th>Address</th>
                                 <th>VRN</th>
+                                <th>Supplier</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
@@ -55,6 +56,7 @@
                                     <td class="font-w400">{{ $supplier->email }}</td>
                                     <td class="font-w400">{{ $supplier->address }}</td>
                                     <td class="font-w400">{{ $supplier->vrn }}</td>
+                                    <td class="font-w400">{{ $supplier->system->name }}</td>
 
                                     <td class="text-center" >
                                         <div class="btn-group">
