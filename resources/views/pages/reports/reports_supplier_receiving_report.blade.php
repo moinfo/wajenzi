@@ -80,12 +80,12 @@
                                     $end_date = $_POST['end_date'] ?? date('Y-m-d');
                                     $first_date = explode("-", $start_date);
                                     $last_date = explode("-", $end_date);
-
+                                $first_month = $first_date[1];
                                 use Illuminate\Support\Facades\DB;
                                 for($i = $first_date[2]; $i <=  $last_date[2]; $i++)
                                 {
                                     // add the date to the dates array
-                                    $dates[] = date('Y') . "-" . date('m') . "-" . str_pad($i, 2, '0', STR_PAD_LEFT);
+                                    $dates[] = date('Y') . "-" . $first_month. "-" . str_pad($i, 2, '0', STR_PAD_LEFT);
                                 }
                                     ?>
                                 @foreach(array_reverse($dates) as $date)
