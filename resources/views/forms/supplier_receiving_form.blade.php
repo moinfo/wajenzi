@@ -19,9 +19,9 @@
                    value="{{ $object->amount ?? '' }}" placeholder="Total Amount" required>
         </div>
         <div class="form-group">
-            <label for="example-nf-description">Description</label>
+            <label for="example-nf-description" class="control-label required">Description</label>
             <input type="text" class="form-control" id="input-description" name="description"
-                   value="{{ $object->description ?? '' }}" placeholder="Description">
+                   value="{{ $object->description ?? '' }}" placeholder="Description" required>
         </div>
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>
