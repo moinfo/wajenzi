@@ -25,7 +25,6 @@
         <div class="form-group">
             <label for="example-nf-system" class="control-label required">System</label>
             <select name="system_id" id="input-system-id" class="form-control" required>
-
                 <option value="">Select System</option>
                 @foreach ($systems as $system)
                     <option value="{{ $system['id'] }}" {{ ( $system['id'] == $object->system_id) ? 'selected' : '' }}> {{ $system['name'] }} </option>
