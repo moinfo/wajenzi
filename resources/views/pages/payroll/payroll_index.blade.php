@@ -85,9 +85,12 @@
          use Illuminate\Support\Facades\DB;
          $start_date = $_POST['start_date'] ?? date('Y-m-01');
          $end_date = $_POST['end_date'] ?? date('Y-m-t');
+         echo $start_date;
+         echo $end_date;
          $payroll_record = new \App\Models\PayrollRecord();
          $payroll_records = $payroll_record->getCurrentPayroll($start_date,$end_date);
          $is_current_payroll_paid = \App\Models\Payroll::isCurrentPayrollPaid($start_date,$end_date);
+         dump($is_current_payroll_paid);
      ?>
     <div class="main-container">
         <div class="content">
