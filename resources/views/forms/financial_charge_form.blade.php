@@ -26,7 +26,7 @@
         <div class="form-group">
             <label for="example-nf-date">Date</label>
             <input type="text" class="form-control datepicker" id="input-date" name="date"
-                   value="{{ $object->invoice_date ?? date('Y-m-d') }}" required>
+                   value="{{ $object->date ?? date('Y-m-d') }}" required>
             {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
         </div>
         <div class="form-group">

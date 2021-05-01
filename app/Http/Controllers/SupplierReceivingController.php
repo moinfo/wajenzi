@@ -95,6 +95,9 @@ class SupplierReceivingController extends Controller
     }
 
     public function search(Request $request){
+        if($this->handleCrud($request, 'SupplierReceiving')) {
+            return back();
+        }
         $start_date = $request->input('start_date') ?? date('Y-m-d');
         $end_date = $request->input('end_date') ?? date('Y-m-d');
         $supplier_id = $request->input('supplier_id');

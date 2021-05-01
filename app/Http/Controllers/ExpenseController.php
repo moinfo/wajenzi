@@ -100,6 +100,9 @@ class ExpenseController extends Controller
     }
 
     public function search(Request $request){
+        if($this->handleCrud($request, 'Expense')) {
+            return back();
+        }
         $start_date = $request->input('start_date') ?? date('Y-m-d');
         $end_date = $request->input('end_date') ?? date('Y-m-d');
         $supervisor_id = $request->input('supervisor_id');
