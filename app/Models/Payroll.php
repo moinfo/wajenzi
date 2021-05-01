@@ -10,7 +10,7 @@ class Payroll extends Model
 {
     use HasFactory;
 
-    protected static function isCurrentPayrollPaid($start_date,$end_date)
+    public static function isCurrentPayrollPaid($start_date,$end_date)
     {
         $records = PayrollRecord::WhereBetween('created_at',[$start_date,$end_date])->select([DB::raw("*")])->get();
         if(count($records)){

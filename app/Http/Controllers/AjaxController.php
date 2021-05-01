@@ -11,6 +11,7 @@ use App\Models\Efd;
 use App\Models\ExpensesCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
+use App\Models\Payroll;
 use App\Models\Staff;
 use App\Models\Supervisor;
 use App\Models\Supplier;
@@ -136,14 +137,14 @@ class AjaxController
     {
         $controller = new Controller();
         $data = json_decode($request['TableData'],true);
-
-       $save = DB::table('payroll_records')->insert($data) ?? [];
-
-       return $save;
-//       if($save == true){
-//           $controller->notify(' Updated Successfully', 'Updated!', 'success');
-//       }
-
+        $start_date = date('Y-m-01');
+        $end_date = date('Y-m-t');
+       if(Payroll::isCurrentPayrollPaid($start_date,$end_date)){
+           return 0;
+       }else{
+           $save = DB::table('payroll_records')->insert($data) ?? [];
+           return $save;
+       }
     }
 
 }
