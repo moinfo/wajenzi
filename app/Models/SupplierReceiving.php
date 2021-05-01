@@ -27,6 +27,6 @@ class SupplierReceiving extends Model
     public static function getAllSupplierReceivingAmount($end_date)
     {
         $start_date = '2020-01-01';
-        return SupplierReceiving::WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+        return SupplierReceiving::WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
     }
 }
