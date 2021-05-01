@@ -57,7 +57,7 @@
                                         {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $loan->date }}</td>
-                                    <td class="font-w600">{{ $loan->staff->name }}</td>
+                                    <td class="font-w600">{{ $loan->staff->name  ?? null}}</td>
                                     <td class="text-right">{{ number_format($loan->deduction)}}</td>
                                     <td class="text-right">{{ number_format($loan->amount) }}
                                     </td>

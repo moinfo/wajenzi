@@ -52,7 +52,7 @@
                                     <td class="text-center">
                                         {{$loop->index + 1}}
                                     </td>
-                                    <td class="font-w600">{{ $deduction_setting->deduction->name}}</td>
+                                    <td class="font-w600">{{ $deduction_setting->deduction->name ?? null}}</td>
                                     <td class="text-right">{{ number_format($deduction_setting->minimum_amount)}}</td>
                                     <td class="text-right">{{ number_format($deduction_setting->maximum_amount)}}</td>
                                     <td class="text-right">{{ number_format($deduction_setting->employee_percentage)}}</td>

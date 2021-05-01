@@ -56,7 +56,7 @@
                                     <td class="font-w400">{{ $supplier->email }}</td>
                                     <td class="font-w400">{{ $supplier->address }}</td>
                                     <td class="font-w400">{{ $supplier->vrn }}</td>
-                                    <td class="font-w400">{{ $supplier->system->name }}</td>
+                                    <td class="font-w400">{{ $supplier->system->name ?? null }}</td>
 
                                     <td class="text-center" >
                                         <div class="btn-group">

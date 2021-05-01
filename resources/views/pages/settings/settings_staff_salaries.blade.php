@@ -54,7 +54,7 @@
                                     <td class="text-center">
                                         {{$loop->index + 1}}
                                     </td>
-                                    <td class="font-w600">{{ $staff_salary->staff->name }}</td>
+                                    <td class="font-w600">{{ $staff_salary->staff->name ?? null}}</td>
                                     <td class="text-right">{{ number_format($staff_salary->amount) }}
                                     </td>
                                     <td class="text-center" >

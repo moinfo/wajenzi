@@ -57,8 +57,8 @@
                                         {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $allowance_subscription->date }}</td>
-                                    <td class="font-w600">{{ $allowance_subscription->staff->name }}</td>
-                                    <td class="font-w600">{{ $allowance_subscription->allowance->name}}</td>
+                                    <td class="font-w600">{{ $allowance_subscription->staff->name ?? null}}</td>
+                                    <td class="font-w600">{{ $allowance_subscription->allowance->name ?? null}}</td>
                                     <td class="text-right">{{ number_format($allowance_subscription->amount) }}
                                     </td>
                                     <td class="text-center" >

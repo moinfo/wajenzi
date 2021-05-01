@@ -49,8 +49,8 @@
                                     <td class="text-center">
                                         {{$loop->index + 1}}
                                     </td>
-                                    <td class="font-w600">{{ $deduction_subscription->staff->name }}</td>
-                                    <td class="font-w600">{{ $deduction_subscription->deduction->name}}</td>
+                                    <td class="font-w600">{{ $deduction_subscription->staff->name ?? null }}</td>
+                                    <td class="font-w600">{{ $deduction_subscription->deduction->name ?? null}}</td>
                                     <td class="font-w600">{{ $deduction_subscription->membership_number}}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
