@@ -22,6 +22,7 @@
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
                                 <th class="d-none d-sm-table-cell" style="width: 30%;">Description</th>
+                                <th class="d-none d-sm-table-cell" style="width: 30%;">Permission TYpe</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
@@ -33,6 +34,7 @@
                                     </td>
                                     <td class="font-w600">{{ $permission->name }}</td>
                                     <td class="d-none d-sm-table-cell">{{ $permission->description }}
+                                    <td class="d-none d-sm-table-cell">{{ $permission->permission_type }}
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
