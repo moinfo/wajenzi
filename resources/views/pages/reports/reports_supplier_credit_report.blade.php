@@ -49,7 +49,7 @@
                                                     <span class="input-group-text" id="basic-addon2">System</span>
                                                 </div>
                                                 <select name="system_id" id="input-system-id" class="form-control" required>
-                                                    <option value="">Select System</option>
+                                                    <option value="0">All System</option>
                                                     @foreach ($systems as $system)
                                                         <option value="{{ $system->id }}"> {{ $system->name }} </option>
                                                     @endforeach
@@ -80,7 +80,11 @@
                         <?php
                         use App\Models\Supplier;use App\Models\SupplierReceiving;use Illuminate\Support\Facades\DB;
                         $system_id = $_POST['system_id'] ?? 5;
-                        $suppliers =  Supplier::Where('system_id',$system_id)->select([DB::raw("*")])->get();
+                        if($system_id == 0){
+                            $suppliers = Supplier::all();
+                        }else{
+                            $suppliers =  Supplier::Where('system_id',$system_id)->select([DB::raw("*")])->get();
+                        }
                         $sum = 0;
                         $receiving_total = 0;
                         $transaction_total = 0;
