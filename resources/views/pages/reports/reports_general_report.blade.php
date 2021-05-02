@@ -128,7 +128,7 @@
                                         <td class="text-right">{{number_format($total_collection_per_day )}}</td>
                                         <td class="text-right">{{number_format($total_transaction_per_day )}}</td>
                                         <td class="text-right">{{number_format($total_supplier_receiving_per_day )}}</td>
-                                        <td class="text-right">{{number_format( (($total_collection_yesterday )-($total_transaction_yesterday )) + ((($total_collection_per_day )-($total_transaction_per_day ))) ) }}</td>
+                                        <td class="text-right">{{number_format( (($total_collection_yesterday)-($total_transaction_yesterday)) ) }}</td>
                                         <td class="text-right">{{number_format( (($total_collection_per_day )-($total_transaction_per_day )) + (($total_collection_yesterday )-($total_transaction_yesterday )) )}}</td>
                                         <td class="text-right">{{number_format($total_gross_profit_per_day )}}</td>
                                         <td class="text-right">{{number_format(($total_gross_profit_per_day  )-($total_expense_per_day ))}}</td>
