@@ -12,10 +12,10 @@
 
         <div class="form-group">
             <label for="example-nf-permission" class="control-label required">Permission Type</label>
-            <select name="permission_id" id="input-permission-id" class="form-control" required>
+            <select name="permission_type" id="input-permission-type-id" class="form-control" required>
                 <option value="">Select Permission</option>
                 @foreach ($permissions as $permission)
-                    <option value="{{ $permission['name'] }}" {{ ( $permission['name'] == $object->permission_id) ? 'selected' : '' }}> {{ $permission['name'] }} </option>
+                    <option value="{{$permission['name']}}" {{ ( $permission['name'] == $object->permission_id) ? 'selected' : '' }}> {{ $permission['name'] }} </option>
                 @endforeach
             </select>
         </div>

@@ -25,7 +25,9 @@ use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
 use App\Models\User;
+use App\Models\UsersPermission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SettingsController extends Controller
 {
@@ -151,6 +153,16 @@ class SettingsController extends Controller
         return view('pages.settings.settings_systems')->with($data);
     }
     public function users(Request $request){
+        if($request->permission_id){
+            DB::table('users_permissions')->where('user_id', '=', $request->user_id)->delete();
+            foreach($request->permission_id as $permissions) {
+                UsersPermission::create([
+                    'user_id' => $request->user_id,
+                    'permission_id' => $permissions,
+                ]);
+            }
+        }
+
         if($this->handleCrud($request, 'User')) {
             return back();
         }
