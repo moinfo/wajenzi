@@ -30,18 +30,9 @@ class Report extends Model
 
     static function getOpening($date){
         $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($date)));
-        $total_collection_per_day = \App\Models\Collection::getTotalCollectionPerDay($yesterday);
-        $total_transaction_per_day = \App\Models\TransactionMovement::getTotalTransactionPerDay($yesterday);
+        $total_collection_per_day = \App\Models\Collection::getCollectionAmount($yesterday);
+        $total_transaction_per_day = \App\Models\TransactionMovement::getAllSupplierTransactionAmount($yesterday);
         return $total_collection_per_day - $total_transaction_per_day;
     }
 
-    static function getBalance($date){
-        $total_collection_per_day = \App\Models\Collection::getTotalCollectionPerDay($date);
-        $total_transaction_per_day = \App\Models\TransactionMovement::getTotalTransactionPerDay($date);
-        return $total_collection_per_day - $total_transaction_per_day;
-    }
-
-    static function getClosing($date){
-        return self::getOpening($date) + self::getBalance($date);
-    }
 }

@@ -31,7 +31,7 @@ class TransactionMovement extends Model
     }
 
     static function getTotalTransactionPerDay($date){
-        return  \App\Models\TransactionMovement::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+        return  \App\Models\TransactionMovement::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
     }
 
     static function getTotalTransactionToAllSupplier($start_date, $end_date){
