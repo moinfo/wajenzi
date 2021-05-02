@@ -77,6 +77,7 @@
                                     <th>Total Supplier Receiving</th>
                                     <th>Opening</th>
                                     <th>Total Balance</th>
+                                    <th>Closing</th>
                                     <th>Total Gross Profits</th>
                                     <th>Total Net Profit/Loss</th>
                                     <th>Total Actual Profit/Loss</th>
@@ -129,6 +130,7 @@
                                         <td class="text-right">{{number_format($total_transaction_per_day )}}</td>
                                         <td class="text-right">{{number_format($total_supplier_receiving_per_day )}}</td>
                                         <td class="text-right">{{number_format( (($total_collection_yesterday)-($total_transaction_yesterday)) ) }}</td>
+                                        <td class="text-right">{{number_format( (($total_collection_per_day )-($total_transaction_per_day )) )}}</td>
                                         <td class="text-right">{{number_format( (($total_collection_per_day )-($total_transaction_per_day )) + (($total_collection_yesterday )-($total_transaction_yesterday )) )}}</td>
                                         <td class="text-right">{{number_format($total_gross_profit_per_day )}}</td>
                                         <td class="text-right">{{number_format(($total_gross_profit_per_day  )-($total_expense_per_day ))}}</td>
@@ -159,8 +161,9 @@
                                     <td class="text-right">{{number_format($total_transaction_by_supervisor)}}</td>
                                     <td class="text-right">{{number_format($total_supplier_receiving_by_supervisor)}}</td>
                                     <td></td>
-                                    <td class="text-right">{{number_format($sum)}}</td>
+                                    <td class="text-right"></td>
                                     <td class="text-right">{{number_format($total_gross_profit_by_supervisor)}}</td>
+                                    <td class="text-right"></td>
                                     <td class="text-right">{{number_format($total_gross_profit_by_supervisor-$total_expense_by_all_supervisor)}}</td>
                                     <td class="text-right">{{number_format($total_gross_profit_by_supervisor-$total_expenses_for_all_by_supervisor)}}</td>
                                 </tr>
