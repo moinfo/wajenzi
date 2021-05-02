@@ -85,7 +85,14 @@
                                 $end_date = $_POST['end_date'] ?? date('Y-m-d');
 
                                     $systems = \App\Models\System::all();
-
+                                $total_cash = 0;
+                                $total_credit = 0;
+                                $total_inventory = 0;
+                                $total_capital = 0;
+                                $total_supplier_credit = 0;
+                                $total_total_out = 0;
+                                $total_difference = 0;
+                                $total_total_in = 0;
                                 ?>
                                 @foreach($systems as $system)
                                     <?php
@@ -98,6 +105,14 @@
                                     $total_in = $cash + $credit + $inventory;
                                     $total_out = $supplier_credit + $capital;
                                     $difference = $total_in - $total_out;
+                                    $total_cash += $cash;
+                                    $total_credit += $credit;
+                                    $total_inventory += $inventory;
+                                    $total_capital  += $capital ;
+                                    $total_supplier_credit += $supplier_credit;
+                                    $total_total_out  += $total_out ;
+                                    $total_total_in  += $total_in;
+                                    $total_difference += $difference;
                                     ?>
                                     <tr>
                                         <td>{{$loop->iteration}}</td>
@@ -114,6 +129,20 @@
                                     </tr>
                                 @endforeach
                                 </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th class="text-right">{{number_format($total_cash)}}</th>
+                                        <th class="text-right">{{number_format($total_credit)}}</th>
+                                        <th class="text-right">{{number_format($total_inventory)}}</th>
+                                        <th class="text-right">{{number_format($total_total_in)}}</th>
+                                        <th class="text-right">{{number_format($total_supplier_credit)}}</th>
+                                        <th class="text-right">{{number_format($total_capital)}}</th>
+                                        <th class="text-right">{{number_format($total_total_out)}}</th>
+                                        <th class="text-right">{{number_format($total_difference)}}</th>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>
