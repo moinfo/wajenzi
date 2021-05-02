@@ -29,4 +29,12 @@ class TransactionMovement extends Model
         $start_date = '2020-01-01';
         return TransactionMovement::select([DB::raw("SUM(transaction_movements.amount) as total_amount")])->join('suppliers','suppliers.id','=','transaction_movements.supplier_id')->WhereBetween('transaction_movements.date',[$start_date,$end_date])->get()->first()['total_amount'] ?? 0;
     }
+
+    static function getTotalTransactionPerDay($date){
+        return  \App\Models\TransactionMovement::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+    }
+
+    static function getTotalTransactionToAllSupplier($start_date, $end_date){
+        return \App\Models\TransactionMovement::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+    }
 }

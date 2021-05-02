@@ -16,4 +16,5 @@ class Expense extends Model
     public function supervisor(){
         return $this->belongsTo(Supervisor::class);
     }
+
 }
