@@ -72,9 +72,9 @@
                                         <th> {{ $supervisor->name }} </th>
                                     @endforeach
                                     <th>Total Expenses</th>
+                                    <th>Total Supplier Receiving</th>
                                     <th>Total Collections</th>
                                     <th>Total Transactions</th>
-                                    <th>Total Supplier Receiving</th>
                                     <th>Opening</th>
                                     <th>Total Balance</th>
                                     <th>Closing</th>
@@ -122,14 +122,15 @@
                                             //$expense = \App\Models\Expense::select([DB::raw("SUM(amount) as total_amount")])->join('supervisors', 'supervisors.id', '=','expenses.supervisor_id')->Where('date',$date)->Where('supervisor_id',$id)->Where('employee_id',1)->groupBy('date')->get()->first();
                                             $total = (($total_collection_per_day )-($total_transaction_per_day )) + (($total_collection_yesterday )-($total_transaction_yesterday ));
                                             $sum +=$total;
+                                            $closing = \App\Models\Report::getClosing($yesterday);
                                             ?>
                                             <td class="text-right">{{number_format($expense)}}</td>
                                         @endforeach
                                         <td class="text-right">{{number_format($total_expense_per_day )}}</td>
+                                        <td class="text-right">{{number_format($total_supplier_receiving_per_day )}}</td>
                                         <td class="text-right">{{number_format($total_collection_per_day )}}</td>
                                         <td class="text-right">{{number_format($total_transaction_per_day )}}</td>
-                                        <td class="text-right">{{number_format($total_supplier_receiving_per_day )}}</td>
-                                        <td class="text-right">{{number_format( (($total_collection_yesterday)-($total_transaction_yesterday)) ) }}</td>
+                                        <td class="text-right">{{number_format($closing) }}</td>
                                         <td class="text-right">{{number_format( (($total_collection_per_day )-($total_transaction_per_day )) )}}</td>
                                         <td class="text-right">{{number_format( (($total_collection_per_day )-($total_transaction_per_day )) + (($total_collection_yesterday )-($total_transaction_yesterday )) )}}</td>
                                         <td class="text-right">{{number_format($total_gross_profit_per_day )}}</td>
@@ -138,7 +139,8 @@
 
                                     </tr>
                                 @endforeach
-                                </tbody>
+                                </tbody>	0	0	0
+2	2021-05-01	0	0	0	200,004	40,000	55,000	1,000,000	-15,000	98
                                 <tfoot>
                                 <tr>
                                     <th colspan="2"></th>
@@ -157,9 +159,9 @@
                                     $total_expense_by_all_supervisor = \App\Models\Supervisor::getSumSupervisorExpensesPerDateGiven($start_date, $end_date);
                                     ?>
                                     <td class="text-right">{{number_format($total_expense_by_all_supervisor)}}</td>
+                                    <td class="text-right">{{number_format($total_supplier_receiving_by_supervisor)}}</td>
                                     <td class="text-right">{{number_format($total_collection_by_supervisor)}}</td>
                                     <td class="text-right">{{number_format($total_transaction_by_supervisor)}}</td>
-                                    <td class="text-right">{{number_format($total_supplier_receiving_by_supervisor)}}</td>
                                     <td></td>
                                     <td class="text-right"></td>
                                     <td class="text-right">{{number_format($total_gross_profit_by_supervisor)}}</td>
