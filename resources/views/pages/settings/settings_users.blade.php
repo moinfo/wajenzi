@@ -37,6 +37,7 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
+                                    <th></th>
                                     <th>Name</th>
                                     <th class="d-none d-sm-table-cell" style="width: 30%;">Email</th>
                                     <th>Address</th>
@@ -58,6 +59,11 @@
                                     <tr id="user-tr-{{$user->id}}">
                                         <td class="text-center">
                                             {{$loop->index + 1}}
+                                        </td>
+                                        <td class="font-w600">
+                                            <button type="button" onclick="loadFormModal('settings_user_permission_form', {className: 'UsersPermission', user_id: {{$user->id}}}, 'Permission For {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                <i class="fa fa-cog"></i>
+                                            </button>
                                         </td>
                                         <td class="font-w600">{{ $user->name }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $user->email }}

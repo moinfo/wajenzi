@@ -51,6 +51,12 @@ class AjaxController
                         ['name'=>'INTERN'],
                         ['name'=>'EXTERNAL']
                     ];
+                    $permissions = [
+                        ['name'=>'MENU'],
+                        ['name'=>'SETTING'],
+                        ['name'=>'REPORT'],
+                        ['name'=>'CRUD']
+                    ];
                     $natures = [
                         ['name'=>'GROSS'],
                         ['name'=>'NET'],
@@ -78,6 +84,7 @@ class AjaxController
                             'suppliers' => $suppliers,
                             'employees' => $employees,
                             'natures' => $natures,
+                            'permissions' => $permissions,
                             'supervisors_and_drivers' => $supervisors_and_drivers,
                             'items' => $items,
                             'employee_types' => $employee_types,
