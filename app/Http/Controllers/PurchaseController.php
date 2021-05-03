@@ -18,10 +18,10 @@ class PurchaseController extends Controller
             return back();
         }
         $suppliers = Supplier::all();
-        $purchases = Purchase::all();
+        //$purchases = Purchase::all();
         $data = [
             'suppliers' => $suppliers,
-            'purchases' => $purchases
+           // 'purchases' => $purchases
         ];
         return view('pages.purchases.purchases_index')->with($data);
     }

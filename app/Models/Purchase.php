@@ -16,7 +16,6 @@ class Purchase extends Model
 
     public function supplier() {
         return $this->belongsTo(Supplier::class);
-
     }
-    public $fillable = ['id', 'supplier_id', 'item_id', 'tax_invoice', 'invoice_date', 'total_amount', 'amount_vat_exc', 'vat_amount', 'purchase_type'];
+    public $fillable = ['id', 'supplier_id', 'item_id', 'tax_invoice', 'invoice_date', 'total_amount', 'amount_vat_exc', 'vat_amount', 'purchase_type', 'file'];
 }

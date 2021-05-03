@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Efd;
 use App\Models\Sale;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -18,8 +19,10 @@ class SaleController extends Controller
             return back();
         }
         $sales = Sale::all();
+        $efds = Efd::all();
 
         $data = [
+            'efds' => $efds,
             'sales' => $sales
         ];
         return view('pages.sales.sales_index')->with($data);

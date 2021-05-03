@@ -12,7 +12,7 @@
                         <i class="si si-bag fa-2x text-primary-light"></i>
                     </div>
                     <div class="font-size-h3 font-w600 text-primary" data-toggle="countTo" data-speed="1000" data-to="{{$collections['total_amount'] ?? 0}}">{{$collections['total_amount'] ?? 0}}</div>
-                    <div class="font-size-sm font-w600 text-uppercase text-muted">Collections</div>
+                    <div class="font-size-sm font-w600 text-uppercase text-muted">Sales</div>
                 </div>
             </a>
         </div>
@@ -23,7 +23,7 @@
                         <i class="si si-wallet fa-2x text-earth-light"></i>
                     </div>
                     <div class="font-size-h3 font-w600 text-earth"><span data-toggle="countTo" data-speed="1000" data-to="{{$transactions['total_amount'] ?? 0}}">{{$transactions['total_amount'] ?? 0}}</span></div>
-                    <div class="font-size-sm font-w600 text-uppercase text-muted">Transactions</div>
+                    <div class="font-size-sm font-w600 text-uppercase text-muted">Purchases</div>
                 </div>
             </a>
         </div>
@@ -34,7 +34,7 @@
                         <i class="si si-globe-alt fa-2x text-elegance-light"></i>
                     </div>
                     <div class="font-size-h3 font-w600 text-elegance" data-toggle="countTo" data-speed="1000" data-to="{{$transactions['total_amount'] ?? 0}}">{{$transactions['total_amount'] ?? 0}}</div>
-                    <div class="font-size-sm font-w600 text-uppercase text-muted">Expenses</div>
+                    <div class="font-size-sm font-w600 text-uppercase text-muted">Last Month VAT</div>
                 </div>
             </a>
         </div>
@@ -45,7 +45,7 @@
                         <i class="si si-bar-chart fa-2x text-pulse"></i>
                     </div>
                     <div class="font-size-h3 font-w600 text-pulse" data-toggle="countTo" data-speed="1000" data-to="{{$gross['total_amount'] ?? 0}}">{{$gross['total_amount'] ?? 0}}</div>
-                    <div class="font-size-sm font-w600 text-uppercase text-muted">Gross Profit</div>
+                    <div class="font-size-sm font-w600 text-uppercase text-muted">This Month VAT</div>
                 </div>
             </a>
         </div>
@@ -57,7 +57,7 @@
             <div class="block block-rounded block-bordered">
                 <div class="block-header block-header-default border-b">
                     <h3 class="block-title">
-                        Collections <small>This week</small>
+                        Sales <small>This week</small>
                     </h3>
                     <div class="block-options">
                         <button type="button" class="btn-block-option" data-toggle="block-option" data-action="state_toggle" data-action-mode="demo">
@@ -106,7 +106,7 @@
             <div class="block block-rounded block-bordered">
                 <div class="block-header block-header-default border-b">
                     <h3 class="block-title">
-                        Expenses <small>This week</small>
+                        Purchases <small>This week</small>
                     </h3>
                     <div class="block-options">
                         <button type="button" class="btn-block-option" data-toggle="block-option" data-action="state_toggle" data-action-mode="demo">
