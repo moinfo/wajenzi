@@ -6,7 +6,7 @@
 
         <title>{{  $page_title }}</title>
 
-        <meta name="description" content="HRMS - Bootstrap 4 Admin Template &amp; UI Framework created by pixelcave and published on Themeforest">
+        <meta name="description" content="Reports Analysis">
         <meta name="author" content="pixelcave">
         <meta name="robots" content="noindex, nofollow">
 
@@ -24,6 +24,7 @@
         <link rel="stylesheet" id="css-main" href="{{ mix('/css/codebase.css') }}">
         <link rel="stylesheet" id="css-sweetalert2" href="{{ asset('js/plugins/sweetalert2/sweetalert2.min.css') }}">
         <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/bootstrap-datepicker/css/bootstrap-datepicker.css') }}">
+{{--        <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.css') }}">--}}
         <!-- You can include a specific file from public/css/themes/ folder to alter the default color theme of the template. eg: -->
 
         @yield('css_after')
@@ -106,7 +107,7 @@
                         Crafted with <i class="fa fa-heart text-pulse"></i> by <a class="font-w600" href="https://kibahaonline.co.tz" target="_blank">KibahaOnline</a>
                     </div>
                     <div class="float-left">
-                        <a class="font-w600" href="#" target="_blank">Financial Analysis</a> &copy; <span class="js-year-copy"></span>
+                        <a class="font-w600" href="#" target="_blank">Reports Analysis</a> &copy; <span class="js-year-copy"></span>
                     </div>
                 </div>
             </footer>
@@ -118,8 +119,8 @@
         <div class="modal fade" id="ajax-loader-modal" tabindex="-1" role="dialog" aria-labelledby="ajax-loader-modal" aria-hidden="true">
             <div class="modal-dialog modal-dialog-popin" role="document">
                 <div class="modal-content">
-                    <div class="block block-themed block-transparent mb-0">
-                        <div class="block-header bg-primary-dark">
+                    <div class="block block-themed mb-0">
+                        <div class="block-header bg-gd-dusk">
                             <h3 class="block-title" id="ajax-loader-modal-title">New</h3>
                             <div class="block-options">
                                 <button type="button" class="btn-block-option" data-dismiss="modal" aria-label="Close">
@@ -143,12 +144,16 @@
         <script src="{{ mix('js/codebase.app.js') }}"></script>
         <script src="{{ asset('js/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
         <script src="{{ asset('js/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js') }}"></script>
+{{--        <script src="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.min.js') }}"></script>--}}
 
 
 
         <script>
 
+
             var csrf_token = '{{csrf_token()}}';
+           
+                @if(Session::get('notifications') != null)
             @foreach(Session::get('notifications') as $notification)
                 Swal.fire('{{$notification['title']}}', '{{$notification['text']}}', '{{$notification['type']}}').then((res) => {
             @endforeach
@@ -156,6 +161,7 @@
                 });
             @endforeach
             <?php  Session::put('notifications', []); ?>
+            @endif
         </script>
 
         <script>

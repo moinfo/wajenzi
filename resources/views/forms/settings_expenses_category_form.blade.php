@@ -1,9 +1,9 @@
 
 <div class="block-content">
-    <form  method="post" >
+    <form  method="post"  autocomplete="off">
         @csrf
         <div class="form-group">
-            <label for="example-nf-email">Name</label>
+            <label for="example-nf-email" class="control-label required">Name</label>
             <input type="text" class="form-control" id="input-item-name" name="name" value="{{ $object->name ?? '' }}" placeholder="Expense Category Name" required>
         </div>
         <div class="form-group">

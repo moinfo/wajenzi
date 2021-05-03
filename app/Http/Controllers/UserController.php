@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\UsersPermission;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -25,5 +26,17 @@ class UserController extends Controller
     public function notifications(Request $request) {
         $data = [];
         return view('pages.user.user_notifications')->with($data);
+    }
+    public function user_permissions(Request $request) {
+        foreach($request->permission_id as $permissions) {
+
+            UsersPermission::create([
+                'user_id' => $request->user_id,
+                'permission_id' => $permissions,
+            ]);
+        }
+        //dd($request);
+        $data = [];
+        return view('pages.settings.settings_users')->with($data);
     }
 }

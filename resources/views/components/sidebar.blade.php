@@ -38,7 +38,7 @@
                 <div class="content-header-item">
                     <a class="link-effect font-w700" href="/">
                         <i class="si si-users text-primary"></i>
-                        <span class="font-size-xl text-dual-primary-dark">Financial</span><span class="font-size-xl text-primary">Analysis</span>
+                        <span class="font-size-xl text-dual-primary-dark">Reports</span><span class="font-size-xl text-primary">Analysis</span>
                     </a>
                 </div>
                 <!-- END Logo -->
@@ -87,17 +87,29 @@
                 <li class="nav-main-heading">
                     <span class="sidebar-mini-visible">VR</span><span class="sidebar-mini-hidden">MENU</span>
                 </li>
+
                 @foreach($user_menu as $menu)
+                    <?php
+                    $staff_permissions = \App\Models\UsersPermission::getUserPermissions(Auth::user()->id);
+                    ?>
+                @foreach($staff_permissions as $staff_permission)
+                    @if($staff_permission->permission_name == $menu['name'])
                     <li class="{{ request()->is( $menu['route'] .'/*') ? ' open' : '' }}">
-                        <a class="nav-submenu" data-toggle="nav-submenu" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i><span class="sidebar-mini-hide">{{$menu['name']}}</span></a>
-                        <ul>
-                            <li> <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}">{{$menu['name']}}</a> </li>
-                            @if(count($menu->subMenus))
-                                @foreach($menu->subMenus as $subMenu)
-                                    <li> <a class="{{ request()->is($subMenu['route']) ? ' active' : '' }}" href="{{ route($subMenu['route']) }}">{{$subMenu['name']}}</a> </li>
-                                @endforeach
-                            @endif
-                        </ul>
+                        <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i>{{$menu['name']}}</a>
+                @endif
+                        @endforeach
+
+
+
+                        {{--                        <a class="nav-submenu" data-toggle="nav-submenu" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i><span class="sidebar-mini-hide">{{$menu['name']}}</span></a>--}}
+{{--                        <ul>--}}
+{{--                            <li> <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}">{{$menu['name']}}</a> </li>--}}
+{{--                            @if(count($menu->subMenus))--}}
+{{--                                @foreach($menu->subMenus as $subMenu)--}}
+{{--                                    <li> <a class="{{ request()->is($subMenu['route']) ? ' active' : '' }}" href="{{ route($subMenu['route']) }}">{{$subMenu['name']}}</a> </li>--}}
+{{--                                @endforeach--}}
+{{--                            @endif--}}
+{{--                        </ul>--}}
                     </li>
                 @endforeach
 

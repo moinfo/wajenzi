@@ -20,33 +20,25 @@ class MenusSeeder extends Seeder
             'route' => 'home',
             'icon' => 'si si-home',
             ], [
-            'name' => 'Dashboard',
-            'route' => 'dashboard',
+            'name' => 'Collection',
+            'route' => 'collection',
             'icon' => 'si si-home',
             ], [
-            'name' => 'Timesheet',
-            'route' => 'timesheet',
-            'icon' => 'si si-home',
-            ], [
-            'name' => 'Leave management',
-            'route' => 'leave',
-            'icon' => 'si si-home',
-            ], [
-            'name' => 'Loan management',
-            'route' => 'loan',
-            'icon' => 'si si-home',
-            ], [
-            'name' => 'Recruitment',
-            'route' => 'recruitment',
+            'name' => 'Transaction Movement',
+            'route' => 'transaction_movement',
             'icon' => 'si si-home',
             ],[
-            'name' => 'Staff Management',
-            'route' => 'staff',
+            'name' => 'Supplier Receiving',
+            'route' => 'supplier_receiving',
             'icon' => 'si si-home',
-            ],[
-            'name' => 'Accounting',
-            'route' => 'accounting',
+            ], [
+            'name' => 'Gross Profit',
+            'route' => 'gross',
             'icon' => 'si si-home',
+            ], [
+                'name' => 'Expenses',
+                'route' => 'expenses',
+                'icon' => 'si si-home',
             ],[
             'name' => 'Reports',
             'route' => 'reports',
@@ -55,23 +47,7 @@ class MenusSeeder extends Seeder
             'name' => 'Settings',
             'route' => 'hr_settings',
             'icon' => 'si si-cog',
-            ],[
-            'name' => 'Sales',
-            'route' => 'sales',
-            'icon' => 'si si-home',
-            ],[
-            'name' => 'Purchases',
-            'route' => 'purchases',
-            'icon' => 'si si-home',
-            ],[
-            'name' => 'Expenses',
-            'route' => 'expenses',
-            'icon' => 'si si-home',
-            ],[
-            'name' => 'financial Charges',
-            'route' => 'financial_Charges',
-            'icon' => 'si si-home',
-            ],
+            ]
 
         ]);
     }

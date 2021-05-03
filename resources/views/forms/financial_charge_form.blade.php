@@ -1,11 +1,11 @@
 <div class="block-content">
-    <form method="post">
+    <form method="post"  enctype="multipart/form-data">
         @csrf
         <div class="form-group">
             <label for="example-nf-email">Financial Charge Category</label>
             <select name="financial_charge_category_id" id="input-ifd-id" class="form-control">
 
-                <option>Select Financial Charge Category</option>
+                <option value="">Select Financial Charge Category</option>
 
                 @foreach ($financial_charge_categories as $financial_charge_category)
                     <option value="{{ $financial_charge_category->id }}" {{ ( $financial_charge_category->id == $object->financial_charge_category_id) ? 'selected' : '' }}> {{ $financial_charge_category->name }} </option>
@@ -26,7 +26,7 @@
         <div class="form-group">
             <label for="example-nf-date">Date</label>
             <input type="text" class="form-control datepicker" id="input-date" name="date"
-                   value="{{ $object->invoice_date ?? date('Y-m-d') }}" required>
+                   value="{{ $object->date ?? date('Y-m-d') }}" required>
             {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
         </div>
         <div class="form-group">

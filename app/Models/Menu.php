@@ -14,13 +14,13 @@ class Menu extends Model
     }
 
     public static function getParentMenus(){
-        return self::whereNull('parent_id')->where('status', 'ACTIVE')->get();
+        return self::whereNull('parent_id')->where('status', 'ACTIVE')->orderBy('list_order','ASC')->get();
     }
 
     /**
      * Return the full hierarchy of menu
      */
     public static function getFullMenu(){
-        return self::whereNull('parent_id')->where('status', 'ACTIVE')->with('subMenus')->get();
+        return self::whereNull('parent_id')->where('status', 'ACTIVE')->orderBy('list_order','ASC')->with('subMenus')->get();
     }
 }

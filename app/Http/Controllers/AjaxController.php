@@ -2,31 +2,103 @@
 
 
 namespace App\Http\Controllers;
+use App\Models\Allowance;
+use App\Models\AllowanceSubscription;
+use App\Models\Bank;
+use App\Models\Deduction;
 use App\Models\Division;
 use App\Models\Efd;
 use App\Models\ExpensesCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
+use App\Models\Payroll;
+use App\Models\Staff;
+use App\Models\Supervisor;
 use App\Models\Supplier;
+use App\Models\System;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 
 class AjaxController
 {
     public function index(Request $request, $fx = null) {
 //        $fx = $request->has('fx') ? $request->get('fx') : null;
+       // dd($fx);
         if ($fx) {
             switch ($fx) {
                 case 'form': // Load form from forms directory
                     $suppliers = Supplier::all();
+                    $supervisors_and_drivers = Supervisor::all();
+                    $supervisors = Supervisor::where('employee_id',1)->get();
                     $items = Item::all();
+                    $banks = Bank::all();
                     $efds = Efd::all();
+                    $allowance_subscriptions = Allowance::all();
+                    $deduction_subscriptions = Deduction::all();
+                    $staffs = Staff::getList();
+                    $systems= System::all();
+                    $employees = [
+                        ['id'=>'1','name'=>'Supervisor'],
+                        ['id'=>'2','name'=>'Driver']
+                    ];
+                    $genders = [
+                        ['name'=>'MALE'],
+                        ['name'=>'FEMALE']
+                    ];
+                    $employee_types = [
+                        ['name'=>'STAFF'],
+                        ['name'=>'INTERN'],
+                        ['name'=>'EXTERNAL']
+                    ];
+                    $permissions = [
+                        ['name'=>'MENU'],
+                        ['name'=>'SETTING'],
+                        ['name'=>'REPORT'],
+                        ['name'=>'CRUD']
+                    ];
+                    $natures = [
+                        ['name'=>'GROSS'],
+                        ['name'=>'NET'],
+                        ['name'=>'TAXABLE']
+                    ];
+                    $employment_types = [
+                        ['name'=>'FULL_TIME'],
+                        ['name'=>'CONTRACT'],
+                        ['name'=>'INTERN']
+                    ];
+                    $marital_status = [
+                        ['name'=>'SINGLE'],
+                        ['name'=>'MARRIED'],
+                        ['name'=>'DIVORCED'],
+                        ['name'=>'OTHER']
+                    ];
+                    $status = [
+                        ['name'=>'ACTIVE'],
+                        ['name'=>'INACTIVE'],
+                        ['name'=>'DORMANT']
+                    ];
                     $expenses_categories = ExpensesCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
                     $data = $request->input('data') ?? [
                             'suppliers' => $suppliers,
+                            'employees' => $employees,
+                            'natures' => $natures,
+                            'permissions' => $permissions,
+                            'supervisors_and_drivers' => $supervisors_and_drivers,
                             'items' => $items,
+                            'employee_types' => $employee_types,
+                            'employment_types' => $employment_types,
+                            'deduction_subscriptions' => $deduction_subscriptions,
+                            'allowance_subscriptions' => $allowance_subscriptions,
+                            'statuses' => $status,
+                            'marital_status' => $marital_status,
                             'efds' => $efds,
+                            'staffs' => $staffs,
+                            'banks' => $banks,
+                            'systems' => $systems,
+                            'genders' => $genders,
+                            'supervisors' => $supervisors,
                             'expenses_categories' => $expenses_categories,
                             'financial_charge_categories' => $financial_charge_categories,
                         ];
@@ -68,4 +140,18 @@ class AjaxController
             return 'INVALID OPERATION';
         }
     }
+    public function ajaxRequestPost(Request $request)
+    {
+        $controller = new Controller();
+        $data = json_decode($request['TableData'],true);
+        $start_date = date('Y-m-01');
+        $end_date = date('Y-m-t');
+       if(Payroll::isCurrentPayrollPaid($start_date,$end_date)){
+           return 0;
+       }else{
+           $save = DB::table('payroll_records')->insert($data) ?? [];
+           return $save;
+       }
+    }
+
 }

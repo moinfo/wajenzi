@@ -1,11 +1,24 @@
 <div class="block-content">
-    <form method="post">
+    <form method="post"  enctype="multipart/form-data">
         @csrf
-        <div class="form-group">
-            <label for="example-nf-email">Expense Category</label>
-            <select name="expenses_category_id" id="input-ifd-id" class="form-control">
 
-                <option>Select Expense Category</option>
+        <div class="form-group">
+            <label for="example-nf-supervisor" class="control-label required">Supervisor Name</label>
+            <select name="supervisor_id" id="input-ifd-id" class="form-control" required>
+
+                <option value="">Select Supervisor</option>
+
+                @foreach ($supervisors_and_drivers as $supervisor)
+                    <option value="{{ $supervisor->id }}" {{ ( $supervisor->id == $object->supervisor_id) ? 'selected' : '' }}> {{ $supervisor->name }} </option>
+                @endforeach
+
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="example-nf-email" class="control-label required">Expense Category</label>
+            <select name="expenses_category_id" id="input-ifd-id" class="form-control" required>
+
+                <option value="">Select Expense Category</option>
 
                 @foreach ($expenses_categories as $expenses_category)
                     <option value="{{ $expenses_category->id }}" {{ ( $expenses_category->id == $object->expenses_category_id) ? 'selected' : '' }}> {{ $expenses_category->name }} </option>
@@ -13,21 +26,25 @@
 
             </select>
         </div>
-        <div class="form-group">
-            <label for="example-nf-description">Description</label>
+        <div class="form-group" >
+            <label for="example-nf-description" class="control-label required">Description</label>
             <input type="text" class="form-control" id="input-description" name="description"
                    value="{{ $object->description ?? '' }}" placeholder="Description" required>
         </div>
         <div class="form-group">
-            <label for="example-nf-amount">Amount</label>
+            <label for="example-nf-amount" class="control-label required">Amount</label>
             <input type="number" step=".01" class="form-control" id="input-amount" name="amount"
                    value="{{ $object->amount ?? '' }}" placeholder="Total Amount" required>
         </div>
         <div class="form-group">
-            <label for="example-nf-date">Date</label>
+            <label for="example-nf-date" class="control-label required">Date</label>
             <input type="text" class="form-control datepicker"  id="input-date" name="date"
-                   value="{{ $object->invoice_date ?? date('Y-m-d') }}" required>
+                   value="{{ $object->date ?? date('Y-m-d') }}" required>
             {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
+        </div>
+        <div class="form-group">
+            <label class="control-label" for="chooseFile">Choose file</label>
+            <input type="file" name="file" class="form-control" id="chooseFile">
         </div>
         <div class="form-group">
             @if($object->id ?? null)

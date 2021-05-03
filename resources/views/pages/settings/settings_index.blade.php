@@ -3,7 +3,7 @@
 @section('content')
     <!-- Page Content -->
     <div class="content">
-        <h2 class="content-heading">Financial Analysis Related Settings <small>| All</small>
+        <h2 class="content-heading">Transactions Analysis Related Settings <small>| All</small>
             <div class="float-right">
 
             </div>
@@ -12,9 +12,14 @@
         <div class="row js-appear-enabled animated fadeIn" data-toggle="appear">
             <!-- Row #5 -->
             @foreach($settings as $item)
+                <?php
+                $staff_permissions = \App\Models\UsersPermission::getUserPermissions(Auth::user()->id);
+                ?>
+                @foreach($staff_permissions as $staff_permission)
+                    @if($staff_permission->permission_name == $item['name'])
                 <div class="col-6 col-md-4 col-xl-2">
                     <a class="block block-link-shadow text-center" href="{{ route($item['route']) }}">
-                        <div class="block-content">
+                        <div class="block-content" style="min-height: 170px">
                             <p class="mt-5">
                                 <i class="{{ $item['icon'] }} fa-3x"></i>
                             </p>
@@ -22,18 +27,9 @@
                         </div>
                     </a>
                 </div>
+                        @endif
+                    @endforeach
             @endforeach
-                <div class="col-6 col-md-4 col-xl-2">
-                    <a class="block block-link-shadow text-center" href="#">
-                        <div class="block-content ribbon ribbon-bookmark ribbon-success ribbon-left">
-                            <div class="ribbon-box">15</div>
-                            <p class="mt-5">
-                                <i class="si si-envelope-letter fa-3x"></i>
-                            </p>
-                            <p class="font-w600">Test</p>
-                        </div>
-                    </a>
-                </div>
         </div>
 
 
