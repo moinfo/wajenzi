@@ -18,12 +18,12 @@ class SaleController extends Controller
         if($this->handleCrud($request, 'Sale')) {
             return back();
         }
-        $sales = Sale::all();
+       // $sales = Sale::all();
         $efds = Efd::all();
 
         $data = [
             'efds' => $efds,
-            'sales' => $sales
+          //  'sales' => $sales
         ];
         return view('pages.sales.sales_index')->with($data);
     }

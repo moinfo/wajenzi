@@ -37,7 +37,7 @@
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form  name="collection_search" action="{{route('collection_search')}}" id="filter-form" method="post" autocomplete="off">
+                                    <form  name="collection_search" action="" id="filter-form" method="post" autocomplete="off">
                                         @csrf
                                         <div class="row">
                                             <div class="class col-md-3">
@@ -62,7 +62,7 @@
                                                         <span class="input-group-text" id="basic-addon3">EFD</span>
                                                     </div>
                                                     <select name="efd_id" id="input-efd-id" class="form-control" aria-describedby="basic-addon3">
-                                                        <option value="0">All EFD</option>
+                                                        <option value="">All EFD</option>
                                                         @foreach ($efds as $efd)
                                                             <option value="{{ $efd->id }}"> {{ $efd->name }} </option>
                                                         @endforeach
@@ -80,10 +80,10 @@
                             </div>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-striped table-vcenter">
-                                <thead>
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                            <thead>
                                 <tr>
-                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th class="text-center">#</th>
                                     <th>Date</th>
                                     <th>EFD Name</th>
                                     <th>Turnover</th>
@@ -95,13 +95,35 @@
                                 </tr>
                                 </thead>
                                 <tbody>
+                                <?php
+                                $sale = new \App\Models\Sale();
+                                $start_date = $_POST['start_date'] ?? date('Y-m-d');
+                                $end_date = $_POST['end_date'] ?? date('Y-m-d');
+                                $efd_id = $_POST['efd_id'] ?? null;
+
+                                $sales = $sale->getAll($start_date,$end_date,$efd_id);
+                                $total_amount = 0;
+                                $total_net = 0;
+                                $total_tax = 0;
+                                $total_turn_over = 0;
+                                ?>
                                 @foreach($sales as $sale)
+                                    <?php
+                                        $amount = $sale->amount;
+                                        $total_amount += $amount;
+                                        $net = $sale->net;
+                                        $total_net += $net;
+                                        $tax = $sale->tax;
+                                        $total_tax += $tax;
+                                        $turn_over = $sale->turn_over;
+                                        $total_turn_over += $turn_over;
+                                    ?>
                                     <tr id="sale-tr-{{$sale->id}}">
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
                                         <td class="font-w600">{{ $sale->date }}</td>
-                                        <td class="font-w600">{{ $sale->efd->name }}</td>
+                                        <td class="font-w600">{{ $sale->efd }}</td>
                                         <td class="text-right">{{ number_format($sale->amount, 2) }}</td>
                                         <td class="text-right">{{ number_format($sale->net, 2) }}</td>
                                         <td class="text-right">{{ number_format($sale->tax, 2) }}</td>
@@ -116,7 +138,7 @@
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"
-                                                        onclick="loadFormModal('sale_form', {className: 'Sale', id: {{$sale->id}}}, 'Edit {{$sale->name}}', 'modal-md');"
+                                                        onclick="loadFormModal('sale_form', {className: 'Sale', id: {{$sale->id}}}, 'Edit {{$sale->efd}}', 'modal-md');"
                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
                                                         data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
@@ -133,6 +155,16 @@
                                     </tr>
                                 @endforeach
                                 </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3"></td>
+                                        <td class="text-right">{{ number_format($total_amount, 2) }}</td>
+                                        <td class="text-right">{{ number_format($total_net, 2) }}</td>
+                                        <td class="text-right">{{ number_format($total_tax, 2) }}</td>
+                                        <td class="text-right">{{ number_format($total_turn_over, 2) }}</td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
 

@@ -26,13 +26,13 @@
             <div>
                 <div class="block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">Supplier Report</h3>
+                        <h3 class="block-title">VAT Analysis Report</h3>
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form  name="supplier_receiving_search" action="{{route('reports_supplier_report_search')}}" id="filter-form" method="post" autocomplete="off">
+                                    <form  name="supplier_receiving_search" action="" id="filter-form" method="post" autocomplete="off">
                                         @csrf
                                         <div class="row">
                                             <div class="class col-md-3">
@@ -40,7 +40,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Start Date</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-01')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -48,21 +48,9 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon2">End Date</span>
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-t')}}">
                                                 </div>
                                             </div>
-{{--                                            <div class="class col-md-4">--}}
-{{--                                                <div class="input-group mb-3">--}}
-{{--                                                    <div class="input-group-prepend">--}}
-{{--                                                        <span class="input-group-text" id="basic-addon3">Supplier</span>--}}
-{{--                                                    </div>--}}
-{{--                                                    <select name="supplier_id" id="input-supervisor-id" class="form-control" aria-describedby="basic-addon3">--}}
-{{--                                                        @foreach ($suppliers as $supplier)--}}
-{{--                                                            <option value="{{ $supplier->id }}"> {{ $supplier->name }} </option>--}}
-{{--                                                        @endforeach--}}
-{{--                                                    </select>--}}
-{{--                                                </div>--}}
-{{--                                            </div>--}}
                                             <div class="class col-md-2">
                                                 <div>
                                                     <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
@@ -73,21 +61,84 @@
                                 </div>
                             </div>
                         </div>
-                        <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
-                            <thead>
-                            <tr>
-                                <th class="text-center" style="width: 100px;">#</th>
-                                <th>Date</th>
-                                <th class="d-none d-sm-table-cell" style="width: 30%;">Description</th>
-                                <th class="text-left">Debit</th>
-                                <th class="text-left">Credit</th>
-                                <th class="text-left">Balance</th>
-                            </tr>
-                            </thead>
-                            <tbody>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                                <thead>
+                                <tr>
+                                    <th class="text-center">#</th>
+                                    <th>Supplier</th>
+                                    <th>VRN</th>
+                                    <th>Invoice</th>
+                                    <th>Date</th>
+                                    <th>Goods</th>
+                                    <th>Total</th>
+                                    <th>VAT EXC</th>
+                                    <th>VAT</th>
 
-                            </tbody>
-                        </table>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <?php
+                                use Illuminate\Support\Facades\DB;
+                                $purchase = new \App\Models\Purchase();
+                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
+                                $end_date = $_POST['end_date'] ?? date('Y-m-t');
+
+                                $purchases = $purchase->getAll($start_date,$end_date);
+                                $total_net = \App\Models\Sale::getTotalNet($start_date,$end_date);
+                                $total_tax = \App\Models\Sale::getTotalTax($start_date,$end_date);
+                                $total_exempt = \App\Models\Sale::getTotalExempt($start_date,$end_date);
+                                $total_purchases = 0;
+                                $total_vat_exempts = 0;
+                                $total_vats = 0;
+                                ?>
+                                @foreach($purchases as $purchase)
+                                    <?php
+                                    $purchases_amount = $purchase->total_amount;
+                                    $total_purchases += $purchases_amount;
+                                    $vat_exempts_amount = $purchase->amount_vat_exc;
+                                    $total_vat_exempts += $vat_exempts_amount;
+                                    $vats_amount = $purchase->vat_amount;
+                                    $total_vats += $vats_amount;
+                                    ?>
+                                    <tr id="purchase-tr-{{$purchase->id}}">
+                                        <td class="text-center">
+                                            {{$loop->index + 1}}
+                                        </td>
+                                        <td class="font-w600">{{ $purchase->supplier ?? null }}</td>
+                                        <td class="font-w600">{{ $purchase->vrn ?? null}}</td>
+                                        <td class="font-w600">{{ $purchase->tax_invoice }}</td>
+                                        <td class="font-w600">{{ $purchase->invoice_date }}</td>
+                                        <td class="font-w600">{{ $purchase->goods ?? null }}</td>
+                                        <td class="text-right">{{ number_format($purchase->total_amount, 2) }}</td>
+                                        <td class="text-right">{{ number_format($purchase->amount_vat_exc,2) }}</td>
+                                        <td class="text-right">{{ number_format($purchase->vat_amount, 2) }}</td>
+
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="6" class="text-right">TOTAL PURCHASES</td>
+                                    <td class="text-right">{{ number_format($total_purchases, 2) }}</td>
+                                    <td class="text-right">{{ number_format($total_vat_exempts, 2) }}</td>
+                                    <td class="text-right">{{ number_format($total_vats, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" class="text-right">TOTAL SALES</td>
+                                    <td class="text-right">{{ number_format($total_net, 2,'.',',') }}</td>
+                                    <td class="text-right">{{ number_format($total_exempt, 2) }}</td>
+                                    <td class="text-right">{{ number_format($total_tax, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="6" class="text-right"><b>VAT PAYABLE/(REFUND)</b></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right">{{ number_format(($total_tax-$total_vats), 2) }}</td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

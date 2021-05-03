@@ -21,9 +21,8 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $reports = [
-         ['name'=>'VAT Analysis ', 'route'=>'reports_vat_analysis', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'VAT Analysis', 'route'=>'reports_vat_analysis', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
-
             ['name' => 'General Report', 'route' => 'reports_general_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Business Position Details Report', 'route' => 'reports_business_position_details_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Credit Report', 'route' => 'reports_supplier_credit_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -67,14 +66,25 @@ class ReportsController extends Controller
         $data = [
             'supervisor_with_amount_of_grosses' => $supervisor_with_amount_of_grosses,
             'supervisors' => $supervisors,
-            '$grosses' => $grosses
+            'grosses' => $grosses
         ];
         return view('pages.reports.reports_gross_summary_report')->with($data);
     }
 
     public function supervisor_report(Request $request){
-        $data = [];
+        $suppliers = Supplier::all();
+        $data = [
+            'suppliers' => $suppliers
+        ];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+
+    public function vat_analysis_report(Request $request){
+        $suppliers = Supplier::all();
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_vat_analysis_report')->with($data);
     }
 
     public function business_position_report(Request $request){

@@ -62,7 +62,7 @@
                                                         <span class="input-group-text" id="basic-addon3">Suppliers</span>
                                                     </div>
                                                     <select name="supplier_id" id="input-supplier-id" class="form-control" aria-describedby="basic-addon3">
-                                                        <option value="0">All Suppliers</option>
+                                                        <option value="">All Suppliers</option>
                                                         @foreach ($suppliers as $supplier)
                                                             <option value="{{ $supplier->id }}"> {{ $supplier->name }} </option>
                                                         @endforeach
@@ -75,7 +75,7 @@
                                                         <span class="input-group-text" id="basic-addon3">Type</span>
                                                     </div>
                                                     <select name="purchase_type" id="input-purchase-id" class="form-control" aria-describedby="basic-addon3">
-                                                        <option value="0">All Purchase Types</option>
+                                                        <option value="">All Purchase Types</option>
                                                             <option value="1">VAT</option>
                                                             <option value="2">EXEMPT</option>
                                                     </select>
@@ -111,24 +111,13 @@
                                 <tbody>
                                 <?php
                                 use Illuminate\Support\Facades\DB;
+                                $purchase = new \App\Models\Purchase();
                                 $start_date = $_POST['start_date'] ?? date('Y-m-d');
                                 $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                                $supplier_id = $_POST['supplier_id'] ?? 0;
-                                $purchase_type = $_POST['purchase_type'] ?? 0;
+                                $supplier_id = $_POST['supplier_id'] ?? null;
+                                $purchase_type = $_POST['purchase_type'] ?? null;
 
-
-                                    $purchases = DB::table('purchases')
-                                        ->join('suppliers', 'suppliers.id', '=', 'purchases.supplier_id')
-                                        ->join('items', 'items.id', '=', 'purchases.item_id')
-                                        ->select('purchases.*','items.name as goods','suppliers.name as supplier', 'suppliers.vrn as vrn')
-                                        ->where('invoice_date','>=',$start_date)
-                                        ->where('invoice_date','<=',$end_date);
-                                        if($supplier_id != 0){
-                                          $purchases->where('supplier_id','=',$supplier_id);
-                                        }if($purchase_type != 0){
-                                          $purchases->where('purchase_type','=',$purchase_type);
-                                        }
-                                $purchases = $purchases->get();
+                                $purchases = $purchase->getAll($start_date,$end_date,$supplier_id,$purchase_type);
 
                                 $total_purchases = 0;
                                 $total_vat_exempts = 0;
@@ -184,17 +173,11 @@
                                 </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td colspan="6"></td>
                                         <td class="text-right">{{ number_format($total_purchases, 2) }}</td>
                                         <td class="text-right">{{ number_format($total_vat_exempts, 2) }}</td>
                                         <td class="text-right">{{ number_format($total_vats, 2) }}</td>
-                                        <td></td>
-                                        <td></td>
+                                        <td colspan="2"></td>
                                     </tr>
                                 </tfoot>
                             </table>
