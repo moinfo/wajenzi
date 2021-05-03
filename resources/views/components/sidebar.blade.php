@@ -87,10 +87,21 @@
                 <li class="nav-main-heading">
                     <span class="sidebar-mini-visible">VR</span><span class="sidebar-mini-hidden">MENU</span>
                 </li>
+
                 @foreach($user_menu as $menu)
+                    <?php
+                    $staff_permissions = \App\Models\UsersPermission::getUserPermissions(Auth::user()->id);
+                    ?>
+                @foreach($staff_permissions as $staff_permission)
+                    @if($staff_permission->permission_name == $menu['name'])
                     <li class="{{ request()->is( $menu['route'] .'/*') ? ' open' : '' }}">
                         <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i>{{$menu['name']}}</a>
-{{--                        <a class="nav-submenu" data-toggle="nav-submenu" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i><span class="sidebar-mini-hide">{{$menu['name']}}</span></a>--}}
+                @endif
+                        @endforeach
+
+
+
+                        {{--                        <a class="nav-submenu" data-toggle="nav-submenu" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i><span class="sidebar-mini-hide">{{$menu['name']}}</span></a>--}}
 {{--                        <ul>--}}
 {{--                            <li> <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}">{{$menu['name']}}</a> </li>--}}
 {{--                            @if(count($menu->subMenus))--}}

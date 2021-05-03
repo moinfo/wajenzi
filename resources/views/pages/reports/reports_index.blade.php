@@ -12,6 +12,11 @@
         <div class="row js-appear-enabled animated fadeIn" data-toggle="appear">
             <!-- Row #5 -->
             @foreach($reports as $item)
+                <?php
+                $staff_permissions = \App\Models\UsersPermission::getUserPermissions(Auth::user()->id);
+                ?>
+                @foreach($staff_permissions as $staff_permission)
+                        @if($staff_permission->permission_name == $item['name'])
                 <div class="col-6 col-md-4 col-xl-2">
                     <a class="block block-link-shadow text-center" href="{{ route($item['route']) }}">
                         <div class="block-content" style="min-height: 170px">
@@ -22,6 +27,8 @@
                         </div>
                     </a>
                 </div>
+                        @endif
+                    @endforeach
             @endforeach
         </div>
 
