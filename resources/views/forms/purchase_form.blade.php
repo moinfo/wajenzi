@@ -1,9 +1,10 @@
+
 <div class="block-content">
     <form method="post"  enctype="multipart/form-data">
         @csrf
         <div class="form-group">
             <label for="example-nf-email">Supplier</label>
-            <select name="supplier_id" id="input-supplier-id" class="form-control">
+            <select name="supplier_id" id="input-supplier-id" class="form-control select2" required>
                 <option value=""></option>
                 @foreach($suppliers as $supplier)
                     <option value="{{ $supplier->id }}" {{ ( $supplier->id == $object->supplier_id) ? 'selected' : '' }}> {{ $supplier->name }} </option>
@@ -12,7 +13,7 @@
         </div>
         <div class="form-group">
             <label for="example-nf-email">Item</label>
-            <select name="item_id" id="input-item-id" class="form-control">
+            <select name="item_id" id="input-item-id" class="form-control select2" required>
                 <option value=""></option>
                 @foreach($items as $item)
                     <option value="{{ $item->id }}" {{ ( $item->id == $object->item_id) ? 'selected' : '' }}> {{ $item->name }} </option>
@@ -21,10 +22,11 @@
         </div>
         <div class="form-group">
             <label for="example-nf-email">Purchase Type</label>
-            <select name="purchase_type" id="input-purchases_type" class="form-control">
+            <select name="purchase_type" id="input-purchases_type" class="form-control" required>
                 <option value="">Choose Purchases Type</option>
-                <option value="1">VAT</option>
-                <option value="2">EXEMPT</option>
+                @foreach($purchases_types as $purchases_type)
+                    <option value="{{ $purchases_type['id'] }}" {{ ( $purchases_type['id'] == $object->purchase_type) ? 'selected' : '' }}> {{ $purchases_type['name'] }} </option>
+                @endforeach
             </select>
         </div>
         <div class="form-group">
@@ -84,6 +86,13 @@
         format: 'yyyy-mm-dd'
     });
 
+    $(".select2").select2({
+        theme: "bootstrap",
+        placeholder: "Choose",
+        width: 'auto',
+        dropdownAutoWidth: true,
+        allowClear: true,
+    });
     $(function() {
         $('#amount_vat_exc').hide();
         $('#vat_amount').hide();

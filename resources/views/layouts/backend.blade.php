@@ -6,7 +6,7 @@
 
         <title>{{  $page_title }}</title>
 
-        <meta name="description" content="Reports Analysis">
+        <meta name="description" content="Financial Analysis">
         <meta name="author" content="pixelcave">
         <meta name="robots" content="noindex, nofollow">
 
@@ -23,6 +23,7 @@
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito+Sans:300,400,400i,600,700">
         <link rel="stylesheet" id="css-main" href="{{ mix('/css/codebase.css') }}">
         <link rel="stylesheet" id="css-sweetalert2" href="{{ asset('js/plugins/sweetalert2/sweetalert2.min.css') }}">
+        <link rel="stylesheet" href="{{ asset('js/plugins/select2/css/select2.min.css') }}">
         <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/bootstrap-datepicker/css/bootstrap-datepicker.css') }}">
 {{--        <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.css') }}">--}}
         <!-- You can include a specific file from public/css/themes/ folder to alter the default color theme of the template. eg: -->
@@ -107,7 +108,7 @@
                         Crafted with <i class="fa fa-heart text-pulse"></i> by <a class="font-w600" href="https://kibahaonline.co.tz" target="_blank">KibahaOnline</a>
                     </div>
                     <div class="float-left">
-                        <a class="font-w600" href="#" target="_blank">Reports Analysis</a> &copy; <span class="js-year-copy"></span>
+                        <a class="font-w600" href="#" target="_blank">Financial Analysis</a> &copy; <span class="js-year-copy"></span>
                     </div>
                 </div>
             </footer>
@@ -144,7 +145,9 @@
         <script src="{{ mix('js/codebase.app.js') }}"></script>
         <script src="{{ asset('js/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
         <script src="{{ asset('js/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js') }}"></script>
-{{--        <script src="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.min.js') }}"></script>--}}
+        <script src="{{ asset('js/plugins/select2/js/select2.min.js') }}"></script>
+
+        {{--        <script src="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.min.js') }}"></script>--}}
 
 
 
@@ -152,7 +155,7 @@
 
 
             var csrf_token = '{{csrf_token()}}';
-           
+
                 @if(Session::get('notifications') != null)
             @foreach(Session::get('notifications') as $notification)
                 Swal.fire('{{$notification['title']}}', '{{$notification['text']}}', '{{$notification['type']}}').then((res) => {

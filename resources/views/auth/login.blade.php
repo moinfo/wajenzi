@@ -8,9 +8,9 @@
             <div class="content content-full overflow-hidden">
                 <!-- Header -->
                 <div class="py-30 text-center">
-                    <a class="link-effect font-w700" href="index.html">
+                    <a class="link-effect font-w700" href="#">
                         <i class="si si-fire"></i>
-                        <span class="font-size-xl text-primary-dark">Reports</span><span class="font-size-xl">Analysis</span>
+                        <span class="font-size-xl text-primary-dark">Financial</span><span class="font-size-xl">Analysis</span>
                     </a>
                     <h1 class="h4 font-w700 mt-30 mb-10">Welcome to Your Dashboard</h1>
                     <h2 class="h5 font-w400 text-muted mb-0">It’s a great day today!</h2>
@@ -24,7 +24,7 @@
                         @csrf
 
                         <div class="block block-themed block-rounded block-shadow">
-                        <div class="block-header bg-gd-dusk">
+                        <div class="block-header bg-gd-cherry">
                             <h3 class="block-title">Please Sign In</h3>
                             <div class="block-options">
                                 <button type="button" class="btn-block-option">

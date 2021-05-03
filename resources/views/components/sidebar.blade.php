@@ -38,7 +38,7 @@
                 <div class="content-header-item">
                     <a class="link-effect font-w700" href="/">
                         <i class="si si-users text-primary"></i>
-                        <span class="font-size-xl text-dual-primary-dark">Reports</span><span class="font-size-xl text-primary">Analysis</span>
+                        <span class="font-size-xl text-dual-primary-dark">Financial</span><span class="font-size-xl text-primary">Analysis</span>
                     </a>
                 </div>
                 <!-- END Logo -->
@@ -91,6 +91,7 @@
                 @foreach($user_menu as $menu)
                     <?php
                     $staff_permissions = \App\Models\UsersPermission::getUserPermissions(Auth::user()->id);
+                   // dump($staff_permissions);
                     ?>
                 @foreach($staff_permissions as $staff_permission)
                     @if($staff_permission->permission_name == $menu['name'])

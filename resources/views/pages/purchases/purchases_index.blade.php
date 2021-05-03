@@ -33,7 +33,7 @@
                             <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
-                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th class="text-center">#</th>
                                     <th>Supplier Name</th>
                                     <th>Supplier VRN</th>
                                     <th>Tax Invoice</th>
@@ -42,7 +42,7 @@
                                     <th>Total Amount</th>
                                     <th>Amount VAT EXC</th>
                                     <th>VAT Amount</th>
-                                    <th class="text-center" style="width: 100px;">Actions</th>
+                                    <th class="text-center">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -51,19 +51,18 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
-                                        <td class="font-w600">{{ $purchase->supplier->name }}</td>
-                                        <td class="font-w600">{{ $purchase->supplier->vrn }}</td>
+                                        <td class="font-w600">{{ $purchase->supplier->name ?? null }}</td>
+                                        <td class="font-w600">{{ $purchase->supplier->vrn ?? null}}</td>
                                         <td class="font-w600">{{ $purchase->tax_invoice }}</td>
                                         <td class="font-w600">{{ $purchase->invoice_date }}</td>
-                                        <td class="font-w600">{{ $purchase->item->name }}</td>
+                                        <td class="font-w600">{{ $purchase->item->name ?? null }}</td>
                                         <td class="font-w600">{{ number_format($purchase->total_amount, 2) }}</td>
                                         <td class="font-w600">{{ number_format($purchase->amount_vat_exc,2) }}</td>
                                         <td class="font-w600">{{ number_format($purchase->vat_amount, 2) }}</td>
-
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <button type="button"
-                                                        onclick="loadFormModal('purchase_form', {className: 'Purchase', id: {{$purchase->id}}}, 'Edit {{$purchase->name}}', 'modal-md');"
+                                                        onclick="loadFormModal('purchase_form', {className: 'Purchase', id: {{$purchase->id}}}, 'Edit {{ $purchase->supplier->name ?? null }} Purchases', 'modal-md');"
                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
                                                         data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>

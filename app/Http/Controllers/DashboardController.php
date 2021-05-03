@@ -37,7 +37,7 @@ class DashboardController extends Controller
             'gross' => $gross,
         ];
 
-        $this->notify('Welcome to a Reports Analysis System', 'Hello User', 'success');
+        $this->notify('Welcome to a Financial Analysis System', 'Hello User', 'success');
         return view('pages.dashboard')->with($data);
     }
 }

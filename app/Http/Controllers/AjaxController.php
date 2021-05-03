@@ -51,6 +51,10 @@ class AjaxController
                         ['name'=>'INTERN'],
                         ['name'=>'EXTERNAL']
                     ];
+                    $purchases_types = [
+                        ['id'=>'1','name'=>'VAT'],
+                        ['id'=>'2','name'=>'EXEMPT']
+                    ];
                     $permissions = [
                         ['name'=>'MENU'],
                         ['name'=>'SETTING'],
@@ -84,6 +88,7 @@ class AjaxController
                             'suppliers' => $suppliers,
                             'employees' => $employees,
                             'natures' => $natures,
+                            'purchases_types' => $purchases_types,
                             'permissions' => $permissions,
                             'supervisors_and_drivers' => $supervisors_and_drivers,
                             'items' => $items,
