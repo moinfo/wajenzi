@@ -49,7 +49,7 @@
                             @foreach($suppliers as $supplier)
                                 <tr id="supplier-tr-{{$supplier->id}}">
                                     <td class="text-center">
-                                        {{$loop->index + 1}}
+                                        {{$item->id}}
                                     </td>
                                     <td class="font-w600">{{ $supplier->name }}</td>
                                     <td class="font-w400">{{ $supplier->phone }}</td>

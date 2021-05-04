@@ -26,7 +26,7 @@
                             @foreach($items as $item)
                                 <tr id="item-tr-{{$item->id}}">
                                     <td class="text-center">
-                                        {{$loop->index + 1}}
+                                        {{$item->id}}
                                     </td>
                                     <td class="font-w600">{{ $item->name }}</td>
                                     <td class="text-center" >
