@@ -52,9 +52,9 @@
                                             <button type="button" onclick="loadFormModal('settings_expenses_category_form', {className: 'ExpensesCategory', id: {{$expenses_category->id}}}, 'Edit {{$expenses_category->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                 <i class="fa fa-pencil"></i>
                                             </button>
-                                            <button type="button" onclick="deleteModelItem('ExpensesCategory', {{$expenses_category->id}}, 'expenses_category-tr-{{$expenses_category->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
-                                                <i class="fa fa-times"></i>
-                                            </button>
+{{--                                            <button type="button" onclick="deleteModelItem('ExpensesCategory', {{$expenses_category->id}}, 'expenses_category-tr-{{$expenses_category->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
+{{--                                                <i class="fa fa-times"></i>--}}
+{{--                                            </button>--}}
                                         </div>
                                     </td>
                                 </tr>

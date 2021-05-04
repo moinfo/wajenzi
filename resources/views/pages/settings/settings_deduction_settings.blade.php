@@ -63,9 +63,9 @@
                                             <button type="button" onclick="loadFormModal('settings_deduction_settings_form', {className: 'DeductionSetting', id: {{$deduction_setting->id}}}, 'Edit {{$deduction_setting->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                 <i class="fa fa-pencil"></i>
                                             </button>
-                                            <button type="button" onclick="deleteModelItem('DeductionSetting', {{$deduction_setting->id}}, 'deduction_setting-tr-{{$deduction_setting->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
-                                                <i class="fa fa-times"></i>
-                                            </button>
+{{--                                            <button type="button" onclick="deleteModelItem('DeductionSetting', {{$deduction_setting->id}}, 'deduction_setting-tr-{{$deduction_setting->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
+{{--                                                <i class="fa fa-times"></i>--}}
+{{--                                            </button>--}}
                                         </div>
                                     </td>
                                 </tr>

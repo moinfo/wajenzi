@@ -84,9 +84,9 @@
                                                 <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User', id: {{$user->id}}}, 'Edit {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
                                                 </button>
-                                                <button type="button" onclick="deleteModelItem('User', {{$user->id}}, 'user-tr-{{$user->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
-                                                    <i class="fa fa-times"></i>
-                                                </button>
+{{--                                                <button type="button" onclick="deleteModelItem('User', {{$user->id}}, 'user-tr-{{$user->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
+{{--                                                    <i class="fa fa-times"></i>--}}
+{{--                                                </button>--}}
                                             </div>
                                         </td>
                                     </tr>
