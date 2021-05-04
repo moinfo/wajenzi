@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Allowance;
 use App\Models\Collection;
+use App\Models\Efd;
 use App\Models\Expense;
 use App\Models\ExpensesCategory;
 use App\Models\Gross;
@@ -22,6 +23,8 @@ class ReportsController extends Controller
     {
         $reports = [
             ['name'=>'VAT Analysis', 'route'=>'reports_vat_analysis', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Sales Report', 'route'=>'reports_sales_report', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Purchases Report', 'route'=>'reports_purchases_report', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
             ['name' => 'General Report', 'route' => 'reports_general_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Business Position Details Report', 'route' => 'reports_business_position_details_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -85,6 +88,27 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_vat_analysis_report')->with($data);
+    }
+
+    public function sales_report(Request $request){
+        $efds = Efd::all();
+        $data = [
+            'efds' => $efds
+        ];
+        return view('pages.reports.reports_sales_report')->with($data);
+    }
+
+    public function purchases_report(Request $request){
+        $suppliers = Supplier::all();
+        $purchases_types = [
+            ['id'=>'1','name'=>'VAT'],
+            ['id'=>'2','name'=>'EXEMPT']
+        ];
+        $data = [
+            'suppliers' => $suppliers,
+            'purchases_types' => $purchases_types
+        ];
+        return view('pages.reports.reports_purchases_report')->with($data);
     }
 
     public function business_position_report(Request $request){
