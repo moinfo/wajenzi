@@ -81,6 +81,7 @@
                                 <?php
                                 use Illuminate\Support\Facades\DB;
                                 $purchase = new \App\Models\Purchase();
+                                $payable = new \App\Models\VatAnalysis();
                                 $start_date = $_POST['start_date'] ?? date('Y-m-01');
                                 $end_date = $_POST['end_date'] ?? date('Y-m-t');
 
@@ -88,6 +89,7 @@
                                 $total_net = \App\Models\Sale::getTotalNet($start_date,$end_date);
                                 $total_tax = \App\Models\Sale::getTotalTax($start_date,$end_date);
                                 $total_exempt = \App\Models\Sale::getTotalExempt($start_date,$end_date);
+                                $vat_payable = $payable->getTaxPayable($end_date);
                                 $total_purchases = 0;
                                 $total_vat_exempts = 0;
                                 $total_vats = 0;
@@ -134,7 +136,7 @@
                                     <td colspan="6" class="text-right"><b>VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
-                                    <td class="text-right">{{ number_format(($total_tax-$total_vats), 2) }}</td>
+                                    <td class="text-right">{{ number_format(($vat_payable), 2) }}</td>
                                 </tr>
                                 </tfoot>
                             </table>

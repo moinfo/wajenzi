@@ -59,4 +59,15 @@ class Sale extends Model
         }
         return $sales = $sales->sum('sales.turn_over');
     }
+    public static function getTotalExemptFromStart($end_date,$efd_id = null){
+        $start_date = '2020-01-01';
+        $sales = DB::table('sales')
+            ->join('efds', 'efds.id', '=', 'sales.efd_id')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date);
+        if($efd_id != null){
+            $sales->where('efd_id','=',$efd_id);
+        }
+        return $sales = $sales->sum('sales.turn_over');
+    }
 }
