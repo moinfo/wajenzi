@@ -7,12 +7,12 @@
             <input type="text" class="form-control" id="input-supplier-name" name="name" value="{{ $object->name ?? '' }}" placeholder="Supplier Name" required>
         </div>
         <div class="form-group">
-            <label for="example-nf-phone" class="control-label required">Phone</label>
-            <input type="text" class="form-control" id="input-phone" name="phone" value="{{ $object->phone ?? '' }}" placeholder="Phone Number" required>
+            <label for="example-nf-phone">Phone</label>
+            <input type="text" class="form-control" id="input-phone" name="phone" value="{{ $object->phone ?? '' }}" placeholder="Phone Number" >
         </div>
-        <div class="form-group" class="control-label required">
+        <div class="form-group" >
             <label for="example-nf-email">Email</label>
-            <input type="email" class="form-control" id="input-email" name="email" value="{{ $object->email ?? '' }}" placeholder="Email Address" required>
+            <input type="email" class="form-control" id="input-email" name="email" value="{{ $object->email ?? '' }}" placeholder="Email Address" >
         </div>
         <div class="form-group">
             <label for="example-nf-address">Address</label>
@@ -25,7 +25,6 @@
         <div class="form-group">
             <label for="example-nf-system" class="control-label required">System</label>
             <select name="system_id" id="input-system-id" class="form-control" required>
-                <option value="">Select System</option>
                 @foreach ($systems as $system)
                     <option value="{{ $system['id'] }}" {{ ( $system['id'] == $object->system_id) ? 'selected' : '' }}> {{ $system['name'] }} </option>
                 @endforeach
