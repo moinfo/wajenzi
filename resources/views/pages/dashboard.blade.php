@@ -1,6 +1,20 @@
 @extends('layouts.backend')
 
 @section('content')
+    <?php
+    $start_date = date('Y-m-01');
+    $end_date = date('Y-m-t');
+    $last_month_last_date = date("Y-m-t", strtotime("last month"));
+    $last_month_first_date = date("Y-m-01", strtotime("last month"));
+    $sales = \App\Models\Sale::getTotalTax($start_date,$end_date);
+    $purchases = \App\Models\Purchase::getTotalPurchasesWithVAT($end_date,null,null,$start_date,);
+
+    $vat_analysis = new \App\Models\VatAnalysis();
+
+    $this_month_tax_payable = $vat_analysis->getTaxPayable($end_date);
+    $last_month_tax_payable = \App\Models\VatPayment::getTotalPaymentOfLastMonth($last_month_first_date,$last_month_last_date)
+
+    ?>
 <!-- Page Content -->
 <div class="content">
     <div class="row invisible" data-toggle="appear">
@@ -11,7 +25,7 @@
                     <div class="float-right mt-15 d-none d-sm-block">
                         <i class="si si-bag fa-2x text-primary-light"></i>
                     </div>
-                    <div class="font-size-h3 font-w600 text-primary" data-toggle="countTo" data-speed="1000" data-to="{{$collections['total_amount'] ?? 0}}">{{$collections['total_amount'] ?? 0}}</div>
+                    <div class="font-size-h3 font-w600 text-primary" data-toggle="countTo" data-speed="1000" data-to="{{$sales}}">{{$sales}}</div>
                     <div class="font-size-sm font-w600 text-uppercase text-muted">Sales</div>
                 </div>
             </a>
@@ -22,7 +36,7 @@
                     <div class="float-right mt-15 d-none d-sm-block">
                         <i class="si si-wallet fa-2x text-earth-light"></i>
                     </div>
-                    <div class="font-size-h3 font-w600 text-earth"><span data-toggle="countTo" data-speed="1000" data-to="{{$transactions['total_amount'] ?? 0}}">{{$transactions['total_amount'] ?? 0}}</span></div>
+                    <div class="font-size-h3 font-w600 text-earth"><span data-toggle="countTo" data-speed="1000" data-to="{{$purchases}}">{{$purchases}}</span></div>
                     <div class="font-size-sm font-w600 text-uppercase text-muted">Purchases</div>
                 </div>
             </a>
@@ -33,7 +47,7 @@
                     <div class="float-right mt-15 d-none d-sm-block">
                         <i class="si si-globe-alt fa-2x text-elegance-light"></i>
                     </div>
-                    <div class="font-size-h3 font-w600 text-elegance" data-toggle="countTo" data-speed="1000" data-to="{{$transactions['total_amount'] ?? 0}}">{{$transactions['total_amount'] ?? 0}}</div>
+                    <div class="font-size-h3 font-w600 text-elegance" data-toggle="countTo" data-speed="1000" data-to="{{$last_month_tax_payable}}">{{$last_month_tax_payable}}</div>
                     <div class="font-size-sm font-w600 text-uppercase text-muted">Last Month VAT</div>
                 </div>
             </a>
@@ -44,7 +58,7 @@
                     <div class="float-right mt-15 d-none d-sm-block">
                         <i class="si si-bar-chart fa-2x text-pulse"></i>
                     </div>
-                    <div class="font-size-h3 font-w600 text-pulse" data-toggle="countTo" data-speed="1000" data-to="{{$gross['total_amount'] ?? 0}}">{{$gross['total_amount'] ?? 0}}</div>
+                    <div class="font-size-h3 font-w600 text-pulse" data-toggle="countTo" data-speed="1000" data-to="{{$this_month_tax_payable}}">{{$this_month_tax_payable}}</div>
                     <div class="font-size-sm font-w600 text-uppercase text-muted">This Month VAT</div>
                 </div>
             </a>
@@ -578,8 +592,8 @@
     if (isset($dates)) {
         foreach ($dates as $index => $date) {
             // echo $date;
-            $collections_per_week[] = Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
-            $expenses_per_week[] = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+            $collections_per_week[] = \App\Models\Sale::Where('date',$date)->select([DB::raw("SUM(tax) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+            $expenses_per_week[] = \App\Models\Purchase::Where('invoice_date',$date)->select([DB::raw("SUM(vat_amount) as total_amount")])->groupBy('invoice_date')->get()->first()['total_amount'] ?? 0;
 
         }
     }

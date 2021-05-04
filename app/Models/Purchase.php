@@ -51,8 +51,8 @@ class Purchase extends Model
         return $purchases = $purchases->sum('purchases.total_amount');
     }
 
-    public static function getTotalPurchasesWithVAT($end_date, $supplier_id = null, $purchase_type = null){
-        $start_date = '2020-01-01';
+    public static function getTotalPurchasesWithVAT($end_date, $supplier_id = null, $purchase_type = null, $start_date = null){
+        $start_date = '2020-01-01' ?? $start_date;
         $purchases = DB::table('purchases')
             ->join('suppliers', 'suppliers.id', '=', 'purchases.supplier_id')
             ->join('items', 'items.id', '=', 'purchases.item_id')
