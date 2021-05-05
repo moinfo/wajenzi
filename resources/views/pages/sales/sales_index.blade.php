@@ -97,8 +97,8 @@
                                 <tbody>
                                 <?php
                                 $sale = new \App\Models\Sale();
-                                $start_date = $_POST['start_date'] ?? date('Y-m-d');
-                                $end_date = $_POST['end_date'] ?? date('Y-m-d');
+                                $start_date = $_POST['start_date'] ?? $_GET['start_date'] ?? date('Y-m-d');
+                                $end_date = $_POST['end_date'] ?? $_GET['end_date'] ?? date('Y-m-d');
                                 $efd_id = $_POST['efd_id'] ?? null;
 
                                 $sales = $sale->getAll($start_date,$end_date,$efd_id);

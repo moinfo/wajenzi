@@ -125,7 +125,7 @@
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-right">TOTAL SALES</td>
-                                    <td class="text-right">{{ number_format($total_exempt, 2,'.',',') }}</td>
+                                    <td class="text-right"><a href="{{ route('sales', ['start_date'=>$start_date, 'end_date'=>$end_date]) }}">{{ number_format($total_exempt, 2,'.',',') }}</a></td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-right"><b>DIFFERENCE</b></td>

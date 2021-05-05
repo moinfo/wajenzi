@@ -74,7 +74,6 @@
                                     <th>Total</th>
                                     <th>VAT EXC</th>
                                     <th>VAT</th>
-
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -134,7 +133,7 @@
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-right">TOTAL SALES</td>
-                                    <td class="text-right">{{ number_format($total_sales, 2,'.',',') }}</td>
+                                    <td class="text-right"><a href="{{ route('sales', ['start_date'=>$start_date, 'end_date'=>$end_date]) }}">{{ number_format($total_sales, 2,'.',',') }}</a></td>
                                     <td class="text-right">{{ number_format($total_amount_vat_exc, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vat_amt, 2) }}</td>
                                 </tr>
@@ -144,6 +143,7 @@
                                     <td class="text-right"></td>
                                     <td class="text-right">{{ number_format(($vat_payable), 2) }}</td>
                                 </tr>
+
                                 </tfoot>
                             </table>
                         </div>
