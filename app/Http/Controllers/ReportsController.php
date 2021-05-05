@@ -22,10 +22,11 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $reports = [
-            ['name'=>'VAT Analysis', 'route'=>'reports_vat_analysis', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Sales Report', 'route'=>'reports_sales_report', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Purchases Report', 'route'=>'reports_purchases_report', 'icon' => 'si si-settings', 'badge' => 0],
-            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'VAT Analysis', 'route'=>'reports_vat_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name'=>'Exempt Analysis', 'route'=>'reports_exempt_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name'=>'Sales Report', 'route'=>'reports_sales_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name'=>'Purchases Report', 'route'=>'reports_purchases_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'General Report', 'route' => 'reports_general_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Business Position Details Report', 'route' => 'reports_business_position_details_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Credit Report', 'route' => 'reports_supplier_credit_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -88,6 +89,14 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_vat_analysis_report')->with($data);
+    }
+
+    public function exempt_analysis_report(Request $request){
+        $suppliers = Supplier::all();
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_exempt_analysis_report')->with($data);
     }
 
     public function sales_report(Request $request){

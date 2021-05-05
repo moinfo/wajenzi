@@ -37,6 +37,28 @@ class Sale extends Model
         }
         return $sales = $sales->sum('sales.net');
     }
+    public static function getTotalTurnover($start_date,$end_date,$efd_id = null){
+        $sales = DB::table('sales')
+            ->join('efds', 'efds.id', '=', 'sales.efd_id')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date);
+        if($efd_id != null){
+            $sales->where('efd_id','=',$efd_id);
+        }
+        return $sales = $sales->sum('sales.amount');
+    }
+
+    public static function getTotalSale($start_date,$end_date,$efd_id = null){
+       return self::getTotalTurnover($start_date,$end_date,$efd_id = null) - self::getTotalExempt($start_date,$end_date,$efd_id = null);
+
+    }
+
+    public static function getTotalSaleVatExcl($start_date,$end_date,$efd_id = null){
+        return self::getTotalSale($start_date,$end_date,$efd_id = null)*100/118;
+    }
+    public static function getTotalVatAmt($start_date,$end_date,$efd_id = null){
+        return self::getTotalSaleVatExcl($start_date,$end_date,$efd_id = null)*0.18;
+    }
 
     public static function getTotalTax($start_date,$end_date,$efd_id = null){
         $sales = DB::table('sales')

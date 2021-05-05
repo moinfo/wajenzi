@@ -11,9 +11,9 @@ class VatAnalysis extends Model
 
     public function getTaxPayable($end_date){
         $purchases_vat = Purchase::getTotalPurchasesWithVAT($end_date);
-        $sales_vat = Sale::getTotalExemptFromStart($end_date);
+        $sales_vat = Sale::getTotalVatAmt('2020-01-01',$end_date);
         $payment_vat = VatPayment::getTotalPayments($end_date);
-        return $payment_vat - ($sales_vat-$purchases_vat);
+        return  ($sales_vat-$purchases_vat) - $payment_vat;
 
     }
 }

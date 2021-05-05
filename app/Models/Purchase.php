@@ -35,6 +35,9 @@ class Purchase extends Model
         return $purchases = $purchases->get();
     }
 
+
+
+
     public static function getTotalPurchases($end_date, $supplier_id = null, $purchase_type = null){
         $start_date = '2020-01-01';
         $purchases = DB::table('purchases')

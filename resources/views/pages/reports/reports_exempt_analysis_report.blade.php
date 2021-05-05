@@ -26,7 +26,7 @@
             <div>
                 <div class="block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">VAT Analysis Report</h3>
+                        <h3 class="block-title">Exempt Analysis Report</h3>
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
@@ -72,9 +72,6 @@
                                     <th>Date</th>
                                     <th>Goods</th>
                                     <th>Total</th>
-                                    <th>VAT EXC</th>
-                                    <th>VAT</th>
-
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -82,12 +79,12 @@
                                 use Illuminate\Support\Facades\DB;
                                 $purchase = new \App\Models\Purchase();
                                 $payable = new \App\Models\VatAnalysis();
-                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
-                                $end_date = $_POST['end_date'] ?? date('Y-m-t');
-//                                $start_date = $_POST['start_date'] ?? '2021-02-01';
-//                                $end_date = $_POST['end_date'] ?? '2021-02-28';
+//                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
+//                                $end_date = $_POST['end_date'] ?? date('Y-m-t');
+                                $start_date = $_POST['start_date'] ?? '2021-04-01';
+                                $end_date = $_POST['end_date'] ?? '2021-04-30';
 
-                                $purchases = $purchase->getAll($start_date,$end_date,null,1);
+                                $purchases = $purchase->getAll($start_date,$end_date,null,2);
                                 $total_net = \App\Models\Sale::getTotalNet($start_date,$end_date);
                                 $total_turnover = \App\Models\Sale::getTotalTurnover($start_date,$end_date);
                                 $total_tax = \App\Models\Sale::getTotalTax($start_date,$end_date);
@@ -119,8 +116,6 @@
                                         <td class="font-w600">{{ $purchase->invoice_date }}</td>
                                         <td class="font-w600">{{ $purchase->goods ?? null }}</td>
                                         <td class="text-right">{{ number_format($purchase->total_amount, 2) }}</td>
-                                        <td class="text-right">{{ number_format($purchase->amount_vat_exc,2) }}</td>
-                                        <td class="text-right">{{ number_format($purchase->vat_amount, 2) }}</td>
 
                                     </tr>
                                 @endforeach
@@ -129,20 +124,14 @@
                                 <tr>
                                     <td colspan="6" class="text-right">TOTAL PURCHASES</td>
                                     <td class="text-right">{{ number_format($total_purchases, 2) }}</td>
-                                    <td class="text-right">{{ number_format($total_vat_exempts, 2) }}</td>
-                                    <td class="text-right">{{ number_format($total_vats, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="6" class="text-right">TOTAL SALES</td>
-                                    <td class="text-right">{{ number_format($total_sales, 2,'.',',') }}</td>
-                                    <td class="text-right">{{ number_format($total_amount_vat_exc, 2) }}</td>
-                                    <td class="text-right">{{ number_format($total_vat_amt, 2) }}</td>
+                                    <td class="text-right">{{ number_format($total_exempt, 2,'.',',') }}</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="6" class="text-right"><b>VAT PAYABLE/(REFUND)</b></td>
-                                    <td class="text-right"></td>
-                                    <td class="text-right"></td>
-                                    <td class="text-right">{{ number_format(($vat_payable), 2) }}</td>
+                                    <td colspan="6" class="text-right"><b>DIFFERENCE</b></td>
+                                    <td class="text-right">{{ number_format(($total_exempt-$total_purchases), 2) }}</td>
                                 </tr>
                                 </tfoot>
                             </table>
