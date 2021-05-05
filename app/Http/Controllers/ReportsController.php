@@ -23,6 +23,7 @@ class ReportsController extends Controller
     {
         $reports = [
             ['name'=>'VAT Analysis', 'route'=>'reports_vat_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name'=>'VAT Payments', 'route'=>'reports_vat_payment', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Exempt Analysis', 'route'=>'reports_exempt_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Sales Report', 'route'=>'reports_sales_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Purchases Report', 'route'=>'reports_purchases_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -81,6 +82,14 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+
+    public function vat_payments_report(Request $request){
+        $suppliers = Supplier::all();
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_vat_payments_report')->with($data);
     }
 
     public function vat_analysis_report(Request $request){

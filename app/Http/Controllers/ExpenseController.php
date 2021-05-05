@@ -105,49 +105,21 @@ class ExpenseController extends Controller
         }
         $start_date = $request->input('start_date') ?? date('Y-m-d');
         $end_date = $request->input('end_date') ?? date('Y-m-d');
-        $supervisor_id = $request->input('supervisor_id');
         $expenses_category_id = $request->input('expenses_category_id');
-        if($supervisor_id == 0 && $expenses_category_id == 0){
+
             $expenses = DB::table('expenses')
-                ->join('supervisors', 'supervisors.id', '=', 'expenses.supervisor_id')
                 ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses.expenses_category_id')
                 ->select('expenses.*','expenses_categories.name as category_name','supervisors.name as supervisor_name')
                 ->where('date','>=',$start_date)
-                ->where('date','<=',$end_date)
-                ->get();
-        }elseif($supervisor_id != 0 && $expenses_category_id == 0){
-            $expenses = DB::table('expenses')
-                ->join('supervisors', 'supervisors.id', '=', 'expenses.supervisor_id')
-                ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses.expenses_category_id')
-                ->select('expenses.*','expenses_categories.name as category_name','supervisors.name as supervisor_name')
-                ->where('date','>=',$start_date)
-                ->where('date','<=',$end_date)
-                ->where('supervisor_id','=',$supervisor_id)
-                ->get();
-        }elseif($supervisor_id == 0 && $expenses_category_id != 0){
-            $expenses = DB::table('expenses')
-                ->join('supervisors', 'supervisors.id', '=', 'expenses.supervisor_id')
-                ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses.expenses_category_id')
-                ->select('expenses.*','expenses_categories.name as category_name','supervisors.name as supervisor_name')
-                ->where('date','>=',$start_date)
-                ->where('date','<=',$end_date)
-                ->where('expenses_category_id','=',$expenses_category_id)
-                ->get();
-        }
-        else{
-            $expenses = DB::table('expenses')
-                ->join('supervisors', 'supervisors.id', '=', 'expenses.supervisor_id')
-                ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses.expenses_category_id')
-                ->select('expenses.*','expenses_categories.name as category_name','supervisors.name as supervisor_name')
-                ->where('date','>=',$start_date)
-                ->where('date','<=',$end_date)
-                ->where('supervisor_id','=',$supervisor_id)
-                ->where('expenses_category_id','=',$expenses_category_id)
-                ->get();
-        }
+                ->where('date','<=',$end_date);
+                if($expenses_category_id != 0){
+                    $expenses->where('expenses_category_id','=',$expenses_category_id);
+                }
+                $expenses = $expenses->get();
+
 
         $supervisors = Supervisor::all();
         $expense_categories = ExpensesCategory::all();
-        return view('pages.expenses.expenses_index',compact('expenses','supervisors', 'expense_categories'));
+        return view('pages.expenses.expenses_index',compact('expenses', 'expense_categories'));
     }
 }

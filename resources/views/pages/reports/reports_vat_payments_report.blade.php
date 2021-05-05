@@ -19,21 +19,20 @@
     </script>
 @endsection
 @section('content')
-
     <div class="main-container">
         <div class="content">
             <div class="content-heading">Reports
             </div>
             <div>
-                <div class="block block-themed">
-                    <div class="block-header bg-gd-dusk">
-                        <h3 class="block-title">Expenses Report</h3>
+                <div class="block">
+                    <div class="block-header block-header-default">
+                        <h3 class="block-title">VAT Payments Report</h3>
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form  name="expense_search" action="" id="filter-form" method="post" autocomplete="off">
+                                    <form  name="vat_payment_search" action="" id="filter-form" method="post" autocomplete="off">
                                         @csrf
                                         <div class="row">
                                             <div class="class col-md-3">
@@ -41,7 +40,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Start Date</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-01')}}">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d', strtotime('first day of january this year'))}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -49,7 +48,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon2">End Date</span>
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d', strtotime('last day of december this year'))}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-2">
@@ -63,44 +62,45 @@
                             </div>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                            <table id="js-dataTable-full" class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
-                                    <th>Expenses Description</th>
-                                    <th>Expenses Categories</th>
-                                    <th>Total Expense</th>
+                                    <th>Bank Name</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <?php
-                                use Illuminate\Support\Facades\DB;$start_date = $_POST['start_date'] ?? date('Y-m-d');
-                                    $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                                    $expenses = \App\Models\Expense::select([DB::raw("expenses.*,expenses_categories.name as expense_category")])->join('expenses_categories','expenses_categories.id','expenses.expenses_category_id')->WhereBetween('date',[$start_date,$end_date])->groupBy('date')->get();
-                                $total_expenses=0;
-                                    ?>
-                                @foreach($expenses as $expense)
+                                use Illuminate\Support\Facades\DB;
+                                $vat_payment = new \App\Models\VatPayment();
+                                $start_date = $_POST['start_date'] ?? date('Y-m-d', strtotime('first day of january this year'));
+                                $end_date = $_POST['end_date'] ?? date('Y-m-d', strtotime('last day of december this year'));
+
+                                $vat_payments = $vat_payment->getAll($start_date,$end_date);
+                                $sum = 0;
+                                ?>
+                                @foreach($vat_payments as $vat_payment)
                                     <?php
-                                    $expenses = $expense->amount;
-                                    $total_expenses += $expenses;
+                                    $sum += $vat_payment->amount;
                                     ?>
-                                    <tr>
+                                    <tr id="vat_payment-tr-{{$vat_payment->id}}">
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
-                                        <td>{{ $expense->date }}</td>
-                                        <td>{{$expense->description }}</td>
-                                        <td>{{ $expense->expense_category }}</td>
-                                        <td class="text-right">{{number_format($expense->amount ?? 0)}}</td>
-
+                                        <td>{{ $vat_payment->date }}</td>
+                                        <td>{{ $vat_payment->bank_name }}</td>
+                                        <td class="font-w600">{{ $vat_payment->description }}</td>
+                                        <td class="text-right">{{ number_format($vat_payment->amount, 2) }}</td>
                                     </tr>
                                 @endforeach
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td colspan="4"></td>
-                                    <td class="text-right">{{number_format($total_expenses ?? 0)}}</td>
+                                    <td class="text-right text-dark" colspan="4"></td>
+                                    <td class="text-right text-dark"><b>{{number_format($sum,2)}}</b></td>
                                 </tr>
                                 </tfoot>
                             </table>
@@ -110,8 +110,4 @@
             </div>
         </div>
     </div>
-
 @endsection
-
-
-

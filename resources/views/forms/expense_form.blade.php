@@ -1,19 +1,7 @@
 <div class="block-content">
     <form method="post"  enctype="multipart/form-data">
         @csrf
-
-        <div class="form-group">
-            <label for="example-nf-supervisor" class="control-label required">Supervisor Name</label>
-            <select name="supervisor_id" id="input-ifd-id" class="form-control" required>
-
-                <option value="">Select Supervisor</option>
-
-                @foreach ($supervisors_and_drivers as $supervisor)
-                    <option value="{{ $supervisor->id }}" {{ ( $supervisor->id == $object->supervisor_id) ? 'selected' : '' }}> {{ $supervisor->name }} </option>
-                @endforeach
-
-            </select>
-        </div>
+            <input name="supervisor_id" id="input-ifd-id" type="hidden" class="form-control" value="1">
         <div class="form-group">
             <label for="example-nf-email" class="control-label required">Expense Category</label>
             <select name="expenses_category_id" id="input-ifd-id" class="form-control" required>
