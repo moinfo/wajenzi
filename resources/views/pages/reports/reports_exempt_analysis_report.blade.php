@@ -79,10 +79,8 @@
                                 use Illuminate\Support\Facades\DB;
                                 $purchase = new \App\Models\Purchase();
                                 $payable = new \App\Models\VatAnalysis();
-//                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
-//                                $end_date = $_POST['end_date'] ?? date('Y-m-t');
-                                $start_date = $_POST['start_date'] ?? '2021-04-01';
-                                $end_date = $_POST['end_date'] ?? '2021-04-30';
+                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
+                                $end_date = $_POST['end_date'] ?? date('Y-m-t');
 
                                 $purchases = $purchase->getAll($start_date,$end_date,null,2);
                                 $total_net = \App\Models\Sale::getTotalNet($start_date,$end_date);
