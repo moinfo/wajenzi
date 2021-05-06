@@ -101,7 +101,7 @@
                                 $end_date = $_POST['end_date'] ?? $_GET['end_date'] ?? date('Y-m-d');
                                 $efd_id = $_POST['efd_id'] ?? null;
 
-                                dump($_GET);
+                               // dump($_GET);
 //                                dump($_GET['end_date']);
 
                                 $sales = $sale->getAll($start_date,$end_date,$efd_id);
