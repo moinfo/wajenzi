@@ -45,6 +45,9 @@ class ReportsController extends Controller
             ['name' => 'Expenses Categories Report', 'route' => 'reports_expenses_categories_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Business Position Report', 'route' => 'reports_business_position_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Allowance Subscriptions Report', 'route' => 'reports_allowance_subscriptions_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Statement of Comprehensive Income Report', 'route' => 'reports_statement_of_comprehensive_income_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Statement of Financial Position Report', 'route' => 'reports_statement_of_financial_position_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Detailed Expenditure Statement Report', 'route' => 'reports_detailed_expenditure_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
@@ -82,6 +85,20 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+
+    public function statement_of_comprehensive_income_report(Request $request){
+        $data = [];
+        return view('pages.reports.reports_statement_of_comprehensive_income_report')->with($data);
+    }
+
+    public function statement_of_financial_position_report(Request $request){
+        $data = [];
+        return view('pages.reports.reports_statement_of_financial_position_report')->with($data);
+    }
+    public function detailed_expenditure_statement_report(Request $request){
+        $data = [];
+        return view('pages.reports.reports_detailed_expenditure_statement_report')->with($data);
     }
 
     public function vat_payments_report(Request $request){
