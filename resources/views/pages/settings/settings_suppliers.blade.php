@@ -23,7 +23,9 @@
         <div class="content">
             <div class="content-heading">SUPPLIER
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_supplier_form', {className: 'Supplier'}, 'Create New Supplier', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Supplier</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Supplier"))
+                        <button type="button" onclick="loadFormModal('settings_supplier_form', {className: 'Supplier'}, 'Create New Supplier', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Supplier</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -49,7 +51,7 @@
                             @foreach($suppliers as $supplier)
                                 <tr id="supplier-tr-{{$supplier->id}}">
                                     <td class="text-center">
-                                        {{$supplier->id}}
+                                        {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $supplier->name }}</td>
                                     <td class="font-w400">{{ $supplier->phone }}</td>
@@ -60,12 +62,18 @@
 
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('settings_supplier_form', {className: 'Supplier', id: {{$supplier->id}}}, 'Edit {{$supplier->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-{{--                                            <button type="button" onclick="deleteModelItem('Supplier', {{$supplier->id}}, 'supplier-tr-{{$supplier->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
-{{--                                                <i class="fa fa-times"></i>--}}
-{{--                                            </button>--}}
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier"))
+                                                <button type="button" onclick="loadFormModal('settings_supplier_form', {className: 'Supplier', id: {{$supplier->id}}}, 'Edit {{$supplier->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                            @endif
+
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Supplier"))
+                                                    <button type="button" onclick="deleteModelItem('Supplier', {{$supplier->id}}, 'supplier-tr-{{$supplier->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+
                                         </div>
                                     </td>
                                 </tr>

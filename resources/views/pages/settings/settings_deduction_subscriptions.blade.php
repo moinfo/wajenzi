@@ -23,7 +23,11 @@
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_deduction_subscriptions_form', {className: 'DeductionSubscription'}, 'Create New DeductionSubscription', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New DeductionSubscription</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Deduction Subscription"))
+                        <button type="button" onclick="loadFormModal('settings_deduction_subscriptions_form', {className: 'DeductionSubscription'}, 'Create New DeductionSubscription', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                            <i class="si si-plus">&nbsp;</i>New Deduction Subscription</button>
+                    @endif
+
                 </div>
             </div>
             <div>
@@ -54,12 +58,17 @@
                                     <td class="font-w600">{{ $deduction_subscription->membership_number}}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('settings_deduction_subscriptions_form', {className: 'DeductionSubscription', id: {{$deduction_subscription->id}}}, 'Edit {{$deduction_subscription->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-                                            <button type="button" onclick="deleteModelItem('DeductionSubscription', {{$deduction_subscription->id}}, 'deduction_subscription-tr-{{$deduction_subscription->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
-                                                <i class="fa fa-times"></i>
-                                            </button>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Deduction Subscription"))
+                                                <button type="button" onclick="loadFormModal('settings_deduction_subscriptions_form', {className: 'DeductionSubscription', id: {{$deduction_subscription->id}}}, 'Edit {{$deduction_subscription->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                            @endif
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Deduction Subscription"))
+                                                    <button type="button" onclick="deleteModelItem('DeductionSubscription', {{$deduction_subscription->id}}, 'deduction_subscription-tr-{{$deduction_subscription->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+
                                         </div>
                                     </td>
                                 </tr>

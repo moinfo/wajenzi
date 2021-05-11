@@ -25,7 +25,9 @@
         <div class="content">
             <div class="content-heading">Supplier Receiving
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving'}, 'Create New Supplier Receiving', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Supplier Receiving</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Supplier Receiving"))
+                        <button type="button" onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving'}, 'Create New Supplier Receiving', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Supplier Receiving</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -118,19 +120,24 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <button type="button"
-                                                        onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving', id: {{$supplier_receiving->id}}}, 'Edit {{$supplier_receiving->supplier->name ?? $supplier_receiving->supplier_name}}', 'modal-md');"
-                                                        class="btn btn-sm btn-primary js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-                                                <button type="button"
-                                                        onclick="deleteModelItem('SupplierReceiving', {{$supplier_receiving->id}}, 'supplier_receiving-tr-{{$supplier_receiving->id}}');"
-                                                        class="btn btn-sm btn-danger js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Delete"
-                                                        data-original-title="Delete">
-                                                    <i class="fa fa-times"></i>
-                                                </button>
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier Receiving"))
+                                                    <button type="button"
+                                                            onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving', id: {{$supplier_receiving->id}}}, 'Edit {{$supplier_receiving->supplier->name ?? $supplier_receiving->supplier_name}}', 'modal-md');"
+                                                            class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                            data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                @endif
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Supplier Receiving"))
+                                                        <button type="button"
+                                                                onclick="deleteModelItem('SupplierReceiving', {{$supplier_receiving->id}}, 'supplier_receiving-tr-{{$supplier_receiving->id}}');"
+                                                                class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                                data-toggle="tooltip" title="Delete"
+                                                                data-original-title="Delete">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    @endif
+
                                             </div>
                                         </td>
                                     </tr>

@@ -96,7 +96,9 @@
                     @if($is_current_payroll_paid)
                     <button class="btn btn-rounded btn-outline-success min-width-125 mb-10"><i class="si si-clock">&nbsp;</i>Already Created Payroll This Month</button>
                     @else
-                        <button type="button"  class="btn btn-rounded btn-outline-primary min-width-125 mb-10 btn-submit"><i class="si si-plus">&nbsp;</i>Create Payroll</button>
+                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Payroll"))
+                            <button type="button"  class="btn btn-rounded btn-outline-primary min-width-125 mb-10 btn-submit"><i class="si si-plus">&nbsp;</i>Create Payroll</button>
+                        @endif
 
                     @endif
                 </div>

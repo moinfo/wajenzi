@@ -23,7 +23,11 @@
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_deduction_settings_form', {className: 'DeductionSetting'}, 'Create New DeductionSetting', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New DeductionSetting</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Deduction Setting"))
+                        <button type="button" onclick="loadFormModal('settings_deduction_settings_form', {className: 'DeductionSetting'}, 'Create New DeductionSetting', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                            <i class="si si-plus">&nbsp;</i>New DeductionSetting</button>
+                    @endif
+
                 </div>
             </div>
             <div>
@@ -60,12 +64,17 @@
                                     <td class="text-right">{{ number_format($deduction_setting->additional_amount)}}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('settings_deduction_settings_form', {className: 'DeductionSetting', id: {{$deduction_setting->id}}}, 'Edit {{$deduction_setting->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-{{--                                            <button type="button" onclick="deleteModelItem('DeductionSetting', {{$deduction_setting->id}}, 'deduction_setting-tr-{{$deduction_setting->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
-{{--                                                <i class="fa fa-times"></i>--}}
-{{--                                            </button>--}}
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Deduction Setting"))
+                                                <button type="button" onclick="loadFormModal('settings_deduction_settings_form', {className: 'DeductionSetting', id: {{$deduction_setting->id}}}, 'Edit {{$deduction_setting->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                            @endif
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Deduction Setting"))
+                                                    <button type="button" onclick="deleteModelItem('DeductionSetting', {{$deduction_setting->id}}, 'deduction_setting-tr-{{$deduction_setting->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+
                                         </div>
                                     </td>
                                 </tr>

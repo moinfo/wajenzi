@@ -23,7 +23,9 @@
         <div class="content">
             <div class="content-heading">EXPENSES CATEGORIES
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_expenses_category_form', {className: 'ExpensesCategory'}, 'Create New Expense Category', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Expense Category</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Expenses Category"))
+                        <button type="button" onclick="loadFormModal('settings_expenses_category_form', {className: 'ExpensesCategory'}, 'Create New Expense Category', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Expense Category</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -49,12 +51,18 @@
                                     <td class="font-w600">{{ $expenses_category->name }}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('settings_expenses_category_form', {className: 'ExpensesCategory', id: {{$expenses_category->id}}}, 'Edit {{$expenses_category->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-{{--                                            <button type="button" onclick="deleteModelItem('ExpensesCategory', {{$expenses_category->id}}, 'expenses_category-tr-{{$expenses_category->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
-{{--                                                <i class="fa fa-times"></i>--}}
-{{--                                            </button>--}}
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Expenses Category"))
+                                                <button type="button" onclick="loadFormModal('settings_expenses_category_form', {className: 'ExpensesCategory', id: {{$expenses_category->id}}}, 'Edit {{$expenses_category->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                            @endif
+
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Expenses Category"))
+                                                    <button type="button" onclick="deleteModelItem('ExpensesCategory', {{$expenses_category->id}}, 'expenses_category-tr-{{$expenses_category->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+
                                         </div>
                                     </td>
                                 </tr>

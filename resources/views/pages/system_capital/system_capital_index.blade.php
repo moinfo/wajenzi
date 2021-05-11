@@ -21,15 +21,17 @@
 @section('content')
     <div class="main-container">
         <div class="content">
-            <div class="content-heading">System Capital
+            <div class="content-heading">System Receiving
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('system_capital_form', {className: 'SystemCapital'}, 'Create New System Capital', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Capital</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add System Receiving"))
+                        <button type="button" onclick="loadFormModal('system_capital_form', {className: 'SystemCapital'}, 'Create New System Receiving', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Receiving</button>
+                    @endif
                 </div>
             </div>
             <div>
                 <div class="block block-themed">
                     <div class="block-header bg-gd-lake">
-                        <h3 class="block-title">All System Capitals</h3>
+                        <h3 class="block-title">All System Receivings</h3>
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
@@ -78,7 +80,7 @@
                                 <tbody>
                                 <?php
                                 use Illuminate\Support\Facades\DB;
-                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
+                                $start_date = $_POST['start_date'] ?? date('Y-m-d');
                                 $end_date = $_POST['end_date'] ?? date('Y-m-d');
                                 $system_capitals = \App\Models\SystemCapital::whereBetween('date', [$start_date, $end_date])->select([DB::raw("*")])->get();
 
@@ -97,19 +99,25 @@
                                         <td class="text-right">{{ number_format($system_capital->amount, 2) }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <button type="button"
-                                                        onclick="loadFormModal('system_capital_form', {className: 'SystemCapital', id: {{$system_capital->id}}}, 'Edit {{ $system_capital->system->name}}', 'modal-md');"
-                                                        class="btn btn-sm btn-primary js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-                                                <button type="button"
-                                                        onclick="deleteModelItem('SystemCapital', {{$system_capital->id}}, 'system_capital-tr-{{$system_capital->id}}');"
-                                                        class="btn btn-sm btn-danger js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Delete"
-                                                        data-original-title="Delete">
-                                                    <i class="fa fa-times"></i>
-                                                </button>
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit System Receiving"))
+                                                    <button type="button"
+                                                            onclick="loadFormModal('system_capital_form', {className: 'SystemCapital', id: {{$system_capital->id}}}, 'Edit {{ $system_capital->system->name}}', 'modal-md');"
+                                                            class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                            data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                @endif
+
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete System Receiving"))
+                                                        <button type="button"
+                                                                onclick="deleteModelItem('SystemCapital', {{$system_capital->id}}, 'system_capital-tr-{{$system_capital->id}}');"
+                                                                class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                                data-toggle="tooltip" title="Delete"
+                                                                data-original-title="Delete">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    @endif
+
                                             </div>
                                         </td>
                                     </tr>

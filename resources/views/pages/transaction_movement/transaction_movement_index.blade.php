@@ -24,7 +24,9 @@
         <div class="content">
             <div class="content-heading">Transaction Movement
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement'}, 'Create New TransactionMovement', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New TransactionMovement</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Transaction Movement"))
+                        <button type="button" onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement'}, 'Create New TransactionMovement', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Transaction Movement</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -117,19 +119,25 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <button type="button"
-                                                        onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement', id: {{$transaction_movement->id}}}, 'Edit {{$transaction_movement->supplier->name ?? $transaction_movement->supplier_name}} Transcaction Movement', 'modal-md');"
-                                                        class="btn btn-sm btn-primary js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-                                                <button type="button"
-                                                        onclick="deleteModelItem('TransactionMovement', {{$transaction_movement->id}}, 'transaction_movement-tr-{{$transaction_movement->id}}');"
-                                                        class="btn btn-sm btn-danger js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Delete"
-                                                        data-original-title="Delete">
-                                                    <i class="fa fa-times"></i>
-                                                </button>
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Transaction Movement"))
+                                                    <button type="button"
+                                                            onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement', id: {{$transaction_movement->id}}}, 'Edit {{$transaction_movement->supplier->name ?? $transaction_movement->supplier_name}} Transcaction Movement', 'modal-md');"
+                                                            class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                            data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                @endif
+
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Transaction Movement"))
+                                                        <button type="button"
+                                                                onclick="deleteModelItem('TransactionMovement', {{$transaction_movement->id}}, 'transaction_movement-tr-{{$transaction_movement->id}}');"
+                                                                class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                                data-toggle="tooltip" title="Delete"
+                                                                data-original-title="Delete">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    @endif
+
                                             </div>
                                         </td>
                                     </tr>

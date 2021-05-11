@@ -23,7 +23,9 @@
         <div class="content">
             <div class="content-heading">System Cash
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('system_cash_form', {className: 'SystemCash'}, 'Create New System Cash', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Cash</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add System Cash"))
+                        <button type="button" onclick="loadFormModal('system_cash_form', {className: 'SystemCash'}, 'Create New System Cash', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Cash</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -97,19 +99,25 @@
                                         <td class="text-right">{{ number_format($system_cash->amount, 2) }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <button type="button"
-                                                        onclick="loadFormModal('system_cash_form', {className: 'SystemCash', id: {{$system_cash->id}}}, 'Edit {{ $system_cash->system->name}}', 'modal-md');"
-                                                        class="btn btn-sm btn-primary js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-                                                <button type="button"
-                                                        onclick="deleteModelItem('SystemCash', {{$system_cash->id}}, 'system_cash-tr-{{$system_cash->id}}');"
-                                                        class="btn btn-sm btn-danger js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Delete"
-                                                        data-original-title="Delete">
-                                                    <i class="fa fa-times"></i>
-                                                </button>
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit System Cash"))
+                                                    <button type="button"
+                                                            onclick="loadFormModal('system_cash_form', {className: 'SystemCash', id: {{$system_cash->id}}}, 'Edit {{ $system_cash->system->name}}', 'modal-md');"
+                                                            class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                            data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                @endif
+
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete System Cash"))
+                                                        <button type="button"
+                                                                onclick="deleteModelItem('SystemCash', {{$system_cash->id}}, 'system_cash-tr-{{$system_cash->id}}');"
+                                                                class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                                data-toggle="tooltip" title="Delete"
+                                                                data-original-title="Delete">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    @endif
+
                                             </div>
                                         </td>
                                     </tr>

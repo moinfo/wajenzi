@@ -6,7 +6,10 @@
         <div class="content">
             <div class="content-heading">Allowances
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_allowance_form', {className: 'Allowance'}, 'Create New Allowance', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Recruitment Request</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Allowance"))
+                        <button type="button" onclick="loadFormModal('settings_allowance_form', {className: 'Allowance'}, 'Create New Allowance', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                            <i class="si si-plus">&nbsp;</i>New Recruitment Request</button> @endif
+
                 </div>
             </div>
             <div>
@@ -36,12 +39,18 @@
                                 </td>
                                 <td class="text-center" >
                                     <div class="btn-group">
-                                        <button type="button" onclick="loadFormModal('settings_allowance_form', {className: 'Allowance', id: {{$allowance->id}}}, 'Edit {{$allowance->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                            <i class="fa fa-pencil"></i>
-                                        </button>
-{{--                                        <button type="button" onclick="deleteModelItem('Allowance', {{$allowance->id}}, 'allowance-tr-{{$allowance->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
-{{--                                            <i class="fa fa-times"></i>--}}
-{{--                                        </button>--}}
+                                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Allowance"))
+                                            <button type="button" onclick="loadFormModal('settings_allowance_form', {className: 'Allowance', id: {{$allowance->id}}}, 'Edit {{$allowance->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                <i class="fa fa-pencil"></i>
+                                            </button>
+                                        @endif
+
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Allowance"))
+                                                <button type="button" onclick="deleteModelItem('Allowance', {{$allowance->id}}, 'allowance-tr-{{$allowance->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            @endif
+
                                     </div>
                                 </td>
                             </tr>

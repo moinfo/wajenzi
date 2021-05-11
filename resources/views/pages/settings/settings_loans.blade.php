@@ -23,7 +23,9 @@
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('loan_form', {className: 'Loan'}, 'Create New Loan', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Loan</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Staff Loan"))
+                        <button type="button" onclick="loadFormModal('loan_form', {className: 'Loan'}, 'Create New Loan', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Staff Loan</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -63,12 +65,18 @@
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('loan_form', {className: 'Loan', id: {{$loan->id}}}, 'Edit {{$loan->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-                                            <button type="button" onclick="deleteModelItem('Loan', {{$loan->id}}, 'loan-tr-{{$loan->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
-                                                <i class="fa fa-times"></i>
-                                            </button>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Staff Loan"))
+                                                <button type="button" onclick="loadFormModal('loan_form', {className: 'Loan', id: {{$loan->id}}}, 'Edit {{$loan->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                            @endif
+
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Staff Loan"))
+                                                    <button type="button" onclick="deleteModelItem('Loan', {{$loan->id}}, 'loan-tr-{{$loan->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+
                                         </div>
                                     </td>
                                 </tr>

@@ -6,7 +6,9 @@
         <div class="content">
             <div class="content-heading">Financial Charges
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('financial_charge_form', {className: 'FinancialCharge'}, 'Create New Financial Charges', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Financial Charges</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Financial Charge"))
+                        <button type="button" onclick="loadFormModal('financial_charge_form', {className: 'FinancialCharge'}, 'Create New Financial Charges', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Financial Charges</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -41,19 +43,27 @@
 
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <button type="button"
-                                                        onclick="loadFormModal('financial_charge_form', {className: 'FinancialCharge', id: {{$financial_charge->id}}}, 'Edit {{$financial_charge->name}}', 'modal-md');"
-                                                        class="btn btn-sm btn-primary js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-                                                <button type="button"
-                                                        onclick="deleteModelItem('FinancialCharge', {{$financial_charge->id}}, 'financial_charge-tr-{{$financial_charge->id}}');"
-                                                        class="btn btn-sm btn-danger js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Delete"
-                                                        data-original-title="Delete">
-                                                    <i class="fa fa-times"></i>
-                                                </button>
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Financial Charge"))
+                                                    <button type="button"
+                                                            onclick="loadFormModal('financial_charge_form', {className: 'FinancialCharge', id: {{$financial_charge->id}}}, 'Edit {{$financial_charge->name}}', 'modal-md');"
+                                                            class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                            data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                @endif
+
+
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Financial Charge"))
+                                                        <button type="button"
+                                                                onclick="deleteModelItem('FinancialCharge', {{$financial_charge->id}}, 'financial_charge-tr-{{$financial_charge->id}}');"
+                                                                class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                                data-toggle="tooltip" title="Delete"
+                                                                data-original-title="Delete">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    @endif
+
+
                                             </div>
                                         </td>
                                     </tr>

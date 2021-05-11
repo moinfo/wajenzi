@@ -5,7 +5,9 @@
         <div class="content">
             <div class="content-heading">EFD
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_efd_form', {className: 'Efd'}, 'Create New EFD', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New EFD</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add EFD"))
+                        <button type="button" onclick="loadFormModal('settings_efd_form', {className: 'Efd'}, 'Create New EFD', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New EFD</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -33,12 +35,18 @@
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('settings_efd_form', {className: 'Efd', id: {{$efd->id}}}, 'Edit {{$efd->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-{{--                                            <button type="button" onclick="deleteModelItem('Efd', {{$efd->id}}, 'efd-tr-{{$efd->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
-{{--                                                <i class="fa fa-times"></i>--}}
-{{--                                            </button>--}}
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit EFD"))
+                                                <button type="button" onclick="loadFormModal('settings_efd_form', {className: 'Efd', id: {{$efd->id}}}, 'Edit {{$efd->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                            @endif
+
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete EFD"))
+                                                    <button type="button" onclick="deleteModelItem('Efd', {{$efd->id}}, 'efd-tr-{{$efd->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+
                                         </div>
                                     </td>
                                 </tr>

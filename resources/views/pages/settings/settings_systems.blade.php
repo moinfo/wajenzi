@@ -23,7 +23,11 @@
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_system_form', {className: 'system'}, 'Create New system', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New system</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add System"))
+                        <button type="button" onclick="loadFormModal('settings_system_form', {className: 'system'}, 'Create New system', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                            <i class="si si-plus">&nbsp;</i>New system</button>
+                    @endif
+
                 </div>
             </div>
             <div>
@@ -52,12 +56,17 @@
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('settings_system_form', {className: 'system', id: {{$system->id}}}, 'Edit {{$system->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-                                            <button type="button" onclick="deleteModelItem('system', {{$system->id}}, 'system-tr-{{$system->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
-                                                <i class="fa fa-times"></i>
-                                            </button>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit System"))
+                                                <button type="button" onclick="loadFormModal('settings_system_form', {className: 'system', id: {{$system->id}}}, 'Edit {{$system->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                            @endif
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete System"))
+                                                    <button type="button" onclick="deleteModelItem('system', {{$system->id}}, 'system-tr-{{$system->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+
                                         </div>
                                     </td>
                                 </tr>

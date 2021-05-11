@@ -23,7 +23,9 @@
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User'}, 'Create New User', 'modal-lg');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New User</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add User"))
+                        <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User'}, 'Create New User', 'modal-lg');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New User</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -60,10 +62,13 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
+
                                         <td class="font-w600">
-                                            <button type="button" onclick="loadFormModal('settings_user_permission_form', {className: 'UsersPermission', user_id: {{$user->id}}}, 'Permission For {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-cog"></i>
-                                            </button>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add User"))
+                                                <button type="button" onclick="loadFormModal('settings_user_permission_form', {className: 'UsersPermission', user_id: {{$user->id}}}, 'Permission For {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-cog"></i>
+                                                </button>
+                                            @endif
                                         </td>
                                         <td class="font-w600">{{ $user->name }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $user->email }}
@@ -81,12 +86,18 @@
                                         <td>{{ $user->status }}</td>
                                         <td class="text-center" >
                                             <div class="btn-group">
-                                                <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User', id: {{$user->id}}}, 'Edit {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-{{--                                                <button type="button" onclick="deleteModelItem('User', {{$user->id}}, 'user-tr-{{$user->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
-{{--                                                    <i class="fa fa-times"></i>--}}
-{{--                                                </button>--}}
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit User"))
+                                                    <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User', id: {{$user->id}}}, 'Edit {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                @endif
+
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete User"))
+                                                        <button type="button" onclick="deleteModelItem('User', {{$user->id}}, 'user-tr-{{$user->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    @endif
+
                                             </div>
                                         </td>
                                     </tr>

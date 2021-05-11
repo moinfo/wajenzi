@@ -5,7 +5,9 @@
         <div class="content">
             <div class="content-heading">ITEMS
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_item_form', {className: 'Item'}, 'Create New Item', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Item</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Item"))
+                        <button type="button" onclick="loadFormModal('settings_item_form', {className: 'Item'}, 'Create New Item', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Item</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -26,17 +28,23 @@
                             @foreach($items as $item)
                                 <tr id="item-tr-{{$item->id}}">
                                     <td class="text-center">
-                                        {{$item->id}}
+                                        {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $item->name }}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('settings_item_form', {className: 'Item', id: {{$item->id}}}, 'Edit {{$item->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-{{--                                            <button type="button" onclick="deleteModelItem('Item', {{$item->id}}, 'item-tr-{{$item->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">--}}
-{{--                                                <i class="fa fa-times"></i>--}}
-{{--                                            </button>--}}
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Item"))
+                                                <button type="button" onclick="loadFormModal('settings_item_form', {className: 'Item', id: {{$item->id}}}, 'Edit {{$item->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                            @endif
+
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Item"))
+                                                    <button type="button" onclick="deleteModelItem('Item', {{$item->id}}, 'item-tr-{{$item->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+
                                         </div>
                                     </td>
                                 </tr>

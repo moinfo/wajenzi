@@ -23,7 +23,9 @@
         <div class="content">
             <div class="content-heading">System Credit
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('system_credit_form', {className: 'SystemCredit'}, 'Create New System Credit', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Credit</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add System Credit"))
+                        <button type="button" onclick="loadFormModal('system_credit_form', {className: 'SystemCredit'}, 'Create New System Credit', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Credit</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -97,19 +99,25 @@
                                         <td class="text-right">{{ number_format($system_credit->amount, 2) }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <button type="button"
-                                                        onclick="loadFormModal('system_credit_form', {className: 'SystemCredit', id: {{$system_credit->id}}}, 'Edit {{ $system_credit->system->name}}', 'modal-md');"
-                                                        class="btn btn-sm btn-primary js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-                                                <button type="button"
-                                                        onclick="deleteModelItem('SystemCredit', {{$system_credit->id}}, 'system_credit-tr-{{$system_credit->id}}');"
-                                                        class="btn btn-sm btn-danger js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Delete"
-                                                        data-original-title="Delete">
-                                                    <i class="fa fa-times"></i>
-                                                </button>
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit System Credit"))
+                                                    <button type="button"
+                                                            onclick="loadFormModal('system_credit_form', {className: 'SystemCredit', id: {{$system_credit->id}}}, 'Edit {{ $system_credit->system->name}}', 'modal-md');"
+                                                            class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                            data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                @endif
+
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete System Credit"))
+                                                        <button type="button"
+                                                                onclick="deleteModelItem('SystemCredit', {{$system_credit->id}}, 'system_credit-tr-{{$system_credit->id}}');"
+                                                                class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                                data-toggle="tooltip" title="Delete"
+                                                                data-original-title="Delete">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    @endif
+
                                             </div>
                                         </td>
                                     </tr>

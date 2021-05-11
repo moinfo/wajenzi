@@ -25,7 +25,10 @@
         <div class="content">
             <div class="content-heading">Collection
                 <div class="float-right">
+
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Collection"))
                     <button type="button" onclick="loadFormModal('collection_form', {className: 'Collection'}, 'Create New Collection', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Collection</button>
+                @endif
                 </div>
             </div>
             <div>
@@ -119,19 +122,24 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Collection"))
                                                 <button type="button"
                                                         onclick="loadFormModal('collection_form', {className: 'Collection', id: {{$collection->id}}}, 'Edit {{$collection->supervisor->name ?? $collection->supervisor_name}} Collection', 'modal-md');"
                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
                                                         data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
                                                 </button>
-                                                <button type="button"
+                                                @endif
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Collection"))
+
+                                                    <button type="button"
                                                         onclick="deleteModelItem('Collection', {{$collection->id}}, 'collection-tr-{{$collection->id}}');"
                                                         class="btn btn-sm btn-danger js-tooltip-enabled"
                                                         data-toggle="tooltip" title="Delete"
                                                         data-original-title="Delete">
                                                     <i class="fa fa-times"></i>
                                                 </button>
+                                                    @endif
                                             </div>
                                         </td>
                                     </tr>

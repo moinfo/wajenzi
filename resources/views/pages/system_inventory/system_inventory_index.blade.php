@@ -23,7 +23,9 @@
         <div class="content">
             <div class="content-heading">System Inventory
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('system_inventory_form', {className: 'SystemInventory'}, 'Create New System Inventory', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Inventory</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add System Inventory"))
+                        <button type="button" onclick="loadFormModal('system_inventory_form', {className: 'SystemInventory'}, 'Create New System Inventory', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Inventory</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -97,19 +99,25 @@
                                         <td class="text-right">{{ number_format($system_inventory->amount, 2) }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <button type="button"
-                                                        onclick="loadFormModal('system_inventory_form', {className: 'SystemInventory', id: {{$system_inventory->id}}}, 'Edit {{ $system_inventory->system->name}}', 'modal-md');"
-                                                        class="btn btn-sm btn-primary js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-                                                <button type="button"
-                                                        onclick="deleteModelItem('SystemInventory', {{$system_inventory->id}}, 'system_inventory-tr-{{$system_inventory->id}}');"
-                                                        class="btn btn-sm btn-danger js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Delete"
-                                                        data-original-title="Delete">
-                                                    <i class="fa fa-times"></i>
-                                                </button>
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit System Inventory"))
+                                                    <button type="button"
+                                                            onclick="loadFormModal('system_inventory_form', {className: 'SystemInventory', id: {{$system_inventory->id}}}, 'Edit {{ $system_inventory->system->name}}', 'modal-md');"
+                                                            class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                            data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                @endif
+
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete System Inventory"))
+                                                        <button type="button"
+                                                                onclick="deleteModelItem('SystemInventory', {{$system_inventory->id}}, 'system_inventory-tr-{{$system_inventory->id}}');"
+                                                                class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                                data-toggle="tooltip" title="Delete"
+                                                                data-original-title="Delete">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    @endif
+
                                             </div>
                                         </td>
                                     </tr>

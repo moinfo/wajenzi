@@ -6,7 +6,9 @@
         <div class="content">
             <div class="content-heading">Permissions
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_permission_form', {className: 'Permission'}, 'Create New Permission', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Permission</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Permission"))
+                        <button type="button" onclick="loadFormModal('settings_permission_form', {className: 'Permission'}, 'Create New Permission', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Permission</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -37,13 +39,19 @@
                                     <td class="d-none d-sm-table-cell">{{ $permission->permission_type }}
                                     </td>
                                     <td class="text-center" >
+
                                         <div class="btn-group">
-                                            <button type="button" onclick="loadFormModal('settings_permission_form', {className: 'Permission', id: {{$permission->id}}}, 'Edit {{$permission->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-                                            <button type="button" onclick="deleteModelItem('Permission', {{$permission->id}}, 'permission-tr-{{$permission->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
-                                                <i class="fa fa-times"></i>
-                                            </button>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Permission"))
+                                                <button type="button" onclick="loadFormModal('settings_permission_form', {className: 'Permission', id: {{$permission->id}}}, 'Edit {{$permission->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                            @endif
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Permission"))
+                                                    <button type="button" onclick="deleteModelItem('Permission', {{$permission->id}}, 'permission-tr-{{$permission->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+
                                         </div>
                                     </td>
                                 </tr>
