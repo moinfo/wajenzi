@@ -88,8 +88,6 @@
                                 $supplier_credit = \App\Models\Report::getTotalSupplierBalance($end_date);
                                 $supplier_credit1 = \App\Models\SupplierReceiving::getAllSupplierReceivingAmount($end_date);
                                 $supplier_credit2 = \App\Models\TransactionMovement::getAllSupplierTransactionAmount($end_date);
-                                dump($supplier_credit1);
-                                dump($supplier_credit2);
                                 $total_in = $cash + $credit + $inventory;
                                 $total_out = $supplier_credit + $capital;
                                 $difference = $total_in - $total_out

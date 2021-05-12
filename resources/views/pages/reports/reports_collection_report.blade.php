@@ -96,14 +96,20 @@
                                         <td>{{ $date }}</td>
                                         @foreach($supervisors as $supervisor)
                                             <?php
+                                            $key_name = 'supervisor_id';
                                             $id = $supervisor->id;
                                            $collection = \App\Models\Collection::Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                            $total_collection_per_day = \App\Models\Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
-
-                                            ?>
-                                            <td class="text-right">{{number_format($collection['total_amount'] ?? 0)}}</td>
+                                            ?><td class="text-right">
+                                                <a onclick="loadFormModal('collection_per_supervisor_form', {className: 'Collection', date_find:'{{$date}}',  key_name:'{{$key_name}}', id: {{$id}} }, '{{$supervisor->name}} Collections For {{$date}}', 'modal-md');"
+                                                   class=" js-tooltip-enabled"
+                                                   data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    {{number_format($collection['total_amount'] ?? 0)}}</a></td>
                                         @endforeach
-                                        <td class="text-right">{{number_format($total_collection_per_day['total_amount'] ?? 0)}}</td>
+                                        <td class="text-right">
+                                            <a onclick="loadFormModal('collection_per_day_form', {className: 'Collection', date_find:'{{$date}}' }, 'All Collection For {{$date}}', 'modal-md');"
+                                               class=" js-tooltip-enabled">
+                                                {{number_format($total_collection_per_day['total_amount'] ?? 0)}}</a></td>
 
                                     </tr>
                                 @endforeach

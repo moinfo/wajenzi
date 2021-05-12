@@ -123,17 +123,37 @@
                                             $total = (($total_collection_per_day )-($total_transaction_per_day )) + (($total_collection_yesterday )-($total_transaction_yesterday ));
                                             $sum +=$total;
                                             $opening = \App\Models\Report::getOpening($date);
+                                            $key_name = 'supervisor_id';
                                             ?>
-                                            <td class="text-right">{{number_format($expense)}}</td>
+                                            <td class="text-right">
+                                                <a onclick="loadFormModal('expenses_per_supervisor_form', {className: 'Expense', date_find:'{{$date}}',  key_name:'{{$key_name}}', id: {{$id}} }, '{{$supervisor->name}} Expenses For {{$date}}', 'modal-md');"
+                                                        class=" js-tooltip-enabled"
+                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                {{number_format($expense)}}</a></td>
                                         @endforeach
-                                        <td class="text-right">{{number_format($total_expense_per_day )}}</td>
-                                        <td class="text-right">{{number_format($total_supplier_receiving_per_day )}}</td>
-                                        <td class="text-right">{{number_format($total_collection_per_day )}}</td>
-                                        <td class="text-right">{{number_format($total_transaction_per_day )}}</td>
+                                        <td class="text-right">
+                                            <a onclick="loadFormModal('expenses_per_day_form', {className: 'Expense', date_find:'{{$date}}' }, 'All Expenses For {{$date}}', 'modal-md');"
+                                               class=" js-tooltip-enabled">
+                                                {{number_format($total_expense_per_day )}}</a></td>
+                                        <td class="text-right">
+                                            <a onclick="loadFormModal('supplier_receiving_per_day_form', {className: 'SupplierReceiving', date_find:'{{$date}}' }, 'All Supplier Receiving For {{$date}}', 'modal-md');"
+                                               class=" js-tooltip-enabled">
+                                                {{number_format($total_supplier_receiving_per_day )}}</a></td>
+                                        <td class="text-right">
+                                            <a onclick="loadFormModal('collection_per_day_form', {className: 'Collection', date_find:'{{$date}}' }, 'All Collection For {{$date}}', 'modal-md');"
+                                               class=" js-tooltip-enabled">
+                                                {{number_format($total_collection_per_day )}}</a></td>
+                                        <td class="text-right">
+                                            <a onclick="loadFormModal('transaction_movement_per_day_form', {className: 'TransactionMovement', date_find:'{{$date}}' }, 'All Transaction Movement For {{$date}}', 'modal-md');"
+                                               class=" js-tooltip-enabled">
+                                                {{number_format($total_transaction_per_day )}}</a></td>
                                         <td class="text-right">{{number_format( (($total_collection_per_day )-($total_transaction_per_day )) )}}</td>
                                         <td class="text-right">{{number_format($opening) }}</td>
                                         <td class="text-right">{{number_format( (($total_collection_per_day )-($total_transaction_per_day )) + ($opening) )}}</td>
-                                        <td class="text-right">{{number_format($total_gross_profit_per_day )}}</td>
+                                        <td class="text-right">
+                                            <a onclick="loadFormModal('gross_profit_per_day_form', {className: 'Gross', date_find:'{{$date}}' }, 'All Gross Profit For {{$date}}', 'modal-md');"
+                                               class=" js-tooltip-enabled">
+                                                {{number_format($total_gross_profit_per_day )}}</a></td>
                                         <td class="text-right">{{number_format(($total_gross_profit_per_day  )-($total_expense_per_day ))}}</td>
                                         <td class="text-right">{{number_format(($total_gross_profit_per_day  )-($total_expenses_for_all_per_day ))}}</td>
 

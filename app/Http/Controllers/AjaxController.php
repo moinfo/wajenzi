@@ -24,7 +24,7 @@ class AjaxController
 {
     public function index(Request $request, $fx = null) {
 //        $fx = $request->has('fx') ? $request->get('fx') : null;
-       // dd($fx);
+       // dd();
         if ($fx) {
             switch ($fx) {
                 case 'form': // Load form from forms directory
@@ -111,8 +111,22 @@ class AjaxController
                     $metadata = $request->has('metadata') ? $request->input('metadata') : [];
                     if($object) {
                         $fullObject = 'App\Models\\' . $object;
+                       // dd($fullObject);
                         $id = $request->input('id');
-                        $data['object'] = $id ? $fullObject::find($id) : new $fullObject();
+                        $key_name = $request->input('key_name') ?? null;
+                        $date_find = $request->input('date_find') ?? null;
+                        if($date_find != null && $date_find != '1970-01-01'){
+                            $data['object'] = $fullObject::select([DB::raw("*")]);
+                            if($date_find){
+                                $data['object']->Where('date',$date_find);
+                            }
+                            if ($key_name){
+                                $data['object']->Where("$key_name",$id);
+                            }
+                            $data['object'] = $data['object']->get();
+                        }else{
+                            $data['object'] = $id ? $fullObject::find($id) : new $fullObject();
+                        }
                     }
                     if(count($metadata)){
                         foreach ($metadata as $fieldName => $className) {

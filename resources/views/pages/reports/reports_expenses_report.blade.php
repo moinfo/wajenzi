@@ -68,39 +68,67 @@
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
-                                    <th>Expenses Description</th>
-                                    <th>Expenses Categories</th>
+                                    @foreach ($supervisors as $supervisor)
+                                       <th> {{ $supervisor->name }} </th>
+                                    @endforeach
                                     <th>Total Expense</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 <?php
-                                use Illuminate\Support\Facades\DB;$start_date = $_POST['start_date'] ?? date('Y-m-d');
+                                    $start_date = $_POST['start_date'] ?? date('Y-m-01');
                                     $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                                    $expenses = \App\Models\Expense::select([DB::raw("expenses.*,expenses_categories.name as expense_category")])->join('expenses_categories','expenses_categories.id','expenses.expenses_category_id')->WhereBetween('date',[$start_date,$end_date])->groupBy('date')->get();
-                                $total_expenses=0;
+                                    $first_date = explode("-", $start_date);
+                                    $last_date = explode("-", $end_date);
+                                $first_month = $first_date[1];
+                                use Illuminate\Support\Facades\DB;
+                                for($i = $first_date[2]; $i <=  $last_date[2]; $i++)
+                                {
+                                    // add the date to the dates array
+                                    $dates[] = date('Y') . "-" . $first_month . "-" . str_pad($i, 2, '0', STR_PAD_LEFT);
+                                }
                                     ?>
-                                @foreach($expenses as $expense)
-                                    <?php
-                                    $expenses = $expense->amount;
-                                    $total_expenses += $expenses;
-                                    ?>
+                                @foreach(array_reverse($dates) as $date)
                                     <tr>
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
-                                        <td>{{ $expense->date }}</td>
-                                        <td>{{$expense->description }}</td>
-                                        <td>{{ $expense->expense_category }}</td>
-                                        <td class="text-right">{{number_format($expense->amount ?? 0)}}</td>
+                                        <td>{{ $date }}</td>
+                                        @foreach($supervisors as $supervisor)
+                                            <?php
+                                            $key_name = 'supervisor_id';
+                                            $id = $supervisor->id;
+                                           $expense = \App\Models\Expense::Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                           $total_expense_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+
+                                            ?>
+                                            <td class="text-right">
+                                                <a onclick="loadFormModal('expenses_per_supervisor_form', {className: 'Expense', date_find:'{{$date}}',  key_name:'{{$key_name}}', id: {{$id}} }, '{{$supervisor->name}} Expenses For {{$date}}', 'modal-md');"
+                                                   class=" js-tooltip-enabled"
+                                                   data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    {{number_format($expense['total_amount'] ?? 0)}}</a></td>
+                                        @endforeach
+                                        <td class="text-right">
+                                            <a onclick="loadFormModal('expenses_per_day_form', {className: 'Expense', date_find:'{{$date}}' }, 'All Expenses For {{$date}}', 'modal-md');"
+                                               class=" js-tooltip-enabled">
+                                                {{number_format($total_expense_per_day['total_amount'] ?? 0)}}</a></td>
 
                                     </tr>
                                 @endforeach
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td colspan="4"></td>
-                                    <td class="text-right">{{number_format($total_expenses ?? 0)}}</td>
+                                    <th colspan="2"></th>
+                                    @foreach ($supervisors as $supervisor)
+                                        <?php
+                                        $total_expense_by_supervisor = \App\Models\Expense::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
+                                        ?>
+                                        <td class="text-right">{{number_format($total_expense_by_supervisor['total_amount'] ?? 0)}}</td>
+                                    @endforeach
+                                    <?php
+                                    $total_expense_by_all_supervisor = \App\Models\Expense::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
+                                    ?>
+                                    <td class="text-right">{{number_format($total_expense_by_all_supervisor['total_amount'] ?? 0)}}</td>
                                 </tr>
                                 </tfoot>
                             </table>

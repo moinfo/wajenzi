@@ -97,13 +97,20 @@
                                         @foreach($suppliers as $supplier)
                                             <?php
                                             $id = $supplier->id;
+                                            $key_name = 'supplier_id';
                                            $supplier_receiving = \App\Models\SupplierReceiving::Where('date',$date)->Where('supplier_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
                                            $total_supplier_receiving_per_day = \App\Models\SupplierReceiving::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
-                                            <td class="text-right">{{number_format($supplier_receiving['total_amount']  ?? 0)}}</td>
+                                            <td class="text-right">
+                                                <a onclick="loadFormModal('supplier_receiving_per_supplier_form', {className: 'SupplierReceiving', date_find:'{{$date}}',  key_name:'{{$key_name}}', id: {{$id}} }, '{{$supplier->name}} Supplier Receivings For {{$date}}', 'modal-md');"
+                                                   class=" js-tooltip-enabled">
+                                                {{number_format($supplier_receiving['total_amount']  ?? 0)}}</a></td>
                                         @endforeach
-                                        <td class="text-right">{{number_format($total_supplier_receiving_per_day['total_amount']  ?? 0)}}</td>
+                                        <td class="text-right">
+                                            <a onclick="loadFormModal('supplier_receiving_per_day_form', {className: 'SupplierReceiving', date_find:'{{$date}}' }, 'All Supplier Receiving For {{$date}}', 'modal-md');"
+                                               class=" js-tooltip-enabled">
+                                                {{number_format($total_supplier_receiving_per_day['total_amount']  ?? 0)}}</a></td>
 
                                     </tr>
                                 @endforeach
