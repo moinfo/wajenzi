@@ -4,7 +4,9 @@
 namespace App\Http\Controllers;
 use App\Models\Allowance;
 use App\Models\AllowanceSubscription;
+use App\Models\ApprovalDocumentType;
 use App\Models\Bank;
+use App\Models\Category;
 use App\Models\Deduction;
 use App\Models\Division;
 use App\Models\Efd;
@@ -13,9 +15,11 @@ use App\Models\FinancialChargeCategory;
 use App\Models\Item;
 use App\Models\Payroll;
 use App\Models\Staff;
+use App\Models\SubCategory;
 use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
+use App\Models\UserGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -29,6 +33,10 @@ class AjaxController
             switch ($fx) {
                 case 'form': // Load form from forms directory
                     $suppliers = Supplier::all();
+                    $user_groups = UserGroup::all();
+                    $approval_document_types = ApprovalDocumentType::all();
+                    $categories = Category::all();
+                    $sub_categories = SubCategory::all();
                     $supervisors_and_drivers = Supervisor::all();
                     $supervisors = Supervisor::where('employee_id',1)->get();
                     $items = Item::all();
@@ -54,6 +62,21 @@ class AjaxController
                     $purchases_types = [
                         ['id'=>'1','name'=>'VAT'],
                         ['id'=>'2','name'=>'EXEMPT']
+                    ];
+                    $actions = [
+                        ['id'=>'1','name'=>'CREATE'],
+                        ['id'=>'2','name'=>'CHECK'],
+                        ['id'=>'3','name'=>'VERIFY'],
+                        ['id'=>'4','name'=>'APPROVE'],
+                        ['id'=>'5','name'=>'AUTHORIZE']
+                    ];
+                    $status = [
+                        ['id'=>'1','name'=>'CREATED'],
+                        ['id'=>'2','name'=>'PENDING'],
+                        ['id'=>'3','name'=>'PAID'],
+                        ['id'=>'4','name'=>'REJECTED'],
+                        ['id'=>'5','name'=>'APPROVED'],
+                        ['id'=>'6','name'=>'COMPLETED']
                     ];
                     $permissions = [
                         ['name'=>'MENU'],
@@ -86,7 +109,13 @@ class AjaxController
                     $financial_charge_categories = FinancialChargeCategory::all();
                     $data = $request->input('data') ?? [
                             'suppliers' => $suppliers,
+                            'user_groups' => $user_groups,
+                            'categories' => $categories,
+                            'status' => $status,
+                            'actions' => $actions,
+                            'approval_document_types' => $approval_document_types,
                             'employees' => $employees,
+                            'sub_categories' => $sub_categories,
                             'natures' => $natures,
                             'purchases_types' => $purchases_types,
                             'permissions' => $permissions,

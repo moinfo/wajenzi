@@ -6,7 +6,12 @@ use App\Classes\Utility;
 use App\Models\AdvanceSalary;
 use App\Models\Allowance;
 use App\Models\AllowanceSubscription;
+use App\Models\Approval;
+use App\Models\ApprovalDocumentType;
+use App\Models\ApprovalLevel;
+use App\Models\AssignUserGroup;
 use App\Models\Bank;
+use App\Models\Category;
 use App\Models\Deduction;
 use App\Models\DeductionSetting;
 use App\Models\DeductionSubscription;
@@ -21,10 +26,13 @@ use App\Models\Position;
 use App\Models\Role;
 use App\Models\Staff;
 use App\Models\StaffSalary;
+use App\Models\StatutoryPayment;
+use App\Models\SubCategory;
 use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
 use App\Models\User;
+use App\Models\UserGroup;
 use App\Models\UsersPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -54,6 +62,14 @@ class SettingsController extends Controller
             ['name'=>'Expenses Categories', 'route'=>'hr_settings_expenses_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Financial Charge Categories', 'route'=>'hr_settings_financial_charge_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'EFD', 'route'=>'hr_settings_efd', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Approval Document Type', 'route'=>'hr_settings_approval_document_types', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Approval', 'route'=>'hr_settings_approvals', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Approval Level', 'route'=>'hr_settings_approval_levels', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'User Group', 'route'=>'hr_settings_user_groups', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Assign User Group', 'route'=>'hr_settings_assign_user_groups', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Statutory Payment', 'route'=>'hr_settings_statutory_payments', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Statutory Payment Category', 'route'=>'hr_settings_categories', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Statutory Payment Sub Category', 'route'=>'hr_settings_sub_categories', 'icon' => 'si si-settings', 'badge' => 0],
         ];
         $data = [
             'settings' => $settings
@@ -260,5 +276,77 @@ class SettingsController extends Controller
             'efd' => Efd::all()
         ];
         return view('pages.settings.settings_efds')->with($data);
+    }
+    public function approval_document_types(Request $request){
+        if($this->handleCrud($request, 'ApprovalDocumentType')) {
+            return back();
+        }
+        $data = [
+            'approval_document_types' => ApprovalDocumentType::all()
+        ];
+        return view('pages.settings.settings_approval_document_types')->with($data);
+    }
+    public function approvals(Request $request){
+        if($this->handleCrud($request, 'Approval')) {
+            return back();
+        }
+        $data = [
+            'approvals' => Approval::all()
+        ];
+        return view('pages.settings.settings_approvals')->with($data);
+    }
+    public function statutory_payments(Request $request){
+        if($this->handleCrud($request, 'StatutoryPayment')) {
+            return back();
+        }
+        $data = [
+            'statutory_payments' => StatutoryPayment::all()
+        ];
+        return view('pages.settings.settings_statutory_payments')->with($data);
+    }
+    public function sub_categories(Request $request){
+        if($this->handleCrud($request, 'SubCategory')) {
+            return back();
+        }
+        $data = [
+            'sub_categories' => SubCategory::all()
+        ];
+        return view('pages.settings.settings_sub_categories')->with($data);
+    }
+    public function categories(Request $request){
+        if($this->handleCrud($request, 'Category')) {
+            return back();
+        }
+        $data = [
+            'categories' => Category::all()
+        ];
+        return view('pages.settings.settings_categories')->with($data);
+    }
+    public function user_groups(Request $request){
+        if($this->handleCrud($request, 'UserGroup')) {
+            return back();
+        }
+        $data = [
+            'user_groups' => UserGroup::all()
+        ];
+        return view('pages.settings.settings_user_groups')->with($data);
+    }
+    public function assign_user_groups(Request $request){
+        if($this->handleCrud($request, 'AssignUserGroup')) {
+            return back();
+        }
+        $data = [
+            'assign_user_groups' => AssignUserGroup::all()
+        ];
+        return view('pages.settings.settings_assign_user_groups')->with($data);
+    }
+    public function approval_levels(Request $request){
+        if($this->handleCrud($request, 'ApprovalLevel')) {
+            return back();
+        }
+        $data = [
+            'approval_levels' => ApprovalLevel::all()
+        ];
+        return view('pages.settings.settings_approval_levels')->with($data);
     }
 }

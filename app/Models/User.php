@@ -75,4 +75,14 @@ class User extends Authenticatable
     public static function getCount() {
         return count(self::all());
     }
+
+    public function approvals(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Approval::class);
+    }
+
+    public function assignUserGroups(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AssignUserGroup::class);
+    }
 }
