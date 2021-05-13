@@ -15,7 +15,7 @@ class CreateApprovalLevelsTable extends Migration
     {
         Schema::create('approval_levels', function (Blueprint $table) {
             $table->id();
-            $table->integer('approval_document_type_id');
+            $table->integer('approval_document_types_id');
             $table->integer('order');
             $table->integer('user_group_id');
             $table->text('description');

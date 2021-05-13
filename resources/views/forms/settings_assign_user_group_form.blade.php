@@ -8,7 +8,7 @@
 
                 <option value="">Select Staff</option>
 
-                @foreach ($staffs as $user)
+                @foreach ($users as $user)
                     <option value="{{ $user->id }}" {{ ( $user->id == $object->user_id) ? 'selected' : '' }}> {{ $user->name }} </option>
                 @endforeach
 

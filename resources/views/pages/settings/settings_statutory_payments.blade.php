@@ -51,6 +51,7 @@
                             </tr>
                             </thead>
                             <tbody>
+<<<<<<< HEAD
                             @foreach ($statutory_payments as $key => $value)
                                 <tr id="statutory_payment-tr-{{$value->id}}">
                                     <th>

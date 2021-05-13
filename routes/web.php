@@ -114,8 +114,6 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/statutory_payments/{id}/{document_type_id}', [App\Http\Controllers\SettingsController::class, 'statutory_payment'])->name('hr_settings_statutory_payment');
     Route::match(['get', 'post'], '/settings/user_group', [App\Http\Controllers\SettingsController::class, 'user_group'])->name('hr_settings_user_group');
     Route::match(['get', 'post'], '/settings/stock', [App\Http\Controllers\SettingsController::class, 'stock'])->name('hr_settings_stock');
-
-
     Route::match(['get', 'post'], '/reports', [App\Http\Controllers\ReportsController::class, 'index'])->name('reports');
     Route::match(['get', 'post'], '/reports/allowance_subscriptions_report', [App\Http\Controllers\ReportsController::class, 'allowance_subscriptions_report'])->name('reports_allowance_subscriptions_report');
     Route::match(['get', 'post'], '/reports/general_report', [App\Http\Controllers\ReportsController::class, 'general_report'])->name('reports_general_report');

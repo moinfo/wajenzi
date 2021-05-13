@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
+
 class ApprovalController extends Controller
 {
     /**
@@ -95,6 +96,7 @@ class ApprovalController extends Controller
 //            'statutory_payments' => $statutory_payments
 //        ];
 //        return view('pages.settings.settings_statutory_payments')->with($data);
+
     }
 
     /**

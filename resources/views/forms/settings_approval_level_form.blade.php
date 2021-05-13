@@ -37,12 +37,12 @@
 
         <div class="form-group">
             <label for="example-nf-supplier" class="control-label required">Action</label>
-            <select name="action" id="input-action-id" class="form-control" required>
+            <select name="action_id" id="input-action-id" class="form-control" required>
 
                 <option value="">Select Action</option>
 
                 @foreach ($actions as $action)
-                    <option value="{{$action['name']}}" {{ ( $action['id'] == $object->action) ? 'selected' : '' }}> {{ $action['name'] }} </option>
+                    <option value="{{$action->name}}" {{ ( $action->id == $object->action) ? 'selected' : '' }}> {{ $action->name }} </option>
                 @endforeach
 
             </select>

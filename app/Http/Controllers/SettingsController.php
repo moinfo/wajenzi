@@ -354,7 +354,6 @@ class SettingsController extends Controller
         return view('pages.settings.settings_efds')->with($data);
     }
 
-
     public function approval_document_types(Request $request){
         if($this->handleCrud($request, 'ApprovalDocumentType')) {
             return back();
@@ -445,6 +444,7 @@ class SettingsController extends Controller
     }
 
 
+
     public function sub_categories(Request $request){
         if($this->handleCrud($request, 'SubCategory')) {
             return back();
@@ -498,6 +498,5 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_approval_levels')->with($data);
     }
-
 
 }

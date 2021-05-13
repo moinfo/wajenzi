@@ -9,13 +9,13 @@ class ApprovalLevel extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'approval_document_type_id', 'user_group_id', 'description',
+        'approval_document_types_id', 'user_group_id', 'description',
         'action','order'
     ];
 
     public function approvalDocumentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(ApprovalDocumentType::class, "approval_document_type_id");
+        return $this->belongsTo(ApprovalDocumentType::class, "approval_document_types_id");
     }
     public function userGroup(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

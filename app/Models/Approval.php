@@ -13,6 +13,7 @@ class Approval extends Model
     protected $fillable = [
         'approval_document_type_id', 'statutory_payment_id', 'user_id', 'user_group_id', 'approval_level_id',
         'comments', 'status', 'approval_date','document_id'
+
     ];
 
     public function approvalDocumentTypes(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -76,10 +77,5 @@ class Approval extends Model
         }
         return false;
     }
-
-
-
-
 }
-
 
