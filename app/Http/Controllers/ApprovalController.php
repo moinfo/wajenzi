@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Approval;
+use App\Models\Expense;
+//use App\Models\StatutoryPayment;
+use App\Models\StatutoryPayment;
 use Illuminate\Http\Request;
 
 class ApprovalController extends Controller
@@ -12,9 +15,62 @@ class ApprovalController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+
+    }
+
+    public function approvals(Request $request) {
+//        dump($_POST);
+//        return;
+        if($request->approveItem){
+            $class_name =  $request->approveItem;
+            $class_object = 'App\Models\\' . $class_name;
+           $approve =  Approval::create([
+                'approval_document_type_id' => $request->approval_document_type_id,
+                'user_id' => $request->user_id,
+                'document_id' => $request->document_id,
+                'approval_level_id' => $request->approval_level_id,
+                'user_group_id' => $request->user_group_id,
+                'approval_date' => $request->approval_date,
+                'comments' => $request->comments,
+                'status' => 'APPROVED']);
+           if($approve){
+               $this->notify($class_name .'Approved Successfully', 'Approved!', 'success');
+               if (Approval::isApprovalCompleted($request->document_id)){
+                   $class_object::where('id', $request->document_id)->update(['status' => 'APPROVED']);
+               }else{
+                   $class_object::where('id', $request->document_id)->update(['status' => 'PENDING']);
+               }
+           }else{
+               $this->notify('Failed to Approve '.$class_name, 'Failed', 'error');
+              // redirect('settings/statutory_payments');
+           }
+
+        }else{
+            $class_name =  $request->rejectItem;
+            $reject = Approval::create([
+                'approval_document_type_id' => $request->approval_document_type_id,
+                'user_id' => $request->user_id,
+                'document_id' => $request->document_id,
+                'approval_level_id' => $request->approval_level_id,
+                'user_group_id' => $request->user_group_id,
+                'approval_date' => $request->approval_date,
+                'comments' => $request->comments,
+                'status' => 'REJECTED']);
+            if ($reject == true){
+                $this->notify($class_name .'Rejected Successfully', 'Rejected!', 'success');
+            }else{
+                $this->notify('Failed to Reject '.$class_name, 'Failed', 'error');
+            }
+
+
+        }
+        $statutory_payments = StatutoryPayment::all();
+        $data = [
+            'statutory_payments' => $statutory_payments
+        ];
+        return view('pages.settings.settings_statutory_payments')->with($data);
     }
 
     /**

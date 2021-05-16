@@ -37,7 +37,7 @@
 
         <div class="form-group">
             <label for="example-nf-supplier" class="control-label required">Action</label>
-            <select name="action_id" id="input-action-id" class="form-control" required>
+            <select name="action" id="input-action-id" class="form-control" required>
 
                 <option value="">Select Action</option>
 

@@ -12,6 +12,11 @@ class AssignUserGroup extends Model
         'user_id', 'user_group_id'
     ];
 
+    public static function getAssignUserGroup($user_id)
+    {
+        return AssignUserGroup::where('user_id',$user_id)->get();
+    }
+
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class);

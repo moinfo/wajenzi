@@ -39,7 +39,7 @@
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                             <thead>
                             <tr>
-                                <th class="text-center" style="width: 100px;">#</th>
+                                <th class="text-center">#</th>
                                 <th>Date</th>
                                 <th scope="col">Control Number</th>
                                 <th scope="col">Statutory Payments</th>
@@ -53,12 +53,12 @@
                             <tbody>
                             @foreach ($statutory_payments as $key => $value)
                                 <tr>
-                                    <th scope="row">
-                                        <a href="#">{{$loop->iteration}}</a>
+                                    <th>
+                                        <a>{{$loop->iteration}}</a>
                                     </th>
                                     <td>{{ $value->updated_at }}</td>
                                     <td>{{ $value->control_number }}</td>
-                                    <td>{{ $value->subCategory->name }}</td>
+                                    <td>{{ $value->subCategory->name ?? null }}</td>
                                     <td>{{ \Str::limit($value->description, 100) }}</td>
                                     <td>{{ number_format($value->amount) }}</td>
                                     <td>{{ $value->due_date }}</td>
@@ -80,7 +80,7 @@
                                     <td class="text-center" >
                                         <div class="btn-group">
 {{--                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Approve Statutory Payment"))--}}
-                                                <button type="button" onclick="loadFormModal('settings_approval_statutory_payment_form', {className: 'Approval', id: {{$value->id}}}, 'Approve {{$value->subCategory->name }}', 'modal-md');" class="btn btn-sm btn-success js-tooltip-enabled" data-toggle="tooltip" title="Approval" data-original-title="Edit">
+                                                <button type="button" onclick="loadFormModal('settings_approval_statutory_payment_form', {className: 'Approval', id: {{$value->id}}}, 'Approve {{$value->subCategory->name ?? null}}', 'modal-md');" class="btn btn-sm btn-success js-tooltip-enabled" data-toggle="tooltip" title="Approval" data-original-title="Edit">
                                                     <i class="fa fa-eye"></i>
                                                 </button>
 {{--                                            @endif--}}

@@ -9,9 +9,10 @@ use Illuminate\Support\Facades\DB;
 class Approval extends Model
 {
     use HasFactory;
+
     protected $fillable = [
-        'approval_document_types_id', 'statutory_payment_id', 'user_id', 'user_group_id', 'approval_level_id',
-        'comments','status','approval_date'
+        'approval_document_type_id', 'statutory_payment_id', 'user_id', 'user_group_id', 'approval_level_id',
+        'comments', 'status', 'approval_date','document_id'
     ];
 
     public function approvalDocumentTypes(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -40,11 +41,11 @@ class Approval extends Model
     }
 
 
-
-    static function getApprovalStages($statutory_payment_id){
+    static function getApprovalStages($statutory_payment_id)
+    {
         $query = DB::SELECT("SELECT *, al.id AS order_id, al.`order` as `order`, al.`approval_document_type_id` AS document_id,
        al.`user_group_id` AS `user_group_id`, ug.name AS user_group_name FROM approval_levels al
-        LEFT JOIN approvals a ON (a.approval_level_id=al.id AND a.`approval_document_type_id` = '$statutory_payment_id')
+        LEFT JOIN approvals a ON (a.approval_level_id=al.id AND a.`document_id` = '$statutory_payment_id')
         LEFT JOIN user_groups ug ON (ug.id = al.`user_group_id`) WHERE al.order > 0 ");
         return $query;
     }
@@ -53,18 +54,20 @@ class Approval extends Model
     {
         $stages = self::getApprovalStages($statutory_payment_id);
         foreach ($stages as $stage) {
-            if (($stage->status != 'approved') ) {
+            if (($stage->status != 'APPROVED')) {
                 return $stage;
             }
         }
         return false;
     }
 
-    static function isApprovalCompleted($statutory_payment_id) {
+    static function isApprovalCompleted($statutory_payment_id)
+    {
         return self::getNextApproval($statutory_payment_id) === false;
     }
 
-    static function isRejected($statutory_payment_id){
+    static function isRejected($statutory_payment_id)
+    {
         $stages = self::getApprovalStages($statutory_payment_id);
         foreach ($stages as $stage) {
             if ($stage->status == 'rejected') {
@@ -73,4 +76,10 @@ class Approval extends Model
         }
         return false;
     }
+
+
+
+
 }
+
+
