@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Approval extends Model
 {
@@ -41,8 +42,9 @@ class Approval extends Model
 
 
     static function getApprovalStages($statutory_payment_id){
-        $query = DB::SELECT("SELECT *, al.id AS order_id, al.`order` as `order`, al.`approval_document_types_id` AS document_id,al.`user_group_id` AS `user_group_id`, ug.name AS user_group_name FROM approval_levels al
-        LEFT JOIN approvals a ON (a.approval_level_id=al.id AND a.`statutory_payment_id` = '$statutory_payment_id')
+        $query = DB::SELECT("SELECT *, al.id AS order_id, al.`order` as `order`, al.`approval_document_type_id` AS document_id,
+       al.`user_group_id` AS `user_group_id`, ug.name AS user_group_name FROM approval_levels al
+        LEFT JOIN approvals a ON (a.approval_level_id=al.id AND a.`approval_document_type_id` = '$statutory_payment_id')
         LEFT JOIN user_groups ug ON (ug.id = al.`user_group_id`) WHERE al.order > 0 ");
         return $query;
     }

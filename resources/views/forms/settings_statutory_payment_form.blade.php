@@ -28,7 +28,7 @@
         </div>
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Issues Date</label>
-            <input type="text" class="form-control datepicker"  id="input-issue-date" name="issues_date"
+            <input type="text" class="form-control datepicker"  id="input-issue-date" name="issue_date"
                    value="{{ $object->issue_date ?? date('Y-m-d') }}" required>
         </div>
         <div class="form-group">

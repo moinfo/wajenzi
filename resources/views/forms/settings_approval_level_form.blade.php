@@ -42,7 +42,7 @@
                 <option value="">Select Action</option>
 
                 @foreach ($actions as $action)
-                    <option value="{{$action->name}}" {{ ( $action->id == $object->action) ? 'selected' : '' }}> {{ $action->name }} </option>
+                    <option value="{{$action['name']}}" {{ ( $action['id'] == $object->action) ? 'selected' : '' }}> {{ $action['name'] }} </option>
                 @endforeach
 
             </select>
