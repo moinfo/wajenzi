@@ -304,6 +304,25 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_statutory_payments')->with($data);
     }
+    public function statutory_payment(Request $request,$id){
+//        dump($id);
+//        return;
+        $statutory_payments = \App\Models\StatutoryPayment::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id);
+        $nextApproval = Approval::getNextApproval($id);
+        $approvalCompleted = Approval::isApprovalCompleted($id);
+        $rejected = Approval::isRejected($id);
+        $document_id = $id;
+        $data = [
+            'statutory_payments' => $statutory_payments,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.statutory_payment.statutory_payment')->with($data);
+    }
     public function sub_categories(Request $request){
         if($this->handleCrud($request, 'SubCategory')) {
             return back();

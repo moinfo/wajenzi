@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Approval;
+use App\Models\AssignUserGroup;
 use App\Models\Expense;
 //use App\Models\StatutoryPayment;
+use App\Models\Notification;
 use App\Models\StatutoryPayment;
 use Illuminate\Http\Request;
 
@@ -35,8 +37,16 @@ class ApprovalController extends Controller
                 'approval_date' => $request->approval_date,
                 'comments' => $request->comments,
                 'status' => 'APPROVED']);
+
            if($approve){
                $this->notify($class_name .'Approved Successfully', 'Approved!', 'success');
+               $next_user_group_id = Approval::getNextApproval($request->document_id)->user_group_id;
+               $next_user_id = AssignUserGroup::getUserId($next_user_group_id)->user_id;
+               $nofity_next_approval = Notification::create([
+                   'staff_id' => $next_user_id,
+                   'title' => $class_name. ' '. 'Waiting for Approval',
+                   'body' => 'A new '.$class_name.' has been created and submitted. You are required to review and approve the created '. $class_name,
+                   'link' => $request->link]);
                if (Approval::isApprovalCompleted($request->document_id)){
                    $class_object::where('id', $request->document_id)->update(['status' => 'APPROVED']);
                }else{

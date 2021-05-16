@@ -100,6 +100,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/categories', [App\Http\Controllers\SettingsController::class, 'categories'])->name('hr_settings_categories');
     Route::match(['get', 'post'], '/settings/sub_categories', [App\Http\Controllers\SettingsController::class, 'sub_categories'])->name('hr_settings_sub_categories');
     Route::match(['get', 'post'], '/settings/statutory_payments', [App\Http\Controllers\SettingsController::class, 'statutory_payments'])->name('hr_settings_statutory_payments');
+    Route::match(['get', 'post'], '/settings/statutory_payments/{id}', [App\Http\Controllers\SettingsController::class, 'statutory_payment'])->name('hr_settings_statutory_payment');
     Route::match(['get', 'post'], '/settings/user_group', [App\Http\Controllers\SettingsController::class, 'user_group'])->name('hr_settings_user_group');
 
 

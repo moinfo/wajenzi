@@ -7,6 +7,7 @@ use App\Models\Expense;
 use App\Models\Gross;
 use App\Models\TransactionMovement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -36,8 +37,8 @@ class DashboardController extends Controller
             'expenses' => $expenses,
             'gross' => $gross,
         ];
-
-        $this->notify('Welcome to a Financial Analysis System', 'Hello User', 'success');
+        $user = Auth::user()->name;
+        $this->notify('Welcome to a Financial Analysis System', 'Hello'.' '.$user, 'success');
         return view('pages.dashboard')->with($data);
     }
 }
