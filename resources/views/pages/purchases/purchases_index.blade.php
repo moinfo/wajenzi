@@ -36,6 +36,7 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
+                                    <th>Date</th>
                                     <th>Supplier Name</th>
                                     <th>Supplier VRN</th>
                                     <th>Tax Invoice</th>
@@ -53,6 +54,7 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
+                                        <td class="font-w600">{{ $purchase->date }}</td>
                                         <td class="font-w600">{{ $purchase->supplier->name }}</td>
                                         <td class="font-w600">{{ $purchase->supplier->vrn }}</td>
                                         <td class="font-w600">{{ $purchase->tax_invoice }}</td>

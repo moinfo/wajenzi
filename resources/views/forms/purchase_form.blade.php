@@ -43,7 +43,11 @@
             <label for="example-nf-invoice_date">Invoice Date</label>
             <input type="text" class="form-control datepicker" id="input-invoice_date" name="invoice_date"
                    value="{{ $object->invoice_date ?? date('Y-m-d') }}" required>
-{{--            <input type="text" class="js-flatpickr form-control bg-white js-flatpickr-enabled flatpickr-input active" id="example-flatpickr-custom" name="example-flatpickr-custom" placeholder="d-m-Y" data-date-format="d-m-Y" readonly="readonly">--}}
+        </div>
+        <div class="form-group">
+            <label for="example-nf-invoice_date">Date</label>
+            <input type="text" class="form-control datepicker" id="input-date" name="date"
+                   value="{{ $object->date ?? date('Y-m-d') }}" required>
         </div>
         <div class="form-group">
             <label class="control-label" for="chooseFile">Choose file</label>

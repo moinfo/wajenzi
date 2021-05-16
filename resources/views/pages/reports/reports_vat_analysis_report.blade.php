@@ -66,10 +66,11 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center">#</th>
+                                    <th>Date</th>
                                     <th>Supplier</th>
                                     <th>VRN</th>
                                     <th>Invoice</th>
-                                    <th>Date</th>
+                                    <th>Invoice Date</th>
                                     <th>Goods</th>
                                     <th>Total</th>
                                     <th>VAT EXC</th>
@@ -112,6 +113,7 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
+                                        <td class="font-w600">{{ $purchase->date }}</td>
                                         <td class="font-w600">{{ $purchase->supplier ?? null }}</td>
                                         <td class="font-w600">{{ $purchase->vrn ?? null}}</td>
                                         <td class="font-w600">{{ $purchase->tax_invoice }}</td>
@@ -126,7 +128,7 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td colspan="6" class="text-right">TOTAL PURCHASES</td>
+                                    <td colspan="7" class="text-right">TOTAL PURCHASES</td>
                                     <td class="text-right">{{ number_format($total_purchases, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vat_exempts, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vats, 2) }}</td>

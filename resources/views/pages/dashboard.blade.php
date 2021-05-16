@@ -593,7 +593,7 @@
         foreach ($dates as $index => $date) {
             // echo $date;
             $collections_per_week[] = \App\Models\Sale::Where('date',$date)->select([DB::raw("SUM(tax) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
-            $expenses_per_week[] = \App\Models\Purchase::Where('invoice_date',$date)->select([DB::raw("SUM(vat_amount) as total_amount")])->groupBy('invoice_date')->get()->first()['total_amount'] ?? 0;
+            $expenses_per_week[] = \App\Models\Purchase::Where('date',$date)->select([DB::raw("SUM(vat_amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
 
         }
     }

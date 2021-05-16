@@ -66,10 +66,11 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center">#</th>
+                                    <th>Date</th>
                                     <th>Supplier</th>
                                     <th>VRN</th>
                                     <th>Invoice</th>
-                                    <th>Date</th>
+                                    <th>Invoice Date</th>
                                     <th>Goods</th>
                                     <th>Total</th>
                                 </tr>
@@ -108,6 +109,7 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
+                                        <td class="font-w600">{{ $purchase->date }}</td>
                                         <td class="font-w600">{{ $purchase->supplier ?? null }}</td>
                                         <td class="font-w600">{{ $purchase->vrn ?? null}}</td>
                                         <td class="font-w600">{{ $purchase->tax_invoice }}</td>
