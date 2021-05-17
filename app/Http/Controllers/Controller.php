@@ -51,8 +51,9 @@ class Controller extends BaseController
                                 'body' => 'A new '.$class_name.' has been created and submitted. You are required to review and approve the created '. $class_name,
                                 'link' => $request->link
                             ];
-
                             $user->notify(new \App\Notifications\ApprovalNotification($details));
+
+                            event(new \App\Events\Approved($details));
                         }
                     }
                 } else {

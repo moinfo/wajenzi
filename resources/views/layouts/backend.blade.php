@@ -169,6 +169,10 @@
         </script>
 
         <script>
+            // window.Echo.channel('test-event')
+            //     .listen('StatusLinked', (e) => {
+            //         console.log(e);
+            //     });
 
             /**
              *

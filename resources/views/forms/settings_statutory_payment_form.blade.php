@@ -58,6 +58,10 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
 </div>
 
 <script>
+    // window.Echo.private('details.' + window.Laravel.user)
+    //     .listen('Approved', (e) => {
+    //         console.log(e);
+    //     });
     $('.datepicker').datepicker({
         format: 'yyyy-mm-dd'
     });

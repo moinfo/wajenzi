@@ -1,120 +1,6 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./resources/js/codebase/app.js":
-/*!**************************************!*\
-  !*** ./resources/js/codebase/app.js ***!
-  \**************************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* binding */ App)
-/* harmony export */ });
-/* harmony import */ var _bootstrap__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./bootstrap */ "./resources/js/codebase/bootstrap.js");
-/* harmony import */ var _main__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../main */ "./resources/js/main.js");
-/* harmony import */ var _main__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_main__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var _modules_tools__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/tools */ "./resources/js/codebase/modules/tools.js");
-/* harmony import */ var _modules_helpers__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/helpers */ "./resources/js/codebase/modules/helpers.js");
-/* harmony import */ var _modules_template__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./modules/template */ "./resources/js/codebase/modules/template.js");
-function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
-
-function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
-
-function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
-
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
-function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-/*
- *  Document   : app.js
- *  Author     : pixelcave
- *  Description: Main entry point
- *
- */
-// Import global dependencies
-
- // Import required modules
-
-
-
- // App extends Template
-
-var App = /*#__PURE__*/function (_Template) {
-  _inherits(App, _Template);
-
-  var _super = _createSuper(App);
-
-  /*
-   * Auto called when creating a new instance
-   *
-   */
-  function App() {
-    _classCallCheck(this, App);
-
-    return _super.call(this);
-  }
-  /*
-   *  Here you can override or extend any function you want from Template class
-   *  if you would like to change/extend/remove the default functionality.
-   *
-   *  This way it will be easier for you to update the module files if a new update
-   *  is released since all your changes will be in here overriding the original ones.
-   *
-   *  Let's have a look at the _uiInit() function, the one that runs the first time
-   *  we create an instance of Template class or App class which extends it. This function
-   *  inits all vital functionality but you can change it to fit your own needs.
-   *
-   */
-
-  /*
-   * EXAMPLE #1 - Removing default functionality by making it empty
-   *
-   */
-  //  _uiInit() {}
-
-  /*
-   * EXAMPLE #2 - Extending default functionality with additional code
-   *
-   */
-  //  _uiInit() {
-  //      // Call original function
-  //      super._uiInit();
-  //
-  //      // Your extra JS code afterwards
-  //  }
-
-  /*
-   * EXAMPLE #3 - Replacing default functionality by writing your own code
-   *
-   */
-  //  _uiInit() {
-  //      // Your own JS code without ever calling the original function's code
-  //  }
-
-
-  return App;
-}(_modules_template__WEBPACK_IMPORTED_MODULE_4__.default); // Once everything is loaded
-
-
-
-jQuery(function () {
-  // Create a new instance of App
-  window.Codebase = new App();
-});
-
-/***/ }),
-
 /***/ "./resources/js/codebase/bootstrap.js":
 /*!********************************************!*\
   !*** ./resources/js/codebase/bootstrap.js ***!
@@ -28424,8 +28310,9 @@ if ((can_use_dom__WEBPACK_IMPORTED_MODULE_2___default())) {
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
 /******/ 		// Check if module is in cache
-/******/ 		if(__webpack_module_cache__[moduleId]) {
-/******/ 			return __webpack_module_cache__[moduleId].exports;
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
 /******/ 		}
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = __webpack_module_cache__[moduleId] = {
@@ -28495,9 +28382,118 @@ if ((can_use_dom__WEBPACK_IMPORTED_MODULE_2___default())) {
 /******/ 	})();
 /******/ 	
 /************************************************************************/
-/******/ 	// startup
-/******/ 	// Load entry module
-/******/ 	__webpack_require__("./resources/js/codebase/app.js");
-/******/ 	// This entry module used 'exports' so it can't be inlined
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+/*!**************************************!*\
+  !*** ./resources/js/codebase/app.js ***!
+  \**************************************/
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ App)
+/* harmony export */ });
+/* harmony import */ var _bootstrap__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./bootstrap */ "./resources/js/codebase/bootstrap.js");
+/* harmony import */ var _main__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../main */ "./resources/js/main.js");
+/* harmony import */ var _main__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_main__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _modules_tools__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/tools */ "./resources/js/codebase/modules/tools.js");
+/* harmony import */ var _modules_helpers__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/helpers */ "./resources/js/codebase/modules/helpers.js");
+/* harmony import */ var _modules_template__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./modules/template */ "./resources/js/codebase/modules/template.js");
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+/*
+ *  Document   : app.js
+ *  Author     : pixelcave
+ *  Description: Main entry point
+ *
+ */
+// Import global dependencies
+
+ // Import required modules
+
+
+
+ // App extends Template
+
+var App = /*#__PURE__*/function (_Template) {
+  _inherits(App, _Template);
+
+  var _super = _createSuper(App);
+
+  /*
+   * Auto called when creating a new instance
+   *
+   */
+  function App() {
+    _classCallCheck(this, App);
+
+    return _super.call(this);
+  }
+  /*
+   *  Here you can override or extend any function you want from Template class
+   *  if you would like to change/extend/remove the default functionality.
+   *
+   *  This way it will be easier for you to update the module files if a new update
+   *  is released since all your changes will be in here overriding the original ones.
+   *
+   *  Let's have a look at the _uiInit() function, the one that runs the first time
+   *  we create an instance of Template class or App class which extends it. This function
+   *  inits all vital functionality but you can change it to fit your own needs.
+   *
+   */
+
+  /*
+   * EXAMPLE #1 - Removing default functionality by making it empty
+   *
+   */
+  //  _uiInit() {}
+
+  /*
+   * EXAMPLE #2 - Extending default functionality with additional code
+   *
+   */
+  //  _uiInit() {
+  //      // Call original function
+  //      super._uiInit();
+  //
+  //      // Your extra JS code afterwards
+  //  }
+
+  /*
+   * EXAMPLE #3 - Replacing default functionality by writing your own code
+   *
+   */
+  //  _uiInit() {
+  //      // Your own JS code without ever calling the original function's code
+  //  }
+
+
+  return App;
+}(_modules_template__WEBPACK_IMPORTED_MODULE_4__.default); // Once everything is loaded
+
+
+
+jQuery(function () {
+  // Create a new instance of App
+  window.Codebase = new App();
+});
+})();
+
 /******/ })()
 ;

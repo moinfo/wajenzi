@@ -6,6 +6,7 @@ use App\Models\Approval;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -33,7 +34,7 @@ class ApprovalNotification extends Notification
      */
     public function via($notifiable)
     {
-        return ['database'];
+        return ['database','broadcast'];
     }
 
     /**
@@ -64,5 +65,19 @@ class ApprovalNotification extends Notification
             'title' => $this->details['title'],
             'body' => $this->details['body']
         ];
+    }/**
+     * Get the array representation of the notification.
+     *
+     * @param  mixed  $notifiable
+     * @return array
+     */
+    public function toBroadcast($notifiable)
+    {
+        return new BroadcastMessage([
+            'data' => $this->details,
+            'link' => $this->details['link'],
+            'title' => $this->details['title'],
+            'body' => $this->details['body']
+        ]);
     }
 }
