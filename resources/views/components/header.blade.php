@@ -1,7 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Auth;
-$notification_unread = \App\Models\Notification::getUnreadNotification(Auth::user()->id);
-$count_notification_unread = \App\Models\Notification::getCountUnreadNotification(Auth::user()->id);
+$notification_unread = \App\Models\Notification::getLatestUnreadNotifications(Auth::user()->id);
+$count_notification_unread = \App\Models\Notification::getUnreadNotificationsCount(Auth::user()->id);
 //                    dump($notification_unread);
 ?>
 <header id="page-header">
@@ -143,16 +143,19 @@ $count_notification_unread = \App\Models\Notification::getCountUnreadNotificatio
                     <h5 class="h6 text-center py-10 mb-0 border-b text-uppercase">Notifications</h5>
 
                     <ul class="list-unstyled my-20">
-                        @foreach($notification_unread as $item)
+                        @foreach( Auth::user()->unreadNotifications as $notification)
+                        <?php
+                            $link = $notification->data['link']
+                        ?>
                         <li>
-                            <a class="text-body-color-dark media mb-15" href="{{url("$item->link")}}">
+                            <a class="text-body-color-dark media mb-15" href="{{url("$link")}}">
                                 <div class="ml-5 mr-15">
                                     <i class="fa fa-fw fa-clock-o text-success"></i>
                                 </div>
                                 <div class="media-body pr-10">
-                                    <h6 class="mb-0">{{$item->title}}</h6>
-                                    <p class="mb-0">{{$item->body}}</p>
-                                    <div class="text-muted font-size-sm font-italic">{{$item->updated_at}}</div>
+                                    <h6 class="mb-0">{{$notification->data['title']}}</h6>
+                                    <p class="mb-0">{{$notification->data['body']}}</p>
+                                    <div class="text-muted font-size-sm font-italic">{{$notification->updated_at}}</div>
                                 </div>
                             </a>
                         </li>

@@ -146,6 +146,7 @@
         <script src="{{ asset('js/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
         <script src="{{ asset('js/plugins/bootstrap-datepicker/js/bootstrap-datepicker.js') }}"></script>
         <script src="{{ asset('js/plugins/select2/js/select2.min.js') }}"></script>
+        <script src="//js.pusher.com/3.1/pusher.min.js"></script>
 
         {{--        <script src="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.min.js') }}"></script>--}}
 

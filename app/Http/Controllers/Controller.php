@@ -6,6 +6,7 @@ use App\Classes\Utility;
 use App\Models\Approval;
 use App\Models\AssignUserGroup;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -39,10 +40,19 @@ class Controller extends BaseController
                 if($this->crudAdd($request, $class_name)) {
                     $this->notify($class_name .'Added Successfully', 'Added!', 'success');
                     if($request->document_id != null){
-                        if(Approval::getNextApproval($request->document_id)){
+                        if(Approval::getNextApproval($request->document_id)) {
                             $next_user_group_id = Approval::getNextApproval($request->document_id)->user_group_id;
                             $next_user_id = AssignUserGroup::getUserId($next_user_group_id)->user_id;
-                            $notify_next_approval = Notification::notifyNextApproval($next_user_id,$class_name,$request->link);
+                            $user = User::find($next_user_id);
+
+                            $details = [
+                                'staff_id' => $next_user_id,
+                                'title' => $class_name. ' '. 'Waiting for Approval',
+                                'body' => 'A new '.$class_name.' has been created and submitted. You are required to review and approve the created '. $class_name,
+                                'link' => $request->link
+                            ];
+
+                            $user->notify(new \App\Notifications\ApprovalNotification($details));
                         }
                     }
                 } else {
