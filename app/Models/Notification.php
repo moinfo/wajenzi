@@ -21,4 +21,13 @@ class Notification extends Model
             return Notification::where('staff_id',$user_id)->where('shown',0)->get()->count();
 
     }
+
+    public static function notifyNextApproval($next_user_id,$class_name,$link){
+       $save =  Notification::create([
+            'staff_id' => $next_user_id,
+            'title' => $class_name. ' '. 'Waiting for Approval',
+            'body' => 'A new '.$class_name.' has been created and submitted. You are required to review and approve the created '. $class_name,
+            'link' => $link]);
+       return $save;
+    }
 }

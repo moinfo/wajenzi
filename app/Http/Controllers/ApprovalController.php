@@ -40,13 +40,16 @@ class ApprovalController extends Controller
 
            if($approve){
                $this->notify($class_name .'Approved Successfully', 'Approved!', 'success');
-               $next_user_group_id = Approval::getNextApproval($request->document_id)->user_group_id;
-               $next_user_id = AssignUserGroup::getUserId($next_user_group_id)->user_id;
-               $nofity_next_approval = Notification::create([
-                   'staff_id' => $next_user_id,
-                   'title' => $class_name. ' '. 'Waiting for Approval',
-                   'body' => 'A new '.$class_name.' has been created and submitted. You are required to review and approve the created '. $class_name,
-                   'link' => $request->link]);
+               if(Approval::getNextApproval($request->document_id)){
+                   $next_user_group_id = Approval::getNextApproval($request->document_id)->user_group_id;
+                   $next_user_id = AssignUserGroup::getUserId($next_user_group_id)->user_id;
+                   $nofity_next_approval = Notification::create([
+                       'staff_id' => $next_user_id,
+                       'title' => $class_name. ' '. 'Waiting for Approval',
+                       'body' => 'A new '.$class_name.' has been created and submitted. You are required to review and approve the created '. $class_name,
+                       'link' => $request->link]);
+               }
+
                if (Approval::isApprovalCompleted($request->document_id)){
                    $class_object::where('id', $request->document_id)->update(['status' => 'APPROVED']);
                }else{

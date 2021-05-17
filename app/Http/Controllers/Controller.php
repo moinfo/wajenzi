@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Classes\Utility;
+use App\Models\Approval;
+use App\Models\AssignUserGroup;
+use App\Models\Notification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -35,6 +38,13 @@ class Controller extends BaseController
             if($request->has('addItem')) {
                 if($this->crudAdd($request, $class_name)) {
                     $this->notify($class_name .'Added Successfully', 'Added!', 'success');
+                    if($request->document_id != null){
+                        if(Approval::getNextApproval($request->document_id)){
+                            $next_user_group_id = Approval::getNextApproval($request->document_id)->user_group_id;
+                            $next_user_id = AssignUserGroup::getUserId($next_user_group_id)->user_id;
+                            $notify_next_approval = Notification::notifyNextApproval($next_user_id,$class_name,$request->link);
+                        }
+                    }
                 } else {
                     $this->notify('Failed to Add '.$class_name, 'Failed', 'error');
                 }

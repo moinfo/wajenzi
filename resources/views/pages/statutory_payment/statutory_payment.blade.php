@@ -36,7 +36,7 @@
                         <form method="post" action="{{route('hr_settings_approvals')}}" enctype="multipart/form-data">
                             @csrf
                             <?php
-                            dump($nextApproval);
+                         //   dump($nextApproval);
                             use App\Models\Approval;
                           //  $document_id = 1;
                             ?>
