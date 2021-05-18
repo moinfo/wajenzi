@@ -72,3 +72,5 @@ jQuery(() => {
     // Create a new instance of App
    window.Codebase = new App();
 });
+
+require('../pages/backend');
