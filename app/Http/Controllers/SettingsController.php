@@ -34,7 +34,9 @@ use App\Models\System;
 use App\Models\User;
 use App\Models\UserGroup;
 use App\Models\UsersPermission;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class SettingsController extends Controller
@@ -86,6 +88,13 @@ class SettingsController extends Controller
             'allowances' => Allowance::all()
         ];
         return view('pages.settings.settings_allowances')->with($data);
+    }
+    public function makeReadNotification(Request $request){
+        $notification_id = $request->id;
+        $link = $request->link;
+        $id = $request->id;
+        DB::table('notifications')->where('id',$notification_id)->update(['read_at'=>Carbon::now()]);
+        redirect()->route('hr_settings_statutory_payment', ['id' => $id]);
     }
     public function allowance_subscriptions(Request $request){
         if($this->handleCrud($request, 'AllowanceSubscription')) {

@@ -29,7 +29,7 @@ class Utility
     }
 
     public static function getLastId($class_name){
-        return self::getLastRow($class_name)->id;
+        return self::getLastRow($class_name)->id ?? 0;
     }
 
     public static function getMonthNames($start = 1, $end = 12) {

@@ -1,5 +1,5 @@
 <?php
-$document_id = (\App\Classes\Utility::getLastId('StatutoryPayment') ?? 0)+1;
+$document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
 ?>
 <div class="block-content">
     <form method="post"  enctype="multipart/form-data">
