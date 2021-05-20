@@ -39,6 +39,9 @@ class DashboardController extends Controller
         ];
         $user = Auth::user()->name;
         $this->notify('Welcome to a Financial Analysis System', 'Hello'.' '.$user, 'success');
+//        $this->notify_toast('success','hello');
+        session()->put('success','Item created successfully.');
         return view('pages.dashboard')->with($data);
     }
+
 }

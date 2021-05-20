@@ -32,6 +32,13 @@ class Controller extends BaseController
 
     }
 
+    public function notify_toast($text, $type = 'success') {
+        $toast_session_notifications = session('toast_notifications') ?? [];
+        array_push($toast_session_notifications, ['text' => $text, 'type' => $type]);
+        session(['toast_notifications' => $toast_session_notifications]);
+
+    }
+
 
     public function handleCrud(Request $request, $class_name, $id = null) {
         if($request->isMethod('POST') || $request->isMethod('PUT')) {

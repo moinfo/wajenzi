@@ -97,6 +97,7 @@
 
             <!-- Main Container -->
             <main id="main-container">
+                <div class='notifications top-right'></div>
                 @yield('content')
             </main>
             <!-- END Main Container -->
@@ -148,13 +149,24 @@
         <script src="{{ asset('js/plugins/select2/js/select2.min.js') }}"></script>
         <script src="//js.pusher.com/3.1/pusher.min.js"></script>
 
+         <!-- Page JS Plugins -->
+         <script src="{{ asset('js/plugins/bootstrap-notify/bootstrap-notify.min.js') }}"></script>
+        <script src="{{ asset('js/plugins/es6-promise/es6-promise.auto.min.js') }}"></script>
+
+
+        <!-- Page JS Code -->
+{{--        <script src="{{ asset('js/pages/be_ui_activity.min.js') }}"></script>--}}
+
+        <!-- Page JS Helpers (BS Notify Plugin) -->
+        <script>jQuery(function(){ Codebase.helpers('notify'); });</script>
+
         {{--        <script src="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.min.js') }}"></script>--}}
 
 
 
         <script>
 
-
+// jQuery('#toast-example-1').toast('show');
             var csrf_token = '{{csrf_token()}}';
 
                 @if(Session::get('notifications') != null)
@@ -166,9 +178,37 @@
             @endforeach
             <?php  Session::put('notifications', []); ?>
             @endif
+
         </script>
 
         <script>
+                <?php
+                $timer = 1000;
+                $delay = 5000;
+
+            foreach( Auth::user()->unreadNotifications as $notification){
+            $link = $notification->data['link']
+            ?>
+            $.notify({
+                    title: "<strong>{{$notification->data['title']}}:</strong></br> ",
+                    message: "{{$notification->data['body']}}",
+                    url: "{{url("$link")}}",
+                },{
+                    type: 'success',
+                    placement: {
+                        from: "bottom",
+                        align: "right"
+                    },
+                delay: {{$delay}},
+                timer: {{$timer}},
+                },
+            );
+            <?php
+            $delay+=1000;
+            $timer+=1000;
+            }
+          ?>
+
 
             // window.Echo.channel('test-event')
             //     .listen('StatusLinked', (e) => {
