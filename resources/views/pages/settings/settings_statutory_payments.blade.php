@@ -52,7 +52,7 @@
                             </thead>
                             <tbody>
                             @foreach ($statutory_payments as $key => $value)
-                                <tr>
+                                <tr id="statutory_payment-tr-{{$value->id}}">
                                     <th>
                                         <a>{{$loop->iteration}}</a>
                                     </th>
