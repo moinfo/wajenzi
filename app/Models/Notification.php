@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Notification extends Model
 {
     use HasFactory;
-
+    protected $keyType = 'string';
     public static function forUser($user_id) {
         return self::where('user_id', $user_id);
     }

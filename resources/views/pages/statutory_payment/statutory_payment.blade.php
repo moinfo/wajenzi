@@ -20,7 +20,21 @@
     </script>
 @endsection
 @section('content')
-
+    <?php
+    use App\Models\Approval;use Illuminate\Http\Request;
+    $notifiable_id = Auth::user()->id;
+    $route_id =request()->route('id');
+    $base_route = 'settings/statutory_payments/'.$route_id;
+    foreach( Auth::user()->unreadNotifications as $notification){
+        if($notification->data['link'] == $base_route){
+            $notification_id= \App\Models\Notification::Where('notifiable_id',$notifiable_id)->where('data->link', $base_route)->get()->first()->id;
+            $notification = auth()->user()->notifications()->find($notification_id);
+            if($notification) {
+                $notification->markAsRead();
+            }
+        }
+    }
+    ?>
     <div class="main-container">
         <div class="content">
             <div class="content-heading">Statutory Payment
@@ -35,11 +49,6 @@
                     <div class="block-content">
                         <form method="post" action="{{route('hr_settings_approvals')}}" enctype="multipart/form-data">
                             @csrf
-                            <?php
-                         //   dump($nextApproval);
-                            use App\Models\Approval;
-                          //  $document_id = 1;
-                            ?>
                             <table class="table table-bordered table-striped table-vcenter">
                                 <tbody>
                                 <tr>
