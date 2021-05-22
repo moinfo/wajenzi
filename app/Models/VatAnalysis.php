@@ -16,4 +16,11 @@ class VatAnalysis extends Model
         return  ($sales_vat-$purchases_vat) - $payment_vat;
 
     }
+    public function getTaxPayablePerMonth($end_date){
+        $purchases_vat = Purchase::getTotalPurchasesWithVAT($end_date);
+        $sales_vat = Sale::getTotalVatAmt('2020-01-01',$end_date);
+        $payment_vat = VatPayment::getTotalPayments($end_date);
+        return  ($sales_vat-$purchases_vat) - $payment_vat;
+
+    }
 }
