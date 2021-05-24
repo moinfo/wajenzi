@@ -140,10 +140,22 @@
                                     <td class="text-right">{{ number_format($total_vat_amt, 2) }}</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="7" class="text-right"><b>VAT PAYABLE/(REFUND)</b></td>
+                                    <td colspan="7" class="text-right"><b>CURRENT VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
                                     <td class="text-right">{{ number_format(($total_vat_amt-$total_vats), 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="7" class="text-right"><b>OLD VAT PAYABLE/(REFUND)</b></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right">{{ number_format(($vat_payable - ($total_vat_amt-$total_vats)), 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="7" class="text-right"><b>TOTAL VAT PAYABLE/(REFUND)</b></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right">{{ number_format(($vat_payable), 2) }}</td>
                                 </tr>
 
                                 </tfoot>
