@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Loan extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'staff_id', 'amount', 'date', 'deduction'];
+    public $fillable = ['id', 'staff_id', 'amount', 'date', 'deduction', 'status'];
     public function staff(){
         return $this->belongsTo(Staff::class);
     }

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class AdvanceSalary extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'staff_id', 'amount', 'date', 'description'];
+    public $fillable = ['id', 'staff_id', 'amount', 'date', 'description', 'status'];
 
     public function staff(){
         return $this->belongsTo(Staff::class);

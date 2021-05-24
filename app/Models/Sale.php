@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class Sale extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'efd_id', 'amount', 'date', 'net', 'tax', 'turn_over', 'file'];
+    public $fillable = ['id', 'efd_id', 'amount', 'date', 'net', 'tax', 'turn_over', 'file', 'status'];
 
     public function efd(){
         return $this->belongsTo(Efd::class);

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class VatPayment extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'bank_id', 'amount', 'date', 'description', 'file'];
+    public $fillable = ['id', 'bank_id', 'amount', 'date', 'description', 'file', 'status'];
 
     public function getAll($start_date,$end_date){
         $vat_payments =  DB::table('vat_payments')
