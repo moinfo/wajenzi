@@ -21,6 +21,10 @@
                    value="{{ $object->date ?? date('Y-m-d') }}" required>
         </div>
         <div class="form-group">
+            <label class="control-label" for="chooseFile">Choose file</label>
+            <input type="file" name="file" class="form-control" id="chooseFile">
+        </div>
+        <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>

@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class Stock extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'stock_type', 'amount', 'date'];
+    public $fillable = ['id', 'stock_type', 'amount', 'date', 'file'];
 
 
     public static function getTotalOpeningStock($start_date, $end_date){

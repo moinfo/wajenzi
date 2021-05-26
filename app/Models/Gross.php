@@ -20,4 +20,9 @@ class Gross extends Model
     static function getTotalGrossProfitBySupervisorForSpecificDate($start_date, $end_date){
         return \App\Models\Gross::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
     }
+    public static function getTotalGrossProfit($start_date,$end_date){
+        $revenue = Sale::getTotalRevenue($start_date,$end_date);
+        $cost_of_sales = Sale::getCostOfSales($start_date,$end_date);
+        return $revenue-$cost_of_sales;
+    }
 }

@@ -42,6 +42,7 @@
                                 <th>Date</th>
                                 <th>Stock Type</th>
                                 <th class="d-none d-sm-table-cell" style="width: 30%;">Amount</th>
+                                <td>Attachment</td>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
@@ -60,6 +61,13 @@
                                     <td class="font-w600">{{ $stock->date}}</td>
                                     <td class="font-w600">{{ $stock->stock_type}}</td>
                                     <td class="text-right">{{ number_format($stock->amount) }}
+                                    </td>
+                                    <td class="text-center">
+                                        @if($stock->file != null)
+                                            <a href="{{ url("$stock->file") }}">Attachment</a>
+                                        @else
+                                            No File
+                                        @endif
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
@@ -86,6 +94,7 @@
                                     <td></td>
                                     <td></td>
                                     <td class="text-right">{{number_format($sum)}}</td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                             </tfoot>

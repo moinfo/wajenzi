@@ -71,6 +71,8 @@
                         $revenue_last = \App\Models\Sale::getTotalRevenue($start_date_last,$end_date_last) ?? 0;
                         $cost_of_sales_current = \App\Models\Sale::getCostOfSales($start_date,$end_date) ?? 0;
                         $cost_of_sales_last = \App\Models\Sale::getCostOfSales($start_date_last,$end_date_last) ?? 0;
+                         $gross_profit_current = \App\Models\Gross::getTotalGrossProfit($start_date,$end_date) ?? 0;
+                        $gross_profit_last = \App\Models\Gross::getTotalGrossProfit($start_date_last,$end_date_last) ?? 0;
                         ?>
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-vcenter ">
@@ -116,8 +118,8 @@
                                     <tr>
                                         <td>Gross Profit</td>
                                         <td class="text-center"></td>
-                                      <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                      <td class="text-right">{{number_format($gross_profit_current)}}</td>
+                                        <td class="text-right">{{number_format($gross_profit_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
