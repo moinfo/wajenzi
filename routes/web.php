@@ -95,6 +95,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/items', [App\Http\Controllers\SettingsController::class, 'items'])->name('hr_settings_items');
     Route::match(['get', 'post'], '/settings/efd', [App\Http\Controllers\SettingsController::class, 'efd'])->name('hr_settings_efd');
     Route::match(['get', 'post'], '/settings/expenses_categories', [App\Http\Controllers\SettingsController::class, 'expenses_categories'])->name('hr_settings_expenses_categories');
+    Route::match(['get', 'post'], '/settings/expenses_sub_categories', [App\Http\Controllers\SettingsController::class, 'expenses_sub_categories'])->name('hr_settings_expenses_sub_categories');
     Route::match(['get', 'post'], '/settings/financial_charge_categories', [App\Http\Controllers\SettingsController::class, 'financial_charge_categories'])->name('hr_settings_financial_charge_categories');
     Route::match(['get', 'post'], '/settings/approval_document_types', [App\Http\Controllers\SettingsController::class, 'approval_document_types'])->name('hr_settings_approval_document_types');
     Route::match(['get', 'post'], '/settings/approval_document_types', [App\Http\Controllers\SettingsController::class, 'approval_document_types'])->name('hr_settings_approval_document_types');

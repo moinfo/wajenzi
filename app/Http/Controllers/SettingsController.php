@@ -18,6 +18,7 @@ use App\Models\DeductionSubscription;
 use App\Models\Department;
 use App\Models\Efd;
 use App\Models\ExpensesCategory;
+use App\Models\ExpensesSubCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
 use App\Models\Loan;
@@ -63,6 +64,7 @@ class SettingsController extends Controller
             ['name'=>'Suppliers', 'route'=>'hr_settings_suppliers', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Items', 'route'=>'hr_settings_items', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Expenses Categories', 'route'=>'hr_settings_expenses_categories', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Expenses Sub Categories', 'route'=>'hr_settings_expenses_sub_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Financial Charge Categories', 'route'=>'hr_settings_financial_charge_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'EFD', 'route'=>'hr_settings_efd', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Approval Document Type', 'route'=>'hr_settings_approval_document_types', 'icon' => 'si si-settings', 'badge' => 0],
@@ -277,6 +279,15 @@ class SettingsController extends Controller
             'expenses_categories' => ExpensesCategory::all()
         ];
         return view('pages.settings.settings_expenses_categories')->with($data);
+    }
+    public function expenses_sub_categories(Request $request){
+        if($this->handleCrud($request, 'ExpensesSubCategory')) {
+            return back();
+        }
+        $data = [
+            'expenses_sub_categories' => ExpensesSubCategory::all()
+        ];
+        return view('pages.settings.settings_expenses_sub_categories')->with($data);
     }
     public function financial_charge_categories(Request $request){
         if($this->handleCrud($request, 'FinancialChargeCategory')) {

@@ -1,15 +1,14 @@
 <div class="block-content">
     <form method="post"  enctype="multipart/form-data">
         @csrf
-            <input name="supervisor_id" id="input-ifd-id" type="hidden" class="form-control" value="1">
         <div class="form-group">
-            <label for="example-nf-email" class="control-label required">Expense Category</label>
-            <select name="expenses_category_id" id="input-ifd-id" class="form-control" required>
+            <label for="example-nf-email" class="control-label required">Expense Sub Category</label>
+            <select name="expenses_sub_category_id" id="input-ifd-id" class="form-control" required>
 
-                <option value="">Select Expense Category</option>
+                <option value="">Select Expense Sub Category</option>
 
-                @foreach ($expenses_categories as $expenses_category)
-                    <option value="{{ $expenses_category->id }}" {{ ( $expenses_category->id == $object->expenses_category_id) ? 'selected' : '' }}> {{ $expenses_category->name }} </option>
+                @foreach ($expenses_sub_categories as $expenses_sub_category)
+                    <option value="{{ $expenses_sub_category->id }}" {{ ( $expenses_sub_category->id == $object->expenses_sub_category_id) ? 'selected' : '' }}> {{ $expenses_sub_category->name }} </option>
                 @endforeach
 
             </select>

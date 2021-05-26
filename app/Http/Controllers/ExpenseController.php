@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use App\Models\ExpensesCategory;
+use App\Models\ExpensesSubCategory;
 use App\Models\Sale;
 use App\Models\Supervisor;
 use Illuminate\Http\Request;
@@ -24,8 +25,10 @@ class ExpenseController extends Controller
         $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
         $supervisors = Supervisor::all();
         $expense_categories = ExpensesCategory::all();
+        $expense_sub_categories = ExpensesSubCategory::all();
 
         $data = [
+            'expense_sub_categories' => $expense_sub_categories,
             'expense_categories' => $expense_categories,
             'supervisors' => $supervisors,
             'expenses' => $expenses
@@ -105,12 +108,18 @@ class ExpenseController extends Controller
         }
         $start_date = $request->input('start_date') ?? date('Y-m-d');
         $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $expenses_sub_category_id = $request->input('expenses_sub_category_id');
         $expenses_category_id = $request->input('expenses_category_id');
 
             $expenses = DB::table('expenses')
-                ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses.expenses_category_id')
+                ->select(['expenses.*','expenses_sub_categories.name as sub_category','expenses_categories.name as category'])
+                ->join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
+                ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
                 ->where('date','>=',$start_date)
                 ->where('date','<=',$end_date);
+                if($expenses_sub_category_id != 0){
+                    $expenses->where('expenses_sub_category_id','=',$expenses_sub_category_id);
+                }
                 if($expenses_category_id != 0){
                     $expenses->where('expenses_category_id','=',$expenses_category_id);
                 }
@@ -119,6 +128,7 @@ class ExpenseController extends Controller
 
         $supervisors = Supervisor::all();
         $expense_categories = ExpensesCategory::all();
-        return view('pages.expenses.expenses_index',compact('expenses', 'expense_categories'));
+        $expense_sub_categories = ExpensesSubCategory::all();
+        return view('pages.expenses.expenses_index',compact('expenses', 'expense_categories', 'expense_sub_categories'));
     }
 }

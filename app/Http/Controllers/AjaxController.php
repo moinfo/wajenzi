@@ -11,6 +11,7 @@ use App\Models\Deduction;
 use App\Models\Division;
 use App\Models\Efd;
 use App\Models\ExpensesCategory;
+use App\Models\ExpensesSubCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
 use App\Models\Payroll;
@@ -110,8 +111,10 @@ class AjaxController
                         ['name'=>'CLOSING']
                     ];
                     $expenses_categories = ExpensesCategory::all();
+                    $expenses_sub_categories = ExpensesSubCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
                     $data = $request->input('data') ?? [
+                            'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
                             'stock_types' => $stock_types,
                             'user_groups' => $user_groups,
