@@ -73,6 +73,22 @@
                         $cost_of_sales_last = \App\Models\Sale::getCostOfSales($start_date_last,$end_date_last) ?? 0;
                          $gross_profit_current = \App\Models\Gross::getTotalGrossProfit($start_date,$end_date) ?? 0;
                         $gross_profit_last = \App\Models\Gross::getTotalGrossProfit($start_date_last,$end_date_last) ?? 0;
+                        $administrative_expenses_current = \App\Models\Expense::getTotalAdministrativeExpenses($start_date,$end_date) ?? 0;
+                        $administrative_expenses_last = \App\Models\Expense::getTotalAdministrativeExpenses($start_date_last,$end_date_last) ?? 0;
+                        $financial_charges_current = \App\Models\Expense::getTotalFinancialCharges($start_date,$end_date) ?? 0;
+                        $financial_charges_last = \App\Models\Expense::getTotalFinancialCharges($start_date_last,$end_date_last) ?? 0;
+                        $depreciation_current = \App\Models\Expense::getTotalDepreciation($start_date,$end_date) ?? 0;
+                        $depreciation_last = \App\Models\Expense::getTotalDepreciation($start_date_last,$end_date_last) ?? 0;
+                        $total_expenses_current = \App\Models\Expense::getTotalExpensesInFinancial($start_date,$end_date) ?? 0;
+                        $total_expenses_last = \App\Models\Expense::getTotalExpensesInFinancial($start_date_last,$end_date_last) ?? 0;
+                        $Profit_from_Operating_Activities_Before_Taxation_current = \App\Models\Taxation::ProfitFromOperatingActivitiesBeforeTaxation($start_date,$end_date) ?? 0;
+                        $Profit_from_Operating_Activities_Before_Taxation_last = \App\Models\Taxation::ProfitFromOperatingActivitiesBeforeTaxation($start_date_last,$end_date_last) ?? 0;
+                        $Taxation_current = \App\Models\Taxation::getMainlandTaxation($start_date,$end_date) ?? 0;
+                        $Taxation_last = \App\Models\Taxation::getMainlandTaxation($start_date_last,$end_date_last) ?? 0;
+                        $Profit_from_Operating_Activities_After_Taxation_current = \App\Models\Taxation::Profit_From_Operating_Activities_After_Taxation($start_date,$end_date) ?? 0;
+                        $Profit_from_Operating_Activities_After_Taxation_last = \App\Models\Taxation::Profit_From_Operating_Activities_After_Taxation($start_date_last,$end_date_last) ?? 0;
+
+
                         ?>
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-vcenter ">
@@ -130,8 +146,8 @@
                                     <tr>
                                         <td>Financial Charges</td>
                                         <td class="text-center">9</td>
-                                      <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                      <td class="text-right">{{number_format($financial_charges_current)}}</td>
+                                        <td class="text-right">{{number_format($financial_charges_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
@@ -142,8 +158,8 @@
                                     <tr>
                                         <td>Administration Expenses</td>
                                         <td class="text-center">10</td>
-                                      <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                      <td class="text-right">{{number_format($administrative_expenses_current)}}</td>
+                                        <td class="text-right">{{number_format($administrative_expenses_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
@@ -154,8 +170,8 @@
                                     <tr>
                                         <td>Depreciation</td>
                                         <td class="text-center">11</td>
-                                      <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                      <td class="text-right">{{number_format($depreciation_current)}}</td>
+                                        <td class="text-right">{{number_format($depreciation_current)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
@@ -166,8 +182,8 @@
                                     <tr>
                                         <td></td>
                                         <td></td>
-                                        <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                        <td class="text-right">{{number_format($total_expenses_current)}}</td>
+                                        <td class="text-right">{{number_format($total_expenses_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
@@ -179,8 +195,8 @@
                                     <tr>
                                         <td> Profit from Operating Activities Before Taxation</td>
                                         <td class="text-center"></td>
-                                      <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                      <td class="text-right">{{number_format($Profit_from_Operating_Activities_Before_Taxation_current)}}</td>
+                                        <td class="text-right">{{number_format($Profit_from_Operating_Activities_Before_Taxation_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
@@ -192,8 +208,8 @@
                                     <tr>
                                         <td>Tax</td>
                                         <td class="text-center"></td>
-                                      <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                      <td class="text-right">{{number_format($Taxation_current)}}</td>
+                                        <td class="text-right">{{number_format($Taxation_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
@@ -204,8 +220,8 @@
                                     <tr>
                                         <td>  Profit from Operating Activities After Taxation</td>
                                         <td class="text-center"></td>
-                                      <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                      <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_current)}}</td>
+                                        <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_last)}}</td>
                                     </tr>
                                 </tbody>
 
