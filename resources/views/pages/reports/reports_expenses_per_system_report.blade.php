@@ -111,7 +111,7 @@
                                 <tfoot>
                                 <tr>
                                     <th colspan="2"></th>
-                                    @foreach ($systems as $system)date
+                                    @foreach ($systems as $system)
                                         <?php
                                         $id = $system->id;
                                         $total_expense_by_supervisor = \App\Models\Expense::select([DB::raw("SUM(expenses.amount) as total_amount")])->join('supervisors','supervisors.id','=', 'expenses.supervisor_id')->join('systems','systems.id','=', 'supervisors.system_id')->whereBetween('expenses.date', [$start_date, $end_date])->Where('supervisors.system_id',$id)->groupBy('supervisors.system_id')->get()->first();

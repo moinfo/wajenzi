@@ -27,6 +27,7 @@ use App\Models\Role;
 use App\Models\Staff;
 use App\Models\StaffSalary;
 use App\Models\StatutoryPayment;
+use App\Models\Stock;
 use App\Models\SubCategory;
 use App\Models\Supervisor;
 use App\Models\Supplier;
@@ -72,6 +73,7 @@ class SettingsController extends Controller
             ['name'=>'Statutory Payment', 'route'=>'hr_settings_statutory_payments', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Statutory Payment Category', 'route'=>'hr_settings_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Statutory Payment Sub Category', 'route'=>'hr_settings_sub_categories', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Stock', 'route'=>'hr_settings_stock', 'icon' => 'si si-settings', 'badge' => 0],
         ];
         $data = [
             'settings' => $settings
@@ -80,7 +82,15 @@ class SettingsController extends Controller
         return view('pages.settings.settings_index')->with($data);
     }
 
-    public function allowances(Request $request){
+    public function stock(Request $request){
+        if($this->handleCrud($request, 'Stock')) {
+            return back();
+        }
+        $data = [
+            'stocks' => Stock::all()
+        ];
+        return view('pages.settings.settings_stocks')->with($data);
+    }public function allowances(Request $request){
         if($this->handleCrud($request, 'Allowance')) {
             return back();
         }

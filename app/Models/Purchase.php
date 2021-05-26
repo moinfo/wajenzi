@@ -85,4 +85,9 @@ class Purchase extends Model
         }
         return $purchases = $purchases->sum('purchases.amount_vat_exc');
     }
+
+    public static function getTotalPurchasesByDate($start_date, $end_date){
+        return Purchase::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(total_amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+
+    }
 }

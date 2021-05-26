@@ -92,4 +92,16 @@ class Sale extends Model
         }
         return $sales = $sales->sum('sales.turn_over');
     }
+
+    public static function getTotalRevenue($start_date, $end_date){
+        return Sale::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+
+    }
+
+    public static function getCostOfSales($start_date, $end_date){
+        $opening = Stock::getTotalOpeningStock($start_date, $end_date);
+        $closing = Stock::getTotalClosingStock($start_date, $end_date);
+        $purchases = Purchase::getTotalPurchasesByDate($start_date, $end_date);
+        return ($opening+$purchases) - $closing;
+    }
 }

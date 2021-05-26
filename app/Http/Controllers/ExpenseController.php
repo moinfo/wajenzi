@@ -109,7 +109,6 @@ class ExpenseController extends Controller
 
             $expenses = DB::table('expenses')
                 ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses.expenses_category_id')
-                ->select('expenses.*','expenses_categories.name as category_name','supervisors.name as supervisor_name')
                 ->where('date','>=',$start_date)
                 ->where('date','<=',$end_date);
                 if($expenses_category_id != 0){

@@ -62,6 +62,16 @@
                                 </div>
                             </div>
                         </div>
+                        <?php
+                        $start_date = $_POST['start_date'] ?? date('Y-m-d', strtotime('first day of january this year'));
+                        $end_date = $_POST['end_date'] ?? date('Y-m-d', strtotime('last day of december this year'));
+                        $start_date_last =  date('Y-m-d', strtotime('first day of january last year'));
+                        $end_date_last = date('Y-m-d', strtotime('last day of december last year'));
+                        $revenue_current = \App\Models\Sale::getTotalRevenue($start_date,$end_date) ?? 0;
+                        $revenue_last = \App\Models\Sale::getTotalRevenue($start_date_last,$end_date_last) ?? 0;
+                        $cost_of_sales_current = \App\Models\Sale::getCostOfSales($start_date,$end_date) ?? 0;
+                        $cost_of_sales_last = \App\Models\Sale::getCostOfSales($start_date_last,$end_date_last) ?? 0;
+                        ?>
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-vcenter ">
                                 <thead>
@@ -82,8 +92,8 @@
                                     <tr>
                                         <td>Revenue</td>
                                         <td class="text-center">4</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                        <td class="text-right">{{number_format($revenue_current)}}</td>
+                                        <td class="text-right">{{number_format($revenue_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
@@ -94,8 +104,8 @@
                                     <tr>
                                         <td>Cost of Sales</td>
                                         <td class="text-center">8</td>
-                                      <td class="text-right">{{number_format(0)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                      <td class="text-right">{{number_format($cost_of_sales_current)}}</td>
+                                        <td class="text-right">{{number_format($cost_of_sales_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>

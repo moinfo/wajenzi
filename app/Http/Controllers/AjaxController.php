@@ -105,10 +105,15 @@ class AjaxController
                         ['name'=>'INACTIVE'],
                         ['name'=>'DORMANT']
                     ];
+                    $stock_types = [
+                        ['name'=>'OPENING'],
+                        ['name'=>'CLOSING']
+                    ];
                     $expenses_categories = ExpensesCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
                     $data = $request->input('data') ?? [
                             'suppliers' => $suppliers,
+                            'stock_types' => $stock_types,
                             'user_groups' => $user_groups,
                             'categories' => $categories,
                             'status' => $status,
