@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\Efd;
 use App\Models\Sale;
 use App\Models\Supplier;
@@ -26,6 +27,27 @@ class SaleController extends Controller
           // 'sales' => $sales
         ];
         return view('pages.sales.sales_index')->with($data);
+    }
+
+    public function sale($id,$document_type_id){
+//        dump($id);
+//        return;
+       // $document_type_id = 2;
+        $sales = \App\Models\Sale::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'sales' => $sales,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.sales.sales')->with($data);
     }
 
     /**

@@ -93,6 +93,7 @@
                                     <th>Tax</th>
                                     <th>Turnover (EX + SR)</th>
                                     <th>Attachment</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -141,9 +142,25 @@
                                                 No File
                                             @endif
                                         </td>
+                                        <td>
+                                            @if($sale->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $sale->status}}</div>
+                                            @elseif($sale->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $sale->status}}</div>
+                                            @elseif($sale->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $sale->status}}</div>
+                                            @elseif($sale->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $sale->status}}</div>
+                                            @elseif($sale->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $sale->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $sale->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Sales"))
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('sale',['id' => $sale->id,'document_type_id'=>2])}}"><i class="fa fa-eye"></i></a>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Sales"))
                                                     <button type="button"
                                                             onclick="loadFormModal('sale_form', {className: 'Sale', id: {{$sale->id}}}, 'Edit {{$sale->efd}}', 'modal-md');"
                                                             class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -174,7 +191,7 @@
                                     <td class="text-right">{{ number_format($total_net, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_tax, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_turn_over, 2) }}</td>
-                                    <td colspan="2"></td>
+                                    <td colspan="3"></td>
                                 </tr>
                                 </tfoot>
                             </table>

@@ -47,8 +47,8 @@ class Controller extends BaseController
                 if($this->crudAdd($request, $class_name)) {
                     $this->notify($class_name .'Added Successfully', 'Added!', 'success');
                     if($request->document_id != null){
-                        if(Approval::getNextApproval($request->document_id)) {
-                            $next_user_group_id = Approval::getNextApproval($request->document_id)->user_group_id;
+                        if(Approval::getNextApproval($request->document_id,$request->document_type_id)) {
+                            $next_user_group_id = Approval::getNextApproval($request->document_id,$request->document_type_id)->user_group_id;
                             $next_user_id = AssignUserGroup::getUserId($next_user_group_id)->user_id;
                             $user = User::find($next_user_id);
 
@@ -56,7 +56,9 @@ class Controller extends BaseController
                                 'staff_id' => $next_user_id,
                                 'title' => $class_name. ' '. 'Waiting for Approval',
                                 'body' => 'A new '.$class_name.' has been created and submitted. You are required to review and approve the created '. $class_name,
-                                'link' => $request->link
+                                'link' => $request->link,
+                                'document_id' => $request->document_id,
+                                'document_type_id' => $request->document_type_id
                             ];
                             $user->notify(new \App\Notifications\ApprovalNotification($details));
 

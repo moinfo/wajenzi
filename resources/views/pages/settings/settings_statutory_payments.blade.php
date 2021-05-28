@@ -79,7 +79,7 @@
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('hr_settings_statutory_payment',['id' => $value->id])}}"><i class="fa fa-eye"></i></a>
+                                            <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('hr_settings_statutory_payment',['id' => $value->id,'document_type_id'=>1])}}"><i class="fa fa-eye"></i></a>
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Statutory Payment"))
                                                 <button type="button" onclick="loadFormModal('settings_statutory_payment_form', {className: 'StatutoryPayment', id: {{$value->id}}}, 'Edit {{$value->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>

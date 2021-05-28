@@ -41,18 +41,18 @@ class Approval extends Model
     }
 
 
-    static function getApprovalStages($statutory_payment_id)
+    static function getApprovalStages($document_id,$document_type_id)
     {
         $query = DB::SELECT("SELECT *, al.id AS order_id, al.`order` as `order`, al.`approval_document_type_id` AS document_id,
        al.`user_group_id` AS `user_group_id`, ug.name AS user_group_name FROM approval_levels al
-        LEFT JOIN approvals a ON (a.approval_level_id=al.id AND a.`document_id` = '$statutory_payment_id')
-        LEFT JOIN user_groups ug ON (ug.id = al.`user_group_id`) WHERE al.order > 0 ");
+        LEFT JOIN approvals a ON (a.approval_level_id=al.id AND a.`document_id` = '$document_id')
+        LEFT JOIN user_groups ug ON (ug.id = al.`user_group_id`) WHERE al.order > 0 AND al.approval_document_type_id  = '$document_type_id'");
         return $query;
     }
 
-    static function getNextApproval($statutory_payment_id)
+    static function getNextApproval($document_id,$document_type_id)
     {
-        $stages = self::getApprovalStages($statutory_payment_id);
+        $stages = self::getApprovalStages($document_id,$document_type_id);
         foreach ($stages as $stage) {
             if (($stage->status != 'APPROVED')) {
                 return $stage;
@@ -61,14 +61,14 @@ class Approval extends Model
         return false;
     }
 
-    static function isApprovalCompleted($statutory_payment_id)
+    static function isApprovalCompleted($document_id,$document_type_id)
     {
-        return self::getNextApproval($statutory_payment_id) === false;
+        return self::getNextApproval($document_id,$document_type_id) === false;
     }
 
-    static function isRejected($statutory_payment_id)
+    static function isRejected($document_id,$document_type_id)
     {
-        $stages = self::getApprovalStages($statutory_payment_id);
+        $stages = self::getApprovalStages($document_id,$document_type_id);
         foreach ($stages as $stage) {
             if ($stage->status == 'rejected') {
                 return $stage;

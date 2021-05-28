@@ -92,7 +92,9 @@ class SettingsController extends Controller
             'stocks' => Stock::all()
         ];
         return view('pages.settings.settings_stocks')->with($data);
-    }public function allowances(Request $request){
+    }
+
+    public function allowances(Request $request){
         if($this->handleCrud($request, 'Allowance')) {
             return back();
         }
@@ -101,6 +103,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_allowances')->with($data);
     }
+
+
     public function makeReadNotification(Request $request){
         $notification_id = $request->id;
         $link = $request->link;
@@ -108,6 +112,8 @@ class SettingsController extends Controller
         DB::table('notifications')->where('id',$notification_id)->update(['read_at'=>Carbon::now()]);
         redirect()->route('hr_settings_statutory_payment', ['id' => $id]);
     }
+
+
     public function allowance_subscriptions(Request $request){
         if($this->handleCrud($request, 'AllowanceSubscription')) {
             return back();
@@ -117,6 +123,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_allowance_subscriptions')->with($data);
     }
+
+
     public function deduction_subscriptions(Request $request){
         if($this->handleCrud($request, 'DeductionSubscription')) {
             return back();
@@ -126,6 +134,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_deduction_subscriptions')->with($data);
     }
+
+
     public function deduction_settings(Request $request){
         if($this->handleCrud($request, 'DeductionSetting')) {
             return back();
@@ -135,6 +145,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_deduction_settings')->with($data);
     }
+
+
     public function deductions(Request $request){
         if($this->handleCrud($request, 'Deduction')) {
             return back();
@@ -144,6 +156,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_deductions')->with($data);
     }
+
+
     public function banks(Request $request){
         if($this->handleCrud($request, 'Bank')) {
             return back();
@@ -153,6 +167,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_banks')->with($data);
     }
+
+
     public function staff_salaries(Request $request){
         if($this->handleCrud($request, 'StaffSalary')) {
             return back();
@@ -162,6 +178,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_staff_salaries')->with($data);
     }
+
+
     public function staff_loans(Request $request){
         if($this->handleCrud($request, 'Loan')) {
             return back();
@@ -171,6 +189,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_loans')->with($data);
     }
+
+
     public function advance_salaries(Request $request){
         if($this->handleCrud($request, 'AdvanceSalary')) {
             return back();
@@ -180,6 +200,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_advance_salaries')->with($data);
     }
+
+
     public function systems(Request $request){
         if($this->handleCrud($request, 'System')) {
             return back();
@@ -189,6 +211,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_systems')->with($data);
     }
+
+
     public function users(Request $request){
         if($request->permission_id){
             DB::table('users_permissions')->where('user_id', '=', $request->user_id)->delete();
@@ -208,6 +232,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_users')->with($data);
     }
+
+
     public function supervisors(Request $request){
         if($this->handleCrud($request, 'Supervisor')) {
             return back();
@@ -217,6 +243,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_supervisors')->with($data);
     }
+
+
     public function departments(Request $request){
         if($this->handleCrud($request, 'Department')) {
             return back();
@@ -226,6 +254,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_departments')->with($data);
     }
+
+
     public function positions(Request $request){
         if($this->handleCrud($request, 'Position')) {
             return back();
@@ -235,6 +265,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_positions')->with($data);
     }
+
+
     public function roles(Request $request){
         if($this->handleCrud($request, 'Role')) {
             return back();
@@ -244,6 +276,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_roles')->with($data);
     }
+
+
     public function permissions(Request $request){
         if($this->handleCrud($request, 'Permission')) {
             return back();
@@ -253,6 +287,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_permissions')->with($data);
     }
+
+
     public function suppliers(Request $request){
         if($this->handleCrud($request, 'Supplier')) {
             return back();
@@ -262,6 +298,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_suppliers')->with($data);
     }
+
+
     public function items(Request $request){
         if($this->handleCrud($request, 'Item')) {
             return back();
@@ -271,6 +309,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_items')->with($data);
     }
+
+
     public function expenses_categories(Request $request){
         if($this->handleCrud($request, 'ExpensesCategory')) {
             return back();
@@ -280,6 +320,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_expenses_categories')->with($data);
     }
+
+
     public function expenses_sub_categories(Request $request){
         if($this->handleCrud($request, 'ExpensesSubCategory')) {
             return back();
@@ -289,6 +331,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_expenses_sub_categories')->with($data);
     }
+
+
     public function financial_charge_categories(Request $request){
         if($this->handleCrud($request, 'FinancialChargeCategory')) {
             return back();
@@ -298,6 +342,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_financial_charge_categories')->with($data);
     }
+
+
     public function efd(Request $request){
         if($this->handleCrud($request, 'Efd')) {
             return back();
@@ -307,6 +353,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_efds')->with($data);
     }
+
+
     public function approval_document_types(Request $request){
         if($this->handleCrud($request, 'ApprovalDocumentType')) {
             return back();
@@ -316,6 +364,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_approval_document_types')->with($data);
     }
+
+
     public function approvals(Request $request){
         if($this->handleCrud($request, 'Approval')) {
             return back();
@@ -325,6 +375,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_approvals')->with($data);
     }
+
+
     public function statutory_payments(Request $request){
         if($this->handleCrud($request, 'StatutoryPayment')) {
             return back();
@@ -334,14 +386,16 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_statutory_payments')->with($data);
     }
-    public function statutory_payment(Request $request,$id){
+
+
+    public function statutory_payment(Request $request,$id,$document_type_id){
 //        dump($id);
 //        return;
         $statutory_payments = \App\Models\StatutoryPayment::where('id',$id)->get()->first();
-        $approvalStages = Approval::getApprovalStages($id);
-        $nextApproval = Approval::getNextApproval($id);
-        $approvalCompleted = Approval::isApprovalCompleted($id);
-        $rejected = Approval::isRejected($id);
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
         $document_id = $id;
         $data = [
             'statutory_payments' => $statutory_payments,
@@ -353,6 +407,8 @@ class SettingsController extends Controller
         ];
         return view('pages.statutory_payment.statutory_payment')->with($data);
     }
+
+
     public function sub_categories(Request $request){
         if($this->handleCrud($request, 'SubCategory')) {
             return back();
@@ -362,6 +418,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_sub_categories')->with($data);
     }
+
+
     public function categories(Request $request){
         if($this->handleCrud($request, 'Category')) {
             return back();
@@ -371,6 +429,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_categories')->with($data);
     }
+
+
     public function user_groups(Request $request){
         if($this->handleCrud($request, 'UserGroup')) {
             return back();
@@ -380,6 +440,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_user_groups')->with($data);
     }
+
+
     public function assign_user_groups(Request $request){
         if($this->handleCrud($request, 'AssignUserGroup')) {
             return back();
@@ -389,6 +451,8 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_assign_user_groups')->with($data);
     }
+
+
     public function approval_levels(Request $request){
         if($this->handleCrud($request, 'ApprovalLevel')) {
             return back();
@@ -398,4 +462,6 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_approval_levels')->with($data);
     }
+
+
 }

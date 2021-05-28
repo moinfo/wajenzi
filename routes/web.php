@@ -55,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/user_permissions', [App\Http\Controllers\UserController::class, 'user_permissions'])->name('user_permissions');
     Route::match(['get', 'post'], '/system', [App\Http\Controllers\SystemController::class, 'index'])->name('system');
     Route::match(['get', 'post'], '/sales', [App\Http\Controllers\SaleController::class, 'index'])->name('sales');
+    Route::match(['get', 'post'], '/sales/{id}/{document_type_id}', [App\Http\Controllers\SaleController::class, 'sale'])->name('sale');
     Route::match(['get', 'post'], '/purchases', [App\Http\Controllers\PurchaseController::class, 'index'])->name('purchases');
     Route::match(['get', 'post'], '/payroll', [App\Http\Controllers\PayrollController::class, 'index'])->name('payroll');
     Route::match(['get', 'post'], '/system_inventory', [App\Http\Controllers\SystemInventoryController::class, 'index'])->name('system_inventory');
@@ -105,7 +106,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/categories', [App\Http\Controllers\SettingsController::class, 'categories'])->name('hr_settings_categories');
     Route::match(['get', 'post'], '/settings/sub_categories', [App\Http\Controllers\SettingsController::class, 'sub_categories'])->name('hr_settings_sub_categories');
     Route::match(['get', 'post'], '/settings/statutory_payments', [App\Http\Controllers\SettingsController::class, 'statutory_payments'])->name('hr_settings_statutory_payments');
-    Route::match(['get', 'post'], '/settings/statutory_payments/{id}', [App\Http\Controllers\SettingsController::class, 'statutory_payment'])->name('hr_settings_statutory_payment');
+    Route::match(['get', 'post'], '/settings/statutory_payments/{id}/{document_type_id}', [App\Http\Controllers\SettingsController::class, 'statutory_payment'])->name('hr_settings_statutory_payment');
     Route::match(['get', 'post'], '/settings/user_group', [App\Http\Controllers\SettingsController::class, 'user_group'])->name('hr_settings_user_group');
     Route::match(['get', 'post'], '/settings/stock', [App\Http\Controllers\SettingsController::class, 'stock'])->name('hr_settings_stock');
 

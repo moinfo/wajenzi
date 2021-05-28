@@ -50,8 +50,9 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
                 </button>
             @else
                 <input type="hidden" name="document_id" value="{{$document_id}}">
-                <input type="hidden" name="link" value="settings/statutory_payments/{{$document_id}}">
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Expense">Submit</button>
+                <input type="hidden" name="link" value="settings/statutory_payments/{{$document_id}}/1">
+                <input type="hidden" name="document_type_id" value="1">
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="StatutoryPayment">Submit</button>
             @endif
         </div>
     </form>
