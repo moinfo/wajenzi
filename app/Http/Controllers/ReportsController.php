@@ -285,7 +285,11 @@ class ReportsController extends Controller
     public function expenses_categories_report(Request $request){
         $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
         $categories = ExpensesCategory::all();
-        $categories_with_amount_of_expenses = DB::select('SELECT SUM(c.amount) as total_expenses, s.name as category_name,c.date as expense_date FROM expenses c JOIN expenses_categories s ON (s.id = c.expenses_category_id) GROUP BY c.expenses_category_id,c.date');
+        $categories_with_amount_of_expenses = DB::select('SELECT SUM(c.amount) as total_expenses,
+       s.name as category_name,c.date as expense_date FROM expenses c
+           JOIN expenses_categories s ON (s.id = c.expenses_sub_category_id)
+           JOIN expenses_sub_categories sc ON (sc.expenses_category_id = c.id)
+            GROUP BY c.expenses_sub_category_id,c.date');
         $data = [
             'categories_with_amount_of_expenses' => $categories_with_amount_of_expenses,
             'expenses_categories' => $categories,

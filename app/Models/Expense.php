@@ -29,6 +29,14 @@ class Expense extends Model
             ->WhereBetween('expenses.date',[$start_date,$end_date])
             ->get()->first()['total_amount'];
     }
+    public static function getTotalExpensesGroupByExpensesCategory($start_date,$end_date){
+     return   Expense::select(DB::raw("SUM(expenses.amount) as total_amount"),"expenses_categories.name as expense_name")
+            ->join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
+            ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
+            ->WhereBetween('expenses.date',[$start_date,$end_date])
+            ->groupBy('expenses_categories.id')
+            ->get();
+    }
 
     public static function getTotalFinancialCharges($start_date,$end_date){
      return   Expense::select(DB::raw("SUM(amount) as total_amount"))
@@ -48,11 +56,12 @@ class Expense extends Model
             ->get()->first()['total_amount'];
     }
 
+    public static function getTotalExpense($start_date,$end_date){
+     return   Expense::select(DB::raw("SUM(amount) as total_amount"))->WhereBetween('date',[$start_date,$end_date])->get()->first()['total_amount'];
+    }
+
     public static function getTotalExpensesInFinancial($start_date,$end_date){
-        $administrative = self::getTotalAdministrativeExpenses($start_date,$end_date);
-        $charges = self::getTotalFinancialCharges($start_date,$end_date);
-        $depreciation = self::getTotalDepreciation($start_date,$end_date);
-        return $administrative+$charges+$depreciation;
+        return self::getTotalExpense($start_date,$end_date);
     }
 
 }

@@ -84,6 +84,7 @@
                         $Profit_from_Operating_Activities_Before_Taxation_current = \App\Models\Taxation::ProfitFromOperatingActivitiesBeforeTaxation($start_date,$end_date) ?? 0;
                         $Profit_from_Operating_Activities_Before_Taxation_last = \App\Models\Taxation::ProfitFromOperatingActivitiesBeforeTaxation($start_date_last,$end_date_last) ?? 0;
                         $Taxation_current = \App\Models\Taxation::getMainlandTaxation($start_date,$end_date) ?? 0;
+                        $expenses = \App\Models\Expense::getTotalExpensesGroupByExpensesCategory($start_date,$end_date);
                         $Taxation_last = \App\Models\Taxation::getMainlandTaxation($start_date_last,$end_date_last) ?? 0;
                         $Profit_from_Operating_Activities_After_Taxation_current = \App\Models\Taxation::Profit_From_Operating_Activities_After_Taxation($start_date,$end_date) ?? 0;
                         $Profit_from_Operating_Activities_After_Taxation_last = \App\Models\Taxation::Profit_From_Operating_Activities_After_Taxation($start_date_last,$end_date_last) ?? 0;
@@ -143,11 +144,18 @@
                                         <td></td>
                                         <td></td>
                                     </tr>
+                                    <?php
+                                        $total_expenses = 0;
+                                    foreach ($expenses as $index => $expense) {
+                                        $total = $expense->total_amount;
+                                        $total_expenses += $total;
+                                       ?>
+
                                     <tr>
-                                        <td>Financial Charges</td>
-                                        <td class="text-center">9</td>
-                                      <td class="text-right">{{number_format($financial_charges_current)}}</td>
-                                        <td class="text-right">{{number_format($financial_charges_last)}}</td>
+                                        <td>{{$expense->expense_name}}</td>
+                                        <td class="text-center"></td>
+                                        <td class="text-right">{{number_format($expense->total_amount)}}</td>
+                                        <td class="text-right">{{number_format(0)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
@@ -155,35 +163,15 @@
                                         <td></td>
                                         <td></td>
                                     </tr>
-                                    <tr>
-                                        <td>Administration Expenses</td>
-                                        <td class="text-center">10</td>
-                                      <td class="text-right">{{number_format($administrative_expenses_current)}}</td>
-                                        <td class="text-right">{{number_format($administrative_expenses_last)}}</td>
-                                    </tr>
+                                    <?php
+                                    }
+                                   ?>
+
                                     <tr>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Depreciation</td>
-                                        <td class="text-center">11</td>
-                                      <td class="text-right">{{number_format($depreciation_current)}}</td>
-                                        <td class="text-right">{{number_format($depreciation_current)}}</td>
-                                    </tr>
-                                    <tr>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td></td>
-                                        <td></td>
-                                        <td class="text-right">{{number_format($total_expenses_current)}}</td>
-                                        <td class="text-right">{{number_format($total_expenses_last)}}</td>
+                                        <td class="text-right">{{number_format($total_expenses)}}</td>
+                                        <td class="text-right">{{number_format(0)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
