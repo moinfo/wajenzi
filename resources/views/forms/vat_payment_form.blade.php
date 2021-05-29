@@ -1,3 +1,6 @@
+<?php
+$document_id = \App\Classes\Utility::getLastId('VatPayment')+1;
+?>
 <div class="block-content">
     <form method="post" enctype="multipart/form-data">
         @csrf
@@ -40,7 +43,10 @@
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update
                 </button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Sale">Submit</button>
+                <input type="hidden" name="document_id" value="{{$document_id}}">
+                <input type="hidden" name="document_type_id" value="4">
+                <input type="hidden" name="link" value="vat_payment/{{$document_id}}/4">
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="VatPayment">Submit</button>
             @endif
         </div>
     </form>

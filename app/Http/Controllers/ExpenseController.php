@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\Expense;
 use App\Models\ExpensesCategory;
 use App\Models\ExpensesSubCategory;
@@ -100,6 +101,24 @@ class ExpenseController extends Controller
     public function destroy(Expense $expense)
     {
         //
+    }
+
+    public function expense($id,$document_type_id){
+        $expense = \App\Models\Expense::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'expense' => $expense,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.expenses.expense')->with($data);
     }
 
     public function search(Request $request){

@@ -105,6 +105,7 @@
                                     <th>Description</th>
                                     <th>Amount</th>
                                     <th>Attachment</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -134,9 +135,25 @@
                                                 No File
                                             @endif
                                         </td>
+                                        <td>
+                                            @if($expense->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $expense->status}}</div>
+                                            @elseif($expense->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $expense->status}}</div>
+                                            @elseif($expense->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $expense->status}}</div>
+                                            @elseif($expense->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $expense->status}}</div>
+                                            @elseif($expense->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $expense->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $expense->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Expense"))
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('expense',['id' => $expense->id,'document_type_id'=>4])}}"><i class="fa fa-eye"></i></a>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Expense"))
                                                     <button type="button"
                                                             onclick="loadFormModal('expense_form', {className: 'Expense', id: {{$expense->id}}}, 'Edit Expenses', 'modal-md');"
                                                             class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -163,6 +180,7 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="6"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                 </tr>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\Supervisor;
 use App\Models\VatPayment;
 use Illuminate\Http\Request;
@@ -27,6 +28,23 @@ class VatPaymentController extends Controller
             'collections' => $collections
         ];
         return view('pages.vat_payment.vat_payment_index')->with($data);
+    }
+    public function vat_payment($id,$document_type_id){
+        $vat_payment = \App\Models\VatPayment::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'vat_payment' => $vat_payment,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.vat_payment.vat_payment')->with($data);
     }
 
     /**

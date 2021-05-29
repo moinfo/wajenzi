@@ -76,6 +76,7 @@
                                     <th>Description</th>
                                     <th>Amount</th>
                                     <th>Attachment</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -108,8 +109,24 @@
                                                 No File
                                             @endif
                                         </td>
+                                        <td>
+                                            @if($vat_payment->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $vat_payment->status}}</div>
+                                            @elseif($vat_payment->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $vat_payment->status}}</div>
+                                            @elseif($vat_payment->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $vat_payment->status}}</div>
+                                            @elseif($vat_payment->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $vat_payment->status}}</div>
+                                            @elseif($vat_payment->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $vat_payment->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $vat_payment->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('individual_vat_payment',['id' => $vat_payment->id,'document_type_id'=>4])}}"><i class="fa fa-eye"></i></a>
                                                 <button type="button"
                                                         onclick="loadFormModal('vat_payment_form', {className: 'VatPayment', id: {{$vat_payment->id}}}, 'Edit VatPayment', 'modal-md');"
                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -131,6 +148,7 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="5"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                 </tr>

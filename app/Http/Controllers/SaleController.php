@@ -30,9 +30,6 @@ class SaleController extends Controller
     }
 
     public function sale($id,$document_type_id){
-//        dump($id);
-//        return;
-       // $document_type_id = 2;
         $sales = \App\Models\Sale::where('id',$id)->get()->first();
         $approvalStages = Approval::getApprovalStages($id,$document_type_id);
         $nextApproval = Approval::getNextApproval($id,$document_type_id);

@@ -25,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/AjaxController', [App\Http\Controllers\AjaxController::class, 'ajaxRequestPost'])->name('ajax_request.post');
 
     Route::match(['get', 'post'], '/vat_payment', [App\Http\Controllers\VatPaymentController::class, 'index'])->name('vat_payment');
+    Route::match(['get', 'post'], '/vat_payment/{id}/{document_type_id}', [App\Http\Controllers\VatPaymentController::class, 'vat_payment'])->name('individual_vat_payment');
 
     Route::match(['get', 'post'], '/collection', [App\Http\Controllers\CollectionController::class, 'index'])->name('collection');
     Route::match(['get', 'post'], '/collection_search', [App\Http\Controllers\CollectionController::class, 'search'])->name('collection_search');
@@ -57,6 +58,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/sales', [App\Http\Controllers\SaleController::class, 'index'])->name('sales');
     Route::match(['get', 'post'], '/sales/{id}/{document_type_id}', [App\Http\Controllers\SaleController::class, 'sale'])->name('sale');
     Route::match(['get', 'post'], '/purchases', [App\Http\Controllers\PurchaseController::class, 'index'])->name('purchases');
+    Route::match(['get', 'post'], '/purchases/{id}/{document_type_id}', [App\Http\Controllers\PurchaseController::class, 'purchase'])->name('purchase');
     Route::match(['get', 'post'], '/payroll', [App\Http\Controllers\PayrollController::class, 'index'])->name('payroll');
     Route::match(['get', 'post'], '/system_inventory', [App\Http\Controllers\SystemInventoryController::class, 'index'])->name('system_inventory');
     Route::match(['get', 'post'], '/system_credit', [App\Http\Controllers\SystemCreditController::class, 'index'])->name('system_credit');
@@ -64,6 +66,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/system_cash', [App\Http\Controllers\SystemCashController::class, 'index'])->name('system_cash');
 
     Route::match(['get', 'post'], '/expenses', [App\Http\Controllers\ExpenseController::class, 'index'])->name('expenses');
+    Route::match(['get', 'post'], '/expenses/{id}/{document_type_id}', [App\Http\Controllers\ExpenseController::class, 'expense'])->name('expense');
     Route::match(['get', 'post'], '/expenses_search', [App\Http\Controllers\ExpenseController::class, 'search'])->name('expenses_search');
 
     Route::match(['get', 'post'], '/financial_charges', [App\Http\Controllers\FinancialChargeController::class, 'index'])->name('financial_charges');

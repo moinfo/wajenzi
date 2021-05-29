@@ -45,6 +45,7 @@
                                     <th>Total Amount</th>
                                     <th>Amount VAT EXC</th>
                                     <th>VAT Amount</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -63,10 +64,25 @@
                                         <td class="font-w600">{{ number_format($purchase->total_amount, 2) }}</td>
                                         <td class="font-w600">{{ number_format($purchase->amount_vat_exc,2) }}</td>
                                         <td class="font-w600">{{ number_format($purchase->vat_amount, 2) }}</td>
-
+                                        <td>
+                                            @if($purchase->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $purchase->status}}</div>
+                                            @elseif($purchase->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $purchase->status}}</div>
+                                            @elseif($purchase->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $purchase->status}}</div>
+                                            @elseif($purchase->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $purchase->status}}</div>
+                                            @elseif($purchase->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $purchase->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $purchase->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Purchases"))
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('purchase',['id' => $purchase->id,'document_type_id'=>3])}}"><i class="fa fa-eye"></i></a>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Purchases"))
                                                     <button type="button"
                                                             onclick="loadFormModal('purchase_form', {className: 'Purchase', id: {{$purchase->id}}}, 'Edit {{$purchase->name}}', 'modal-md');"
                                                             class="btn btn-sm btn-primary js-tooltip-enabled"

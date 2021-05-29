@@ -16,7 +16,6 @@ class VatPayment extends Model
             ->join('banks', 'banks.id', '=', 'vat_payments.bank_id','LEFT')
             ->select('vat_payments.*','banks.name as bank_name')
             ->whereBetween('date', [$start_date,$end_date])
-            ->groupBy('date')
             ->orderBy('date','desc')
             ->get();
         return $vat_payments;

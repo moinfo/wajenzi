@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -26,6 +27,23 @@ class PurchaseController extends Controller
         return view('pages.purchases.purchases_index')->with($data);
     }
 
+    public function purchase($id,$document_type_id){
+        $purchase = \App\Models\Purchase::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'purchase' => $purchase,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.purchases.purchase')->with($data);
+    }
     /**
      * Show the form for creating a new resource.
      *
