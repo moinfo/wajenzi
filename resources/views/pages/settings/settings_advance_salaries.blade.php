@@ -23,9 +23,10 @@
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
-                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Advance Salary"))
+{{--                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Advance Salary"))--}}
                         <button type="button" onclick="loadFormModal('settings_advance_salary_form', {className: 'AdvanceSalary'}, 'Create New AdvanceSalary', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
-                            <i class="si si-plus">&nbsp;</i>New AdvanceSalary</button> @endif
+                            <i class="si si-plus">&nbsp;</i>New AdvanceSalary</button>
+{{--                    @endif--}}
 
                 </div>
             </div>
@@ -44,6 +45,7 @@
                                 <th>Name</th>
                                 <th>Description</th>
                                 <th>Amount</th>
+                                <th scope="col">Status</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
@@ -64,9 +66,25 @@
                                     <td class="font-w600">{{ $advance_salary->description}}</td>
                                     <td class="text-right">{{ number_format($advance_salary->amount) }}
                                     </td>
+                                    <td>
+                                        @if($advance_salary->status == 'PENDING')
+                                            <div class="badge badge-warning">{{ $advance_salary->status}}</div>
+                                        @elseif($advance_salary->status == 'APPROVED')
+                                            <div class="badge badge-primary">{{ $advance_salary->status}}</div>
+                                        @elseif($advance_salary->status == 'REJECTED')
+                                            <div class="badge badge-danger">{{ $advance_salary->status}}</div>
+                                        @elseif($advance_salary->status == 'PAID')
+                                            <div class="badge badge-primary">{{ $advance_salary->status}}</div>
+                                        @elseif($advance_salary->status == 'COMPLETED')
+                                            <div class="badge badge-success">{{ $advance_salary->status}}</div>
+                                        @else
+                                            <div class="badge badge-secondary">{{ $advance_salary->status}}</div>
+                                        @endif
+                                    </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Advance Salary"))
+                                            <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('advance_salary',['id' => $advance_salary->id,'document_type_id'=>2])}}"><i class="fa fa-eye"></i></a>
+                                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Advance Salary"))
                                                 <button type="button" onclick="loadFormModal('settings_advance_salary_form', {className: 'AdvanceSalary', id: {{$advance_salary->id}}}, 'Edit {{$advance_salary->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
                                                 </button>
@@ -90,6 +108,7 @@
                                     <td></td>
                                     <td></td>
                                     <td class="text-right">{{number_format($sum)}}</td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                             </tfoot>

@@ -25,8 +25,6 @@ class ApprovalController extends Controller
     }
 
     public function approvals(Request $request) {
-//        dump($_POST);
-//        return;
         if($request->approveItem){
             $class_name =  $request->approveItem;
             $class_object = 'App\Models\\' . $class_name;
@@ -70,6 +68,7 @@ class ApprovalController extends Controller
 
         }else{
             $class_name =  $request->rejectItem;
+            $class_object = 'App\Models\\' . $class_name;
             $reject = Approval::create([
                 'approval_document_type_id' => $request->approval_document_type_id,
                 'user_id' => $request->user_id,
@@ -81,6 +80,8 @@ class ApprovalController extends Controller
                 'status' => 'REJECTED']);
             if ($reject == true){
                 $this->notify($class_name .'Rejected Successfully', 'Rejected!', 'success');
+                $class_object::where('id', $request->document_id)->update(['status' => 'REJECTED']);
+
             }else{
                 $this->notify('Failed to Reject '.$class_name, 'Failed', 'error');
             }

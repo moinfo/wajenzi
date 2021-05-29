@@ -408,6 +408,42 @@ class SettingsController extends Controller
         return view('pages.statutory_payment.statutory_payment')->with($data);
     }
 
+    public function advance_salary($id,$document_type_id){
+        $advance_salary = \App\Models\AdvanceSalary::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'advance_salary' => $advance_salary,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.advance_salaries.advance_salary')->with($data);
+    }
+
+    public function staff_loan($id,$document_type_id){
+        $staff_loan = \App\Models\Loan::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'staff_loan' => $staff_loan,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.loan.staff_loan')->with($data);
+    }
+
 
     public function sub_categories(Request $request){
         if($this->handleCrud($request, 'SubCategory')) {

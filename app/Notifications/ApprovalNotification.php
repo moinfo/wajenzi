@@ -64,7 +64,9 @@ class ApprovalNotification extends Notification
             'staff_id' => $this->details['staff_id'],
             'link' => $this->details['link'],
             'title' => $this->details['title'],
-            'body' => $this->details['body']
+            'body' => $this->details['body'],
+            'document_id' => $this->details['document_id'],
+            'document_type_id' => $this->details['document_type_id']
         ];
     }/**
      * Get the array representation of the notification.
@@ -78,7 +80,9 @@ class ApprovalNotification extends Notification
             'data' => $this->details,
             'link' => $this->details['link'],
             'title' => $this->details['title'],
-            'body' => $this->details['body']
+            'body' => $this->details['body'],
+            'document_id' => $this->details['document_id'],
+            'document_type_id' => $this->details['document_type_id']
         ]);
     }
 }

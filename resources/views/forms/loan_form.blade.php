@@ -1,4 +1,6 @@
-
+<?php
+$document_id = \App\Classes\Utility::getLastId('Loan')+1;
+?>
 <div class="block-content">
     <form  method="post"  autocomplete="off">
         @csrf
@@ -31,7 +33,10 @@
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Bank">Submit</button>
+                <input type="hidden" name="document_id" value="{{$document_id}}">
+                <input type="hidden" name="document_type_id" value="7">
+                <input type="hidden" name="link" value="settings/staff_loans/{{$document_id}}/7">
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Loan">Submit</button>
             @endif
         </div>
     </form>
