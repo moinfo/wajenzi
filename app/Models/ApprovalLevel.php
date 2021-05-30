@@ -10,7 +10,7 @@ class ApprovalLevel extends Model
     use HasFactory;
     protected $fillable = [
         'approval_document_types_id', 'user_group_id', 'description',
-        'action','order'
+        'action_id','order'
     ];
     public function approvalDocumentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

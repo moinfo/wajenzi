@@ -9,7 +9,7 @@
                 <option value="">Select Approval Document Type</option>
 
                 @foreach ($approval_document_types as $approval_document_type)
-                    <option value="{{ $approval_document_type->id }}" {{ ( $approval_document_type->id == $object->approval_document_type_id) ? 'selected' : '' }}> {{ $approval_document_type->name }} </option>
+                    <option value="{{$approval_document_type->id}}" {{($approval_document_type->id == $object->approval_document_types_id) ? 'selected' : '' }}> {{$approval_document_type->name}} </option>
                 @endforeach
 
             </select>
