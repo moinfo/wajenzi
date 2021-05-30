@@ -4,7 +4,7 @@
         @csrf
         <div class="form-group">
             <label for="example-nf-supplier" class="control-label required">Approval Document Type</label>
-            <select name="approval_document_type_id" id="input-approval_document_type-id" class="form-control" required>
+            <select name="approval_document_types_id" id="input-approval_document_types-id" class="form-control" required>
 
                 <option value="">Select Approval Document Type</option>
 
