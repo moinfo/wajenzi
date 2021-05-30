@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\SystemCash;
 use Illuminate\Http\Request;
 
@@ -22,6 +23,23 @@ class SystemCashController extends Controller
         return view('pages.system_cash.system_cash_index')->with($data);
     }
 
+    public function system_cash($id,$document_type_id){
+        $system_cash = \App\Models\SystemCash::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'system_cash' => $system_cash,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.system_cash.system_cash')->with($data);
+    }
     /**
      * Show the form for creating a new resource.
      *

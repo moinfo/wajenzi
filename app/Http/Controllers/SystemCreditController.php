@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\SystemCredit;
 use App\Models\Supervisor;
 use Illuminate\Http\Request;
@@ -22,6 +23,24 @@ class SystemCreditController extends Controller
 
         $data = [];
         return view('pages.system_credit.system_credit_index')->with($data);
+    }
+
+    public function system_credit($id,$document_type_id){
+        $system_credit = \App\Models\SystemCredit::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'system_credit' => $system_credit,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.system_credit.system_credit')->with($data);
     }
 
     /**

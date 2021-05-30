@@ -1,4 +1,3 @@
-
 <div class="block-content">
     <form  method="post"  autocomplete="off">
         @csrf

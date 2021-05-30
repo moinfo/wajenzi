@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/vat_payment/{id}/{document_type_id}', [App\Http\Controllers\VatPaymentController::class, 'vat_payment'])->name('individual_vat_payment');
 
     Route::match(['get', 'post'], '/collection', [App\Http\Controllers\CollectionController::class, 'index'])->name('collection');
+    Route::match(['get', 'post'], '/collection/{id}/{document_type_id}', [App\Http\Controllers\CollectionController::class, 'collection'])->name('collections');
     Route::match(['get', 'post'], '/collection_search', [App\Http\Controllers\CollectionController::class, 'search'])->name('collection_search');
 
     Route::match(['get', 'post'], '/transaction_movement', [App\Http\Controllers\TransactionMovementController::class, 'index'])->name('transaction_movement');

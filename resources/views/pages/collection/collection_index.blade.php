@@ -92,7 +92,9 @@
                                     <th>Bank Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Payment Type</th>
                                     <th>Attachment</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -102,6 +104,7 @@
                                 ?>
                                 @foreach($collections as $collection)
                                     <?php
+                                    $payment_type = $collection->payment_type_id == '1' ? 'System' : 'Office';
                                     $sum += $collection->amount;
                                     ?>
                                     <tr id="collection-tr-{{$collection->id}}">
@@ -113,6 +116,7 @@
                                         <td>{{ $collection->bank->name ?? $collection->bank_name }}</td>
                                         <td class="font-w600">{{ $collection->description }}</td>
                                         <td class="text-right">{{ number_format($collection->amount, 2) }}</td>
+                                        <td>{{$payment_type}}</td>
                                         <td class="text-center">
                                             @if($collection->file != null)
                                                 <a href="{{ url("$collection->file") }}">Attachment</a>
@@ -120,9 +124,25 @@
                                                 No File
                                             @endif
                                         </td>
+                                        <td>
+                                            @if($collection->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $collection->status}}</div>
+                                            @elseif($collection->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $collection->status}}</div>
+                                            @elseif($collection->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $collection->status}}</div>
+                                            @elseif($collection->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $collection->status}}</div>
+                                            @elseif($collection->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $collection->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $collection->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Collection"))
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('collections',['id' => $collection->id,'document_type_id'=>8])}}"><i class="fa fa-eye"></i></a>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Collection"))
                                                 <button type="button"
                                                         onclick="loadFormModal('collection_form', {className: 'Collection', id: {{$collection->id}}}, 'Edit {{$collection->supervisor->name ?? $collection->supervisor_name}} Collection', 'modal-md');"
                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -148,6 +168,8 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="6"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                 </tr>

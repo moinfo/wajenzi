@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\SystemCapital;
 use Illuminate\Http\Request;
 
@@ -20,6 +21,24 @@ class SystemCapitalController extends Controller
 
         $data = [];
         return view('pages.system_capital.system_capital_index')->with($data);
+    }
+
+    public function system_capital($id,$document_type_id){
+        $system_capital = \App\Models\SystemCapital::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'system_capital' => $system_capital,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.system_capital.system_capital')->with($data);
     }
 
     /**

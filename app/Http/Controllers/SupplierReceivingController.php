@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\Supplier;
 use App\Models\SupplierReceiving;
 use Illuminate\Http\Request;
@@ -29,6 +30,23 @@ class SupplierReceivingController extends Controller
         return view('pages.supplier_receiving.supplier_receiving_index')->with($data);
     }
 
+    public function supplier_receiving($id,$document_type_id){
+        $supplier_receiving = \App\Models\Expense::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'supplier_receiving' => $supplier_receiving,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.supplier_receivings.supplier_receiving')->with($data);
+    }
     /**
      * Show the form for creating a new resource.
      *

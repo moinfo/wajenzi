@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\Gross;
 use App\Models\Supervisor;
 use Illuminate\Http\Request;
@@ -27,6 +28,24 @@ class GrossController extends Controller
             'grosses' => $grosses
         ];
         return view('pages.gross.gross_index')->with($data);
+    }
+
+    public function gross($id,$document_type_id){
+        $gross = \App\Models\Gross::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'gross' => $gross,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.grosses.gross')->with($data);
     }
 
     /**

@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Approval;
-use App\Models\SystemInventory;
+use App\Models\BankDeposit;
 use Illuminate\Http\Request;
 
-class SystemInventoryController extends Controller
+class BankDepositController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -15,30 +15,30 @@ class SystemInventoryController extends Controller
      */
     public function index(Request $request)
     {
-        if($this->handleCrud($request, 'SystemInventory')) {
+        if($this->handleCrud($request, 'BankDeposit')) {
             return back();
         }
 
         $data = [];
-        return view('pages.system_inventory.system_inventory_index')->with($data);
+        return view('pages.bank_deposit.bank_deposit_index')->with($data);
     }
 
-    public function system_inventory($id,$document_type_id){
-        $system_inventory = \App\Models\SystemInventory::where('id',$id)->get()->first();
+    public function bank_deposit($id,$document_type_id){
+        $bank_deposit = \App\Models\BankDeposit::where('id',$id)->get()->first();
         $approvalStages = Approval::getApprovalStages($id,$document_type_id);
         $nextApproval = Approval::getNextApproval($id,$document_type_id);
         $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
         $rejected = Approval::isRejected($id,$document_type_id);
         $document_id = $id;
         $data = [
-            'system_inventory' => $system_inventory,
+            'bank_deposit' => $bank_deposit,
             'approvalStages' => $approvalStages,
             'nextApproval' => $nextApproval,
             'approvalCompleted' => $approvalCompleted,
             'rejected' => $rejected,
             'document_id' => $document_id,
         ];
-        return view('pages.system_inventory.system_inventory')->with($data);
+        return view('pages.bank_deposits.bank_deposit')->with($data);
     }
 
     /**
@@ -65,10 +65,10 @@ class SystemInventoryController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\SystemInventory  $systemInventory
+     * @param  \App\Models\BankDeposit  $bankDeposit
      * @return \Illuminate\Http\Response
      */
-    public function show(SystemInventory $systemInventory)
+    public function show(BankDeposit $bankDeposit)
     {
         //
     }
@@ -76,10 +76,10 @@ class SystemInventoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\SystemInventory  $systemInventory
+     * @param  \App\Models\BankDeposit  $bankDeposit
      * @return \Illuminate\Http\Response
      */
-    public function edit(SystemInventory $systemInventory)
+    public function edit(BankDeposit $bankDeposit)
     {
         //
     }
@@ -88,10 +88,10 @@ class SystemInventoryController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\SystemInventory  $systemInventory
+     * @param  \App\Models\BankDeposit  $bankDeposit
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, SystemInventory $systemInventory)
+    public function update(Request $request, BankDeposit $bankDeposit)
     {
         //
     }
@@ -99,10 +99,10 @@ class SystemInventoryController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\SystemInventory  $systemInventory
+     * @param  \App\Models\BankDeposit  $bankDeposit
      * @return \Illuminate\Http\Response
      */
-    public function destroy(SystemInventory $systemInventory)
+    public function destroy(BankDeposit $bankDeposit)
     {
         //
     }

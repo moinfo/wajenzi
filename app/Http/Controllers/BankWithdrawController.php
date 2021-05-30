@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Approval;
-use App\Models\SystemInventory;
+use App\Models\BankWithdraw;
 use Illuminate\Http\Request;
 
-class SystemInventoryController extends Controller
+class BankWithdrawController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -15,32 +15,31 @@ class SystemInventoryController extends Controller
      */
     public function index(Request $request)
     {
-        if($this->handleCrud($request, 'SystemInventory')) {
+        if($this->handleCrud($request, 'BankWithdraw')) {
             return back();
         }
 
         $data = [];
-        return view('pages.system_inventory.system_inventory_index')->with($data);
+        return view('pages.bank_withdraw.bank_withdraw_index')->with($data);
     }
 
-    public function system_inventory($id,$document_type_id){
-        $system_inventory = \App\Models\SystemInventory::where('id',$id)->get()->first();
+    public function bank_withdraw($id,$document_type_id){
+        $bank_withdraw = \App\Models\Expense::where('id',$id)->get()->first();
         $approvalStages = Approval::getApprovalStages($id,$document_type_id);
         $nextApproval = Approval::getNextApproval($id,$document_type_id);
         $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
         $rejected = Approval::isRejected($id,$document_type_id);
         $document_id = $id;
         $data = [
-            'system_inventory' => $system_inventory,
+            'bank_withdraw' => $bank_withdraw,
             'approvalStages' => $approvalStages,
             'nextApproval' => $nextApproval,
             'approvalCompleted' => $approvalCompleted,
             'rejected' => $rejected,
             'document_id' => $document_id,
         ];
-        return view('pages.system_inventory.system_inventory')->with($data);
+        return view('pages.bank_withdraws.bank_withdraw')->with($data);
     }
-
     /**
      * Show the form for creating a new resource.
      *
@@ -65,10 +64,10 @@ class SystemInventoryController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\SystemInventory  $systemInventory
+     * @param  \App\Models\BankWithdraw  $bankWithdraw
      * @return \Illuminate\Http\Response
      */
-    public function show(SystemInventory $systemInventory)
+    public function show(BankWithdraw $bankWithdraw)
     {
         //
     }
@@ -76,10 +75,10 @@ class SystemInventoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\SystemInventory  $systemInventory
+     * @param  \App\Models\BankWithdraw  $bankWithdraw
      * @return \Illuminate\Http\Response
      */
-    public function edit(SystemInventory $systemInventory)
+    public function edit(BankWithdraw $bankWithdraw)
     {
         //
     }
@@ -88,10 +87,10 @@ class SystemInventoryController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\SystemInventory  $systemInventory
+     * @param  \App\Models\BankWithdraw  $bankWithdraw
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, SystemInventory $systemInventory)
+    public function update(Request $request, BankWithdraw $bankWithdraw)
     {
         //
     }
@@ -99,10 +98,10 @@ class SystemInventoryController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\SystemInventory  $systemInventory
+     * @param  \App\Models\BankWithdraw  $bankWithdraw
      * @return \Illuminate\Http\Response
      */
-    public function destroy(SystemInventory $systemInventory)
+    public function destroy(BankWithdraw $bankWithdraw)
     {
         //
     }

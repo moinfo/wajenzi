@@ -1,3 +1,6 @@
+<?php
+$document_id = \App\Classes\Utility::getLastId('Collection')+1;
+?>
 <div class="block-content">
     <form method="post" enctype="multipart/form-data">
         @csrf
@@ -51,7 +54,10 @@
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update
                 </button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Sale">Submit</button>
+                <input type="hidden" name="document_id" value="{{$document_id}}">
+                <input type="hidden" name="document_type_id" value="8">
+                <input type="hidden" name="link" value="collections/{{$document_id}}/8">
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Collection">Submit</button>
             @endif
         </div>
     </form>

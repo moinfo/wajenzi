@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\Collection;
 use App\Models\Supervisor;
 use Illuminate\Http\Request;
@@ -129,5 +130,23 @@ class CollectionController extends Controller
 
         $supervisors = Supervisor::all();
         return view('pages.collection.collection_index',compact('collections','supervisors'));
+    }
+
+    public function collection($id,$document_type_id){
+        $collection = \App\Models\Collection::where('id',$id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+        $data = [
+            'collection' => $collection,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.collections.collection')->with($data);
     }
 }
