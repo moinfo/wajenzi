@@ -12,7 +12,6 @@ class ApprovalLevel extends Model
         'approval_document_types_id', 'user_group_id', 'description',
         'action','order'
     ];
-
     public function approvalDocumentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(ApprovalDocumentType::class, "approval_document_types_id");
