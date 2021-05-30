@@ -21,12 +21,27 @@ class CollectionController extends Controller
             return back();
         }
 //        $collections = Collection::whereDate('date', DB::raw('CURDATE()'))->get();
-        $collections =  DB::table('collections')
-            ->join('supervisors', 'supervisors.id', '=', 'collections.supervisor_id')
-            ->join('banks', 'banks.id', '=', 'collections.bank_id')
-            ->select('collections.*','banks.name as bank_name','supervisors.name as supervisor_name')
-            ->whereDate('date', DB::raw('CURDATE()'))
-            ->get();
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $supervisor_id = $request->input('supervisor_id');
+        if($supervisor_id == 0){
+            $collections = DB::table('collections')
+                ->join('supervisors', 'supervisors.id', '=', 'collections.supervisor_id')
+                ->join('banks', 'banks.id', '=', 'collections.bank_id')
+                ->select('collections.*','banks.name as bank_name','supervisors.name as supervisor_name')
+                ->where('date','>=',$start_date)
+                ->where('date','<=',$end_date)
+                ->get();
+        }else{
+            $collections = DB::table('collections')
+                ->join('supervisors', 'supervisors.id', '=', 'collections.supervisor_id')
+                ->join('banks', 'banks.id', '=', 'collections.bank_id')
+                ->select('collections.*','banks.name as bank_name','supervisors.name as supervisor_name')
+                ->where('date','>=',$start_date)
+                ->where('date','<=',$end_date)
+                ->where('supervisor_id','=',$supervisor_id)
+                ->get();
+        }
         $supervisors = Supervisor::where('employee_id',1)->get();
 
         $data = [
@@ -147,6 +162,6 @@ class CollectionController extends Controller
             'rejected' => $rejected,
             'document_id' => $document_id,
         ];
-        return view('pages.collections.collection')->with($data);
+        return view('pages.collection.collection')->with($data);
     }
 }

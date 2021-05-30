@@ -90,7 +90,9 @@
                                     <th>Supplier Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Payment Type</th>
                                     <th>Attachment</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -100,6 +102,7 @@
                                 ?>
                                 @foreach($supplier_receivings as $supplier_receiving)
                                     <?php
+                                    $payment_type = $supplier_receiving->payment_type_id == '1' ? 'System' : 'Office';
                                     $sum += $supplier_receiving->amount;
                                     ?>
 
@@ -111,6 +114,7 @@
                                         <td>{{ $supplier_receiving->supplier->name ?? $supplier_receiving->supplier_name}}</td>
                                         <td class="font-w600">{{ $supplier_receiving->description }}</td>
                                         <td class="text-right">{{ number_format($supplier_receiving->amount, 2) }}</td>
+                                        <td>{{$payment_type}}</td>
                                         <td class="text-center">
                                             @if($supplier_receiving->file != null)
                                                 <a href="{{ url("$supplier_receiving->file") }}">Attachment</a>
@@ -118,9 +122,25 @@
                                                 No File
                                             @endif
                                         </td>
+                                        <td>
+                                            @if($supplier_receiving->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $supplier_receiving->status}}</div>
+                                            @elseif($supplier_receiving->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $supplier_receiving->status}}</div>
+                                            @elseif($supplier_receiving->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $supplier_receiving->status}}</div>
+                                            @elseif($supplier_receiving->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $supplier_receiving->status}}</div>
+                                            @elseif($supplier_receiving->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $supplier_receiving->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $supplier_receiving->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier Receiving"))
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('supplier_receivings',['id' => $supplier_receiving->id,'document_type_id'=>8])}}"><i class="fa fa-eye"></i></a>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier Receiving"))
                                                     <button type="button"
                                                             onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving', id: {{$supplier_receiving->id}}}, 'Edit {{$supplier_receiving->supplier->name ?? $supplier_receiving->supplier_name}}', 'modal-md');"
                                                             class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -146,6 +166,8 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="5"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                 </tr>

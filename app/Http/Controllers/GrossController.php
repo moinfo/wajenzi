@@ -45,7 +45,7 @@ class GrossController extends Controller
             'rejected' => $rejected,
             'document_id' => $document_id,
         ];
-        return view('pages.grosses.gross')->with($data);
+        return view('pages.gross.gross')->with($data);
     }
 
     /**

@@ -1,3 +1,6 @@
+<?php
+$document_id = \App\Classes\Utility::getLastId('TransactionMovement')+1;
+?>
 <div class="block-content">
     <form method="post"  enctype="multipart/form-data">
         @csrf
@@ -39,7 +42,10 @@
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update
                 </button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Sale">Submit</button>
+                <input type="hidden" name="document_id" value="{{$document_id}}">
+                <input type="hidden" name="document_type_id" value="9">
+                <input type="hidden" name="link" value="transaction_movement/{{$document_id}}/9">
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="TransactionMovement">Submit</button>
             @endif
         </div>
     </form>

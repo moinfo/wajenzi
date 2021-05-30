@@ -1,3 +1,6 @@
+<?php
+$document_id = \App\Classes\Utility::getLastId('SupplierReceiving')+1;
+?>
 <div class="block-content">
     <form method="post"  enctype="multipart/form-data">
         @csrf
@@ -39,6 +42,9 @@
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update
                 </button>
             @else
+                <input type="hidden" name="document_id" value="{{$document_id}}">
+                <input type="hidden" name="document_type_id" value="10">
+                <input type="hidden" name="link" value="supplier_receiving/{{$document_id}}/10">
                 <button type="submit" class="btn btn-alt-primary col" name="addItem" value="SupplierReceiving">Submit</button>
             @endif
         </div>

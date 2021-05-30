@@ -1,4 +1,6 @@
-
+<?php
+$document_id = \App\Classes\Utility::getLastId('SystemCredit')+1;
+?>
 <div class="block-content">
     <form  method="post"  autocomplete="off">
         @csrf
@@ -27,6 +29,9 @@
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
+                <input type="hidden" name="document_id" value="{{$document_id}}">
+                <input type="hidden" name="document_type_id" value="13">
+                <input type="hidden" name="link" value="system_credit/{{$document_id}}/13">
                 <button type="submit" class="btn btn-alt-primary col" name="addItem" value="SystemCredit">Submit</button>
             @endif
         </div>

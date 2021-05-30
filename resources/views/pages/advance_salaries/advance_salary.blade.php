@@ -136,7 +136,7 @@
                                         @else
                                             <div class="col-md-12">
                                                 <input type="hidden" name="status" id="status" value="APPROVED">
-                                                <input type="hidden" name="approval_document_type_id" id="approval_document_type_id" value="{{$nextApproval->document_id}}">
+                                                <input type="hidden" name="approval_document_types_id" id="approval_document_types_id" value="{{$nextApproval->document_id}}">
                                                 <input type="hidden" name="link" id="link" value="settings/advance_salaries/{{$document_id}}/6">
                                                 <input type="hidden" name="user_id" id="user_id" value="{{Auth::user()->id }}">
                                                 <input type="hidden" name="document_type_id" value="6">

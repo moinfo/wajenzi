@@ -1,16 +1,16 @@
 <?php
-$document_id = \App\Classes\Utility::getLastId('SystemCapital')+1;
+$document_id = \App\Classes\Utility::getLastId('BankWithdraw')+1;
 ?>
 <div class="block-content">
     <form  method="post"  autocomplete="off">
         @csrf
         <div class="form-group">
-            <label for="example-nf-system" class="control-label required">System</label>
-            <select name="system_id" id="input-system-id" class="form-control" required>
+            <label for="example-nf-bank" class="control-label required">Bank</label>
+            <select name="bank_id" id="input-bank-id" class="form-control" required>
 
-                <option value="">Select System</option>
-                @foreach ($systems as $system)
-                    <option value="{{ $system['id'] }}" {{ ( $system['id'] == $object->system_id) ? 'selected' : '' }}> {{ $system['name'] }} </option>
+                <option value="">Select Bank</option>
+                @foreach ($banks as $bank)
+                    <option value="{{ $bank['id'] }}" {{ ( $bank['id'] == $object->bank_id) ? 'selected' : '' }}> {{ $bank['name'] }} </option>
                 @endforeach
             </select>
         </div>
@@ -30,9 +30,9 @@ $document_id = \App\Classes\Utility::getLastId('SystemCapital')+1;
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
                 <input type="hidden" name="document_id" value="{{$document_id}}">
-                <input type="hidden" name="document_type_id" value="16">
-                <input type="hidden" name="link" value="system_capital/{{$document_id}}/16">
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="SystemCapital">Submit</button>
+                <input type="hidden" name="document_type_id" value="18">
+                <input type="hidden" name="link" value="bank_withdraw/{{$document_id}}/18">
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="BankWithdraw">Submit</button>
             @endif
         </div>
     </form>

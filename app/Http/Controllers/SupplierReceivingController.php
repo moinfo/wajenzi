@@ -20,7 +20,25 @@ class SupplierReceivingController extends Controller
         if($this->handleCrud($request, 'SupplierReceiving')) {
             return back();
         }
-        $supplier_receivings = SupplierReceiving::whereDate('date', DB::raw('CURDATE()'))->get();
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $supplier_id = $request->input('supplier_id');
+        if($supplier_id == 0){
+            $supplier_receivings = DB::table('supplier_receivings')
+                ->join('suppliers', 'suppliers.id', '=', 'supplier_receivings.supplier_id')
+                ->select('supplier_receivings.*','suppliers.name as supplier_name')
+                ->where('date','>=',$start_date)
+                ->where('date','<=',$end_date)
+                ->get();
+        }else{
+            $supplier_receivings = DB::table('supplier_receivings')
+                ->join('suppliers', 'suppliers.id', '=', 'supplier_receivings.supplier_id')
+                ->select('supplier_receivings.*','suppliers.name as supplier_name')
+                ->where('date','>=',$start_date)
+                ->where('date','<=',$end_date)
+                ->where('supplier_id','=',$supplier_id)
+                ->get();
+        }
         $suppliers = Supplier::all();
 
         $data = [
@@ -45,7 +63,7 @@ class SupplierReceivingController extends Controller
             'rejected' => $rejected,
             'document_id' => $document_id,
         ];
-        return view('pages.supplier_receivings.supplier_receiving')->with($data);
+        return view('pages.supplier_receiving.supplier_receiving')->with($data);
     }
     /**
      * Show the form for creating a new resource.

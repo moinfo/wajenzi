@@ -56,7 +56,7 @@ $document_id = \App\Classes\Utility::getLastId('Collection')+1;
             @else
                 <input type="hidden" name="document_id" value="{{$document_id}}">
                 <input type="hidden" name="document_type_id" value="8">
-                <input type="hidden" name="link" value="collections/{{$document_id}}/8">
+                <input type="hidden" name="link" value="collection/{{$document_id}}/8">
                 <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Collection">Submit</button>
             @endif
         </div>

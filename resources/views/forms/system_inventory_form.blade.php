@@ -1,4 +1,6 @@
-
+<?php
+$document_id = \App\Classes\Utility::getLastId('SystemInventory')+1;
+?>
 <div class="block-content">
     <form  method="post"  autocomplete="off">
         @csrf
@@ -27,7 +29,10 @@
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="SystemCredit">Submit</button>
+                <input type="hidden" name="document_id" value="{{$document_id}}">
+                <input type="hidden" name="document_type_id" value="15">
+                <input type="hidden" name="link" value="system_inventory/{{$document_id}}/15">
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="SystemInventory">Submit</button>
             @endif
         </div>
     </form>

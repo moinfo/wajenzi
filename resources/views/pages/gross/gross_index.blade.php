@@ -89,7 +89,9 @@
                                     <th>Supervisor Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Payment Type</th>
                                     <th>Attachment</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -99,6 +101,8 @@
                                 ?>
                                 @foreach($grosses as $gross)
                                     <?php
+                                    $payment_type = $gross->payment_type_id == '1' ? 'System' : 'Office';
+
                                     $sum += $gross->amount;
                                     ?>
                                     <tr id="gross-tr-{{$gross->id}}">
@@ -109,6 +113,7 @@
                                         <td>{{ $gross->supervisor->name ?? $gross->supervisor_name}}</td>
                                         <td class="font-w600">{{ $gross->description }}</td>
                                         <td class="text-right">{{ number_format($gross->amount, 2) }}</td>
+                                        <td>{{$payment_type}}</td>
                                         <td class="text-center">
                                             @if($gross->file != null)
                                                 <a href="{{ url("$gross->file") }}">Attachment</a>
@@ -116,9 +121,25 @@
                                                 No File
                                             @endif
                                         </td>
+                                        <td>
+                                            @if($gross->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $gross->status}}</div>
+                                            @elseif($gross->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $gross->status}}</div>
+                                            @elseif($gross->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $gross->status}}</div>
+                                            @elseif($gross->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $gross->status}}</div>
+                                            @elseif($gross->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $gross->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $gross->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Gross Profit"))
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('grosses',['id' => $gross->id,'document_type_id'=>8])}}"><i class="fa fa-eye"></i></a>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Gross Profit"))
                                                     <button type="button"
                                                             onclick="loadFormModal('gross_form', {className: 'Gross', id: {{$gross->id}}}, 'Edit {{ $gross->supervisor->name ?? $gross->supervisor_name}}', 'modal-md');"
                                                             class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -145,6 +166,8 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="5"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                 </tr>

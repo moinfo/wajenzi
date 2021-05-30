@@ -21,7 +21,25 @@ class TransactionMovementController extends Controller
         if($this->handleCrud($request, 'TransactionMovement')) {
             return back();
         }
-        $transaction_movements = TransactionMovement::whereDate('date', DB::raw('CURDATE()'))->get();
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $supplier_id = $request->input('supplier_id');
+        if($supplier_id == 0){
+            $transaction_movements = DB::table('transaction_movements')
+                ->join('suppliers', 'suppliers.id', '=', 'transaction_movements.supplier_id')
+                ->select('transaction_movements.*','suppliers.name as supplier_name')
+                ->where('date','>=',$start_date)
+                ->where('date','<=',$end_date)
+                ->get();
+        }else{
+            $transaction_movements = DB::table('transaction_movements')
+                ->join('suppliers', 'suppliers.id', '=', 'transaction_movements.supplier_id')
+                ->select('transaction_movements.*','suppliers.name as supplier_name')
+                ->where('date','>=',$start_date)
+                ->where('date','<=',$end_date)
+                ->where('supplier_id','=',$supplier_id)
+                ->get();
+        }
         $suppliers = Supplier::all();
 
         $data = [

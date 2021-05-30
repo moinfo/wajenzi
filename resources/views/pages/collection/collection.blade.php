@@ -25,7 +25,7 @@
     $notifiable_id = Auth::user()->id;
     $route_id =request()->route('id');
     $route_document_type_id =request()->route('document_type_id');
-    $base_route = 'collections/'.$route_id.'/'.$route_document_type_id;
+    $base_route = 'collection/'.$route_id.'/'.$route_document_type_id;
     foreach( Auth::user()->unreadNotifications as $notification){
         if($notification->data['link'] == $base_route){
             $notification_id= \App\Models\Notification::Where('notifiable_id',$notifiable_id)->where('data->link', $base_route)->get()->first()->id;
@@ -140,8 +140,8 @@
                                         @else
                                             <div class="col-md-12">
                                                 <input type="hidden" name="status" id="status" value="APPROVED">
-                                                <input type="hidden" name="approval_document_type_id" id="approval_document_type_id" value="{{$nextApproval->document_id}}">
-                                                <input type="hidden" name="link" id="link" value="collections/{{$document_id}}/8">
+                                                <input type="hidden" name="approval_document_types_id" id="approval_document_types_id" value="{{$nextApproval->document_id}}">
+                                                <input type="hidden" name="link" id="link" value="collection/{{$document_id}}/8">
                                                 <input type="hidden" name="user_id" id="user_id" value="{{Auth::user()->id }}">
                                                 <input type="hidden" name="approval_level_id" id="approval_level_id" value="{{$nextApproval->order_id ?? null}}">
                                                 <input type="hidden" name="user_group_id" id="user_group_id" value="{{$nextApproval->user_group_id ?? null}}">

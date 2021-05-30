@@ -30,7 +30,7 @@ class ApprovalController extends Controller
             $class_name =  $request->approveItem;
             $class_object = 'App\Models\\' . $class_name;
            $approve =  Approval::create([
-                'approval_document_type_id' => $request->approval_document_type_id,
+                'approval_document_types_id' => $request->approval_document_types_id,
                 'user_id' => $request->user_id,
                 'document_id' => $request->document_id,
                 'approval_level_id' => $request->approval_level_id,
@@ -71,7 +71,7 @@ class ApprovalController extends Controller
             $class_name =  $request->rejectItem;
             $class_object = 'App\Models\\' . $class_name;
             $reject = Approval::create([
-                'approval_document_type_id' => $request->approval_document_type_id,
+                'approval_document_types_id' => $request->approval_document_types_id,
                 'user_id' => $request->user_id,
                 'document_id' => $request->document_id,
                 'approval_level_id' => $request->approval_level_id,

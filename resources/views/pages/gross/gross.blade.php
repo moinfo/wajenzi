@@ -25,7 +25,7 @@
     $notifiable_id = Auth::user()->id;
     $route_id =request()->route('id');
     $route_document_type_id =request()->route('document_type_id');
-    $base_route = 'settings/statutory_payments/'.$route_id.'/'.$route_document_type_id;
+    $base_route = 'gross/'.$route_id.'/'.$route_document_type_id;
     foreach( Auth::user()->unreadNotifications as $notification){
         if($notification->data['link'] == $base_route){
             $notification_id= \App\Models\Notification::Where('notifiable_id',$notifiable_id)->where('data->link', $base_route)->get()->first()->id;
@@ -38,14 +38,14 @@
     ?>
     <div class="main-container">
         <div class="content">
-            <div class="content-heading">Statutory Payment
+            <div class="content-heading">Gross
                 <div class="float-right">
                 </div>
             </div>
             <div>
                 <div class="block block-themed">
                     <div class="block-header bg-gd-lake">
-                        <h3 class="block-title">{{$statutory_payments->subCategory->name}}</h3>
+                        <h3 class="block-title">{{$gross->supervisor->name ?? null }}</h3>
                     </div>
                     <div class="block-content">
                         <form method="post" action="{{route('hr_settings_approvals')}}" enctype="multipart/form-data">
@@ -54,69 +54,61 @@
                                 <tbody>
                                 <tr>
                                     <th width="30%">Description</th>
-                                    <td>{{$statutory_payments->description}}</td>
+                                    <td>{{$gross->description ?? null}}</td>
                                 </tr>
                                 <tr>
-                                    <th width="30%">Amount</th>
-                                    <td>{{number_format($statutory_payments->amount)}}</td>
+                                    <th>Total Amount</th>
+                                    <td>{{ number_format($gross->amount, 2)}}</td>
                                 </tr>
                                 <tr>
-                                    <th width="30%">Control Number</th>
-                                    <td>{{$statutory_payments->description}}</td>
-                                </tr>
-                                <tr>
-                                    <th width="30%">Issue Date</th>
-                                    <td>{{$statutory_payments->issue_date}}</td>
-                                </tr>
-                                <tr>
-                                    <th>Due Date</th>
-                                    <td>{{$statutory_payments->due_date}}</td>
+                                    <th>Date</th>
+                                    <td>{{$gross->date}}</td>
                                 </tr>
                                 <tr>
                                     <th width="30%">Uploaded File</th>
                                     <td width="70%" class="bold">
-                                        @if($statutory_payments->file != null)
-                                        <a href="{{ url($statutory_payments->file) }}" target="_blank">View</a>
+                                        @if($gross->file != null)
+                                        <a href="{{ url($gross->file) }}" target="_blank">View</a>
                                             @endif
                                     </td>
                                 </tr>
                                 <tr>
                                     <th width="30%">status</th>
-                                    @if($statutory_payments->status == 'PENDING')
+                                    @if($gross->status == 'PENDING')
                                         <td width="70%" class="bold text-capitalize"
                                             style="font-size: 16px!important">
                                             <div
-                                                class="badge badge-warning badge-pill">{{ $statutory_payments->status}}</div>
+                                                class="badge badge-warning badge-pill">{{ $gross->status}}</div>
                                         </td>
-                                    @elseif($statutory_payments->status == 'APPROVED')
+                                    @elseif($gross->status == 'APPROVED')
                                         <td width="70%" class="bold text-capitalize"
                                             style="font-size: 16px!important">
                                             <div
-                                                class="badge badge-primary badge-pill">{{ $statutory_payments->status}}</div>
+                                                class="badge badge-primary badge-pill">{{ $gross->status}}</div>
                                         </td>
-                                    @elseif($statutory_payments->status == 'REJECTED')
+                                    @elseif($gross->status == 'REJECTED')
                                         <td width="70%" class="bold text-capitalize"
                                             style="font-size: 16px!important">
                                             <div
-                                                class="badge badge-danger badge-pill">{{ $statutory_payments->status}}</div>
+                                                class="badge badge-danger badge-pill">{{ $gross->status}}</div>
                                         </td>
-                                    @elseif($statutory_payments->status == 'PAID')
+                                    @elseif($gross->status == 'PAID')
                                         <td width="70%" class="bold text-capitalize"
                                             style="font-size: 16px!important">
                                             <div
-                                                class="badge badge-primary badge-pill">{{ $statutory_payments->status}}</div>
+                                                class="badge badge-primary badge-pill">{{ $gross->status}}</div>
                                         </td>
-                                    @elseif($statutory_payments->status == 'COMPLETED')
+                                    @elseif($gross->status == 'COMPLETED')
                                         <td width="70%" class="bold text-capitalize"
                                             style="font-size: 16px!important">
                                             <div
-                                                class="badge badge-success badge-pill">{{ $statutory_payments->status}}</div>
+                                                class="badge badge-success badge-pill">{{ $gross->status}}</div>
                                         </td>
                                     @else
                                         <td width="70%" class="bold text-capitalize"
                                             style="font-size: 16px!important">
                                             <div
-                                                class="badge badge-secondary badge-pill">{{ $statutory_payments->status}}</div>
+                                                class="badge badge-secondary badge-pill">{{ $gross->status}}</div>
                                         </td>
                                     @endif
                                 </tr>
@@ -132,7 +124,7 @@
                                 @if($nextApproval)
                                     @if($rejected)
                                         <div class="col-md-9">
-                                            <span class='pull-right'>This Statutory Payment was rejected <i class='text-light'>Comment: {{$rejected->comments}}</i></span>
+                                            <span class='pull-right'>This Grosss was rejected <i class='text-light'>Comment: {{$rejected->comments}}</i></span>
                                         </div>
                                         <div class="col-md-3">
                                         </div>
@@ -145,12 +137,12 @@
                                             <div class="col-md-12">
                                                 <input type="hidden" name="status" id="status" value="APPROVED">
                                                 <input type="hidden" name="approval_document_types_id" id="approval_document_types_id" value="{{$nextApproval->document_id}}">
-                                                <input type="hidden" name="link" id="link" value="settings/statutory_payments/{{$document_id}}/1">
+                                                <input type="hidden" name="link" id="link" value="gross/{{$document_id}}/11">
                                                 <input type="hidden" name="user_id" id="user_id" value="{{Auth::user()->id }}">
-                                                <input type="hidden" name="document_type_id" value="1">
                                                 <input type="hidden" name="approval_level_id" id="approval_level_id" value="{{$nextApproval->order_id ?? null}}">
                                                 <input type="hidden" name="user_group_id" id="user_group_id" value="{{$nextApproval->user_group_id ?? null}}">
                                                 <input type="hidden" name="document_id" id="document_id" value="{{$document_id}}">
+                                                <input type="hidden" name="document_type_id" id="document_type_id" value="11">
                                                 <input type="hidden" name="approval_date" id="approval_date" value="<?=date('Y-m-d H:i:s')?>">
                                                 <br/>
                                                 <div class="form-group row">
@@ -161,8 +153,8 @@
                                                 </div>
                                                 <div class="form-group">
                                                     <div class="btn-group pull-right">
-                                                        <button type="submit" class="btn btn-alt-primary btn-sm" name="approveItem" value="StatutoryPayment">Approve now</button>
-                                                        <button type="submit" class="btn btn-alt-danger btn-sm" name="rejectItem" value="StatutoryPayment">Reject</button>
+                                                        <button type="submit" class="btn btn-alt-primary btn-sm" name="approveItem" value="Gross">Approve now</button>
+                                                        <button type="submit" class="btn btn-alt-danger btn-sm" name="rejectItem" value="Gross">Reject</button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -170,7 +162,7 @@
                                     @endif
                                 @elseif($approvalCompleted)
                                     <div class="col-md-9">
-                                        <span class='text-primary'><i class='fa fa-check '>&nbsp;&nbsp;&nbsp;</i> Statutory Payment Approved</span>
+                                        <span class='text-primary'><i class='fa fa-check '>&nbsp;&nbsp;&nbsp;</i> Grosss Approved</span>
                                     </div>
                                     <div class="col-md-3">
 

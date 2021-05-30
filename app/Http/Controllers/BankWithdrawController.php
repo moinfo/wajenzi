@@ -38,7 +38,7 @@ class BankWithdrawController extends Controller
             'rejected' => $rejected,
             'document_id' => $document_id,
         ];
-        return view('pages.bank_withdraws.bank_withdraw')->with($data);
+        return view('pages.bank_withdraw.bank_withdraw')->with($data);
     }
     /**
      * Show the form for creating a new resource.

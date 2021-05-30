@@ -89,7 +89,9 @@
                                     <th>Supplier Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Payment Type</th>
                                     <th>Attachment</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -99,7 +101,8 @@
                                 ?>
                                 @foreach($transaction_movements as $transaction_movement)
                                     <?php
-                                     $sum += $transaction_movement->amount;
+                                    $payment_type = $transaction_movement->payment_type_id == '1' ? 'System' : 'Office';
+                                    $sum += $transaction_movement->amount;
                                     ?>
 
                                     <tr id="transaction_movement-tr-{{$transaction_movement->id}}">
@@ -110,6 +113,7 @@
                                         <td>{{ $transaction_movement->supplier->name ?? $transaction_movement->supplier_name }}</td>
                                         <td class="font-w600">{{ $transaction_movement->description }}</td>
                                         <td class="text-right">{{ number_format($transaction_movement->amount, 2) }}</td>
+                                        <td>{{$payment_type}}</td>
                                         <td class="text-center">
                                             @if($transaction_movement->file != null)
                                                 <a href="{{ url("$transaction_movement->file") }}">Attachment</a>
@@ -117,9 +121,25 @@
                                                 No File
                                             @endif
                                         </td>
+                                        <td>
+                                            @if($transaction_movement->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $transaction_movement->status}}</div>
+                                            @elseif($transaction_movement->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $transaction_movement->status}}</div>
+                                            @elseif($transaction_movement->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $transaction_movement->status}}</div>
+                                            @elseif($transaction_movement->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $transaction_movement->status}}</div>
+                                            @elseif($transaction_movement->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $transaction_movement->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $transaction_movement->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Transaction Movement"))
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('transaction_movements',['id' => $transaction_movement->id,'document_type_id'=>8])}}"><i class="fa fa-eye"></i></a>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Transaction Movement"))
                                                     <button type="button"
                                                             onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement', id: {{$transaction_movement->id}}}, 'Edit {{$transaction_movement->supplier->name ?? $transaction_movement->supplier_name}} Transcaction Movement', 'modal-md');"
                                                             class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -146,6 +166,8 @@
                                 <tfoot>
                                     <tr>
                                         <td class="text-right text-dark" colspan="5"><b>{{number_format($sum,2)}}</b></td>
+                                        <td></td>
+                                        <td></td>
                                         <td></td>
                                         <td></td>
                                     </tr>

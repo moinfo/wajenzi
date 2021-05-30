@@ -38,7 +38,7 @@ class BankDepositController extends Controller
             'rejected' => $rejected,
             'document_id' => $document_id,
         ];
-        return view('pages.bank_deposits.bank_deposit')->with($data);
+        return view('pages.bank_deposit.bank_deposit')->with($data);
     }
 
     /**

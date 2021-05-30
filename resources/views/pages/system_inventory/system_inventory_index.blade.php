@@ -74,6 +74,7 @@
                                     <th>Date</th>
                                     <th>System Name</th>
                                     <th>Amount</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -97,9 +98,25 @@
                                         <td>{{ $system_inventory->date }}</td>
                                         <td>{{ $system_inventory->system->name}}</td>
                                         <td class="text-right">{{ number_format($system_inventory->amount, 2) }}</td>
+                                        <td>
+                                            @if($system_inventory->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $system_inventory->status}}</div>
+                                            @elseif($system_inventory->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $system_inventory->status}}</div>
+                                            @elseif($system_inventory->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $system_inventory->status}}</div>
+                                            @elseif($system_inventory->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $system_inventory->status}}</div>
+                                            @elseif($system_inventory->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $system_inventory->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $system_inventory->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit System Inventory"))
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('system_inventories',['id' => $system_inventory->id,'document_type_id'=>15])}}"><i class="fa fa-eye"></i></a>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit System Inventory"))
                                                     <button type="button"
                                                             onclick="loadFormModal('system_inventory_form', {className: 'SystemInventory', id: {{$system_inventory->id}}}, 'Edit {{ $system_inventory->system->name}}', 'modal-md');"
                                                             class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -126,6 +143,7 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="4"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                                 </tfoot>

@@ -74,6 +74,7 @@
                                     <th>Date</th>
                                     <th>System Name</th>
                                     <th>Amount</th>
+                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -97,9 +98,25 @@
                                         <td>{{ $system_cash->date }}</td>
                                         <td>{{ $system_cash->system->name}}</td>
                                         <td class="text-right">{{ number_format($system_cash->amount, 2) }}</td>
+                                        <td>
+                                            @if($system_cash->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $system_cash->status}}</div>
+                                            @elseif($system_cash->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $system_cash->status}}</div>
+                                            @elseif($system_cash->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $system_cash->status}}</div>
+                                            @elseif($system_cash->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $system_cash->status}}</div>
+                                            @elseif($system_cash->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $system_cash->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $system_cash->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit System Cash"))
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('system_cashes',['id' => $system_cash->id,'document_type_id'=>14])}}"><i class="fa fa-eye"></i></a>
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit System Cash"))
                                                     <button type="button"
                                                             onclick="loadFormModal('system_cash_form', {className: 'SystemCash', id: {{$system_cash->id}}}, 'Edit {{ $system_cash->system->name}}', 'modal-md');"
                                                             class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -126,6 +143,7 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="4"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                                 </tfoot>

@@ -80,6 +80,10 @@ class AjaxController
                         ['id'=>'5','name'=>'APPROVED'],
                         ['id'=>'6','name'=>'COMPLETED']
                     ];
+                    $payment_types = [
+                        ['id'=>'1','name'=>'System'],
+                        ['id'=>'2','name'=>'Office']
+                    ];
                     $permissions = [
                         ['name'=>'MENU'],
                         ['name'=>'SETTING'],
@@ -121,6 +125,7 @@ class AjaxController
                             'users' => $users,
                             'stock_types' => $stock_types,
                             'user_groups' => $user_groups,
+                            'payment_types' => $payment_types,
                             'categories' => $categories,
                             'status' => $status,
                             'actions' => $actions,
