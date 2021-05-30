@@ -11,7 +11,7 @@ class Approval extends Model
     use HasFactory;
 
     protected $fillable = [
-        'approval_document_type_id', 'statutory_payment_id', 'user_id', 'user_group_id', 'approval_level_id',
+        'approval_document_types_id', 'statutory_payment_id', 'user_id', 'user_group_id', 'approval_level_id',
         'comments', 'status', 'approval_date','document_id'
 
     ];
@@ -44,10 +44,10 @@ class Approval extends Model
 
     static function getApprovalStages($document_id,$document_type_id)
     {
-        $query = DB::SELECT("SELECT *, al.id AS order_id, al.`order` as `order`, al.`approval_document_type_id` AS document_id,
+        $query = DB::SELECT("SELECT *, al.id AS order_id, al.`order` as `order`, al.`approval_document_types_id` AS document_id,
        al.`user_group_id` AS `user_group_id`, ug.name AS user_group_name FROM approval_levels al
         LEFT JOIN approvals a ON (a.approval_level_id=al.id AND a.`document_id` = '$document_id')
-        LEFT JOIN user_groups ug ON (ug.id = al.`user_group_id`) WHERE al.order > 0 AND al.approval_document_type_id  = '$document_type_id'");
+        LEFT JOIN user_groups ug ON (ug.id = al.`user_group_id`) WHERE al.order > 0 AND al.approval_document_types_id  = '$document_type_id'");
         return $query;
     }
 
@@ -71,7 +71,7 @@ class Approval extends Model
     {
         $stages = self::getApprovalStages($document_id,$document_type_id);
         foreach ($stages as $stage) {
-            if ($stage->status == 'rejected') {
+            if ($stage->status == 'REJECTED') {
                 return $stage;
             }
         }

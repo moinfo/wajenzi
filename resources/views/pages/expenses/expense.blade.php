@@ -45,7 +45,7 @@
             <div>
                 <div class="block block-themed">
                     <div class="block-header bg-gd-lake">
-                        <h3 class="block-title">{{$expense->expensesSubCategory->name }}</h3>
+                        <h3 class="block-title">{{$expense->expensesSubCategory->name ?? null }}</h3>
                     </div>
                     <div class="block-content">
                         <form method="post" action="{{route('hr_settings_approvals')}}" enctype="multipart/form-data">
@@ -54,11 +54,11 @@
                                 <tbody>
                                 <tr>
                                     <th width="30%">Expenses Category</th>
-                                    <td>{{ $expense->expensesSubCategory->expensesCategory->name }}</td>
+                                    <td>{{ $expense->expensesSubCategory->expensesCategory->name ?? null }}</td>
                                 </tr>
                                 <tr>
                                     <th width="30%">Description</th>
-                                    <td>{{$expense->description}}</td>
+                                    <td>{{$expense->description ?? null}}</td>
                                 </tr>
                                 <tr>
                                     <th>Total Amount</th>

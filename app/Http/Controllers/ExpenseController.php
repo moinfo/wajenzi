@@ -140,7 +140,7 @@ class ExpenseController extends Controller
                     $expenses->where('expenses_sub_category_id','=',$expenses_sub_category_id);
                 }
                 if($expenses_category_id != 0){
-                    $expenses->where('expenses_category_id','=',$expenses_category_id);
+                    $expenses->where('expenses_sub_category_id','=',$expenses_category_id);
                 }
                 $expenses = $expenses->get();
 

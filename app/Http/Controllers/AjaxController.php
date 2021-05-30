@@ -20,6 +20,7 @@ use App\Models\SubCategory;
 use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
+use App\Models\User;
 use App\Models\UserGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -110,12 +111,14 @@ class AjaxController
                         ['name'=>'OPENING'],
                         ['name'=>'CLOSING']
                     ];
+                    $users = Staff::all();
                     $expenses_categories = ExpensesCategory::all();
                     $expenses_sub_categories = ExpensesSubCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
                     $data = $request->input('data') ?? [
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
+                            'users' => $users,
                             'stock_types' => $stock_types,
                             'user_groups' => $user_groups,
                             'categories' => $categories,
