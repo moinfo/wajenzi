@@ -12,7 +12,10 @@ class Payroll extends Model
 
     public static function isCurrentPayrollPaid($start_date,$end_date)
     {
-        $records = PayrollRecord::WhereBetween('created_at',[$start_date,$end_date])->select([DB::raw("*")])->get();
+        $records = PayrollRecord::select([DB::raw("*")])
+            ->whereDate('created_at','>=',$start_date)
+            ->whereDate('created_at','<=',$end_date)
+            ->get();
         if(count($records)){
             return true;
         }else{
