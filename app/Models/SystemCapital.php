@@ -16,11 +16,11 @@ class SystemCapital extends Model
 
 
     public static function getTotalCapitalForSpecificDate($start_date,$end_date){
-        return  $inventory = \App\Models\SystemCapital::WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'];
+        return  $inventory = \App\Models\SystemCapital::Where('status','APPROVED')->WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'];
 
     }
     public static function getTotalCapitalForSystem($start_date,$end_date,$system_id){
-        return  $inventory = \App\Models\SystemCapital::Where('system_id',$system_id)->WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'];
+        return  $inventory = \App\Models\SystemCapital::Where('status','APPROVED')->Where('system_id',$system_id)->WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'];
     }
 
 }

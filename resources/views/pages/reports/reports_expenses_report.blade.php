@@ -98,8 +98,8 @@
                                             <?php
                                             $key_name = 'supervisor_id';
                                             $id = $supervisor->id;
-                                           $expense = \App\Models\Expense::Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
-                                           $total_expense_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                           $expense = \App\Models\Expense::Where('status','APPROVED')->Where('date',$date)->Where('supervisor_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                           $total_expense_per_day = \App\Models\Expense::Where('status','APPROVED')->Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
                                             <td class="text-right">
@@ -121,12 +121,12 @@
                                     <th colspan="2"></th>
                                     @foreach ($supervisors as $supervisor)
                                         <?php
-                                        $total_expense_by_supervisor = \App\Models\Expense::Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
+                                        $total_expense_by_supervisor = \App\Models\Expense::Where('status','APPROVED')->Where('supervisor_id',$supervisor->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supervisor_id')->get()->first();
                                         ?>
                                         <td class="text-right">{{number_format($total_expense_by_supervisor['total_amount'] ?? 0)}}</td>
                                     @endforeach
                                     <?php
-                                    $total_expense_by_all_supervisor = \App\Models\Expense::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
+                                    $total_expense_by_all_supervisor = \App\Models\Expense::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     ?>
                                     <td class="text-right">{{number_format($total_expense_by_all_supervisor['total_amount'] ?? 0)}}</td>
                                 </tr>

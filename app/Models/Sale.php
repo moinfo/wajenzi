@@ -20,7 +20,8 @@ class Sale extends Model
             ->join('efds', 'efds.id', '=', 'sales.efd_id')
             ->select('sales.*','efds.name as efd')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($efd_id != null){
             $sales->where('efd_id','=',$efd_id);
         }
@@ -31,7 +32,8 @@ class Sale extends Model
         $sales = DB::table('sales')
             ->join('efds', 'efds.id', '=', 'sales.efd_id')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($efd_id != null){
             $sales->where('efd_id','=',$efd_id);
         }
@@ -41,7 +43,8 @@ class Sale extends Model
         $sales = DB::table('sales')
             ->join('efds', 'efds.id', '=', 'sales.efd_id')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($efd_id != null){
             $sales->where('efd_id','=',$efd_id);
         }
@@ -64,7 +67,8 @@ class Sale extends Model
         $sales = DB::table('sales')
             ->join('efds', 'efds.id', '=', 'sales.efd_id')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($efd_id != null){
             $sales->where('efd_id','=',$efd_id);
         }
@@ -75,7 +79,8 @@ class Sale extends Model
         $sales = DB::table('sales')
             ->join('efds', 'efds.id', '=', 'sales.efd_id')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($efd_id != null){
             $sales->where('efd_id','=',$efd_id);
         }
@@ -86,7 +91,8 @@ class Sale extends Model
         $sales = DB::table('sales')
             ->join('efds', 'efds.id', '=', 'sales.efd_id')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($efd_id != null){
             $sales->where('efd_id','=',$efd_id);
         }
@@ -94,7 +100,7 @@ class Sale extends Model
     }
 
     public static function getTotalRevenue($start_date, $end_date){
-        return Sale::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+        return Sale::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
 
     }
 

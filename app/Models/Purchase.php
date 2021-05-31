@@ -26,7 +26,8 @@ class Purchase extends Model
             ->join('items', 'items.id', '=', 'purchases.item_id')
             ->select('purchases.*','items.name as goods','suppliers.name as supplier', 'suppliers.vrn as vrn')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($supplier_id != null){
             $purchases->where('supplier_id','=',$supplier_id);
         }if($purchase_type != null){
@@ -45,7 +46,8 @@ class Purchase extends Model
             ->join('items', 'items.id', '=', 'purchases.item_id')
             ->select('purchases.*','items.name as goods','suppliers.name as supplier', 'suppliers.vrn as vrn')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($supplier_id != null){
             $purchases->where('supplier_id','=',$supplier_id);
         }if($purchase_type != null){
@@ -61,7 +63,8 @@ class Purchase extends Model
             ->join('items', 'items.id', '=', 'purchases.item_id')
             ->select('purchases.*','items.name as goods','suppliers.name as supplier', 'suppliers.vrn as vrn')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($supplier_id != null){
             $purchases->where('supplier_id','=',$supplier_id);
         }if($purchase_type != null){
@@ -77,7 +80,8 @@ class Purchase extends Model
             ->join('items', 'items.id', '=', 'purchases.item_id')
             ->select('purchases.*','items.name as goods','suppliers.name as supplier', 'suppliers.vrn as vrn')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
         if($supplier_id != null){
             $purchases->where('supplier_id','=',$supplier_id);
         }if($purchase_type != null){
@@ -87,7 +91,7 @@ class Purchase extends Model
     }
 
     public static function getTotalPurchasesByDate($start_date, $end_date){
-        return Purchase::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(total_amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+        return Purchase::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(total_amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
 
     }
 }

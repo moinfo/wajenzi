@@ -15,10 +15,10 @@ class Gross extends Model
     }
 
     static function getTotalGrossProfitPerDay($date){
-        return \App\Models\Gross::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
+        return \App\Models\Gross::Where('status','APPROVED')->Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'] ?? 0;
     }
     static function getTotalGrossProfitBySupervisorForSpecificDate($start_date, $end_date){
-        return \App\Models\Gross::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+        return \App\Models\Gross::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
     }
     public static function getTotalGrossProfit($start_date,$end_date){
         $revenue = Sale::getTotalRevenue($start_date,$end_date);

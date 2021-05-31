@@ -98,8 +98,8 @@
                                             <?php
                                             $id = $supplier->id;
                                             $key_name = 'supplier_id';
-                                           $supplier_receiving = \App\Models\SupplierReceiving::Where('date',$date)->Where('supplier_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
-                                           $total_supplier_receiving_per_day = \App\Models\SupplierReceiving::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                           $supplier_receiving = \App\Models\SupplierReceiving::Where('status','APPROVED')->Where('date',$date)->Where('supplier_id',$id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                           $total_supplier_receiving_per_day = \App\Models\SupplierReceiving::Where('status','APPROVED')->Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
                                             <td class="text-right">
@@ -120,12 +120,12 @@
                                     <th colspan="2"></th>
                                     @foreach ($suppliers as $supplier)
                                         <?php
-                                        $total_supplier_receiving_by_supplier = \App\Models\SupplierReceiving::Where('supplier_id',$supplier->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supplier_id')->get()->first();
+                                        $total_supplier_receiving_by_supplier = \App\Models\SupplierReceiving::Where('status','APPROVED')->Where('supplier_id',$supplier->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('supplier_id')->get()->first();
                                         ?>
                                         <td class="text-right">{{number_format($total_supplier_receiving_by_supplier['total_amount'] ?? 0)}}</td>
                                     @endforeach
                                     <?php
-                                    $total_supplier_receiving_by_all_supplier = \App\Models\SupplierReceiving::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
+                                    $total_supplier_receiving_by_all_supplier = \App\Models\SupplierReceiving::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     ?>
                                     <td class="text-right">{{number_format($total_supplier_receiving_by_all_supplier['total_amount'] ?? 0)}}</td>
                                 </tr>

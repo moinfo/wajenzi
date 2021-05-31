@@ -100,8 +100,8 @@
                                             $expense = \App\Models\Expense::
                                                 join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
                                                 ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
-                                               ->Where('expenses.date',$date)->Where('expenses.expenses_sub_category_id',$id)->select([DB::raw("SUM(expenses.amount) as total_amount")])->groupBy('expenses.date')->get()->first();
-                                            $total_expense_per_day = \App\Models\Expense::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
+                                               ->Where('expenses.date',$date)->Where('expenses.status','APPROVED')->Where('expenses.expenses_sub_category_id',$id)->select([DB::raw("SUM(expenses.amount) as total_amount")])->groupBy('expenses.date')->get()->first();
+                                            $total_expense_per_day = \App\Models\Expense::Where('status','APPROVED')->Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
                                             <td class="text-right">{{number_format($expense['total_amount'] ?? 0)}}</td>
@@ -120,12 +120,12 @@
                                         join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
                                             ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
 
-                                        ->Where('expenses_sub_category_id',$expenses_category->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('expenses_sub_categories.expenses_category_id')->get()->first();
+                                        ->Where('expenses.status','APPROVED')->Where('expenses_sub_category_id',$expenses_category->id)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('expenses_sub_categories.expenses_category_id')->get()->first();
                                         ?>
                                         <td class="text-right">{{number_format($total_expense_by_expenses_category['total_amount'] ?? 0)}}</td>
                                     @endforeach
                                     <?php
-                                    $total_expense_by_all_expenses_category = \App\Models\Expense::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
+                                    $total_expense_by_all_expenses_category = \App\Models\Expense::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                     ?>
                                     <td class="text-right">{{number_format($total_expense_by_all_expenses_category['total_amount']  ?? 0)}}</td>
                                 </tr>

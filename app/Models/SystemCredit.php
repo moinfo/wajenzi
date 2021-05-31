@@ -16,12 +16,12 @@ class SystemCredit extends Model
 
 
     public static function getSystemCreditForSpecificDate($start_date,$end_date){
-        return  $inventory = \App\Models\SystemCredit::WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'];
+        return  $inventory = \App\Models\SystemCredit::Where('status','APPROVED')->WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'];
 
     }
 
     public static function getTotalCreditForSystem($start_date,$end_date,$system_id){
-        return  $inventory = \App\Models\SystemCredit::Where('system_id',$system_id)->WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'];
+        return  $inventory = \App\Models\SystemCredit::Where('status','APPROVED')->Where('system_id',$system_id)->WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first()['total_amount'];
     }
 
 

@@ -27,14 +27,16 @@ class Expense extends Model
             ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
             ->where('expenses_sub_categories.expenses_category_id','=',1)
             ->WhereBetween('expenses.date',[$start_date,$end_date])
-            ->get()->first()['total_amount'];
+            ->Where('expenses.status','APPROVED')
+             ->get()->first()['total_amount'];
     }
     public static function getTotalExpensesGroupByExpensesCategory($start_date,$end_date){
      return   Expense::select(DB::raw("SUM(expenses.amount) as total_amount"),"expenses_categories.name as expense_name")
             ->join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
             ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
             ->WhereBetween('expenses.date',[$start_date,$end_date])
-            ->groupBy('expenses_categories.id')
+             ->Where('expenses.status','APPROVED')
+             ->groupBy('expenses_categories.id')
             ->get();
     }
 
@@ -53,11 +55,12 @@ class Expense extends Model
             ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
             ->where('expenses_sub_categories.expenses_category_id','=',3)
             ->WhereBetween('expenses.date',[$start_date,$end_date])
+            ->Where('expenses.status','APPROVED')
             ->get()->first()['total_amount'];
     }
 
     public static function getTotalExpense($start_date,$end_date){
-     return   Expense::select(DB::raw("SUM(amount) as total_amount"))->WhereBetween('date',[$start_date,$end_date])->get()->first()['total_amount'];
+     return   Expense::select(DB::raw("SUM(amount) as total_amount"))->Where('status','APPROVED')->WhereBetween('date',[$start_date,$end_date])->get()->first()['total_amount'];
     }
 
     public static function getTotalExpensesInFinancial($start_date,$end_date){

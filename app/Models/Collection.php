@@ -17,16 +17,16 @@ class Collection extends Model
         return $this->belongsTo(Bank::class);
     }
     static function getTotalCollectionPerDay($date){
-        return \App\Models\Collection::Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+        return \App\Models\Collection::Where('status','APPROVED')->Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
     }
 
     static function getTotalCollectionToAllSupervisors($start_date, $end_date){
-        return \App\Models\Collection::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+        return \App\Models\Collection::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
     }
 
     public static function getCollectionAmount($end_date)
     {
         $start_date = '2020-01-01';
-        return Collection::select([DB::raw("SUM(collections.amount) as total_amount")])->join('supervisors','supervisors.id','=','collections.supervisor_id')->WhereBetween('collections.date',[$start_date,$end_date])->get()->first()['total_amount'] ?? 0;
+        return Collection::select([DB::raw("SUM(collections.amount) as total_amount")])->join('supervisors','supervisors.id','=','collections.supervisor_id')->Where('collections.status','APPROVED')->WhereBetween('collections.date',[$start_date,$end_date])->get()->first()['total_amount'] ?? 0;
     }
 }
