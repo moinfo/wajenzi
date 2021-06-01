@@ -49,7 +49,7 @@ class SupplierReceivingController extends Controller
     }
 
     public function supplier_receiving($id,$document_type_id){
-        $supplier_receiving = \App\Models\Expense::where('id',$id)->get()->first();
+        $supplier_receiving = \App\Models\SupplierReceiving::where('id',$id)->get()->first();
         $approvalStages = Approval::getApprovalStages($id,$document_type_id);
         $nextApproval = Approval::getNextApproval($id,$document_type_id);
         $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
