@@ -30,3 +30,5 @@ window.Echo = new Echo({
  window.$ = window.jQuery    = jQuery;
  window.SimpleBar            = SimpleBar;
  window.Cookies              = Cookies;
+
+

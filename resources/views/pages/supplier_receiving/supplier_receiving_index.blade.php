@@ -1,23 +1,5 @@
 @extends('layouts.backend')
-@section('css_before')
-    <!-- Page JS Plugins CSS -->
-    <link rel="stylesheet" href="{{ asset('js/plugins/datatables/dataTables.bootstrap4.css') }}">
-@endsection
 
-@section('js_after')
-    <!-- Page JS Plugins -->
-    <script src="{{ asset('js/plugins/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('js/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
-
-    <!-- Page JS Code -->
-    <script src="{{ asset('js/pages/tables_datatables.js') }}"></script>
-
-    <script>
-        $('.datepicker').datepicker({
-            format: 'yyyy-mm-dd'
-        });
-    </script>
-@endsection
 @section('content')
 
 
@@ -139,7 +121,7 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('supplier_receivings',['id' => $supplier_receiving->id,'document_type_id'=>8])}}"><i class="fa fa-eye"></i></a>
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('supplier_receivings',['id' => $supplier_receiving->id,'document_type_id'=>10])}}"><i class="fa fa-eye"></i></a>
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier Receiving"))
                                                     <button type="button"
                                                             onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving', id: {{$supplier_receiving->id}}}, 'Edit {{$supplier_receiving->supplier->name ?? $supplier_receiving->supplier_name}}', 'modal-md');"

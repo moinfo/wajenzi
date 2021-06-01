@@ -1,23 +1,5 @@
 @extends('layouts.backend')
-@section('css_before')
-    <!-- Page JS Plugins CSS -->
-    <link rel="stylesheet" href="{{ asset('js/plugins/datatables/dataTables.bootstrap4.css') }}">
-@endsection
 
-@section('js_after')
-    <!-- Page JS Plugins -->
-    <script src="{{ asset('js/plugins/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('js/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
-
-    <!-- Page JS Code -->
-    <script src="{{ asset('js/pages/tables_datatables.js') }}"></script>
-
-    <script>
-        $('.datepicker').datepicker({
-            format: 'yyyy-mm-dd'
-        });
-    </script>
-@endsection
 @section('content')
 
     <div class="main-container">
@@ -78,14 +60,9 @@
                                 <?php
                                 $start_date = $_POST['start_date'] ?? date('Y-m-01');
                                 $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                                $first_date = explode("-", $start_date);
-                                $last_date = explode("-", $end_date);
-                                $first_month = $first_date[1];
-                                use Illuminate\Support\Facades\DB;
-                                for($i = $first_date[2]; $i <=  $last_date[2]; $i++)
-                                {
-                                    // add the date to the dates array
-                                    $dates[] = date('Y') . "-" . $first_month . "-" . str_pad($i, 2, '0', STR_PAD_LEFT);
+                                $period = new DatePeriod(new DateTime("$start_date"), new DateInterval('P1D'), new DateTime("$end_date +1 day"));
+                                foreach ($period as $date) {
+                                    $dates[] = $date->format("Y-m-d");
                                 }
                                 ?>
                                 @foreach(array_reverse($dates) as $date)

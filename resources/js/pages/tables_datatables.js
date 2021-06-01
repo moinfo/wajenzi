@@ -20,9 +20,9 @@ class pageTablesDatatables {
         // });
         // Init full DataTable
         jQuery('.js-dataTable-full').dataTable({
-            // dom: 'Bfrtip',
-            // buttons: [ 'copy', 'excel', 'pdf' ],
-            pageLength: 30,
+            dom: 'Bfrtip',
+            buttons: [ 'print', 'excel', 'pdf' ],
+            pageLength: 200,
             lengthMenu: [[30, 50, 90], [30, 50, 90]],
             autoWidth: false
 

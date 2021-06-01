@@ -25,9 +25,10 @@
         <link rel="stylesheet" id="css-sweetalert2" href="{{ asset('js/plugins/sweetalert2/sweetalert2.min.css') }}">
         <link rel="stylesheet" href="{{ asset('js/plugins/select2/css/select2.min.css') }}">
         <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/bootstrap-datepicker/css/bootstrap-datepicker.css') }}">
-{{--        <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.css') }}">--}}
+        <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.7.0/css/buttons.dataTables.min.css">
+    {{--        <link rel="stylesheet" id="css-datepicker" href="{{ asset('js/plugins/datatables/buttons-bs4/buttons.bootstrap4.css') }}">--}}
         <!-- You can include a specific file from public/css/themes/ folder to alter the default color theme of the template. eg: -->
-
+        <link rel="stylesheet" href="{{ asset('js/plugins/datatables/dataTables.bootstrap4.css') }}">
         @yield('css_after')
 
         <!-- Scripts -->
@@ -149,11 +150,24 @@
         <script src="{{ asset('js/plugins/select2/js/select2.min.js') }}"></script>
         <script src="//js.pusher.com/3.1/pusher.min.js"></script>
 
+
+
          <!-- Page JS Plugins -->
          <script src="{{ asset('js/plugins/bootstrap-notify/bootstrap-notify.min.js') }}"></script>
         <script src="{{ asset('js/plugins/es6-promise/es6-promise.auto.min.js') }}"></script>
 
+        <!-- Page JS Plugins -->
+        <script src="{{ asset('js/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+        <script src="{{ asset('js/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
 
+        <!-- Page JS Code -->
+        <script src="{{ asset('js/pages/tables_datatables.js') }}"></script>
+        <script src="https://cdn.datatables.net/buttons/1.7.0/js/dataTables.buttons.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+        <script src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.html5.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/1.7.0/js/buttons.print.min.js"></script>
         <!-- Page JS Code -->
 {{--        <script src="{{ asset('js/pages/be_ui_activity.min.js') }}"></script>--}}
 
@@ -165,7 +179,9 @@
 
 
         <script>
-
+            $('.datepicker').datepicker({
+                format: 'yyyy-mm-dd'
+            });
 // jQuery('#toast-example-1').toast('show');
             var csrf_token = '{{csrf_token()}}';
 

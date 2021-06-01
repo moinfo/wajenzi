@@ -1,23 +1,5 @@
 @extends('layouts.backend')
-@section('css_before')
-    <!-- Page JS Plugins CSS -->
-    <link rel="stylesheet" href="{{ asset('js/plugins/datatables/dataTables.bootstrap4.css') }}">
-@endsection
 
-@section('js_after')
-    <!-- Page JS Plugins -->
-    <script src="{{ asset('js/plugins/datatables/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('js/plugins/datatables/dataTables.bootstrap4.min.js') }}"></script>
-
-    <!-- Page JS Code -->
-    <script src="{{ asset('js/pages/tables_datatables.js') }}"></script>
-
-    <script>
-        $('.datepicker').datepicker({
-            format: 'yyyy-mm-dd'
-        });
-    </script>
-@endsection
 @section('content')
 
     <div class="main-container">
@@ -138,7 +120,7 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('transaction_movements',['id' => $transaction_movement->id,'document_type_id'=>8])}}"><i class="fa fa-eye"></i></a>
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('transaction_movements',['id' => $transaction_movement->id,'document_type_id'=>11])}}"><i class="fa fa-eye"></i></a>
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Transaction Movement"))
                                                     <button type="button"
                                                             onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement', id: {{$transaction_movement->id}}}, 'Edit {{$transaction_movement->supplier->name ?? $transaction_movement->supplier_name}} Transcaction Movement', 'modal-md');"

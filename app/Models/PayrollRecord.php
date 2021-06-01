@@ -12,7 +12,8 @@ class PayrollRecord extends Model
 
     public static function getTotalNetSalaryPerDay($date)
     {
-        return PayrollRecord::select([DB::raw("SUM(net) as total_amount, DATE(created_at) as date")])->Where('status','APPROVED')->whereDate('created_at',$date)->groupBy('date')->get()->first()['total_amount'] ?? 0;
+        return PayrollRecord::select([DB::raw("SUM(net) as total_amount")])
+                ->Where('status','APPROVED')->whereDate('created_at',$date)->get()->first()['total_amount'] ?? 0;
     }
 
     public static function getTotalNetSalaryAmountFromBeginning($end_date)
@@ -23,7 +24,8 @@ class PayrollRecord extends Model
 
     public function getCurrentPayroll($start_date, $end_date)
     {
-      return  $records = PayrollRecord::whereDate('created_at','>=',$start_date)
+      return  $records = PayrollRecord::
+            whereDate('created_at','>=',$start_date)
           ->whereDate('created_at','<=',$end_date)
           ->select([DB::raw("*")])->get();
     }
