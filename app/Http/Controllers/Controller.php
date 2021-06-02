@@ -42,7 +42,6 @@ class Controller extends BaseController
 
     public function handleCrud(Request $request, $class_name, $id = null) {
         if($request->isMethod('POST') || $request->isMethod('PUT')) {
-//            dd($request);
             if($request->has('addItem')) {
                 if($this->crudAdd($request, $class_name)) {
                     $this->notify($class_name .'Added Successfully', 'Added!', 'success');
@@ -96,7 +95,11 @@ class Controller extends BaseController
             $full_class_name = '\App\Models\\'. $class_name;
             $newObj = new $full_class_name();
             $request->validate([
-                'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048'
+                'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048',
+            ]);
+            $request->request->add([
+                'amount' => Utility::strip_commas($request->input('amount')),
+                'deduction' => Utility::strip_commas($request->input('deduction'))
             ]);
             $newObj->fill($request->all());
             $name = time().'_'.$request->file->getClientOriginalName();
@@ -111,6 +114,10 @@ class Controller extends BaseController
         }else{
             $full_class_name = '\App\Models\\'. $class_name;
             $newObj = new $full_class_name();
+            $request->request->add([
+                'amount' => Utility::strip_commas($request->input('amount')),
+                'deduction' => Utility::strip_commas($request->input('deduction'))
+            ]);
             $newObj->fill($request->all());
             if($newObj->save()) {
                 return $newObj;
@@ -123,7 +130,6 @@ class Controller extends BaseController
     }
 
     private function crudUpdate(Request $request, $class_name, $id = null){
-
         if($request->file()) {
             $full_class_name = '\App\Models\\'. $class_name;
             $obj_id = $request->input('id') ?? $id; //TODO or the other way round
@@ -131,6 +137,10 @@ class Controller extends BaseController
 
             $request->validate([
                 'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048'
+            ]);
+            $request->request->add([
+                'amount' => Utility::strip_commas($request->input('amount')),
+                'deduction' => Utility::strip_commas($request->input('deduction'))
             ]);
             $obj->fill($request->all());
             $name = time().'_'.$request->file->getClientOriginalName();
@@ -141,7 +151,10 @@ class Controller extends BaseController
             $full_class_name = '\App\Models\\'. $class_name;
             $obj_id = $request->input('id') ?? $id; //TODO or the other way round
             $obj = $full_class_name::find($request->input('id'));
-
+            $request->request->add([
+                'amount' => Utility::strip_commas($request->input('amount')),
+                'deduction' => Utility::strip_commas($request->input('deduction'))
+            ]);
             $obj->fill($request->all());
             return $obj->save();
         }

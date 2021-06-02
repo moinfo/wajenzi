@@ -1,5 +1,5 @@
 <div class="block-content">
-    <form method="post"  enctype="multipart/form-data">
+    <form method="post"  enctype="multipart/form-data"  autocomplete="off">
         @csrf
 
         <div class="form-group">

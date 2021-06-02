@@ -23,6 +23,16 @@ class Utility
 
     }
 
+    public static function strip_commas($array)
+    {
+        $str1 = $array;
+        $x = str_replace( ',', '', $str1);
+        if( is_numeric($x))
+        {
+            return $x;
+        }
+    }
+
     public static function getLastRow($class_name){
         $class = '\App\Models\\'. $class_name;
         return $class::orderBy('id','DESC')->get()->first();

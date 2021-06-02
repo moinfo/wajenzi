@@ -23,7 +23,7 @@
                                     <form  name="expenses_search" action="{{route('expenses_search')}}" id="filter-form" method="post" autocomplete="off">
                                         @csrf
                                         <div class="row">
-                                            <div class="class col-md-2">
+                                            <div class="class col-md-4">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Start</span>
@@ -31,7 +31,7 @@
                                                     <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
-                                            <div class="class col-md-2">
+                                            <div class="class col-md-4">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon2">End</span>
@@ -39,28 +39,41 @@
                                                     <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
-                                            <div class="class col-md-3">
+                                            <div class="class col-md-4">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon4">Category</span>
                                                     </div>
                                                     <select name="expenses_category_id" id="input-expenses-category-id" class="form-control" aria-describedby="basic-addon4">
-                                                        <option value="">All</option>
+                                                        <option >All</option>
                                                         @foreach ($expense_categories as $expense_category)
                                                             <option value="{{ $expense_category->id }}"> {{ $expense_category->name }} </option>
                                                         @endforeach
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="class col-md-3">
+                                            <div class="class col-md-4">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon4">Sub Category</span>
                                                     </div>
                                                     <select name="expenses_sub_category_id" id="input-expenses-sub-category-id" class="form-control" aria-describedby="basic-addon4">
-                                                        <option value="">All</option>
+                                                        <option>All</option>
                                                         @foreach ($expense_sub_categories as $expense_sub_category)
                                                             <option value="{{ $expense_sub_category->id }}"> {{ $expense_sub_category->name }} </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="class col-md-4">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon3">Supervisor</span>
+                                                    </div>
+                                                    <select name="supervisor_id" id="input-supervisor-id" class="form-control" aria-describedby="basic-addon3">
+                                                        <option>All</option>
+                                                        @foreach ($supervisors as $supervisor)
+                                                            <option value="{{ $supervisor->id }}"> {{ $supervisor->name }} </option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -75,17 +88,19 @@
                                 </div>
                             </div>
                         </div>
+                        <br/>
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
-{{--                                    <th>Supervisor Name</th>--}}
+                                    <th>Supervisor Name</th>
                                     <th>Expenses Sub Category</th>
                                     <th>Expenses Category</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Payment Type</th>
                                     <th>Attachment</th>
                                     <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
@@ -98,6 +113,7 @@
                                 ?>
                                 @foreach($expenses as $expense)
                                     <?php
+                                    $payment_type = $expense->payment_type_id == '1' ? 'System' : 'Office';
                                     $sum += $expense->amount;
                                     ?>
                                     <tr id="expense-tr-{{$expense->id}}">
@@ -105,11 +121,12 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td class="font-w600">{{ $expense->date }}</td>
-{{--                                        <td class="font-w600">{{ $expense->supervisor->name ?? $expense->supervisor_name}}</td>--}}
+                                        <td class="font-w600">{{ $expense->supervisor->name ?? $expense->supervisor_name}}</td>
                                         <td class="font-w600">{{ $expense->expensesSubCategory->name ?? $expense->sub_category }}</td>
                                         <td class="font-w600">{{ $expense->expensesSubCategory->expensesCategory->name ?? $expense->category }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $expense->description }}
                                         <td class="font-w600">{{ number_format($expense->amount, 2) }}</td>
+                                        <td>{{$payment_type}}</td>
                                         <td class="text-center">
                                             @if($expense->file != null)
                                                 <a href="{{ url("$expense->file") }}">Attachment</a>
@@ -161,7 +178,8 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td class="text-right text-dark" colspan="6"><b>{{number_format($sum,2)}}</b></td>
+                                    <td class="text-right text-dark" colspan="7"><b>{{number_format($sum,2)}}</b></td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>

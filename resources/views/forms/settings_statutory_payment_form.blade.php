@@ -2,7 +2,7 @@
 $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
 ?>
 <div class="block-content">
-    <form method="post"  enctype="multipart/form-data">
+    <form method="post"  enctype="multipart/form-data"  autocomplete="off">
         @csrf
         <div class="form-group">
             <label for="example-nf-email" class="control-label required">Sub Category</label>
@@ -21,7 +21,7 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-amount" class="control-label required">Amount</label>
-            <input type="number" step=".01" class="form-control" id="input-amount" name="amount"
+            <input type="number" step=".01" class="form-control amount" id="input-amount" name="amount"
                    value="{{ $object->amount ?? '' }}" placeholder="Total Amount" required>
         </div>
         <div class="form-group">
@@ -57,7 +57,41 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
         </div>
     </form>
 </div>
+<script>
+    $("input.amount").each((i,ele)=>{
+        let clone=$(ele).clone(false)
+        clone.attr("type","text")
+        let ele1=$(ele)
+        clone.val(Number(ele1.val()).toLocaleString("en"))
+        $(ele).after(clone)
+        $(ele).hide()
+        clone.mouseenter(()=>{
 
+            ele1.show()
+            clone.hide()
+        })
+        setInterval(()=>{
+            let newv=Number(ele1.val()).toLocaleString("en")
+            if(clone.val()!=newv){
+                clone.val(newv)
+            }
+        },10)
+
+        $(ele).mouseleave(()=>{
+            $(clone).show()
+            $(ele1).hide()
+        })
+
+
+    });
+    $("input").on("change", function () {
+        this.setAttribute(
+            "data-date",
+            moment(this.value, "YYYY-MM-DD")
+                .format(this.getAttribute("data-date-format"))
+        )
+    }).trigger("change")
+</script>
 <script>
     // window.Echo.private('details.' + window.Laravel.user)
     //     .listen('Approved', (e) => {
