@@ -151,7 +151,7 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('expense',['id' => $expense->id,'document_type_id'=>4])}}"><i class="fa fa-eye"></i></a>
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('expense',['id' => $expense->id,'document_type_id'=>5])}}"><i class="fa fa-eye"></i></a>
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Expense"))
                                                     <button type="button"
                                                             onclick="loadFormModal('expense_form', {className: 'Expense', id: {{$expense->id}}}, 'Edit Expenses', 'modal-md');"
