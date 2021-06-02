@@ -41,7 +41,7 @@
                                 <tbody>
                                 <tr>
                                     <th width="30%">Turnover</th>
-                                    <td>{{$sales->amount}}</td>
+                                    <td>{{number_format($sales->amount)}}</td>
                                 </tr>
                                 <tr>
                                     <th width="30%">NET (A+B+C)</th>
@@ -49,11 +49,11 @@
                                 </tr>
                                 <tr>
                                     <th width="30%">Tax</th>
-                                    <td>{{$sales->tax}}</td>
+                                    <td>{{number_format($sales->tax)}}</td>
                                 </tr>
                                 <tr>
                                     <th width="30%">Turnover (EX + SR)</th>
-                                    <td>{{$sales->turn_over}}</td>
+                                    <td>{{number_format($sales->turn_over)}}</td>
                                 </tr>
                                 <tr>
                                     <th>Date</th>

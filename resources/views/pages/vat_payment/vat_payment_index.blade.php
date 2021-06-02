@@ -68,7 +68,7 @@
                                 $start_date = $_POST['start_date'] ?? date('Y-m-01');
                                 $end_date = $_POST['end_date'] ?? date('Y-m-t');
 
-                                $vat_payments = $vat_payment->getAll($start_date,$end_date);
+//                                $vat_payments = $vat_payment->getAll($start_date,$end_date);
                                 $sum = 0;
                                 ?>
                                 @foreach($vat_payments as $vat_payment)

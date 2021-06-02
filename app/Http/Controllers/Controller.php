@@ -99,6 +99,12 @@ class Controller extends BaseController
             ]);
             $request->request->add([
                 'amount' => Utility::strip_commas($request->input('amount')),
+                'net' => Utility::strip_commas($request->input('net')),
+                'tax' => Utility::strip_commas($request->input('tax')),
+                'turn_over' => Utility::strip_commas($request->input('turn_over')),
+                'total_amount' => Utility::strip_commas($request->input('total_amount')),
+                'amount_vat_exc' => Utility::strip_commas($request->input('amount_vat_exc')),
+                'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                 'deduction' => Utility::strip_commas($request->input('deduction'))
             ]);
             $newObj->fill($request->all());
@@ -116,6 +122,12 @@ class Controller extends BaseController
             $newObj = new $full_class_name();
             $request->request->add([
                 'amount' => Utility::strip_commas($request->input('amount')),
+                'net' => Utility::strip_commas($request->input('net')),
+                'tax' => Utility::strip_commas($request->input('tax')),
+                'turn_over' => Utility::strip_commas($request->input('turn_over')),
+                'total_amount' => Utility::strip_commas($request->input('total_amount')),
+                'amount_vat_exc' => Utility::strip_commas($request->input('amount_vat_exc')),
+                'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                 'deduction' => Utility::strip_commas($request->input('deduction'))
             ]);
             $newObj->fill($request->all());
@@ -140,6 +152,12 @@ class Controller extends BaseController
             ]);
             $request->request->add([
                 'amount' => Utility::strip_commas($request->input('amount')),
+                'net' => Utility::strip_commas($request->input('net')),
+                'tax' => Utility::strip_commas($request->input('tax')),
+                'turn_over' => Utility::strip_commas($request->input('turn_over')),
+                'total_amount' => Utility::strip_commas($request->input('total_amount')),
+                'amount_vat_exc' => Utility::strip_commas($request->input('amount_vat_exc')),
+                'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                 'deduction' => Utility::strip_commas($request->input('deduction'))
             ]);
             $obj->fill($request->all());
@@ -153,6 +171,12 @@ class Controller extends BaseController
             $obj = $full_class_name::find($request->input('id'));
             $request->request->add([
                 'amount' => Utility::strip_commas($request->input('amount')),
+                'net' => Utility::strip_commas($request->input('net')),
+                'tax' => Utility::strip_commas($request->input('tax')),
+                'turn_over' => Utility::strip_commas($request->input('turn_over')),
+                'total_amount' => Utility::strip_commas($request->input('total_amount')),
+                'amount_vat_exc' => Utility::strip_commas($request->input('amount_vat_exc')),
+                'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                 'deduction' => Utility::strip_commas($request->input('deduction'))
             ]);
             $obj->fill($request->all());

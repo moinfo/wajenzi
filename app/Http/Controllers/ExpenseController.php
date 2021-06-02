@@ -23,7 +23,9 @@ class ExpenseController extends Controller
         if($this->handleCrud($request, 'Expense')) {
             return back();
         }
-        $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $expenses = Expense::where('date','>=',$start_date)->where('date','<=',$end_date)->get();
         $supervisors = Supervisor::all();
         $expense_categories = ExpensesCategory::all();
         $expense_sub_categories = ExpensesSubCategory::all();

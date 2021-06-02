@@ -33,7 +33,7 @@ $document_id = \App\Classes\Utility::getLastId('Purchase')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-total_amount">Total Amount</label>
-            <input type="number" step=".01" class="form-control" id="input-total_amount" name="total_amount"
+            <input type="number" step=".01" class="form-control amount" id="input-total_amount" name="total_amount"
                    value="{{ $object->total_amount ?? '' }}" placeholder="Total Amount" required>
         </div>
         <div class="form-group">
@@ -57,12 +57,12 @@ $document_id = \App\Classes\Utility::getLastId('Purchase')+1;
         </div>
         <div class="form-group" style="display: none;" id="amount_vat_exc">
             <label for="example-nf-amount_vat_exc">Amount VAT Exc</label>
-            <input type="text" class="form-control" id="input-amount_vat_exc" name="amount_vat_exc"
+            <input type="text" class="form-control amount" id="input-amount_vat_exc" name="amount_vat_exc"
                    value="{{ $object->amount_vat_exc ?? '' }}" readonly>
         </div>
         <div class="form-group" style="display: none;" id="vat_amount">
             <label for="example-nf-vat_amount"> VAT Amount</label>
-            <input type="text" class="form-control" id="input-vat_amount" name="vat_amount"
+            <input type="text" class="form-control amount" id="input-vat_amount" name="vat_amount"
                    value="{{ $object->vat_amount ?? '' }}" readonly>
         </div>
         <div class="form-group">
@@ -81,8 +81,35 @@ $document_id = \App\Classes\Utility::getLastId('Purchase')+1;
 </div>
 
 <script>
+
     $(document).ready(function () {
         $('#input-total_amount').keyup(calculate);
+        $("input.amount").each((i,ele)=>{
+            let clone=$(ele).clone(false)
+            clone.attr("type","text")
+            let ele1=$(ele)
+            clone.val(Number(ele1.val()).toLocaleString("en"))
+            $(ele).after(clone)
+            $(ele).hide()
+            clone.mouseenter(()=>{
+
+                ele1.show()
+                clone.hide()
+            })
+            setInterval(()=>{
+                let newv=Number(ele1.val()).toLocaleString("en")
+                if(clone.val()!=newv){
+                    clone.val(newv)
+                }
+            },10)
+
+            $(ele).mouseleave(()=>{
+                $(clone).show()
+                $(ele1).hide()
+            })
+
+
+        });
     });
 
     function calculate(e) {

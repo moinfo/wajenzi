@@ -18,8 +18,10 @@ class PurchaseController extends Controller
         if($this->handleCrud($request, 'Purchase')) {
             return back();
         }
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
         $suppliers = Supplier::all();
-        $purchases = Purchase::all();
+        $purchases = Purchase::where('date','>=',$start_date)->where('date','<=',$end_date)->get();
         $data = [
             'suppliers' => $suppliers,
             'purchases' => $purchases

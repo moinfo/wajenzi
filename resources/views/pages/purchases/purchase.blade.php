@@ -45,7 +45,7 @@
                                 </tr>
                                 <tr>
                                     <th width="30%">Tax Invoice</th>
-                                    <td>{{number_format($purchase->tax_invoice)}}</td>
+                                    <td>{{$purchase->tax_invoice}}</td>
                                 </tr>
                                 <tr>
                                     <th width="30%">Invoice Date</th>
@@ -57,15 +57,15 @@
                                 </tr>
                                 <tr>
                                     <th>Total Amount</th>
-                                    <td>{{$purchase->total_amount}}</td>
+                                    <td>{{number_format($purchase->total_amount)}}</td>
                                 </tr>
                                 <tr>
                                     <th>Amount VAT EXC</th>
-                                    <td>{{$purchase->amount_vat_exc}}</td>
+                                    <td>{{number_format($purchase->amount_vat_exc)}}</td>
                                 </tr>
                                 <tr>
                                     <th>VAT Amount</th>
-                                    <td>{{$purchase->vat_amount}}</td>
+                                    <td>{{number_format($purchase->vat_amount)}}</td>
                                 </tr>
                                 <tr>
                                     <th>Date</th>

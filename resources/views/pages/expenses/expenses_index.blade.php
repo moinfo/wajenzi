@@ -95,7 +95,7 @@
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
-                                    <th>Supervisor Name</th>
+{{--                                    <th>Supervisor Name</th>--}}
                                     <th>Expenses Sub Category</th>
                                     <th>Expenses Category</th>
                                     <th>Description</th>
@@ -121,7 +121,7 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td class="font-w600">{{ $expense->date }}</td>
-                                        <td class="font-w600">{{ $expense->supervisor->name ?? $expense->supervisor_name}}</td>
+{{--                                        <td class="font-w600">{{ $expense->supervisor->name ?? $expense->supervisor_name}}</td>--}}
                                         <td class="font-w600">{{ $expense->expensesSubCategory->name ?? $expense->sub_category }}</td>
                                         <td class="font-w600">{{ $expense->expensesSubCategory->expensesCategory->name ?? $expense->category }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $expense->description }}
@@ -178,7 +178,7 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td class="text-right text-dark" colspan="7"><b>{{number_format($sum,2)}}</b></td>
+                                    <td class="text-right text-dark" colspan="6"><b>{{number_format($sum,2)}}</b></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>

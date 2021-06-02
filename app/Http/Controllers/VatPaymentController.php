@@ -20,12 +20,13 @@ class VatPaymentController extends Controller
         if($this->handleCrud($request, 'VatPayment')) {
             return back();
         }
-//        $collections = Collection::whereDate('date', DB::raw('CURDATE()'))->get();
-        $collections =  VatPayment::all();
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $vat_payments =  VatPayment::where('date','>=',$start_date)->where('date','<=',$end_date)->get();
 
 
         $data = [
-            'collections' => $collections
+            'vat_payments' => $vat_payments
         ];
         return view('pages.vat_payment.vat_payment_index')->with($data);
     }
