@@ -120,7 +120,7 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('transaction_movements',['id' => $transaction_movement->id,'document_type_id'=>11])}}"><i class="fa fa-eye"></i></a>
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('transaction_movements',['id' => $transaction_movement->id,'document_type_id'=>9])}}"><i class="fa fa-eye"></i></a>
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Transaction Movement"))
                                                     <button type="button"
                                                             onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement', id: {{$transaction_movement->id}}}, 'Edit {{$transaction_movement->supplier->name ?? $transaction_movement->supplier_name}} Transcaction Movement', 'modal-md');"
