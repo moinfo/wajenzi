@@ -2,6 +2,7 @@
 
 @section('content')
     <?php
+
     use App\Models\Approval;use Illuminate\Http\Request;
     $notifiable_id = Auth::user()->id;
     $route_id =request()->route('id');
@@ -16,7 +17,13 @@
             }
         }
     }
-    ?>
+?>
+@if($system_inventory == null)
+    @php
+        header("Location: " . URL::to('/404'), true, 302);
+        exit();
+    @endphp
+@endif
     <div class="main-container">
         <div class="content">
             <div class="content-heading">SystemInventory

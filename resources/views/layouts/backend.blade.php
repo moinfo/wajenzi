@@ -203,7 +203,7 @@
                 $timer = 1000;
                 $delay = 5000;
 
-            foreach( Auth::user()->unreadNotifications as $notification){
+            foreach( Auth::user()->unreadNotifications()->take(4)->get() as $notification){
             $link = $notification->data['link']
             ?>
             $.notify({

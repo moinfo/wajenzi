@@ -5,9 +5,7 @@
         <div class="content">
             <div class="content-heading">Notifications
                 <div class="float-right">
-{{--                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add System Receiving"))--}}
-{{--                        <button type="button" onclick="loadFormModal('system_capital_form', {className: 'SystemCapital'}, 'Create New System Receiving', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Receiving</button>--}}
-{{--                    @endif--}}
+                        <a href="{{route('read_all_notifications')}}" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>Clear</a>
                 </div>
             </div>
             <div>
@@ -52,7 +50,7 @@
                             <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
-                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th class="text-center">#</th>
                                     <th>Date</th>
                                     <th>Title</th>
                                     <th>Body</th>

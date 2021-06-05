@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 
 class Notification extends Model
 {
@@ -21,4 +23,5 @@ class Notification extends Model
         $user = User::find($user_id);
         return $user->unreadNotifications;
     }
+
 }

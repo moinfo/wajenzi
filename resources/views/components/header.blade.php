@@ -143,7 +143,7 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
                     <h5 class="h6 text-center py-10 mb-0 border-b text-uppercase">Notifications</h5>
 
                     <ul class="list-unstyled my-20">
-                        @foreach( Auth::user()->unreadNotifications as $notification)
+                        @foreach( Auth::user()->unreadNotifications()->take(3)->get() as $notification)
                         <?php
                             $link = $notification->data['link']
                         ?>

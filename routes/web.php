@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\DashboardController::class, 'index'])->name('home');
     Route::match(['get', 'post'], '/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::match(['get', 'post'], '/404', [App\Http\Controllers\ErrorController::class, 'index'])->name('404');
     Route::view('/lock', 'auth.lock');
 //    Route::get('notification', 'HomeController@notification');
 
@@ -88,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/user/settings', [App\Http\Controllers\UserController::class, 'settings'])->name('user_settings');
     Route::match(['get', 'post'], '/user/inbox', [App\Http\Controllers\UserController::class, 'inbox'])->name('user_inbox');
     Route::match(['get', 'post'], '/user/notifications', [App\Http\Controllers\UserController::class, 'notifications'])->name('user_notifications');
+    Route::match(['get', 'post'], '/user/notifications/read_all', [App\Http\Controllers\UserController::class, 'readAllNotification'])->name('read_all_notifications');
 
     Route::match(['get', 'post'], '/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('hr_settings');
     Route::match(['get', 'post'], '/settings/supervisor', [App\Http\Controllers\SettingsController::class, 'supervisors'])->name('hr_settings_supervisors');

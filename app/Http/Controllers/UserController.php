@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\UsersPermission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 
 class UserController extends Controller
 {
@@ -38,5 +41,13 @@ class UserController extends Controller
         //dd($request);
         $data = [];
         return view('pages.settings.settings_users')->with($data);
+    }
+    public static function readAllNotification(){
+        $notifiable_id = Auth::user()->id;
+        $user = User::find($notifiable_id);
+        foreach ($user->unreadNotifications as $notification) {
+            $notification->markAsRead();
+        }
+        return Redirect::back();
     }
 }
