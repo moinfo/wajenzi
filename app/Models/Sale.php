@@ -20,8 +20,8 @@ class Sale extends Model
             ->join('efds', 'efds.id', '=', 'sales.efd_id')
             ->select('sales.*','efds.name as efd')
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date)
-            ->Where('status','APPROVED');
+            ->where('date','<=',$end_date);
+
         if($efd_id != null){
             $sales->where('efd_id','=',$efd_id);
         }
