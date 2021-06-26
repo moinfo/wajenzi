@@ -20,7 +20,7 @@
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form  name="expenses_search" action="{{route('expenses_search')}}" id="filter-form" method="post" autocomplete="off">
+                                    <form  name="expenses_search" action="{{route('expenses')}}" id="filter-form" method="post" autocomplete="off">
                                         @csrf
                                         <div class="row">
                                             <div class="class col-md-4">
@@ -100,7 +100,7 @@
                                     <th>Expenses Category</th>
                                     <th>Description</th>
                                     <th>Amount</th>
-                                    <th>Payment Type</th>
+{{--                                    <th>Payment Type</th>--}}
                                     <th>Attachment</th>
                                     <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
@@ -113,7 +113,7 @@
                                 ?>
                                 @foreach($expenses as $expense)
                                     <?php
-                                    $payment_type = $expense->payment_type_id == '1' ? 'System' : 'Office';
+//                                    $payment_type = $expense->payment_type_id == '1' ? 'System' : 'Office';
                                     $sum += $expense->amount;
                                     ?>
                                     <tr id="expense-tr-{{$expense->id}}">
@@ -126,7 +126,7 @@
                                         <td class="font-w600">{{ $expense->expensesSubCategory->expensesCategory->name ?? $expense->category }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $expense->description }}
                                         <td class="font-w600">{{ number_format($expense->amount, 2) }}</td>
-                                        <td>{{$payment_type}}</td>
+{{--                                        <td>{{$payment_type}}</td>--}}
                                         <td class="text-center">
                                             @if($expense->file != null)
                                                 <a href="{{ url("$expense->file") }}">Attachment</a>
@@ -182,7 +182,7 @@
                                     <td></td>
                                     <td></td>
                                     <td></td>
-                                    <td></td>
+{{--                                    <td></td>--}}
                                 </tr>
                                 </tfoot>
                             </table>

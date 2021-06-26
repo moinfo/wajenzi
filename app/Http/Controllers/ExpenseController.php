@@ -25,7 +25,24 @@ class ExpenseController extends Controller
         }
         $start_date = $request->input('start_date') ?? date('Y-m-d');
         $end_date = $request->input('end_date') ?? date('Y-m-d');
-        $expenses = Expense::where('date','>=',$start_date)->where('date','<=',$end_date)->get();
+        $expenses_sub_category_id = $request->input('expenses_sub_category_id');
+        $expenses_category_id = $request->input('expenses_category_id');
+
+        $expenses = DB::table('expenses')
+            ->select(['expenses.*','expenses_sub_categories.name as sub_category','expenses_categories.name as category'])
+            ->join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
+            ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date);
+        if($expenses_sub_category_id != 0){
+            $expenses->where('expenses_sub_category_id','=',$expenses_sub_category_id);
+        }
+        if($expenses_category_id != 0){
+            $expenses->where('expenses_sub_category_id','=',$expenses_category_id);
+        }
+        $expenses = $expenses->get();
+
+
         $supervisors = Supervisor::all();
         $expense_categories = ExpensesCategory::all();
         $expense_sub_categories = ExpensesSubCategory::all();
