@@ -58,7 +58,7 @@
                                 </thead>
                                 <tbody>
                                 <?php
-                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
+                                use Illuminate\Support\Facades\DB;$start_date = $_POST['start_date'] ?? date('Y-m-01');
                                 $end_date = $_POST['end_date'] ?? date('Y-m-d');
                                 $period = new DatePeriod(new DateTime("$start_date"), new DateInterval('P1D'), new DateTime("$end_date +1 day"));
                                 foreach ($period as $date) {
@@ -75,13 +75,18 @@
                                             <?php
                                             $id = $expenses_category->id;
                                             $expense = \App\Models\Expense::
-                                                join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
+                                            select(DB::raw("*, SUM(expenses.amount) as total_amount"))
+                                                ->join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
                                                 ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
-                                               ->Where('expenses.date',$date)->Where('expenses.status','APPROVED')->Where('expenses.expenses_sub_category_id',$id)->select([DB::raw("SUM(expenses.amount) as total_amount")])->groupBy('expenses.date')->get()->first();
+                                                ->Where('expenses.date',$date)
+                                                ->Where('expenses.status','APPROVED')
+                                                ->Where('expenses_sub_categories.expenses_category_id',$id)
+                                                ->groupBy('expenses_sub_categories.expenses_category_id')
+                                                ->get()->first()['total_amount'];
                                             $total_expense_per_day = \App\Models\Expense::Where('status','APPROVED')->Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
-                                            <td class="text-right">{{number_format($expense['total_amount'] ?? 0)}}</td>
+                                            <td class="text-right">{{number_format($expense)}}</td>
                                         @endforeach
                                         <td class="text-right">{{number_format($total_expense_per_day['total_amount']  ?? 0)}}</td>
 
