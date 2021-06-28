@@ -36,7 +36,7 @@ class Expense extends Model
             ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id','left')
             ->WhereBetween('expenses.date',[$start_date,$end_date])
              ->Where('expenses.status','APPROVED')
-             ->groupBy('expenses_categories.id')
+             ->groupBy('expenses_sub_categories.expenses_category_id')
             ->get();
     }
 
