@@ -30,14 +30,15 @@ class Expense extends Model
             ->Where('expenses.status','APPROVED')
              ->get()->first()['total_amount'];
     }
-    public static function getTotalExpensesGroupByExpensesCategory($start_date,$end_date){
-     return   Expense::select(DB::raw("SUM(expenses.amount) as total_amount,expenses_categories.name as expense_name"))
+    public static function getTotalExpensesGroupByExpensesCategory($start_date,$end_date,$category){
+     return   Expense::select(DB::raw("SUM(expenses.amount) as total_amount"))
             ->join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id','left')
             ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id','left')
             ->WhereBetween('expenses.date',[$start_date,$end_date])
              ->Where('expenses.status','APPROVED')
+             ->Where('expenses_sub_categories.expenses_category_id',$category)
              ->groupBy('expenses_sub_categories.expenses_category_id')
-            ->get();
+            ->get()->first()['total_amount'];
     }
 
     public static function getTotalFinancialCharges($start_date,$end_date){

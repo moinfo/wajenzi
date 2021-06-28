@@ -66,7 +66,7 @@
                         $Profit_from_Operating_Activities_Before_Taxation_current = \App\Models\Taxation::ProfitFromOperatingActivitiesBeforeTaxation($start_date,$end_date) ?? 0;
                         $Profit_from_Operating_Activities_Before_Taxation_last = \App\Models\Taxation::ProfitFromOperatingActivitiesBeforeTaxation($start_date_last,$end_date_last) ?? 0;
                         $Taxation_current = \App\Models\Taxation::getMainlandTaxation($start_date,$end_date) ?? 0;
-                        $expenses = \App\Models\Expense::getTotalExpensesGroupByExpensesCategory($start_date,$end_date);
+                        $expenses = \App\Models\ExpensesCategory::all();
                         $Taxation_last = \App\Models\Taxation::getMainlandTaxation($start_date_last,$end_date_last) ?? 0;
                         $Profit_from_Operating_Activities_After_Taxation_current = \App\Models\Taxation::Profit_From_Operating_Activities_After_Taxation($start_date,$end_date) ?? 0;
                         $Profit_from_Operating_Activities_After_Taxation_last = \App\Models\Taxation::Profit_From_Operating_Activities_After_Taxation($start_date_last,$end_date_last) ?? 0;
@@ -129,14 +129,14 @@
                                     <?php
                                         $total_expenses = 0;
                                     foreach ($expenses as $index => $expense) {
-                                        $total = $expense->total_amount;
+                                        $total = \App\Models\Expense::getTotalExpensesGroupByExpensesCategory($start_date,$end_date,$expense->id);
                                         $total_expenses += $total;
                                        ?>
 
                                     <tr>
-                                        <td>{{$expense->expense_name}}</td>
+                                        <td>{{$expense->name}}</td>
                                         <td class="text-center"></td>
-                                        <td class="text-right">{{number_format($expense->total_amount)}}</td>
+                                        <td class="text-right">{{number_format($total)}}</td>
                                         <td class="text-right">{{number_format(0)}}</td>
                                     </tr>
                                     <tr>
