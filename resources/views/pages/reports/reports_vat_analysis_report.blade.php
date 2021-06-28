@@ -48,6 +48,7 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center">#</th>
+                                    <th>Attachment</th>
                                     <th>Date</th>
                                     <th>Supplier</th>
                                     <th>VRN</th>
@@ -95,6 +96,13 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
+                                        <td class="text-center">
+                                            @if($purchase->file != null)
+                                                <a href="{{ url("$purchase->file") }}">Attachment</a>
+                                            @else
+                                                No File
+                                            @endif
+                                        </td>
                                         <td class="font-w600">{{ $purchase->date }}</td>
                                         <td class="font-w600">{{ $purchase->supplier ?? null }}</td>
                                         <td class="font-w600">{{ $purchase->vrn ?? null}}</td>
@@ -110,31 +118,31 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td colspan="7" class="text-right">TOTAL PURCHASES</td>
+                                    <td colspan="8" class="text-right">TOTAL PURCHASES</td>
                                     <td class="text-right">{{ number_format($total_purchases, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vat_exempts, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vats, 2) }}</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="7" class="text-right">TOTAL SALES</td>
+                                    <td colspan="8" class="text-right">TOTAL SALES</td>
                                     <td class="text-right"><a href="{{ route('sales', ['start_date'=>$start_date, 'end_date'=>$end_date]) }}">{{ number_format($total_sales, 2,'.',',') }}</a></td>
                                     <td class="text-right">{{ number_format($total_amount_vat_exc, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vat_amt, 2) }}</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="7" class="text-right"><b>CURRENT VAT PAYABLE/(REFUND)</b></td>
+                                    <td colspan="8" class="text-right"><b>CURRENT VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
                                     <td class="text-right">{{ number_format(($total_vat_amt-$total_vats), 2) }}</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="7" class="text-right"><b>OLD VAT PAYABLE/(REFUND)</b></td>
+                                    <td colspan="8" class="text-right"><b>OLD VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
                                     <td class="text-right">{{ number_format(($vat_payable - ($total_vat_amt-$total_vats)), 2) }}</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="7" class="text-right"><b>TOTAL VAT PAYABLE/(REFUND)</b></td>
+                                    <td colspan="8" class="text-right"><b>TOTAL VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
                                     <td class="text-right">{{ number_format(($vat_payable), 2) }}</td>

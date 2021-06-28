@@ -87,6 +87,7 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center">#</th>
+                                    <th>Attachment</th>
                                     <th>Date</th>
                                     <th>Supplier</th>
                                     <th>VRN</th>
@@ -126,6 +127,13 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
+                                        <td class="text-center">
+                                            @if($purchase->file != null)
+                                                <a href="{{ url("$purchase->file") }}">Attachment</a>
+                                            @else
+                                                No File
+                                            @endif
+                                        </td>
                                         <td class="font-w600">{{ $purchase->date }}</td>
                                         <td class="font-w600">{{ $purchase->supplier ?? null }}</td>
                                         <td class="font-w600">{{ $purchase->vrn ?? null}}</td>
@@ -141,7 +149,7 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td colspan="7"></td>
+                                    <td colspan="8"></td>
                                     <td class="text-right">{{ number_format($total_purchases, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vat_exempts, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vats, 2) }}</td>

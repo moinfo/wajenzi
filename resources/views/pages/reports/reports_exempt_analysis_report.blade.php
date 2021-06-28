@@ -61,6 +61,7 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center">#</th>
+                                    <th>Attachment</th>
                                     <th>Date</th>
                                     <th>Supplier</th>
                                     <th>VRN</th>
@@ -104,6 +105,13 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
+                                        <td class="text-center">
+                                            @if($purchase->file != null)
+                                                <a href="{{ url("$purchase->file") }}">Attachment</a>
+                                            @else
+                                                No File
+                                            @endif
+                                        </td>
                                         <td class="font-w600">{{ $purchase->date }}</td>
                                         <td class="font-w600">{{ $purchase->supplier ?? null }}</td>
                                         <td class="font-w600">{{ $purchase->vrn ?? null}}</td>
@@ -117,15 +125,15 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td colspan="7" class="text-right">TOTAL PURCHASES</td>
+                                    <td colspan="8" class="text-right">TOTAL PURCHASES</td>
                                     <td class="text-right">{{ number_format($total_purchases, 2) }}</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="7" class="text-right">TOTAL SALES</td>
+                                    <td colspan="8" class="text-right">TOTAL SALES</td>
                                     <td class="text-right"><a href="{{ route('sales', ['start_date'=>$start_date, 'end_date'=>$end_date]) }}">{{ number_format($total_exempt, 2,'.',',') }}</a></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="7" class="text-right"><b>DIFFERENCE</b></td>
+                                    <td colspan="8" class="text-right"><b>DIFFERENCE</b></td>
                                     <td class="text-right">{{ number_format(($total_exempt-$total_purchases), 2) }}</td>
                                 </tr>
                                 </tfoot>

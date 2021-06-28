@@ -74,6 +74,7 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center">#</th>
+                                    <th>Attachment</th>
                                     <th>Date</th>
                                     <th>EFD Name</th>
                                     <th>Turnover</th>
@@ -110,6 +111,13 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
+                                        <td class="text-center">
+                                            @if($sale->file != null)
+                                                <a href="{{ url("$sale->file") }}">Attachment</a>
+                                            @else
+                                                No File
+                                            @endif
+                                        </td>
                                         <td class="font-w600">{{ $sale->date }}</td>
                                         <td class="font-w600">{{ $sale->efd }}</td>
                                         <td class="text-right">{{ number_format($sale->amount, 2) }}</td>
@@ -121,7 +129,7 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td colspan="3"></td>
+                                    <td colspan="4"></td>
                                     <td class="text-right">{{ number_format($total_amount, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_net, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_tax, 2) }}</td>

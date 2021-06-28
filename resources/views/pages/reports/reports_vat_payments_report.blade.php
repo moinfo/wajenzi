@@ -59,7 +59,8 @@
                             <table id="js-dataTable-full" class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
-                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th class="text-center">#</th>
+                                    <th>Attachment</th>
                                     <th>Date</th>
                                     <th>Bank Name</th>
                                     <th>Description</th>
@@ -84,17 +85,26 @@
                                         <td class="text-center">
                                             {{$loop->index + 1}}
                                         </td>
+                                        <td class="text-center">
+                                            @if($vat_payment->file != null)
+                                                <a href="{{ url("$vat_payment->file") }}">Attachment</a>
+                                            @else
+                                                No File
+                                            @endif
+                                        </td>
                                         <td>{{ $vat_payment->date }}</td>
                                         <td>{{ $vat_payment->bank_name }}</td>
                                         <td class="font-w600">{{ $vat_payment->description }}</td>
                                         <td class="text-right">{{ number_format($vat_payment->amount, 2) }}</td>
+
                                     </tr>
                                 @endforeach
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td class="text-right text-dark" colspan="4"></td>
+                                    <td class="text-right text-dark" colspan="5"></td>
                                     <td class="text-right text-dark"><b>{{number_format($sum,2)}}</b></td>
+
                                 </tr>
                                 </tfoot>
                             </table>
