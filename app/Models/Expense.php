@@ -31,7 +31,7 @@ class Expense extends Model
              ->get()->first()['total_amount'];
     }
     public static function getTotalExpensesGroupByExpensesCategory($start_date,$end_date){
-     return   Expense::select(DB::raw("SUM(expenses.amount) as total_amount"),"expenses_categories.name as expense_name")
+     return   Expense::select(DB::raw("SUM(expenses.amount) as total_amount,expenses_categories.name as expense_name"))
             ->join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
             ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
             ->WhereBetween('expenses.date',[$start_date,$end_date])
