@@ -105,6 +105,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/deduction_subscriptions', [App\Http\Controllers\SettingsController::class, 'deduction_subscriptions'])->name('hr_settings_deduction_subscriptions');
     Route::match(['get', 'post'], '/settings/deduction_settings', [App\Http\Controllers\SettingsController::class, 'deduction_settings'])->name('hr_settings_deduction_settings');
     Route::match(['get', 'post'], '/settings/banks', [App\Http\Controllers\SettingsController::class, 'banks'])->name('hr_settings_banks');
+    Route::match(['get', 'post'], '/settings/assets', [App\Http\Controllers\SettingsController::class, 'assets'])->name('hr_settings_assets');
+    Route::match(['get', 'post'], '/settings/asset_properties', [App\Http\Controllers\SettingsController::class, 'asset_properties'])->name('hr_settings_asset_properties');
     Route::match(['get', 'post'], '/settings/systems', [App\Http\Controllers\SettingsController::class, 'systems'])->name('hr_settings_systems');
     Route::match(['get', 'post'], '/settings/users', [App\Http\Controllers\SettingsController::class, 'users'])->name('hr_settings_users');
     Route::match(['get', 'post'], '/settings/approvals', [App\Http\Controllers\ApprovalController::class, 'approvals'])->name('hr_settings_approvals');

@@ -9,6 +9,8 @@ use App\Models\AllowanceSubscription;
 use App\Models\Approval;
 use App\Models\ApprovalDocumentType;
 use App\Models\ApprovalLevel;
+use App\Models\Asset;
+use App\Models\AssetProperty;
 use App\Models\AssignUserGroup;
 use App\Models\Bank;
 use App\Models\Category;
@@ -56,6 +58,8 @@ class SettingsController extends Controller
 //            ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
             //['name'=>'Supervisor', 'route'=>'hr_settings_supervisors', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Banks', 'route'=>'hr_settings_banks', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Assets', 'route'=>'hr_settings_assets', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Asset Properties', 'route'=>'hr_settings_asset_properties', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Systems', 'route'=>'hr_settings_systems', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Users', 'route'=>'hr_settings_users', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Positions', 'route'=>'hr_settings_positions', 'icon' => 'si si-settings', 'badge' => 0],
@@ -166,6 +170,26 @@ class SettingsController extends Controller
             'banks' => Bank::all()
         ];
         return view('pages.settings.settings_banks')->with($data);
+    }
+
+    public function assets(Request $request){
+        if($this->handleCrud($request, 'Asset')) {
+            return back();
+        }
+        $data = [
+            'assets' => Asset::all()
+        ];
+        return view('pages.settings.settings_assets')->with($data);
+    }
+
+    public function asset_properties(Request $request){
+        if($this->handleCrud($request, 'AssetProperty')) {
+            return back();
+        }
+        $data = [
+            'asset_properties' => AssetProperty::all()
+        ];
+        return view('pages.settings.settings_asset_properties')->with($data);
     }
 
 

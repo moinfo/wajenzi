@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Allowance;
 use App\Models\AllowanceSubscription;
 use App\Models\ApprovalDocumentType;
+use App\Models\Asset;
 use App\Models\Bank;
 use App\Models\Category;
 use App\Models\Deduction;
@@ -35,6 +36,7 @@ class AjaxController
             switch ($fx) {
                 case 'form': // Load form from forms directory
                     $suppliers = Supplier::all();
+                    $assets = Asset::all();
                     $user_groups = UserGroup::all();
                     $approval_document_types = ApprovalDocumentType::all();
                     $categories = Category::all();
@@ -123,6 +125,8 @@ class AjaxController
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
                             'users' => $users,
+                            'assets' => $assets,
+//                            'allowance_types' => $allowance_types,
                             'stock_types' => $stock_types,
                             'user_groups' => $user_groups,
                             'payment_types' => $payment_types,
