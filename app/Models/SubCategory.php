@@ -9,7 +9,7 @@ class SubCategory extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'category_id','name', 'description'
+        'category_id','name', 'description', 'billing_cycle', 'price'
     ];
 
     public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo

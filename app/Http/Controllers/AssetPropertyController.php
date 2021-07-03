@@ -82,4 +82,17 @@ class AssetPropertyController extends Controller
     {
         //
     }
+
+    public function getAssetProperties(Request $request){
+        $asset_id = $request->input('asset_id');
+        $asset_properties = AssetProperty::where('asset_id',$asset_id)->get();
+
+        foreach ($asset_properties as $index => $asset) {
+            $id = $asset->id;
+            $asset_property = $asset->name;
+            $asset_property_arr[] = array("id" => $id, "name" => $asset_property);
+        }
+        echo json_encode($asset_property_arr);
+
+    }
 }

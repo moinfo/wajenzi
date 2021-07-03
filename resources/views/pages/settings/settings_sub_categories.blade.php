@@ -21,16 +21,44 @@
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                             <thead>
                             <tr>
-                                <th class="text-center" style="width: 100px;">#</th>
+                                <th class="text-center">#</th>
                                 <th>Date</th>
                                 <th scope="col">Name</th>
                                 <th scope="col">Description</th>
                                 <th scope="col">Category</th>
+                                <th scope="col">Billing_cycle</th>
+                                <th scope="col">Amount</th>
+                                <th scope="col">Annually</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
                             @foreach ($sub_categories as $key => $value)
+                                @php
+                                    if($value->billing_cycle == 0){
+                                        $billing_cycle = 'One Time';
+                                        $annualy = ($value->price);
+                                    } elseif($value->billing_cycle == 1){
+                                        $billing_cycle = 'Annually';
+                                        $annualy = ($value->price);
+                                    }elseif($value->billing_cycle == 3){
+                                        $billing_cycle = 'Quarterly';
+                                        $annualy = ($value->price)*4;
+                                    }elseif($value->billing_cycle == 6){
+                                        $billing_cycle = 'Semi-Annually';
+                                        $annualy = ($value->price)*2;
+                                    }elseif($value->billing_cycle == 12){
+                                        $billing_cycle = 'Monthly';
+                                        $annualy = ($value->price)*12;
+                                    }else{
+                                        $billing_cycle = 'Nothing';
+                                        $annualy = ($value->price);
+                                    }
+                                @endphp
+
+
+
+
                                 <tr>
                                     <th scope="row">
                                         <a href="#">{{$loop->iteration}}</a>
@@ -39,6 +67,9 @@
                                     <td>{{ $value->name }}</td>
                                     <td>{{ \Str::limit($value->description, 100) }}</td>
                                     <td>{{ $value->category->name}}</td>
+                                    <td>{{ $billing_cycle}}</td>
+                                    <td>{{ number_format($value->price)}}</td>
+                                    <td>{{ number_format($annualy)}}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Statutory Payment Sub Category"))

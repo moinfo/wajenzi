@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AssetProperty;
 use App\Models\SubCategory;
 use Illuminate\Http\Request;
 
@@ -81,5 +82,32 @@ class SubCategoryController extends Controller
     public function destroy(SubCategory $subCategory)
     {
         //
+    }
+
+    public function getSubCategories(Request $request){
+        $sub_category_id = $request->input('sub_category_id');
+        $sub_categories = SubCategory::where('id',$sub_category_id)->get();
+
+        foreach ($sub_categories as $index => $sub_category) {
+            $id = $sub_category->id;
+            $billing_cycle = $sub_category->billing_cycle;
+            $price = $sub_category->price;
+            if($billing_cycle == 0){
+                $billing_cycle_name = 'One Time';
+            } elseif($billing_cycle == 1){
+                $billing_cycle_name = 'Annually';
+            }elseif($billing_cycle == 3){
+                $billing_cycle_name = 'Quarterly';
+            }elseif($billing_cycle == 6){
+                $billing_cycle_name = 'Semi-Annually';
+            }elseif($billing_cycle == 12){
+                $billing_cycle_name = 'Monthly';
+            }else{
+                $billing_cycle_name = 'Nothing';
+            }
+            $sub_category_arr[] = array("id" => $id, "price" => $price, "billing_cycle" => $billing_cycle, "billing_cycle_name" => $billing_cycle_name);
+        }
+        echo json_encode($sub_category_arr);
+
     }
 }

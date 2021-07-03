@@ -86,6 +86,13 @@ class AjaxController
                         ['id'=>'1','name'=>'System'],
                         ['id'=>'2','name'=>'Office']
                     ];
+                    $billing_cycles = [
+                        ['id'=>'0','name'=>'One Time'],
+                        ['id'=>'1','name'=>'Monthly'],
+                        ['id'=>'3','name'=>'Quarterly'],
+                        ['id'=>'6','name'=>'Semi-Annually'],
+                        ['id'=>'12','name'=>'Annually']
+                    ];
                     $permissions = [
                         ['name'=>'MENU'],
                         ['name'=>'SETTING'],
@@ -126,7 +133,7 @@ class AjaxController
                             'suppliers' => $suppliers,
                             'users' => $users,
                             'assets' => $assets,
-//                            'allowance_types' => $allowance_types,
+                            'billing_cycles' => $billing_cycles,
                             'stock_types' => $stock_types,
                             'user_groups' => $user_groups,
                             'payment_types' => $payment_types,
