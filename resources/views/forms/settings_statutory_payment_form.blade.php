@@ -106,6 +106,9 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
 <script>
     $("#input-sub-category-id").change(function () {
         var sub_category_id = $(this).val();
+        var startdate = $('#input-issue-date').val();
+
+// alert(month_add);
         var url = '/sub_category_list';
         $.ajax({
             url: url,
@@ -122,27 +125,24 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
                     var price = response[i]['price'];
                     var billing_cycle = response[i]['billing_cycle'];
                     var billing_cycle_name = response[i]['billing_cycle_name'];
+                    var month_add = response[i]['billing_cycle'];
+                    var newDate = moment(startdate, "YYYY-MM-DD").add(month_add, 'months').format('YYYY-MM-DD');
+                    // alert(month_add);
 
                     $("#amount").append("<option value='" + price + "'>" + price + "</option>");
                     $("#billing_cycle").append("<option value='" + billing_cycle + "'>" + billing_cycle_name + "</option>");
-
+                    $('#input-due_date').val(newDate);
                 }
             }
         });
     });
-    $(document).ready(function () {
-        $('#billing_cycle').keyup(calculate);
 
-    });
-    function calculate(e) {
-        var startdate = $('#input-issue-date').val();
-        var month_add = $('#billing_cycle').val();
-        var newDate = moment(startdate, "YYYY-MM-DD").add(month_add, 'months').format('YYYY-MM-DD');
-        $('#input-due_date').val(newDate);
+
+
         // $('#total').val($('#number_of_months').val() * $( "#price option:selected" ).text());
 
 
-    }
+
 
     $("#asset_id").change(function () {
         var asset_id = $(this).val();
