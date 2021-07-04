@@ -23,7 +23,7 @@
                     <select name="gender" id="input-gender" class="form-control"  required="required">
                         <option value="">Select Gender</option>
                         @foreach ($genders as $gender)
-                            <option value="{{ $gender['name'] }}" {{ ( $gender['name'] == $object->gender_name) ? 'selected' : '' }}> {{ $gender['name'] }} </option>
+                            <option value="{{ $gender['name'] }}" {{ ( $gender['name'] == $object->gender) ? 'selected' : '' }}> {{ $gender['name'] }} </option>
                         @endforeach
 
                     </select>
@@ -53,7 +53,7 @@
                     <select name="type" id="input-type" class="form-control"  required="required">
                         <option value="">Select Type</option>
                         @foreach ($employee_types as $employee_type)
-                            <option value="{{ $employee_type['name'] }}" {{ ( $employee_type['name'] == $object->employee_type) ? 'selected' : '' }}> {{ $employee_type['name'] }} </option>
+                            <option value="{{ $employee_type['name'] }}" {{ ( $employee_type['name'] == $object->type) ? 'selected' : '' }}> {{ $employee_type['name'] }} </option>
                         @endforeach
                     </select>
                 </div>
@@ -109,6 +109,12 @@
                             <option value="{{ $status['name'] }}" {{ ( $status['name'] == $object->status) ? 'selected' : '' }}> {{ $status['name'] }} </option>
                         @endforeach
                     </select>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <label for="example-nf-password">Password</label>
+                    <input type="text" class="form-control" id="input-user-password" name="password" value="123456">
                 </div>
             </div>
         </div>
