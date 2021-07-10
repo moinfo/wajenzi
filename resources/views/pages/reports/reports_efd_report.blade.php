@@ -75,8 +75,13 @@
                                         @php
                                             $efd_id = $efd->id;
                                             $sales = $sale->getTotalTurnover($date,$date,$efd_id);
+                                            $key_name = 'efd_id';
                                         @endphp
-                                        <td class="text-right">{{number_format($sales)}}</td>
+                                    <td class="text-right">
+                                        <a onclick="loadFormModal('efd_per_day_form', {className: 'Sale', date_find:'{{$date}}',  key_name:'{{$key_name}}', id: {{$efd_id}} }, '{{$efd->name}} EFD For {{$date}}', 'modal-md');"
+                                           class=" js-tooltip-enabled"
+                                           data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                            {{number_format($sales)}}</a></td>
                                     @endforeach
                                     @php
                                         $efd_id1 = null;
