@@ -47,6 +47,7 @@ class ReportsController extends Controller
             ['name' => 'Statement of Comprehensive Income Report', 'route' => 'reports_statement_of_comprehensive_income_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Statement of Financial Position Report', 'route' => 'reports_statement_of_financial_position_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Detailed Expenditure Statement Report', 'route' => 'reports_detailed_expenditure_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Efd Report', 'route' => 'reports_efd_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
@@ -268,6 +269,14 @@ class ReportsController extends Controller
             'expenses' => $expenses
         ];
         return view('pages.reports.reports_expenses_report')->with($data);
+    }
+
+    public function efd_report(Request $request){
+        $efds = Efd::all();
+        $data = [
+            'efds' => $efds,
+        ];
+        return view('pages.reports.reports_efd_report')->with($data);
     }
 
     public function expenses_per_system_report(Request $request){
