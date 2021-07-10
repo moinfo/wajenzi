@@ -34,7 +34,7 @@
                     {{$loop->index + 1}}
                 </td>
                 <td class="font-w600">{{ $sale->date }}</td>
-                <td class="font-w600">{{ $sale->efd }}</td>
+                <td class="font-w600">{{ $sale->efd->name }}</td>
                 <td class="text-right">{{ number_format($sale->amount, 2) }}</td>
                 <td class="text-right">{{ number_format($sale->net, 2) }}</td>
                 <td class="text-right">{{ number_format($sale->tax, 2) }}</td>
