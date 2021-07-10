@@ -36,7 +36,7 @@ class AjaxController
             switch ($fx) {
                 case 'form': // Load form from forms directory
                     $suppliers = Supplier::all();
-                    $assets = Asset::all();
+//                    $assets = Asset::all();
                     $user_groups = UserGroup::all();
                     $approval_document_types = ApprovalDocumentType::all();
                     $categories = Category::all();
@@ -132,7 +132,7 @@ class AjaxController
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
                             'users' => $users,
-                            'assets' => $assets,
+//                            'assets' => $assets,
                             'billing_cycles' => $billing_cycles,
                             'stock_types' => $stock_types,
                             'user_groups' => $user_groups,
@@ -179,6 +179,7 @@ class AjaxController
                             if ($key_name){
                                 $data['object']->Where("$key_name",$id);
                             }
+                            $data['object']->Where("status",'APPROVED');
                             $data['object'] = $data['object']->get();
                         }else{
                             $data['object'] = $id ? $fullObject::find($id) : new $fullObject();

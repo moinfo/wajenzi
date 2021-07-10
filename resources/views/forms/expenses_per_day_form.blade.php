@@ -22,9 +22,9 @@
                 <tr>
                     <td>{{$loop->iteration}}</td>
                     <td>{{$list->description}}</td>
-                    <td>{{$list->expensesCategory->name}}</td>
+                    <td>{{$list->expensesSubCategory->name ?? NULL}}</td>
                     <td class="text-right">{{number_format($list->amount)}}</td>
-                    <td>{{$list->supervisor->name}}</td>
+                    <td>{{$list->supervisor->name ?? NULL}}</td>
                 </tr>
             @endforeach
             </tbody>

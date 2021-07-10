@@ -76,11 +76,15 @@
                                            $total_expense_per_day = \App\Models\Expense::Where('status','APPROVED')->Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
-                                            <td class="text-right">
-                                                <a onclick="loadFormModal('expenses_per_supervisor_form', {className: 'Expense', date_find:'{{$date}}',  key_name:'{{$key_name}}', ' Expenses For {{$date}}', 'modal-md');"
-                                                   class=" js-tooltip-enabled"
-                                                   data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    {{number_format($expense['total_amount'] ?? 0)}}</a></td>
+                                        <td class="text-right">
+                                            <a onclick="loadFormModal('expenses_per_day_form', {className: 'Expense', date_find:'{{$date}}' }, 'All Expenses For {{$date}}', 'modal-md');"
+                                               class=" js-tooltip-enabled">
+                                                {{number_format($expense['total_amount'] ?? 0 )}}</a></td>
+{{--                                            <td class="text-right">--}}
+{{--                                                <a onclick="loadFormModal('expenses_per_supervisor_form', {className: 'Expense', date_find:'{{$date}}',  key_name:'{{$key_name}}', ' Expenses For {{$date}}', 'modal-md');"--}}
+{{--                                                   class=" js-tooltip-enabled"--}}
+{{--                                                   data-toggle="tooltip" title="Edit" data-original-title="Edit">--}}
+{{--                                                    {{number_format($expense['total_amount'] ?? 0)}}</a></td>--}}
 {{--                                        @endforeach--}}
 {{--                                        <td class="text-right">--}}
 {{--                                            <a onclick="loadFormModal('expenses_per_day_form', {className: 'Expense', date_find:'{{$date}}' }, 'All Expenses For {{$date}}', 'modal-md');"--}}
