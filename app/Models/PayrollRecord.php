@@ -24,10 +24,10 @@ class PayrollRecord extends Model
 
     public function getCurrentPayroll($start_date, $end_date)
     {
-      return  $records = PayrollRecord::
-            whereDate('created_at','>=',$start_date)
-          ->whereDate('created_at','<=',$end_date)
-          ->select([DB::raw("*")])->get();
+        return  $records = PayrollRecord::
+        whereDate('created_at','>=',$start_date)
+            ->whereDate('created_at','<=',$end_date)
+            ->select([DB::raw("*")])->get();
     }
 
 }
