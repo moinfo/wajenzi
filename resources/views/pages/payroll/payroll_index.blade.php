@@ -257,20 +257,20 @@
                                             $additional_amount = 0;
                                             $maximum_amount = 0;
                                         }elseif($taxable >= 270000 && $taxable < 520000){
-                                            $employee_percentage = 0.09;
+                                            $employee_percentage = 0.08;
                                             $additional_amount = 0;
                                             $maximum_amount = 270000;
                                         }elseif($taxable >= 520000 && $taxable < 760000){
                                             $employee_percentage = 0.2;
-                                            $additional_amount = 25000;
+                                            $additional_amount = 20000;
                                             $maximum_amount = 520000;
                                         }elseif($taxable >= 760000 && $taxable < 1000000){
                                             $employee_percentage = 0.25;
-                                            $additional_amount = 70500;
+                                            $additional_amount = 68000;
                                             $maximum_amount = 760000;
                                         }elseif($taxable >= 1000000){
                                             $employee_percentage = 0.30;
-                                            $additional_amount = 130500;
+                                            $additional_amount = 128000;
                                             $maximum_amount = 1000000;
                                         }
                                         $paye_amount = (($taxable-$maximum_amount)*$employee_percentage)+$additional_amount;
