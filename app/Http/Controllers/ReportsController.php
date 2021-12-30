@@ -48,6 +48,7 @@ class ReportsController extends Controller
             ['name' => 'Statement of Financial Position Report', 'route' => 'reports_statement_of_financial_position_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Detailed Expenditure Statement Report', 'route' => 'reports_detailed_expenditure_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Efd Report', 'route' => 'reports_efd_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Bank Reconciliation Report', 'route' => 'reports_bank_reconciliation_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
@@ -81,10 +82,33 @@ class ReportsController extends Controller
 
     public function supervisor_report(Request $request){
         $suppliers = Supplier::all();
+
         $data = [
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+
+    public function bank_reconciliation_report(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $suppliers = Supplier::all();
+        $efds = Efd::all();
+        $reports = Efd::allWithTransactions($start_date, $end_date);
+        $maxTransactions = 0;
+        foreach ($reports as $index => $item) {
+            if($item->transactions()->count() > $maxTransactions){
+                $maxTransactions = $item->transactions()->count();
+            }
+        }
+        $data = [
+            'suppliers' => $suppliers,
+            'efds' => $efds,
+            'efdTransactions' => $reports,
+            'maxTransactions' => $maxTransactions
+
+        ];
+        return view('pages.reports.reports_bank_reconciliation_report')->with($data);
     }
 
     public function statement_of_comprehensive_income_report(Request $request){

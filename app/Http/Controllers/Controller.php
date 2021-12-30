@@ -99,6 +99,8 @@ class Controller extends BaseController
             ]);
             $request->request->add([
                 'amount' => Utility::strip_commas($request->input('amount')),
+                'credit' => Utility::strip_commas($request->input('credit')),
+                'debit' => Utility::strip_commas($request->input('debit')),
                 'net' => Utility::strip_commas($request->input('net')),
                 'tax' => Utility::strip_commas($request->input('tax')),
                 'turn_over' => Utility::strip_commas($request->input('turn_over')),
@@ -124,6 +126,8 @@ class Controller extends BaseController
             $newObj = new $full_class_name();
             $request->request->add([
                 'amount' => Utility::strip_commas($request->input('amount')),
+                'credit' => Utility::strip_commas($request->input('credit')),
+                'debit' => Utility::strip_commas($request->input('debit')),
                 'net' => Utility::strip_commas($request->input('net')),
                 'tax' => Utility::strip_commas($request->input('tax')),
                 'turn_over' => Utility::strip_commas($request->input('turn_over')),
@@ -156,6 +160,8 @@ class Controller extends BaseController
             ]);
             $request->request->add([
                 'amount' => Utility::strip_commas($request->input('amount')),
+                'credit' => Utility::strip_commas($request->input('credit')),
+                'debit' => Utility::strip_commas($request->input('debit')),
                 'net' => Utility::strip_commas($request->input('net')),
                 'tax' => Utility::strip_commas($request->input('tax')),
                 'turn_over' => Utility::strip_commas($request->input('turn_over')),
@@ -177,6 +183,8 @@ class Controller extends BaseController
             $obj = $full_class_name::find($request->input('id'));
             $request->request->add([
                 'amount' => Utility::strip_commas($request->input('amount')),
+                'credit' => Utility::strip_commas($request->input('credit')),
+                'debit' => Utility::strip_commas($request->input('debit')),
                 'net' => Utility::strip_commas($request->input('net')),
                 'tax' => Utility::strip_commas($request->input('tax')),
                 'turn_over' => Utility::strip_commas($request->input('turn_over')),
