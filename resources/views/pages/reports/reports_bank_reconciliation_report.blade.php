@@ -133,11 +133,69 @@
                             </table>
 
                     </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
+                                <thead>
+                                <tr>
+                                    <th>EFDs/SUPPLIERS</th>
+                                    @foreach($supplier_with_deposits as $supplier)
+                                    <th>{{$supplier->name}}</th>
+                                    @endforeach
+                                    <th>Total</th>
+
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @php
+                                @endphp
+                                @foreach($efds as $efd)
+                                    @php
+                                        $efd_id = $efd->id;
+                                    @endphp
+                                    <tr>
+                                        <td>{{$efd->name}}</td>
+                                        @foreach($supplier_with_deposits as $supplier)
+                                            @php {{
+                                            $supplier_id = $supplier->supplier_id;
+                                            $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplier($start_date,$end_date,$efd_id,$supplier_id);
+
+                                            }} @endphp
+                                            <td class="text-right">{{number_format($deposit,2)}}</td>
+                                        @endforeach
+                                        @php {{
+                                            $total_deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplier($start_date,$end_date,$efd_id,null);
+
+                                            }} @endphp
+                                        <td class="text-right">{{number_format($total_deposit,2)}}</td>
+                                    </tr>
+                                @endforeach
+
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td>Total</td>
+                                    @foreach($supplier_with_deposits as $supplier)
+                                        @php {{
+                                            $supplier_id = $supplier->supplier_id;
+                                            $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplier($start_date,$end_date,null,$supplier_id);
+
+                                            }} @endphp
+                                        <td class="text-right">{{number_format($deposit,2)}}</td>
+                                    @endforeach
+                                    @php {{
+                                            $total_deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplier($start_date,$end_date,null,null);
+
+                                            }} @endphp
+                                    <td class="text-right">{{number_format($total_deposit,2)}}</td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
 @endsection
 
 

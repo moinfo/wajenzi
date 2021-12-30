@@ -11,6 +11,22 @@ class BankReconciliation extends Model
     use HasFactory;
     public $fillable = ['id', 'supplier_id', 'efd_id', 'description', 'date', 'debit', 'credit'];
 
+    public static function getTotalDepositPerDayPerSupplier($start_date, $end_date, $efd_id, $supplier_id)
+    {
+        $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->select([DB::raw("SUM(debit) as amount")])
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date);
+
+        if($efd_id != null){
+            $receiving->where('efd_id','=',$efd_id);
+        }
+        if($supplier_id != null){
+            $receiving->where('supplier_id','=',$supplier_id);
+        }
+        return $receiving->get()->first()['amount'];
+    }
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id', 'id');
