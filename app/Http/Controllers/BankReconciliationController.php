@@ -19,12 +19,25 @@ class BankReconciliationController extends Controller
         if($this->handleCrud($request, 'BankReconciliation')) {
             return back();
         }
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
         $suppliers = Supplier::all();
+        $supplier_with_deposits = BankReconciliation::where('date','>=',$start_date)->where('date','<=',$end_date)->select('suppliers.name','bank_reconciliations.supplier_id')
+            ->join('suppliers','suppliers.id','=','bank_reconciliations.supplier_id')->groupBy('supplier_id')->get();
         $efds = Efd::all();
-
+        $reports = Efd::allWithTransactions($start_date, $end_date);
+        $maxTransactions = 0;
+        foreach ($reports as $index => $item) {
+            if($item->transactions()->count() > $maxTransactions){
+                $maxTransactions = $item->transactions()->count();
+            }
+        }
         $data = [
+            'supplier_with_deposits' => $supplier_with_deposits,
             'suppliers' => $suppliers,
             'efds' => $efds,
+            'efdTransactions' => $reports,
+            'maxTransactions' => $maxTransactions
         ];
         return view('pages.bank_reconciliation.bank_reconciliation_index')->with($data);
     }
