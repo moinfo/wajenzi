@@ -72,6 +72,19 @@ class BankReconciliation extends Model
         return $receiving->get()->first()['amount'];
     }
 
+    public static function getTotalDepositPerSupplier($start_date, $end_date, $supplier_id)
+    {
+        $receiving = BankReconciliation::join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->select([DB::raw("SUM(debit) as amount")])
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date);
+
+        if($supplier_id != null){
+            $receiving->where('supplier_id','=',$supplier_id);
+        }
+        return $receiving->get()->first()['amount'];
+    }
+
     public static function getTotalDepositPerDay($start_date, $end_date, $efd_id)
     {
         $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')

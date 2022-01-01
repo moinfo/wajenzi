@@ -96,6 +96,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/user/notifications', [App\Http\Controllers\UserController::class, 'notifications'])->name('user_notifications');
     Route::match(['get', 'post'], '/user/notifications/read_all', [App\Http\Controllers\UserController::class, 'readAllNotification'])->name('read_all_notifications');
 
+    Route::match(['get', 'post'], '/reports/bank_report', [App\Http\Controllers\ReportsController::class, 'bank_report'])->name('reports_bank_report');
     Route::match(['get', 'post'], '/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('hr_settings');
     Route::match(['get', 'post'], '/settings/supervisor', [App\Http\Controllers\SettingsController::class, 'supervisors'])->name('hr_settings_supervisors');
     Route::match(['get', 'post'], '/settings/departments', [App\Http\Controllers\SettingsController::class, 'departments'])->name('hr_settings_departments');
