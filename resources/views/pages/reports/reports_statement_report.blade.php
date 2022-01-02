@@ -64,7 +64,7 @@
                                 $supplier_id = $_POST['supplier_id'] ?? 0;
                                 $supplier_name = \App\Models\Supplier::getSupplierName($supplier_id);
                                 $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalance($supplier_id,$today_date) ?? 0;
-                                $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalance($supplier_id,$end_date) ?? 0;
+                                $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalance($supplier_id,$start_date) ?? 0;
                                 $transactions = \App\Models\BankReconciliation::getSupplierTransactions($start_date,$end_date,$supplier_id);
 
                         @endphp
@@ -102,9 +102,9 @@
                                         <td>{{$transaction->date}}</td>
                                         <td>{{$transaction->description}}</td>
                                         <td>{{$efd}}</td>
-                                        <td>{{$transaction->credit}}</td>
-                                        <td>{{$transaction->debit}}</td>
-                                        <td></td>
+                                        <td class="text-right">{{number_format($transaction->credit,2)}}</td>
+                                        <td class="text-right">{{number_format($transaction->debit,2)}}</td>
+                                        <td class="text-right">{{number_format($opening_balance,2)}}</td>
                                     </tr>
 
                                 @endforeach

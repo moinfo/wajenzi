@@ -41,7 +41,7 @@ class BankReconciliation extends Model
     }
     public static function getSupplierCurrentBalance($supplier_id,$end_date)
     {
-        return self::getSupplierAllTimeCredit($supplier_id,$end_date) - self::getSupplierAllTimeDebit($supplier_id,$end_date);
+        return  self::getSupplierAllTimeDebit($supplier_id,$end_date) - self::getSupplierAllTimeCredit($supplier_id,$end_date);
     }
 
     public static function getSupplierOpeningBalance($supplier_id, $end_date)
@@ -65,7 +65,7 @@ class BankReconciliation extends Model
     }
     public static function getSupplierTransactions($start_date, $end_date, $supplier_id)
     {
-        return DB::select("SELECT * FROM ((SELECT  efd_id,supplier_id,date,null as credit, debit FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND debit != 0) UNION ALL (SELECT  efd_id, supplier_id, date,credit, null as debit FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND credit != 0)) b WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' order by `date` asc");
+        return DB::select("SELECT * FROM ((SELECT  description,efd_id,supplier_id,date,null as credit, debit FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND debit != 0) UNION ALL (SELECT  description,efd_id, supplier_id, date,credit, null as debit FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND credit != 0)) b WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' order by `date` asc");
 
     }
 
