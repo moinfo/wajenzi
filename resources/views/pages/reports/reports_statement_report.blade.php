@@ -1,0 +1,101 @@
+@extends('layouts.backend')
+
+@section('content')
+
+    <div class="main-container">
+        <div class="content">
+            <div class="content-heading">Reports
+            </div>
+            <div>
+                <div class="block block-themed">
+                    <div class="block-header bg-gd-dusk">
+                        <h3 class="block-title">Statement Report</h3>
+                    </div>
+                    <div class="block-content">
+                        <div class="row no-print m-t-10">
+                            <div class="class col-md-12">
+                                <div class="class card-box">
+                                    <form  name="expense_search" action="" id="filter-form" method="post" autocomplete="off">
+                                        @csrf
+                                        <div class="row">
+                                            <div class="class col-md-3">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon1">Start Date</span>
+                                                    </div>
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
+                                                </div>
+                                            </div>
+                                            <div class="class col-md-3">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon2">End Date</span>
+                                                    </div>
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
+                                                </div>
+                                            </div>
+                                            <div class="class col-md-3">
+                                                <div class="input-group mb-3">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text" id="basic-addon3">Suppliers</span>
+                                                    </div>
+                                                    <select name="supplier_id" id="input-supplier-id" class="form-control" aria-describedby="basic-addon3">
+                                                        <option value="">Select Supplier</option>
+                                                        @foreach ($suppliers as $supplier)
+                                                            <option value="{{ $supplier->id }}"> {{ $supplier->name }} </option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="class col-md-2">
+                                                <div>
+                                                    <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @php
+                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
+                                $end_date = $_POST['end_date'] ?? date('Y-m-d');
+                                $today_date = date('Y-m-d');
+                                $supplier_id = $_POST['supplier_id'] ?? 0;
+                                $supplier_name = \App\Models\Supplier::getSupplierName($supplier_id);
+                                $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalance($supplier_id,$today_date) ?? 0;
+                                $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalance($supplier_id,$end_date) ?? 0;
+                        @endphp
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
+                                <thead>
+                                <tr>
+                                    <td colspan="2">Date: <b class="float-right">{{$start_date}} - {{$end_date}}</b></td>
+                                    <td colspan="2">Supplier: <b class="float-right">{{$supplier_name}}</b></td>
+                                    <td colspan="2">Current Balance: <b class="float-right">{{number_format($current_balance,2)}}</b></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="text-right">Opening Balance:</td>
+                                    <td class="text-right">{{number_format($opening_balance,2)}}</td>
+                                </tr>
+                                    <tr>
+                                        <td>#</td>
+                                        <td>Description</td>
+                                        <td>Efd</td>
+                                        <td>Credit</td>
+                                        <td>Debit</td>
+                                        <td>Balance</td>
+                                    </tr>
+
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+
+

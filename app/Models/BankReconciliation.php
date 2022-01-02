@@ -27,6 +27,31 @@ class BankReconciliation extends Model
         return $receiving->get()->first()['amount'];
     }
 
+
+    public static function getSupplierAllTimeDebit($supplier_id,$end_date)
+    {
+        $start_date = '2010-01-01';
+        return BankReconciliation::select(DB::raw('SUM(debit) as debit'))->where('supplier_id',$supplier_id)->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['debit'] ?? 0;
+    }
+
+    public static function getSupplierAllTimeCredit($supplier_id,$end_date)
+    {
+        $start_date = '2010-01-01';
+        return BankReconciliation::select(DB::raw('SUM(credit) as credit'))->where('supplier_id',$supplier_id)->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['credit'] ?? 0;
+    }
+    public static function getSupplierCurrentBalance($supplier_id,$end_date)
+    {
+        return self::getSupplierAllTimeCredit($supplier_id,$end_date) - self::getSupplierAllTimeDebit($supplier_id,$end_date);
+    }
+
+    public static function getSupplierOpeningBalance($supplier_id, $end_date)
+    {
+        $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
+        return self::getSupplierAllTimeCredit($supplier_id,$yesterday) - self::getSupplierAllTimeDebit($supplier_id,$yesterday);
+
+
+    }
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id', 'id');

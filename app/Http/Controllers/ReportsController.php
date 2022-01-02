@@ -51,6 +51,7 @@ class ReportsController extends Controller
             ['name' => 'Efd Report', 'route' => 'reports_efd_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Bank Reconciliation Report', 'route' => 'reports_bank_reconciliation_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Bank Report', 'route' => 'reports_bank_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Statement Report', 'route' => 'reports_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
@@ -89,6 +90,15 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+
+    public function statement_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_statement_report')->with($data);
     }
 
     public function bank_report(Request $request){

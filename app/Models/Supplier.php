@@ -10,6 +10,11 @@ class Supplier extends Model
     use HasFactory;
     public $fillable = ['id', 'name', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id'];
 
+    public static function getSupplierName($supplier_id)
+    {
+        return Supplier::where('id',$supplier_id)->get()->first()['name'];
+    }
+
     public function purchases() {
         return $this->hasMany(Purchase::class);
     }
