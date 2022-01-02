@@ -52,6 +52,23 @@ class BankReconciliation extends Model
 
     }
 
+    public static function getSimCardRegisteredTransactions($start_date, $end_date, $sim_card_registration_id, $account_id)
+    {
+        if($account_id == 1) {
+            $transactions = DB::select("SELECT * FROM ((SELECT j.transaction_date,j.sim_card_registration_id,j.account_id,j.transaction_type_id, j.debit,null as credit FROM journal_entries j JOIN ledgers l ON (l.id = j.ledger_id) WHERE j.account_id IN(1,3,4)  and j.sim_card_registration_id = '$sim_card_registration_id' AND l.status = 'APPROVED' AND j.debit != 0) UNION ALL (SELECT j.transaction_date,j.sim_card_registration_id,j.account_id,j.transaction_type_id, null as debit, j.credit FROM journal_entries j JOIN ledgers l ON (l.id = j.ledger_id) WHERE j.account_id IN(1,3,4) and j.sim_card_registration_id = '$sim_card_registration_id' AND l.status = 'APPROVED' AND j.credit != 0)) b WHERE  DATE(transaction_date) BETWEEN '$start_date' AND '$end_date' order by transaction_date asc");
+        }else{
+            $transactions = DB::select("SELECT * FROM ((SELECT j.transaction_date,j.sim_card_registration_id,j.account_id,j.transaction_type_id, j.debit,null as credit FROM journal_entries j JOIN ledgers l ON (l.id = j.ledger_id) WHERE j.account_id = '$account_id' and j.sim_card_registration_id = '$sim_card_registration_id' AND l.status = 'APPROVED' AND j.debit != 0) UNION ALL (SELECT j.transaction_date,j.sim_card_registration_id,j.account_id,j.transaction_type_id, null as debit, j.credit FROM journal_entries j JOIN ledgers l ON (l.id = j.ledger_id) WHERE j.account_id = '$account_id' and j.sim_card_registration_id = '$sim_card_registration_id' AND l.status = 'APPROVED' AND j.credit != 0)) b WHERE  DATE(transaction_date) BETWEEN '$start_date' AND '$end_date' order by transaction_date asc");
+        }
+
+        return $transactions;
+
+    }
+    public static function getSupplierTransactions($start_date, $end_date, $supplier_id)
+    {
+        return DB::select("SELECT * FROM ((SELECT  efd_id,supplier_id,date,null as credit, debit FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND debit != 0) UNION ALL (SELECT  efd_id, supplier_id, date,credit, null as debit FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND credit != 0)) b WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' order by `date` asc");
+
+    }
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id', 'id');

@@ -65,29 +65,50 @@
                                 $supplier_name = \App\Models\Supplier::getSupplierName($supplier_id);
                                 $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalance($supplier_id,$today_date) ?? 0;
                                 $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalance($supplier_id,$end_date) ?? 0;
+                                $transactions = \App\Models\BankReconciliation::getSupplierTransactions($start_date,$end_date,$supplier_id);
+
                         @endphp
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
                                 <thead>
                                 <tr>
-                                    <td colspan="2">Date: <b class="float-right">{{$start_date}} - {{$end_date}}</b></td>
+                                    <td colspan="3">Date: <b class="float-right">{{$start_date}} - {{$end_date}}</b></td>
                                     <td colspan="2">Supplier: <b class="float-right">{{$supplier_name}}</b></td>
                                     <td colspan="2">Current Balance: <b class="float-right">{{number_format($current_balance,2)}}</b></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="5" class="text-right">Opening Balance:</td>
+                                    <td colspan="6" class="text-right">Opening Balance:</td>
                                     <td class="text-right">{{number_format($opening_balance,2)}}</td>
                                 </tr>
                                     <tr>
                                         <td>#</td>
+                                        <td>date</td>
                                         <td>Description</td>
                                         <td>Efd</td>
                                         <td>Credit</td>
                                         <td>Debit</td>
                                         <td>Balance</td>
                                     </tr>
-
                                 </thead>
+                                <tbody>
+                                @foreach($transactions as $transaction)
+                                    @php
+                                        $opening_balance += $transaction->debit;
+                                        $opening_balance -= $transaction->credit;
+                                        $efd = \App\Models\Efd::where('id',$transaction->efd_id)->get()->first()['name'];
+                                    @endphp
+                                    <tr>
+                                        <td>{{$loop->iteration}}</td>
+                                        <td>{{$transaction->date}}</td>
+                                        <td>{{$transaction->description}}</td>
+                                        <td>{{$efd}}</td>
+                                        <td>{{$transaction->credit}}</td>
+                                        <td>{{$transaction->debit}}</td>
+                                        <td></td>
+                                    </tr>
+
+                                @endforeach
+                                </tbody>
                             </table>
                         </div>
                     </div>
