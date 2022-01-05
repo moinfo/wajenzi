@@ -196,7 +196,7 @@
 
                         </div>
                         <br>
-                        <h4>RECEIVING</h4>
+                        <h4>SUPPLIERS STATEMENT</h4>
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
                                 <thead>
