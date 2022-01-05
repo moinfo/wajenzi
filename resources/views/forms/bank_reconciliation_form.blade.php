@@ -4,7 +4,7 @@
         @csrf
         <div class="form-group">
             <label for="example-nf-email">Supplier Name</label>
-            <select name="supplier_id" id="supplier_id" class="form-control">
+            <select name="supplier_id" id="supplier_id" class="form-control" required>
 
                 <option value="">Select Supplier</option>
 
@@ -16,12 +16,24 @@
         </div>
         <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
-            <select name="efd_id" id="input-ifd-id" class="form-control">
+            <select name="efd_id" id="input-ifd-id" class="form-control" required>
 
                 <option value="">Select Efd</option>
 
                 @foreach ($efds as $efd)
                     <option value="{{$efd->id}}" {{ ( $efd->id == $object->efd_id) ? 'selected' : '' }}> {{ $efd->name }} </option>
+                @endforeach
+
+                    </select>
+        </div>
+        <div class="form-group">
+            <label for="example-nf-email">Payment Type</label>
+            <select name="payment_type" id="payment_type" class="form-control" required>
+
+                <option value="">Select Payment Type</option>
+
+                @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
+                    <option value="{{$bank_reconciliation_payment_type['name']}}" {{ ( $bank_reconciliation_payment_type['name'] == $object->payment_type) ? 'selected' : '' }}> {{ $bank_reconciliation_payment_type['name'] }} </option>
                 @endforeach
 
                     </select>

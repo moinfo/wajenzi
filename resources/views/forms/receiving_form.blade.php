@@ -4,7 +4,7 @@
         @csrf
         <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
-            <select name="efd_id" id="input-ifd-id" class="form-control">
+            <select name="efd_id" id="input-ifd-id" class="form-control" required>
 
                 <option value="">Select Efd</option>
 

@@ -54,6 +54,10 @@ class AjaxController
                         ['id'=>'1','name'=>'Supervisor'],
                         ['id'=>'2','name'=>'Driver']
                     ];
+                    $bank_reconciliation_payment_types = [
+                        ['name'=>'SALES'],
+                        ['name'=>'OFFICE']
+                    ];
                     $genders = [
                         ['name'=>'MALE'],
                         ['name'=>'FEMALE']
@@ -132,6 +136,7 @@ class AjaxController
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
                             'users' => $users,
+                            'bank_reconciliation_payment_types' => $bank_reconciliation_payment_types,
                             'assets' => $assets,
                             'billing_cycles' => $billing_cycles,
                             'stock_types' => $stock_types,

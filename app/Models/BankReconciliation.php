@@ -84,7 +84,7 @@ class BankReconciliation extends Model
         return $this->debit ?? $this->credit;
     }
 
-    public static function getAll($start_date,$end_date,$efd_id = null,$supplier_id = null){
+    public static function getAll($start_date,$end_date,$efd_id = null,$supplier_id = null,$payment_type = null){
         $bank_reconciliation = DB::table('bank_reconciliations')
             ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
@@ -94,6 +94,9 @@ class BankReconciliation extends Model
 
         if($efd_id != null){
             $bank_reconciliation->where('efd_id','=',$efd_id);
+        }
+        if($payment_type != null){
+            $bank_reconciliation->where('payment_type','=', "$payment_type");
         }
         if($supplier_id != null){
             $bank_reconciliation->where('supplier_id','=',$supplier_id);
@@ -105,6 +108,7 @@ class BankReconciliation extends Model
     {
         $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->select([DB::raw("SUM(debit) as amount")])
+            ->where('payment_type','=','SALES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
 
@@ -118,6 +122,7 @@ class BankReconciliation extends Model
     {
         $receiving = BankReconciliation::join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
             ->select([DB::raw("SUM(debit) as amount")])
+            ->where('payment_type','=','SALES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
 
@@ -131,6 +136,7 @@ class BankReconciliation extends Model
     {
         $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->select([DB::raw("debit as amount")])
+            ->where('payment_type','=','SALES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
 

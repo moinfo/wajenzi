@@ -29,4 +29,15 @@ class Efd extends Model
         }])->get();
         return $res;
     }
+
+    public static function allWithTransactionsWithOfficePaymentType($start_date, $end_date = null, $payment_type = null)
+    {
+        $start_date = $start_date ?? date('Y-m-d', 0);
+        $end_date =  $end_date ?? date('Y-m-d');
+        $payment_type =  $payment_type ?? 'OFFICE';
+        $res = self::with(["transactions" => function ($query) use($start_date, $end_date, $payment_type) {
+            $query->where('date','>=',$start_date)->where('date','<=',$end_date)->where('payment_type','=',"$payment_type")->with('supplier');
+        }])->get();
+        return $res;
+    }
 }
