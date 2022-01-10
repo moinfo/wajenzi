@@ -16,7 +16,8 @@ class BankReconciliation extends Model
         $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->select([DB::raw("SUM(debit) as amount")])
             ->where('date','>=',$start_date)
-            ->where('date','<=',$end_date);
+            ->where('date','<=',$end_date)
+            ->where('payment_type','=','SALES');
 
         if($efd_id != null){
             $receiving->where('efd_id','=',$efd_id);
