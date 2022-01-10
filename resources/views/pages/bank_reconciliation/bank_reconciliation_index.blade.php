@@ -67,7 +67,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon3">Type</span>
                                                     </div>
-                                                    <select name="payment_type" id="payment_type" class="form-control" required>
+                                                    <select name="payment_type" id="payment_type" class="form-control">
                                                     <option value="">ALL</option>
 
                                                     @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
