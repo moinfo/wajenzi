@@ -86,6 +86,40 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
+                                <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Efd</th>
+                                    <th>Actual</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @php
+                                    $start_date = $_POST['start_date'] ?? date('Y-m-d');
+                                    $end_date = $_POST['end_date'] ?? date('Y-m-d');
+                                @endphp
+                                @foreach($efds as $efd)
+                                    @php
+                                    $receiving = \App\Models\Receiving::getTotalReceivingPerDayPerSupervisor($start_date,$end_date,$efd->id);
+                                    @endphp
+                                    <tr>
+                                        <td>{{$loop->iteration}}</td>
+                                        <td>{{$efd->name}}</td>
+                                        <td></td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                         <br>
                         <h4>BANK RECONCILIATION STATEMENT</h4>
                         <div class="table-responsive">
