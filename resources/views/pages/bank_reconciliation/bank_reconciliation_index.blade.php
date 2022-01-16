@@ -102,12 +102,12 @@
                                 @endphp
                                 @foreach($efds as $efd)
                                     @php
-                                    $receiving = \App\Models\Receiving::getTotalReceivingPerDayPerSupervisor($start_date,$end_date,$efd->id);
+                                    $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupervisor($start_date,$end_date,$efd->id);
                                     @endphp
                                     <tr>
                                         <td>{{$loop->iteration}}</td>
                                         <td>{{$efd->name}}</td>
-                                        <td></td>
+                                        <td>{{number_format($deposit,2)}}</td>
                                     </tr>
                                 @endforeach
                                 </tbody>
