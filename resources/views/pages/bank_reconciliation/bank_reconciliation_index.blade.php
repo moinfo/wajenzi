@@ -104,6 +104,7 @@
                                             $start_date = $_POST['start_date'] ?? date('Y-m-d');
                                             $end_date = $_POST['end_date'] ?? date('Y-m-d');
                                             $deposit_sum = 0;
+
                                         @endphp
                                         @foreach($systems as $system)
                                             @php
@@ -189,7 +190,7 @@
                                     <td class="text-right"></td>
                                 </tr>
                                 @php {{ $totalSum = 0; }} @endphp
-                                @foreach(range(0, $maxTransactions - 1) as $rowIndex => $rowIndex)
+                                @foreach(range(0, 30) as $rowIndex => $rowIndex)
                                     @php {{ $rowSum = 0; }} @endphp
                                     <tr>
                                         <td>{{$loop->index + 1}}</td>
@@ -205,8 +206,17 @@
                                         @endforeach
                                         <td class="text-right">{{ number_format($rowSum) }}</td>
                                     </tr>
+
                                     @php {{ $totalSum += $rowSum; }} @endphp
                                 @endforeach
+                                <tr>
+                                    <th></th>
+                                    @foreach($efds as $efd)
+
+                                        <th class="">{{$efd->name}}</th>
+                                    @endforeach
+                                    <th class="text-right"></th>
+                                </tr>
                                 <tr>
                                     <th>All Total</th>
                                     @foreach($efdTransactions as $footerIndex => $efd)
