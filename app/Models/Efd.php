@@ -8,10 +8,13 @@ use Illuminate\Database\Eloquent\Model;
 class Efd extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name'];
+    public $fillable = ['id', 'name','system_id'];
 
     public function sales() {
         return $this->hasMany(Sale::class);
+    }
+    public function system() {
+        return $this->belongsTo(System::class,'system_id');
     }
 
     public function transactions()

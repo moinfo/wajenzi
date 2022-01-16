@@ -105,14 +105,14 @@
                                             $end_date = $_POST['end_date'] ?? date('Y-m-d');
                                             $deposit_sum = 0;
                                         @endphp
-                                        @foreach($efds as $efd)
+                                        @foreach($systems as $system)
                                             @php
-                                                $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupervisor($start_date,$end_date,$efd->id);
+                                                $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystem($start_date,$end_date,$system->id);
                                                 $deposit_sum += $deposit;
                                             @endphp
                                             <tr>
                                                 <td>{{$loop->iteration}}</td>
-                                                <td>{{$efd->name}}</td>
+                                                <td>{{$system->name}}</td>
                                                 <td class="text-right">{{number_format($deposit,2)}}</td>
                                             </tr>
                                         @endforeach

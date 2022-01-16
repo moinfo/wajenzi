@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BankReconciliation;
 use App\Models\Efd;
 use App\Models\Supplier;
+use App\Models\System;
 use Illuminate\Http\Request;
 
 class BankReconciliationController extends Controller
@@ -23,6 +24,7 @@ class BankReconciliationController extends Controller
         $end_date = $request->input('end_date') ?? date('Y-m-d');
         $payment_type = $request->input('payment_type') ?? 'OFFICE';
         $suppliers = Supplier::all();
+        $systems = System::all();
         $supplier_with_deposits = BankReconciliation::where('date','>=',$start_date)->where('date','<=',$end_date)->where('payment_type','SALES')->select('suppliers.name','bank_reconciliations.supplier_id')
             ->join('suppliers','suppliers.id','=','bank_reconciliations.supplier_id')->groupBy('supplier_id')->get();
         $efds = Efd::all();
@@ -44,6 +46,7 @@ class BankReconciliationController extends Controller
             'bank_reconciliation_payment_types' => $bank_reconciliation_payment_types,
             'supplier_with_deposits' => $supplier_with_deposits,
             'suppliers' => $suppliers,
+            'systems' => $systems,
             'efds' => $efds,
             'efdTransactions' => $reports,
             'efdTransactions_2' => $reports_2,

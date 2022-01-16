@@ -21,6 +21,7 @@
                             <tr>
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
+                                <th>System</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
@@ -31,6 +32,7 @@
                                         {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $efd->name }}</td>
+                                    <td class="font-w600">{{ $efd->system->name ?? null }}</td>
                                     <td class="d-none d-sm-table-cell">{{ $efd->description }}
                                     </td>
                                     <td class="text-center" >
