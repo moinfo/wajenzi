@@ -120,7 +120,7 @@
                                         <tfoot>
                                         <tr>
                                             <th colspan="2" class="text-right">Total</th>
-                                            <th class="text-right">{{number_format($deposit,2)}}</th>
+                                            <th class="text-right">{{number_format($deposit_sum,2)}}</th>
                                         </tr>
                                         </tfoot>
                                     </table>
