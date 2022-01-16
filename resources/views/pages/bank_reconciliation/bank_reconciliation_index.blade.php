@@ -86,40 +86,49 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
-                                <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Efd</th>
-                                    <th>Actual</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @php
-                                    $start_date = $_POST['start_date'] ?? date('Y-m-d');
-                                    $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                                @endphp
-                                @foreach($efds as $efd)
-                                    @php
-                                    $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupervisor($start_date,$end_date,$efd->id);
-                                    @endphp
-                                    <tr>
-                                        <td>{{$loop->iteration}}</td>
-                                        <td>{{$efd->name}}</td>
-                                        <td>{{number_format($deposit,2)}}</td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th></th>
-                                        <th></th>
-                                        <th></th>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                        <div class="row">
+                            <div class="col-sm-3"></div>
+                            <div class="col-sm-6">
+                                <h4>Actual Deposit Summary</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-vcenter "  data-ordering="false">
+                                        <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Efd</th>
+                                            <th>Actual</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        @php
+                                            $start_date = $_POST['start_date'] ?? date('Y-m-d');
+                                            $end_date = $_POST['end_date'] ?? date('Y-m-d');
+                                            $deposit_sum = 0;
+                                        @endphp
+                                        @foreach($efds as $efd)
+                                            @php
+                                                $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupervisor($start_date,$end_date,$efd->id);
+                                                $deposit_sum += $deposit;
+                                            @endphp
+                                            <tr>
+                                                <td>{{$loop->iteration}}</td>
+                                                <td>{{$efd->name}}</td>
+                                                <td class="text-right">{{number_format($deposit,2)}}</td>
+                                            </tr>
+                                        @endforeach
+                                        </tbody>
+                                        <tfoot>
+                                        <tr>
+                                            <th colspan="2" class="text-right">Total</th>
+                                            <th class="text-right">{{number_format($deposit,2)}}</th>
+                                        </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="col-sm-3"></div>
                         </div>
+
                         <br>
                         <h4>BANK RECONCILIATION STATEMENT</h4>
                         <div class="table-responsive">
