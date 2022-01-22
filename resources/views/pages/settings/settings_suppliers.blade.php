@@ -22,6 +22,7 @@
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
                                 <th>Phone</th>
+                                <th>Account Name</th>
                                 <th>CRDB Account</th>
                                 <th>NMB Account</th>
                                 <th>NBC Account</th>
@@ -39,6 +40,7 @@
                                     </td>
                                     <td class="font-w600">{{ $supplier->name }}</td>
                                     <td class="font-w400">{{ $supplier->phone }}</td>
+                                    <td class="font-w400">{{ $supplier->account_name }}</td>
                                     <td class="font-w400">{{ $supplier->crdb_account }}</td>
                                     <td class="font-w400">{{ $supplier->nmb_account }}</td>
                                     <td class="font-w400">{{ $supplier->nbc_account }}</td>

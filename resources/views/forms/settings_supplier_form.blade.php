@@ -11,6 +11,10 @@
             <input type="text" class="form-control" id="input-phone" name="phone" value="{{ $object->phone ?? '' }}" placeholder="Phone Number" >
         </div>
         <div class="form-group" >
+            <label for="example-nf-account_name">Account Name</label>
+            <input type="text" class="form-control" id="input-account_name" name="account_name" value="{{ $object->account_name ?? '' }}" placeholder="Account Name" >
+        </div>
+        <div class="form-group" >
             <label for="example-nf-crdb_account">CRDB Account</label>
             <input type="text" class="form-control" id="input-crdb_account" name="crdb_account" value="{{ $object->crdb_account ?? '' }}" placeholder="CRDB Account" >
         </div>
