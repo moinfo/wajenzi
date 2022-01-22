@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Supplier extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id'];
+    public $fillable = ['id', 'name', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id', 'nmb_account', 'nbc_account', 'crdb_account'];
 
     public static function getSupplierName($supplier_id)
     {
