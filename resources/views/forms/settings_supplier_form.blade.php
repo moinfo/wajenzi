@@ -43,6 +43,14 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-system" class="control-label required">Supplier Type</label>
+            <select name="supplier_type" id="input-supplier_type" class="form-control" required>
+                @foreach ($supplier_types as $supplier_type)
+                    <option value="{{ $supplier_type['name'] }}" {{ ( $supplier_type['name'] == $object->supplier_type) ? 'selected' : '' }}> {{ $supplier_type['name'] }} </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>

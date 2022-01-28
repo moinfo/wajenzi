@@ -16,45 +16,48 @@
                         <h3 class="block-title">SUPPLIER</h3>
                     </div>
                     <div class="block-content">
-                        <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
-                        <thead>
-                            <tr>
-                                <th class="text-center" style="width: 100px;">#</th>
-                                <th>Name</th>
-                                <th>Phone</th>
-                                <th>Account Name</th>
-                                <th>CRDB Account</th>
-                                <th>NMB Account</th>
-                                <th>NBC Account</th>
-                                <th>Address</th>
-                                <th>VRN</th>
-                                <th>Supplier</th>
-                                <th class="text-center" style="width: 100px;">Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            @foreach($suppliers as $supplier)
-                                <tr id="supplier-tr-{{$supplier->id}}">
-                                    <td class="text-center">
-                                        {{$loop->index + 1}}
-                                    </td>
-                                    <td class="font-w600">{{ $supplier->name }}</td>
-                                    <td class="font-w400">{{ $supplier->phone }}</td>
-                                    <td class="font-w400">{{ $supplier->account_name }}</td>
-                                    <td class="font-w400">{{ $supplier->crdb_account }}</td>
-                                    <td class="font-w400">{{ $supplier->nmb_account }}</td>
-                                    <td class="font-w400">{{ $supplier->nbc_account }}</td>
-                                    <td class="font-w400">{{ $supplier->address }}</td>
-                                    <td class="font-w400">{{ $supplier->vrn }}</td>
-                                    <td class="font-w400">{{ $supplier->system->name ?? null }}</td>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                                <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Account Name</th>
+                                    <th>CRDB Account</th>
+                                    <th>NMB Account</th>
+                                    <th>NBC Account</th>
+                                    <th>Address</th>
+                                    <th>VRN</th>
+                                    <th>System</th>
+                                    <th>Supplier Type</th>
+                                    <th class="text-center" style="width: 100px;">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach($suppliers as $supplier)
+                                    <tr id="supplier-tr-{{$supplier->id}}">
+                                        <td class="text-center">
+                                            {{$loop->index + 1}}
+                                        </td>
+                                        <td class="font-w600">{{ $supplier->name }}</td>
+                                        <td class="font-w400">{{ $supplier->phone }}</td>
+                                        <td class="font-w400">{{ $supplier->account_name }}</td>
+                                        <td class="font-w400">{{ $supplier->crdb_account }}</td>
+                                        <td class="font-w400">{{ $supplier->nmb_account }}</td>
+                                        <td class="font-w400">{{ $supplier->nbc_account }}</td>
+                                        <td class="font-w400">{{ $supplier->address }}</td>
+                                        <td class="font-w400">{{ $supplier->vrn }}</td>
+                                        <td class="font-w400">{{ $supplier->system->name ?? null }}</td>
+                                        <td class="font-w400">{{ $supplier->supplier_type }}</td>
 
-                                    <td class="text-center" >
-                                        <div class="btn-group">
-                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier"))
-                                                <button type="button" onclick="loadFormModal('settings_supplier_form', {className: 'Supplier', id: {{$supplier->id}}}, 'Edit {{$supplier->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                    <i class="fa fa-pencil"></i>
-                                                </button>
-                                            @endif
+                                        <td class="text-center" >
+                                            <div class="btn-group">
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier"))
+                                                    <button type="button" onclick="loadFormModal('settings_supplier_form', {className: 'Supplier', id: {{$supplier->id}}}, 'Edit {{$supplier->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                        <i class="fa fa-pencil"></i>
+                                                    </button>
+                                                @endif
 
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Supplier"))
                                                     <button type="button" onclick="deleteModelItem('Supplier', {{$supplier->id}}, 'supplier-tr-{{$supplier->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
@@ -62,12 +65,13 @@
                                                     </button>
                                                 @endif
 
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                            </tbody>
-                        </table>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>

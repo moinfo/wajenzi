@@ -119,6 +119,10 @@ class AjaxController
                         ['name'=>'DIVORCED'],
                         ['name'=>'OTHER']
                     ];
+                    $supplier_types = [
+                        ['name'=>'DIRECT'],
+                        ['name'=>'INDIRECT']
+                    ];
                     $status = [
                         ['name'=>'ACTIVE'],
                         ['name'=>'INACTIVE'],
@@ -135,6 +139,7 @@ class AjaxController
                     $data = $request->input('data') ?? [
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
+                            'supplier_types' => $supplier_types,
                             'users' => $users,
                             'bank_reconciliation_payment_types' => $bank_reconciliation_payment_types,
                             'assets' => $assets,
