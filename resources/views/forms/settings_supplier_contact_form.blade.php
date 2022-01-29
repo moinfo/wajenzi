@@ -34,7 +34,7 @@
         <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
-                <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
+                <button type="submit" class="btn btn-alt-primary" name="updateItem" value="SupplierContact"><i class="si si-check"></i> Update</button>
             @else
                 <button type="submit" class="btn btn-alt-primary" name="addItem" value="SupplierContact">Submit</button>
             @endif

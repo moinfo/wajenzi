@@ -151,8 +151,9 @@ class Controller extends BaseController
     }
 
     private function crudUpdate(Request $request, $class_name, $id = null){
+//        dd($request->updateItem);
         if($request->file()) {
-            $full_class_name = '\App\Models\\'. $class_name;
+            $full_class_name = '\App\Models\\'. ($class_name ?? $request->updateItem);
             $obj_id = $request->input('id') ?? $id; //TODO or the other way round
             $obj = $full_class_name::find($request->input('id'));
 
@@ -179,7 +180,7 @@ class Controller extends BaseController
             $obj->file = '/storage/'. $filePath;
             return $obj->save();
         }else {
-            $full_class_name = '\App\Models\\'. $class_name;
+            $full_class_name = '\App\Models\\'. ($class_name ?? $request->updateItem);
             $obj_id = $request->input('id') ?? $id; //TODO or the other way round
             $obj = $full_class_name::find($request->input('id'));
             $request->request->add([
