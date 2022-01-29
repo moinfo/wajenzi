@@ -10,22 +10,22 @@
             <label for="example-nf-phone">Phone</label>
             <input type="text" class="form-control" id="input-phone" name="phone" value="{{ $object->phone ?? '' }}" placeholder="Phone Number" >
         </div>
-        <div class="form-group" >
-            <label for="example-nf-account_name">Account Name</label>
-            <input type="text" class="form-control" id="input-account_name" name="account_name" value="{{ $object->account_name ?? '' }}" placeholder="Account Name" >
-        </div>
-        <div class="form-group" >
-            <label for="example-nf-crdb_account">CRDB Account</label>
-            <input type="text" class="form-control" id="input-crdb_account" name="crdb_account" value="{{ $object->crdb_account ?? '' }}" placeholder="CRDB Account" >
-        </div>
-        <div class="form-group" >
-            <label for="example-nf-nmb_account">NMB Account</label>
-            <input type="text" class="form-control" id="input-nmb_account" name="nmb_account" value="{{ $object->nmb_account ?? '' }}" placeholder="NMB Account" >
-        </div>
-        <div class="form-group" >
-            <label for="example-nf-nbc_account">NBC Account</label>
-            <input type="text" class="form-control" id="input-nbc_account" name="nbc_account" value="{{ $object->nbc_account ?? '' }}" placeholder="NBC Account" >
-        </div>
+{{--        <div class="form-group" >--}}
+{{--            <label for="example-nf-account_name">Account Name</label>--}}
+{{--            <input type="text" class="form-control" id="input-account_name" name="account_name" value="{{ $object->account_name ?? '' }}" placeholder="Account Name" >--}}
+{{--        </div>--}}
+{{--        <div class="form-group" >--}}
+{{--            <label for="example-nf-crdb_account">CRDB Account</label>--}}
+{{--            <input type="text" class="form-control" id="input-crdb_account" name="crdb_account" value="{{ $object->crdb_account ?? '' }}" placeholder="CRDB Account" >--}}
+{{--        </div>--}}
+{{--        <div class="form-group" >--}}
+{{--            <label for="example-nf-nmb_account">NMB Account</label>--}}
+{{--            <input type="text" class="form-control" id="input-nmb_account" name="nmb_account" value="{{ $object->nmb_account ?? '' }}" placeholder="NMB Account" >--}}
+{{--        </div>--}}
+{{--        <div class="form-group" >--}}
+{{--            <label for="example-nf-nbc_account">NBC Account</label>--}}
+{{--            <input type="text" class="form-control" id="input-nbc_account" name="nbc_account" value="{{ $object->nbc_account ?? '' }}" placeholder="NBC Account" >--}}
+{{--        </div>--}}
         <div class="form-group">
             <label for="example-nf-address">Address</label>
             <input type="text" class="form-control" id="input-address" name="address" value="{{ $object->address ?? '' }}" placeholder="Address">

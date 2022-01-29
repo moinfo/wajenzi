@@ -314,7 +314,7 @@ class SettingsController extends Controller
 
 
     public function suppliers(Request $request){
-        if($this->handleCrud($request, 'Supplier')) {
+        if($this->handleCrud($request, $request->addItem)) {
             return back();
         }
         $data = [
