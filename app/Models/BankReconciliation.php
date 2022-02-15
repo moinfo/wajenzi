@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class BankReconciliation extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'supplier_id', 'efd_id', 'description', 'date', 'debit', 'credit', 'payment_type'];
+    public $fillable = ['id', 'supplier_id', 'efd_id', 'description', 'date', 'debit', 'credit', 'payment_type', 'reference'];
 
     public static function getTotalDepositPerDayPerSupplier($start_date, $end_date, $efd_id, $supplier_id)
     {

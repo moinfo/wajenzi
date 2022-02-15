@@ -39,6 +39,10 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-reference">Reference</label>
+            <input type="text" class="form-control" id="input-reference" name="reference" value="{{ $object->reference ?? '' }}" required>
+        </div>
+        <div class="form-group">
             <label for="example-nf-description">Description</label>
             <textarea type="text" row="3" class="form-control" id="input-description" name="description">{{ $object->description ?? '' }}</textarea>
         </div>

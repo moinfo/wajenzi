@@ -1,7 +1,11 @@
-
+<?php
+$document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
+?>
 <div class="block-content">
     <form method="post" action="{{route('transfer')}}" enctype="multipart/form-data"  autocomplete="off">
         @csrf
+        <input type="hidden" class="form-control" id="input-reference" name="reference" value="TRANSFER{{ $document_id  }}">
+
         <div class="form-group">
             <label for="example-nf-email">From</label>
             <select name="from" id="from" class="form-control" required>
