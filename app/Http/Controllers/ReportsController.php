@@ -51,6 +51,7 @@ class ReportsController extends Controller
             ['name' => 'Efd Report', 'route' => 'reports_efd_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Bank Reconciliation Report', 'route' => 'reports_bank_reconciliation_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Bank Report', 'route' => 'reports_bank_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Supplier Bank Deposit Report', 'route' => 'reports_supplier_bank_deposit_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Statement Report', 'route' => 'reports_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
@@ -90,6 +91,18 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+
+    public function supplier_bank_deposit_report(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $efds = Efd::all();
+        $reports = Efd::allWithTransactionsWithOfficePaymentType($start_date, $end_date, 'SALES');;
+        $data = [
+            'efds' => $efds,
+            'reports' => $reports,
+        ];
+        return view('pages.reports.reports_supplier_bank_deposit_report')->with($data);
     }
 
     public function statement_report(Request $request){
