@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Classes\Utility;
 use App\Models\BankReconciliation;
 use App\Models\Efd;
 use App\Models\Supplier;
 use App\Models\System;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redirect;
 
 class BankReconciliationController extends Controller
 {
@@ -61,9 +64,22 @@ class BankReconciliationController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function create()
+    public function transfer(Request $request)
     {
-        //
+        $from = $request->input('from');
+        $to = $request->input('to');
+        $efd_id = $request->input('efd_id');
+        $date = $request->input('date');
+        $debit = Utility::strip_commas($request->input('debit'));
+        $description = $request->input('description');
+        $payment_type = $request->input('payment_type');
+      DB::table('bank_reconciliations')->insert([
+           ['supplier_id' => $from, 'efd_id' => $efd_id, 'date' => $date, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
+           ['supplier_id' => $to, 'efd_id' => $efd_id, 'date' => $date, 'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
+       ]);
+
+
+       return Redirect::back();
     }
 
     /**

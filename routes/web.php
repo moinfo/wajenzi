@@ -26,6 +26,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/AjaxController', [App\Http\Controllers\AjaxController::class, 'ajaxRequestPost'])->name('ajax_request.post');
 
     Route::match(['get', 'post'], '/bank_reconciliation', [App\Http\Controllers\BankReconciliationController::class, 'index'])->name('bank_reconciliation');
+    Route::match(['get', 'post'], '/transfer', [App\Http\Controllers\BankReconciliationController::class, 'transfer'])->name('transfer');
     Route::match(['get', 'post'], '/receiving', [App\Http\Controllers\ReceivingController::class, 'index'])->name('receiving');
 
     Route::match(['get', 'post'], '/vat_payment', [App\Http\Controllers\VatPaymentController::class, 'index'])->name('vat_payment');
