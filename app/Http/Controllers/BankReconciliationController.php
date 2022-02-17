@@ -27,7 +27,7 @@ class BankReconciliationController extends Controller
         $end_date = $request->input('end_date') ?? date('Y-m-d');
         $payment_type = $request->input('payment_type') ?? 'OFFICE';
         $suppliers = Supplier::all();
-        $systems = System::all();
+        $systems = System::where('id','!=',5)->get();
         $supplier_with_deposits = BankReconciliation::where('date','>=',$start_date)->where('date','<=',$end_date)->where('payment_type','SALES')->select('suppliers.name','bank_reconciliations.supplier_id')
             ->join('suppliers','suppliers.id','=','bank_reconciliations.supplier_id')->groupBy('supplier_id')->get();
         $efds = Efd::all();

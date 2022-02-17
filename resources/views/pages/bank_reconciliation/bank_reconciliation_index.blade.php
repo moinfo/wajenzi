@@ -98,6 +98,8 @@
                                             <th>#</th>
                                             <th>Efd</th>
                                             <th>Actual</th>
+                                            <th>Supplier Excluded</th>
+                                            <th>Balance</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -105,17 +107,26 @@
                                             $start_date = $_POST['start_date'] ?? date('Y-m-d');
                                             $end_date = $_POST['end_date'] ?? date('Y-m-d');
                                             $deposit_sum = 0;
+                                            $deposit_excluded_total = 0;
+                                            $balance_total = 0;
 
                                         @endphp
                                         @foreach($systems as $system)
                                             @php
                                                 $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystem($start_date,$end_date,$system->id);
+                                                $deposit_excluded = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemExcluded($start_date,$end_date,$system->id);
+                                                $balance = $deposit - $deposit_excluded;
+
+                                                $deposit_excluded_total += $deposit_excluded;
+                                                $balance_total += $balance;
                                                 $deposit_sum += $deposit;
                                             @endphp
                                             <tr>
                                                 <td>{{$loop->iteration}}</td>
                                                 <td>{{$system->name}}</td>
                                                 <td class="text-right">{{number_format($deposit,2)}}</td>
+                                                <td class="text-right">{{number_format($balance,2)}}</td>
+                                                <td class="text-right">{{number_format($deposit_excluded,2)}}</td>
                                             </tr>
                                         @endforeach
                                         </tbody>
@@ -123,6 +134,19 @@
                                         <tr>
                                             <th colspan="2" class="text-right">Total</th>
                                             <th class="text-right">{{number_format($deposit_sum,2)}}</th>
+                                            <th class="text-right">{{number_format($balance_total,2)}}</th>
+                                            <th class="text-right">{{number_format($deposit_excluded_total,2)}}</th>
+                                        </tr>
+                                        @php
+
+                                            $deposit_out = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystem($start_date,$end_date,5) ?? 0;
+                                             $deposit_excluded_out = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemExcluded($start_date,$end_date,5) ?? 0;
+                                        @endphp
+                                        <tr>
+                                            <td colspan="2" class="text-right">KIWANDANI</td>
+                                            <td class="text-right">{{number_format($deposit_out,2)}}</td>
+                                            <td class="text-right">{{number_format($deposit_out-$deposit_excluded_out,2)}}</td>
+                                            <td class="text-right">{{number_format($deposit_excluded_out,2)}}</td>
                                         </tr>
                                         </tfoot>
                                     </table>

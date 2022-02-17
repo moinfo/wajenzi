@@ -85,6 +85,31 @@ class BankReconciliation extends Model
         return $receiving->get()->first()['amount'];
     }
 
+    public static function getTotalDepositPerDayPerSystemExcluded($start_date, $end_date, $system_id)
+    {
+        $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('systems','systems.id','=','efds.system_id')
+            ->select([DB::raw("SUM(debit) as amount")])
+            ->where('payment_type','=','SALES')
+            ->where('bank_reconciliations.supplier_id',42)
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date);
+
+        if($system_id != null){
+            $receiving->where('efds.system_id','=',$system_id);
+        }
+        return $receiving->get()->first()['amount'];
+    }
+
+
+
+//    public static function getTotalDepositPerDayPerSystem($start_date, $end_date, $system_id)
+//    {
+//        BankReconciliation::where('date','>=',$start_date)->where('date','<=',$end_date)->
+//                            where('payment_type','SALES')->select('suppliers.name','bank_reconciliations.supplier_id')
+//            ->join('suppliers','suppliers.id','=','bank_reconciliations.supplier_id')->groupBy('supplier_id')->get();
+//    }
+
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id', 'id');
