@@ -73,7 +73,7 @@
                                         $bank_deposit = \App\Models\BankReconciliation::getTotalDepositPerSupplierBank($date,$date);
                                         $difference = $turnover - $bank_deposit;
                                         $all_time_turnover = \App\Models\Sale::getTotalTurnover($date_from_began,$yesterday,null);
-                                        $all_time_bank_deposit = \App\Models\BankReconciliation::getTotalDepositPerSupplier($date_from_began,$yesterday,42);
+                                        $all_time_bank_deposit = \App\Models\BankReconciliation::getTotalDepositPerSupplierBank($date_from_began,$yesterday,null);
                                         $all_time_difference = $all_time_turnover - $all_time_bank_deposit;
 
 
