@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Classes\Utility;
+use App\Models\AssetProperty;
 use App\Models\BankReconciliation;
 use App\Models\Efd;
 use App\Models\Supplier;
@@ -137,5 +138,15 @@ class BankReconciliationController extends Controller
     public function destroy(BankReconciliation $bankReconciliation)
     {
         //
+    }
+
+    public function getTransferredBalance(Request $request){
+        $efd_id = $request->input('efd_id');
+        $date = $request->input('date');
+        $supplier_from = $request->input('supplier_from');
+        $balance = BankReconciliation::select(DB::raw("SUM(debit) AS total"))->where('date',$date)->where('efd_id',$efd_id)->where('supplier_id',$supplier_from)->get()->first()['total'] ?? 0;
+            $balance_arr[] = array("cash_available" => $balance);
+        echo json_encode($balance_arr);
+
     }
 }

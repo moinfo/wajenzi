@@ -5,7 +5,22 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
     <form method="post" action="{{route('transfer')}}" enctype="multipart/form-data"  autocomplete="off">
         @csrf
         <input type="hidden" class="form-control" id="input-reference" name="reference" value="TRANSFER{{ $document_id  }}">
-
+        <div class="row" style="border: 1px solid black; border-radius: 10px; padding: 10px; background: lightgrey; margin-top: -30px!important;">
+            <div class="col-md-12 text-center text-dark font-weight-bold"><span>Available Balance</span></div>
+            <div class="col-md-12 text-center">
+                <span>Current Balance</span>
+                <select name="cash_available" id="cash_available" class="form-control">
+                    <option></option>
+                </select>
+            </div>
+        </div>
+        <br/>
+        <div class="form-group">
+            <label for="example-nf-date">Date</label>
+            <input type="text" class="form-control datepicker"  id="input-date" name="date"
+                   value="{{ $object->date ?? date('Y-m-d') }}" required>
+            {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
+        </div>
         <div class="form-group">
             <label for="example-nf-email">From</label>
             <select name="from" id="from" class="form-control" required>
@@ -70,12 +85,7 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
                        value="{{ $object->credit ?? '' }}" placeholder="Total Amount" required>
             </div>
             @endif
-        <div class="form-group">
-            <label for="example-nf-date">Date</label>
-            <input type="text" class="form-control datepicker"  id="input-date" name="date"
-                   value="{{ $object->date ?? date('Y-m-d') }}" required>
-            {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
-        </div>
+
         <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
@@ -88,6 +98,35 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
     </form>
 </div>
 <script>
+    $("#input-ifd-id").change(function () {
+        var efd_id = $(this).val();
+        var date = $('#input-date').val();
+        var supplier_from = $('#from').find('option:selected').val();
+        var supplier_to = $('#to').find('option:selected').val();
+        var url = '/transfer_balance';
+
+        $.ajax({
+            url: url,
+            type: 'post',
+            data: {efd_id: efd_id,date: date,supplier_from: supplier_from,supplier_to: supplier_to, _token: csrf_token},
+            dataType: 'json',
+            success: function (response) {
+                var len = response.length;
+                $("#cash_available").empty();
+                for (var i = 0; i < len; i++) {
+                    var cash_available = response[i]['cash_available'];
+
+                    $("#cash_available").append("<option value='" + cash_available + "'>" + cash_available + "</option>");
+
+
+                    var max = ($("#cash_available").find(":selected").val());
+
+                    // var max = accType == 1 ? ($("#float_available").find(":selected").val()) : ($("#cash_available").find(":selected").val());
+                    $("#input-debit").attr('max', max);
+                }
+            }
+        });
+    });
     $("input.amount").each((i,ele)=>{
         let clone=$(ele).clone(false)
         clone.attr("type","text")
