@@ -121,8 +121,8 @@ class AjaxController
                         ['name'=>'OTHER']
                     ];
                     $supplier_types = [
-                        ['name'=>'DIRECT'],
-                        ['name'=>'INDIRECT']
+                        ['name'=>'INDIRECT'],
+                        ['name'=>'DIRECT']
                     ];
                     $status = [
                         ['name'=>'ACTIVE'],
