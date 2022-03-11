@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/bank_reconciliation', [App\Http\Controllers\BankReconciliationController::class, 'index'])->name('bank_reconciliation');
     Route::match(['get', 'post'], '/transfer', [App\Http\Controllers\BankReconciliationController::class, 'transfer'])->name('transfer');
     Route::match(['get', 'post'], '/receiving', [App\Http\Controllers\ReceivingController::class, 'index'])->name('receiving');
+    Route::match(['get', 'post'], '/transfer_reports', [App\Http\Controllers\BankReconciliationController::class, 'transferReports'])->name('transfer_reports');
 
     Route::match(['get', 'post'], '/vat_payment', [App\Http\Controllers\VatPaymentController::class, 'index'])->name('vat_payment');
     Route::match(['get', 'post'], '/vat_payment/{id}/{document_type_id}', [App\Http\Controllers\VatPaymentController::class, 'vat_payment'])->name('individual_vat_payment');

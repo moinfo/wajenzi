@@ -60,6 +60,19 @@ class BankReconciliationController extends Controller
         return view('pages.bank_reconciliation.bank_reconciliation_index')->with($data);
     }
 
+    public function transferReports(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $efd_id = $request->input('efd_if') ?? null;
+        $supplier_id = $request->input('supplier_id') ?? null;
+
+        $bank_reconciliations = \App\Models\BankReconciliation::getOnlyTransfered($start_date,$end_date,$efd_id,$supplier_id);
+        $data = [
+           'bank_reconciliations' => $bank_reconciliations
+        ];
+        return view('pages.bank_reconciliation.transfer_reports')->with($data);
+    }
+
     /**
      * Show the form for creating a new resource.
      *

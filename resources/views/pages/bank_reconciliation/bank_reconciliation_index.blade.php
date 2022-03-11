@@ -6,7 +6,8 @@
         <div class="content">
             <div class="content-heading">Bank Reconciliation
                 <div class="float-right">
-                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Bank Reconciliation"))
+                    <a href="{{route('transfer_reports')}}" class="btn btn-rounded btn-outline-success min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Transfer Reports</a>
+                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Bank Reconciliation"))
                         <button type="button" onclick="loadFormModal('bank_reconciliation_transfer_form', {className: 'BankReconciliation'}, 'Transfer', 'modal-md');" class="btn btn-rounded btn-outline-danger min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>Make Transfer</button>
                         <button type="button" onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation'}, 'Create New Bank Reconciliation', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Deposit</button>
                         <button type="button" onclick="loadFormModal('bank_reconciliation_withdraw_form', {className: 'BankReconciliation'}, 'Create New Withdraw', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Withdraw</button>

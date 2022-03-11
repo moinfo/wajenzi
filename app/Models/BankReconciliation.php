@@ -144,6 +144,23 @@ class BankReconciliation extends Model
         }
         return $bank_reconciliation->get();
     }
+    public static function getOnlyTransfered($start_date,$end_date,$efd_id = null,$supplier_id = null){
+        $bank_reconciliation = DB::table('bank_reconciliations')
+            ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->where('reference', 'LIKE', "%TRANSFER%");
+
+        if($efd_id != null){
+            $bank_reconciliation->where('efd_id','=',$efd_id);
+        }
+        if($supplier_id != null){
+            $bank_reconciliation->where('supplier_id','=',$supplier_id);
+        }
+        return $bank_reconciliation->get();
+    }
 
     public static function getTotalDepositPerDayPerSupervisor($start_date, $end_date, $efd_id)
     {
