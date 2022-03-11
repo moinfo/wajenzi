@@ -71,10 +71,14 @@
                                         ?>
                                         @foreach($bank_reconciliations as $bank_reconciliation)
                                             <?php
-                                            $credit = $bank_reconciliation->credit;
-                                            $total_credit += $credit;
+                                                    $credit = $bank_reconciliation->credit;
+                                                if($credit > 0){
+                                                    $total_credit += $credit;
+                                                }
                                             $debit = $bank_reconciliation->debit;
+                                            if($debit > 0){
                                             $total_debit += $debit;
+                                            }
 
                                             ?>
                                             <tr id="bank_reconciliation-tr-{{$bank_reconciliation->id}}">
