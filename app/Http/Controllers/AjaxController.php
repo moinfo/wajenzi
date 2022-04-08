@@ -36,7 +36,7 @@ class AjaxController
             switch ($fx) {
                 case 'form': // Load form from forms directory
                     $suppliers = Supplier::all();
-                    $kassim_supplier = Supplier::where('id',42)->get();
+                    $kassim_supplier = Supplier::where('is_transferred','YES')->get();
                     $assets = Asset::all();
                     $user_groups = UserGroup::all();
                     $approval_document_types = ApprovalDocumentType::all();
@@ -54,6 +54,10 @@ class AjaxController
                     $employees = [
                         ['id'=>'1','name'=>'Supervisor'],
                         ['id'=>'2','name'=>'Driver']
+                    ];
+                    $transfers = [
+                        ['id'=>'1','name'=>'NO'],
+                        ['id'=>'2','name'=>'YES']
                     ];
                     $bank_reconciliation_payment_types = [
                         ['name'=>'SALES'],
@@ -143,6 +147,7 @@ class AjaxController
                             'supplier_types' => $supplier_types,
                             'users' => $users,
                             'kassim_supplier' => $kassim_supplier,
+                            'transfers' => $transfers,
                             'bank_reconciliation_payment_types' => $bank_reconciliation_payment_types,
                             'assets' => $assets,
                             'billing_cycles' => $billing_cycles,

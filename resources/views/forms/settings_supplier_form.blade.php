@@ -35,6 +35,13 @@
             <input type="text" class="form-control" id="input-vrn" name="vrn" value="{{ $object->vrn ?? '' }}" placeholder="Supplier VRN" required>
         </div>
         <div class="form-group">
+            <label for="example-nf-system" class="control-label required">is Transferred</label>
+            <select name="is_transferred" id="is_transferred" class="form-control" required>
+                @foreach ($transfers as $transfer)
+                    <option value="{{ $transfer['name'] }}" {{ ( $transfer['name'] == $object->is_transferred) ? 'selected' : '' }}> {{ $transfer['name'] }} </option>
+                @endforeach
+            </select>
+        </div><div class="form-group">
             <label for="example-nf-system" class="control-label required">System</label>
             <select name="system_id" id="input-system-id" class="form-control" required>
                 @foreach ($systems as $system)

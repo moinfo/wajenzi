@@ -30,6 +30,7 @@
                                     <th>VRN</th>
                                     <th>System</th>
                                     <th>Supplier Type</th>
+                                    <th>Is Transferred</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -45,6 +46,7 @@
                                         <td class="font-w400">{{ $supplier->vrn }}</td>
                                         <td class="font-w400">{{ $supplier->system->name ?? null }}</td>
                                         <td class="font-w400">{{ $supplier->supplier_type }}</td>
+                                        <td class="font-w400">{{ $supplier->is_transferred }}</td>
 
                                         <td class="text-center" >
                                             <div class="btn-group">
@@ -71,7 +73,7 @@
                                         <th class="text-right">#</th>
                                         <th colspan="2">Account Name</th>
                                         <th colspan="2">Account Number</th>
-                                        <th colspan="2">Bank</th>
+                                        <th colspan="3">Bank</th>
                                         <th class="text-center" style="width: 100px;">Actions</th>
                                     </tr>
                                     @foreach($supplier_contacts as $supplier_contact)
@@ -79,7 +81,7 @@
                                             <td class="text-right"> {{$loop->iteration}}</td>
                                             <td colspan="2" class="font-w600">{{ $supplier_contact->account_name }}</td>
                                             <td colspan="2" class="font-w400">{{ $supplier_contact->account_number }}</td>
-                                            <td colspan="2" class="font-w400">{{ $supplier_contact->bank->name ?? null }}</td>
+                                            <td colspan="3" class="font-w400">{{ $supplier_contact->bank->name ?? null }}</td>
                                             <td class="text-center" >
                                                 <div class="btn-group">
                                                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier"))
