@@ -54,6 +54,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/list_asset_properties', [App\Http\Controllers\AssetPropertyController::class, 'getAssetProperties'])->name('list_asset_properties');
     Route::match(['get', 'post'], '/transfer_balance', [App\Http\Controllers\BankReconciliationController::class, 'getTransferredBalance'])->name('transfer_balance');
     Route::match(['get', 'post'], '/sub_category_list', [App\Http\Controllers\SubCategoryController::class, 'getSubCategories'])->name('sub_category_list');
+    Route::match(['get', 'post'], '/getLastEfdNumber', [App\Http\Controllers\SaleController::class, 'getLastEfdNumber'])->name('getLastEfdNumber');
 
     Route::match(['get', 'post'], '/makeReadNotification', [App\Http\Controllers\SettingsController::class, 'makeReadNotification'])->name('makeReadNotification');
 

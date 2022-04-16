@@ -17,6 +17,16 @@ $document_id = \App\Classes\Utility::getLastId('Sale')+1;
                     </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-amount">Last Z Report Number</label>
+            <div id="z_report_id"></div>
+{{--            <input type="number" id="z_id" name="z_id" value="0" readonly>--}}
+        </div>
+        <div class="form-group">
+            <label for="example-nf-amount">Current Z Report Number</label>
+            <input type="number" class="form-control" id="efd_number" name="efd_number"
+                   value="{{ $object->amount ?? '' }}" placeholder="" required>
+        </div>
+        <div class="form-group">
             <label for="example-nf-amount">Turnover</label>
             <input type="number" step=".01" class="form-control amount" id="input-amount" name="amount"
                    value="{{ $object->amount ?? '' }}" placeholder="Total Amount" required>
@@ -61,6 +71,23 @@ $document_id = \App\Classes\Utility::getLastId('Sale')+1;
     </form>
 </div>
 <script>
+    $("#input-ifd-id").change(function () {
+        var efd_id = $(this).val();
+
+        var url = '/getLastEfdNumber';
+        $.ajax({
+            url: url,
+            type: 'post',
+            data: {efd_id: efd_id, _token: csrf_token},
+            dataType: 'json',
+            success: function (response) {
+
+                var len = response.length;
+                $("#z_report_id").empty();
+                $("#z_report_id").append("<input name='z_id' value='" + response[0].id + "' class='form-control'>");
+            }
+        });
+    });
     $("input.amount").each((i,ele)=>{
         let clone=$(ele).clone(false)
         clone.attr("type","text")

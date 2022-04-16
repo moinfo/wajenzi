@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Approval;
 use App\Models\Efd;
 use App\Models\Sale;
+use App\Models\SubCategory;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 
@@ -45,6 +46,15 @@ class SaleController extends Controller
             'document_id' => $document_id,
         ];
         return view('pages.sales.sales')->with($data);
+    }
+
+    public function getLastEfdNumber(Request $request){
+        $efd_id = $request->input('efd_id');
+        $last_id = Sale::getLastEfdNumber($efd_id);
+
+        $last_z_report_number_arr[] = array("id" => $last_id, "name" => $last_id);
+        echo json_encode($last_z_report_number_arr);
+
     }
 
     /**
