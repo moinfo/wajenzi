@@ -31,11 +31,16 @@
                                     <th>System</th>
                                     <th>Supplier Type</th>
                                     <th>Is Transferred</th>
+                                    <th>Whitestar Supplier</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
+
                                 @foreach($suppliers as $supplier)
+                                    @php
+                                    $whitestar_supplier = \App\Models\Supplier::getWhitestarSupplier($supplier->whitestar_supplier_id);
+                                    @endphp
                                     <tr id="supplier-tr-{{$supplier->id}}">
                                         <td class="text-center">
                                             {{$loop->index + 1}}
@@ -47,6 +52,7 @@
                                         <td class="font-w400">{{ $supplier->system->name ?? null }}</td>
                                         <td class="font-w400">{{ $supplier->supplier_type }}</td>
                                         <td class="font-w400">{{ $supplier->is_transferred }}</td>
+                                        <td class="font-w400">{{ ($whitestar_supplier->first_name ?? null) .' '. ($whitestar_supplier->last_name ?? null)}}</td>
 
                                         <td class="text-center" >
                                             <div class="btn-group">
@@ -73,7 +79,7 @@
                                         <th class="text-right">#</th>
                                         <th colspan="2">Account Name</th>
                                         <th colspan="2">Account Number</th>
-                                        <th colspan="3">Bank</th>
+                                        <th colspan="4">Bank</th>
                                         <th class="text-center" style="width: 100px;">Actions</th>
                                     </tr>
                                     @foreach($supplier_contacts as $supplier_contact)
@@ -81,7 +87,7 @@
                                             <td class="text-right"> {{$loop->iteration}}</td>
                                             <td colspan="2" class="font-w600">{{ $supplier_contact->account_name }}</td>
                                             <td colspan="2" class="font-w400">{{ $supplier_contact->account_number }}</td>
-                                            <td colspan="3" class="font-w400">{{ $supplier_contact->bank->name ?? null }}</td>
+                                            <td colspan="4" class="font-w400">{{ $supplier_contact->bank->name ?? null }}</td>
                                             <td class="text-center" >
                                                 <div class="btn-group">
                                                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier"))

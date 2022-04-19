@@ -41,7 +41,17 @@
                     <option value="{{ $transfer['name'] }}" {{ ( $transfer['name'] == $object->is_transferred) ? 'selected' : '' }}> {{ $transfer['name'] }} </option>
                 @endforeach
             </select>
-        </div><div class="form-group">
+        </div>
+        <div class="form-group">
+            <label for="example-nf-system" class="control-label required">Whitestar Supplier</label>
+            <select name="whitestar_supplier_id" id="input-whitestar_supplier-id" class="form-control" required>
+                <option value="">Select Whitestar Supplier</option>
+                @foreach ($whitestar_suppliers as $whitestar_supplier)
+                    <option value="{{ $whitestar_supplier->local_supplier_id }}" {{ ( $whitestar_supplier->local_supplier_id == $object->whitestar_supplier_id) ? 'selected' : '' }}> {{ $whitestar_supplier->first_name . ' '. $whitestar_supplier->last_name }} </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
             <label for="example-nf-system" class="control-label required">System</label>
             <select name="system_id" id="input-system-id" class="form-control" required>
                 @foreach ($systems as $system)
