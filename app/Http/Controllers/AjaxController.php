@@ -36,6 +36,7 @@ class AjaxController
             switch ($fx) {
                 case 'form': // Load form from forms directory
                     $suppliers = Supplier::all();
+                    $whitestar_suppliers = Supplier::getWhitestarSuppliers();
                     $kassim_supplier = Supplier::where('is_transferred','YES')->get();
                     $assets = Asset::all();
                     $user_groups = UserGroup::all();
@@ -144,6 +145,7 @@ class AjaxController
                     $data = $request->input('data') ?? [
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
+                            'whitestar_suppliers' => $whitestar_suppliers,
                             'supplier_types' => $supplier_types,
                             'users' => $users,
                             'kassim_supplier' => $kassim_supplier,
