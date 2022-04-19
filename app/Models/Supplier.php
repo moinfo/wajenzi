@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Supplier extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name','supplier_type', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id', 'account_name', 'nmb_account', 'nbc_account', 'crdb_account', 'is_transferred'];
+    public $fillable = ['id', 'name','supplier_type', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id', 'account_name', 'nmb_account', 'nbc_account', 'crdb_account', 'is_transferred', 'whitestar_supplier_id'];
 
     public static function getSupplierName($supplier_id)
     {
@@ -27,5 +27,9 @@ class Supplier extends Model
 
     public function supplierReceivings() {
         return $this->hasMany(SupplierReceiving::class);
+    }
+
+    public static function  getWhitestarSuppliers(){
+
     }
 }
