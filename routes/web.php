@@ -155,6 +155,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/reports/collection_per_system_report', [App\Http\Controllers\ReportsController::class, 'collection_per_system_report'])->name('reports_collection_per_system_report');
     Route::match(['get', 'post'], '/reports/gross_summary_report', [App\Http\Controllers\ReportsController::class, 'gross_summary_report'])->name('reports_gross_summary_report');
     Route::match(['get', 'post'], '/reports/expenses_report', [App\Http\Controllers\ReportsController::class, 'expenses_report'])->name('reports_expenses_report');
+    Route::match(['get', 'post'], '/reports/total_credit_suppliers_report', [App\Http\Controllers\ReportsController::class, 'total_credit_suppliers_report'])->name('reports_total_credit_suppliers_report');
     Route::match(['get', 'post'], '/reports/expenses_per_system_report', [App\Http\Controllers\ReportsController::class, 'expenses_per_system_report'])->name('reports_expenses_per_system_report');
     Route::match(['get', 'post'], '/reports/expenses_categories_report', [App\Http\Controllers\ReportsController::class, 'expenses_categories_report'])->name('reports_expenses_categories_report');
     Route::match(['get', 'post'], '/reports/supplier_credit_report', [App\Http\Controllers\ReportsController::class, 'supplier_credit_report'])->name('reports_supplier_credit_report');

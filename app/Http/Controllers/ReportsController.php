@@ -22,6 +22,7 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $reports = [
+            ['name'=>'Total Credit Suppliers Report', 'route'=>'reports_total_credit_suppliers_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'VAT Analysis', 'route'=>'reports_vat_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'VAT Payments', 'route'=>'reports_vat_payment', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Exempt Analysis', 'route'=>'reports_exempt_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -91,6 +92,14 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+    public function total_credit_suppliers_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_total_credit_suppliers_report')->with($data);
     }
 
     public function supplier_bank_deposit_report(Request $request){
