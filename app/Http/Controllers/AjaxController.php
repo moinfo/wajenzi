@@ -37,6 +37,7 @@ class AjaxController
                 case 'form': // Load form from forms directory
                     $suppliers = Supplier::all();
                     $whitestar_suppliers = Supplier::getWhitestarSuppliers();
+                    $bonge_suppliers = Supplier::getBongeSuppliers();
                     $kassim_supplier = Supplier::where('is_transferred','YES')->get();
                     $assets = Asset::all();
                     $user_groups = UserGroup::all();
@@ -59,6 +60,10 @@ class AjaxController
                     $transfers = [
                         ['id'=>'1','name'=>'NO'],
                         ['id'=>'2','name'=>'YES']
+                    ];
+                    $supplier_depend_on_systems = [
+                        ['id'=>'1','name'=>'WHITESTAR'],
+                        ['id'=>'2','name'=>'BONGE']
                     ];
                     $bank_reconciliation_payment_types = [
                         ['name'=>'SALES'],
@@ -146,10 +151,12 @@ class AjaxController
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
                             'whitestar_suppliers' => $whitestar_suppliers,
+                            'bonge_suppliers' => $bonge_suppliers,
                             'supplier_types' => $supplier_types,
                             'users' => $users,
                             'kassim_supplier' => $kassim_supplier,
                             'transfers' => $transfers,
+                            'supplier_depend_on_systems' => $supplier_depend_on_systems,
                             'bank_reconciliation_payment_types' => $bank_reconciliation_payment_types,
                             'assets' => $assets,
                             'billing_cycles' => $billing_cycles,

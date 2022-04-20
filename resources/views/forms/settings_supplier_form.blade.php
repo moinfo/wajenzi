@@ -43,11 +43,29 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-system" class="control-label required">Supplier Depend On System</label>
+            <select name="supplier_depend_on_system" id="supplier_depend_on_system" class="form-control" required>
+                <option value="">Select</option>
+                @foreach ($supplier_depend_on_systems as $supplier_depend_on_system)
+                    <option value="{{ $supplier_depend_on_system['name'] }}" {{ ( $supplier_depend_on_system['name'] == $object->supplier_depend_on_system) ? 'selected' : '' }}> {{ $supplier_depend_on_system['name'] }} </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group" id="whitestar" style='display:none;'>
             <label for="example-nf-system" class="control-label required">Whitestar Supplier</label>
-            <select name="whitestar_supplier_id" id="input-whitestar_supplier-id" class="form-control" required>
+            <select name="whitestar_supplier_id" id="input-whitestar_supplier-id" class="form-control" >
                 <option value="">Select Whitestar Supplier</option>
                 @foreach ($whitestar_suppliers as $whitestar_supplier)
                     <option value="{{ $whitestar_supplier->local_supplier_id }}" {{ ( $whitestar_supplier->local_supplier_id == $object->whitestar_supplier_id) ? 'selected' : '' }}> {{ $whitestar_supplier->first_name . ' '. $whitestar_supplier->last_name }} </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group" id="bonge" style='display:none;'>
+            <label for="example-nf-system" class="control-label required">Bonge Supplier</label>
+            <select name="whitestar_supplier_id" id="input-bonge_supplier-id" class="form-control" >
+                <option value="">Select Bonge Supplier</option>
+                @foreach ($bonge_suppliers as $bonge_supplier)
+                    <option value="{{ $bonge_supplier->local_supplier_id }}" {{ ( $bonge_supplier->local_supplier_id == $object->bonge_supplier_id) ? 'selected' : '' }}> {{ $bonge_supplier->first_name . ' '. $bonge_supplier->last_name }} </option>
                 @endforeach
             </select>
         </div>
@@ -81,4 +99,16 @@
     $('.datepicker').datepicker({
         format: 'yyyy-mm-dd'
     });
+    $('#supplier_depend_on_system').on('change', function() {
+        if (this.value == 'WHITESTAR')
+        {
+            $("#whitestar").show();
+            $("#bonge").hide();
+        }else
+        {
+            $("#bonge").show();
+            $("#whitestar").hide();
+        }
+    });
+
 </script>

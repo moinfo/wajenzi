@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class Supplier extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name','supplier_type', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id', 'account_name', 'nmb_account', 'nbc_account', 'crdb_account', 'is_transferred', 'whitestar_supplier_id'];
+    public $fillable = ['id', 'name','supplier_type', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id', 'account_name', 'nmb_account', 'nbc_account', 'crdb_account', 'is_transferred', 'whitestar_supplier_id', 'supplier_depend_on_system'];
 
     public static function getSupplierName($supplier_id)
     {
@@ -45,6 +45,26 @@ class Supplier extends Model
         return DB::connection('mysql6')->table('whitestar.ospos_people')
             ->select(DB::raw("ospos_people.first_name AS first_name,ospos_people.last_name AS last_name,ospos_people.person_id as local_supplier_id"))
             ->join('whitestar.ospos_suppliers','ospos_suppliers.person_id','=','ospos_people.person_id')
+            ->where('ospos_suppliers.deleted', '0')
+            ->where('ospos_people.person_id', $local_supplier_id)
+            ->get()->first();
+    }
+
+    public static function getBongeSuppliers()
+    {
+
+        return DB::connection('mysql5')->table('bonge.ospos_people')
+            ->select(DB::raw("ospos_people.first_name AS first_name,ospos_people.last_name AS last_name,ospos_people.person_id as local_supplier_id"))
+            ->join('bonge.ospos_suppliers','ospos_suppliers.person_id','=','ospos_people.person_id')
+            ->where('ospos_suppliers.deleted', '0')
+            ->get();
+    }
+
+    public static function getBongeSupplier($local_supplier_id)
+    {
+        return DB::connection('mysql5')->table('bonge.ospos_people')
+            ->select(DB::raw("ospos_people.first_name AS first_name,ospos_people.last_name AS last_name,ospos_people.person_id as local_supplier_id"))
+            ->join('bonge.ospos_suppliers','ospos_suppliers.person_id','=','ospos_people.person_id')
             ->where('ospos_suppliers.deleted', '0')
             ->where('ospos_people.person_id', $local_supplier_id)
             ->get()->first();

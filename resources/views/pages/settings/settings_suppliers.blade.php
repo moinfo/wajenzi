@@ -39,7 +39,14 @@
 
                                 @foreach($suppliers as $supplier)
                                     @php
-                                    $whitestar_supplier = \App\Models\Supplier::getWhitestarSupplier($supplier->whitestar_supplier_id);
+
+                                    if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
+                                        $whitestar_supplier = \App\Models\Supplier::getWhitestarSupplier($supplier->whitestar_supplier_id);
+                                    }elseif ($supplier->supplier_depend_on_system == 'BONGE'){
+                                          $whitestar_supplier = \App\Models\Supplier::getBongeSupplier($supplier->whitestar_supplier_id);
+                                    }else{
+                                           $whitestar_supplier = '';
+                                    }
                                     @endphp
                                     <tr id="supplier-tr-{{$supplier->id}}">
                                         <td class="text-center">
