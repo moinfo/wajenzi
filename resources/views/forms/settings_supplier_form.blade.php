@@ -72,7 +72,7 @@
             <select name="whitestar_supplier_id" id="input-bonge_supplier-id" class="form-control" >
                 <option value="">Select Bonge Supplier</option>
                 @foreach ($bonge_suppliers as $bonge_supplier)
-                    <option value="{{ $bonge_supplier->local_supplier_id }}" {{ ( $bonge_supplier->local_supplier_id == $object->bonge_supplier_id) ? 'selected' : '' }}> {{ $bonge_supplier->first_name . ' '. $bonge_supplier->last_name }} </option>
+                    <option value="{{ $bonge_supplier->local_supplier_id }}" {{ ( $bonge_supplier->local_supplier_id == $object->whitestar_supplier_id) ? 'selected' : '' }}> {{ $bonge_supplier->first_name . ' '. $bonge_supplier->last_name }} </option>
                 @endforeach
             </select>
         </div>
