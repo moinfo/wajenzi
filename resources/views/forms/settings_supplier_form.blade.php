@@ -55,7 +55,9 @@
                 @endforeach
             </select>
         </div>
-        <div class="form-group" id="whitestar" style='display:none;'>
+        @if($object->supplier_depend_on_system)
+            @if($object->supplier_depend_on_system == 'WHITESTAR')
+        <div class="form-group">
             <label for="example-nf-system" class="control-label required">Whitestar Supplier</label>
             <select name="whitestar_supplier_id" id="input-whitestar_supplier-id" class="form-control" >
                 <option value="">Select Whitestar Supplier</option>
@@ -64,7 +66,8 @@
                 @endforeach
             </select>
         </div>
-        <div class="form-group" id="bonge" style='display:none;'>
+            @else
+        <div class="form-group">
             <label for="example-nf-system" class="control-label required">Bonge Supplier</label>
             <select name="whitestar_supplier_id" id="input-bonge_supplier-id" class="form-control" >
                 <option value="">Select Bonge Supplier</option>
@@ -73,6 +76,27 @@
                 @endforeach
             </select>
         </div>
+            @endif
+        @else
+            <div class="form-group" id="whitestar" style='display:none;'>
+                <label for="example-nf-system" class="control-label required">Whitestar Supplier</label>
+                <select name="whitestar_supplier_id" id="input-whitestar_supplier-id" class="form-control" >
+                    <option value="">Select Whitestar Supplier</option>
+                    @foreach ($whitestar_suppliers as $whitestar_supplier)
+                        <option value="{{ $whitestar_supplier->local_supplier_id }}" {{ ( $whitestar_supplier->local_supplier_id == $object->whitestar_supplier_id) ? 'selected' : '' }}> {{ $whitestar_supplier->first_name . ' '. $whitestar_supplier->last_name }} </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group" id="bonge" style='display:none;'>
+                <label for="example-nf-system" class="control-label required">Bonge Supplier</label>
+                <select name="whitestar_supplier_id" id="input-bonge_supplier-id" class="form-control" >
+                    <option value="">Select Bonge Supplier</option>
+                    @foreach ($bonge_suppliers as $bonge_supplier)
+                        <option value="{{ $bonge_supplier->local_supplier_id }}" {{ ( $bonge_supplier->local_supplier_id == $object->bonge_supplier_id) ? 'selected' : '' }}> {{ $bonge_supplier->first_name . ' '. $bonge_supplier->last_name }} </option>
+                    @endforeach
+                </select>
+            </div>
+            @endif
         <div class="form-group">
             <label for="example-nf-system" class="control-label required">System</label>
             <select name="system_id" id="input-system-id" class="form-control" required>
