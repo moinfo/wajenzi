@@ -23,18 +23,45 @@
                         </tr>
                         </thead>
                         <tbody>
+                        @php
+                        $total_credit = 0;
+                        $total_debit = 0;
+                        $total_balance = 0;
+                        @endphp
                         @foreach($suppliers as $supplier)
+                            @php
+                            if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
+                                $credit = \App\Models\Supplier::getWhitestarSupplierWithCredit($supplier->whitestar_supplier_id);
+                            }else{
+                                 $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);
+                            }
+                            $total_credit += $credit;
+                            $debit = \App\Models\Supplier::getLemuruSupplierWithDebit($supplier->id)+$supplier->debit;
+                            $total_debit += $debit;
+                            $balance = $credit - $debit;
+                            $total_balance += $balance;
+                            @endphp
                             <tr>
                                 <td>{{$loop->iteration}}</td>
                                 <td>{{$supplier->name}}</td>
-                                <td></td>
-                                <td></td>
-                                <td></td>
+                                <td class="text-right">{{number_format($credit)}}</td>
+                                <td class="text-right">{{number_format($debit)}}</td>
+                                <td class="text-right">{{number_format($balance)}}</td>
                                 <td>{{$supplier->supplier_depend_on_system}}</td>
                             </tr>
                         @endforeach
 
                         </tbody>
+                        <tfoot>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">{{number_format($total_credit)}}</td>
+                            <td class="text-right">{{number_format($total_debit)}}</td>
+                            <td class="text-right">{{number_format($total_balance)}}</td>
+                            <td></td>
+                        </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>

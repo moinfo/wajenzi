@@ -32,6 +32,7 @@
                                     <th>Supplier Type</th>
                                     <th>Is Transferred</th>
                                     <th>Whitestar Supplier</th>
+                                    <th>Default Debit</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -60,6 +61,7 @@
                                         <td class="font-w400">{{ $supplier->supplier_type }}</td>
                                         <td class="font-w400">{{ $supplier->is_transferred }}</td>
                                         <td class="font-w400">{{ ($whitestar_supplier->first_name ?? null) .' '. ($whitestar_supplier->last_name ?? null)}}</td>
+                                        <td class="text-right">{{ number_format($supplier->debit) }}</td>
 
                                         <td class="text-center" >
                                             <div class="btn-group">
@@ -85,7 +87,7 @@
                                     <tr>
                                         <th class="text-right">#</th>
                                         <th colspan="2">Account Name</th>
-                                        <th colspan="2">Account Number</th>
+                                        <th colspan="3">Account Number</th>
                                         <th colspan="4">Bank</th>
                                         <th class="text-center" style="width: 100px;">Actions</th>
                                     </tr>
@@ -93,7 +95,7 @@
                                         <tr id="supplier-contact-tr-{{$supplier_contact->id}}">
                                             <td class="text-right"> {{$loop->iteration}}</td>
                                             <td colspan="2" class="font-w600">{{ $supplier_contact->account_name }}</td>
-                                            <td colspan="2" class="font-w400">{{ $supplier_contact->account_number }}</td>
+                                            <td colspan="3" class="font-w400">{{ $supplier_contact->account_number }}</td>
                                             <td colspan="4" class="font-w400">{{ $supplier_contact->bank->name ?? null }}</td>
                                             <td class="text-center" >
                                                 <div class="btn-group">

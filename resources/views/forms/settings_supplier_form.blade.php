@@ -35,6 +35,10 @@
             <input type="text" class="form-control" id="input-vrn" name="vrn" value="{{ $object->vrn ?? '' }}" placeholder="Supplier VRN" required>
         </div>
         <div class="form-group">
+            <label for="example-nf-vrn" class="control-label required">Default Debit</label>
+            <input type="number" class="form-control" id="input-debit" name="debit" value="{{ $object->debit ?? '' }}" required>
+        </div>
+        <div class="form-group">
             <label for="example-nf-system" class="control-label required">is Transferred</label>
             <select name="is_transferred" id="is_transferred" class="form-control" required>
                 @foreach ($transfers as $transfer)
