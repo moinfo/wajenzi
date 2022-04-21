@@ -94,7 +94,7 @@ class ReportsController extends Controller
         return view('pages.reports.reports_supervisor_report')->with($data);
     }
     public function total_credit_suppliers_report(Request $request){
-        $suppliers = Supplier::all();
+        $suppliers = Supplier::orderBy('supplier_depend_on_system', 'DESC')->get();
 
         $data = [
             'suppliers' => $suppliers
