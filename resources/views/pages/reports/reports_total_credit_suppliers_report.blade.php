@@ -41,6 +41,7 @@
                             $balance = $credit - $debit;
                             $total_balance += $balance;
                             @endphp
+                            @if($balance != 0)
                             <tr>
                                 <td>{{$loop->iteration}}</td>
                                 <td>{{$supplier->name}}</td>
@@ -49,6 +50,7 @@
                                 <td class="text-right">{{number_format($balance)}}</td>
                                 <td>{{$supplier->supplier_depend_on_system}}</td>
                             </tr>
+                            @endif
                         @endforeach
 
                         </tbody>
