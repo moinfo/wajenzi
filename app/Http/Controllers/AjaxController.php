@@ -60,7 +60,8 @@ class AjaxController
                     ];
                     $transfers = [
                         ['id'=>'1','name'=>'NO'],
-                        ['id'=>'2','name'=>'YES']
+                        ['id'=>'2','name'=>'YES'],
+                        ['id'=>'3','name'=>'CAN BE BOTH']
                     ];
                     $supplier_depend_on_systems = [
                         ['id'=>'1','name'=>'WHITESTAR'],
