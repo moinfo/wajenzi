@@ -92,6 +92,7 @@ class BankReconciliation extends Model
             ->select([DB::raw("SUM(debit) as amount")])
             ->where('payment_type','=','SALES')
             ->where('bank_reconciliations.supplier_id',42)
+            ->orWhere('bank_reconciliations.supplier_id',88)
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
 
