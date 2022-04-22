@@ -281,6 +281,7 @@
                                 <thead>
                                 <tr>
                                     <th>EFDs/SUPPLIERS</th>
+                                    <th>MASHINENI</th>
                                     @foreach($supplier_with_deposits as $supplier)
                                         <th>{{$supplier->name}}</th>
                                     @endforeach
@@ -297,6 +298,10 @@
                                     @endphp
                                     <tr>
                                         <td>{{$efd->name}}</td>
+                                        @php
+                                            $deposit_whitestar = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplierInWhitestar($start_date,$end_date,$efd_id);
+                                        @endphp
+                                        <td class="text-right">{{number_format($deposit_whitestar)}}</td>
                                         @foreach($supplier_with_deposits as $supplier)
                                             @php {{
                                             $supplier_id = $supplier->supplier_id;
@@ -317,6 +322,10 @@
                                 <tfoot>
                                 <tr>
                                     <td>Total</td>
+                                    @php
+                                        $total_deposit_whitestar = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplierInWhitestar($start_date,$end_date,null);
+                                    @endphp
+                                    <td class="text-right">{{number_format($total_deposit_whitestar)}}</td>
                                     @foreach($supplier_with_deposits as $supplier)
                                         @php {{
                                             $supplier_id = $supplier->supplier_id;
