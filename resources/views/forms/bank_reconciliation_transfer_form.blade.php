@@ -45,7 +45,7 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
                         }else{
                              $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);
                         }
-                        $debit = \App\Models\Supplier::getLemuruSupplierWithDebit($supplier->id)+$supplier->debit;
+                        $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransfer($supplier->id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->id) + $supplier->debit;
                         $balance = $credit - $debit;
                     @endphp
                     @if($balance != 0)

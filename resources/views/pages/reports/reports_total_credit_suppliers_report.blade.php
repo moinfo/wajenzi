@@ -36,7 +36,7 @@
                                  $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);
                             }
                             $total_credit += $credit;
-                            $debit = \App\Models\Supplier::getLemuruSupplierWithDebit($supplier->id)+$supplier->debit;
+                            $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransfer($supplier->id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->id) + $supplier->debit;
                             $total_debit += $debit;
                             $balance = $credit - $debit;
                             $total_balance += $balance;

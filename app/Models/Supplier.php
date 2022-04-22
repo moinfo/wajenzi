@@ -97,7 +97,7 @@ class Supplier extends Model
             ->where('ospos_receivings.supplier_id', $supplier_id)
             ->get()->first()->credit;
     }
-    public static function getLemuruSupplierWithDebit($supplier_id)
+    public static function getLemuruSupplierWithDebitWithoutTransfer($supplier_id)
     {
         $date = date('Y-m-d');
         $end_date = date('Y-m-d', strtotime('-1 day', strtotime($date)));
@@ -105,7 +105,20 @@ class Supplier extends Model
             ->select(DB::raw("SUM(debit) AS debit"))
             ->where('payment_type', 'SALES')
             ->where('supplier_id', $supplier_id)
+            ->where('reference', 'NOT LIKE', "%TRANSFER%")
             ->whereBetween('date', ['2010-01-01',$end_date])
+            ->get()->first()->debit;
+    }
+    public static function getLemuruSupplierWithDebitWithTransfer($supplier_id)
+    {
+        $date = date('Y-m-d');
+//        $end_date = date('Y-m-d', strtotime('-1 day', strtotime($date)));
+        return DB::connection('mysql')->table('bank_reconciliations')
+            ->select(DB::raw("SUM(debit) AS debit"))
+            ->where('payment_type', 'SALES')
+            ->where('supplier_id', $supplier_id)
+            ->where('reference', 'LIKE', "%TRANSFER%")
+            ->whereBetween('date', ['2010-01-01',$date])
             ->get()->first()->debit;
     }
 }
