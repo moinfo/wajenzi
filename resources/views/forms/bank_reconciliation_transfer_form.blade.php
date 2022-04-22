@@ -38,11 +38,22 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
 
                 <option value="">Select Supplier</option>
 
-                @foreach ($suppliers as $supplier)
-                    <option value="{{$supplier->id}}" {{( $supplier->id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name }} </option>
+                @foreach ($suppliers_with_balances as $supplier)
+                    @php
+                        if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
+                            $credit = \App\Models\Supplier::getWhitestarSupplierWithCredit($supplier->whitestar_supplier_id);
+                        }else{
+                             $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);
+                        }
+                        $debit = \App\Models\Supplier::getLemuruSupplierWithDebit($supplier->id)+$supplier->debit;
+                        $balance = $credit - $debit;
+                    @endphp
+                    @if($balance != 0)
+                        <option value="{{$supplier->id}}" {{( $supplier->id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name . ' - '. number_format($balance) }} </option>
+                    @endif
                 @endforeach
 
-                    </select>
+            </select>
         </div>
         <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
