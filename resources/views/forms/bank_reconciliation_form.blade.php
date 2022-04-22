@@ -18,7 +18,7 @@
                         $debit = \App\Models\Supplier::getLemuruSupplierWithDebit($supplier->id)+$supplier->debit;
                         $balance = $credit - $debit;
                     @endphp
-                    @if($balance != 0)
+                    @if($balance != 0 || $supplier->is_transferred == 'YES')
                     <option value="{{$supplier->id}}" {{( $supplier->id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name . ' - '. number_format($balance) }} </option>
                     @endif
                 @endforeach
