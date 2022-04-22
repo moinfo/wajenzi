@@ -89,10 +89,10 @@ class BankReconciliation extends Model
     {
         $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->join('systems','systems.id','=','efds.system_id')
-            ->select([DB::raw("SUM(debit) as amount")])
+            ->join('suppliers','suppliers.id','=','bank_reconciliations.supplier_id')
+            ->select([DB::raw("SUM(bank_reconciliations.debit) as amount")])
             ->where('payment_type','=','SALES')
-            ->where('bank_reconciliations.supplier_id',42)
-            ->orWhere('bank_reconciliations.supplier_id',88)
+            ->where('suppliers.is_transferred','YES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
 
