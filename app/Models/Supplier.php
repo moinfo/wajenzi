@@ -16,6 +16,16 @@ class Supplier extends Model
         return Supplier::where('id',$supplier_id)->get()->first()['name'];
     }
 
+    public static function isWhitestar($supplier_id)
+    {
+        $whitestar = Supplier::where('id',$supplier_id)->get()->first()['supplier_depend_on_system'];
+        if($whitestar == 'WHITESTAR'){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     public function purchases() {
         return $this->hasMany(Purchase::class);
     }

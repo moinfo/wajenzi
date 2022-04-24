@@ -6,12 +6,14 @@ use App\Classes\Utility;
 use App\Models\Approval;
 use App\Models\AssignUserGroup;
 use App\Models\Notification;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\DB;
 
 class Controller extends BaseController
 {
@@ -45,6 +47,21 @@ class Controller extends BaseController
         if($request->isMethod('POST') || $request->isMethod('PUT')) {
             if($request->has('addItem')) {
                 if($this->crudAdd($request, $class_name)) {
+                    if ($class_name == 'BankReconciliation'){
+                        $supplier_id = $request->input('supplier_id');
+                        $efd_id = $request->input('efd_id');
+                        $date = $request->input('date');
+                        $debit = Utility::strip_commas($request->input('debit'));
+                        $description = $request->input('description');
+                        $reference = $request->input('reference');
+                        $payment_type = $request->input('payment_type');
+                        $is_whitestar = Supplier::isWhitestar($supplier_id);
+                        if ($is_whitestar && $payment_type == 'SALES'){
+                            DB::table('bank_reconciliations')->insert([
+                                ['supplier_id' => 50, 'efd_id' => $efd_id, 'date' => $date, 'reference' => $reference.'Auto' , 'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type],
+                            ]);
+                        }
+                    }
                     $this->notify($class_name .'Added Successfully', 'Added!', 'success');
                     if($request->document_id != null){
                         if(Approval::getNextApproval($request->document_id,$request->document_type_id)) {
