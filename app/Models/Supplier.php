@@ -26,6 +26,11 @@ class Supplier extends Model
         }
     }
 
+    public static function getWhitestarSupplierWithDebitInCash($whitestar_supplier_id)
+    {
+
+    }
+
     public function purchases() {
         return $this->hasMany(Purchase::class);
     }
