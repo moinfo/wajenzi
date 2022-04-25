@@ -94,10 +94,12 @@ class ReportsController extends Controller
         return view('pages.reports.reports_supervisor_report')->with($data);
     }
     public function total_credit_suppliers_report(Request $request){
-        $suppliers = Supplier::where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
+        $suppliers_with_bonge = Supplier::where('supplier_depend_on_system','=','BONGE')->where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
+        $suppliers_with_whitestar = Supplier::where('supplier_depend_on_system','=','WHITESTAR')->where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
 
         $data = [
-            'suppliers' => $suppliers
+            'suppliers_with_bonge' => $suppliers_with_bonge,
+            'suppliers_with_whitestar' => $suppliers_with_whitestar
         ];
         return view('pages.reports.reports_total_credit_suppliers_report')->with($data);
     }
