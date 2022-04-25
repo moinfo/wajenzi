@@ -42,11 +42,13 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
                     @php
                         if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
                             $credit = \App\Models\Supplier::getWhitestarSupplierWithCredit($supplier->whitestar_supplier_id);
+                                                            $debit_cash = \App\Models\Supplier::getWhitestarSupplierWithDebitInCash($supplier->whitestar_supplier_id);
                         }else{
                              $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);
+                                                             $debit_cash = 0;
                         }
-                        $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransfer($supplier->id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->id) + $supplier->debit;
-                        $balance = $credit - $debit;
+                        $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransfer($supplier->id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->id) + $supplier->debit + $debit_cash;
+                         $balance = $credit - $debit;
                     @endphp
                     @if($balance != 0)
                         <option value="{{$supplier->id}}" {{( $supplier->id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name . ' - '. number_format($balance) }} </option>

@@ -26,9 +26,20 @@ class Supplier extends Model
         }
     }
 
+
     public static function getWhitestarSupplierWithDebitInCash($whitestar_supplier_id)
     {
-
+        $start_date = '2010-01-01';
+        $end_date = date('Y-m-d');
+        return DB::connection('mysql6')->table('whitestar.ospos_debits_credits')
+            ->select(DB::raw('SUM(dr) as dr'))
+            ->where('payment_mode', '=','1')
+            ->where('payment_type', '=','SUPPLIER')
+            ->where('delete', '=','0')
+            ->where('paid_payment_type', '=',1)
+            ->where('client_id','=', $whitestar_supplier_id)
+            ->whereBetween('date', [$start_date, $end_date])
+            ->get()->first()->dr;
     }
 
     public function purchases() {

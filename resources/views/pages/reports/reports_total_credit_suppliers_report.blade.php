@@ -17,7 +17,9 @@
                             <th class="text-center">#</th>
                             <th>Supplier Name</th>
                             <th>Credit</th>
-                            <th>Debit</th>
+                            <th>Debit Bank</th>
+                            <th>Debit Cash</th>
+                            <th>Total Debit</th>
                             <th>Balance</th>
                             <th>System Supplier Type</th>
                         </tr>
@@ -27,6 +29,8 @@
                         $total_credit = 0;
                         $total_debit = 0;
                         $total_balance = 0;
+                        $total_both_debit = 0;
+                        $total_debit_cash = 0;
                         @endphp
                         @foreach($suppliers as $supplier)
                             @php
@@ -35,11 +39,15 @@
                                 $debit_cash = \App\Models\Supplier::getWhitestarSupplierWithDebitInCash($supplier->whitestar_supplier_id);
                             }else{
                                  $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);
+                                 $debit_cash = 0;
                             }
                             $total_credit += $credit;
                             $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransfer($supplier->id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->id) + $supplier->debit;
                             $total_debit += $debit;
-                            $balance = $credit - $debit;
+                            $total_debit_cash += $debit_cash;
+                            $both_debit = $debit+$debit_cash;
+                            $total_both_debit += $both_debit;
+                            $balance = $credit - $both_debit;
                             $total_balance += $balance;
                             @endphp
                             @if($balance != 0)
@@ -48,6 +56,8 @@
                                 <td>{{$supplier->name}}</td>
                                 <td class="text-right">{{number_format($credit)}}</td>
                                 <td class="text-right">{{number_format($debit)}}</td>
+                                <td class="text-right">{{number_format($debit_cash)}}</td>
+                                <td class="text-right">{{number_format($both_debit)}}</td>
                                 <td class="text-right">{{number_format($balance)}}</td>
                                 <td>{{$supplier->supplier_depend_on_system}}</td>
                             </tr>
@@ -61,6 +71,8 @@
                             <td></td>
                             <td class="text-right">{{number_format($total_credit)}}</td>
                             <td class="text-right">{{number_format($total_debit)}}</td>
+                            <td class="text-right">{{number_format($total_debit_cash)}}</td>
+                            <td class="text-right">{{number_format($total_both_debit)}}</td>
                             <td class="text-right">{{number_format($total_balance)}}</td>
                             <td></td>
                         </tr>
