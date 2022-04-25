@@ -58,7 +58,7 @@ class Controller extends BaseController
                         $is_whitestar = Supplier::isWhitestar($supplier_id);
                         if ($is_whitestar && $payment_type == 'SALES'){
                             DB::table('bank_reconciliations')->insert([
-                                ['supplier_id' => 50, 'efd_id' => $efd_id, 'date' => $date, 'reference' => $reference.'Auto' , 'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type],
+                                ['supplier_id' => 50, 'efd_id' => 16, 'date' => $date, 'reference' => $reference.'Auto' , 'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type],
                             ]);
                         }
                     }
