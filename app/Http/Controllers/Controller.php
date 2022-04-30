@@ -56,7 +56,7 @@ class Controller extends BaseController
                         $reference = $request->input('reference');
                         $payment_type = $request->input('payment_type');
                         $is_whitestar = Supplier::isWhitestar($supplier_id);
-                        if ($is_whitestar && $payment_type == 'SALES'){
+                        if ($is_whitestar && $payment_type == 'SALES' && $supplier_id != 50){
                             DB::table('bank_reconciliations')->insert([
                                 ['supplier_id' => 50, 'efd_id' => 16, 'date' => $date, 'reference' => $reference.'Auto' , 'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type],
                             ]);
