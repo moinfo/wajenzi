@@ -35,7 +35,7 @@
                                     <td class="text-center">
                                         {{$loop->index + 1}}
                                     </td>
-                                    <td class="font-w600">{{ $efd->name }}</td>
+                                    <td class="font-w600">{{ $efd->name ?? null}}</td>
                                     <td class="font-w600">{{ $efd->system->name ?? null }}</td>
                                     <td class="d-none d-sm-table-cell">{{$sellers}}</td>
                                     <td class="text-center">
