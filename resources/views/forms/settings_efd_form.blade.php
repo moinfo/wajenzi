@@ -17,6 +17,16 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-system" class="control-label required">Seller</label>
+            <select name="seller" id="seller" class="form-control" required>
+                <option value="">Select Seller</option>
+
+                @foreach ($sellers as $seller)
+                    <option value="{{ $seller->id }}" {{ ( $seller->id == $object->seller) ? 'selected' : '' }}> {{ $seller->name }} </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>

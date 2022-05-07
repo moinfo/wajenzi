@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Efd extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name','system_id'];
+    public $fillable = ['id', 'name','system_id','seller'];
 
     public function sales() {
         return $this->hasMany(Sale::class);
@@ -20,6 +21,21 @@ class Efd extends Model
     public function transactions()
     {
         return $this->hasMany(BankReconciliation::class, 'efd_id', 'id');
+    }
+
+    public static function getSellers()
+    {
+        return DB::connection('mysql4')->table('leruma.ospos_supervisors')
+            ->where('deleted', '0')
+            ->get();
+    }
+
+    public static function getSellerName($seller)
+    {
+        return DB::connection('mysql4')->table('leruma.ospos_supervisors')
+            ->where('deleted', '0')
+            ->where('id', $seller)
+            ->get()->first()->name;
     }
 
 

@@ -54,6 +54,7 @@ class AjaxController
                     $deduction_subscriptions = Deduction::all();
                     $staffs = Staff::getList();
                     $systems= System::all();
+                    $sellers= Efd::getSellers();
                     $employees = [
                         ['id'=>'1','name'=>'Supervisor'],
                         ['id'=>'2','name'=>'Driver']
@@ -157,6 +158,7 @@ class AjaxController
                             'bonge_suppliers' => $bonge_suppliers,
                             'supplier_types' => $supplier_types,
                             'users' => $users,
+                            'sellers' => $sellers,
                             'kassim_supplier' => $kassim_supplier,
                             'transfers' => $transfers,
                             'supplier_depend_on_systems' => $supplier_depend_on_systems,

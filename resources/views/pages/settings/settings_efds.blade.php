@@ -16,26 +16,29 @@
                         <h3 class="block-title">EFD</h3>
                     </div>
                     <div class="block-content">
-                        <table class="table table-striped table-vcenter">
+                        <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                             <thead>
                             <tr>
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
                                 <th>System</th>
+                                <th>Seller</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
                             @foreach($efd as $efd)
+                                @php
+                                    $sellers = \App\Models\Efd::getSellerName($efd->seller);
+                                @endphp
                                 <tr id="efd-tr-{{$efd->id}}">
                                     <td class="text-center">
                                         {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $efd->name }}</td>
                                     <td class="font-w600">{{ $efd->system->name ?? null }}</td>
-                                    <td class="d-none d-sm-table-cell">{{ $efd->description }}
-                                    </td>
-                                    <td class="text-center" >
+                                    <td class="d-none d-sm-table-cell">{{$sellers}}</td>
+                                    <td class="text-center">
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit EFD"))
                                                 <button type="button" onclick="loadFormModal('settings_efd_form', {className: 'Efd', id: {{$efd->id}}}, 'Edit {{$efd->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
