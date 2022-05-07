@@ -29,7 +29,7 @@
                             <tbody>
                             @foreach($efd as $efd)
                                 @php
-                                    $sellers = \App\Models\Efd::getSellerName($efd->seller);
+                                    $sellers = \App\Models\Efd::getSellerName($efd->seller) ?? '';
                                 @endphp
                                 <tr id="efd-tr-{{$efd->id}}">
                                     <td class="text-center">
