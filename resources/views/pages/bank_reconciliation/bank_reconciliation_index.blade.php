@@ -147,9 +147,9 @@
                                         @endphp
                                         <tr>
                                             <td colspan="2" class="text-right">KIWANDANI</td>
-                                            <td class="text-right">{{number_format($deposit_out_only,2)}}</td>
-                                            <td class="text-right">{{number_format(($deposit_out_only)-($deposit_excluded_out+$deposit_excluded_out_only),2)}}</td>
-                                            <td class="text-right">{{number_format(($deposit_excluded_out+$deposit_excluded_out_only),2)}}</td>
+                                            <td class="text-right">{{number_format($deposit_out,2)}}</td>
+                                            <td class="text-right">{{number_format(($deposit_out)-($deposit_excluded_out),2)}}</td>
+                                            <td class="text-right">{{number_format(($deposit_excluded_out),2)}}</td>
                                         </tr>
                                         </tfoot>
                                     </table>
