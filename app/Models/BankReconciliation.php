@@ -93,7 +93,7 @@ class BankReconciliation extends Model
             ->where('payment_type','=','SALES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
-        $receiving->where('bank_reconciliations.supplier_id','!=',50);
+//        $receiving->where('bank_reconciliations.supplier_id','!=',50);
 
         if($system_id != null){
             $receiving->where('efds.system_id','=',$system_id);
@@ -129,7 +129,7 @@ class BankReconciliation extends Model
             ->where('suppliers.is_transferred','YES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
-        $receiving->where('bank_reconciliations.supplier_id','!=',50);
+//        $receiving->where('bank_reconciliations.supplier_id','!=',50);
         if($system_id != null){
             $receiving->where('efds.system_id','=',$system_id);
         }
