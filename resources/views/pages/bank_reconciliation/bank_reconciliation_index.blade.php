@@ -141,13 +141,15 @@
                                         @php
 
                                             $deposit_out = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystem($start_date,$end_date,5) ?? 0;
+                                            $deposit_out_only = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemOnly($start_date,$end_date,5) ?? 0;
                                              $deposit_excluded_out = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemExcluded($start_date,$end_date,5) ?? 0;
+                                             $deposit_excluded_out_only = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemExcludedOnly($start_date,$end_date,5) ?? 0;
                                         @endphp
                                         <tr>
                                             <td colspan="2" class="text-right">KIWANDANI</td>
-                                            <td class="text-right">{{number_format($deposit_out,2)}}</td>
-                                            <td class="text-right">{{number_format($deposit_out-$deposit_excluded_out,2)}}</td>
-                                            <td class="text-right">{{number_format($deposit_excluded_out,2)}}</td>
+                                            <td class="text-right">{{number_format($deposit_out+$deposit_out_only,2)}}</td>
+                                            <td class="text-right">{{number_format(($deposit_out+$deposit_out_only)-($deposit_excluded_out+$deposit_excluded_out_only),2)}}</td>
+                                            <td class="text-right">{{number_format(($deposit_excluded_out+$deposit_excluded_out_only),2)}}</td>
                                         </tr>
                                         </tfoot>
                                     </table>

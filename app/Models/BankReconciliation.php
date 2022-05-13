@@ -93,6 +93,24 @@ class BankReconciliation extends Model
             ->where('payment_type','=','SALES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
+        $receiving->where('bank_reconciliations.supplier_id','!=',52);
+
+        if($system_id != null){
+            $receiving->where('efds.system_id','=',$system_id);
+        }
+        return $receiving->get()->first()['amount'];
+    }
+
+    public static function getTotalDepositPerDayPerSystemOnly($start_date, $end_date, $system_id)
+    {
+        $end_date = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
+        $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('systems','systems.id','=','efds.system_id')
+            ->select([DB::raw("SUM(debit) as amount")])
+            ->where('payment_type','=','SALES')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date);
+        $receiving->where('bank_reconciliations.supplier_id','=',52);
 
         if($system_id != null){
             $receiving->where('efds.system_id','=',$system_id);
@@ -110,6 +128,25 @@ class BankReconciliation extends Model
             ->where('suppliers.is_transferred','YES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
+        $receiving->where('bank_reconciliations.supplier_id','!=',52);
+        if($system_id != null){
+            $receiving->where('efds.system_id','=',$system_id);
+        }
+        return $receiving->get()->first()['amount'];
+    }
+
+    public static function getTotalDepositPerDayPerSystemExcludedOnly($start_date, $end_date, $system_id)
+    {
+        $end_date = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
+        $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('systems','systems.id','=','efds.system_id')
+            ->join('suppliers','suppliers.id','=','bank_reconciliations.supplier_id')
+            ->select([DB::raw("SUM(bank_reconciliations.debit) as amount")])
+            ->where('payment_type','=','SALES')
+            ->where('suppliers.is_transferred','YES')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date);
+        $receiving->where('bank_reconciliations.supplier_id','=',52);
 
         if($system_id != null){
             $receiving->where('efds.system_id','=',$system_id);
