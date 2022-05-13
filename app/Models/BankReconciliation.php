@@ -103,6 +103,7 @@ class BankReconciliation extends Model
 
     public static function getTotalDepositPerDayPerSystemOnly($start_date, $end_date, $system_id)
     {
+        $start_date = date('Y-m-d', strtotime('-1 day', strtotime($start_date)));
         $end_date = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
         $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->join('systems','systems.id','=','efds.system_id')
@@ -137,6 +138,7 @@ class BankReconciliation extends Model
 
     public static function getTotalDepositPerDayPerSystemExcludedOnly($start_date, $end_date, $system_id)
     {
+        $start_date = date('Y-m-d', strtotime('-1 day', strtotime($start_date)));
         $end_date = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
         $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->join('systems','systems.id','=','efds.system_id')
