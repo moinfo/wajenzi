@@ -86,7 +86,10 @@
                                             $total_expense_per_day = \App\Models\Expense::Where('status','APPROVED')->Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
-                                            <td class="text-right">{{number_format($expense)}}</td>
+                                            <td class="text-right">
+                                                <a onclick="loadFormModal('expenses_per_day_form', {className: 'Expense', date_find:'{{$date}}' }, 'All Expenses For {{$date}}', 'modal-md');"
+                                                                      class=" js-tooltip-enabled">{{number_format($expense)}}</a>
+                                            </td>
                                         @endforeach
                                         <td class="text-right">{{number_format($total_expense_per_day['total_amount']  ?? 0)}}</td>
 
