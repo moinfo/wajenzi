@@ -8,6 +8,7 @@ use App\Models\Collection;
 use App\Models\Efd;
 use App\Models\Expense;
 use App\Models\ExpensesCategory;
+use App\Models\ExpensesSubCategory;
 use App\Models\Gross;
 use App\Models\Staff;
 use App\Models\Supervisor;
@@ -44,6 +45,7 @@ class ReportsController extends Controller
             ['name' => 'Collection Per System Report', 'route' => 'reports_collection_per_system_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Expenses Per System Report', 'route' => 'reports_expenses_per_system_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Expenses Categories Report', 'route' => 'reports_expenses_categories_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Expenses Sub Categories Report', 'route' => 'reports_expenses_sub_categories_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Business Position Report', 'route' => 'reports_business_position_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Allowance Subscriptions Report', 'route' => 'reports_allowance_subscriptions_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Statement of Comprehensive Income Report', 'route' => 'reports_statement_of_comprehensive_income_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -376,6 +378,21 @@ class ReportsController extends Controller
             'expenses' => $expenses
         ];
         return view('pages.reports.reports_expenses_categories_report')->with($data);
+    }
+    public function expenses_sub_categories_report(Request $request){
+        $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();
+        $categories = ExpensesSubCategory::all();
+        $categories_with_amount_of_expenses = DB::select('SELECT SUM(c.amount) as total_expenses,
+       s.name as category_name,c.date as expense_date FROM expenses c
+           JOIN expenses_categories s ON (s.id = c.expenses_sub_category_id)
+           JOIN expenses_sub_categories sc ON (sc.expenses_category_id = c.id)
+            GROUP BY c.expenses_sub_category_id,c.date');
+        $data = [
+            'categories_with_amount_of_expenses' => $categories_with_amount_of_expenses,
+            'expenses_categories' => $categories,
+            'expenses' => $expenses
+        ];
+        return view('pages.reports.reports_expenses_sub_categories_report')->with($data);
     }
     public function allowance_subscriptions_report(Request $request){
         $allowances = Allowance::all();
