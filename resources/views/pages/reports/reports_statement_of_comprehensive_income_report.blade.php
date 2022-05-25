@@ -70,6 +70,8 @@
                         $Taxation_last = \App\Models\Taxation::getMainlandTaxation($start_date_last,$end_date_last) ?? 0;
                         $Profit_from_Operating_Activities_After_Taxation_current = \App\Models\Taxation::Profit_From_Operating_Activities_After_Taxation($start_date,$end_date) ?? 0;
                         $Profit_from_Operating_Activities_After_Taxation_last = \App\Models\Taxation::Profit_From_Operating_Activities_After_Taxation($start_date_last,$end_date_last) ?? 0;
+                        $Profit_from_Operating_Activities_After_provision_tax_current = \App\Models\ProvisionTax::Profit_From_Operating_Activities_After_Provision($start_date,$end_date) ?? 0;
+                        $Profit_from_Operating_Activities_After_provision_tax_last = \App\Models\ProvisionTax::Profit_From_Operating_Activities_After_Provision($start_date_last,$end_date_last) ?? 0;
 
                         ?>
                         <div class="table-responsive">
@@ -175,7 +177,7 @@
                                     </tr>
 
                                     <tr>
-                                        <td>Tax</td>
+                                        <td>Tax(Formular)</td>
                                         <td class="text-center"></td>
                                       <td class="text-right">{{number_format($Taxation_current)}}</td>
                                         <td class="text-right">{{number_format($Taxation_last)}}</td>
@@ -191,6 +193,18 @@
                                         <td class="text-center"></td>
                                       <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_current)}}</td>
                                         <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_last)}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>  Profit from Operating Activities After Provision</td>
+                                        <td class="text-center"></td>
+                                      <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_provision_tax_current)}}</td>
+                                        <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_provision_tax_last)}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>  Net Profit</td>
+                                        <td class="text-center"></td>
+                                      <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_current-$Profit_from_Operating_Activities_After_provision_tax_current)}}</td>
+                                        <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_last-$Profit_from_Operating_Activities_After_provision_tax_last)}}</td>
                                     </tr>
                                 </tbody>
 
