@@ -47,8 +47,8 @@
                         <?php
                         $start_date = $_POST['start_date'] ?? date('Y-m-d', strtotime('first day of january this year'));
                         $end_date = $_POST['end_date'] ?? date('Y-m-d', strtotime('last day of december this year'));
-                        $start_date_last =  date('Y-m-d', strtotime('first day of january last year'));
-                        $end_date_last = date('Y-m-d', strtotime('last day of december last year'));
+                        $start_date_last = $_POST['start_date'] ?? date('Y-m-d', strtotime('first day of january last year'));
+                        $end_date_last =  $_POST['end_date'] ?? date('Y-m-d', strtotime('last day of december last year'));
                         $revenue_current = \App\Models\Sale::getTotalRevenue($start_date,$end_date) ?? 0;
                         $revenue_last = \App\Models\Sale::getTotalRevenue($start_date_last,$end_date_last) ?? 0;
                         $cost_of_sales_current = \App\Models\Sale::getCostOfSales($start_date,$end_date) ?? 0;
