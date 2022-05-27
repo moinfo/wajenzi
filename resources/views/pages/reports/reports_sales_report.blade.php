@@ -135,6 +135,11 @@
                                     <td class="text-right">{{ number_format($total_tax, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_turn_over, 2) }}</td>
                                 </tr>
+                                <tr>
+                                    <td colspan="5"></td>
+                                    <td class="text-right" colspan="2">{{ number_format($total_net+$total_tax, 2) }}</td>
+                                    <td class="text-right"></td>
+                                </tr>
                                 </tfoot>
                             </table>
                         </div>
