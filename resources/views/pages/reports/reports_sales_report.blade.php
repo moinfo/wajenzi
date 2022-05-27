@@ -90,7 +90,7 @@
                                 $end_date = $_POST['end_date'] ?? date('Y-m-t');
                                 $efd_id = $_POST['efd_id'] ?? null;
 
-                                $sales = $sale->getAll($start_date,$end_date,$efd_id);
+                                $sales = $sale->getAll($start_date,$end_date,$efd_id,'APPROVED');
                                 $total_amount = 0;
                                 $total_net = 0;
                                 $total_tax = 0;

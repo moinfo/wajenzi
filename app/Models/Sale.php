@@ -20,14 +20,16 @@ class Sale extends Model
         return Sale::where('efd_id',$efd_id)->orderBy('id','DESC')->get()->first()['efd_number'] ?? 0;
     }
 
-    public function getAll($start_date,$end_date,$efd_id = null){
+    public function getAll($start_date,$end_date,$efd_id = null,$status = null){
         $sales = DB::table('sales')
             ->join('efds', 'efds.id', '=', 'sales.efd_id')
             ->select('sales.*','efds.name as efd')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
 
-        if($efd_id != null){
+        if($status != null){
+            $sales->where('status','=',$status);
+        } if($efd_id != null){
             $sales->where('efd_id','=',$efd_id);
         }
         return $sales = $sales->get();
