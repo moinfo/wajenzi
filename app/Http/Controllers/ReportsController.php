@@ -29,6 +29,7 @@ class ReportsController extends Controller
             ['name'=>'Exempt Analysis', 'route'=>'reports_exempt_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Sales Report', 'route'=>'reports_sales_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Purchases Report', 'route'=>'reports_purchases_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name'=>'Purchases By Supplier Report', 'route'=>'reports_purchases_by_supplier_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'General Report', 'route' => 'reports_general_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Business Position Details Report', 'route' => 'reports_business_position_details_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -218,6 +219,18 @@ class ReportsController extends Controller
             'purchases_types' => $purchases_types
         ];
         return view('pages.reports.reports_purchases_report')->with($data);
+    }
+    public function purchases_by_supplier_report(Request $request){
+        $suppliers = Supplier::all();
+        $purchases_types = [
+            ['id'=>'1','name'=>'VAT'],
+            ['id'=>'2','name'=>'EXEMPT']
+        ];
+        $data = [
+            'suppliers' => $suppliers,
+            'purchases_types' => $purchases_types
+        ];
+        return view('pages.reports.reports_purchases_by_supplier_report')->with($data);
     }
 
     public function business_position_report(Request $request){

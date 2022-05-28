@@ -55,6 +55,21 @@ class Purchase extends Model
         }
         return $purchases = $purchases->sum('purchases.total_amount');
     }
+    public static function getTotalPurchasesBySupplier($start_date,$end_date, $supplier_id = null, $purchase_type = null){
+        $purchases = DB::table('purchases')
+            ->join('suppliers', 'suppliers.id', '=', 'purchases.supplier_id')
+            ->join('items', 'items.id', '=', 'purchases.item_id')
+            ->select('purchases.*','items.name as goods','suppliers.name as supplier', 'suppliers.vrn as vrn')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->Where('status','APPROVED');
+        if($supplier_id != null){
+            $purchases->where('supplier_id','=',$supplier_id);
+        }if($purchase_type != null){
+            $purchases->where('purchase_type','=',$purchase_type);
+        }
+        return $purchases = $purchases->sum('purchases.total_amount');
+    }
 
     public static function getTotalPurchasesWithVAT($end_date, $supplier_id = null, $purchase_type = null, $start_date = null){
         $start_date = '2020-01-01' ?? $start_date;
