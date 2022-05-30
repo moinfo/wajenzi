@@ -49,6 +49,10 @@
                         $end_date = $_POST['end_date'] ?? date('Y-m-d', strtotime('last day of december this year'));
                         $start_date_last =  date('Y-m-d', strtotime('first day of january last year'));
                         $end_date_last = date('Y-m-d', strtotime('last day of december last year'));
+                        $basic_salary_current = \App\Models\PayrollRecord::getTotalBasicSalary($start_date,$end_date) ;
+                        $basic_salary_last = \App\Models\PayrollRecord::getTotalBasicSalary($start_date_last,$end_date_last) ?? 0;
+                        $sdl_current = \App\Models\PayrollRecord::getTotalSDL($start_date,$end_date) ?? 0;
+                        $sdl_last = \App\Models\PayrollRecord::getTotalSDL($start_date_last,$end_date_last) ?? 0;
                         $revenue_current = \App\Models\Sale::getTotalRevenue($start_date,$end_date) ?? 0;
                         $revenue_last = \App\Models\Sale::getTotalRevenue($start_date_last,$end_date_last) ?? 0;
                         $cost_of_sales_current = \App\Models\Sale::getCostOfSales($start_date,$end_date) ?? 0;
@@ -148,13 +152,37 @@
                                     </tr>
                                     <?php
                                     }
+                                    $total_expenses=$total_expenses+$basic_salary_current+$sdl_current
                                    ?>
-
+                                    <tr>
+                                        <td>Salaries and Wages</td>
+                                        <td class="text-center"></td>
+                                        <td class="text-right">{{number_format($basic_salary_current)}}</td>
+                                        <td class="text-right">{{number_format($basic_salary_last)}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                    <tr>
+                                        <td>SDL</td>
+                                        <td class="text-center"></td>
+                                        <td class="text-right">{{number_format($sdl_current)}}</td>
+                                        <td class="text-right">{{number_format($sdl_last)}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
                                     <tr>
                                         <td></td>
                                         <td></td>
                                         <td class="text-right">{{number_format($total_expenses)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                        <td class="text-right">{{number_format($basic_salary_last+$sdl_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>

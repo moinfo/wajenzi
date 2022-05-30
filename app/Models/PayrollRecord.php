@@ -30,4 +30,21 @@ class PayrollRecord extends Model
             ->select([DB::raw("*")])->get();
     }
 
+
+    public static function getTotalBasicSalary($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(basicSalary) as basic_salary")])
+            ->whereDate('created_at','>=',$start_date)
+            ->whereDate('created_at','<=',$end_date)
+            ->get()->first()['basic_salary'];
+    }
+
+    public static function getTotalSDL($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(sdl) as sdl")])
+            ->whereDate('created_at','>=',$start_date)
+            ->whereDate('created_at','<=',$end_date)
+            ->get()->first()['sdl'];
+    }
+
 }

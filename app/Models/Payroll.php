@@ -23,4 +23,6 @@ class Payroll extends Model
         }
 
     }
+
+
 }
