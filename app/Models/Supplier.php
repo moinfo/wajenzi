@@ -135,6 +135,18 @@ class Supplier extends Model
             ->whereBetween('date', ['2010-01-01',$end_date])
             ->get()->first()->debit;
     }
+    public static function getLemuruSupplierWithDebitWithoutTransferToday($supplier_id)
+    {
+        $end_date = date('Y-m-d');
+//        $end_date = date('Y-m-d', strtotime('-1 day', strtotime($date)));
+        return DB::connection('mysql')->table('bank_reconciliations')
+            ->select(DB::raw("SUM(debit) AS debit"))
+            ->where('payment_type', 'SALES')
+            ->where('supplier_id', $supplier_id)
+            ->where('reference', 'NOT LIKE', "%TRANSFER%")
+            ->whereBetween('date', ['2010-01-01',$end_date])
+            ->get()->first()->debit;
+    }
     public static function getLemuruSupplierWithDebitWithTransfer($supplier_id)
     {
         $date = date('Y-m-d');

@@ -23,6 +23,7 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $reports = [
+            ['name'=>'Total Current Credit Suppliers Report', 'route'=>'reports_total_current_credit_suppliers_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Total Credit Suppliers Report', 'route'=>'reports_total_credit_suppliers_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'VAT Analysis', 'route'=>'reports_vat_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'VAT Payments', 'route'=>'reports_vat_payment', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -105,6 +106,16 @@ class ReportsController extends Controller
             'suppliers_with_whitestar' => $suppliers_with_whitestar
         ];
         return view('pages.reports.reports_total_credit_suppliers_report')->with($data);
+    }
+    public function total_current_credit_suppliers_report(Request $request){
+        $suppliers_with_bonge = Supplier::where('supplier_depend_on_system','=','BONGE')->where('id','!=','88')->where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
+        $suppliers_with_whitestar = Supplier::where('supplier_depend_on_system','=','WHITESTAR')->where('id','!=','52')->where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
+
+        $data = [
+            'suppliers_with_bonge' => $suppliers_with_bonge,
+            'suppliers_with_whitestar' => $suppliers_with_whitestar
+        ];
+        return view('pages.reports.reports_total_current_credit_suppliers_report')->with($data);
     }
 
     public function supplier_bank_deposit_report(Request $request){
