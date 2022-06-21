@@ -63,7 +63,7 @@ class BankReconciliation extends Model
             ->select([DB::raw("SUM(bank_reconciliations.debit) as amount")])
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date)
-            ->like('reference','LIKE','%Auto')
+            ->where('reference','LIKE','%Auto')
             ->where('payment_type','=','SALES');
 
         if($efd_id != null){
