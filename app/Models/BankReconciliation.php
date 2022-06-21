@@ -42,6 +42,35 @@ class BankReconciliation extends Model
         }
         return $receiving->get()->first()['amount'];
     }
+    public static function getTotalDepositWhitestar($start_date, $end_date, $efd_id)
+    {
+        $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->select([DB::raw("SUM(bank_reconciliations.debit) as amount")])
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->where('payment_type','=','SALES');
+
+        if($efd_id != null){
+            $receiving->where('efd_id','=',$efd_id);
+        }
+        return $receiving->get()->first()['amount'];
+    }
+    public static function getTotalDepositWhitestarAuto($start_date, $end_date, $efd_id)
+    {
+        $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->select([DB::raw("SUM(bank_reconciliations.debit) as amount")])
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->like('reference','Auto','before')
+            ->where('payment_type','=','SALES');
+
+        if($efd_id != null){
+            $receiving->where('efd_id','=',$efd_id);
+        }
+        return $receiving->get()->first()['amount'];
+    }
 
 
     public static function getSupplierAllTimeDebit($supplier_id,$end_date)

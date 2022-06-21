@@ -130,6 +130,16 @@
                                                 <td class="text-right">{{number_format($deposit_excluded,2)}}</td>
                                             </tr>
                                         @endforeach
+                                        @php
+                                        $white = \App\Models\BankReconciliation::getTotalDepositWhitestar($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositWhitestarAuto($start_date,$end_date,16);
+                                        @endphp
+                                        <tr>
+                                            <td>5</td>
+                                            <td>WHITESTAR</td>
+                                            <td class="text-right">{{number_format($white)}}</td>
+                                            <td class="text-right"></td>
+                                            <td class="text-right"></td>
+                                        </tr>
                                         </tbody>
                                         <tfoot>
                                         <tr>
