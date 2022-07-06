@@ -106,10 +106,10 @@ class AjaxController
                     ];
                     $billing_cycles = [
                         ['id'=>'0','name'=>'One Time'],
-                        ['id'=>'1','name'=>'Monthly'],
+                        ['id'=>'1','name'=>'Annually'],
                         ['id'=>'3','name'=>'Quarterly'],
                         ['id'=>'6','name'=>'Semi-Annually'],
-                        ['id'=>'12','name'=>'Annually']
+                        ['id'=>'12','name'=>'Monthly']
                     ];
                     $permissions = [
                         ['name'=>'MENU'],
