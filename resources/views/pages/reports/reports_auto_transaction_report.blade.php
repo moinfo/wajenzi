@@ -11,7 +11,7 @@
                     <div class="block-content">
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
-                                @include('components.headed_paper')
+{{--                                @include('components.headed_paper')--}}
                                 <br/>
                                 <div class="class card-box">
                                     <form  name="collection_search"  id="filter-form" method="post" autocomplete="off">
@@ -48,32 +48,6 @@
                         </div>
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                             <tr>
-                                <th class="text-center" colspan="6">BANK WITHDRAW REPORT</th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" >#</th>
-                                <th>Bank Name</th>
-                                <th>Amount</th>
-                            </tr>
-                            <?php
-                            $withdraw_total = 0;
-                            ?>
-                            @foreach($withdraws as $withdraw)
-                                <?php
-                                $withdraw_total += $withdraw->amount;
-                                ?>
-                                <tr>
-                                    <td>{{$loop->iteration}}</td>
-                                    <td>{{$withdraw->name}}</td>
-                                    <td class="text-right">{{number_format($withdraw->amount)}}</td>
-                                </tr>
-                            @endforeach
-                            <tr>
-                                <th colspan="2" class="text-right">Total Withdraw</th>
-                                <th class="text-right"><b>{{number_format($withdraw_total)}}</b></th>
-                            </tr>
-
-                            <tr>
                                 <th class="text-center" colspan="6">TRANSACTION REPORT</th>
                             </tr>
                             <tr>
@@ -82,7 +56,7 @@
                                 <th>Amount</th>
                             </tr>
                             <?php
-                            $transaction_total = $transaction_muhidini+$transaction_kassim+$transaction_leruma;
+                            $transaction_total = $transaction_muhidini+$transaction_kassim+$transaction_leruma+$transaction_whitestar;
                             ?>
 
                             <tr>
@@ -101,147 +75,31 @@
                                 <td class="text-right">{{number_format($transaction_leruma)}}</td>
                             </tr>
                             <tr>
+                                <td>3</td>
+                                <td>WHITESTAR</td>
+                                <td class="text-right">{{number_format($transaction_whitestar)}}</td>
+                            </tr>
+                            <tr>
                                 <th colspan="2" class="text-right">Total Transactions</th>
                                 <th class="text-right"><b>{{number_format($transaction_total)}}</b></th>
                             </tr>
-                            <tr>
-                                <th colspan="2" class="text-right">Total Transactions + Total Withdraw</th>
-                                <th class="text-right"><b>{{number_format($transaction_total+$withdraw_total)}}</b></th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" colspan="6">BANK DEPOSIT REPORT</th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" >#</th>
-                                <th>Bank Name</th>
-                                <th>Amount</th>
-                            </tr>
-                            <?php
-                            $deposit_total = 0;
-                            ?>
-                            @foreach($deposits as $deposit)
-                                <?php
-                                $deposit_total += $deposit->amount;
-                                ?>
-                                <tr>
-                                    <td>{{$loop->iteration}}</td>
-                                    <td>{{$deposit->name}}</td>
-                                    <td class="text-right">{{number_format($deposit->amount)}}</td>
-                                </tr>
-                            @endforeach
-                            <tr>
-                                <th colspan="2" class="text-right">Total Deposit</th>
-                                <th class="text-right"><b>{{number_format($deposit_total)}}</b></th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" colspan="6">LOAN REPORT</th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" >#</th>
-                                <th>Staff Name</th>
-                                <th>Amount</th>
-                            </tr>
-                            <?php
-                            $loan_total = 0;
-                            ?>
-                            @foreach($loans as $loan)
-                                <?php
-                                $loan_total += $loan->amount;
-                                ?>
-                                <tr>
-                                    <td>{{$loop->iteration}}</td>
-                                    <td>{{$loan->name}}</td>
-                                    <td class="text-right">{{number_format($loan->amount)}}</td>
-                                </tr>
-                            @endforeach
-                            <tr>
-                                <th colspan="2" class="text-right">Total Loan</th>
-                                <th class="text-right"><b>{{number_format($loan_total)}}</b></th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" colspan="6">ADVANCE SALARY REPORT</th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" >#</th>
-                                <th>staff Name</th>
-                                <th>Amount</th>
-                            </tr>
-                            <?php
-                            $advance_salary_total = 0;
-                            ?>
-                            @foreach($advance_salaries as $advance_salary)
-                                <?php
-                                $advance_salary_total += $advance_salary->amount;
-                                ?>
-                                <tr>
-                                    <td>{{$loop->iteration}}</td>
-                                    <td>{{$advance_salary->name}}</td>
-                                    <td class="text-right">{{number_format($advance_salary->amount)}}</td>
-                                </tr>
-                            @endforeach
-                            <tr>
-                                <th colspan="2" class="text-right">Total Advance Salary</th>
-                                <th class="text-right"><b>{{number_format($advance_salary_total)}}</b></th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" colspan="6">NET SALARY REPORT</th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" >#</th>
-                                <th>Staff Name</th>
-                                <th>Amount</th>
-                            </tr>
-                            <?php
-                            $payroll_total = 0;
-                            ?>
-                            @foreach($payrolls as $payroll)
-                                <?php
-                                $payroll_total += $payroll->amount;
-                                ?>
-                                <tr>
-                                    <td>{{$loop->iteration}}</td>
-                                    <td>{{$payroll->name}}</td>
-                                    <td class="text-right">{{number_format($payroll->amount)}}</td>
-                                </tr>
-                            @endforeach
-                            <tr>
-                                <th colspan="2" class="text-right">Total Net Salary</th>
-                                <th class="text-right"><b>{{number_format($payroll_total)}}</b></th>
-                            </tr>
-                            <tr>
-                                <th class="text-center" colspan="6">ALLOWANCE REPORT</th>
-                            </tr>
-                            <?php
-                            $allowance_total = 0;
-                            ?>
-                            @foreach($allowances as $allowance)
-                                <?php
-                                $allowance_total += $allowance->amount;
-                                ?>
-                                <tr>
-                                    <td>{{$loop->iteration}}</td>
-                                    <td>{{$allowance->name}}</td>
-                                    <td class="text-right">{{number_format($allowance->amount)}}</td>
-                                </tr>
-                            @endforeach
-                            <tr>
-                                <th colspan="2" class="text-right">Total Allowances</th>
-                                <th class="text-right"><b>{{number_format($allowance_total)}}</b></th>
-                            </tr>
+
+
+
                             <tr>
                                 <th class="text-center" colspan="6">PAYMENT REPORT</th>
                             </tr>
                             <tr>
                                 <th class="text-center" >#</th>
-                                <th>Supplier Name</th>
+                                <th>Bonge Supplier Name</th>
                                 <th>Amount</th>
                             </tr>
                             <?php
-                            $payment_total = 0;
+                            $payment_total_bonge = 0;
                             ?>
                             @foreach($bonge_payments as $payment)
                                 <?php
-                                $payment_total += $payment->dr;
+                                $payment_total_bonge += $payment->dr;
                                 ?>
                                 <tr>
                                     <td>{{$loop->iteration}}</td>
@@ -251,19 +109,38 @@
                             @endforeach
                             <tr>
                                 <th colspan="2" class="text-right">Total Payments</th>
-                                <th class="text-right"><b>{{number_format($payment_total  ?? 0)}}</b></th>
+                                <th class="text-right"><b>{{number_format(($payment_total_bonge)  ?? 0)}}</b></th>
                             </tr>
+
                             <tr>
-                                <th colspan="2" class="text-right">Total Payments + Total Deposit + Total Loan + Total Advance + Total Net</th>
-                                <th class="text-right"><b>{{number_format(($payment_total+$deposit_total+$loan_total+$advance_salary_total+$payroll_total+$allowance_total)  ?? 0)}}</b></th>
+                                <th class="text-center" >#</th>
+                                <th>Whitestar Supplier Name</th>
+                                <th>Amount</th>
+                            </tr>
+                            <?php
+                            $payment_total_whitestar = 0;
+                            ?>
+                            @foreach($whitestar_payments as $payment)
+                                <?php
+                                $payment_total_whitestar += $payment->dr;
+                                ?>
+                                <tr>
+                                    <td>{{$loop->iteration}}</td>
+                                    <td>{{$payment->first_name_client .' '. $payment->last_name_client}}</td>
+                                    <td class="text-right">{{number_format($payment->dr  ?? 0)}}</td>
+                                </tr>
+                            @endforeach
+                            <tr>
+                                <th colspan="2" class="text-right">Total Payments</th>
+                                <th class="text-right"><b>{{number_format(($payment_total_whitestar)  ?? 0)}}</b></th>
                             </tr>
                             <tr>
                                 <th colspan="2" class="text-right">Total All Transactions - Total All Payments</th>
-                                <th class="text-right"><b>{{number_format(( ($transaction_total+$withdraw_total)  ?? 0 )-(($payment_total+$deposit_total+$loan_total+$advance_salary_total+$payroll_total+$allowance_total)  ?? 0))}}</b></th>
+                                <th class="text-right"><b>{{number_format(( ($transaction_total)  ?? 0 )-(($payment_total_bonge+$payment_total_whitestar)  ?? 0))}}</b></th>
                             </tr>
                             <tr>
                                 <th colspan="2" class="text-right">Balance Increments</th>
-                                <th class="text-right"><b>{{number_format(($transaction_muhidini_all_time+$transaction_kassim_all_time+$transaction_leruma_all_time+$withdraws_all_time)-($bonge_payment_all_time+$deposits_all_time+$loans_all_time+$advance_salaries_all_time+$payrolls_all_time+$allowances_all_time))}}</b></th>
+                                <th class="text-right"><b>{{number_format(($transaction_muhidini_all_time+$transaction_kassim_all_time+$transaction_leruma_all_time)-($bonge_payment_all_time+$white_payment_all_time))}}</b></th>
                             </tr>
                         </table>
                     </div>

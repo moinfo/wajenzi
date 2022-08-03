@@ -74,25 +74,29 @@ class ReportsController extends Controller
         $transaction_muhidini = Report::getTotalTransactionMuhidini($start_date,$end_date);
         $transaction_kassim = Report::getTotalTransactionKassim($start_date,$end_date);
         $transaction_leruma = Report::getTotalTransactionLeruma($start_date,$end_date);
+        $transaction_whitestar = Report::getTotalTransactionWhitestar($start_date,$end_date);
         $bonge_payments = Report::getSupplierDailyDebit($start_date,$end_date);
+        $whitestar_payments = Report::getSupplierDailyDebitWhitestar($start_date,$end_date);
 
         $first_start_date = '2022-04-01';
         $transaction_muhidini_all_time = Report::getTotalTransactionMuhidini($first_start_date,$end_date);
         $transaction_kassim_all_time = Report::getTotalTransactionKassim($first_start_date,$end_date);
         $transaction_leruma_all_time = Report::getTotalTransactionLeruma($first_start_date,$end_date);
+        $transaction_whitestar_all_time = Report::getTotalTransactionWhitestar($first_start_date,$end_date);
         $bonge_payment_all_time = Report::getSupplierDailyDebitAllTime($first_start_date,$end_date);
+        $white_payment_all_time = Report::getSupplierDailyDebitAllTimeWhiteStar($first_start_date,$end_date);
 
 
-        $withdraws_all_time = Report::getTotalWithDraw($first_start_date,$end_date);
-        $deposits_all_time = Report::getTotalBankDepositForSpecificDate($first_start_date,$end_date);
+        $withdraws_all_time = 0;
+        $deposits_all_time = 0;
         $loans_all_time = Report::getTotalLoan($first_start_date,$end_date);
         $advance_salaries_all_time = Report::getTotalAdvanceSalary($first_start_date,$end_date);
         $payrolls_all_time = Report::getTotalNetSalary($first_start_date,$end_date);
         $allowances_all_time = Report::getTotalAllowance($first_start_date,$end_date);
 
 //            DB::connection('mysql2')->select("Select * FROM ospos_items");
-        $withdraws = DB::select("SELECT c.name, SUM(s.amount) AS amount FROM bank_withdraws s JOIN banks c ON (s.bank_id = c.id) WHERE s.status = 'APPROVED' AND s.date BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.bank_id");
-        $deposits = DB::select("SELECT c.name, SUM(s.amount) AS amount FROM bank_deposits s JOIN banks c ON (s.bank_id = c.id) WHERE s.status = 'APPROVED' AND s.date BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.bank_id");
+        $withdraws = 0;
+        $deposits = 0;
         $loans = DB::select("SELECT c.name, SUM(s.amount) AS amount FROM loans s JOIN users c ON (s.staff_id = c.id) WHERE s.status = 'APPROVED' AND s.date BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.staff_id");
         $advance_salaries = DB::select("SELECT c.name, SUM(s.amount) AS amount FROM advance_salaries s JOIN users c ON (s.staff_id = c.id) WHERE s.status = 'APPROVED' AND s.date BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.staff_id");
         $payrolls = DB::select("SELECT c.name, SUM(s.net) AS amount FROM payroll_records s JOIN users c ON (s.staff_id = c.id) WHERE s.status = 'APPROVED' AND DATE(s.created_at) BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.staff_id");
@@ -102,11 +106,15 @@ class ReportsController extends Controller
 
         $data = [
             'payrolls' => $payrolls,
+            'whitestar_payments' => $whitestar_payments,
             'payrolls_all_time' => $payrolls_all_time,
+            'white_payment_all_time' => $white_payment_all_time,
             'transaction_muhidini' => $transaction_muhidini,
+            'transaction_whitestar' => $transaction_whitestar,
             'transaction_kassim' => $transaction_kassim,
             'transaction_leruma' => $transaction_leruma,
             'transaction_muhidini_all_time' => $transaction_muhidini_all_time,
+            'transaction_whitestar_all_time' => $transaction_whitestar_all_time,
             'transaction_kassim_all_time' => $transaction_kassim_all_time,
             'transaction_leruma_all_time' => $transaction_leruma_all_time,
             'allowances' => $allowances,
