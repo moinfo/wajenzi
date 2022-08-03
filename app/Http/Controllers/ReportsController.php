@@ -10,6 +10,7 @@ use App\Models\Expense;
 use App\Models\ExpensesCategory;
 use App\Models\ExpensesSubCategory;
 use App\Models\Gross;
+use App\Models\Report;
 use App\Models\Staff;
 use App\Models\Supervisor;
 use App\Models\Supplier;
@@ -33,6 +34,7 @@ class ReportsController extends Controller
             ['name'=>'Purchases By Supplier Report', 'route'=>'reports_purchases_by_supplier_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'General Report', 'route' => 'reports_general_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Auto Transaction Report', 'route' => 'reports_auto_transaction_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Business Position Details Report', 'route' => 'reports_business_position_details_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Credit Report', 'route' => 'reports_supplier_credit_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Transaction Movement Report', 'route' => 'reports_transaction_movement_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -63,6 +65,66 @@ class ReportsController extends Controller
             'reports' => $reports
         ];
         return view('pages.reports.reports_index')->with($data);
+    }
+
+
+    public function auto_transaction_report(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $transaction_muhidini = Report::getTotalTransactionMuhidini($start_date,$end_date);
+        $transaction_kassim = Report::getTotalTransactionKassim($start_date,$end_date);
+        $transaction_leruma = Report::getTotalTransactionLeruma($start_date,$end_date);
+        $bonge_payments = Report::getSupplierDailyDebit($start_date,$end_date);
+
+        $first_start_date = '2022-04-01';
+        $transaction_muhidini_all_time = Report::getTotalTransactionMuhidini($first_start_date,$end_date);
+        $transaction_kassim_all_time = Report::getTotalTransactionKassim($first_start_date,$end_date);
+        $transaction_leruma_all_time = Report::getTotalTransactionLeruma($first_start_date,$end_date);
+        $bonge_payment_all_time = Report::getSupplierDailyDebitAllTime($first_start_date,$end_date);
+
+
+        $withdraws_all_time = Report::getTotalWithDraw($first_start_date,$end_date);
+        $deposits_all_time = Report::getTotalBankDepositForSpecificDate($first_start_date,$end_date);
+        $loans_all_time = Report::getTotalLoan($first_start_date,$end_date);
+        $advance_salaries_all_time = Report::getTotalAdvanceSalary($first_start_date,$end_date);
+        $payrolls_all_time = Report::getTotalNetSalary($first_start_date,$end_date);
+        $allowances_all_time = Report::getTotalAllowance($first_start_date,$end_date);
+
+//            DB::connection('mysql2')->select("Select * FROM ospos_items");
+        $withdraws = DB::select("SELECT c.name, SUM(s.amount) AS amount FROM bank_withdraws s JOIN banks c ON (s.bank_id = c.id) WHERE s.status = 'APPROVED' AND s.date BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.bank_id");
+        $deposits = DB::select("SELECT c.name, SUM(s.amount) AS amount FROM bank_deposits s JOIN banks c ON (s.bank_id = c.id) WHERE s.status = 'APPROVED' AND s.date BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.bank_id");
+        $loans = DB::select("SELECT c.name, SUM(s.amount) AS amount FROM loans s JOIN users c ON (s.staff_id = c.id) WHERE s.status = 'APPROVED' AND s.date BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.staff_id");
+        $advance_salaries = DB::select("SELECT c.name, SUM(s.amount) AS amount FROM advance_salaries s JOIN users c ON (s.staff_id = c.id) WHERE s.status = 'APPROVED' AND s.date BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.staff_id");
+        $payrolls = DB::select("SELECT c.name, SUM(s.net) AS amount FROM payroll_records s JOIN users c ON (s.staff_id = c.id) WHERE s.status = 'APPROVED' AND DATE(s.created_at) BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.staff_id");
+        $allowances = DB::select("SELECT c.name, SUM(s.allowance) AS amount FROM payroll_records s JOIN users c ON (s.staff_id = c.id) WHERE s.status = 'APPROVED' AND DATE(s.created_at) BETWEEN '$start_date' AND '$end_date' GROUP BY c.id,s.staff_id");
+        $transactions = DB::select("SELECT s.name, SUM(c.amount) AS amount FROM supervisors s JOIN collections c ON (c.supervisor_id = s.id) WHERE c.status = 'APPROVED' AND c.date BETWEEN '$start_date' AND '$end_date' GROUP BY s.id,c.supervisor_id");
+        $payments = DB::select("SELECT s.name, SUM(c.amount) AS amount FROM suppliers s JOIN transaction_movements c ON (c.supplier_id = s.id) WHERE c.status = 'APPROVED' AND c.date BETWEEN '$start_date' AND '$end_date' GROUP BY s.id,c.supplier_id");
+
+        $data = [
+            'payrolls' => $payrolls,
+            'payrolls_all_time' => $payrolls_all_time,
+            'transaction_muhidini' => $transaction_muhidini,
+            'transaction_kassim' => $transaction_kassim,
+            'transaction_leruma' => $transaction_leruma,
+            'transaction_muhidini_all_time' => $transaction_muhidini_all_time,
+            'transaction_kassim_all_time' => $transaction_kassim_all_time,
+            'transaction_leruma_all_time' => $transaction_leruma_all_time,
+            'allowances' => $allowances,
+            'advance_salaries' => $advance_salaries,
+            'loans' => $loans,
+            'withdraws' => $withdraws,
+            'deposits' => $deposits,
+            'allowances_all_time' => $allowances_all_time,
+            'advance_salaries_all_time' => $advance_salaries_all_time,
+            'loans_all_time' => $loans_all_time,
+            'withdraws_all_time' => $withdraws_all_time,
+            'deposits_all_time' => $deposits_all_time,
+            'payments' => $payments,
+            'transactions' => $transactions,
+            'bonge_payments' => $bonge_payments,
+            'bonge_payment_all_time' => $bonge_payment_all_time
+        ];
+        return view('pages.reports.reports_auto_transaction_report')->with($data);
     }
 
     public function general_report(Request $request){
