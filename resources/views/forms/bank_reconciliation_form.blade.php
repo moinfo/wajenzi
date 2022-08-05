@@ -4,7 +4,7 @@
         @csrf
         <div class="form-group">
             <label for="example-nf-email">Supplier Name</label>
-            <select name="supplier_id" id="supplier_id" class="form-control" required>
+            <select name="supplier_id" id="supplier_id" class="form-control select2" required>
 
                 <option value="">Select Supplier</option>
 
@@ -29,7 +29,7 @@
         </div>
         <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
-            <select name="efd_id" id="input-ifd-id" class="form-control" required>
+            <select name="efd_id" id="input-ifd-id" class="form-control select2" required>
 
                 <option value="">Select Efd</option>
 
@@ -127,6 +127,13 @@
 <script>
     $('.datepicker').datepicker({
         format: 'yyyy-mm-dd'
+    });
+    $(".select2").select2({
+        theme: "bootstrap",
+        placeholder: "Choose",
+        width: 'auto',
+        dropdownAutoWidth: true,
+        allowClear: true,
     });
 </script>
 

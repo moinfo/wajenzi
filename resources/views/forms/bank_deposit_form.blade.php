@@ -6,7 +6,7 @@ $document_id = \App\Classes\Utility::getLastId('BankDeposit')+1;
         @csrf
         <div class="form-group">
             <label for="example-nf-bank" class="control-label required">Bank</label>
-            <select name="bank_id" id="input-bank-id" class="form-control" required>
+            <select name="bank_id" id="input-bank-id" class="form-control select2" required>
 
                 <option value="">Select Bank</option>
                 @foreach ($banks as $bank)
@@ -75,5 +75,12 @@ $document_id = \App\Classes\Utility::getLastId('BankDeposit')+1;
 <script>
     $('.datepicker').datepicker({
         format: 'yyyy-mm-dd'
+    });
+    $(".select2").select2({
+        theme: "bootstrap",
+        placeholder: "Choose",
+        width: 'auto',
+        dropdownAutoWidth: true,
+        allowClear: true,
     });
 </script>

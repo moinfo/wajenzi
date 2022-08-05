@@ -23,7 +23,7 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-email">From</label>
-            <select name="from" id="from" class="form-control" required>
+            <select name="from" id="from" class="form-control select2" required>
 
 
                 @foreach ($kassim_supplier as $supplier)
@@ -34,7 +34,7 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-email">To</label>
-            <select name="to" id="to" class="form-control" required>
+            <select name="to" id="to" class="form-control select2" required>
 
                 <option value="">Select Supplier</option>
 
@@ -59,7 +59,7 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
-            <select name="efd_id" id="input-ifd-id" class="form-control" required>
+            <select name="efd_id" id="input-ifd-id" class="form-control select2" required>
 
                 <option value="">Select Efd</option>
 
@@ -177,6 +177,13 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
 <script>
     $('.datepicker').datepicker({
         format: 'yyyy-mm-dd'
+    });
+    $(".select2").select2({
+        theme: "bootstrap",
+        placeholder: "Choose",
+        width: 'auto',
+        dropdownAutoWidth: true,
+        allowClear: true,
     });
 </script>
 
