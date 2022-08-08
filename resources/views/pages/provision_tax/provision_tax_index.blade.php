@@ -55,6 +55,7 @@
                                     <th>Date</th>
                                     <th>Description</th>
                                     <th>Amount</th>
+                                    <th>Bank</th>
                                     <th>Attachment</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
@@ -77,6 +78,7 @@
                                         <td>{{ $provision_tax->date }}</td>
                                         <td class="font-w600">{{ $provision_tax->description }}</td>
                                         <td class="text-right">{{ number_format($provision_tax->amount, 2) }}</td>
+                                        <td>{{ $provision_tax->bank->name ?? null}}</td>
                                         <td class="text-center">
                                             @if($provision_tax->file != null)
                                                 <a href="{{ url("$provision_tax->file") }}">Attachment</a>

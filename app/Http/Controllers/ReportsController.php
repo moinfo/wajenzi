@@ -10,6 +10,7 @@ use App\Models\Expense;
 use App\Models\ExpensesCategory;
 use App\Models\ExpensesSubCategory;
 use App\Models\Gross;
+use App\Models\ProvisionTax;
 use App\Models\Report;
 use App\Models\Staff;
 use App\Models\Supervisor;
@@ -60,6 +61,7 @@ class ReportsController extends Controller
             ['name' => 'Bank Report', 'route' => 'reports_bank_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Bank Deposit Report', 'route' => 'reports_supplier_bank_deposit_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Statement Report', 'route' => 'reports_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Provision Report', 'route' => 'reports_provision_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
@@ -329,6 +331,12 @@ class ReportsController extends Controller
         $statements = DB::select("select id, date, description, debit, credit, sum( coalesce(debit, 0) - coalesce(credit, 0) ) over (order by date) as balance from ((select id, date,s.description as description, s.amount as debit, null as credit from supplier_receivings s WHERE s.supplier_id = '$supplier_id' ) union all (select id, date, t.description as description,  null as debit, t.amount from transaction_movements t WHERE t.supplier_id = '$supplier_id')) b WHERE b.date BETWEEN '$start_date' AND '$end_date' order by b.date ;");
         $systems = System::all();
         return view('pages.reports.reports_supplier_credit_report',compact('statements','systems'));
+    }
+    public function provision_report(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-01-01');
+        $end_date = $request->input('end_date') ?? date('Y-12-t');
+        $provisions = ProvisionTax::whereBetween('date',[$start_date,$end_date])->get();
+        return view('pages.reports.reports_provision_report',compact('provisions'));
     }
     public function deduction_report(Request $request){
         $staffs = Staff::getList();

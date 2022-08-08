@@ -1,7 +1,16 @@
 <div class="block-content">
     <form method="post" enctype="multipart/form-data">
         @csrf
+        <div class="form-group">
+            <label for="example-nf-details" class="control-label required">Bank</label>
+            <select name="bank_id" id="input-bank-id" class="form-control" required>
 
+                <option value="">Select Bank</option>
+                @foreach ($banks as $bank)
+                    <option value="{{ $bank['id'] }}" {{ ( $bank['id'] == $object->bank_id) ? 'selected' : '' }}> {{ $bank['name'] }} </option>
+                @endforeach
+            </select>
+        </div>
         <div class="form-group">
             <label for="example-nf-amount" class="control-label required">Amount</label>
             <input type="number" step=".01" class="form-control amount" id="input-amount" name="amount"
