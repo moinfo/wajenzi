@@ -53,6 +53,7 @@
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
+                                    <th>Debit Number</th>
                                     <th>Description</th>
                                     <th>Amount</th>
                                     <th>Bank</th>
@@ -77,6 +78,7 @@
                                         </td>
                                         <td>{{ $provision_tax->date }}</td>
                                         <td class="font-w600">{{ $provision_tax->description }}</td>
+                                        <td class="font-w600">{{ $provision_tax->debit_number }}</td>
                                         <td class="text-right">{{ number_format($provision_tax->amount, 2) }}</td>
                                         <td>{{ $provision_tax->bank->name ?? null}}</td>
                                         <td class="text-center">

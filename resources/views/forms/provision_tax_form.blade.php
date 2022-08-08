@@ -12,6 +12,11 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-debit_number" class="control-label required">Debit Number</label>
+            <input type="number"  class="form-control" id="input-debit_number" name="debit_number"
+                   value="{{ $object->debit_number ?? '' }}" placeholder="Debit Number" required>
+        </div>
+        <div class="form-group">
             <label for="example-nf-amount" class="control-label required">Amount</label>
             <input type="number" step=".01" class="form-control amount" id="input-amount" name="amount"
                    value="{{ $object->amount ?? '' }}" placeholder="Total Amount" required>

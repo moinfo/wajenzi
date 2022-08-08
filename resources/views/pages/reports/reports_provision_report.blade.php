@@ -52,6 +52,7 @@
                                     <th>Attachment</th>
                                     <th>Date</th>
                                     <th>Description</th>
+                                    <th>Debit Number</th>
                                     <th>Amount</th>
                                     <th>Bank</th>
                                 </tr>
@@ -73,6 +74,7 @@
                                         </td>
                                         <td>{{$provision->date}}</td>
                                         <td>{{$provision->description}}</td>
+                                        <td>{{$provision->debit_number}}</td>
                                         <td  class="text-right">{{number_format($provision->amount)}}</td>
                                         <td>{{$provision->bank->name ?? null}}</td>
                                     </tr>
@@ -80,6 +82,7 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
