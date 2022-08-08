@@ -13,6 +13,7 @@ use App\Models\Gross;
 use App\Models\ProvisionTax;
 use App\Models\Report;
 use App\Models\Staff;
+use App\Models\SubCategory;
 use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
@@ -62,6 +63,7 @@ class ReportsController extends Controller
             ['name' => 'Supplier Bank Deposit Report', 'route' => 'reports_supplier_bank_deposit_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Statement Report', 'route' => 'reports_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Provision Report', 'route' => 'reports_provision_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Statutory Payment Report', 'route' => 'reports_statutory_payment_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
@@ -168,6 +170,15 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_supervisor_report')->with($data);
+    }
+
+    public function statutory_payment_report(Request $request){
+//        $suppliers = Supplier::all();
+        $sub_categories = SubCategory::all();
+        $data = [
+            'sub_categories' => $sub_categories
+        ];
+        return view('pages.reports.reports_statutory_payment_report')->with($data);
     }
     public function total_credit_suppliers_report(Request $request){
         $suppliers_with_bonge = Supplier::where('supplier_depend_on_system','=','BONGE')->where('id','!=','88')->where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
