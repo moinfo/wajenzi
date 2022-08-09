@@ -22,12 +22,14 @@ class PayrollRecord extends Model
         return PayrollRecord::select([DB::raw("SUM(net) as total_amount, DATE(created_at) as date")])->Where('status','APPROVED')->WhereBetween(DB::raw('date(created_at)'),[$start_date,$end_date])->get()->first()['total_amount'] ?? 0;
     }
 
-    public function getCurrentPayroll($start_date, $end_date)
+    public static function getPayrollRecord($start_date,$end_date)
     {
-        return  $records = PayrollRecord::
-        whereDate('created_at','>=',$start_date)
-            ->whereDate('created_at','<=',$end_date)
-            ->select([DB::raw("*")])->get();
+        return PayrollRecord::whereBetween('date',[$start_date,$end_date])->get()->first();
+    }
+
+    public function getCurrentPayroll($month, $year)
+    {
+        return  $records = PayrollRecord::where('month',$month)->where('year',$year)->select([DB::raw("*")])->get();
     }
 
 
@@ -39,12 +41,35 @@ class PayrollRecord extends Model
             ->get()->first()['basic_salary'];
     }
 
+    public static function getTotalAllowance($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(allowance) as allowance")])
+            ->whereDate('created_at','>=',$start_date)
+            ->whereDate('created_at','<=',$end_date)
+            ->get()->first()['allowance'];
+    }
+    public static function getTotalNet($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(net) as net")])
+            ->whereDate('created_at','>=',$start_date)
+            ->whereDate('created_at','<=',$end_date)
+            ->get()->first()['net'];
+    }
+
     public static function getTotalSDL($start_date, $end_date)
     {
         return PayrollRecord::select([DB::raw("SUM(sdl) as sdl")])
             ->whereDate('created_at','>=',$start_date)
             ->whereDate('created_at','<=',$end_date)
             ->get()->first()['sdl'];
+    }
+
+    public static function getTotalNSSF($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(employeePension) as employeePension")])
+            ->whereDate('created_at','>=',$start_date)
+            ->whereDate('created_at','<=',$end_date)
+            ->get()->first()['employeePension'];
     }
 
 }

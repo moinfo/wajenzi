@@ -22,6 +22,21 @@ class PayrollController extends Controller
             'payroll' => $payroll,
              'staffs' => $staffs
         ];
+        return view('pages.payroll.generate_payroll')->with($data);
+    }
+
+    public function payroll_view(Request $request,$month,$year)
+    {
+        if($this->handleCrud($request, 'Payroll')) {
+            return back();
+        }
+        $staffs = Staff::getList();
+        $payroll = Payroll::all();
+
+        $data = [
+            'payroll' => $payroll,
+             'staffs' => $staffs
+        ];
         return view('pages.payroll.payroll_index')->with($data);
     }
 

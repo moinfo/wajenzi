@@ -40,6 +40,10 @@
                     , "loanBalance": $(tr).find('td:eq(17)').text()
                     , "net": $(tr).find('td:eq(18)').text()
                     , "staff_id": $(tr).find('td:eq(19)').text()
+                    , "payroll_number": $(tr).find('td:eq(20)').text()
+                    , "month": $(tr).find('td:eq(21)').text()
+                    , "year": $(tr).find('td:eq(22)').text()
+                    , "date": $(tr).find('td:eq(23)').text()
                 }
             });
             TableData.shift();  // first row is the table header - so remove
@@ -82,8 +86,12 @@
     $start_date = $_POST['start_date'] ?? date('Y-m-01');
     $end_date = $_POST['end_date'] ?? date('Y-m-t');
     $payroll_record = new \App\Models\PayrollRecord();
-    $payroll_records = $payroll_record->getCurrentPayroll($start_date,$end_date);
-    $is_current_payroll_paid = \App\Models\Payroll::isCurrentPayrollPaid($start_date,$end_date);
+    $month =request()->route('month');
+    $year =request()->route('year');
+    $payroll_records = $payroll_record->getCurrentPayroll($month,$year);
+    $is_current_payroll_paid = \App\Models\Payroll::isCurrentPayrollPaid($month,$year);
+    $payroll_number =time();
+    $date = date("$year-$month-t");
     ?>
     <div class="main-container">
         <div class="content">
@@ -162,6 +170,10 @@
                                     <th class="text-right d-none"></th>
                                     <th class="text-right d-none"></th>
                                     <th class="text-right d-none"></th>
+                                    <th class="text-right d-none"></th>
+                                    <th class="text-right d-none"></th>
+                                    <th class="text-right d-none"></th>
+                                    <th class="text-right d-none"></th>
                                     <th>Basic Salary</th>
                                     <th>Allowance</th>
                                     <th>Gross Pay</th>
@@ -180,6 +192,10 @@
                                     <th>Loan Balance</th>
                                     <th>NET</th>
                                     <th class="d-none">ID</th>
+                                    <th class="d-none">Payroll Number</th>
+                                    <th class="d-none">Month</th>
+                                    <th class="d-none">Year</th>
+                                    <th class="d-none">Date</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -343,6 +359,10 @@
                                             <td class="text-right d-none">{{($current_loan - $current_loan_deduction),2,'.',','}}</td>
                                             <td class="text-right d-none">{{$net,2,'.',','}}</td>
                                             <td class="text-right d-none">{{$staff_id}}</td>
+                                            <td class="text-right d-none">{{$payroll_number}}</td>
+                                            <td class="text-right d-none">{{$month}}</td>
+                                            <td class="text-right d-none">{{$year}}</td>
+                                            <td class="text-right d-none">{{$date}}</td>
                                             <td class="text-right">{{number_format($basic_salary)}}</td>
                                             <td class="text-right">{{number_format($allowance,2,'.',',')}}</td>
                                             <td class="text-right">{{number_format($gross_pay,2,'.',',')}}</td>
@@ -361,6 +381,10 @@
                                             <td class="text-right">{{number_format(($current_loan - $current_loan_deduction),2,'.',',')}}</td>
                                             <td class="text-right">{{number_format($net,2,'.',',')}}</td>
                                             <td class="text-right d-none">{{$staff_id}}</td>
+                                            <td class="text-right d-none">{{$payroll_number}}</td>
+                                            <td class="text-right d-none">{{$month}}</td>
+                                            <td class="text-right d-none">{{$year}}</td>
+                                            <td class="text-right d-none">{{$date}}</td>
                                         </tr>
                                     @endforeach
                                 @else
@@ -423,6 +447,10 @@
                                             <td class="text-right d-none">{{($totalLoan - $loanDeduction),2,'.',','}}</td>
                                             <td class="text-right d-none">{{$net,2,'.',','}}</td>
                                             <td class="text-right d-none">{{$staff_id}}</td>
+                                            <td class="text-right d-none">{{$item->payroll_number}}</td>
+                                            <td class="text-right d-none">{{$item->month}}</td>
+                                            <td class="text-right d-none">{{$item->year}}</td>
+                                            <td class="text-right d-none">{{$item->date}}</td>
                                             <td class="text-right">{{number_format($basic_salary)}}</td>
                                             <td class="text-right">{{number_format($allowance,2,'.',',')}}</td>
                                             <td class="text-right">{{number_format($gross_pay,2,'.',',')}}</td>
@@ -441,6 +469,10 @@
                                             <td class="text-right">{{number_format($totalLoan - $loanDeduction),2,'.',','}}</td>
                                             <td class="text-right">{{number_format($net,2,'.',',')}}</td>
                                             <td class="text-right d-none">{{$staff_id}}</td>
+                                            <td class="text-right d-none">{{$item->payroll_number}}</td>
+                                            <td class="text-right d-none">{{$item->month}}</td>
+                                            <td class="text-right d-none">{{$item->year}}</td>
+                                            <td class="text-right d-none">{{$item->date}}</td>
                                         </tr>
                                     @endforeach
                                 @endif
@@ -450,6 +482,10 @@
                                 <tr>
                                     <th class="text-center" style="width: 100px;"></th>
                                     <th></th>
+                                    <th class="text-right d-none"></th>
+                                    <th class="text-right d-none"></th>
+                                    <th class="text-right d-none"></th>
+                                    <th class="text-right d-none"></th>
                                     <th class="text-right d-none"></th>
                                     <th class="text-right d-none"></th>
                                     <th class="text-right d-none"></th>
@@ -485,6 +521,10 @@
                                     <th class="text-right">{{number_format(($current_loan_total - $current_loan_deduction_total),2,'.',',')}}</th>
                                     <th class="text-right">{{number_format($net_total,2,'.',',')}}</th>
                                     <th class="d-none">ID</th>
+                                    <th class="d-none">Payroll Number</th>
+                                    <th class="d-none">Month</th>
+                                    <th class="d-none">Year</th>
+                                    <th class="d-none">Date</th>
                                 </tr>
                                 </tfoot>
                             </table>

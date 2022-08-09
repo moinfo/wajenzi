@@ -89,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::match(['get', 'post'], '/expenses', [App\Http\Controllers\ExpenseController::class, 'index'])->name('expenses');
     Route::match(['get', 'post'], '/expenses/{id}/{document_type_id}', [App\Http\Controllers\ExpenseController::class, 'expense'])->name('expense');
+    Route::match(['get', 'post'], '/payroll/payroll_view/{month}/{year}', [App\Http\Controllers\PayrollController::class, 'payroll_view'])->name('payroll_view');
     Route::match(['get', 'post'], '/expenses_search', [App\Http\Controllers\ExpenseController::class, 'search'])->name('expenses_search');
 
     Route::match(['get', 'post'], '/financial_charges', [App\Http\Controllers\FinancialChargeController::class, 'index'])->name('financial_charges');

@@ -10,11 +10,11 @@ class Payroll extends Model
 {
     use HasFactory;
 
-    public static function isCurrentPayrollPaid($start_date,$end_date)
+    public static function isCurrentPayrollPaid($month,$year)
     {
         $records = PayrollRecord::select([DB::raw("*")])
-            ->whereDate('created_at','>=',$start_date)
-            ->whereDate('created_at','<=',$end_date)
+            ->where('month',$month)
+            ->where('year',$year)
             ->get();
         if(count($records)){
             return true;
