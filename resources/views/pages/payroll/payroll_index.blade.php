@@ -91,7 +91,7 @@
     $payroll_records = $payroll_record->getCurrentPayroll($month,$year);
     $is_current_payroll_paid = \App\Models\Payroll::isCurrentPayrollPaid($month,$year);
     $payroll_number =time();
-    $date = date("$year-$month-t");
+    $date = date("$year-$month-28");
     ?>
     <div class="main-container">
         <div class="content">
