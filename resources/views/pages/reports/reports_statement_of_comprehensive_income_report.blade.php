@@ -53,6 +53,8 @@
                         $basic_salary_last = \App\Models\PayrollRecord::getTotalBasicSalary($start_date_last,$end_date_last) ?? 0;
                         $sdl_current = \App\Models\PayrollRecord::getTotalSDL($start_date,$end_date) ?? 0;
                         $sdl_last = \App\Models\PayrollRecord::getTotalSDL($start_date_last,$end_date_last) ?? 0;
+                        $nssf_current = \App\Models\PayrollRecord::getTotalNSSFEmployer($start_date,$end_date) ?? 0;
+                        $nssf_last = \App\Models\PayrollRecord::getTotalNSSFEmployer($start_date_last,$end_date_last) ?? 0;
                         $revenue_current = \App\Models\Sale::getTotalRevenue($start_date,$end_date) ?? 0;
                         $revenue_last = \App\Models\Sale::getTotalRevenue($start_date_last,$end_date_last) ?? 0;
                         $cost_of_sales_current = \App\Models\Sale::getCostOfSales($start_date,$end_date) ?? 0;
@@ -160,6 +162,11 @@
                                         <td class="text-right">{{number_format($sdl_last)}}</td>
                                     </tr>
                                     <tr>
+                                        <td>NSSF</td>
+                                        <td class="text-right"><a href="{{route('reports_annually_nssf_summary_report')}}">{{number_format($nssf_current)}}</a></td>
+                                        <td class="text-right">{{number_format($nssf_last)}}</td>
+                                    </tr>
+                                    <tr>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -203,7 +210,7 @@
                                     </tr>
                                     <tr>
                                         <td>  Profit from Operating Activities After Provision</td>
-                                      <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_provision_tax_current)}}</td>
+                                      <td class="text-right"><a href="{{route('reports_provision_report')}}">{{number_format($Profit_from_Operating_Activities_After_provision_tax_current)}}</a></td>
                                         <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_provision_tax_last)}}</td>
                                     </tr>
                                     <tr>
