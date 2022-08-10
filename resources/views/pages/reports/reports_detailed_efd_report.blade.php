@@ -59,11 +59,11 @@
                                     <th class="text-center" style="width: 100px;"></th>
                                     <th></th>
                                     @foreach($efds as $efd)
-                                    <th>Exempt</th>
-                                    <th>VAT</th>
-                                    <th>Turnover</th>
+                                        <th class="text-center">Exempt</th>
+                                        <th class="text-center">VAT</th>
+                                        <th class="text-center">Turnover</th>
                                     @endforeach
-                                    <th>Total</th>
+                                    <th class="text-center">Total</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -108,14 +108,22 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
+                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th>Date</th>
+                                    @foreach($efds as $efd)
+                                        <th colspan="3" class="text-center">{{$efd->name}}</th>
+                                    @endforeach
+                                    <th>Total</th>
+                                </tr>
+                                <tr>
                                     <th class="text-center" style="width: 100px;"></th>
                                     <th></th>
                                     @foreach($efds as $efd)
-                                        <th>Exempt</th>
-                                        <th>VAT</th>
-                                        <th>Turnover</th>
+                                        <th class="text-center">Exempt</th>
+                                        <th class="text-center">VAT</th>
+                                        <th class="text-center">Turnover</th>
                                     @endforeach
-                                    <th>Total</th>
+                                    <th class="text-center">Total</th>
                                 </tr>
                                     <tr>
                                         <td></td>
