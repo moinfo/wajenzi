@@ -37,11 +37,11 @@
                                     </td>
                                     <td class="font-w600">{{ $efd->name ?? null}}</td>
                                     <td class="font-w600">{{ $efd->system->name ?? null }}</td>
-                                    <td class="d-none d-sm-table-cell">{{$sellers}}</td>
+                                    <td class="d-none d-sm-table-cell">{{$sellers ?? null}}</td>
                                     <td class="text-center">
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit EFD"))
-                                                <button type="button" onclick="loadFormModal('settings_efd_form', {className: 'Efd', id: {{$efd->id}}}, 'Edit {{$efd->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                <button type="button" onclick="loadFormModal('settings_efd_form', {className: 'Efd', id: {{$efd->id}}}, 'Edit {{$efd->name ?? null}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
                                                 </button>
                                             @endif

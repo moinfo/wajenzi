@@ -51,7 +51,17 @@
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
                                     @foreach($efds as $efd)
-                                    <th>{{$efd->name}}</th>
+                                    <th colspan="3" class="text-center">{{$efd->name}}</th>
+                                    @endforeach
+                                    <th>Total</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-center" style="width: 100px;"></th>
+                                    <th></th>
+                                    @foreach($efds as $efd)
+                                    <th>Exempt</th>
+                                    <th>VAT</th>
+                                    <th>Turnover</th>
                                     @endforeach
                                     <th>Total</th>
                                 </tr>
@@ -75,8 +85,13 @@
                                         @php
                                             $efd_id = $efd->id;
                                             $sales = $sale->getTotalTurnover($date,$date,$efd_id);
+                                            $exempt = $sale->getTotalExempt($date,$date,$efd_id);
+                                            $vat= $sale->getTotalTax($date,$date,$efd_id);
+                                            $net= $sale->getTotalNet($date,$date,$efd_id);
                                             $key_name = 'efd_id';
                                         @endphp
+                                    <td class="text-right">{{number_format($exempt)}}</td>
+                                    <td class="text-right">{{number_format($vat+$net)}}</td>
                                     <td class="text-right">
                                         <a onclick="loadFormModal('efd_per_day_form', {className: 'Sale', date_find:'{{$date}}',  key_name:'{{$key_name}}', id: {{$efd_id}} }, '{{$efd->name}} EFD For {{$date}}', 'modal-lg');"
                                            class=" js-tooltip-enabled"
@@ -99,7 +114,12 @@
                                             @php
                                                 $efd_id = $efd->id;
                                                 $sales = $sale->getTotalTurnover($start_date,$end_date,$efd_id);
+                                                $exempt = $sale->getTotalExempt($start_date,$end_date,$efd_id);
+                                            $vat= $sale->getTotalTax($start_date,$end_date,$efd_id);
+                                            $net= $sale->getTotalNet($start_date,$end_date,$efd_id);
                                             @endphp
+                                            <td class="text-right">{{number_format($exempt)}}</td>
+                                            <td class="text-right">{{number_format($vat+$net)}}</td>
                                             <td class="text-right">{{number_format($sales)}}</td>
                                         @endforeach
                                         @php

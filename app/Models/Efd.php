@@ -35,7 +35,7 @@ class Efd extends Model
         return DB::connection('mysql4')->table('leruma.ospos_supervisors')
             ->where('deleted', '0')
             ->where('id', $seller)
-            ->get()->first()->name;
+            ->get()->first()->name ?? '';
     }
 
 
