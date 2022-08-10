@@ -9,6 +9,7 @@ use App\Models\Efd;
 use App\Models\Expense;
 use App\Models\ExpensesCategory;
 use App\Models\ExpensesSubCategory;
+use App\Models\FinancialChargeCategory;
 use App\Models\Gross;
 use App\Models\ProvisionTax;
 use App\Models\Report;
@@ -65,11 +66,161 @@ class ReportsController extends Controller
             ['name' => 'Statement Report', 'route' => 'reports_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Provision Report', 'route' => 'reports_provision_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Statutory Payment Report', 'route' => 'reports_statutory_payment_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Sales Summary Report', 'route' => 'reports_annually_sales_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Purchases Summary Report', 'route' => 'reports_annually_purchases_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Expenses Summary Report', 'route' => 'reports_annually_expenses_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Expense Sub Categories Summary Report', 'route' => 'reports_annually_expense_sub_categories_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Financial Charges Summary Report', 'route' => 'reports_annually_financial_charges_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Salaries and Wages Summary Report', 'route' => 'reports_annually_salaries_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually SDL Summary Report', 'route' => 'reports_annually_sdl_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Advance Salary Summary Report', 'route' => 'reports_annually_advance_salary_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Allowance Summary Report', 'route' => 'reports_annually_allowance_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually HESLB Summary Report', 'route' => 'reports_annually_heslb_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Net Salary Summary Report', 'route' => 'reports_annually_net_salary_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually NHIF Summary Report', 'route' => 'reports_annually_nhif_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually NSSF Summary Report', 'route' => 'reports_annually_nssf_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually PAYE Summary Report', 'route' => 'reports_annually_paye_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually WCF Summary Report', 'route' => 'reports_annually_wcf_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
         ];
         return view('pages.reports.reports_index')->with($data);
+    }
+
+    public function annually_advance_salary_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_advance_salary_summary_report')->with($data);
+    }
+
+    public function annually_allowance_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_allowance_summary_report')->with($data);
+    }
+
+    public function annually_heslb_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_heslb_summary_report')->with($data);
+    }
+
+    public function annually_net_salary_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_net_salary_summary_report')->with($data);
+    }
+
+    public function annually_nhif_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_nhif_summary_report')->with($data);
+    }
+
+    public function annually_nssf_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_nssf_summary_report')->with($data);
+    }
+
+    public function annually_paye_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_paye_summary_report')->with($data);
+    }
+
+    public function annually_wcf_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_wcf_summary_report')->with($data);
+    }
+
+    public function annually_expense_sub_categories_summary_report(Request $request){
+        $sub_categories = ExpensesSubCategory::all();
+
+        $data = [
+            'sub_categories' => $sub_categories
+        ];
+        return view('pages.reports.reports_annually_expense_sub_categories_summary_report')->with($data);
+    }
+
+    public function annually_sales_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_sales_summary_report')->with($data);
+    }
+
+    public function annually_purchases_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_purchases_summary_report')->with($data);
+    }
+
+    public function annually_expenses_summary_report(Request $request){
+        $expenses_categories = ExpensesCategory::all();
+
+        $data = [
+            'expenses_categories' => $expenses_categories
+        ];
+        return view('pages.reports.reports_annually_expenses_summary_report')->with($data);
+    }
+
+    public function annually_financial_charges_summary_report(Request $request){
+        $financial_charge_categories = FinancialChargeCategory::all();
+
+        $data = [
+            'financial_charge_categories' => $financial_charge_categories
+        ];
+        return view('pages.reports.reports_annually_financial_charges_summary_report')->with($data);
+    }
+
+    public function annually_salaries_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_salaries_summary_report')->with($data);
+    }
+
+    public function annually_sdl_summary_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_annually_sdl_summary_report')->with($data);
     }
 
 
@@ -139,6 +290,8 @@ class ReportsController extends Controller
         ];
         return view('pages.reports.reports_auto_transaction_report')->with($data);
     }
+
+
 
     public function general_report(Request $request){
         $expenses = Expense::whereDate('date', DB::raw('CURDATE()'))->get();

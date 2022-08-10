@@ -83,12 +83,10 @@
                                 <thead>
                                 <tr>
                                     <th></th>
-                                    <th class="text-center">Note</th>
                                     <th class="text-right">{{date('Y-m-d', strtotime('last day of december this year'))}}</th>
                                     <th class="text-right">{{date('Y-m-d', strtotime('last day of december last year'))}}</th>
                                 </tr>
                                 <tr>
-                                    <td></td>
                                     <td></td>
                                     <td class="text-right">TShs</td>
                                     <td class="text-right">TShs</td>
@@ -97,36 +95,30 @@
                                 <tbody>
                                     <tr>
                                         <td>Revenue</td>
-                                        <td class="text-center">4</td>
-                                        <td class="text-right">{{number_format($revenue_current)}}</td>
+                                        <td class="text-right"><a href="{{route('reports_annually_sales_summary_report')}}">{{number_format($revenue_current)}}</a></td>
                                         <td class="text-right">{{number_format($revenue_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
                                     </tr>
                                     <tr>
                                         <td>Cost of Sales</td>
-                                        <td class="text-center">8</td>
-                                      <td class="text-right">{{number_format($cost_of_sales_current)}}</td>
+                                        <td class="text-right"><a href="{{route('reports_annually_purchases_summary_report')}}">{{number_format($cost_of_sales_current)}}</a></td>
                                         <td class="text-right">{{number_format($cost_of_sales_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
                                     </tr>
                                     <tr>
                                         <td>Gross Profit</td>
-                                        <td class="text-center"></td>
                                       <td class="text-right">{{number_format($gross_profit_current)}}</td>
                                         <td class="text-right">{{number_format($gross_profit_last)}}</td>
                                     </tr>
                                     <tr>
-                                        <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -140,12 +132,10 @@
 
                                     <tr>
                                         <td>{{$expense->name}}</td>
-                                        <td class="text-center"></td>
-                                        <td class="text-right">{{number_format($total)}}</td>
+                                        <td class="text-right"><a href="{{route('reports_annually_expenses_summary_report')}}">{{number_format($total)}}</a></td>
                                         <td class="text-right">{{number_format(0)}}</td>
                                     </tr>
                                     <tr>
-                                        <td></td>
                                         <td></td>
                                         <td></td>
                                         <td></td>
@@ -156,30 +146,25 @@
                                    ?>
                                     <tr>
                                         <td>Salaries and Wages</td>
-                                        <td class="text-center"></td>
-                                        <td class="text-right">{{number_format($basic_salary_current)}}</td>
+                                        <td class="text-right"><a href="{{route('reports_annually_salaries_summary_report')}}">{{number_format($basic_salary_current)}}</a></td>
                                         <td class="text-right">{{number_format($basic_salary_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
                                     </tr>
                                     <tr>
                                         <td>SDL</td>
-                                        <td class="text-center"></td>
-                                        <td class="text-right">{{number_format($sdl_current)}}</td>
+                                        <td class="text-right"><a href="{{route('reports_annually_sdl_summary_report')}}">{{number_format($sdl_current)}}</a></td>
                                         <td class="text-right">{{number_format($sdl_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
                                     </tr>
                                     <tr>
-                                        <td></td>
                                         <td></td>
                                         <td class="text-right">{{number_format($total_expenses)}}</td>
                                         <td class="text-right">{{number_format($basic_salary_last+$sdl_last)}}</td>
@@ -188,12 +173,10 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
                                     </tr>
 
                                     <tr>
                                         <td> Profit from Operating Activities Before Taxation</td>
-                                        <td class="text-center"></td>
                                       <td class="text-right">{{number_format($Profit_from_Operating_Activities_Before_Taxation_current)}}</td>
                                         <td class="text-right">{{number_format($Profit_from_Operating_Activities_Before_Taxation_last)}}</td>
                                     </tr>
@@ -201,12 +184,10 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
                                     </tr>
 
                                     <tr>
                                         <td>Tax(Formular)</td>
-                                        <td class="text-center"></td>
                                       <td class="text-right">{{number_format($Taxation_current)}}</td>
                                         <td class="text-right">{{number_format($Taxation_last)}}</td>
                                     </tr>
@@ -214,23 +195,19 @@
                                         <td></td>
                                         <td></td>
                                         <td></td>
-                                        <td></td>
                                     </tr>
                                     <tr>
                                         <td>  Profit from Operating Activities After Taxation</td>
-                                        <td class="text-center"></td>
                                       <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_current)}}</td>
                                         <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td>  Profit from Operating Activities After Provision</td>
-                                        <td class="text-center"></td>
                                       <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_provision_tax_current)}}</td>
                                         <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_provision_tax_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td>  Net Profit</td>
-                                        <td class="text-center"></td>
                                       <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_current-$Profit_from_Operating_Activities_After_provision_tax_current)}}</td>
                                         <td class="text-right">{{number_format($Profit_from_Operating_Activities_After_Taxation_last-$Profit_from_Operating_Activities_After_provision_tax_last)}}</td>
                                     </tr>

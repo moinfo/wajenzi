@@ -27,6 +27,7 @@ class PayrollRecord extends Model
         return PayrollRecord::whereBetween('date',[$start_date,$end_date])->get()->first();
     }
 
+
     public function getCurrentPayroll($month, $year)
     {
         return  $records = PayrollRecord::where('month',$month)->where('year',$year)->select([DB::raw("*")])->get();
@@ -60,11 +61,74 @@ class PayrollRecord extends Model
             ->get()->first()['sdl'];
     }
 
+    public static function getTotalPAYE($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(paye) as paye")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()['paye'];
+    }
+
+    public static function getTotalWCF($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(wpf) as wpf")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()['wpf'];
+    }
+
+    public static function getTotalAdvanceSalary($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(advanceSalary) as advanceSalary")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()['advanceSalary'];
+    }
+
+    public static function getTotalLoanDeduction($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(loanDeduction) as loanDeduction")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()['loanDeduction'];
+    }
+
+    public static function getTotalHESLB($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(heslb) as heslb")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()['heslb'];
+    }
+
     public static function getTotalNSSF($start_date, $end_date)
     {
         return PayrollRecord::select([DB::raw("SUM(employeePension) as employeePension")])
             ->whereBetween('date',[$start_date,$end_date])
             ->get()->first()['employeePension'];
+    }
+
+    public static function getTotalNHIFEmployee($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(employeeHealth) as employeeHealth")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()['employeeHealth'];
+    }
+
+    public static function getTotalNHIFEmployer($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(employerHealth) as employerHealth")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()['employerHealth'];
+    }
+
+    public static function getTotalNSSFEmployee($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(employeePension) as employeePension")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()['employeePension'];
+    }
+
+    public static function getTotalNSSFEmployer($start_date, $end_date)
+    {
+        return PayrollRecord::select([DB::raw("SUM(employerPension) as employerPension")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()['employerPension'];
     }
 
 }

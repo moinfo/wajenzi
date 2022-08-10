@@ -109,4 +109,12 @@ class Purchase extends Model
         return Purchase::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(total_amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
 
     }
+    public static function getTotalExemptByDate($start_date, $end_date){
+        return Purchase::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount_vat_exc) as amount_vat_exc")])->get()->first()['amount_vat_exc'] ?? 0;
+
+    }
+    public static function getTotalVATByDate($start_date, $end_date){
+        return Purchase::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(vat_amount) as vat_amount")])->get()->first()['vat_amount'] ?? 0;
+
+    }
 }
