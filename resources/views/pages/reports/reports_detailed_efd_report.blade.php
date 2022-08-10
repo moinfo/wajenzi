@@ -107,6 +107,16 @@
                                 @endforeach
                                 </tbody>
                                 <tfoot>
+                                <tr>
+                                    <th class="text-center" style="width: 100px;"></th>
+                                    <th></th>
+                                    @foreach($efds as $efd)
+                                        <th>Exempt</th>
+                                        <th>VAT</th>
+                                        <th>Turnover</th>
+                                    @endforeach
+                                    <th>Total</th>
+                                </tr>
                                     <tr>
                                         <td></td>
                                         <td></td>
