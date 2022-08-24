@@ -39,8 +39,8 @@
                                                     <span class="input-group-text" id="basic-addon2">System</span>
                                                 </div>
                                                 <select name="system" id="system" class="form-control">
-                                                    <option value="0">All</option>
                                                     <option value="1">Mainstore</option>
+                                                    <option value="0">All</option>
                                                     <option value="2">Whitestar</option>
                                                 </select>
                                             </div>
@@ -72,7 +72,7 @@
                         @php
                             $start_date = $_POST['start_date'] ?? date('Y-m-d');
                             $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                            $system = $_POST['system'] ?? 0;
+                            $system = $_POST['system'] ?? 1;
 
                         @endphp
                         @if($system == 0)
