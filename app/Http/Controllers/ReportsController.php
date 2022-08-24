@@ -512,11 +512,15 @@ class ReportsController extends Controller
     }
 
     public function transaction_movement_report(Request $request){
-        $transactions = DB::select('SELECT s.name, SUM(c.amount) AS amount FROM supervisors s JOIN collections c ON (c.supervisor_id = s.id) GROUP BY s.id,c.supervisor_id');
-        $payments = DB::select('SELECT s.name, SUM(c.amount) AS amount FROM suppliers s JOIN transaction_movements c ON (c.supplier_id = s.id) GROUP BY s.id,c.supplier_id');
+        $efds = Efd::all();
+        $systems = System::where('id','!=',6)->where('id','!=',5)->get();
+        $few_systems = System::where('id','!=',1)->where('id','!=',2)->where('id','!=',3)->get();
+        $all_systems = system::all();
         $data = [
-            'payments' => $payments,
-            'transactions' => $transactions
+            'efds' => $efds,
+            'systems' => $systems,
+            'all_systems' => $all_systems,
+            'few_systems' => $few_systems,
         ];
         return view('pages.reports.reports_transaction_movement_report')->with($data);
     }
