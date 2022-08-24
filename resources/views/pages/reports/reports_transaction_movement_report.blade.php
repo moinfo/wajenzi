@@ -144,6 +144,10 @@
                                 <th class="text-right" colspan="2">Total</th>
                                 <th class="text-right">{{number_format($total_payment)}}</th>
                             </tr>
+                            <tr>
+                                <th class="text-right" colspan="2">Total</th>
+                                <th class="text-right">{{number_format(($total_debit+$white)-$total_payment)}}</th>
+                            </tr>
 
 
 
@@ -207,6 +211,10 @@
                                 <th class="text-right" colspan="2">Total</th>
                                 <th class="text-right">{{number_format($total_payment)}}</th>
                             </tr>
+                            <tr>
+                                <th class="text-right" colspan="2">Difference</th>
+                                <th class="text-right">{{number_format($total_debit - $total_payment)}}</th>
+                            </tr>
 
 
 
@@ -264,6 +272,10 @@
                             <tr>
                                 <th class="text-right" colspan="2">Total</th>
                                 <th class="text-right">{{number_format($total_payment)}}</th>
+                            </tr>
+                            <tr>
+                                <th class="text-right" colspan="2">Total</th>
+                                <th class="text-right">{{number_format($total_debit - $total_payment)}}</th>
                             </tr>
                         @endif
                     </table>
