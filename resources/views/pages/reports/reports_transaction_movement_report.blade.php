@@ -192,7 +192,7 @@
                                 @foreach($suppliers as $supplier)
                                     @php
                                         $supplier_id = $supplier->id;
-                                            $amount = \App\Models\BankReconciliation::select(\Illuminate\Support\Facades\DB::raw("SUM(debit) as total_debit"))->where('supplier_id',$supplier_id)->where('supplier_depend_on_system','BONGE')->whereBetween('date',[$start_date,$end_date])->get()->first()->total_debit;
+                                            $amount = \App\Models\BankReconciliation::select(\Illuminate\Support\Facades\DB::raw("SUM(bank_reconciliations.debit) as total_debit"))->join('suppliers','suppliers.id','=','bank_reconciliations.supplier_id')->where('bank_reconciliations.supplier_id',$supplier_id)->where('suppliers.supplier_depend_on_system','BONGE')->whereBetween('bank_reconciliations.date',[$start_date,$end_date])->get()->first()->total_debit;
 
                                     @endphp
                                     @if($amount > 0)
