@@ -66,7 +66,7 @@
                                     $dates[] = $date->format("Y-m-d");
                                 }
                                 ?>
-                                @foreach(array_reverse($dates) as $date)
+                                @foreach($dates as $date)
                                   @php
                                       $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($date)));
                                         $turnover = \App\Models\Sale::getTotalTurnover($date,$date,null);
