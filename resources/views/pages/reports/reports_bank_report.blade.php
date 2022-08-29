@@ -74,7 +74,7 @@
                                         $difference = $turnover - $bank_deposit;
                                         $all_time_turnover = \App\Models\Sale::getTotalTurnover($date_from_began,$date,null);
                                         $all_time_bank_deposit = \App\Models\BankReconciliation::getTotalDepositPerSupplierBank($date_from_began,$date,null);
-                                        $all_time_difference = $all_time_turnover + $all_time_bank_deposit;
+                                        $all_time_difference = $all_time_turnover - $all_time_bank_deposit;
 
 
                                   @endphp
