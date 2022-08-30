@@ -60,7 +60,7 @@
                                 <?php
                                 $start_date = $_POST['start_date'] ?? date('Y-m-01');
                                 $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                                $date_from_began = '2010-01-01';
+                                $date_from_began = '2022-01-01';
                                 $period = new DatePeriod(new DateTime("$start_date"), new DateInterval('P1D'), new DateTime("$end_date +1 day"));
                                 foreach ($period as $date) {
                                     $dates[] = $date->format("Y-m-d");
