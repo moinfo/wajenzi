@@ -50,8 +50,8 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Date</th>
-                                        <th>Sales</th>
                                         <th>Bank</th>
+                                        <th>Sales</th>
                                         <th>Difference</th>
                                         <th>Increment</th>
                                     </tr>
@@ -81,8 +81,8 @@
                                     <tr>
                                         <td>{{$loop->iteration}}</td>
                                         <td>{{$date}}</td>
-                                        <td class="text-right">{{number_format($turnover,2)}}</td>
                                         <td class="text-right">{{number_format($bank_deposit,2)}}</td>
+                                        <td class="text-right">{{number_format($turnover,2)}}</td>
                                         <td class="text-right">{{number_format($difference,2)}}</td>
                                         <td class="text-right">{{number_format($all_time_difference,2)}}</td>
                                     </tr>
