@@ -71,10 +71,10 @@
                                       $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($date)));
                                         $turnover = \App\Models\Sale::getTotalTurnover($date,$date,null);
                                         $bank_deposit = \App\Models\BankReconciliation::getTotalDepositPerSupplierBank($date,$date);
-                                        $difference =$bank_deposit - $turnover;
+                                        $difference = $bank_deposit - $turnover;
                                         $all_time_turnover = \App\Models\Sale::getTotalTurnover($date_from_began,$yesterday,null);
                                         $all_time_bank_deposit = \App\Models\BankReconciliation::getTotalDepositPerSupplierBank($date_from_began,$yesterday,null);
-                                        $all_time_difference = $difference + ($all_time_turnover - $all_time_bank_deposit);
+                                        $all_time_difference = $difference - ($all_time_turnover - $all_time_bank_deposit);
 
 
                                   @endphp
