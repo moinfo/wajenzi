@@ -37,6 +37,7 @@ class Supplier extends Model
             ->where('payment_type', '=','SUPPLIER')
             ->where('delete', '=','0')
             ->where('paid_payment_type', '=',1)
+            ->where('payment_mode', '=',1)
             ->where('client_id','=', $whitestar_supplier_id)
             ->whereBetween('date', [$start_date, $end_date])
             ->get()->first()->dr;
@@ -102,7 +103,7 @@ class Supplier extends Model
 (SELECT first_name FROM bonge.ospos_people o WHERE o.person_id = s.person_id) as firstname,
 (SELECT last_name FROM bonge.ospos_people o WHERE o.person_id = s.person_id) as lastname,
 (SELECT sum(quantity_purchased*item_unit_price) FROM bonge.ospos_receivings_items r,bonge.ospos_receivings x WHERE r.receiving_id = x.receiving_id AND x.supplier_id = s.person_id AND x.payment_type = 'Credit Card') as credit,
-(SELECT SUM(dr) FROM bonge.ospos_debits_credits c WHERE c.client_id = s.person_id) as debit
+(SELECT SUM(dr) FROM bonge.ospos_debits_credits c WHERE c.client_id = s.person_id AND c.payment_mode = 1) as debit
  FROM bonge.ospos_suppliers s");
     }
     public static function getBongeSupplierWithCredit($supplier_id)
