@@ -67,16 +67,15 @@
                                         $total_turn_over = 0;
                                         $total_supplier_to_amount = 0;
                                         ?>
+                                        @dump($bank_reconciliations);
                                         @foreach($bank_reconciliations as $bank_reconciliation)
                                             <?php
                                                 $supplier = \App\Models\BankReconciliation::getOnlyTransferedTo($bank_reconciliation->date,$bank_reconciliation->reference);
                                             $supplier_to = $supplier->supplier;
-                                            $supplier_to_amount = $supplier->debit;
-                                            $total_supplier_to_amount += $supplier_to_amount;
-
-
+                                            $supplier_to_amount = $bank_reconciliation->debit_amount;
+                                            $total_supplier_to_amount += abs($supplier_to_amount);
                                             ?>
-                                            <tr id="bank_reconciliation-tr-{{$bank_reconciliation->id}}">
+                                            <tr>
                                                 <td class="text-center">
                                                     {{$loop->iteration}}
                                                 </td>
@@ -84,7 +83,7 @@
                                                 <td class="font-w600">{{ $bank_reconciliation->supplier }}</td>
                                                 <td class="font-w600">{{ $supplier_to }}</td>
                                                 <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
-                                                <td class="text-right">{{ number_format($supplier_to_amount, 2) }}</td>
+                                                <td class="text-right">{{ number_format(abs($supplier_to_amount), 2) }}</td>
                                             </tr>
                                         @endforeach
                                         </tbody>

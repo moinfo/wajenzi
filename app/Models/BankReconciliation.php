@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class BankReconciliation extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'supplier_id', 'efd_id', 'description', 'date', 'debit', 'credit', 'payment_type', 'reference'];
+    public $fillable = ['id', 'to_id','from_to_id','supplier_id', 'efd_id', 'description', 'date', 'debit', 'credit', 'payment_type', 'reference'];
 
     public static function getTotalDepositPerDayPerSupplier($start_date, $end_date, $efd_id, $supplier_id)
     {
@@ -254,7 +254,7 @@ class BankReconciliation extends Model
         $bank_reconciliation = DB::table('bank_reconciliations')
             ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
-            ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier')
+            ->select(DB::raw('SUM(bank_reconciliations.debit) as debit_amount,suppliers.name as supplier,bank_reconciliations.date as date,bank_reconciliations.payment_type as payment_type,bank_reconciliations.reference as reference'))
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date)
             ->where('bank_reconciliations.debit','<',0)
@@ -266,7 +266,7 @@ class BankReconciliation extends Model
         if($supplier_id != null){
             $bank_reconciliation->where('supplier_id','=',$supplier_id);
         }
-        return $bank_reconciliation->get();
+        return $bank_reconciliation->groupBy('from_to_id')->get();
     }
 
     public static function getOnlyTransferedTo($start_date,$reference){

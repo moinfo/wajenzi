@@ -95,6 +95,7 @@ class BankReconciliationController extends Controller
     {
         $from = $request->input('from');
         $to = $request->input('to');
+        $from_to_id = $from.$to;
         $efd_id = $request->input('efd_id');
         $date = $request->input('date');
         $debit = Utility::strip_commas($request->input('debit'));
@@ -102,8 +103,8 @@ class BankReconciliationController extends Controller
         $reference = $request->input('reference');
         $payment_type = $request->input('payment_type');
       DB::table('bank_reconciliations')->insert([
-           ['supplier_id' => $from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
-           ['supplier_id' => $to, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
+           ['supplier_id' => $from, 'efd_id' => $efd_id, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
+           ['supplier_id' => $to, 'to_id' => $from, 'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
        ]);
 
 
