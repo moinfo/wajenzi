@@ -93,7 +93,7 @@
                             <div class="col-sm-8">
                                 <h4>Actual Deposit Summary</h4>
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped table-vcenter "  data-ordering="false">
+                                    <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
                                         <thead>
                                         <tr>
                                             <th>#</th>

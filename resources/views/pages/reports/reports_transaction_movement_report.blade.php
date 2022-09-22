@@ -45,10 +45,14 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        <div class="class col-md-2">
+                                        <div class="class col-md-1">
                                             <div>
                                                 <button type="submit" name="submit" value="0" class="btn btn-sm btn-primary">Show</button>
                                             </div>
+                                        </div>
+
+                                        <div class="class col-md-2">
+                                            <a href="{{route('transfer_by_only_supplier_reports')}}" class="btn btn-rounded btn-outline-success min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Transfer Reports</a>
                                         </div>
                                     </div>
                                 </form>
