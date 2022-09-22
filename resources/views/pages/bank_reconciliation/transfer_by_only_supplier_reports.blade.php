@@ -67,7 +67,6 @@
                                         $total_turn_over = 0;
                                         $total_supplier_to_amount = 0;
                                         ?>
-                                        @dump($bank_reconciliations);
                                         @foreach($bank_reconciliations as $bank_reconciliation)
                                             <?php
                                                 $supplier = \App\Models\BankReconciliation::getOnlyTransferedTo($bank_reconciliation->date,$bank_reconciliation->reference);
