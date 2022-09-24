@@ -33,6 +33,19 @@
                                                 </div>
 
                                             </div>
+                                            @php
+                                            $start_date = $_POST['start_date'] ?? date('Y-m-d');
+                                            $end_date = $_POST['end_date'] ?? date('Y-m-d');
+
+                                            $kassim = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,52);
+                                            $lailat = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,88);
+                                            @endphp
+                                            <div class="class col-md-3">
+                                                Kassimu Haji Kassim Balance: {{number_format(abs($kassim))}}
+                                            </div>
+                                            <div class="class col-md-3">
+                                                LAILATI MVUNGI Balance: {{number_format(abs($lailat))}}
+                                            </div>
 
                                             <div class="class col-md-1">
                                                 <div>

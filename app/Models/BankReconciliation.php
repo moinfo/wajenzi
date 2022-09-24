@@ -268,6 +268,20 @@ class BankReconciliation extends Model
         }
         return $bank_reconciliation->groupBy('from_to_id')->get();
     }
+    public static function getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,$supplier_id = null){
+        $bank_reconciliation = DB::table('bank_reconciliations')
+            ->select(DB::raw('SUM(bank_reconciliations.debit) as debit'))
+            ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->where('bank_reconciliations.debit','<',0)
+            ->where('reference', 'LIKE', "%TRANSFER%");
+        $bank_reconciliation->where('bank_reconciliations.supplier_id','=',$supplier_id);
+
+
+        return $bank_reconciliation->get()->first()->debit;
+    }
 
     public static function getOnlyTransferedTo($start_date,$reference){
         $bank_reconciliation = DB::table('bank_reconciliations')
