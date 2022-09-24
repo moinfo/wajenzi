@@ -33,24 +33,25 @@
                                                 </div>
 
                                             </div>
-                                            @php
-                                            $start_date = $_POST['start_date'] ?? date('Y-m-d');
-                                            $end_date = $_POST['end_date'] ?? date('Y-m-d');
 
-                                            $kassim = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,42);
-                                            $lailat = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,88);
-                                            @endphp
-                                            <div class="class col-md-3">
-                                                Kassimu Haji Kassim Balance: {{number_format(abs($kassim))}}
-                                            </div>
-                                            <div class="class col-md-3">
-                                                LAILATI MVUNGI Balance: {{number_format(abs($lailat))}}
-                                            </div>
 
                                             <div class="class col-md-1">
                                                 <div>
                                                     <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
                                                 </div>
+                                            </div>
+                                            @php
+                                                $start_date = $_POST['start_date'] ?? date('Y-m-d');
+                                                $end_date = $_POST['end_date'] ?? date('Y-m-d');
+
+                                                $kassim = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,42);
+                                                $lailat = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,88);
+                                            @endphp
+                                            <div class="class col-md-4">
+                                                Kassimu Haji Kassim Balance: {{number_format(abs($kassim))}}
+                                            </div>
+                                            <div class="class col-md-4">
+                                                LAILATI MVUNGI Balance: {{number_format(abs($lailat))}}
                                             </div>
                                         </div>
                                     </form>
