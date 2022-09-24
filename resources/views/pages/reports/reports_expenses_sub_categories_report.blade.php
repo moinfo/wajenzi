@@ -98,6 +98,14 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
+                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th>Date</th>
+                                    @foreach ($expenses_categories as $expenses_category)
+                                        <th> {{ $expenses_category->name }} </th>
+                                    @endforeach
+                                    <th>Total Expense</th>
+                                </tr>
+                                <tr>
                                     <th colspan="2"></th>
                                     @foreach ($expenses_categories as $expenses_category)
                                         <?php

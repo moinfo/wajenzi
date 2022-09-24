@@ -92,6 +92,14 @@
                                 @endforeach
                                 </tbody>
                                 <tfoot>
+                                <tr>
+                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th>Date</th>
+                                    @foreach($efds as $efd)
+                                        <th>{{$efd->name}}</th>
+                                    @endforeach
+                                    <th>Total</th>
+                                </tr>
                                     <tr>
                                         <td></td>
                                         <td></td>
