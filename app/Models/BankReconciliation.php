@@ -276,6 +276,7 @@ class BankReconciliation extends Model
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date)
             ->where('bank_reconciliations.debit','<',0)
+            ->where('bank_reconciliations.from_to_id','!=',0)
             ->where('reference', 'LIKE', "%TRANSFER%");
         $bank_reconciliation->where('bank_reconciliations.supplier_id','=',$supplier_id);
 
