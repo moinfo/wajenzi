@@ -37,7 +37,7 @@
                                             $start_date = $_POST['start_date'] ?? date('Y-m-d');
                                             $end_date = $_POST['end_date'] ?? date('Y-m-d');
 
-                                            $kassim = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,52);
+                                            $kassim = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,42);
                                             $lailat = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,88);
                                             @endphp
                                             <div class="class col-md-3">
