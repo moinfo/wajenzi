@@ -317,7 +317,7 @@
                                             $employee_heslb_amount = $basic_salary * ($heslb['employee_percentage']/100);
                                         }
                                         //                                    $net = $taxable - ($paye_amount+$employee_heslb_amount+$advance_salary+$current_loan_deduction);
-                                        $net = $taxable - ($advance_salary+$current_loan_deduction);
+                                        $net = $taxable -$paye_amount;
                                         $basic_salary_total += $basic_salary;
                                         $allowance_total += $allowance;
                                         $gross_pay_total += $gross_pay;
