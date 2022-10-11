@@ -9,7 +9,12 @@ use Illuminate\Support\Facades\DB;
 class BongeCustomer extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name','system_id','seller','bonge_customer_id'];
+    protected $connection = 'mysql5';
+    protected $table="ospos_customers";
+
+    public function people(){
+        return $this->belongsTo(BongePeople::class,'person_id','person_id');
+    }
 
 
 }

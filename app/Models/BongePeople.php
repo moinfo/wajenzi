@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\DB;
 class BongePeople extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name','system_id','seller','bonge_customer_id'];
+    protected $connection = 'mysql5';
+    protected $table="ospos_people";
 
 
 }
