@@ -193,7 +193,7 @@
                                     @foreach($efds as $efd)
                                         @php
                                             $efd_id = $efd->id;
-                                            $receiving = \App\Models\Receiving::getTotalReceivingPerDayPerSupervisor($start_date,$end_date,$efd_id);
+                                            $receiving = \App\Models\Report::getTotalDaysSalesBonge($start_date,$end_date,$efd->bonge_customer_id);
                                         @endphp
                                         <td class="text-right">{{number_format($receiving,2)}}</td>
                                     @endforeach

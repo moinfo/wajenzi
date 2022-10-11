@@ -210,5 +210,18 @@ class Report extends Model
             ->get()->first()->dr;
     }
 
+    public static function getTotalDaysSalesBonge($start_date, $end_date, $customer_id)
+    {
+        return DB::connection('mysql5')->table('bonge.ospos_sales_payments')
+            ->select(DB::raw('SUM(ospos_sales_payments.payment_amount) as cash'))
+            ->join('bonge.ospos_sales', 'ospos_sales.sale_id', '=', 'ospos_sales_payments.sale_id')
+            ->where('ospos_sales.sale_status', 0)
+            ->where('ospos_sales_payments.payment_amount', '!=', 0)
+            ->where('ospos_sales.customer_id', '=', $customer_id)
+            ->whereBetween(DB::raw('DATE(ospos_sales_payments.payment_time)'), [$start_date, $end_date])
+            ->get()->first()->cash;
+    }
+
+
 
 }
