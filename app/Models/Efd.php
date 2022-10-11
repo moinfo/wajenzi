@@ -9,12 +9,15 @@ use Illuminate\Support\Facades\DB;
 class Efd extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name','system_id','seller'];
+    public $fillable = ['id', 'name','system_id','seller','bonge_customer_id'];
 
     public function sales() {
         return $this->hasMany(Sale::class);
     }
     public function system() {
+        return $this->belongsTo(System::class,'system_id');
+    }
+    public function bonge_customer() {
         return $this->belongsTo(System::class,'system_id');
     }
 
