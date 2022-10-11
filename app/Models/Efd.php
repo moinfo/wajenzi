@@ -18,7 +18,7 @@ class Efd extends Model
         return $this->belongsTo(System::class,'system_id');
     }
     public function bonge_customer() {
-        return $this->belongsTo(System::class,'system_id');
+        return $this->belongsTo(BongePeople::class,'bonge_customer_id','person_id');
     }
 
     public function transactions()

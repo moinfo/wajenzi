@@ -37,7 +37,8 @@
                                     </td>
                                     <td class="font-w600">{{ $efd->name ?? null}}</td>
                                     <td class="font-w600">{{ $efd->system->name ?? null }}</td>
-                                    <td class="d-none d-sm-table-cell">{{$sellers ?? null}}</td>
+                                    <td>{{$sellers ?? null}}</td>
+                                    <td>{{($efd->bonge_customer->first_name ?? null) .' '.($efd->bonge_customer->last_name ?? null)}}</td>
                                     <td class="text-center">
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit EFD"))

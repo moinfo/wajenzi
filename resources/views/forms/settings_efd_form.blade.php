@@ -18,7 +18,7 @@
         </div>
         <div class="form-group">
             <label for="example-nf-system" class="control-label required">Seller</label>
-            <select name="seller" id="seller" class="form-control" required>
+            <select name="seller" id="seller" class="form-control">
                 <option value="">Select Seller</option>
 
                 @foreach ($sellers as $seller)
@@ -27,9 +27,9 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-system" class="control-label required">Seller</label>
+            <label for="example-nf-system" class="control-label required">Bonge Customer</label>
             <select name="bonge_customer_id" id="bonge_customer_id" class="form-control" required>
-                <option value="">Select Seller</option>
+                <option value="">Select Bonge Customer</option>
 
                 @foreach ($bonge_customers as $bonge_customer)
                     <option value="{{ $bonge_customer->person_id }}" {{ ( $bonge_customer->person_id == $object->bonge_customer_id) ? 'selected' : '' }}> {{ $bonge_customer->people->first_name .' '.$bonge_customer->people->last_name }} </option>

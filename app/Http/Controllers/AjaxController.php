@@ -7,6 +7,7 @@ use App\Models\AllowanceSubscription;
 use App\Models\ApprovalDocumentType;
 use App\Models\Asset;
 use App\Models\Bank;
+use App\Models\BongeCustomer;
 use App\Models\Category;
 use App\Models\Deduction;
 use App\Models\Division;
@@ -150,7 +151,9 @@ class AjaxController
                     $expenses_categories = ExpensesCategory::all();
                     $expenses_sub_categories = ExpensesSubCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
+                    $bonge_customers = BongeCustomer::all();
                     $data = $request->input('data') ?? [
+                            'bonge_customers' => $bonge_customers,
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
                             'suppliers_with_balances' => $suppliers_with_balances,
