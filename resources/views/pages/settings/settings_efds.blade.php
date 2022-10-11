@@ -22,7 +22,8 @@
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
                                 <th>System</th>
-                                <th>Seller</th>
+                                <th>Seller Magari</th>
+                                <th>Bonge Customer</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
