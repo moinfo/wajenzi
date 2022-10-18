@@ -85,9 +85,9 @@
                                             $end_date = $dt->format("Y-m-t");
                                             $sales = \App\Models\Purchase::getTotalPurchasesByDate($start_date,$end_date);
                                             $total_sales += $sales;
-                                            $exempt = \App\Models\Purchase::getTotalExemptByDate($start_date,$end_date);
+                                            $exempt = \App\Models\Purchase::getTotalPurchasesByDateByExempt($start_date,$end_date);
                                             $total_exempt += $exempt;
-                                            $vat= \App\Models\Purchase::getTotalVATByDate($start_date,$end_date);
+                                            $vat= \App\Models\Purchase::getTotalPurchasesByDateByVat($start_date,$end_date);
                                             $total_vat += $vat;
                                             $net= 0;
                                             $total_net += $total_net;
@@ -95,7 +95,7 @@
                                     <tr>
 
                                         <td>{{$dt->format("F, Y")}}</td>
-                                        <td class="text-right">{{number_format($vat+$net)}}</td>
+                                        <td class="text-right">{{number_format($vat)}}</td>
                                         <td class="text-right">{{number_format($exempt)}}</td>
                                         <td class="text-right">{{number_format($sales)}}</td>
                                     </tr>
