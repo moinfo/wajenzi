@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class FinancialChargeCategory extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name'];
+    public $fillable = ['id', 'name', 'charge'];
 
     public function financialCharges(){
         return $this->hasMany(FinancialCharge::class);

@@ -3,11 +3,11 @@
 @section('content')
     <div class="main-container">
         <div class="content">
-            <div class="content-heading">FINANCIAL CHARGE CATEGORIES
+            <div class="content-heading">Financial Charge
                 <div class="float-right">
                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Financial Charge Category"))
                         <button type="button" onclick="loadFormModal('settings_financial_charge_category_form', {className: 'FinancialChargeCategory'}, 'Create New Financial Charge Category', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
-                            <i class="si si-plus">&nbsp;</i>New Financial Charge Category</button>
+                            <i class="si si-plus">&nbsp;</i>New Charge</button>
                     @endif
 
                 </div>
@@ -15,14 +15,15 @@
             <div>
                 <div class="block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">FINANCIAL CHARGE CATEGORIES</h3>
+                        <h3 class="block-title">Financial Charge</h3>
                     </div>
                     <div class="block-content">
-                        <table class="table table-striped table-vcenter">
+                        <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                             <thead>
                             <tr>
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
+                                <th>Charge</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
@@ -33,6 +34,7 @@
                                         {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $financial_charge_category->name }}</td>
+                                    <td class="text-right">{{ number_format($financial_charge_category->charge) }}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Financial Charge Category"))

@@ -4,7 +4,11 @@
         @csrf
         <div class="form-group">
             <label for="example-nf-email">Name</label>
-            <input type="text" class="form-control" id="input-item-name" name="name" value="{{ $object->name ?? '' }}" placeholder="Financial Charge Category Name" required>
+            <input type="text" class="form-control" id="input-item-name" name="name" value="{{ $object->name ?? '' }}"  required>
+        </div>
+        <div class="form-group">
+            <label for="charge">Charge</label>
+            <input type="text" class="form-control" id="charge" name="charge" value="{{ $object->charge ?? '' }}"  required>
         </div>
         <div class="form-group">
             @if($object->id ?? null)
