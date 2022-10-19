@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Expense;
 use App\Models\FinancialCharge;
+use App\Models\FinancialChargeCategory;
+use App\Models\SubCategory;
 use Illuminate\Http\Request;
 
 class FinancialChargeController extends Controller
@@ -90,5 +92,18 @@ class FinancialChargeController extends Controller
     public function destroy(FinancialCharge $financialCharge)
     {
         //
+    }
+
+    public function getCharges(Request $request){
+        $financial_charge_category_id = $request->input('financial_charge_category_id');
+        $financial_charges = FinancialChargeCategory::where('id',$financial_charge_category_id)->get();
+
+        $charge_arr = [];
+        foreach ($financial_charges as $index => $financial_charge) {
+
+            $charge_arr[] = array("charge" => $financial_charge->charge);
+        }
+        echo json_encode($charge_arr);
+
     }
 }

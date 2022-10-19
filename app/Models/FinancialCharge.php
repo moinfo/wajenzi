@@ -9,7 +9,11 @@ use Illuminate\Support\Facades\DB;
 class FinancialCharge extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'financial_charge_category_id', 'amount', 'description', 'date'];
+    public $fillable = ['id', 'financial_charge_category_id', 'amount', 'description', 'date', 'supplier_id'];
+
+    public function supplier(){
+        return $this->belongsTo(Supplier::class);
+    }
 
     public static function getTotalFinancialCharge($start_date, $end_date, $financial_charge_category_id)
     {

@@ -19,12 +19,13 @@
                     <div class="block-content">
                         <p>This is a list containing all financial_charges</p>
                         <div class="table-responsive">
-                            <table class="table table-striped table-vcenter">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
                                     <th>Date</th>
-                                    <th>Financial Charge Category Name</th>
+                                    <th>Supplier</th>
+                                    <th>Charge Name</th>
                                     <th>Description</th>
                                     <th>Amount</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
@@ -37,6 +38,7 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td class="font-w600">{{ $financial_charge->date }}</td>
+                                        <td class="font-w600">{{ $financial_charge->supplier->name }}</td>
                                         <td class="font-w600">{{ $financial_charge->financialChargeCategory->name }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $financial_charge->description }}
                                         <td class="font-w600">{{ number_format($financial_charge->amount, 2) }}</td>
