@@ -110,7 +110,18 @@ class BankReconciliation extends Model
     }
     public static function getSupplierTransactions($start_date, $end_date, $supplier_id)
     {
-        return DB::select("SELECT * FROM ((SELECT  description,efd_id,supplier_id,date,null as credit, debit FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND debit != 0) UNION ALL (SELECT  description,efd_id, supplier_id, date,credit, null as debit FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND credit != 0)) b WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' order by `date` asc");
+        return DB::select("SELECT * FROM
+              (
+    (SELECT  description,efd_id,supplier_id,date,null as credit, debit,null as transfer_in,null as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND debit != 0 AND reference NOT LIKE 'TRANSFER%')
+        UNION ALL
+    (SELECT  description,efd_id,supplier_id,date,null as credit, null as debit,debit as transfer_in,null as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND debit > 0 AND reference LIKE 'TRANSFER%')
+    UNION ALL
+    (SELECT  description,null as efd_id,null as supplier_id,date,null as credit, null as debit,null as transfer_in,null as transfer_out,amount FROM `financial_charges` WHERE supplier_id = '$supplier_id')
+    UNION ALL
+    (SELECT  description,efd_id, supplier_id, date,credit, null as debit,null as transfer_in,null as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND credit != 0)
+                  UNION ALL
+    (SELECT  description,efd_id,supplier_id,date,null as credit, null as debit,null as transfer_in,debit as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND debit < 0 AND reference LIKE 'TRANSFER%')
+    ) b WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' order by `date` desc");
 
     }
 

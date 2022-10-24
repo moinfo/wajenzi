@@ -27,6 +27,7 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $reports = [
+            ['name'=>'Bank Statement', 'route'=>'reports_bank_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Total Current Credit Suppliers Report', 'route'=>'reports_total_current_credit_suppliers_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Total Credit Suppliers Report', 'route'=>'reports_total_credit_suppliers_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'VAT Analysis', 'route'=>'reports_vat_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -86,6 +87,16 @@ class ReportsController extends Controller
             'reports' => $reports
         ];
         return view('pages.reports.reports_index')->with($data);
+    }
+
+    public function bank_statement_report(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $suppliers = Supplier::all();
+        $data = [
+            'suppliers' => $suppliers,
+        ];
+        return view('pages.reports.reports_bank_statement_report')->with($data);
     }
 
     public function annually_advance_salary_summary_report(Request $request){
@@ -409,6 +420,7 @@ class ReportsController extends Controller
         ];
         return view('pages.reports.reports_bank_reconciliation_report')->with($data);
     }
+
 
     public function statement_of_comprehensive_income_report(Request $request){
         $data = [];
