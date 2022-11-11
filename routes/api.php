@@ -19,3 +19,11 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 
 Route::post('/post', 'PostController@store');
+Route::middleware('apiAuth')->group(function() {
+    Route::match(['get', 'post'], '/attendance', [App\Http\Controllers\ApiController::class, 'store'])->name('attendance');
+});
+
+Route::match(['get', 'post'], '/add_receipt', [App\Http\Controllers\ReceiptController::class, 'store'])->name('add_receipt');
+Route::match(['get', 'post'], '/add_receipt_item', [App\Http\Controllers\ReceiptItemController::class, 'store'])->name('add_receipt_item');
+Route::match(['get', 'post'], '/receipts/{id?}', [App\Http\Controllers\ApiController::class, 'receipts'])->name('receipts');
+Route::match(['get', 'post'], '/receipt_items/{id?}', [App\Http\Controllers\ApiController::class, 'receipt_items'])->name('receipt_items');
