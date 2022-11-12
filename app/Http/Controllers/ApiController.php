@@ -53,13 +53,13 @@ class ApiController extends Controller
         return response()->json($newData);
     }
 
-    public function receipts($id=null)
+    public function receipts($id = null)
     {
 
         return $id?Receipt::find($id):Receipt::all();
     }
 
-    public function receipt_items($id)
+    public function receipt_items($id = null)
     {
         return $id?ReceiptItem::find($id):ReceiptItem::all();
     }
