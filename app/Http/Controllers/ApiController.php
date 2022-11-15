@@ -7,6 +7,7 @@ use App\Models\Attendance;
 use App\Models\Receipt;
 use App\Models\ReceiptItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ApiController extends Controller
 {
@@ -55,8 +56,34 @@ class ApiController extends Controller
 
     public function receipts($id = null)
     {
+        if($id){
+            $receipts = DB::table('receipts')->where('id',$id)->get()->toArray();
+            $receipt_items = DB::table('receipt_items')->where('receipt_id',$id)->get()->toArray();
 
-        return $id?Receipt::find($id):Receipt::all();
+            foreach($receipts as &$receipt)
+            {
+                $receipt->receipt_items = array_filter($receipt_items, function($receipt_item) use ($receipt) {
+                    return $receipt_item->receipt_id === $receipt->id;
+                });
+            }
+
+            return $receipts;
+        }else{
+            $receipts = DB::table('receipts')->get()->toArray();
+            $receipt_items = DB::table('receipt_items')->get()->toArray();
+
+            foreach($receipts as &$receipt)
+            {
+                $receipt->receipt_items = array_filter($receipt_items, function($receipt_item) use ($receipt) {
+                    return $receipt_item->receipt_id === $receipt->id;
+                });
+            }
+
+            return $receipts;
+        }
+
+
+        return $id?Receipt::select('*')->join('receipt_items','receipt_items.receipt_id','=','receipts.id')->where('receipt.id',$id)->get()->fist():Receipt::leftJoin('receipt_items','receipts.id','=','receipt_items.receipt_id')->select('receipts.*','receipt_items.*','receipt_items.receipt_id as receipt_id')->get();
     }
 
     public function receipt_items($id = null)
