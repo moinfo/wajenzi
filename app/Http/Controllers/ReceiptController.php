@@ -57,18 +57,20 @@ class ReceiptController extends Controller
         $receipt->receipt_total_excl_of_tax = $request->receipt_total_excl_of_tax;
         $receipt->receipt_total_tax = $request->receipt_total_tax;
         $receipt->receipt_total_incl_of_tax = $request->receipt_total_incl_of_tax;
-        $items = $receipt->items;
         $result = $receipt->save();
-        $receipt_id = $result->id;
-        foreach ($items as $index => $item) {
-            $data = [
-              'receipt_id'  => $receipt_id,
-              'description'  => $item->description,
-              'qty'  => $item->qty,
-              'amount'  => $item->amount,
-            ];
+        $receipt_id = Receipt::latest('id')->first()->id;
+        $items = $request->items;
+        if (count($items) > 0) {
+            foreach($items as $item) {
+                $data = [
+                    'receipt_id' => $receipt_id,
+                    'description' => $item['item_description'],
+                    'qty' => $item['item_qty'],
+                    'amount' => $item['item_amount']
+                ];
+                ReceiptItem::insert($data);
+            }
         }
-        ReceiptItem::insert($data);
         if ($result){
             return ['results' => 'add receipt successful'];
         }else{
