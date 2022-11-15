@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Receipt;
+use App\Models\ReceiptItem;
 use Illuminate\Http\Request;
 
 class ReceiptController extends Controller
@@ -56,7 +57,18 @@ class ReceiptController extends Controller
         $receipt->receipt_total_excl_of_tax = $request->receipt_total_excl_of_tax;
         $receipt->receipt_total_tax = $request->receipt_total_tax;
         $receipt->receipt_total_incl_of_tax = $request->receipt_total_incl_of_tax;
+        $items = $receipt->items;
         $result = $receipt->save();
+        $receipt_id = $result->id;
+        foreach ($items as $index => $item) {
+            $data = [
+              'receipt_id'  => $receipt_id,
+              'description'  => $item->description,
+              'qty'  => $item->qty,
+              'amount'  => $item->amount,
+            ];
+        }
+        ReceiptItem::insert($data);
         if ($result){
             return ['results' => 'add receipt successful'];
         }else{
