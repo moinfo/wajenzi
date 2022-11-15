@@ -74,6 +74,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/sales', [App\Http\Controllers\SaleController::class, 'index'])->name('sales');
     Route::match(['get', 'post'], '/sales/{id}/{document_type_id}', [App\Http\Controllers\SaleController::class, 'sale'])->name('sale');
     Route::match(['get', 'post'], '/purchases', [App\Http\Controllers\PurchaseController::class, 'index'])->name('purchases');
+    Route::match(['get', 'post'], '/auto_purchases', [App\Http\Controllers\AutoPurchaseController::class, 'index'])->name('auto_purchases');
     Route::match(['get', 'post'], '/purchases/{id}/{document_type_id}', [App\Http\Controllers\PurchaseController::class, 'purchase'])->name('purchase');
     Route::match(['get', 'post'], '/payroll', [App\Http\Controllers\PayrollController::class, 'index'])->name('payroll');
     Route::match(['get', 'post'], '/system_inventory', [App\Http\Controllers\SystemInventoryController::class, 'index'])->name('system_inventory');

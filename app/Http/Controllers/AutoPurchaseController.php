@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AutoPurchase;
+use App\Models\Purchase;
+use App\Models\Receipt;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 
 class AutoPurchaseController extends Controller
@@ -12,9 +15,18 @@ class AutoPurchaseController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        if($this->handleCrud($request, 'Purchase')) {
+            return back();
+        }
+        $start_date = $request->input('start_date') ?? date('Y-06-01');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $purchases = Receipt::whereBetween('receipt_date',[$start_date,$end_date])->orderBy('receipt_date','DESC')->get();
+        $data = [
+            'purchases' => $purchases
+        ];
+        return view('pages.auto_purchases.auto_purchases_index')->with($data);
     }
 
     /**

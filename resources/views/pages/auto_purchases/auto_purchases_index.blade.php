@@ -65,12 +65,27 @@
                                     <th>Amount VAT EXC</th>
                                     <th>VAT Amount</th>
                                     <th>Attachment</th>
-                                    <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
+                                    @foreach($purchases as $purchase)
+                                        <tr>
+                                            <td>{{$loop->iteration}}</td>
+                                            <td>{{$purchase->receipt_date}}</td>
+                                            <td>{{$purchase->company_name}}</td>
+                                            <td>{{$purchase->vrn}}</td>
+                                            <td>{{$purchase->receipt_number}}</td>
+                                            <td>{{$purchase->receipt_date}}</td>
+                                            <td></td>
+                                            <td>{{$purchase->receipt_total_incl_of_tax}}</td>
+                                            <td>{{$purchase->receipt_total_excl_of_tax}}</td>
+                                            <td>{{$purchase->receipt_total_tax}}</td>
+                                            <td>{{$purchase->receipt_verification_code}}</td>
+                                            <td></td>
+                                        </tr>
 
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
