@@ -69,21 +69,9 @@ class ApiController extends Controller
 
             return $receipts;
         }else{
-            $receipts = DB::table('receipts')->get()->toArray();
-            $receipt_items = DB::table('receipt_items')->get()->toArray();
-
-            foreach($receipts as &$receipt)
-            {
-                $receipt->receipt_items = array_filter($receipt_items, function($receipt_item) use ($receipt) {
-                    return $receipt_item->receipt_id === $receipt->id;
-                });
-            }
-
-            return $receipts;
+            return Receipt::with(['items'])->get();
         }
 
-
-        return $id?Receipt::select('*')->join('receipt_items','receipt_items.receipt_id','=','receipts.id')->where('receipt.id',$id)->get()->fist():Receipt::leftJoin('receipt_items','receipts.id','=','receipt_items.receipt_id')->select('receipts.*','receipt_items.*','receipt_items.receipt_id as receipt_id')->get();
     }
 
     public function receipt_items($id = null)

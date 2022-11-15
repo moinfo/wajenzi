@@ -10,4 +10,8 @@ class Receipt extends Model
     use HasFactory;
 
     public $timestamps = false;
+
+    public function items(){
+        return $this->hasMany(ReceiptItem::class);
+    }
 }
