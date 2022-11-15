@@ -88,7 +88,7 @@ class ApiController extends Controller
 
     public function receipt_items($id = null)
     {
-        return $id?ReceiptItem::where('receipt_id',$id):ReceiptItem::all();
+        return $id?ReceiptItem::where('receipt_id',$id)->get():ReceiptItem::all();
     }
 
     /**
