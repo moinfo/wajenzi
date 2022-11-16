@@ -6,6 +6,7 @@ use App\Models\Api;
 use App\Models\Attendance;
 use App\Models\Receipt;
 use App\Models\ReceiptItem;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -77,6 +78,11 @@ class ApiController extends Controller
     public function receipt_items($id = null)
     {
         return $id?ReceiptItem::where('receipt_id',$id)->get():ReceiptItem::all();
+    }
+
+    public function employees($id = null)
+    {
+        return $id?User::find($id):User::all();
     }
 
     /**
