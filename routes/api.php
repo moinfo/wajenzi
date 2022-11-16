@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,3 +29,7 @@ Route::match(['get', 'post'], '/add_receipt_item', [App\Http\Controllers\Receipt
 Route::match(['get', 'post'], '/receipts/{id?}', [App\Http\Controllers\ApiController::class, 'receipts'])->name('receipts');
 Route::match(['get', 'post'], '/receipt_items/{id?}', [App\Http\Controllers\ApiController::class, 'receipt_items'])->name('receipt_items');
 Route::match(['get', 'post'], '/employees/{id?}', [App\Http\Controllers\ApiController::class, 'employees'])->name('employees');
+
+
+Route::post('/auth/register', [AuthController::class, 'createUser']);
+Route::post('/auth/login', [AuthController::class, 'loginUser']);

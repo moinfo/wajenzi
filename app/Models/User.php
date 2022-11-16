@@ -8,10 +8,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
     public $table = 'users';
     /**
      * The attributes that are mass assignable.
@@ -42,6 +43,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
 
 
     public function department() {
