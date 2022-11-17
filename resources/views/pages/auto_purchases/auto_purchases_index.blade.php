@@ -79,6 +79,7 @@
                                             $receipt_total_incl_of_tax += ($purchase->receipt_total_incl_of_tax);
                                             $receipt_items = \App\Models\ReceiptItem::getItems($receipt_id);
                                             $items = implode(',',array_column($receipt_items,'description'));
+                                            $receipt_time = $purchase->receipt_time;
                                         @endphp
                                         <tr>
                                             <td>{{$loop->iteration}}</td>
@@ -98,7 +99,10 @@
                                             <td class="text-right">{{number_format($purchase->receipt_total_incl_of_tax)}}</td>
                                             <td>
                                                 @if($purchase->receipt_verification_code)
-                                                    <a href="https://verify.tra.go.tz/{{$purchase->receipt_verification_code}}">{{$purchase->receipt_verification_code}}</a>
+                                                    @php
+                                                        $time = explode(':',$receipt_time);
+                                                    @endphp
+                                                    <a href="https://verify.tra.go.tz/{{$purchase->receipt_verification_code}}_{{$time[0]}}{{$time[1]}}{{$time[2]}}">{{$purchase->receipt_verification_code}}</a>
                                                     @endif
                                                </td>
                                             <td class="text-center">
