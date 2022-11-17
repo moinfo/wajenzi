@@ -17,7 +17,7 @@ class AutoPurchaseController extends Controller
      */
     public function index(Request $request)
     {
-        if($this->handleCrud($request, 'Purchase')) {
+        if($this->handleCrud($request, 'Receipt')) {
             return back();
         }
         $start_date = $request->input('start_date') ?? date('Y-06-01');
