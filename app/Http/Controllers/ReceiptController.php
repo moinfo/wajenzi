@@ -36,6 +36,7 @@ class ReceiptController extends Controller
      */
     public function store(Request $request)
     {
+//        Receipt::isExist($request->receipt_verification_code);
         $receipt = new Receipt;
         $receipt->company_name = $request->company_name;
         $receipt->p_o_box = $request->p_o_box;

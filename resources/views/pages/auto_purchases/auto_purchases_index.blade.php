@@ -1,8 +1,5 @@
 @extends('layouts.backend')
-
-
 @section('content')
-
     <div class="main-container">
         <div class="content">
             <div class="content-heading">Purchases
@@ -55,38 +52,97 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
-                                    <th>Date</th>
-                                    <th>Supplier Name</th>
-                                    <th>Supplier VRN</th>
-                                    <th>Tax Invoice</th>
-                                    <th>Invoice Date</th>
+                                    <th>InsertedDate</th>
+                                    <th>SupplierName</th>
+                                    <th>SupplierVRN</th>
+                                    <th>TaxInvoice</th>
+                                    <th>InvoiceDate</th>
                                     <th>Goods</th>
-                                    <th>Total Amount</th>
-                                    <th>Amount VAT EXC</th>
-                                    <th>VAT Amount</th>
-                                    <th>Attachment</th>
+                                    <th>AmountVATEXC</th>
+                                    <th>VATAmount</th>
+                                    <th>TotalAmount</th>
+                                    <th>VerificationCode</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
+                                @php
+                                    $receipt_total_excl_of_tax = 0;
+                                    $receipt_total_tax = 0;
+                                    $receipt_total_incl_of_tax = 0;
+                                @endphp
                                     @foreach($purchases as $purchase)
+                                        @php
+                                            $receipt_id = $purchase->id;
+                                            $receipt_total_excl_of_tax += $purchase->receipt_total_excl_of_tax;
+                                            $receipt_total_tax += $purchase->receipt_total_tax;
+                                            $receipt_total_incl_of_tax += ($purchase->receipt_total_incl_of_tax);
+                                            $receipt_items = \App\Models\ReceiptItem::getItems($receipt_id);
+                                            $items = implode(',',array_column($receipt_items,'description'));
+                                        @endphp
                                         <tr>
                                             <td>{{$loop->iteration}}</td>
-                                            <td>{{$purchase->receipt_date}}</td>
+                                            <td>{{$purchase->date}}</td>
                                             <td>{{$purchase->company_name}}</td>
                                             <td>{{$purchase->vrn}}</td>
                                             <td>{{$purchase->receipt_number}}</td>
                                             <td>{{$purchase->receipt_date}}</td>
-                                            <td></td>
-                                            <td>{{$purchase->receipt_total_incl_of_tax}}</td>
-                                            <td>{{$purchase->receipt_total_excl_of_tax}}</td>
-                                            <td>{{$purchase->receipt_total_tax}}</td>
-                                            <td>{{$purchase->receipt_verification_code}}</td>
-                                            <td></td>
+                                            <td class="text-primary"><a onclick="loadFormModal('receipt_items_form', {className: 'Receipt', id: {{$receipt_id}} }, 'Receipt items for {{$purchase->company_name}}', 'modal-lg');"
+                                                   class=" js-tooltip-enabled"
+                                                   data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                {{$items}}
+                                                </a>
+                                            </td>
+                                            <td class="text-right">{{number_format($purchase->receipt_total_excl_of_tax)}}</td>
+                                            <td class="text-right">{{number_format($purchase->receipt_total_tax)}}</td>
+                                            <td class="text-right">{{number_format($purchase->receipt_total_incl_of_tax)}}</td>
+                                            <td>
+                                                @if($purchase->receipt_verification_code)
+                                                    <a href="https://verify.tra.go.tz/{{$purchase->receipt_verification_code}}">{{$purchase->receipt_verification_code}}</a>
+                                                    @endif
+                                               </td>
+                                            <td class="text-center">
+                                                <div class="btn-group">
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Auto Purchase"))
+                                                        <button type="button"
+                                                                onclick="loadFormModal('auto_purchase_form', {className: 'Receipt', id: {{$purchase->id}}}, 'Edit {{$purchase->company_name}} Receipt', 'modal-md');"
+                                                                class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                                data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                            <i class="fa fa-pencil"></i>
+                                                        </button>
+                                                    @endif
+                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Auto Purchase"))
+
+                                                        <button type="button"
+                                                                onclick="deleteModelItem('Receipt', {{$purchase->id}}, 'collection-tr-{{$purchase->id}}');"
+                                                                class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                                data-toggle="tooltip" title="Delete"
+                                                                data-original-title="Delete">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </td>
                                         </tr>
 
                                     @endforeach
                                 </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th></th>
+                                        <th class="text-right">{{ number_format($receipt_total_excl_of_tax) }}</th>
+                                        <th class="text-right">{{ number_format($receipt_total_tax) }}</th>
+                                        <th class="text-right">{{number_format($receipt_total_incl_of_tax)}}</th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
 
