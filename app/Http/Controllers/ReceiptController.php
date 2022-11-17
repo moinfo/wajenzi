@@ -58,6 +58,7 @@ class ReceiptController extends Controller
         $receipt->receipt_total_excl_of_tax = $request->receipt_total_excl_of_tax;
         $receipt->receipt_total_tax = $request->receipt_total_tax;
         $receipt->receipt_total_incl_of_tax = $request->receipt_total_incl_of_tax;
+        $receipt->date = date('Y-m-d');
         $result = $receipt->save();
         $receipt_id = Receipt::latest('id')->first()->id;
         $items = $request->items;
