@@ -111,12 +111,12 @@
                     </select>
                 </div>
             </div>
-            <div class="col-sm-4">
-                <div class="form-group">
-                    <label for="example-nf-password">Password</label>
-                    <input type="text" class="form-control" id="input-user-password" name="password" value="123456">
-                </div>
-            </div>
+{{--            <div class="col-sm-4">--}}
+{{--                <div class="form-group">--}}
+{{--                    <label for="example-nf-password">Password</label>--}}
+{{--                    <input type="text" class="form-control" id="input-user-password" name="password" value="123456">--}}
+{{--                </div>--}}
+{{--            </div>--}}
         </div>
         <div class="form-group">
             @if($object->id ?? null)

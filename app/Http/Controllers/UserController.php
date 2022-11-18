@@ -50,4 +50,20 @@ class UserController extends Controller
         }
         return Redirect::back();
     }
+
+    public function update_password(Request $request){
+        $id = $request->input('id');
+        $name = $request->input('name');
+        $email = $request->input('email');
+        $password = bcrypt($request->input('password'));
+
+        User::query()->whereId($id)
+            ->update([
+                'name' => $name,
+                'email' => $email,
+                'password' => $password,
+            ]);
+
+        return Redirect::back();
+    }
 }

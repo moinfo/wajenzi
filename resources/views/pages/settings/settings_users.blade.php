@@ -68,6 +68,11 @@
                                         <td>{{ $user->status }}</td>
                                         <td class="text-center" >
                                             <div class="btn-group">
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Manage User Password"))
+                                                    <button type="button" onclick="loadFormModal('settings_manage_user_form', {className: 'User', id: {{$user->id}}}, 'Edit {{$user->name}}', 'modal-lg');" class="btn btn-sm btn-success js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Password">
+                                                        <i class="fa fa-key"></i>
+                                                    </button>
+                                                @endif
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit User"))
                                                     <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User', id: {{$user->id}}}, 'Edit {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                         <i class="fa fa-pencil"></i>
