@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class BankReconciliation extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'to_id','from_to_id','supplier_id', 'efd_id', 'description', 'date', 'debit', 'credit', 'payment_type', 'reference'];
+    public $fillable = ['id', 'to_id','from_to_id','supplier_id', 'efd_id', 'description', 'date', 'debit', 'status', 'credit', 'payment_type', 'reference'];
 
     public static function getTotalDepositPerDayPerSupplier($start_date, $end_date, $efd_id, $supplier_id)
     {
@@ -118,7 +118,7 @@ class BankReconciliation extends Model
     UNION ALL
     (SELECT  description,null as efd_id,null as supplier_id,date,null as credit, null as debit,null as transfer_in,null as transfer_out,amount FROM `financial_charges` WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date')
     UNION ALL
-    (SELECT  description,efd_id, supplier_id, date,credit, null as debit,null as transfer_in,null as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND credit != 0 AND `date` BETWEEN '$start_date' AND '$end_date')
+    (SELECT  description,efd_id, supplier_id, date,credit, null as debit,null as transfer_in,null as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND credit != 0 AND `date` BETWEEN '$start_date' AND '$end_date' AND status = 'APPROVED')
                   UNION ALL
     (SELECT  description,efd_id,supplier_id,date,null as credit, null as debit,null as transfer_in,debit as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit < 0 AND reference LIKE 'TRANSFER%')
     ) b  order by `date` desc");

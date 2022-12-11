@@ -370,6 +370,7 @@
                                     <th>Payment Type</th>
                                     <th>Credit</th>
                                     <th>Debit</th>
+                                    <th>Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -411,8 +412,28 @@
                                         <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
                                         <td class="text-right">{{ number_format($bank_reconciliation->credit, 2) }}</td>
                                         <td class="text-right">{{ number_format($bank_reconciliation->debit, 2) }}</td>
+                                        <td>
+                                            @if($bank_reconciliation->credit)
+                                                @if($bank_reconciliation->status == 'PENDING')
+                                                    <div class="badge badge-warning">{{ $bank_reconciliation->status}}</div>
+                                                @elseif($bank_reconciliation->status == 'APPROVED')
+                                                    <div class="badge badge-primary">{{ $bank_reconciliation->status}}</div>
+                                                @elseif($bank_reconciliation->status == 'REJECTED')
+                                                    <div class="badge badge-danger">{{ $bank_reconciliation->status}}</div>
+                                                @elseif($bank_reconciliation->status == 'PAID')
+                                                    <div class="badge badge-primary">{{ $bank_reconciliation->status}}</div>
+                                                @elseif($bank_reconciliation->status == 'COMPLETED')
+                                                    <div class="badge badge-success">{{ $bank_reconciliation->status}}</div>
+                                                @else
+                                                    <div class="badge badge-secondary">{{ $bank_reconciliation->status}}</div>
+                                                @endif
+                                            @endif
+                                        </td>
                                         <td class="text-center">
                                             <div class="btn-group">
+                                                @if($bank_reconciliation->credit)
+                                                 <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('bank_reconciliations',['id' => $bank_reconciliation->id,'document_type_id'=>12])}}"><i class="fa fa-eye"></i></a>
+                                                @endif
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Bank Reconciliation"))
                                                     <button type="button"
                                                             onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation', id: {{$bank_reconciliation->id}}}, 'Edit {{$bank_reconciliation->efd}}', 'modal-md');"
@@ -442,6 +463,7 @@
                                     <td colspan="7"></td>
                                     <td class="text-right">{{ number_format($total_credit, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_debit, 2) }}</td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                                 </tfoot>

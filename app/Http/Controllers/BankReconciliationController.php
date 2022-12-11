@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Classes\Utility;
+use App\Models\Approval;
 use App\Models\AssetProperty;
 use App\Models\BankReconciliation;
 use App\Models\Efd;
@@ -59,7 +60,24 @@ class BankReconciliationController extends Controller
         ];
         return view('pages.bank_reconciliation.bank_reconciliation_index')->with($data);
     }
-
+    public function bank_reconciliation($id,$document_type_id)
+    {
+        $bank_reconciliation = \App\Models\BankReconciliation::where('id', $id)->get()->first();
+        $approvalStages = Approval::getApprovalStages($id, $document_type_id);
+        $nextApproval = Approval::getNextApproval($id, $document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id, $document_type_id);
+        $rejected = Approval::isRejected($id, $document_type_id);
+        $document_id = $id;
+        $data = [
+            'bank_reconciliation' => $bank_reconciliation,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.bank_reconciliation.bank_reconciliation')->with($data);
+    }
     public function transferReports(Request $request){
         $start_date = $request->input('start_date') ?? date('Y-m-d');
         $end_date = $request->input('end_date') ?? date('Y-m-d');
