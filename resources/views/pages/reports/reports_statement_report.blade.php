@@ -34,12 +34,12 @@
                                                     <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
-                                            <div class="class col-md-3">
+                                            <div class="class col-md-4">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon3">Suppliers</span>
                                                     </div>
-                                                    <select name="supplier_id" id="input-supplier-id" class="form-control" aria-describedby="basic-addon3">
+                                                    <select name="supplier_id" id="input-supplier-id" class="form-control select2" aria-describedby="basic-addon3">
                                                         <option value="">Select Supplier</option>
                                                         @foreach ($suppliers as $supplier)
                                                             <option value="{{ $supplier->id }}"> {{ $supplier->name }} </option>
@@ -123,6 +123,7 @@
         </div>
     </div>
 @endsection
+
 
 
 

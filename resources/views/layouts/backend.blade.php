@@ -183,6 +183,13 @@
             $('.datepicker').datepicker({
                 format: 'yyyy-mm-dd'
             });
+            $(".select2").select2({
+                theme: "bootstrap",
+                placeholder: "Choose",
+                width: 'auto',
+                dropdownAutoWidth: true,
+                allowClear: true,
+            });
 // jQuery('#toast-example-1').toast('show');
             var csrf_token = '{{csrf_token()}}';
 
