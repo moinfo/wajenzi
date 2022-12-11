@@ -58,7 +58,7 @@
 
                                 <tr>
                                     <th>Total Credit</th>
-                                    <td>{{ number_format($bank_reconciliation->Credit, 2)}}</td>
+                                    <td>{{ number_format($bank_reconciliation->credit, 2)}}</td>
                                 </tr>
                                 <tr>
                                     <th>Date</th>
