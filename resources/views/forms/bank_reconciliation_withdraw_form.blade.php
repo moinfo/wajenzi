@@ -38,10 +38,7 @@
 
             </select>
         </div>
-        <div class="form-group">
-            <label for="example-nf-reference">Reference</label>
-            <input type="text" class="form-control" id="input-reference" name="reference" value="{{ $object->reference ?? '' }}" required>
-        </div>
+        <input type="hidden" class="form-control" id="input-reference" name="reference" value="{{ bin2hex(random_bytes(18)) }}">
         <div class="form-group">
             <label for="example-nf-description">Description</label>
             <textarea type="text" row="3" class="form-control" id="input-description" name="description">{{ $object->description ?? '' }}</textarea>
