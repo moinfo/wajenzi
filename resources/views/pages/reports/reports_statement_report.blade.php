@@ -63,7 +63,7 @@
                                 $today_date = date('Y-m-d');
                                 $supplier_id = $_POST['supplier_id'] ?? 0;
                                 $supplier_name = \App\Models\Supplier::getSupplierName($supplier_id);
-                                $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalance($supplier_id,$today_date) ?? 0;
+                                $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalance($supplier_id,$end_date) ?? 0;
                                 $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalance($supplier_id,$start_date) ?? 0;
                                 $transactions = \App\Models\BankReconciliation::getSupplierTransactions($start_date,$end_date,$supplier_id);
 

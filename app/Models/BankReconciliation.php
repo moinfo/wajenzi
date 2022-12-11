@@ -82,7 +82,7 @@ class BankReconciliation extends Model
     public static function getSupplierAllTimeCredit($supplier_id,$end_date)
     {
         $start_date = '2010-01-01';
-        return BankReconciliation::select(DB::raw('SUM(credit) as credit'))->where('supplier_id',$supplier_id)->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['credit'] ?? 0;
+        return BankReconciliation::select(DB::raw('SUM(credit) as credit'))->where('supplier_id',$supplier_id)->where('status','APPROVED')->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['credit'] ?? 0;
     }
     public static function getSupplierCurrentBalance($supplier_id,$end_date)
     {
