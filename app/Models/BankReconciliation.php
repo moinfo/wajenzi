@@ -84,15 +84,21 @@ class BankReconciliation extends Model
         $start_date = '2010-01-01';
         return BankReconciliation::select(DB::raw('SUM(credit) as credit'))->where('supplier_id',$supplier_id)->where('status','APPROVED')->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['credit'] ?? 0;
     }
+
+    public static function getSupplierAllTimeFinancialCharges($supplier_id,$end_date)
+    {
+        $start_date = '2010-01-01';
+        return FinancialCharge::select(DB::raw('SUM(amount) as credit'))->where('supplier_id',$supplier_id)->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['credit'] ?? 0;
+    }
     public static function getSupplierCurrentBalance($supplier_id,$end_date)
     {
-        return  self::getSupplierAllTimeDebit($supplier_id,$end_date) - self::getSupplierAllTimeCredit($supplier_id,$end_date);
+        return  self::getSupplierAllTimeDebit($supplier_id,$end_date) - self::getSupplierAllTimeCredit($supplier_id,$end_date) - self::getSupplierAllTimeFinancialCharges($supplier_id,$end_date);
     }
 
     public static function getSupplierOpeningBalance($supplier_id, $end_date)
     {
         $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
-        return self::getSupplierAllTimeCredit($supplier_id,$yesterday) - self::getSupplierAllTimeDebit($supplier_id,$yesterday);
+        return (self::getSupplierAllTimeCredit($supplier_id,$yesterday) + self::getSupplierAllTimeFinancialCharges($supplier_id,$yesterday)) - self::getSupplierAllTimeDebit($supplier_id,$yesterday);
 
 
     }
@@ -121,7 +127,7 @@ class BankReconciliation extends Model
     (SELECT  description,efd_id, supplier_id, date,credit, null as debit,null as transfer_in,null as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND credit != 0 AND `date` BETWEEN '$start_date' AND '$end_date' AND status = 'APPROVED')
                   UNION ALL
     (SELECT  description,efd_id,supplier_id,date,null as credit, null as debit,null as transfer_in,debit as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit < 0 AND reference LIKE 'TRANSFER%')
-    ) b  order by `date` desc");
+    ) b  order by `date` asc");
 
     }
 

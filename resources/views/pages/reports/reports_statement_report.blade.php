@@ -96,10 +96,10 @@
                                 <tbody>
                                 @foreach($transactions as $transaction)
                                     @php
-                                        $opening_balance += $transaction->debit;
+                                        $opening_balance -= $transaction->debit;
                                         $opening_balance += $transaction->transfer_in;
-                                        $opening_balance -= $transaction->credit;
-                                        $opening_balance -= $transaction->amount;
+                                        $opening_balance += $transaction->credit;
+                                        $opening_balance += $transaction->amount;
                                         $opening_balance -= $transaction->transfer_out;
                                         $efd = \App\Models\Efd::where('id',$transaction->efd_id)->get()->first()['name'];
                                     @endphp
