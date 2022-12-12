@@ -105,24 +105,73 @@ class Purchase extends Model
         return $purchases = $purchases->sum('purchases.amount_vat_exc');
     }
 
-    public static function getTotalPurchasesByDate($start_date, $end_date){
+
+
+    public static function getTotalAutoPurchasesByDate($start_date, $end_date){
+        return Receipt::whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(receipt_total_incl_of_tax) as total_amount")])->get()->first()['total_amount'] ?? 0;
+
+    }
+    public static function getTotalNormalPurchasesByDate($start_date, $end_date){
         return Purchase::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(total_amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
 
     }
-    public static function getTotalPurchasesByDateByVat($start_date, $end_date){
+
+    public static function getTotalPurchasesByDate($start_date, $end_date){
+        return self::getTotalAutoPurchasesByDate($start_date, $end_date) + self::getTotalNormalPurchasesByDate($start_date, $end_date);
+
+    }
+
+
+    public static function getTotalAutoPurchasesByDateByVat($start_date, $end_date){
+        return Receipt::whereBetween('date', [$start_date, $end_date])->where('receipt_total_tax','!=',0)->select([DB::raw("SUM(receipt_total_tax) as total_amount")])->get()->first()['total_amount'] ?? 0;
+
+    }
+
+    public static function getTotalNormalPurchasesByDateByVat($start_date, $end_date){
         return Purchase::Where('status','APPROVED')->Where('purchase_type',1)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(total_amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
 
     }
-    public static function getTotalPurchasesByDateByExempt($start_date, $end_date){
+
+    public static function getTotalPurchasesByDateByVat($start_date, $end_date){
+        return self::getTotalAutoPurchasesByDateByVat($start_date, $end_date) + self::getTotalNormalPurchasesByDateByVat($start_date, $end_date);
+    }
+
+    public static function getTotalAutoPurchasesByDateByExempt($start_date, $end_date){
+        return Receipt::whereBetween('date', [$start_date, $end_date])->where('receipt_total_tax','=',0)->select([DB::raw("SUM(receipt_total_incl_of_tax) as total_amount")])->get()->first()['total_amount'] ?? 0;
+    }
+
+    public static function getTotalNormalPurchasesByDateByExempt($start_date, $end_date){
         return Purchase::Where('status','APPROVED')->Where('purchase_type',2)->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(total_amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
 
     }
-    public static function getTotalExemptByDate($start_date, $end_date){
+
+    public static function getTotalPurchasesByDateByExempt($start_date, $end_date){
+        return self::getTotalAutoPurchasesByDateByExempt($start_date, $end_date) + self::getTotalNormalPurchasesByDateByExempt($start_date, $end_date);
+
+    }
+    public static function getTotalAutoExemptByDate($start_date, $end_date){
+        return Receipt::whereBetween('date', [$start_date, $end_date])->where('receipt_total_tax','=',0)->select([DB::raw("SUM(receipt_total_excl_of_tax) as total_amount")])->get()->first()['total_amount'] ?? 0;
+
+    }
+    public static function getTotalNormalExemptByDate($start_date, $end_date){
         return Purchase::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount_vat_exc) as amount_vat_exc")])->get()->first()['amount_vat_exc'] ?? 0;
 
     }
-    public static function getTotalVATByDate($start_date, $end_date){
+    public static function getTotalExemptByDate($start_date, $end_date){
+        return self::getTotalAutoExemptByDate($start_date, $end_date) + self::getTotalNormalExemptByDate($start_date, $end_date);
+
+    }
+    public static function getTotalAutoVATByDate($start_date, $end_date){
+        return Receipt::whereBetween('date', [$start_date, $end_date])->where('receipt_total_tax','!=',0)->select([DB::raw("SUM(receipt_total_tax) as total_amount")])->get()->first()['total_amount'] ?? 0;
+
+    }
+    public static function getTotalNormalVATByDate($start_date, $end_date){
         return Purchase::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(vat_amount) as vat_amount")])->get()->first()['vat_amount'] ?? 0;
 
     }
+    public static function getTotalVATByDate($start_date, $end_date){
+        return self::getTotalAutoVATByDate($start_date, $end_date) + self::getTotalNormalVATByDate($start_date, $end_date);
+
+    }
+
 }
