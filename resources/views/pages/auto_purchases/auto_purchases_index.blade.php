@@ -4,9 +4,9 @@
         <div class="content">
             <div class="content-heading">Purchases
                 <div class="float-right">
-                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Purchases"))
-                        <button type="button" onclick="loadFormModal('purchase_form', {className: 'Purchase'}, 'Create New Purchase', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Purchase</button>
-                    @endif
+{{--                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Purchases"))--}}
+{{--                        <button type="button" onclick="loadFormModal('purchase_form', {className: 'Purchase'}, 'Create New Purchase', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Purchase</button>--}}
+{{--                    @endif--}}
                 </div>
             </div>
             <div>
