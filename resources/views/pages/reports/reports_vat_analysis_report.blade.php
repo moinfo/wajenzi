@@ -184,13 +184,13 @@
                                     <td colspan="8" class="text-right"><b>CURRENT VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
-                                    <td class="text-right">{{ number_format(($total_vat_amt-$total_vats), 2) }}</td>
+                                    <td class="text-right">{{ number_format(($total_vat_amt-($total_vats+$receipt_total_tax)), 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="8" class="text-right"><b>OLD VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
-                                    <td class="text-right">{{ number_format(($vat_payable - ($total_vat_amt-$total_vats)), 2) }}</td>
+                                    <td class="text-right">{{ number_format(($vat_payable - ($total_vat_amt-($total_vats+$receipt_total_tax))), 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td colspan="8" class="text-right"><b>TOTAL VAT PAYABLE/(REFUND)</b></td>
