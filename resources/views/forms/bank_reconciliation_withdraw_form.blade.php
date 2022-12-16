@@ -1,4 +1,6 @@
-
+<?php
+$document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
+?>
 <div class="block-content">
     <form method="post"  enctype="multipart/form-data"  autocomplete="off">
         @csrf
@@ -60,7 +62,10 @@
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update
                 </button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Sale">Submit</button>
+                <input type="hidden" name="document_id" value="{{$document_id}}">
+                <input type="hidden" name="document_type_id" value="12">
+                <input type="hidden" name="link" value="bank_reconciliations/{{$document_id}}/12">
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="BankReconciliation">Submit</button>
             @endif
         </div>
     </form>
