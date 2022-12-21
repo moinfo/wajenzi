@@ -84,7 +84,7 @@
                             @php
                             if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
                                 $credit = \App\Models\Supplier::getWhitestarSupplierWithCredit($supplier->whitestar_supplier_id);
-                                $debit_cash = \App\Models\Supplier::getWhitestarSupplierWithDebitInCash($supplier->whitestar_supplier_id);
+                                $debit_cash = \App\Models\Supplier::getWhitestarSupplierWithDebitInCash($supplier->whitestar_supplier_id) + $debit_cash = \App\Models\Supplier::getWhitestarSupplierWithDebitInWithdraw($supplier->whitestar_supplier_id);
                             }else{
                                  $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);
                                  $debit_cash = 0;
