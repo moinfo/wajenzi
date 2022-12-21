@@ -37,6 +37,7 @@ class Supplier extends Model
             ->where('payment_type', '=','SUPPLIER')
             ->where('delete', '=','0')
             ->where('paid_payment_type', '=',1)
+            ->where('paid_payment_type', '=',3)
             ->where('payment_mode', '=',1)
             ->where('client_id','=', $whitestar_supplier_id)
             ->whereBetween('date', [$start_date, $end_date])
