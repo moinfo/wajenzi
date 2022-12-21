@@ -42,7 +42,7 @@
                                  $debit_cash = 0;
                             }
                             $total_credit_bonge += $credit;
-                            $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransfer($supplier->id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->id) + $supplier->debit;
+                            $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransfer($supplier->id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->id);
                             $total_debit_bonge += $debit;
                             $total_debit_cash_bonge += $debit_cash;
                             $both_debit = $debit+$debit_cash;
