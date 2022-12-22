@@ -35,7 +35,7 @@
                         @foreach($suppliers_with_bonge as $supplier)
                             @php
                             if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
-                                $credit = \App\Models\Supplier::getWhitestarSupplierWithCredit($supplier->whitestar_supplier_id);
+                                $credit = \App\Models\Supplier::getWhitestarSupplierWithCredit($supplier->whitestar_supplier_id) - \App\Models\Supplier::getWhitestarSupplierWithCreditInPackage($supplier->whitestar_supplier_id);
                                 $debit_cash = \App\Models\Supplier::getWhitestarSupplierWithDebitInCash($supplier->whitestar_supplier_id);
                             }else{
                                  $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);
@@ -83,7 +83,7 @@
                         @foreach($suppliers_with_whitestar as $supplier)
                             @php
                             if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
-                                $credit = \App\Models\Supplier::getWhitestarSupplierWithCredit($supplier->whitestar_supplier_id);
+                                $credit = \App\Models\Supplier::getWhitestarSupplierWithCredit($supplier->whitestar_supplier_id) - \App\Models\Supplier::getWhitestarSupplierWithCreditInPackage($supplier->whitestar_supplier_id);
                                 $debit_cash = \App\Models\Supplier::getWhitestarSupplierWithDebitInCash($supplier->whitestar_supplier_id) + \App\Models\Supplier::getWhitestarSupplierWithDebitInWithdraw($supplier->whitestar_supplier_id);
                             }else{
                                  $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);

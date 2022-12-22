@@ -137,6 +137,14 @@ class Supplier extends Model
             ->where('ospos_receivings.supplier_id', $supplier_id)
             ->get()->first()->credit;
     }
+    public static function getWhitestarSupplierWithCreditInPackage($supplier_id)
+    {
+        return DB::connection('mysql6')->table('whitestar.ospos_receiving_packages')
+            ->select(DB::raw("sum(cost*quantity) AS credit"))
+            ->where('ospos_receiving_packages.payment_type', 'CREDIT')
+            ->where('ospos_receiving_packages.supplier_id', $supplier_id)
+            ->get()->first()->credit;
+    }
     public static function getLemuruSupplierWithDebitWithoutTransfer($supplier_id)
     {
         $date = date('Y-m-d');
