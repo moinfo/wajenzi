@@ -64,12 +64,12 @@
                                                         <span class="input-group-text" id="basic-addon3">Type</span>
                                                     </div>
                                                     <select name="payment_type" id="payment_type" class="form-control">
-                                                    <option value="">ALL</option>
+                                                        <option value="">ALL</option>
 
-                                                    @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
-                                                        <option value="{{$bank_reconciliation_payment_type['name']}}"> {{ $bank_reconciliation_payment_type['name'] }} </option>
+                                                        @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
+                                                            <option value="{{$bank_reconciliation_payment_type['name']}}"> {{ $bank_reconciliation_payment_type['name'] }} </option>
                                                         @endforeach
-                                                        </select>
+                                                    </select>
                                                 </div>
                                             </div>
                                             <div class="class col-md-1">
@@ -93,7 +93,7 @@
                                     <th>Supplier Name</th>
                                     <th>EFD Name</th>
                                     <th>Payment Type</th>
-                                    <th>Debit</th>
+                                    <th>Credit</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -106,13 +106,14 @@
                                 ?>
                                 @foreach($bank_reconciliations as $bank_reconciliation)
                                     <?php
-                                    if ($bank_reconciliation->debit){
+                                    if ($bank_reconciliation->credit){
                                     $credit = $bank_reconciliation->credit;
                                     $total_credit += $credit;
                                     $debit = $bank_reconciliation->debit;
                                     $total_debit += $debit;
 
                                     ?>
+
                                     <tr id="bank_reconciliation-tr-{{$bank_reconciliation->id}}">
                                         <td class="text-center">
                                             {{$loop->iteration}}
@@ -122,7 +123,7 @@
                                         <td class="font-w600">{{ $bank_reconciliation->supplier }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->efd }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
-                                        <td class="text-right">{{ number_format($bank_reconciliation->debit, 2) }}</td>
+                                        <td class="text-right">{{ number_format($bank_reconciliation->credit, 2) }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Bank Reconciliation"))
@@ -155,7 +156,7 @@
                                 <tfoot>
                                 <tr>
                                     <td colspan="6"></td>
-                                    <td class="text-right">{{ number_format($total_debit, 2) }}</td>
+                                    <td class="text-right">{{ number_format($total_credit, 2) }}</td>
                                     <td></td>
                                 </tr>
                                 </tfoot>
