@@ -7,6 +7,8 @@
             <div class="content-heading">Bank Reconciliation
                 <div class="float-right">
                     <a href="{{route('transfer_reports')}}" class="btn btn-rounded btn-outline-success min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Transfer Reports</a>
+                    <a href="{{route('bank_withdraw_reports')}}" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Withdraw Reports</a>
+                    <a href="{{route('bank_deposit_reports')}}" class="btn btn-rounded btn-outline-danger min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Deposit Reports</a>
                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Bank Reconciliation"))
                         <button type="button" onclick="loadFormModal('bank_reconciliation_transfer_form', {className: 'BankReconciliation'}, 'Transfer', 'modal-md');" class="btn btn-rounded btn-outline-danger min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>Make Transfer</button>
                         <button type="button" onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation'}, 'Create New Bank Reconciliation', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Deposit</button>

@@ -30,9 +30,9 @@ class BankReconciliationController extends Controller
         $payment_type = $request->input('payment_type') ?? 'OFFICE';
         $suppliers = Supplier::all();
         $systems = System::where('id','!=',5)->get();
+        $efds = Efd::all();
         $supplier_with_deposits = BankReconciliation::where('date','>=',$start_date)->where('date','<=',$end_date)->where('payment_type','SALES')->select('suppliers.name','bank_reconciliations.supplier_id')
             ->join('suppliers','suppliers.id','=','bank_reconciliations.supplier_id')->groupBy('supplier_id')->get();
-        $efds = Efd::all();
         $reports = Efd::allWithTransactions($start_date, $end_date);
         $reports_2 = Efd::allWithTransactionsWithOfficePaymentType($start_date, $end_date, $payment_type);
         $reports_3 = Efd::allWithTransactionsWithOfficePaymentType($start_date, $end_date, 'SALES');
@@ -59,6 +59,64 @@ class BankReconciliationController extends Controller
             'maxTransactions' => $maxTransactions
         ];
         return view('pages.bank_reconciliation.bank_reconciliation_index')->with($data);
+    }
+
+    public function bank_deposit_reports(Request $request)
+    {
+        if($this->handleCrud($request, 'BankReconciliation')) {
+            return back();
+        }
+        $start_date = $request->input('start_date') ?? date('Y-m-01');
+        $end_date = $request->input('end_date') ?? date('Y-m-t');
+        $efd_id = $request->input('efd_id') ?? null;
+        $supplier_id = $request->input('supplier_id') ?? null;
+        $payment_type = 'OFFICE';
+        $bank_reconciliations = \App\Models\BankReconciliation::getAll($start_date,$end_date,$efd_id,$supplier_id,$payment_type);
+        $suppliers = Supplier::all();
+        $systems = System::where('id','!=',5)->get();
+        $efds = Efd::all();
+        $bank_reconciliation_payment_types = [
+//            ['name'=>'SALES'],
+            ['name'=>'OFFICE']
+        ];
+        $data = [
+            'bank_reconciliations' => $bank_reconciliations,
+            'suppliers' => $suppliers,
+            'systems' => $systems,
+            'efds' => $efds,
+            'bank_reconciliation_payment_types' => $bank_reconciliation_payment_types,
+
+        ];
+        return view('pages.bank_reconciliation.bank_reconciliation_deposit')->with($data);
+    }
+
+    public function bank_withdraw_reports(Request $request)
+    {
+        if($this->handleCrud($request, 'BankReconciliation')) {
+            return back();
+        }
+        $start_date = $request->input('start_date') ?? date('Y-m-01');
+        $end_date = $request->input('end_date') ?? date('Y-m-t');
+        $efd_id = $request->input('efd_id') ?? null;
+        $supplier_id = $request->input('supplier_id') ?? null;
+        $payment_type = 'OFFICE';
+        $bank_reconciliations = \App\Models\BankReconciliation::getAll($start_date,$end_date,$efd_id,$supplier_id,$payment_type);
+        $suppliers = Supplier::all();
+        $systems = System::where('id','!=',5)->get();
+        $efds = Efd::all();
+        $bank_reconciliation_payment_types = [
+//            ['name'=>'SALES'],
+            ['name'=>'OFFICE']
+        ];
+        $data = [
+            'bank_reconciliations' => $bank_reconciliations,
+            'suppliers' => $suppliers,
+            'systems' => $systems,
+            'efds' => $efds,
+            'bank_reconciliation_payment_types' => $bank_reconciliation_payment_types,
+
+        ];
+        return view('pages.bank_reconciliation.bank_reconciliation_withdraw')->with($data);
     }
     public function bank_reconciliation($id,$document_type_id)
     {
