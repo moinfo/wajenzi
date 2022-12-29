@@ -98,7 +98,7 @@
                                             <td class="text-right">{{number_format($purchase->receipt_total_excl_of_tax)}}</td>
                                             <td class="text-right">{{number_format($purchase->receipt_total_tax)}}</td>
                                             <td class="text-right">{{number_format($purchase->receipt_total_incl_of_tax)}}</td>
-                                            <td class="text-right">{{number_format($purchase->discount ?? 0)}}</td>
+                                            <td class="text-right">{{number_format($purchase->receipt_total_discount ?? 0)}}</td>
                                             <td>
                                                 @if($purchase->receipt_verification_code)
                                                     @php

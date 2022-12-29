@@ -44,7 +44,6 @@ class ReceiptController extends Controller
         $receipt->tin = $request->tin;
         $receipt->vrn = $request->vrn;
         $receipt->serial_no = $request->serial_no;
-        $receipt->discount = $request->discount;
         $receipt->uin = $request->uin;
         $receipt->tax_office = $request->tax_office;
         $receipt->customer_name = $request->customer_name;
@@ -59,6 +58,7 @@ class ReceiptController extends Controller
         $receipt->receipt_total_excl_of_tax = $request->receipt_total_excl_of_tax;
         $receipt->receipt_total_tax = $request->receipt_total_tax;
         $receipt->receipt_total_incl_of_tax = $request->receipt_total_incl_of_tax;
+        $receipt->receipt_total_discount = $request->receipt_total_discount;
         $receipt->date = $request->receipt_date;
         $result = $receipt->save();
         $receipt_id = Receipt::latest('id')->first()->id;
