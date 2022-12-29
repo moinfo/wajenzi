@@ -69,8 +69,7 @@ class ReceiptController extends Controller
                     'receipt_id' => $receipt_id,
                     'description' => $item['item_description'],
                     'qty' => $item['item_qty'],
-                    'amount' => $item['item_amount'],
-                    'discount' => $item['item_discount']
+                    'amount' => $item['item_amount']
                 ];
                 ReceiptItem::insert($data);
             }
