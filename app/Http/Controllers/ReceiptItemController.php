@@ -40,6 +40,7 @@ class ReceiptItemController extends Controller
         $receipt->description = $request->description;
         $receipt->qty = $request->qty;
         $receipt->amount = $request->amount;
+        $receipt->discount = $request->discount;
         $result = $receipt->save();
         if ($result){
             return ['results' => 'add receipt Item successful'];

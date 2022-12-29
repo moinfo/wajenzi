@@ -44,6 +44,7 @@ class ReceiptController extends Controller
         $receipt->tin = $request->tin;
         $receipt->vrn = $request->vrn;
         $receipt->serial_no = $request->serial_no;
+        $receipt->discount = $request->discount;
         $receipt->uin = $request->uin;
         $receipt->tax_office = $request->tax_office;
         $receipt->customer_name = $request->customer_name;
@@ -68,7 +69,8 @@ class ReceiptController extends Controller
                     'receipt_id' => $receipt_id,
                     'description' => $item['item_description'],
                     'qty' => $item['item_qty'],
-                    'amount' => $item['item_amount']
+                    'amount' => $item['item_amount'],
+                    'discount' => $item['item_discount']
                 ];
                 ReceiptItem::insert($data);
             }

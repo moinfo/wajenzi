@@ -61,6 +61,7 @@
                                     <th>AmountVATEXC</th>
                                     <th>VATAmount</th>
                                     <th>TotalAmount</th>
+                                    <th>Discount</th>
                                     <th>VerificationCode</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
@@ -97,6 +98,7 @@
                                             <td class="text-right">{{number_format($purchase->receipt_total_excl_of_tax)}}</td>
                                             <td class="text-right">{{number_format($purchase->receipt_total_tax)}}</td>
                                             <td class="text-right">{{number_format($purchase->receipt_total_incl_of_tax)}}</td>
+                                            <td class="text-right">{{number_format($purchase->discount ?? 0)}}</td>
                                             <td>
                                                 @if($purchase->receipt_verification_code)
                                                     @php
@@ -143,6 +145,7 @@
                                         <th class="text-right">{{ number_format($receipt_total_excl_of_tax) }}</th>
                                         <th class="text-right">{{ number_format($receipt_total_tax) }}</th>
                                         <th class="text-right">{{number_format($receipt_total_incl_of_tax)}}</th>
+                                        <th></th>
                                         <th></th>
                                         <th></th>
                                     </tr>
