@@ -40,7 +40,8 @@ class Taxation extends Model
             $additional_amount = 1566000;
             $maximum_amount = 12000000;
         }
-        return ($additional_amount + $employee_percentage* ($maximum_amount - $Profit_from_Operating_Activities_Before_Taxation_current));
+        return $Profit_from_Operating_Activities_Before_Taxation_current*0.30;
+//        return ($additional_amount + $employee_percentage* ($maximum_amount - $Profit_from_Operating_Activities_Before_Taxation_current));
 
     }
 
