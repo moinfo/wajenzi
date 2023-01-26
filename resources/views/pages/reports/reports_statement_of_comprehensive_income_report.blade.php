@@ -127,15 +127,18 @@
                                     </tr>
                                     <?php
                                         $total_expenses = 0;
+                                        $total_expenses_last_year = 0;
                                     foreach ($expenses as $index => $expense) {
                                         $total = \App\Models\Expense::getTotalExpensesGroupByExpensesCategory($start_date,$end_date,$expense->id);
+                                        $total_last_year = \App\Models\Expense::getTotalExpensesGroupByExpensesCategory($start_date_last,$end_date_last,$expense->id);
                                         $total_expenses += $total;
+                                    $total_expenses_last_year += $total_last_year;
                                        ?>
 
                                     <tr>
                                         <td>{{$expense->name}}</td>
                                         <td class="text-right"><a href="{{route('reports_annually_expenses_summary_report')}}">{{number_format($total)}}</a></td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                        <td class="text-right">{{number_format($total_last_year)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
@@ -174,7 +177,7 @@
                                     <tr>
                                         <td></td>
                                         <td class="text-right">{{number_format($total_expenses)}}</td>
-                                        <td class="text-right">{{number_format($basic_salary_last+$sdl_last)}}</td>
+                                        <td class="text-right">{{number_format($basic_salary_last+$sdl_last+$total_expenses_last_year)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
