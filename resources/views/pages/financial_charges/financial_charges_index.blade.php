@@ -38,8 +38,8 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td class="font-w600">{{ $financial_charge->date }}</td>
-                                        <td class="font-w600">{{ $financial_charge->supplier->name }}</td>
-                                        <td class="font-w600">{{ $financial_charge->financialChargeCategory->name }}</td>
+                                        <td class="font-w600">{{ $financial_charge->supplier->name ?? null }}</td>
+                                        <td class="font-w600">{{ $financial_charge->financialChargeCategory->name ?? null }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $financial_charge->description }}
                                         <td class="font-w600">{{ number_format($financial_charge->amount, 2) }}</td>
 
