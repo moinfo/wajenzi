@@ -67,24 +67,39 @@
                                 $payable = new \App\Models\VatAnalysis();
                                 $start_date = $_POST['start_date'] ?? date('Y-m-01');
                                 $end_date = $_POST['end_date'] ?? date('Y-m-t');
+                                $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($start_date)));
+
+                                $start_date_last_month = '2010-01-01';
+                                $end_date_last_month = $yesterday;
 //                                $start_date = $_POST['start_date'] ?? '2021-02-01';
 //                                $end_date = $_POST['end_date'] ?? '2021-02-28';
 
                                 $purchases = $purchase->getAll($start_date,$end_date,null,1);
+                                $last_month_purchases = $purchase->getAll($start_date_last_month,$end_date_last_month,null,1);
                                 $auto_purchases = \App\Models\AutoPurchase::getAutoPurchasesVAT($start_date,$end_date);
+                                $last_month_auto_purchases = \App\Models\AutoPurchase::getAutoPurchasesVAT($start_date_last_month,$end_date_last_month);
                                 $total_net = \App\Models\Sale::getTotalNet($start_date,$end_date);
                                 $total_turnover = \App\Models\Sale::getTotalTurnover($start_date,$end_date);
                                 $total_tax = \App\Models\Sale::getTotalTax($start_date,$end_date);
                                 $total_sales = \App\Models\Sale::getTotalSale($start_date,$end_date);
                                 $total_amount_vat_exc = \App\Models\Sale::getTotalSaleVatExcl($start_date,$end_date);
                                 $total_vat_amt = \App\Models\Sale::getTotalVatAmt($start_date,$end_date);
+                                $total_vat_amt_last_month = \App\Models\Sale::getTotalVatAmt($start_date_last_month,$end_date_last_month);
                                 $total_exempt = \App\Models\Sale::getTotalExempt($start_date,$end_date);
                                 $vat_payable = $payable->getTaxPayable($end_date);
+                                $vat_payable_last_month = $payable->getTaxPayable($end_date_last_month);
                                 $total_purchases = 0;
                                 $total_vat_exempts = 0;
+                                $total_vats_last_month = 0;
                                 $total_vats = 0;
                                 $no = 1;
                                 ?>
+                                @foreach($last_month_purchases as $purchase)
+                                    @php
+                                    $vats_amount_all = $purchase->vat_amount;
+                                    $total_vats_last_month += $vats_amount_all;
+                                    @endphp
+                                @endforeach
                                 @foreach($purchases as $purchase)
                                     <?php
                                     $purchases_amount = $purchase->total_amount;
@@ -123,9 +138,15 @@
                                 @php
                                     $receipt_total_excl_of_tax = 0;
                                     $receipt_total_tax = 0;
+                                    $receipt_total_tax_last_month = 0;
                                     $receipt_total_incl_of_tax = 0;
                                     $nos = $no;
                                 @endphp
+                                @foreach($last_month_auto_purchases as $purchase)
+                                    @php
+                                        $receipt_total_tax_last_month += $purchase->receipt_total_tax;
+                                    @endphp
+                                @endforeach
                                 @foreach($auto_purchases as $purchase)
                                     @php
                                         $receipt_id = $purchase->id;
@@ -190,8 +211,9 @@
                                     <td colspan="8" class="text-right"><b>OLD VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
-                                    <td class="text-right">{{ number_format(($vat_payable - ($total_vat_amt-($total_vats+$receipt_total_tax))), 2) }}</td>
+                                    <td class="text-right">{{ number_format($vat_payable_last_month, 2) }}</td>
                                 </tr>
+
                                 <tr>
                                     <td colspan="8" class="text-right"><b>TOTAL VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
