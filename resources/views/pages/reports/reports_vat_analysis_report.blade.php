@@ -218,7 +218,7 @@
                                     <td colspan="8" class="text-right"><b>TOTAL VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
-                                    <td class="text-right">{{ number_format(($vat_payable), 2) }}</td>
+                                    <td class="text-right">{{ number_format(($vat_payable_last_month+($total_vat_amt-($total_vats+$receipt_total_tax))), 2) }}</td>
                                 </tr>
 
                                 </tfoot>
