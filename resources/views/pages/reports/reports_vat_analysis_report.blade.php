@@ -87,6 +87,9 @@
                                 $total_vat_amt_last_month = \App\Models\Sale::getTotalVatAmt($start_date_last_month,$end_date_last_month);
                                 $total_exempt = \App\Models\Sale::getTotalExempt($start_date,$end_date);
                                 $vat_payable = $payable->getTaxPayable($end_date);
+                                $vat_payableInMonth = $payable->getTaxPayableInMonth($start_date,$end_date);
+                                $vat_payment = $payable->getVatPayment($start_date,$end_date);
+                                $vat_payment_last_month = $payable->getVatPayment($start_date_last_month,$end_date_last_month);
                                 $vat_payable_last_month = $payable->getTaxPayable($end_date_last_month);
                                 $total_purchases = 0;
                                 $total_vat_exempts = 0;
@@ -208,6 +211,18 @@
                                     <td class="text-right">{{ number_format(($total_vat_amt-($total_vats+$receipt_total_tax)), 2) }}</td>
                                 </tr>
                                 <tr>
+                                    <td colspan="8" class="text-right"><b>CURRENT VAT PAYMENT</b></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right">{{ number_format($vat_payment, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="8" class="text-right"><b>ACTUAL VAT PAYABLE/(REFUND)</b></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right"></td>
+                                    <td class="text-right">{{ number_format($vat_payableInMonth, 2) }}</td>
+                                </tr>
+                                <tr>
                                     <td colspan="8" class="text-right"><b>OLD VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
@@ -218,7 +233,7 @@
                                     <td colspan="8" class="text-right"><b>TOTAL VAT PAYABLE/(REFUND)</b></td>
                                     <td class="text-right"></td>
                                     <td class="text-right"></td>
-                                    <td class="text-right">{{ number_format((($total_vat_amt-($total_vats+$receipt_total_tax))+$vat_payable_last_month), 2) }}</td>
+                                    <td class="text-right">{{ number_format($vat_payable, 2) }}</td>
                                 </tr>
 
                                 </tfoot>

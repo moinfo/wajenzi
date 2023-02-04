@@ -72,7 +72,7 @@ class Purchase extends Model
     }
 
     public static function getTotalPurchasesWithVAT($end_date, $supplier_id = null, $purchase_type = null, $start_date = null){
-        $start_date = '2020-01-01' ?? $start_date;
+        $start_date = $start_date ?? '2020-01-01';
         $purchases = DB::table('purchases')
             ->join('suppliers', 'suppliers.id', '=', 'purchases.supplier_id')
             ->join('items', 'items.id', '=', 'purchases.item_id')
@@ -85,11 +85,11 @@ class Purchase extends Model
         }if($purchase_type != null){
             $purchases->where('purchase_type','=',$purchase_type);
         }
-        return $purchases = $purchases->sum('purchases.vat_amount');
+        return $purchases->sum('purchases.vat_amount');
     }
     public static function getTotalAutoPurchasesVAT($end_date,$start_date = null)
     {
-        $start_date = '2020-01-01' ?? $start_date;
+        $start_date =  $start_date ?? '2020-01-01';
         return DB::table('receipts')->where('receipt_total_tax','!=',0)->whereBetween('date',[$start_date,$end_date])->sum('receipt_total_tax');
     }
 

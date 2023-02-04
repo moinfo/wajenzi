@@ -22,13 +22,13 @@ class VatPayment extends Model
         return $vat_payments;
     }
 
-    public static function getTotalPayments($end_date){
-        $start_date = '2020-01-01';
-        $vat_payments =  DB::table('vat_payments')
+    public static function getTotalPayments($end_date,$start_date=null){
+        $start_date = $start_date ?? '2010-01-01';
+        return DB::table('vat_payments')
             ->whereBetween('date', [$start_date,$end_date])
             ->Where('status','APPROVED')
             ->sum('vat_payments.amount');
-        return $vat_payments;
+
     }
     public static function getTotalPaymentOfLastMonth($start_date,$end_date){
         $vat_payments =  DB::table('vat_payments')
