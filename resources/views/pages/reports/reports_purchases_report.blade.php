@@ -151,7 +151,61 @@
                                         $no++;
                                     @endphp
                                 @endforeach
+                                @php
+                                    $receipt_total_excl_of_tax = 0;
+                                    $receipt_total_tax = 0;
+                                    $receipt_total_incl_of_tax = 0;
+                                    $nos = $no;
+                                @endphp
+                                @foreach($auto_purchases as $purchase)
+                                    @php
+                                        $receipt_id = $purchase->id ?? 0;
+                                        $receipt_total_excl_of_tax += $purchase->receipt_total_excl_of_tax;
+                                        $receipt_total_tax += $purchase->receipt_total_tax;
+                                        $receipt_total_incl_of_tax += ($purchase->receipt_total_incl_of_tax);
+                                        $receipt_items = \App\Models\ReceiptItem::getItems($receipt_id) ?? [];
+                                        $items = implode(',',array_column($receipt_items,'description'));
+                                        $receipt_time = $purchase->receipt_time;
+                                    @endphp
+                                    <tr>
+                                        <td>{{$nos}}</td>
+                                        <td>
+                                            @if($purchase->receipt_verification_code)
+                                                @php
+                                                    $time = explode(':',$receipt_time);
+                                                @endphp
+                                                <a href="https://verify.tra.go.tz/{{$purchase->receipt_verification_code}}_{{$time[0]}}{{$time[1]}}{{$time[2]}}">{{$purchase->receipt_verification_code}}</a>
+                                            @endif
+                                        </td>
+                                        <td>{{$purchase->date}}</td>
+                                        <td>{{$purchase->company_name}}</td>
+                                        <td>{{$purchase->vrn}}</td>
+                                        <td>{{$purchase->receipt_number}}</td>
+                                        <td>{{$purchase->receipt_date}}</td>
+                                        <td class="text-primary"><a onclick="loadFormModal('receipt_items_form', {className: 'Receipt', id: {{$receipt_id}} }, 'Receipt items for {{$purchase->company_name}}', 'modal-lg');"
+                                                                    class=" js-tooltip-enabled"
+                                                                    data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                {{$items}}
+                                            </a>
+                                        </td>
+                                        <td class="text-right">{{number_format($purchase->receipt_total_incl_of_tax)}}</td>
+                                        <td class="text-right">{{number_format(0)}}</td>
+                                        <td class="text-right">{{number_format($purchase->receipt_total_tax)}}</td>
+                                    </tr>
 
+                                    @php
+                                        $nos++;
+                                    @endphp
+                                @endforeach
+                                </tbody>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="8"></td>
+                                    <td class="text-right">{{ number_format($total_purchases+$receipt_total_incl_of_tax, 2) }}</td>
+                                    <td class="text-right">{{ number_format($total_vat_exempts, 2) }}</td>
+                                    <td class="text-right">{{ number_format($total_vats+$receipt_total_tax, 2) }}</td>
+                                </tr>
+                                </tfoot>
                             </table>
                         </div>
 
