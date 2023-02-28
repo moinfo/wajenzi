@@ -155,7 +155,7 @@
                                     $receipt_total_excl_of_tax = 0;
                                     $receipt_total_tax = 0;
                                     $receipt_total_incl_of_tax = 0;
-                                    $nos = $no;
+                                    $nos = $no ?? 0;
                                 @endphp
                                 @foreach($auto_purchases as $purchase)
                                     @php
