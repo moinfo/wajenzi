@@ -117,11 +117,11 @@
                                 ?>
                                 @foreach($purchases as $purchase)
                                     <?php
-                                    $purchases_amount = $purchase->total_amount;
+                                    $purchases_amount = $purchase->total_amount ?? 0;
                                     $total_purchases += $purchases_amount;
-                                    $vat_exempts_amount = $purchase->amount_vat_exc;
+                                    $vat_exempts_amount = $purchase->amount_vat_exc ?? 0;
                                     $total_vat_exempts += $vat_exempts_amount;
-                                    $vats_amount = $purchase->vat_amount;
+                                    $vats_amount = $purchase->vat_amount ?? 0;
                                     $total_vats += $vats_amount;
                                     $no = 0;
                                     ?>
@@ -139,10 +139,10 @@
                                         <td class="font-w600">{{ $purchase->date }}</td>
                                         <td class="font-w600">{{ $purchase->supplier ?? null }}</td>
                                         <td class="font-w600">{{ $purchase->vrn ?? null}}</td>
-                                        <td class="font-w600">{{ $purchase->tax_invoice }}</td>
-                                        <td class="font-w600">{{ $purchase->invoice_date }}</td>
+                                        <td class="font-w600">{{ $purchase->tax_invoice  ?? null }}</td>
+                                        <td class="font-w600">{{ $purchase->invoice_date  ?? null}}</td>
                                         <td class="font-w600">{{ $purchase->goods ?? null }}</td>
-                                        <td class="text-right">{{ number_format($purchase->total_amount, 2) }}</td>
+                                        <td class="text-right">{{ number_format(($purchase->total_amount ?? 0), 2) }}</td>
                                         <td class="text-right">{{ number_format($purchase->amount_vat_exc,2) }}</td>
                                         <td class="text-right">{{ number_format($purchase->vat_amount, 2) }}</td>
 
@@ -159,7 +159,7 @@
                                 @endphp
                                 @foreach($auto_purchases as $purchase)
                                     @php
-                                        $receipt_id = $purchase->id;
+                                        $receipt_id = $purchase->id ?? 0;
                                         $receipt_total_excl_of_tax += $purchase->receipt_total_excl_of_tax;
                                         $receipt_total_tax += $purchase->receipt_total_tax;
                                         $receipt_total_incl_of_tax += ($purchase->receipt_total_incl_of_tax);
