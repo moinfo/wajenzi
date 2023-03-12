@@ -59,6 +59,9 @@ class ReceiptController extends Controller
         $receipt->receipt_total_tax = $request->receipt_total_tax;
         $receipt->receipt_total_incl_of_tax = $request->receipt_total_incl_of_tax;
         $receipt->receipt_total_discount = $request->receipt_total_discount;
+        $receipt->receipt_rea = $request->receipt_rea;
+        $receipt->receipt_property_tax = $request->receipt_property_tax;
+        $receipt->receipt_ewura = $request->receipt_ewura;
         $receipt->date = $request->receipt_date;
         $result = $receipt->save();
         $receipt_id = Receipt::latest('id')->first()->id;
