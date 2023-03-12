@@ -70,7 +70,7 @@ class ApiController extends Controller
 
             return $receipts;
         }else{
-            return Receipt::with(['items'])->latest();
+            return Receipt::with(['items'])->latest()->get();
         }
 
     }
