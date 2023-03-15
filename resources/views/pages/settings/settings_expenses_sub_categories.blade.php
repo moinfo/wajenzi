@@ -32,7 +32,7 @@
                                         {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $expenses_sub_category->name }}</td>
-                                    <td class="font-w600">{{ $expenses_sub_category->expensesCategory->name }}</td>
+                                    <td class="font-w600">{{ $expenses_sub_category->expensesCategory->name ?? null}}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Expenses Sub Category"))
