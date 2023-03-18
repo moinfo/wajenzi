@@ -18,7 +18,7 @@ class FinancialCharge extends Model
     public static function getTotalFinancialCharge($start_date, $end_date, $financial_charge_category_id)
     {
         $financial_charges = DB::table('financial_charges')
-            ->join('financial_charge_categories', 'financial_charge_categories.id', '=', 'financial_charges.financial_charge_category_id','left')
+            ->join('financial_charge_categories', 'financial_charge_categories.id', '=', 'financial_charges.financial_charge_category_id')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
         if($financial_charge_category_id != null){
