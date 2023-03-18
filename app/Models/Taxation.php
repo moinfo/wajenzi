@@ -12,8 +12,10 @@ class Taxation extends Model
     public static function ProfitFromOperatingActivitiesBeforeTaxation($start_date,$end_date){
         $gross = Gross::getTotalGrossProfit($start_date,$end_date);
         $nssf = PayrollRecord::getTotalNSSFEmployer($start_date,$end_date) ?? 0;
+        $sdl = PayrollRecord::getTotalSDL($start_date,$end_date) ?? 0;
         $expenses = Expense::getTotalExpensesInFinancial($start_date,$end_date);
-        return $gross - $expenses - $nssf;
+        $wages = PayrollRecord::getTotalBasicSalary($start_date,$end_date) ?? 0;
+        return $gross - $expenses - $nssf - $sdl - $wages;
     }
     public static function getMainlandTaxation($start_date,$end_date){
         $Profit_from_Operating_Activities_Before_Taxation_current = self::ProfitFromOperatingActivitiesBeforeTaxation($start_date,$end_date);
