@@ -64,6 +64,8 @@
                         $administrative_expenses_current = \App\Models\Expense::getTotalAdministrativeExpenses($start_date,$end_date) ?? 0;
                         $administrative_expenses_last = \App\Models\Expense::getTotalAdministrativeExpenses($start_date_last,$end_date_last) ?? 0;
                         $financial_charges_current = \App\Models\Expense::getTotalFinancialCharges($start_date,$end_date) ?? 0;
+                        $financial_charges_current_new = \App\Models\FinancialCharge::getTotalFinancialCharge($start_date,$end_date,null) ?? 0;
+                        $financial_charges_last_new = \App\Models\FinancialCharge::getTotalFinancialCharge($start_date_last,$end_date_last,null) ?? 0;
                         $financial_charges_last = \App\Models\Expense::getTotalFinancialCharges($start_date_last,$end_date_last) ?? 0;
                         $depreciation_current = \App\Models\Expense::getTotalDepreciation($start_date,$end_date) ?? 0;
                         $depreciation_last = \App\Models\Expense::getTotalDepreciation($start_date_last,$end_date_last) ?? 0;
@@ -125,6 +127,16 @@
                                         <td></td>
                                         <td></td>
                                     </tr>
+                                    <tr>
+                                        <td>Direct Financial Charges</td>
+                                        <td class="text-right"><a href="{{route('financial_charges')}}">{{number_format($financial_charges_current_new)}}</a></td>
+                                        <td class="text-right">{{number_format($financial_charges_last_new)}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
                                     <?php
                                         $total_expenses = 0;
                                         $total_expenses_last_year = 0;
@@ -149,6 +161,7 @@
                                     }
                                     $total_expenses=$total_expenses+$basic_salary_current+$sdl_current
                                    ?>
+
                                     <tr>
                                         <td>Salaries and Wages</td>
                                         <td class="text-right"><a href="{{route('reports_annually_salaries_summary_report')}}">{{number_format($basic_salary_current)}}</a></td>
@@ -176,8 +189,8 @@
                                     </tr>
                                     <tr>
                                         <td>TOTAL EXPENSES</td>
-                                        <td class="text-right">{{number_format($total_expenses+$nssf_current)}}</td>
-                                        <td class="text-right">{{number_format($basic_salary_last+$sdl_last+$total_expenses_last_year+$nssf_last)}}</td>
+                                        <td class="text-right">{{number_format($total_expenses+$nssf_current+$financial_charges_current_new)}}</td>
+                                        <td class="text-right">{{number_format($basic_salary_last+$sdl_last+$total_expenses_last_year+$nssf_last+$financial_charges_last_new)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
