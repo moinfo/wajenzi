@@ -177,7 +177,7 @@
                                     <tr>
                                         <td></td>
                                         <td class="text-right">{{number_format($total_expenses)}}</td>
-                                        <td class="text-right">{{number_format($basic_salary_last+$sdl_last+$total_expenses_last_year)}}</td>
+                                        <td class="text-right">{{number_format($basic_salary_last+$sdl_last+$total_expenses_last_year+$nssf_last)}}</td>
                                     </tr>
                                     <tr>
                                         <td></td>
