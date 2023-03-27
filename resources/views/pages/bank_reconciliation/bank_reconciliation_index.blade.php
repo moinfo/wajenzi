@@ -22,6 +22,7 @@
                         <h3 class="block-title">All Bank Reconciliation</h3>
                     </div>
                     <div class="block-content">
+                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Reconciliation"))
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
@@ -90,6 +91,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
                         <div class="row">
                             <div class="col-sm-2"></div>
                             <div class="col-sm-8">
