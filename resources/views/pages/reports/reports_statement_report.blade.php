@@ -63,9 +63,10 @@
                                 $today_date = date('Y-m-d');
                                 $supplier_id = $_POST['supplier_id'] ?? 0;
                                 $supplier_name = \App\Models\Supplier::getSupplierName($supplier_id);
+                                $bonge_id = \App\Models\Supplier::getBongeSupplierId($supplier_id);
                                 $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalance($supplier_id,$end_date) ?? 0;
                                 $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalance($supplier_id,$start_date) ?? 0;
-                                $transactions = \App\Models\BankReconciliation::getSupplierTransactions($start_date,$end_date,$supplier_id);
+                                $transactions = \App\Models\BankReconciliation::getSupplierTransactions($start_date,$end_date,$supplier_id,$bonge_id);
 
                         @endphp
                         <div class="table-responsive">
@@ -102,11 +103,14 @@
                                         $opening_balance += $transaction->amount;
                                         $opening_balance -= $transaction->transfer_out;
                                         $efd = \App\Models\Efd::where('id',$transaction->efd_id)->get()->first()['name'];
+                                        $receiving_id = $transaction->receiving_id;
+                                        $receiving_items = \App\Models\Report::getReceivingItems($receiving_id);
+                                        $items_name = implode(', ', array_column($receiving_items, 'name'));
                                     @endphp
                                     <tr>
                                         <td>{{$loop->iteration}}</td>
                                         <td>{{$transaction->date}}</td>
-                                        <td>{{$transaction->description}}</td>
+                                        <td>{{$transaction->description. '  '. $transaction->bank_name . '  '.$items_name }}</td>
                                         <td>{{$efd}}</td>
                                         <td class="text-right">{{number_format($transaction->credit,2)}}</td>
                                         <td class="text-right">{{number_format($transaction->debit,2)}}</td>

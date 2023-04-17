@@ -114,19 +114,26 @@ class BankReconciliation extends Model
         return $transactions;
 
     }
-    public static function getSupplierTransactions($start_date, $end_date, $supplier_id)
+    public static function getSupplierTransactions($start_date, $end_date, $supplier_id, $bonge_id = null)
     {
         return DB::select("SELECT * FROM
               (
-    (SELECT  description,efd_id,supplier_id,date,null as credit, debit,null as transfer_in,null as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit != 0 AND reference NOT LIKE 'TRANSFER%')
+    (SELECT  null as receiving_id,bank_reconciliations.description,efd_id,supplier_id,date,null as credit, debit,null as transfer_in,null as transfer_out,null as amount, banks.name AS bank_name FROM `bank_reconciliations` JOIN banks ON (banks.id = bank_reconciliations.bank_id) WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit != 0 AND reference NOT LIKE 'TRANSFER%')
         UNION ALL
-    (SELECT  description,efd_id,supplier_id,date,null as credit, null as debit,debit as transfer_in,null as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit > 0 AND reference LIKE 'TRANSFER%')
+    (SELECT  null as receiving_id,bank_reconciliations.description,efd_id,supplier_id,date,null as credit, null as debit,debit as transfer_in,null as transfer_out,null as amount, banks.name AS bank_name FROM `bank_reconciliations` JOIN banks ON (banks.id = bank_reconciliations.bank_id)WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit > 0 AND reference LIKE 'TRANSFER%')
     UNION ALL
-    (SELECT  description,null as efd_id,null as supplier_id,date,null as credit, null as debit,null as transfer_in,null as transfer_out,amount FROM `financial_charges` WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date')
+    (SELECT  null as receiving_id,description,null as efd_id,null as supplier_id,date,null as credit, null as debit,null as transfer_in,null as transfer_out,amount, null AS bank_name FROM `financial_charges` WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date')
     UNION ALL
-    (SELECT  description,efd_id, supplier_id, date,credit, null as debit,null as transfer_in,null as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND credit != 0 AND `date` BETWEEN '$start_date' AND '$end_date' AND status = 'APPROVED')
+    (SELECT  null as receiving_id,bank_reconciliations.description,efd_id, supplier_id, date,credit, null as debit,null as transfer_in,null as transfer_out,null as amount, banks.name AS bank_name FROM `bank_reconciliations` JOIN banks ON (banks.id = bank_reconciliations.bank_id)WHERE supplier_id = '$supplier_id' AND credit != 0 AND `date` BETWEEN '$start_date' AND '$end_date' AND status = 'APPROVED')
                   UNION ALL
-    (SELECT  description,efd_id,supplier_id,date,null as credit, null as debit,null as transfer_in,debit as transfer_out,null as amount FROM `bank_reconciliations` WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit < 0 AND reference LIKE 'TRANSFER%')
+                      (SELECT   p.receiving_id,null as description,null as efd_id,null as supplier_id,DATE(p.receiving_time) as `date`, SUM(s.quantity_purchased*s.item_cost_price) as credit, 0 as debit, null as transfer_in,null as transfer_out,null as amount, null AS bank_name
+		FROM bonge.ospos_receivings p INNER JOIN bonge.ospos_receivings_items s ON s.receiving_id = p.receiving_id
+		WHERE p.supplier_id = '$bonge_id'
+		AND p.payment_type = 'Credit Card'
+		AND DATE(p.receiving_time) >= DATE('$start_date')
+		AND DATE(p.receiving_time) <= DATE('$end_date') GROUP BY  p.receiving_id  )
+                  UNION ALL
+    (SELECT  null as receiving_id,bank_reconciliations.description,efd_id,supplier_id,date,null as credit, null as debit,null as transfer_in,debit as transfer_out,null as amount, banks.name AS bank_name FROM `bank_reconciliations` JOIN banks ON (banks.id = bank_reconciliations.bank_id)WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit < 0 AND reference LIKE 'TRANSFER%')
     ) b  order by `date` asc");
 
     }

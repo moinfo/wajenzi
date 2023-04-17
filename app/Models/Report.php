@@ -222,6 +222,14 @@ class Report extends Model
             ->get()->first()->cash;
     }
 
+    public static function getReceivingItems($receiving_id)
+    {
+        return DB::connection('mysql5')->table('bonge.ospos_receivings_items')
+            ->select('ospos_items.name')
+            ->join('bonge.ospos_items', 'ospos_items.item_id', '=', 'ospos_receivings_items.item_id')
+            ->where('ospos_receivings_items.receiving_id', '=', $receiving_id)
+            ->get()->toArray();
+    }
 
 
 }

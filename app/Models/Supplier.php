@@ -56,6 +56,11 @@ class Supplier extends Model
             ->get()->first()->dr;
     }
 
+    public static function getBongeSupplierId($supplier_id)
+    {
+         return Supplier::where('id',$supplier_id)->get()->first()['whitestar_supplier_id'];
+    }
+
     public function purchases() {
         return $this->hasMany(Purchase::class);
     }
