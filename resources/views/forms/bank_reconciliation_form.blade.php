@@ -1,6 +1,5 @@
-
 <div class="block-content">
-    <form method="post"  enctype="multipart/form-data"  autocomplete="off">
+    <form method="post" enctype="multipart/form-data" autocomplete="off">
         @csrf
         <div class="form-group">
             <label for="example-nf-email">Supplier Name</label>
@@ -21,11 +20,12 @@
                         $balance = $credit - $debit;
                     @endphp
                     @if($balance != 0 || $supplier->is_transferred == 'YES'|| $supplier->is_transferred == 'CAN BE BOTH')
-                    <option value="{{$supplier->id}}" {{( $supplier->id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name . ' - '. number_format($balance) }} </option>
+                        <option
+                            value="{{$supplier->id}}" {{( $supplier->id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name . ' - '. number_format($balance) }} </option>
                     @endif
                 @endforeach
 
-                    </select>
+            </select>
         </div>
         <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
@@ -34,10 +34,24 @@
                 <option value="">Select Efd</option>
 
                 @foreach ($efds as $efd)
-                    <option value="{{$efd->id}}" {{ ( $efd->id == $object->efd_id) ? 'selected' : '' }}> {{ $efd->name }} </option>
+                    <option
+                        value="{{$efd->id}}" {{ ( $efd->id == $object->efd_id) ? 'selected' : '' }}> {{ $efd->name }} </option>
                 @endforeach
 
-                    </select>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="example-nf-email">Bank Name</label>
+            <select name="bank_id" id="bank-id" class="form-control" required>
+
+                <option value="">Select Bank</option>
+
+                @foreach ($banks as $bank)
+                    <option
+                        value="{{$bank->id}}" {{ ( $bank->id == $object->bank_id) ? 'selected' : '' }}> {{ $bank->name }} </option>
+                @endforeach
+
+            </select>
         </div>
         <div class="form-group">
             <label for="example-nf-email">Payment Type</label>
@@ -46,18 +60,21 @@
                 <option value="">Select Payment Type</option>
 
                 @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
-                    <option value="{{$bank_reconciliation_payment_type['name']}}" {{ ( $bank_reconciliation_payment_type['name'] == $object->payment_type) ? 'selected' : '' }}> {{ $bank_reconciliation_payment_type['name'] }} </option>
+                    <option
+                        value="{{$bank_reconciliation_payment_type['name']}}" {{ ( $bank_reconciliation_payment_type['name'] == $object->payment_type) ? 'selected' : '' }}> {{ $bank_reconciliation_payment_type['name'] }} </option>
                 @endforeach
 
-                    </select>
+            </select>
         </div>
         <div class="form-group">
             <label for="example-nf-reference">Reference</label>
-            <input type="text" class="form-control" id="input-reference" name="reference" value="{{ $object->reference ?? '' }}" required>
+            <input type="text" class="form-control" id="input-reference" name="reference"
+                   value="{{ $object->reference ?? '' }}" required>
         </div>
         <div class="form-group">
             <label for="example-nf-description">Description</label>
-            <textarea type="text" row="3" class="form-control" id="input-description" name="description">{{ $object->description ?? '' }}</textarea>
+            <textarea type="text" row="3" class="form-control" id="input-description"
+                      name="description">{{ $object->description ?? '' }}</textarea>
         </div>
         <div class="form-group">
             <label for="example-nf-debit">Amount/Debit</label>
@@ -71,10 +88,10 @@
                 <input type="number" step=".01" class="form-control amount" id="input-credit" name="credit"
                        value="{{ $object->credit ?? '' }}" placeholder="Total Amount" required>
             </div>
-            @endif
+        @endif
         <div class="form-group">
             <label for="example-nf-date">Date</label>
-            <input type="text" class="form-control datepicker"  id="input-date" name="date"
+            <input type="text" class="form-control datepicker" id="input-date" name="date"
                    value="{{ $object->date ?? date('Y-m-d') }}" required>
             {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
         </div>
@@ -84,32 +101,33 @@
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update
                 </button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="BankReconciliation">Submit</button>
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="BankReconciliation">Submit
+                </button>
             @endif
         </div>
     </form>
 </div>
 <script>
-    $("input.amount").each((i,ele)=>{
-        let clone=$(ele).clone(false)
-        clone.attr("type","text")
-        let ele1=$(ele)
+    $("input.amount").each((i, ele) => {
+        let clone = $(ele).clone(false)
+        clone.attr("type", "text")
+        let ele1 = $(ele)
         clone.val(Number(ele1.val()).toLocaleString("en"))
         $(ele).after(clone)
         $(ele).hide()
-        clone.mouseenter(()=>{
+        clone.mouseenter(() => {
 
             ele1.show()
             clone.hide()
         })
-        setInterval(()=>{
-            let newv=Number(ele1.val()).toLocaleString("en")
-            if(clone.val()!=newv){
+        setInterval(() => {
+            let newv = Number(ele1.val()).toLocaleString("en")
+            if (clone.val() != newv) {
                 clone.val(newv)
             }
-        },10)
+        }, 10)
 
-        $(ele).mouseleave(()=>{
+        $(ele).mouseleave(() => {
             $(clone).show()
             $(ele1).hide()
         })

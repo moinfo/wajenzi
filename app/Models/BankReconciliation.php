@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class BankReconciliation extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'to_id','from_to_id','supplier_id', 'efd_id', 'description', 'date', 'debit', 'status', 'credit', 'payment_type', 'reference'];
+    public $fillable = ['id', 'to_id', 'bank_id','from_to_id','supplier_id', 'efd_id', 'description', 'date', 'debit', 'status', 'credit', 'payment_type', 'reference'];
 
     public static function getTotalDepositPerDayPerSupplier($start_date, $end_date, $efd_id, $supplier_id)
     {
@@ -216,6 +216,10 @@ class BankReconciliation extends Model
             where('bank_reconciliations.date',[$start_date,$end_date])->where('efds.system_id',$system_id)->get()->first()->total_amount ?? 0;
     }
 
+    public function bank()
+    {
+        return $this->belongsTo(Bank::class, 'bank_id', 'id');
+    }
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id', 'id');
@@ -233,9 +237,10 @@ class BankReconciliation extends Model
 
     public static function getAll($start_date,$end_date,$efd_id = null,$supplier_id = null,$payment_type = null){
         $bank_reconciliation = DB::table('bank_reconciliations')
+            ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier','banks.name as bank')
             ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('banks', 'banks.id', '=', 'bank_reconciliations.bank_id')
             ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
-            ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
 

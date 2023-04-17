@@ -371,6 +371,7 @@
                                     <th>Description</th>
                                     <th>Supplier Name</th>
                                     <th>EFD Name</th>
+                                    <th>Bank Name</th>
                                     <th>Payment Type</th>
                                     <th>Credit</th>
                                     <th>Debit</th>
@@ -413,6 +414,7 @@
                                         <td class="font-w600">{{ $bank_reconciliation->description }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->supplier }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->efd }}</td>
+                                        <td class="font-w600">{{ $bank_reconciliation->bank }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
                                         <td class="text-right">{{ number_format($bank_reconciliation->credit, 2) }}</td>
                                         <td class="text-right">{{ number_format($bank_reconciliation->debit, 2) }}</td>

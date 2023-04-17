@@ -28,6 +28,20 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
 
                     </select>
         </div>
+
+        <div class="form-group">
+            <label for="example-nf-email">Bank Name</label>
+            <select name="bank_id" id="bank-id" class="form-control" required>
+
+                <option value="">Select Bank</option>
+
+                @foreach ($banks as $bank)
+                    <option
+                        value="{{$bank->id}}" {{ ( $bank->id == $object->bank_id) ? 'selected' : '' }}> {{ $bank->name }} </option>
+                @endforeach
+
+            </select>
+        </div>
         <div class="form-group">
             <label for="example-nf-email">Payment Type</label>
             <select name="payment_type" id="payment_type" class="form-control" required>
