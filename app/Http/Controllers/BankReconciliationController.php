@@ -8,6 +8,7 @@ use App\Models\AssetProperty;
 use App\Models\BankReconciliation;
 use App\Models\Efd;
 use App\Models\Supplier;
+use App\Models\SupplierTarget;
 use App\Models\System;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +60,42 @@ class BankReconciliationController extends Controller
             'maxTransactions' => $maxTransactions
         ];
         return view('pages.bank_reconciliation.bank_reconciliation_index')->with($data);
+    }
+    public function supplier_targets(Request $request)
+    {
+        if($this->handleCrud($request, 'SupplierTarget')) {
+            return back();
+        }
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $supplier_id = $request->input('supplier_id') ?? 0;
+
+        $suppliers = Supplier::all();
+        $supplier_targets = SupplierTarget::getAll($start_date,$end_date,$supplier_id);
+
+        $data = [
+            'suppliers' => $suppliers,
+            'supplier_targets' => $supplier_targets,
+        ];
+        return view('pages.bank_reconciliation.supplier_targets')->with($data);
+    }
+    public function supplier_targets_report(Request $request)
+    {
+        if($this->handleCrud($request, 'SupplierTarget')) {
+            return back();
+        }
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $supplier_id = $request->input('supplier_id') ?? 0;
+
+        $suppliers = Supplier::all();
+        $supplier_targets_reports = SupplierTarget::getTargetDifference($start_date,$end_date,$supplier_id);
+
+        $data = [
+            'suppliers' => $suppliers,
+            'supplier_targets_reports' => $supplier_targets_reports,
+        ];
+        return view('pages.bank_reconciliation.supplier_targets_reports')->with($data);
     }
 
     public function bank_deposit_reports(Request $request)

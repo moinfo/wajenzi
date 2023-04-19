@@ -338,6 +338,21 @@ class BankReconciliation extends Model
         }
         return $receiving->get()->first()['amount'];
     }
+    public static function getTotalDepositBySupplier($start_date, $end_date, $supplier)
+    {
+        $deposit = BankReconciliation::
+            select([DB::raw("SUM(debit) as amount")])
+            ->where('payment_type','=','SALES')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->where('from_to_id','=',null)
+            ->where('to_id','=',null);
+
+        if($supplier != null){
+            $deposit->where('supplier_id','=',$supplier);
+        }
+        return $deposit->get()->first()['amount'];
+    }
 
     public static function getTotalDepositPerSupplier($start_date, $end_date, $supplier_id)
     {

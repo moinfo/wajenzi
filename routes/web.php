@@ -26,6 +26,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/AjaxController', [App\Http\Controllers\AjaxController::class, 'ajaxRequestPost'])->name('ajax_request.post');
 
     Route::match(['get', 'post'], '/bank_reconciliation', [App\Http\Controllers\BankReconciliationController::class, 'index'])->name('bank_reconciliation');
+    Route::match(['get', 'post'], '/supplier_targets', [App\Http\Controllers\BankReconciliationController::class, 'supplier_targets'])->name('supplier_targets');
+    Route::match(['get', 'post'], '/supplier_targets_report', [App\Http\Controllers\BankReconciliationController::class, 'supplier_targets_report'])->name('supplier_targets_report');
     Route::match(['get', 'post'], '/bank_withdraw_reports', [App\Http\Controllers\BankReconciliationController::class, 'bank_withdraw_reports'])->name('bank_withdraw_reports');
     Route::match(['get', 'post'], '/bank_deposit_reports', [App\Http\Controllers\BankReconciliationController::class, 'bank_deposit_reports'])->name('bank_deposit_reports');
     Route::match(['get', 'post'], '/bank_reconciliations/{id}/{document_type_id}', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation'])->name('bank_reconciliations');
