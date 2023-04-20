@@ -40,7 +40,7 @@ class AjaxController
                     $suppliers = Supplier::all();
                     $whitestar_suppliers = Supplier::getWhitestarSuppliers();
                     $bonge_suppliers = Supplier::getBongeSuppliers();
-                    $suppliers_with_balances = Supplier::join('supplier_targets','supplier_targets.supplier_id','=','suppliers.id')->where('supplier_targets.date',$in_date)->orderBy('supplier_depend_on_system', 'DESC')->get();
+                    $suppliers_with_balances = Supplier::select('*','suppliers.id AS supplier_id')->join('supplier_targets','supplier_targets.supplier_id','=','suppliers.id')->where('supplier_targets.date',$in_date)->orderBy('supplier_depend_on_system', 'DESC')->get();
                     $transfer_suppliers_with_balances = Supplier::orderBy('supplier_depend_on_system', 'DESC')->get();
                     $kassim_supplier = Supplier::where('is_transferred','YES')->get();
                     $assets = Asset::all();

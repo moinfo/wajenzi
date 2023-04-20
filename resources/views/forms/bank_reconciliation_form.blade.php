@@ -16,12 +16,12 @@
                              $credit = \App\Models\Supplier::getBongeSupplierWithCredit($supplier->whitestar_supplier_id);
                                                              $debit_cash = 0;
                         }
-                        $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransferToday($supplier->id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->id) + $supplier->debit + $debit_cash;
+                        $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransferToday($supplier->supplier_id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->supplier_id) + $supplier->debit + $debit_cash;
                         $balance = $credit - $debit;
                     @endphp
                     @if($balance != 0 || $supplier->is_transferred == 'YES'|| $supplier->is_transferred == 'CAN BE BOTH')
                         <option
-                            value="{{$supplier->id}}" {{( $supplier->id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name . ' - '. number_format($balance) }} </option>
+                            value="{{$supplier->supplier_id}}" {{( $supplier->supplier_id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name . ' - '. number_format($balance) }} </option>
                     @endif
                 @endforeach
 
