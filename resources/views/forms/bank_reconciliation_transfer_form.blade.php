@@ -38,7 +38,7 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
 
                 <option value="">Select Supplier</option>
 
-                @foreach ($suppliers_with_balances as $supplier)
+                @foreach ($transfer_suppliers_with_balances as $supplier)
                     @php
                         if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
                             $credit = \App\Models\Supplier::getWhitestarSupplierWithCredit($supplier->whitestar_supplier_id);

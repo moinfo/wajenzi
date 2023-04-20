@@ -41,6 +41,7 @@ class AjaxController
                     $whitestar_suppliers = Supplier::getWhitestarSuppliers();
                     $bonge_suppliers = Supplier::getBongeSuppliers();
                     $suppliers_with_balances = Supplier::join('supplier_targets','supplier_targets.supplier_id','=','suppliers.id')->where('supplier_targets.date',$in_date)->orderBy('supplier_depend_on_system', 'DESC')->get();
+                    $transfer_suppliers_with_balances = Supplier::orderBy('supplier_depend_on_system', 'DESC')->get();
                     $kassim_supplier = Supplier::where('is_transferred','YES')->get();
                     $assets = Asset::all();
                     $user_groups = UserGroup::all();
@@ -158,6 +159,7 @@ class AjaxController
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
                             'suppliers_with_balances' => $suppliers_with_balances,
+                            'transfer_suppliers_with_balances' => $transfer_suppliers_with_balances,
                             'whitestar_suppliers' => $whitestar_suppliers,
                             'bonge_suppliers' => $bonge_suppliers,
                             'supplier_types' => $supplier_types,

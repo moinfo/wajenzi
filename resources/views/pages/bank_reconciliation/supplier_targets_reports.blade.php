@@ -4,17 +4,15 @@
 
     <div class="main-container">
         <div class="content">
-            <div class="content-heading">Supplier Target
+            <div class="content-heading">Supplier Target Report
                 <div class="float-right">
-                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Supplier Target"))
-                        <button type="button" onclick="loadFormModal('supplier_targets_report_form', {className: 'SupplierTarget'}, 'Create New Target', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Target</button>
-                    @endif
+
                 </div>
             </div>
             <div>
                 <div class="block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">All Supplier Target</h3>
+                        <h3 class="block-title">All Supplier Targets Report</h3>
                     </div>
                     <div class="block-content">
                         @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Reconciliation"))
