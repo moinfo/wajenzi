@@ -89,14 +89,21 @@
                        value="{{ $object->credit ?? '' }}" placeholder="Total Amount" required>
             </div>
         @endif
+        @if($object->id ?? null)
+            <div class="form-group">
+                <label for="example-nf-date">Before Edited Date</label>
+                <input type="text" class="form-control" id="input-date-edited" name="date_edited"
+                       value="{{ $object->date }}" readonly>
+            </div>
+        @endif
         <div class="form-group">
             <label for="example-nf-date">Date</label>
             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Change Date Bank Deposit"))
-            <input type="text" class="form-control datepicker" id="input-date" name="date"
-                   value="{{ $object->date ?? date('Y-m-d') }}" required>
+                <input type="text" class="form-control datepicker" id="input-date" name="date"
+                       value="{{ $object->date ?? date('Y-m-d') }}" required>
             @else
                 <input type="text" class="form-control" id="input-date" name="date"
-                       value="{{ $object->date ?? date('Y-m-d') }}" readonly>
+                       value="{{ date('Y-m-d') }}" readonly>
             @endif
             {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
         </div>
