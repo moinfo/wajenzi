@@ -260,7 +260,7 @@ class BankReconciliation extends Model
         if($supplier_id != null){
             $bank_reconciliation->where('supplier_id','=',$supplier_id);
         }
-        return $bank_reconciliation->get();
+        return $bank_reconciliation->orderBy('created_at','asc')->get();
     }
     public static function getOnlyTransfered($start_date,$end_date,$efd_id = null,$supplier_id = null){
         $bank_reconciliation = DB::table('bank_reconciliations')
