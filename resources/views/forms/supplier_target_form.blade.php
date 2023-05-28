@@ -14,6 +14,16 @@
             </select>
         </div>
 
+        <div class="form-group">
+            <label for="example-nf-email">Type</label>
+            <select name="type" id="type" class="form-control" required>
+                @foreach ($supplier_target_types as $supplier_target_type)
+                    <option value="{{ $supplier_target_type['name'] }}" {{ ( $supplier_target_type['name'] == $object->type) ? 'selected' : '' }}> {{ $supplier_target_type['name'] }} </option>
+                @endforeach
+
+            </select>
+        </div>
+
 
         <div class="form-group">
             <label for="example-nf-amount">Target</label>

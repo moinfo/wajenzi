@@ -149,6 +149,10 @@ class AjaxController
                         ['name'=>'OPENING'],
                         ['name'=>'CLOSING']
                     ];
+                    $supplier_target_types = [
+                        ['name'=>'TARGET'],
+                        ['name'=>'COMMISSION']
+                    ];
                     $users = Staff::all();
                     $expenses_categories = ExpensesCategory::all();
                     $expenses_sub_categories = ExpensesSubCategory::all();
@@ -158,6 +162,7 @@ class AjaxController
                             'bonge_customers' => $bonge_customers,
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,
+                            'supplier_target_types' => $supplier_target_types,
                             'suppliers_with_balances' => $suppliers_with_balances,
                             'transfer_suppliers_with_balances' => $transfer_suppliers_with_balances,
                             'whitestar_suppliers' => $whitestar_suppliers,

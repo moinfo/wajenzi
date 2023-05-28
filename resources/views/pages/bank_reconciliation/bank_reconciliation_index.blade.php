@@ -371,6 +371,7 @@
                                     <th>Date</th>
                                     <th>REFERENCE</th>
                                     <th>Description</th>
+                                    <th>Type</th>
                                     <th>Supplier Name</th>
                                     <th>EFD Name</th>
                                     <th>Bank Name</th>
@@ -414,6 +415,7 @@
                                         <td class="font-w600">{{ $bank_reconciliation->date }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->reference }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->description }}</td>
+                                        <td class="font-w600">{{ $bank_reconciliation->type }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->supplier }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->efd }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->bank }}</td>
@@ -468,7 +470,7 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td colspan="7"></td>
+                                    <td colspan="8"></td>
                                     <td class="text-right">{{ number_format($total_credit, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_debit, 2) }}</td>
                                     <td></td>

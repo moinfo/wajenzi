@@ -11,6 +11,7 @@ class SupplierTarget extends Model
     use HasFactory;
     public $fillable = [
       'supplier_id',
+      'type',
       'amount',
       'date'
     ];
