@@ -27,6 +27,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::match(['get', 'post'], '/bank_reconciliation', [App\Http\Controllers\BankReconciliationController::class, 'index'])->name('bank_reconciliation');
     Route::match(['get', 'post'], '/supplier_targets', [App\Http\Controllers\BankReconciliationController::class, 'supplier_targets'])->name('supplier_targets');
+    Route::match(['get', 'post'], '/supplier_commissions', [App\Http\Controllers\BankReconciliationController::class, 'supplier_commissions'])->name('supplier_commissions');
     Route::match(['get', 'post'], '/supplier_targets_report', [App\Http\Controllers\BankReconciliationController::class, 'supplier_targets_report'])->name('supplier_targets_report');
     Route::match(['get', 'post'], '/bank_withdraw_reports', [App\Http\Controllers\BankReconciliationController::class, 'bank_withdraw_reports'])->name('bank_withdraw_reports');
     Route::match(['get', 'post'], '/bank_deposit_reports', [App\Http\Controllers\BankReconciliationController::class, 'bank_deposit_reports'])->name('bank_deposit_reports');
@@ -177,6 +178,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/reports/purchases_report', [App\Http\Controllers\ReportsController::class, 'purchases_report'])->name('reports_purchases_report');
     Route::match(['get', 'post'], '/reports/purchases_by_supplier_report', [App\Http\Controllers\ReportsController::class, 'purchases_by_supplier_report'])->name('reports_purchases_by_supplier_report');
     Route::match(['get', 'post'], '/reports/efd_report', [App\Http\Controllers\ReportsController::class, 'efd_report'])->name('reports_efd_report');
+    Route::match(['get', 'post'], '/reports/commission_vs_deposit_report', [App\Http\Controllers\ReportsController::class, 'commission_vs_deposit_report'])->name('reports_commission_vs_deposit_report');
     Route::match(['get', 'post'], '/reports/detailed_efd_report', [App\Http\Controllers\ReportsController::class, 'detailed_efd_report'])->name('reports_detailed_efd_report');
     Route::match(['get', 'post'], '/reports/bank_reconciliation_report', [App\Http\Controllers\ReportsController::class, 'bank_reconciliation_report'])->name('reports_bank_reconciliation_report');
     Route::match(['get', 'post'], '/reports/statement_report', [App\Http\Controllers\ReportsController::class, 'statement_report'])->name('reports_statement_report');

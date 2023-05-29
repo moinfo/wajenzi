@@ -6,7 +6,7 @@
         <div class="content">
             <div class="content-heading">Supplier Target
                 <div class="float-right">
-                    <a href="{{route('supplier_commissions')}}" class="btn btn-rounded btn-outline-warning min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Supplier Commissions</a>
+                    <a href="{{route('supplier_targets')}}" class="btn btn-rounded btn-outline-warning min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Supplier Targets</a>
                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Supplier Target"))
                         <button type="button" onclick="loadFormModal('supplier_target_form', {className: 'SupplierTarget'}, 'Create New Target', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Target</button>
                     @endif

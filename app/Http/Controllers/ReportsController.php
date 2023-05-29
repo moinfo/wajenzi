@@ -17,6 +17,7 @@ use App\Models\Staff;
 use App\Models\SubCategory;
 use App\Models\Supervisor;
 use App\Models\Supplier;
+use App\Models\SupplierTarget;
 use App\Models\System;
 use App\Models\TransactionMovement;
 use Illuminate\Http\Request;
@@ -82,11 +83,24 @@ class ReportsController extends Controller
             ['name' => 'Annually NSSF Summary Report', 'route' => 'reports_annually_nssf_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Annually PAYE Summary Report', 'route' => 'reports_annually_paye_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Annually WCF Summary Report', 'route' => 'reports_annually_wcf_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Commission Vs Deposit Report', 'route' => 'reports_commission_vs_deposit_report', 'icon' => 'si si-book-open', 'badge' => 0],
         ];
         $data = [
             'reports' => $reports
         ];
         return view('pages.reports.reports_index')->with($data);
+    }
+
+    public function commission_vs_deposit_report(Request $request){
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $supplier_id = $request->input('supplier_id') ?? 0;
+//        $suppliers = SupplierTarget::getTotalSupplierCommissionWithDeposit($supplier_id,$start_date,$end_date);
+        $suppliers = Supplier::all();
+        $data = [
+            'suppliers' => $suppliers,
+        ];
+        return view('pages.reports.reports_commission_vs_deposit_report')->with($data);
     }
 
     public function bank_statement_report(Request $request){

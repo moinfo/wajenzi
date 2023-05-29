@@ -24,6 +24,24 @@ class SupplierTarget extends Model
         }
        return $target->get();
     }
+    public static function getAllTargets($start_date,$end_date,$supplier_id)
+    {
+        $target = SupplierTarget::whereBetween('date',[$start_date,$end_date]);
+        if($supplier_id){
+            $target->where('supplier_id',$supplier_id);
+        }
+        $target->where('type','TARGET');
+        return $target->get();
+    }
+    public static function getAllCommissions($start_date,$end_date,$supplier_id)
+    {
+        $target = SupplierTarget::whereBetween('date',[$start_date,$end_date]);
+        if($supplier_id){
+            $target->where('supplier_id',$supplier_id);
+        }
+        $target->where('type','COMMISSION');
+        return $target->get();
+    }
 
     public static function getTargetDifference($start_date, $end_date, $supplier_id)
     {
@@ -33,6 +51,18 @@ class SupplierTarget extends Model
             $target ->where('supplier_targets.supplier_id',$supplier_id);
         }
         return $target->whereBetween('supplier_targets.date',[$start_date,$end_date])->get();
+    }
+
+    public static function getTotalSupplierCommissionWithDeposit($supplier_id,$start_date, $end_date)
+    {
+        $target = SupplierTarget::select([DB::raw('SUM(supplier_targets.amount) AS total_target')])
+            ->join('suppliers','suppliers.id','=','supplier_targets.supplier_id');
+        if ($supplier_id != 0){
+            $target ->where('supplier_targets.supplier_id',$supplier_id);
+        }
+        $target ->where('supplier_targets.type','COMMISSION');
+        $target->whereBetween('supplier_targets.date',[$start_date,$end_date]);
+        return $target->get()->first()['total_target'];
     }
 
     public function supplier(){
