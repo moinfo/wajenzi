@@ -71,6 +71,7 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>Date</th>
+                                                <th>Description</th>
                                                 <th>Supplier</th>
                                                 <th>Type</th>
                                                 <th>Amount</th>
@@ -90,6 +91,7 @@
                                                         {{$loop->iteration}}
                                                     </td>
                                                     <td class="font-w600">{{ $supplier_target->date }}</td>
+                                                    <td class="font-w600">{{ $supplier_target->description }}</td>
                                                     <td class="font-w600">{{ $supplier_target->supplier->name }}</td>
                                                     <td class="font-w600">{{ $supplier_target->type }}</td>
                                                     <td class="text-right">{{ number_format($supplier_target->amount, 2) }}</td>
@@ -122,7 +124,7 @@
                                             </tbody>
                                             <tfoot>
                                                 <tr>
-                                                    <th class="text-right" colspan="4">TOTAL</th>
+                                                    <th class="text-right" colspan="5">TOTAL</th>
                                                     <th class="text-right">{{number_format($sum)}}</th>
                                                     <th></th>
                                                 </tr>

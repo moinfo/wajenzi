@@ -23,8 +23,10 @@
 
             </select>
         </div>
-
-
+        <div class="form-group">
+            <label for="example-nf-amount">Description</label>
+            <textarea type="text" class="form-control description" id="input-description" name="description">{{ $object->description ?? '' }}</textarea>
+        </div>
         <div class="form-group">
             <label for="example-nf-amount">Target</label>
             <input type="number" class="form-control amount" id="input-amount" name="amount"

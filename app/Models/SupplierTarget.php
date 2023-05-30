@@ -13,6 +13,7 @@ class SupplierTarget extends Model
       'supplier_id',
       'type',
       'amount',
+      'description',
       'date'
     ];
 
