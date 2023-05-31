@@ -355,6 +355,7 @@ class BankReconciliation extends Model
             ->where('payment_type','=','SALES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date)
+            ->where('type','TARGET')
             ->where('from_to_id','=',null)
             ->where('to_id','=',null);
 

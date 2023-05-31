@@ -51,6 +51,7 @@ class SupplierTarget extends Model
         if ($supplier_id){
             $target ->where('supplier_targets.supplier_id',$supplier_id);
         }
+        $target ->where('supplier_targets.type','TARGET');
         return $target->whereBetween('supplier_targets.date',[$start_date,$end_date])->get();
     }
 
