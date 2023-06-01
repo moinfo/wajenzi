@@ -53,6 +53,11 @@
                                                     <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
                                                 </div>
                                             </div>
+                                            <div class="class col-md-3">
+                                                <div>
+                                                    <a href="{{route('reports_commission_vs_deposit_report')}}" class="btn btn-rounded btn-outline-warning min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Supplier Commissions Report</a>
+                                                </div>
+                                            </div>
                                         </div>
                                     </form>
                                 </div>
