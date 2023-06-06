@@ -37,6 +37,18 @@ class BankReconciliation extends Model
             $receiving->where('supplier_id','=',$supplier_id);
         return $receiving->get()->first()['amount'];
     }
+    public static function getTotalSupplierDepositByCommissionOnlyTransfered($supplier_id,$start_date, $end_date)
+    {
+        $receiving = BankReconciliation::
+            select([DB::raw("SUM(debit) as amount")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->where('payment_type','=','SALES')
+            ->where('type','=','COMMISSION')
+            ->where('debit','>',0)
+            ->where('reference', 'LIKE', "%TRANSFER%");
+            $receiving->where('supplier_id','=',$supplier_id);
+        return $receiving->get()->first()['amount'];
+    }
     public static function getTotalDepositPerDayPerSupplierInWhitestar($start_date, $end_date, $efd_id)
     {
         $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
@@ -358,6 +370,23 @@ class BankReconciliation extends Model
             ->where('type','TARGET')
             ->where('from_to_id','=',null)
             ->where('to_id','=',null);
+
+        if($supplier != null){
+            $deposit->where('supplier_id','=',$supplier);
+        }
+        return $deposit->get()->first()['amount'];
+    }
+
+    public static function getTotalDepositBySupplierOnlyTransfered($start_date, $end_date, $supplier, $type)
+    {
+        $deposit = BankReconciliation::
+            select([DB::raw("SUM(debit) as amount")])
+            ->where('payment_type','=','SALES')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->where('type',$type)
+            ->where('bank_reconciliations.debit','>',0)
+            ->where('reference', 'LIKE', "%TRANSFER%");
 
         if($supplier != null){
             $deposit->where('supplier_id','=',$supplier);
