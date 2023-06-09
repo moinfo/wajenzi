@@ -234,12 +234,19 @@ class BankReconciliationController extends Controller
         $description = $request->input('description');
         $reference = $request->input('reference');
         $payment_type = $request->input('payment_type');
-      DB::table('bank_reconciliations')->insert([
-           ['supplier_id' => $from, 'efd_id' => $efd_id, 'type' => $type, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
-           ['supplier_id' => $to, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
-       ]);
-
-
+        $depend = Supplier::find($to)->supplier_depend_on_system;
+        if($depend == 'WHITESTAR'){
+            DB::table('bank_reconciliations')->insert([
+                ['supplier_id' => $from, 'efd_id' => $efd_id, 'type' => $type, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
+                ['supplier_id' => $to, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type],
+                ['supplier_id' => 50, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 2",'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type]
+            ]);
+        }else{
+            DB::table('bank_reconciliations')->insert([
+                ['supplier_id' => $from, 'efd_id' => $efd_id, 'type' => $type, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
+                ['supplier_id' => $to, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
+            ]);
+        }
        return Redirect::back();
     }
 
