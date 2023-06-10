@@ -56,7 +56,7 @@
                                                 <th>#</th>
                                                 <th>Name</th>
                                                 <th>Actual</th>
-                                                <th>Bank Deposit</th>
+                                                <th>System Bank</th>
                                                 <th>Difference</th>
                                             </tr>
                                             </thead>
@@ -116,15 +116,15 @@
                                                 <td>WHITESTAR</td>
                                                 <td class="text-right">{{number_format($white)}}</td>
                                                 <td class="text-right">{{number_format($bank_deposited_whitestar)}}</td>
-                                                <td class="text-right">{{number_format($difference_white+$total_difference)}}</td>
+                                                <td class="text-right">{{number_format($difference_white-$total_difference)}}</td>
                                             </tr>
                                             </tbody>
                                             <tfoot>
                                             <tr>
                                                 <th colspan="2" class="text-right">Total</th>
                                                 <th class="text-right">{{number_format(($deposit_sum+$white),2)}}</th>
-                                                <th class="text-right">{{number_format($bank_deposited_total+$bank_deposited_whitestar)}}</th>
-                                                <th class="text-right"></th>
+                                                <th class="text-right">{{number_format($bank_deposited_total-$bank_deposited_whitestar)}}</th>
+                                                <th class="text-right">{{($deposit_sum+$white)-($bank_deposited_total-$bank_deposited_whitestar)}}</th>
                                             </tr>
 
                                             </tfoot>
