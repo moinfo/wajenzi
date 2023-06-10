@@ -184,8 +184,8 @@ class BankReconciliation extends Model
             ->where('payment_type','=','SALES')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);
-        $receiving->where('bank_reconciliations.supplier_id','!=',50);
-        $receiving->where('bank_reconciliations.efd_id','!=',16);
+        $receiving->where('bank_reconciliations.supplier_id','!=',156);
+//        $receiving->where('bank_reconciliations.efd_id','!=',16);
 
         if($system_id != null){
             $receiving->where('efds.system_id','=',$system_id);
