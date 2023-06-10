@@ -90,7 +90,8 @@
                                                                 $difference = $deposit - $bank_deposited;
                                                                 $total_difference += $difference;
                                                                 @endphp
-                                                    <td class="text-right">{{number_format($bank_deposited)}}</td>
+                                                        <td class="text-right">{{number_format($bank_deposited)}}</td>
+                                                        <td class="text-right">{{number_format($difference)}}</td>
                                                         @elseif($system->id == 2)
                                                         @php
                                                                 $bank_deposited = \App\Models\Report::getSupplierBankDepositedMuhidini($start_date,$end_date);
@@ -99,6 +100,7 @@
                                                                 $total_difference += $difference;
                                                         @endphp
                                                         <td class="text-right">{{number_format($bank_deposited)}}</td>
+                                                        <td class="text-right">{{number_format($difference)}}</td>
                                                     @elseif($system->id == 3)
                                                         @php
                                                                 $bank_deposited = \App\Models\Report::getSupplierBankDepositedKassim($start_date,$end_date);
@@ -106,6 +108,7 @@
                                                                 $difference = $deposit - $bank_deposited;
                                                                 $total_difference += $difference;
                                                         @endphp
+                                                        <td class="text-right">{{number_format($bank_deposited)}}</td>
                                                         <td class="text-right">{{number_format($difference)}}</td>
                                                     @else
                                                         @php
@@ -114,6 +117,7 @@
                                                                 $difference = $deposit - $bank_deposited;
                                                                 $total_difference += $difference;
                                                         @endphp
+                                                        <td class="text-right">{{number_format($bank_deposited)}}</td>
                                                         <td class="text-right">{{number_format($difference)}}</td>
                                                     @endif
 
