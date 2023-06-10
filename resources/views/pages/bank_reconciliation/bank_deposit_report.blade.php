@@ -73,7 +73,7 @@
                                             @endphp
                                             @foreach($systems as $system)
                                                 @php
-                                                    $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystem($start_date,$end_date,$system->id);
+                                                    $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemNotTransfered($start_date,$end_date,$system->id);
 
                                                     $deposit_sum += $deposit;
 

@@ -176,6 +176,23 @@ class BankReconciliation extends Model
         return $receiving->get()->first()['amount'];
     }
 
+    public static function getTotalDepositPerDayPerSystemNotTransfered($start_date, $end_date, $system_id)
+    {
+        $receiving = BankReconciliation::join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('systems','systems.id','=','efds.system_id')
+            ->select([DB::raw("SUM(debit) as amount")])
+            ->where('payment_type','=','SALES')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date);
+        $receiving->where('bank_reconciliations.supplier_id','!=',50);
+        $receiving->where('bank_reconciliations.efd_id','!=',16);
+
+        if($system_id != null){
+            $receiving->where('efds.system_id','=',$system_id);
+        }
+        return $receiving->get()->first()['amount'];
+    }
+
     public static function getTotalDepositPerDayPerSystemOnly($start_date, $end_date, $system_id)
     {
         $start_date = date('Y-m-d', strtotime('-1 day', strtotime($start_date)));
