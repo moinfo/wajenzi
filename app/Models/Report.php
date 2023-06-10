@@ -137,14 +137,12 @@ class Report extends Model
     }
     public static function getSupplierBankDepositedWhiteStar($start_date, $end_date)
     {
-        return DB::connection('mysql6')->table('whitestar.ospos_debits_credits')
-            ->select(DB::raw('SUM(dr) as dr'))
-            ->where('payment_mode', '1')
-            ->where('payment_type', 'SUPPLIER')
+
+        return DB::connection('mysql6')->table('whitestar.ospos_banking')
+            ->select(DB::raw('SUM(amount) as amount'))
             ->where('delete', '0')
-            ->where('paid_payment_type', 2)
             ->whereBetween('date', [$start_date, $end_date])
-            ->get()->first()->dr ?? 0;
+            ->get()->first()->amount ?? 0;
     }
 
     public static function getSupplierDailyDebitWhitestar($start_date, $end_date)

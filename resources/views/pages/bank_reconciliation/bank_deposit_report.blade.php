@@ -76,34 +76,47 @@
                                                     $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystem($start_date,$end_date,$system->id);
 
                                                     $deposit_sum += $deposit;
-                                                    if($system->id == 1){
-                                                        $bank_deposited = \App\Models\Report::getSupplierBankDepositedLeruma($start_date,$end_date);
-                                                        $bank_deposited_total += $bank_deposited;
-                                                        $difference = $deposit - $bank_deposited;
-                                                        $total_difference += $difference;
-                                                    }if($system->id == 2){
-                                                        $bank_deposited = \App\Models\Report::getSupplierBankDepositedMuhidini($start_date,$end_date);
-                                                        $bank_deposited_total += $bank_deposited;
-                                                        $difference = $deposit - $bank_deposited;
-                                                        $total_difference += $difference;
-                                                    }if($system->id == 3){
-                                                        $bank_deposited = \App\Models\Report::getSupplierBankDepositedKassim($start_date,$end_date);
-                                                        $bank_deposited_total += $bank_deposited;
-                                                        $difference = $deposit - $bank_deposited;
-                                                        $total_difference += $difference;
-                                                    }else{
-                                                        $bank_deposited = 0;
-                                                        $bank_deposited_total += $bank_deposited;
-                                                        $difference = $deposit - $bank_deposited;
-                                                        $total_difference += $difference;
-                                                    }
+
                                                 @endphp
                                                 <tr>
                                                     <td>{{$loop->iteration}}</td>
                                                     <td>{{$system->name.'-'.$system->id}}</td>
                                                     <td class="text-right">{{number_format($deposit,2)}}</td>
+
+                                                        @if($system->id == 1)
+                                                            @php
+                                                                $bank_deposited = \App\Models\Report::getSupplierBankDepositedLeruma($start_date,$end_date);
+                                                                $bank_deposited_total += $bank_deposited;
+                                                                $difference = $deposit - $bank_deposited;
+                                                                $total_difference += $difference;
+                                                                @endphp
                                                     <td class="text-right">{{number_format($bank_deposited)}}</td>
-                                                    <td class="text-right">{{number_format($difference)}}</td>
+                                                        @elseif($system->id == 2)
+                                                        @php
+                                                                $bank_deposited = \App\Models\Report::getSupplierBankDepositedMuhidini($start_date,$end_date);
+                                                                $bank_deposited_total += $bank_deposited;
+                                                                $difference = $deposit - $bank_deposited;
+                                                                $total_difference += $difference;
+                                                        @endphp
+                                                        <td class="text-right">{{number_format($bank_deposited)}}</td>
+                                                    @elseif($system->id == 3)
+                                                        @php
+                                                                $bank_deposited = \App\Models\Report::getSupplierBankDepositedKassim($start_date,$end_date);
+                                                                $bank_deposited_total += $bank_deposited;
+                                                                $difference = $deposit - $bank_deposited;
+                                                                $total_difference += $difference;
+                                                        @endphp
+                                                        <td class="text-right">{{number_format($difference)}}</td>
+                                                    @else
+                                                        @php
+                                                                $bank_deposited = 0;
+                                                                $bank_deposited_total += $bank_deposited;
+                                                                $difference = $deposit - $bank_deposited;
+                                                                $total_difference += $difference;
+                                                        @endphp
+                                                        <td class="text-right">{{number_format($difference)}}</td>
+                                                    @endif
+
                                                 </tr>
                                             @endforeach
                                             @php

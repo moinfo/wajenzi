@@ -6,10 +6,10 @@
         <div class="content">
             <div class="content-heading">BR
                 <div class="float-right">
-                    <a href="{{route('bank_deposit_report')}}" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>B</a>
+                    <a href="{{route('bank_deposit_report')}}" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>BP</a>
                     <a href="{{route('supplier_targets')}}" class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>ST</a>
                     <a href="{{route('supplier_targets_report')}}" class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>STR</a>
-                    <a href="{{route('transfer_reports')}}" class="btn btn-rounded btn-outline-success min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>TR</a>
+                    <a href="{{route('transfer_reports')}}" class="btn btn-rounded btn-outline-success min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>TRR</a>
                     <a href="{{route('bank_withdraw_reports')}}" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>WR</a>
                     <a href="{{route('bank_deposit_reports')}}" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>DR</a>
                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Bank Reconciliation"))
