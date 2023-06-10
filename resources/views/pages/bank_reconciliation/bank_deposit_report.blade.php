@@ -80,7 +80,7 @@
                                                 @endphp
                                                 <tr>
                                                     <td>{{$loop->iteration}}</td>
-                                                    <td>{{$system->name.'-'.$system->id}}</td>
+                                                    <td>{{$system->name}}</td>
                                                     <td class="text-right">{{number_format($deposit,2)}}</td>
 
                                                         @if($system->id == 1)
