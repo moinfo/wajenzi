@@ -141,7 +141,7 @@
                                                 <th colspan="2" class="text-right">Total</th>
                                                 <th class="text-right">{{number_format(($deposit_sum+$white),2)}}</th>
                                                 <th class="text-right">{{number_format($bank_deposited_total+$bank_deposited_whitestar)}}</th>
-                                                <th class="text-right">{{($deposit_sum+$white)-($bank_deposited_total+$bank_deposited_whitestar)}}</th>
+                                                <th class="text-right">{{number_format(($deposit_sum+$white)-($bank_deposited_total+$bank_deposited_whitestar))}}</th>
                                             </tr>
 
                                             </tfoot>
