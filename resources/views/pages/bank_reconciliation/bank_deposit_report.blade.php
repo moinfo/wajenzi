@@ -116,7 +116,7 @@
                                                 <td>WHITESTAR</td>
                                                 <td class="text-right">{{number_format($white)}}</td>
                                                 <td class="text-right">{{number_format($bank_deposited_whitestar)}}</td>
-                                                <td class="text-right">{{number_format($difference_white-$total_difference)}}</td>
+                                                <td class="text-right">{{number_format($white-$bank_deposited_whitestar)}}</td>
                                             </tr>
                                             </tbody>
                                             <tfoot>
