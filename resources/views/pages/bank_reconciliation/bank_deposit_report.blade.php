@@ -73,7 +73,7 @@
                                             @endphp
                                             @foreach($systems as $system)
                                                 @php
-                                                    $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemNotTransfered($start_date,$end_date,$system->id);
+                                                    $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSystem($start_date,$end_date,$system->id);
 
                                                     $deposit_sum += $deposit;
 
@@ -124,7 +124,7 @@
                                                 </tr>
                                             @endforeach
                                             @php
-                                                $white = \App\Models\BankReconciliation::getTotalDepositWhitestar($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositWhitestarAuto($start_date,$end_date,16);
+                                                $white = \App\Models\BankReconciliation::getTotalDepositWhitestar($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositWhitestarAuto($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemNotTransfered($start_date,$end_date);
                                                 $bank_deposited_whitestar = \App\Models\Report::getSupplierBankDepositedWhiteStar($start_date,$end_date);
                                                 $difference_white = $white - $bank_deposited_whitestar;
                                             @endphp
