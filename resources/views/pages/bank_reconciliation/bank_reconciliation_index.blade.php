@@ -6,15 +6,16 @@
         <div class="content">
             <div class="content-heading">BR
                 <div class="float-right">
-                    <a href="{{route('supplier_targets')}}" class="btn btn-rounded btn-outline-warning min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>ST</a>
-                    <a href="{{route('supplier_targets_report')}}" class="btn btn-rounded btn-outline-warning min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>STR</a>
-                    <a href="{{route('transfer_reports')}}" class="btn btn-rounded btn-outline-success min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>TR</a>
-                    <a href="{{route('bank_withdraw_reports')}}" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>WR</a>
-                    <a href="{{route('bank_deposit_reports')}}" class="btn btn-rounded btn-outline-danger min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>DR</a>
+                    <a href="{{route('bank_deposit_report')}}" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>B</a>
+                    <a href="{{route('supplier_targets')}}" class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>ST</a>
+                    <a href="{{route('supplier_targets_report')}}" class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>STR</a>
+                    <a href="{{route('transfer_reports')}}" class="btn btn-rounded btn-outline-success min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>TR</a>
+                    <a href="{{route('bank_withdraw_reports')}}" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>WR</a>
+                    <a href="{{route('bank_deposit_reports')}}" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>DR</a>
                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Bank Reconciliation"))
-                        <button type="button" onclick="loadFormModal('bank_reconciliation_transfer_form', {className: 'BankReconciliation'}, 'Transfer', 'modal-md');" class="btn btn-rounded btn-outline-danger min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>MT</button>
-                        <button type="button" onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation'}, 'Create New Bank Reconciliation', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>ND</button>
-                        <button type="button" onclick="loadFormModal('bank_reconciliation_withdraw_form', {className: 'BankReconciliation'}, 'Create New Withdraw', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>NW</button>
+                        <button type="button" onclick="loadFormModal('bank_reconciliation_transfer_form', {className: 'BankReconciliation'}, 'Transfer', 'modal-md');" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>TR</button>
+                        <button type="button" onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation'}, 'Create New Bank Reconciliation', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>ND</button>
+                        <button type="button" onclick="loadFormModal('bank_reconciliation_withdraw_form', {className: 'BankReconciliation'}, 'Create New Withdraw', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>NW</button>
                     @endif
                 </div>
             </div>

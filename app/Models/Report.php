@@ -10,26 +10,35 @@ class Report extends Model
 {
     use HasFactory;
 
-    public static function getTotalSupplierBalance($end_date){
+    public static function getTotalSupplierBalance($end_date)
+    {
         $receiving = SupplierReceiving::getAllSupplierReceivingAmount($end_date);
         $transaction = TransactionMovement::getAllSupplierTransactionAmount($end_date);
-        return $receiving-$transaction;
+        return $receiving - $transaction;
     }
 
-    public static function getTotalInventoryForSpecificDate($start_date,$end_date){
-      return SystemInventory::getTotalInventoryForSpecificDate($start_date,$end_date);
-    }
-    public static function getTotalCashForSpecificDate($start_date,$end_date){
-      return SystemCash::getTotalCashForSpecificDate($start_date,$end_date);
-    }
-    public static function getTotalCreditForSpecificDate($start_date,$end_date){
-      return SystemCredit::getSystemCreditForSpecificDate($start_date,$end_date);
-    }
-    public static function getTotalCapitalForSpecificDate($start_date,$end_date){
-      return SystemCapital::getTotalCapitalForSpecificDate($start_date,$end_date);
+    public static function getTotalInventoryForSpecificDate($start_date, $end_date)
+    {
+        return SystemInventory::getTotalInventoryForSpecificDate($start_date, $end_date);
     }
 
-    static function getOpening($date){
+    public static function getTotalCashForSpecificDate($start_date, $end_date)
+    {
+        return SystemCash::getTotalCashForSpecificDate($start_date, $end_date);
+    }
+
+    public static function getTotalCreditForSpecificDate($start_date, $end_date)
+    {
+        return SystemCredit::getSystemCreditForSpecificDate($start_date, $end_date);
+    }
+
+    public static function getTotalCapitalForSpecificDate($start_date, $end_date)
+    {
+        return SystemCapital::getTotalCapitalForSpecificDate($start_date, $end_date);
+    }
+
+    static function getOpening($date)
+    {
         $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($date)));
         $total_collection_per_day = \App\Models\Collection::getCollectionAmount($yesterday);
         $total_transaction_per_day = \App\Models\TransactionMovement::getAllSupplierTransactionAmount($yesterday);
@@ -88,6 +97,54 @@ class Report extends Model
 (SELECT first_name FROM bonge.`ospos_people` WHERE ospos_people.person_id = ospos_debits_credits.client_id) as first_name_client,
 (SELECT last_name FROM bonge.`ospos_people` WHERE ospos_people.person_id = ospos_debits_credits.client_id) as last_name_client
  FROM bonge.`ospos_debits_credits` where date BETWEEN '$start_date' AND '$end_date' AND `delete` = '0' AND payment_type = 'SUPPLIER' ");
+    }
+
+
+    public static function getSupplierBankDepositedMuhidini($start_date, $end_date)
+    {
+        return DB::connection('mysql2')->table('muhidini.ospos_debits_credits')
+            ->select(DB::raw('SUM(dr) as dr'))
+            ->where('payment_mode', '1')
+            ->where('payment_type', 'SUPPLIER')
+            ->where('delete', '0')
+            ->where('paid_payment_type', 2)
+            ->whereBetween('date', [$start_date, $end_date])
+            ->get()->first()->dr ?? 0;
+    }
+
+    public static function getSupplierBankDepositedKassim($start_date, $end_date)
+    {
+        return DB::connection('mysql3')->table('kassim.ospos_debits_credits')
+            ->select(DB::raw('SUM(dr) as dr'))
+            ->where('payment_mode', '1')
+            ->where('payment_type', 'SUPPLIER')
+            ->where('delete', '0')
+            ->where('paid_payment_type', 2)
+            ->whereBetween('date', [$start_date, $end_date])
+            ->get()->first()->dr ?? 0;
+    }
+
+    public static function getSupplierBankDepositedLeruma($start_date, $end_date)
+    {
+        return DB::connection('mysql4')->table('leruma.ospos_debits_credits')
+            ->select(DB::raw('SUM(dr) as dr'))
+            ->where('payment_mode', '1')
+            ->where('payment_type', 'SUPPLIER')
+            ->where('delete', '0')
+            ->where('paid_payment_type', 2)
+            ->whereBetween('date', [$start_date, $end_date])
+            ->get()->first()->dr ?? 0;
+    }
+    public static function getSupplierBankDepositedWhiteStar($start_date, $end_date)
+    {
+        return DB::connection('mysql6')->table('whitestar.ospos_debits_credits')
+            ->select(DB::raw('SUM(dr) as dr'))
+            ->where('payment_mode', '1')
+            ->where('payment_type', 'SUPPLIER')
+            ->where('delete', '0')
+            ->where('paid_payment_type', 2)
+            ->whereBetween('date', [$start_date, $end_date])
+            ->get()->first()->dr ?? 0;
     }
 
     public static function getSupplierDailyDebitWhitestar($start_date, $end_date)
@@ -173,27 +230,29 @@ class Report extends Model
 //        return   BankDeposit::Where('status','APPROVED')->WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'];
 //
 //    }
-    static function getTotalLoan($start_date,$end_date){
-        return Loan::select([DB::raw("SUM(amount) as total_amount")])->Where('status','APPROVED')->WhereBetween('date',[$start_date,$end_date])->get()->first()['total_amount'] ?? 0;
+    static function getTotalLoan($start_date, $end_date)
+    {
+        return Loan::select([DB::raw("SUM(amount) as total_amount")])->Where('status', 'APPROVED')->WhereBetween('date', [$start_date, $end_date])->get()->first()['total_amount'] ?? 0;
     }
 
     public static function getTotalAdvanceSalary($start_date, $end_date)
     {
-        return AdvanceSalary::select([DB::raw("SUM(amount) as total_amount")])->Where('status','APPROVED')->WhereBetween('date',[$start_date,$end_date])->get()->first()['total_amount'] ?? 0;
+        return AdvanceSalary::select([DB::raw("SUM(amount) as total_amount")])->Where('status', 'APPROVED')->WhereBetween('date', [$start_date, $end_date])->get()->first()['total_amount'] ?? 0;
 
     }
 
-    public static function getTotalNetSalary($start_date,$end_date)
+    public static function getTotalNetSalary($start_date, $end_date)
     {
         return PayrollRecord::select([DB::raw("SUM(net) as total_amount")])
-                ->Where('status','APPROVED')-> whereDate('created_at','>=',$start_date)
-                ->whereDate('created_at','<=',$end_date)->get()->first()['total_amount'] ?? 0;
+                ->Where('status', 'APPROVED')->whereDate('created_at', '>=', $start_date)
+                ->whereDate('created_at', '<=', $end_date)->get()->first()['total_amount'] ?? 0;
     }
+
     public static function getTotalAllowance($start_date, $end_date)
     {
         return PayrollRecord::select([DB::raw("SUM(allowance) as total_amount")])
-                ->Where('status','APPROVED')-> whereDate('created_at','>=',$start_date)
-                ->whereDate('created_at','<=',$end_date)->get()->first()['total_amount'] ?? 0;
+                ->Where('status', 'APPROVED')->whereDate('created_at', '>=', $start_date)
+                ->whereDate('created_at', '<=', $end_date)->get()->first()['total_amount'] ?? 0;
     }
 
     public static function getTotalTransactionWhitestar($start_date, $end_date)

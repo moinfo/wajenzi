@@ -79,6 +79,21 @@ class BankReconciliationController extends Controller
         ];
         return view('pages.bank_reconciliation.supplier_targets')->with($data);
     }
+    public function bank_deposit_report(Request $request)
+    {
+        if($this->handleCrud($request, 'SupplierTarget')) {
+            return back();
+        }
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $systems = System::where('id','!=',5)->get();
+
+
+        $data = [
+            'systems' => $systems,
+        ];
+        return view('pages.bank_reconciliation.bank_deposit_report')->with($data);
+    }
     public function supplier_commissions(Request $request)
     {
         if($this->handleCrud($request, 'SupplierTarget')) {
