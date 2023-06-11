@@ -8,10 +8,10 @@
                 <option value="">Select Supplier</option>
 
                 @foreach ($suppliers_with_balances as $supplier)
-                    @if($supplier->is_transferred == 'YES'|| $supplier->is_transferred == 'CAN BE BOTH')
+{{--                    @if($supplier->is_transferred == 'YES'|| $supplier->is_transferred == 'CAN BE BOTH')--}}
                         <option
-                            value="{{$supplier->supplier_id}}" {{( $supplier->supplier_id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name . ' - '. number_format($balance) }} </option>
-                    @endif
+                            value="{{$supplier->supplier_id}}" {{( $supplier->supplier_id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name  }} </option>
+{{--                    @endif--}}
                 @endforeach
 
             </select>
