@@ -76,10 +76,13 @@
                                         $difference_total = 0;
                                     @endphp
                                     @foreach($suppliers as $supplier)
-
-                                        @if($commission != 0)
+                                        @php
+                                            $supplier_id = $supplier->id;
+                                                $commission1 = App\Models\SupplierTarget::getTotalSupplierCommissionWithDeposit($supplier_id,$start_date,$end_date);
+                                        @endphp
+                                        @if($commission1 != 0)
                                             @php
-                                                $supplier_id = $supplier->id;
+
                                                 $commission = App\Models\SupplierTarget::getTotalSupplierCommissionWithDeposit($supplier_id,$start_date,$end_date);
                                                 $commission_total += $commission;
                                                 $deposit = App\Models\BankReconciliation::getTotalSupplierDepositByCommission($supplier_id,$start_date,$end_date);
