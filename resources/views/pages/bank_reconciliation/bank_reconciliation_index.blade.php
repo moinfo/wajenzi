@@ -138,7 +138,7 @@
                                             </tr>
                                         @endforeach
                                         @php
-                                        $white = \App\Models\BankReconciliation::getTotalDepositWhitestar($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositWhitestarAuto($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemNotTransfered($start_date,$end_date);
+                                        $white = \App\Models\BankReconciliation::getTotalDepositWhitestar($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositWhitestarAuto($start_date,$end_date,16);
                                         @endphp
                                         <tr>
                                             <td>5</td>
