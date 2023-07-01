@@ -76,17 +76,18 @@
                                         $difference_total = 0;
                                     @endphp
                                     @foreach($suppliers as $supplier)
-                                        @php
-                                            $supplier_id = $supplier->id;
-                                            $commission = App\Models\SupplierTarget::getTotalSupplierCommissionWithDeposit($supplier_id,$start_date,$end_date);
-                                            $commission_total += $commission;
-                                            $deposit = App\Models\BankReconciliation::getTotalSupplierDepositByCommission($supplier_id,$start_date,$end_date);
-                                            $deposit_total += $deposit;
-                                            $difference = $commission - $deposit;
-                                            $difference_total += $difference;
 
-                                        @endphp
                                         @if($commission != 0)
+                                            @php
+                                                $supplier_id = $supplier->id;
+                                                $commission = App\Models\SupplierTarget::getTotalSupplierCommissionWithDeposit($supplier_id,$start_date,$end_date);
+                                                $commission_total += $commission;
+                                                $deposit = App\Models\BankReconciliation::getTotalSupplierDepositByCommission($supplier_id,$start_date,$end_date);
+                                                $deposit_total += $deposit;
+                                                $difference = $commission - $deposit;
+                                                $difference_total += $difference;
+
+                                            @endphp
                                         <tr>
                                             <td>{{$loop->iteration}}</td>
                                             <td>{{$supplier->name}}</td>
