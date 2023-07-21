@@ -68,6 +68,7 @@
                                             $total_exempt = 0;
                                             $total_vat = 0;
                                             $total_net = 0;
+                                            $total_amount_vat_exc = 0;
                                     @endphp
                                     @foreach ($period as $dt)
                                         @php
@@ -78,6 +79,8 @@
                                             $total_sales += $sales;
                                             $exempt = \App\Models\Sale::getTotalExempt($start_date,$end_date,$efd_id);
                                             $total_exempt += $exempt;
+                                            $amount_vat_exc = \App\Models\Sale::getTotalSaleVatExcl($start_date,$end_date);
+                                            $total_amount_vat_exc += $amount_vat_exc;
                                             $vat= \App\Models\Sale::getTotalTax($start_date,$end_date,$efd_id);
                                             $total_vat += $vat;
                                             $net= \App\Models\Sale::getTotalNet($start_date,$end_date,$efd_id);
@@ -86,7 +89,7 @@
                                     <tr>
 
                                         <td>{{$dt->format("F, Y")}}</td>
-                                        <td class="text-right">{{number_format($vat+$net)}}</td>
+                                        <td class="text-right">{{number_format($amount_vat_exc)}}</td>
                                         <td class="text-right">{{number_format($exempt)}}</td>
                                         <td class="text-right">{{number_format($sales)}}</td>
                                     </tr>
@@ -95,7 +98,7 @@
                                 <tfoot>
                                 <tr>
                                     <td>Total</td>
-                                    <td class="text-right">{{number_format($total_vat+$total_net)}}</td>
+                                    <td class="text-right">{{number_format($total_amount_vat_exc)}}</td>
                                     <td class="text-right">{{number_format($total_exempt)}}</td>
                                     <td class="text-right">{{number_format($total_sales)}}</td>
                                 </tr>
