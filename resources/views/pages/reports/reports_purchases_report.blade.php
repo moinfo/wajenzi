@@ -116,6 +116,7 @@
                                 $total_vat_exempts = 0;
                                 $total_vats = 0;
                                 $total_exempt = 0;
+                                $no = 1;
                                 ?>
                                 @foreach($purchases as $purchase)
                                     <?php
@@ -127,7 +128,7 @@
                                     $total_vats += $vats_amount;
                                     $exempt = $purchases_amount - $vat_exempts_amount - $vats_amount;
                                     $total_exempt += $exempt;
-                                    $no = 0;
+
                                     ?>
                                     <tr id="purchase-tr-{{$purchase->id}}">
                                         <td class="text-center">
@@ -158,6 +159,7 @@
                                 @endforeach
                                 @php
                                     $receipt_total_excl_of_tax = 0;
+                                    $receipt_total_excl_of_tax_total = 0;
                                     $receipt_total_tax = 0;
                                     $receipt_total_incl_of_tax = 0;
                                     $exempt_live_total = 0;
@@ -166,13 +168,21 @@
                                 @foreach($auto_purchases as $purchase)
                                     @php
                                         $receipt_id = $purchase->id ?? 0;
-                                        $receipt_total_excl_of_tax += $purchase->receipt_total_excl_of_tax;
+
                                         $receipt_total_tax += $purchase->receipt_total_tax;
                                         $receipt_total_incl_of_tax += ($purchase->receipt_total_incl_of_tax);
                                         $receipt_items = \App\Models\ReceiptItem::getItems($receipt_id) ?? [];
                                         $items = implode(',',array_column($receipt_items,'description'));
                                         $receipt_time = $purchase->receipt_time;
-                                        $exempt_live = $purchase->receipt_total_incl_of_tax - $purchase->receipt_total_excl_of_tax - $purchase->receipt_total_tax;
+
+                                        if($purchase->receipt_total_tax>0){
+                                            $receipt_total_excl_of_tax = $purchase->receipt_total_excl_of_tax;
+                                            $receipt_total_excl_of_tax_total += $receipt_total_excl_of_tax;
+                                        }else{
+                                            $receipt_total_excl_of_tax = 0;
+                                             $receipt_total_excl_of_tax_total += $receipt_total_excl_of_tax;
+                                        }
+                                        $exempt_live = $purchase->receipt_total_incl_of_tax - $receipt_total_excl_of_tax - $purchase->receipt_total_tax;
                                         $exempt_live_total += $exempt_live;
 
                                     @endphp
@@ -198,7 +208,7 @@
                                             </a>
                                         </td>
                                         <td class="text-right">{{number_format($purchase->receipt_total_incl_of_tax)}}</td>
-                                        <td class="text-right">{{number_format($purchase->receipt_total_excl_of_tax)}}</td>
+                                        <td class="text-right">{{number_format($receipt_total_excl_of_tax)}}</td>
                                         <td class="text-right">{{number_format($purchase->receipt_total_tax)}}</td>
                                         <td class="text-right">{{number_format($exempt_live)}}</td>
                                     </tr>
@@ -212,7 +222,7 @@
                                 <tr>
                                     <td colspan="8"></td>
                                     <td class="text-right">{{ number_format($total_purchases+$receipt_total_incl_of_tax, 2) }}</td>
-                                    <td class="text-right">{{ number_format($receipt_total_excl_of_tax+$total_vat_exempts, 2) }}</td>
+                                    <td class="text-right">{{ number_format($receipt_total_excl_of_tax_total+$total_vat_exempts, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vats+$receipt_total_tax, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_exempt+$exempt_live_total, 2) }}</td>
                                 </tr>
