@@ -60,13 +60,14 @@
                                             $total_exempt = 0;
                                             $total_vat = 0;
                                             $total_net = 0;
+                                            $vat_exc_total = 0;
                                             $opening = \App\Models\Stock::getTotalOpeningStock($start_date_year, $end_date_year);
                                             $closing = \App\Models\Stock::getTotalClosingStock($start_date_year, $end_date_year);
                                             $cost_of_sales = \App\Models\Sale::getCostOfSales($start_date_year, $end_date_year);
                                 @endphp
                                 <tr>
                                     <th>Monthly</th>
-                                    <th>Vat</th>
+                                    <th>VAT Exclusive</th>
                                     <th>Exempt</th>
                                     <th>Turnover</th>
                                 </tr>
@@ -89,13 +90,15 @@
                                             $total_exempt += $exempt;
                                             $vat= \App\Models\Purchase::getTotalPurchasesByDateByVat($start_date,$end_date);
                                             $total_vat += $vat;
+                                            $vat_exc= \App\Models\Purchase::getTotalNormalExemptByDate($start_date,$end_date);
+                                            $vat_exc_total += $vat_exc;
                                             $net= 0;
                                             $total_net += $total_net;
                                         @endphp
                                     <tr>
 
                                         <td>{{$dt->format("F, Y")}}</td>
-                                        <td class="text-right">{{number_format($vat)}}</td>
+                                        <td class="text-right">{{number_format($vat_exc)}}</td>
                                         <td class="text-right">{{number_format($exempt)}}</td>
                                         <td class="text-right">{{number_format($sales)}}</td>
                                     </tr>
@@ -104,7 +107,7 @@
                                 <tfoot>
                                 <tr>
                                     <td>Total</td>
-                                    <td class="text-right">{{number_format($total_vat+$total_net)}}</td>
+                                    <td class="text-right">{{number_format($vat_exc_total)}}</td>
                                     <td class="text-right">{{number_format($total_exempt)}}</td>
                                     <td class="text-right">{{number_format($total_sales)}}</td>
                                 </tr>

@@ -97,6 +97,7 @@
                                     <th>Total</th>
                                     <th>VAT EXC</th>
                                     <th>VAT</th>
+                                    <th>Exempt</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -114,6 +115,7 @@
                                 $total_purchases = 0;
                                 $total_vat_exempts = 0;
                                 $total_vats = 0;
+                                $total_exempt = 0;
                                 ?>
                                 @foreach($purchases as $purchase)
                                     <?php
@@ -123,6 +125,8 @@
                                     $total_vat_exempts += $vat_exempts_amount;
                                     $vats_amount = $purchase->vat_amount ?? 0;
                                     $total_vats += $vats_amount;
+                                    $exempt = $purchases_amount - $vat_exempts_amount - $vats_amount;
+                                    $total_exempt += $exempt;
                                     $no = 0;
                                     ?>
                                     <tr id="purchase-tr-{{$purchase->id}}">
@@ -145,6 +149,7 @@
                                         <td class="text-right">{{ number_format(($purchase->total_amount ?? 0), 2) }}</td>
                                         <td class="text-right">{{ number_format($purchase->amount_vat_exc,2) }}</td>
                                         <td class="text-right">{{ number_format($purchase->vat_amount, 2) }}</td>
+                                        <td class="text-right">{{ number_format($exempt, 2) }}</td>
 
                                     </tr>
                                     @php
@@ -155,6 +160,7 @@
                                     $receipt_total_excl_of_tax = 0;
                                     $receipt_total_tax = 0;
                                     $receipt_total_incl_of_tax = 0;
+                                    $exempt_live_total = 0;
                                     $nos = $no ?? 1;
                                 @endphp
                                 @foreach($auto_purchases as $purchase)
@@ -166,6 +172,8 @@
                                         $receipt_items = \App\Models\ReceiptItem::getItems($receipt_id) ?? [];
                                         $items = implode(',',array_column($receipt_items,'description'));
                                         $receipt_time = $purchase->receipt_time;
+                                        $exempt_live = $purchase->receipt_total_incl_of_tax - $purchase->receipt_total_tax;
+                                        $exempt_live_total += $exempt_live
                                     @endphp
                                     <tr>
                                         <td>{{$nos}}</td>
@@ -191,6 +199,7 @@
                                         <td class="text-right">{{number_format($purchase->receipt_total_incl_of_tax)}}</td>
                                         <td class="text-right">{{number_format(0)}}</td>
                                         <td class="text-right">{{number_format($purchase->receipt_total_tax)}}</td>
+                                        <td class="text-right">{{number_format($exempt_live)}}</td>
                                     </tr>
 
                                     @php
@@ -204,6 +213,7 @@
                                     <td class="text-right">{{ number_format($total_purchases+$receipt_total_incl_of_tax, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vat_exempts, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vats+$receipt_total_tax, 2) }}</td>
+                                    <td class="text-right">{{ number_format($total_exempt+$exempt_live_total, 2) }}</td>
                                 </tr>
                                 </tfoot>
                             </table>
