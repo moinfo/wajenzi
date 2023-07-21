@@ -48,7 +48,7 @@
                                 <thead>
                                 <tr>
                                     <th>Monthly</th>
-                                    <th>Vat</th>
+                                    <th>Vat Exclusive</th>
                                     <th>Exempt</th>
                                     <th>Turnover</th>
                                 </tr>
