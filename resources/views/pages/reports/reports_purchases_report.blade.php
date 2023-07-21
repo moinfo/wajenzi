@@ -173,7 +173,8 @@
                                         $items = implode(',',array_column($receipt_items,'description'));
                                         $receipt_time = $purchase->receipt_time;
                                         $exempt_live = $purchase->receipt_total_incl_of_tax - $purchase->receipt_total_excl_of_tax - $purchase->receipt_total_tax;
-                                        $exempt_live_total += $exempt_live
+                                        $exempt_live_total += $exempt_live;
+
                                     @endphp
                                     <tr>
                                         <td>{{$nos}}</td>
@@ -211,7 +212,7 @@
                                 <tr>
                                     <td colspan="8"></td>
                                     <td class="text-right">{{ number_format($total_purchases+$receipt_total_incl_of_tax, 2) }}</td>
-                                    <td class="text-right">{{ number_format($total_vat_exempts, 2) }}</td>
+                                    <td class="text-right">{{ number_format($receipt_total_excl_of_tax+$total_vat_exempts, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_vats+$receipt_total_tax, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_exempt+$exempt_live_total, 2) }}</td>
                                 </tr>
