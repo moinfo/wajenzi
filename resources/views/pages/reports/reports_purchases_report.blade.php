@@ -172,7 +172,7 @@
                                         $receipt_items = \App\Models\ReceiptItem::getItems($receipt_id) ?? [];
                                         $items = implode(',',array_column($receipt_items,'description'));
                                         $receipt_time = $purchase->receipt_time;
-                                        $exempt_live = $purchase->receipt_total_incl_of_tax - $purchase->receipt_total_tax;
+                                        $exempt_live = $purchase->receipt_total_incl_of_tax - $purchase->receipt_total_excl_of_tax - $purchase->receipt_total_tax;
                                         $exempt_live_total += $exempt_live
                                     @endphp
                                     <tr>
@@ -197,7 +197,7 @@
                                             </a>
                                         </td>
                                         <td class="text-right">{{number_format($purchase->receipt_total_incl_of_tax)}}</td>
-                                        <td class="text-right">{{number_format(0)}}</td>
+                                        <td class="text-right">{{number_format($purchase->receipt_total_excl_of_tax)}}</td>
                                         <td class="text-right">{{number_format($purchase->receipt_total_tax)}}</td>
                                         <td class="text-right">{{number_format($exempt_live)}}</td>
                                     </tr>
