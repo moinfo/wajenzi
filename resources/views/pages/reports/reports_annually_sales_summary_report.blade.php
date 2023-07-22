@@ -75,8 +75,7 @@
                                             $start_date = $dt->format("Y-m-01");
                                             $end_date = $dt->format("Y-m-t");
                                             $efd_id = null;
-                                            $sales = \App\Models\Sale::getTotalTurnover($start_date,$end_date,$efd_id);
-                                            $total_sales += $sales;
+
                                             $exempt = \App\Models\Sale::getTotalExempt($start_date,$end_date,$efd_id);
                                             $total_exempt += $exempt;
                                             $amount_vat_exc = \App\Models\Sale::getTotalSaleVatExcl($start_date,$end_date);
@@ -85,6 +84,8 @@
                                             $total_vat += $vat;
                                             $net= \App\Models\Sale::getTotalNet($start_date,$end_date,$efd_id);
                                             $total_net += $total_net;
+                                            $sales = $exempt+$amount_vat_exc;
+                                            $total_sales += $sales;
                                         @endphp
                                     <tr>
 

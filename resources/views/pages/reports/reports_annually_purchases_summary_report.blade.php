@@ -84,14 +84,15 @@
                                         @php
                                             $start_date = $dt->format("Y-m-01");
                                             $end_date = $dt->format("Y-m-t");
-                                            $sales = \App\Models\Purchase::getTotalPurchasesByDate($start_date,$end_date);
-                                            $total_sales += $sales;
+
                                             $exempt = \App\Models\Purchase::getTotalPurchasesByDateByExempt($start_date,$end_date);
                                             $total_exempt += $exempt;
                                             $vat= \App\Models\Purchase::getTotalPurchasesByDateByVat($start_date,$end_date);
                                             $total_vat += $vat;
                                             $vat_exc= \App\Models\Purchase::getTotalExemptByDate($start_date,$end_date);
                                             $vat_exc_total += $vat_exc;
+                                            $sales = $exempt+$vat_exc;
+                                            $total_sales += $sales;
                                             $net= 0;
                                             $total_net += $total_net;
                                         @endphp
