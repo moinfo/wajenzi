@@ -155,7 +155,7 @@ class Purchase extends Model
 
     }
     public static function getTotalAutoExemptByDate($start_date, $end_date){
-        return Receipt::whereBetween('date', [$start_date, $end_date])->where('receipt_total_tax','=',0)->select([DB::raw("SUM(receipt_total_excl_of_tax) as total_amount")])->get()->first()['total_amount'] ?? 0;
+        return Receipt::whereBetween('date', [$start_date, $end_date])->where('receipt_total_tax','!=',0)->select([DB::raw("SUM(receipt_total_excl_of_tax) as total_amount")])->get()->first()['total_amount'] ?? 0;
 
     }
     public static function getTotalNormalExemptByDate($start_date, $end_date){

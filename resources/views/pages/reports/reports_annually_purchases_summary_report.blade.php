@@ -90,7 +90,7 @@
                                             $total_exempt += $exempt;
                                             $vat= \App\Models\Purchase::getTotalPurchasesByDateByVat($start_date,$end_date);
                                             $total_vat += $vat;
-                                            $vat_exc= \App\Models\Purchase::getTotalNormalExemptByDate($start_date,$end_date);
+                                            $vat_exc= \App\Models\Purchase::getTotalExemptByDate($start_date,$end_date);
                                             $vat_exc_total += $vat_exc;
                                             $net= 0;
                                             $total_net += $total_net;
