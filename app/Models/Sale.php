@@ -107,7 +107,7 @@ class Sale extends Model
     }
 
     public static function getTotalRevenue($start_date, $end_date){
-        return Sale::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+        return self::getTotalExempt($start_date, $end_date) + self::getTotalSaleVatExcl($start_date, $end_date);
 
     }
 
