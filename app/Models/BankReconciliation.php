@@ -165,7 +165,7 @@ class BankReconciliation extends Model
               (
     (SELECT  null as receiving_id,bank_reconciliations.description,null as efd_id,supplier_id,date,null as credit,SUM(debit) AS debit,null as transfer_in,null as transfer_out,null as amount, banks.name AS bank_name FROM `bank_reconciliations` JOIN banks ON (banks.id = bank_reconciliations.bank_id) WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit != 0 AND reference NOT LIKE 'TRANSFER%' GROUP BY bank_id)
         UNION ALL
-    (SELECT  null as receiving_id,bank_reconciliations.description,null as efd_id,supplier_id,date,null as credit, null as debit,debit as transfer_in,null as transfer_out,null as amount, banks.name AS bank_name FROM `bank_reconciliations` JOIN banks ON (banks.id = bank_reconciliations.bank_id)WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit > 0 AND reference LIKE 'TRANSFER%' GROUP BY bank_id)
+    (SELECT  null as receiving_id,bank_reconciliations.description,null as efd_id,supplier_id,date,null as credit, null as debit,debit as transfer_in,null as transfer_out,null as amount, banks.name AS bank_name FROM `bank_reconciliations` JOIN banks ON (banks.id = bank_reconciliations.bank_id)WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit > 0 AND reference LIKE 'TRANSFER%')
     UNION ALL
     (SELECT  null as receiving_id,description,null as efd_id,null as supplier_id,date,null as credit, null as debit,null as transfer_in,null as transfer_out,amount, null AS bank_name FROM `financial_charges` WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date')
     UNION ALL
