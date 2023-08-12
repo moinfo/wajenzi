@@ -64,10 +64,12 @@
                                 $supplier_id = $_POST['supplier_id'] ?? 0;
                                 $supplier_name = \App\Models\Supplier::getSupplierName($supplier_id);
                                 $bonge_id = \App\Models\Supplier::getBongeSupplierId($supplier_id);
-                                $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalanceWithoutCharges($supplier_id,$end_date) ?? 0;
-                                $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalanceWithoutCharges($supplier_id,$start_date) ?? 0;
+                                $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalanceWithoutCharges($supplier_id,$end_date,$bonge_id) ?? 0;
+                                $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalanceWithoutCharges($supplier_id,$start_date,$bonge_id) ?? 0;
                                 $transactions = \App\Models\BankReconciliation::getSupplier2Transactions($start_date,$end_date,$supplier_id,$bonge_id);
-
+                                $total_credit = 0;
+                                $total_debit = 0;
+                                $total_transfer_in = 0;
                         @endphp
                         <div class="table-responsive">
                             <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
@@ -95,6 +97,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+
                                 @foreach($transactions as $transaction)
                                     @php
                                         $opening_balance -= $transaction->debit;
@@ -104,6 +107,9 @@
                                         $receiving_id = $transaction->receiving_id;
                                         $receiving_items = \App\Models\Report::getReceivingItems($receiving_id);
                                         $items_name = implode(', ', array_column($receiving_items, 'name'));
+                                        $total_credit += $transaction->credit;
+                                        $total_debit += $transaction->debit;
+                                        $total_transfer_in += $transaction->transfer_in;
                                     @endphp
                                     <tr>
                                         <td>{{$loop->iteration}}</td>
@@ -120,6 +126,15 @@
 
                                 @endforeach
                                 </tbody>
+                                <tfoot>
+                                <tr>
+                                    <th colspan="3">Total</th>
+                                    <th class="text-right">{{number_format($total_credit,2)}}</th>
+                                    <th class="text-right">{{number_format($total_debit,2)}}</th>
+                                    <th class="text-right">{{number_format($total_transfer_in,2)}}</th>
+                                    <th class="text-right"></th>
+                                </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>

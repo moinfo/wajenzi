@@ -97,28 +97,33 @@ class BankReconciliation extends Model
 
     public static function getSupplierAllTimeDebit($supplier_id,$end_date)
     {
-        $start_date = '2010-01-01';
+        $start_date = '2022-12-01';
         return BankReconciliation::select(DB::raw('SUM(debit) as debit'))->where('supplier_id',$supplier_id)->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['debit'] ?? 0;
+    }
+    public static function getSupplierAllTimeDebit2($supplier_id,$end_date)
+    {
+        $start_date = '2022-12-01';
+        return BankReconciliation::select(DB::raw('SUM(debit) as debit'))->where('reference', 'NOT LIKE', "TRANSFER%")->where('debit', '!=',0)->where('supplier_id',$supplier_id)->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['debit'] ?? 0;
     }
 
     public static function getSupplierAllTimeCredit($supplier_id,$end_date)
     {
-        $start_date = '2010-01-01';
+        $start_date = '2022-12-01';
         return BankReconciliation::select(DB::raw('SUM(credit) as credit'))->where('supplier_id',$supplier_id)->where('status','APPROVED')->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['credit'] ?? 0;
     }
 
     public static function getSupplierAllTimeFinancialCharges($supplier_id,$end_date)
     {
-        $start_date = '2010-01-01';
+        $start_date = '2022-12-01';
         return FinancialCharge::select(DB::raw('SUM(amount) as credit'))->where('supplier_id',$supplier_id)->where('date','>=',$start_date)->where('date','<=',$end_date)->get()->first()['credit'] ?? 0;
     }
     public static function getSupplierCurrentBalance($supplier_id,$end_date)
     {
         return  self::getSupplierAllTimeDebit($supplier_id,$end_date) - self::getSupplierAllTimeCredit($supplier_id,$end_date) - self::getSupplierAllTimeFinancialCharges($supplier_id,$end_date);
     }
-    public static function getSupplierCurrentBalanceWithoutCharges($supplier_id,$end_date)
+    public static function getSupplierCurrentBalanceWithoutCharges($supplier_id,$end_date,$bonge_id)
     {
-        return  self::getSupplierAllTimeDebit($supplier_id,$end_date) - self::getSupplierAllTimeCredit($supplier_id,$end_date);
+        return  (self::getTotalCreditBonge($end_date,$bonge_id) + self::getTotalTransferedBySupplier($end_date,$supplier_id)) - (self::getSupplierAllTimeDebit2($supplier_id,$end_date));
     }
 
     public static function getSupplierOpeningBalance($supplier_id, $end_date)
@@ -129,10 +134,10 @@ class BankReconciliation extends Model
 
     }
 
-    public static function getSupplierOpeningBalanceWithoutCharges($supplier_id, $end_date)
+    public static function getSupplierOpeningBalanceWithoutCharges($supplier_id, $end_date, $bonge_id)
     {
         $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
-        return (self::getSupplierAllTimeCredit($supplier_id,$yesterday)) - self::getSupplierAllTimeDebit($supplier_id,$yesterday);
+        return (self::getTotalCreditBonge($yesterday,$bonge_id) + self::getTotalTransferedBySupplier($yesterday,$supplier_id)) - (self::getSupplierAllTimeDebit2($supplier_id,$yesterday));
 
 
     }
@@ -193,6 +198,18 @@ class BankReconciliation extends Model
     (SELECT  null as receiving_id,bank_reconciliations.description,efd_id,supplier_id,date,null as credit, null as debit,null as transfer_in,SUM(debit) as transfer_out,null as amount, banks.name AS bank_name FROM `bank_reconciliations` JOIN banks ON (banks.id = bank_reconciliations.bank_id)WHERE supplier_id = '$supplier_id' AND `date` BETWEEN '$start_date' AND '$end_date' AND debit < 0 AND reference LIKE 'TRANSFER%' GROUP BY bank_id, date)
     ) b  order by `date` asc");
 
+    }
+
+    public static function getTotalCreditBonge($end_date, $bonge_id)
+    {
+        $start_date = '2022-12-01';
+        return DB::connection('mysql5')->table('bonge.ospos_receivings')
+            ->select(DB::raw('SUM(ospos_receivings_items.quantity_purchased*ospos_receivings_items.item_cost_price) as cash'))
+            ->join('bonge.ospos_receivings_items', 'ospos_receivings_items.receiving_id', '=', 'ospos_receivings.receiving_id')
+            ->where('ospos_receivings.payment_type', '=','Credit Card')
+            ->where('ospos_receivings.supplier_id', '=', $bonge_id)
+            ->whereBetween(DB::raw('DATE(ospos_receivings.receiving_time)'), [$start_date, $end_date])
+            ->get()->first()->cash;
     }
 
     public static function getTotalDepositPerDayPerSystem($start_date, $end_date, $system_id)
@@ -378,6 +395,21 @@ class BankReconciliation extends Model
             ->where('reference', 'LIKE', "%TRANSFER%");
         $bank_reconciliation->where('bank_reconciliations.supplier_id','=',$supplier_id);
 
+
+        return $bank_reconciliation->get()->first()->debit;
+    }
+
+    public static function getTotalTransferedBySupplier($end_date,$supplier_id){
+        $start_date = '2022-12-01';
+        $bank_reconciliation = DB::table('bank_reconciliations')
+            ->select(DB::raw('SUM(bank_reconciliations.debit) as debit'))
+            ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->where('bank_reconciliations.debit','>',0)
+            ->where('reference', 'LIKE', "TRANSFER%");
+        $bank_reconciliation->where('bank_reconciliations.supplier_id','=',$supplier_id);
 
         return $bank_reconciliation->get()->first()->debit;
     }
