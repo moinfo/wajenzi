@@ -74,21 +74,21 @@
                                 <thead>
                                 <tr>
                                     <td colspan="3">Date: <b class="float-right">{{$start_date}} - {{$end_date}}</b></td>
-                                    <td colspan="3">Supplier: <b class="float-right">{{$supplier_name}}</b></td>
+                                    <td colspan="2">Supplier: <b class="float-right">{{$supplier_name}}</b></td>
                                     <td colspan="2">Current Balance: <b class="float-right">{{number_format($current_balance,2)}}</b></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="7" class="text-right">Opening Balance:</td>
+                                    <td colspan="6" class="text-right">Opening Balance:</td>
                                     <td class="text-right">{{number_format($opening_balance,2)}}</td>
                                 </tr>
                                     <tr>
                                         <td>#</td>
                                         <td>date</td>
                                         <td>Description</td>
-                                        <td>Efd</td>
+{{--                                        <td>Efd</td>--}}
                                         <td>Credit</td>
-{{--                                        <td>Debit</td>--}}
-                                        <td>Charge</td>
+                                        <td>Debit</td>
+{{--                                        <td>Charge</td>--}}
                                         <td>Transfer In</td>
 {{--                                        <td>Transfer Out</td>--}}
                                         <td>Balance</td>
@@ -109,7 +109,7 @@
                                         <td>{{$loop->iteration}}</td>
                                         <td>{{$transaction->date}}</td>
                                         <td>{{$transaction->description. '  '. $transaction->bank_name . '  '.$items_name }}</td>
-                                        <td>{{$efd}}</td>
+{{--                                        <td>{{$efd}}</td>--}}
                                         <td class="text-right">{{number_format($transaction->credit,2)}}</td>
                                         <td class="text-right">{{number_format($transaction->debit,2)}}</td>
 {{--                                        <td class="text-right">{{number_format($transaction->amount,2)}}</td>--}}
