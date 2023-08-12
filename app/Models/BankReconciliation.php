@@ -116,11 +116,23 @@ class BankReconciliation extends Model
     {
         return  self::getSupplierAllTimeDebit($supplier_id,$end_date) - self::getSupplierAllTimeCredit($supplier_id,$end_date) - self::getSupplierAllTimeFinancialCharges($supplier_id,$end_date);
     }
+    public static function getSupplierCurrentBalanceWithoutCharges($supplier_id,$end_date)
+    {
+        return  self::getSupplierAllTimeDebit($supplier_id,$end_date) - self::getSupplierAllTimeCredit($supplier_id,$end_date);
+    }
 
     public static function getSupplierOpeningBalance($supplier_id, $end_date)
     {
         $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
         return (self::getSupplierAllTimeCredit($supplier_id,$yesterday) + self::getSupplierAllTimeFinancialCharges($supplier_id,$yesterday)) - self::getSupplierAllTimeDebit($supplier_id,$yesterday);
+
+
+    }
+
+    public static function getSupplierOpeningBalanceWithoutCharges($supplier_id, $end_date)
+    {
+        $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
+        return (self::getSupplierAllTimeCredit($supplier_id,$yesterday)) - self::getSupplierAllTimeDebit($supplier_id,$yesterday);
 
 
     }

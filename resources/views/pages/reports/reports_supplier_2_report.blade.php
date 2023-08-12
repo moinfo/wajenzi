@@ -64,8 +64,8 @@
                                 $supplier_id = $_POST['supplier_id'] ?? 0;
                                 $supplier_name = \App\Models\Supplier::getSupplierName($supplier_id);
                                 $bonge_id = \App\Models\Supplier::getBongeSupplierId($supplier_id);
-                                $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalance($supplier_id,$end_date) ?? 0;
-                                $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalance($supplier_id,$start_date) ?? 0;
+                                $current_balance = \App\Models\BankReconciliation::getSupplierCurrentBalanceWithoutCharges($supplier_id,$end_date) ?? 0;
+                                $opening_balance = \App\Models\BankReconciliation::getSupplierOpeningBalanceWithoutCharges($supplier_id,$start_date) ?? 0;
                                 $transactions = \App\Models\BankReconciliation::getSupplier2Transactions($start_date,$end_date,$supplier_id,$bonge_id);
 
                         @endphp
@@ -74,11 +74,11 @@
                                 <thead>
                                 <tr>
                                     <td colspan="3">Date: <b class="float-right">{{$start_date}} - {{$end_date}}</b></td>
-                                    <td colspan="4">Supplier: <b class="float-right">{{$supplier_name}}</b></td>
-                                    <td colspan="3">Current Balance: <b class="float-right">{{number_format($current_balance,2)}}</b></td>
+                                    <td colspan="3">Supplier: <b class="float-right">{{$supplier_name}}</b></td>
+                                    <td colspan="2">Current Balance: <b class="float-right">{{number_format($current_balance,2)}}</b></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="9" class="text-right">Opening Balance:</td>
+                                    <td colspan="7" class="text-right">Opening Balance:</td>
                                     <td class="text-right">{{number_format($opening_balance,2)}}</td>
                                 </tr>
                                     <tr>
@@ -87,10 +87,10 @@
                                         <td>Description</td>
                                         <td>Efd</td>
                                         <td>Credit</td>
-                                        <td>Debit</td>
+{{--                                        <td>Debit</td>--}}
                                         <td>Charge</td>
                                         <td>Transfer In</td>
-                                        <td>Transfer Out</td>
+{{--                                        <td>Transfer Out</td>--}}
                                         <td>Balance</td>
                                     </tr>
                                 </thead>
@@ -100,8 +100,6 @@
                                         $opening_balance -= $transaction->debit;
                                         $opening_balance += $transaction->transfer_in;
                                         $opening_balance += $transaction->credit;
-                                        $opening_balance += $transaction->amount;
-                                        $opening_balance -= $transaction->transfer_out;
                                         $efd = \App\Models\Efd::where('id',$transaction->efd_id)->get()->first()['name'];
                                         $receiving_id = $transaction->receiving_id;
                                         $receiving_items = \App\Models\Report::getReceivingItems($receiving_id);
@@ -114,9 +112,9 @@
                                         <td>{{$efd}}</td>
                                         <td class="text-right">{{number_format($transaction->credit,2)}}</td>
                                         <td class="text-right">{{number_format($transaction->debit,2)}}</td>
-                                        <td class="text-right">{{number_format($transaction->amount,2)}}</td>
+{{--                                        <td class="text-right">{{number_format($transaction->amount,2)}}</td>--}}
                                         <td class="text-right">{{number_format($transaction->transfer_in,2)}}</td>
-                                        <td class="text-right">{{number_format($transaction->transfer_out,2)}}</td>
+{{--                                        <td class="text-right">{{number_format($transaction->transfer_out,2)}}</td>--}}
                                         <td class="text-right">{{number_format($opening_balance,2)}}</td>
                                     </tr>
 
