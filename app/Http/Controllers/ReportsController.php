@@ -66,6 +66,7 @@ class ReportsController extends Controller
             ['name' => 'Bank Report', 'route' => 'reports_bank_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Supplier Bank Deposit Report', 'route' => 'reports_supplier_bank_deposit_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Statement Report', 'route' => 'reports_statement_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Supplier 2 Report', 'route' => 'reports_supplier_2_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Provision Report', 'route' => 'reports_provision_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Statutory Payment Report', 'route' => 'reports_statutory_payment_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Annually Sales Summary Report', 'route' => 'reports_annually_sales_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -399,6 +400,15 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_statement_report')->with($data);
+    }
+
+    public function supplier_2_report(Request $request){
+        $suppliers = Supplier::all();
+
+        $data = [
+            'suppliers' => $suppliers
+        ];
+        return view('pages.reports.reports_supplier_2_report')->with($data);
     }
 
     public function bank_report(Request $request){
