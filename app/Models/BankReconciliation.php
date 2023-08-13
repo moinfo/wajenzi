@@ -123,7 +123,7 @@ class BankReconciliation extends Model
     }
     public static function getSupplierCurrentBalanceWithoutCharges($supplier_id,$end_date,$bonge_id)
     {
-        return  (self::getTotalCreditBonge($end_date,$bonge_id) - self::getTotalTransferedBySupplier($end_date,$supplier_id)) - (self::getSupplierAllTimeDebit2($supplier_id,$end_date));
+        return  ((self::getTotalCreditBonge($end_date,$bonge_id) + (Supplier::getSupplierDebit($supplier_id) ?? 0)) - self::getTotalTransferedBySupplier($end_date,$supplier_id)) - (self::getSupplierAllTimeDebit2($supplier_id,$end_date));
     }
 
     public static function getSupplierOpeningBalance($supplier_id, $end_date)
@@ -137,7 +137,7 @@ class BankReconciliation extends Model
     public static function getSupplierOpeningBalanceWithoutCharges($supplier_id, $end_date, $bonge_id)
     {
         $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
-        return (self::getTotalCreditBonge($yesterday,$bonge_id) - self::getTotalTransferedBySupplier($yesterday,$supplier_id)) - (self::getSupplierAllTimeDebit2($supplier_id,$yesterday));
+        return ((self::getTotalCreditBonge($yesterday,$bonge_id) + (Supplier::getSupplierDebit($supplier_id) ?? 0)) - self::getTotalTransferedBySupplier($yesterday,$supplier_id)) - (self::getSupplierAllTimeDebit2($supplier_id,$yesterday));
 
 
     }

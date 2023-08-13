@@ -15,6 +15,10 @@ class Supplier extends Model
     {
         return Supplier::where('id',$supplier_id)->get()->first()['name'];
     }
+    public static function getSupplierDebit($supplier_id)
+    {
+        return Supplier::where('id',$supplier_id)->get()->first()['debit'];
+    }
 
     public static function isWhitestar($supplier_id)
     {
