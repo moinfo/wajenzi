@@ -9,7 +9,7 @@
             <div>
                 <div class="block block-themed">
                     <div class="block-header bg-gd-dusk">
-                        <h3 class="block-title">Supplier 2 Report</h3>
+                        <h3 class="block-title">Supplier Report</h3>
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
