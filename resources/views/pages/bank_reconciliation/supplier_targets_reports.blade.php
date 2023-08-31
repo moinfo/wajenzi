@@ -15,9 +15,10 @@
                         <h3 class="block-title">All Supplier Targets Report</h3>
                     </div>
                     <div class="block-content">
-                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Reconciliation"))
                         <div class="row no-print m-t-10">
-                            <div class="class col-md-12">
+                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Reconciliation"))
+
+                            <div class="class col-md-9">
                                 <div class="class card-box">
                                     <form  name="collection_search" action="" id="filter-form" method="post" autocomplete="off">
                                         @csrf
@@ -53,17 +54,17 @@
                                                     <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
                                                 </div>
                                             </div>
-                                            <div class="class col-md-3">
-                                                <div>
-                                                    <a href="{{route('reports_commission_vs_deposit_report')}}" class="btn btn-rounded btn-outline-warning min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Supplier Commissions Report</a>
-                                                </div>
-                                            </div>
                                         </div>
                                     </form>
                                 </div>
                             </div>
+                            @endif
+                            <div class="class col-md-3">
+                                <div>
+                                    <a href="{{route('reports_commission_vs_deposit_report')}}" class="btn btn-rounded btn-outline-warning min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Supplier Commissions Report</a>
+                                </div>
+                            </div>
                         </div>
-                        @endif
                         <div class="table-responsive">
                             <div class="row">
                                 <div class="col-sm-12">
