@@ -16,16 +16,19 @@ $document_id = \App\Classes\Utility::getLastId('Sale')+1;
 
                     </select>
         </div>
+        @if(!$object->id ?? null)
         <div class="form-group">
             <label for="example-nf-amount">Last Z Report Number</label>
             <div id="z_report_id"></div>
 {{--            <input type="number" id="z_id" name="z_id" value="0" readonly>--}}
         </div>
+            @endif
         <div class="form-group">
             <label for="example-nf-amount">Current Z Report Number</label>
             <input type="number" class="form-control" id="efd_number" name="efd_number"
-                   value="{{ $object->amount ?? '' }}" placeholder="" required>
+                   value="{{ $object->efd_number ?? '' }}" placeholder="" required>
         </div>
+
         <div class="form-group">
             <label for="example-nf-amount">Turnover</label>
             <input type="number" step=".01" class="form-control amount" id="input-amount" name="amount"
