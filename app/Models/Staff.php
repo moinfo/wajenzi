@@ -18,6 +18,15 @@ class Staff extends User
         return  StaffSalary::Where('staff_id',$staff_id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('staff_id')->get()->first()['total_amount'] ?? 0;
     }
 
+    public static function isPAYEDeduction($staff_id,$deduction_id){
+        $deduction =  DeductionSubscription::Where('staff_id',$staff_id)->Where('deduction_id',$deduction_id)->get();
+        if (count($deduction)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
     public static function getStaffAdvanceSalary($staff_id,$start_date,$end_date){
         return AdvanceSalary::Where('staff_id',$staff_id)->WhereBetween('date',[$start_date,$end_date])->select([DB::raw("SUM(amount) as total_amount")])->groupBy('staff_id')->get()->first()['total_amount'] ?? 0;
     }

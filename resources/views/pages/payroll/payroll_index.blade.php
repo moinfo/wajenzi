@@ -227,6 +227,7 @@
 
                                         $staff_id = $staff->id;
                                         $basic_salary = \App\Models\Staff::getStaffSalary($staff_id);
+                                        $paye_deduction = \App\Models\Staff::isPAYEDeduction($staff_id,1);
                                         $advance_salary = \App\Models\Staff::getStaffAdvanceSalary($staff_id,$start_date,$end_date);
                                         //$advance_salary = \App\Models\Staff::getStaffAdvanceSalary($staff_id,$start_date,$end_date);
                                         $allowance = \App\Models\Staff::getStaffAllowance($staff_id);
@@ -289,7 +290,11 @@
                                             $additional_amount = 128000;
                                             $maximum_amount = 1000000;
                                         }
+//                                        if($paye['nature'] == 'PAYE'){
                                         $paye_amount = (($taxable-$maximum_amount)*$employee_percentage)+$additional_amount;
+//                                        }else{
+//                                            $paye_amount = 0;
+//                                        }
 //                                        $paye_amount = ($additional_amount + $employee_percentage* ($maximum_amount - $taxable));
 
 
@@ -316,6 +321,12 @@
                                         } else{
                                             $employee_heslb_amount = $basic_salary * ($heslb['employee_percentage']/100);
                                         }
+                                                                                if($paye_deduction){
+                                        $paye_amount = (($taxable-$maximum_amount)*$employee_percentage)+$additional_amount;
+                                                                                }else{
+                                                                                    $paye_amount = 0;
+                                                                                }
+
                                         //                                    $net = $taxable - ($paye_amount+$employee_heslb_amount+$advance_salary+$current_loan_deduction);
                                         $net = $taxable -$paye_amount;
                                         $basic_salary_total += $basic_salary;
