@@ -122,7 +122,8 @@ class Purchase extends Model
     }
 
     public static function getTotalPurchasesByDate($start_date, $end_date){
-        return self::getTotalAutoPurchasesByDate($start_date, $end_date) + self::getTotalNormalPurchasesByDate($start_date, $end_date);
+//        return self::getTotalAutoPurchasesByDate($start_date, $end_date) + self::getTotalNormalPurchasesByDate($start_date, $end_date);
+        return self::getTotalPurchasesByDateByExempt($start_date, $end_date) + self::getTotalExemptByDate($start_date, $end_date);
 
     }
 
