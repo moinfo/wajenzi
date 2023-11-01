@@ -122,7 +122,7 @@
 
                                     <td colspan="3">Cost of Sales</td>
 
-                                    <td class="text-right">{{number_format($cost_of_sales)}}</td>
+                                    <td class="text-right">{{number_format(($opening+$total_sales)-$closing)}}</td>
                                 </tr>
                                 </tfoot>
                             </table>
