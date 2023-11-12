@@ -126,8 +126,7 @@
                                             @php
                                                 $white = \App\Models\BankReconciliation::getTotalDepositWhitestar($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositWhitestarAuto($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositPerDayPerSystemNotTransfered($start_date,$end_date);
                                                 $bank_deposited_whitestar = \App\Models\Report::getSupplierBankDepositedWhiteStar($start_date,$end_date);
-                                                $bankdepositedCustomer = \App\Models\Report::getCustomerBankDepositedWhiteStar($start_date,$end_date);
-                                                $difference_white = $white - $bank_deposited_whitestar + $bankdepositedCustomer;
+                                                $difference_white = $white - $bank_deposited_whitestar;
                                             @endphp
                                             <tr>
                                                 <td>5</td>
