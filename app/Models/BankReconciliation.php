@@ -305,8 +305,8 @@ class BankReconciliation extends Model
 //    }
     public static function getDebitDepositMainStore($start_date, $end_date, $system_id)
     {
-        return \App\Models\BankReconciliation::select(\Illuminate\Support\Facades\DB::raw("SUM(debit) as total_amount"))->join('efds','efds.id','=','bank_reconciliations.efd_id')->join('systems','systems.id','=','efds.system_id')->
-            where('bank_reconciliations.date',[$start_date,$end_date])->where('efds.system_id',$system_id)->get()->first()->total_amount ?? 0;
+        return \App\Models\BankReconciliation::select(DB::raw("SUM(debit) as total_amount"))->join('efds','efds.id','=','bank_reconciliations.efd_id')->join('systems','systems.id','=','efds.system_id')->
+            whereBetween('bank_reconciliations.date',[$start_date,$end_date])->where('efds.system_id',$system_id)->get()->first()->total_amount ?? 0;
     }
 
     public function bank()
