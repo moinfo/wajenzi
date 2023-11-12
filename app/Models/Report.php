@@ -145,6 +145,19 @@ class Report extends Model
             ->get()->first()->amount ?? 0;
     }
 
+    public static function getCustomerBankDepositedWhiteStar($start_date, $end_date)
+    {
+
+        return DB::connection('mysql6')->table('whitestar.ospos_debits_credits')
+            ->select(DB::raw('SUM(dr) as amount'))
+            ->where('delete', 0)
+            ->where('paid_payment_type', '=',2)
+            ->where('client_id', '!=',283)
+            ->where('payment_type', '=','CUSTOMER')
+            ->whereBetween('date', [$start_date, $end_date])
+            ->get()->first()->amount ?? 0;
+    }
+
     public static function getSupplierDailyDebitWhitestar($start_date, $end_date)
     {
 
