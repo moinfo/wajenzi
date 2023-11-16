@@ -10,7 +10,7 @@ class Receipt extends Model
     use HasFactory;
 
     public $timestamps = false;
-    public $fillable = ['date'];
+    public $fillable = ['date','is_expense'];
 
     public static function isExist($receipt_verification_code)
     {

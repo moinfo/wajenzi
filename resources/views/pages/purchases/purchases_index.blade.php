@@ -77,6 +77,7 @@
                                     <th>Total Amount</th>
                                     <th>Amount VAT EXC</th>
                                     <th>VAT Amount</th>
+                                    <th>Is Expenses</th>
                                     <th>Attachment</th>
                                     <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
@@ -97,6 +98,7 @@
                                         <td class="font-w600">{{ number_format($purchase->total_amount, 2) }}</td>
                                         <td class="font-w600">{{ number_format($purchase->amount_vat_exc,2) }}</td>
                                         <td class="font-w600">{{ number_format($purchase->vat_amount, 2) }}</td>
+                                        <td class="font-w600">{{ $purchase->is_expense }}</td>
                                         <td class="text-center">
                                             @if($purchase->file != null)
                                                 <a href="{{ url("$purchase->file") }}">Attachment</a>

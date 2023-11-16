@@ -2,6 +2,16 @@
     <form method="post" enctype="multipart/form-data" autocomplete="off">
         @csrf
         <div class="form-group">
+            <label for="example-nf-email">Is Expenses?</label>
+            <select name="is_expense" id="is_expense" class="form-control" required>
+                @if($object->id ?? null)
+                    <option value="{{$object->is_expense}}" {{ ( 'YES' == $object->is_expense) ? 'selected' : '' }}>{{$object->is_expense}}</option>
+                @endif
+                <option value="NO">NO</option>
+                <option value="YES">YES</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>
             <input type="text" class="form-control"  id="input-date" name="date"
                    value="{{ $object->date }}" required>

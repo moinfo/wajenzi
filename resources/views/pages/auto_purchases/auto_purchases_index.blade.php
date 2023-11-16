@@ -63,6 +63,7 @@
                                     <th>TotalAmount</th>
                                     <th>Discount</th>
                                     <th>VerificationCode</th>
+                                    <th>Is Expenses</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -107,6 +108,7 @@
                                                     <a href="https://verify.tra.go.tz/{{$purchase->receipt_verification_code}}_{{$time[0]}}{{$time[1]}}{{$time[2]}}">{{$purchase->receipt_verification_code}}</a>
                                                     @endif
                                                </td>
+                                            <td>{{$purchase->is_expense}}</td>
                                             <td class="text-center">
                                                 <div class="btn-group">
                                                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Auto Purchase"))
