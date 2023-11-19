@@ -10,6 +10,11 @@ class Purchase extends Model
 {
     use HasFactory;
 
+    public static function getTotalAdjustmentExpenses($start_date, $end_date)
+    {
+        return AdjustmentExpense::where('date','>=',$start_date)->where('date','<=',$end_date)->sum('amount');
+    }
+
     public function item() {
         return $this->belongsTo(Item::class);
 

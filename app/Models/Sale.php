@@ -115,6 +115,7 @@ class Sale extends Model
         $opening = Stock::getTotalOpeningStock($start_date, $end_date);
         $closing = Stock::getTotalClosingStock($start_date, $end_date);
         $purchases = Purchase::getTotalPurchasesByDate($start_date, $end_date);
-        return ($opening+$purchases) - $closing;
+        $adjustment = Purchase::getTotalAdjustmentExpenses($start_date, $end_date);
+        return ($opening+$purchases-$adjustment) - $closing;
     }
 }

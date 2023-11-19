@@ -60,6 +60,8 @@
                                             $total_exempt = 0;
                                             $total_vat = 0;
                                             $total_net = 0;
+                                            $total_adjustment = 0;
+                                            $all_sum = 0;
                                             $vat_exc_total = 0;
                                             $opening = \App\Models\Stock::getTotalOpeningStock($start_date_year, $end_date_year);
                                             $closing = \App\Models\Stock::getTotalClosingStock($start_date_year, $end_date_year);
@@ -70,10 +72,12 @@
                                     <th>VAT Exclusive</th>
                                     <th>Exempt</th>
                                     <th>Turnover</th>
+                                    <th>Adjustment Expenses</th>
+                                    <th>Total</th>
                                 </tr>
                                 <tr>
 
-                                    <td colspan="3">Opening Stock at {{date('d F, Y',strtotime($start_date_year))}}</td>
+                                    <td colspan="5">Opening Stock at {{date('d F, Y',strtotime($start_date_year))}}</td>
 
                                     <td class="text-right">{{number_format($opening)}}</td>
                                 </tr>
@@ -91,8 +95,12 @@
                                             $total_vat += $vat;
                                             $vat_exc= \App\Models\Purchase::getTotalExemptByDate($start_date,$end_date);
                                             $vat_exc_total += $vat_exc;
+                                            $adjustment= \App\Models\Purchase::getTotalAdjustmentExpenses($start_date,$end_date);
+                                            $total_adjustment += $adjustment;
                                             $sales = $exempt+$vat_exc;
                                             $total_sales += $sales;
+                                            $all_total = $sales - $adjustment;
+                                            $all_sum += $all_total;
                                             $net= 0;
                                             $total_net += $total_net;
                                         @endphp
@@ -102,6 +110,8 @@
                                         <td class="text-right">{{number_format($vat_exc)}}</td>
                                         <td class="text-right">{{number_format($exempt)}}</td>
                                         <td class="text-right">{{number_format($sales)}}</td>
+                                        <td class="text-right">{{number_format($adjustment)}}</td>
+                                        <td class="text-right">{{number_format($all_total)}}</td>
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -111,16 +121,18 @@
                                     <td class="text-right">{{number_format($vat_exc_total)}}</td>
                                     <td class="text-right">{{number_format($total_exempt)}}</td>
                                     <td class="text-right">{{number_format($total_sales)}}</td>
+                                    <td class="text-right">{{number_format($total_adjustment)}}</td>
+                                    <td class="text-right">{{number_format($all_sum)}}</td>
                                 </tr>
                                 <tr>
 
-                                    <td colspan="3">Closing Stock at {{date('d F, Y',strtotime($end_date_year))}}</td>
+                                    <td colspan="5">Closing Stock at {{date('d F, Y',strtotime($end_date_year))}}</td>
 
                                     <td class="text-right">{{number_format($closing)}}</td>
                                 </tr>
                                 <tr>
 
-                                    <td colspan="3">Cost of Sales</td>
+                                    <td colspan="5">Cost of Sales</td>
 
                                     <td class="text-right">{{number_format($cost_of_sales)}}</td>
                                 </tr>
