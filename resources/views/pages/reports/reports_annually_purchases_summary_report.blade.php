@@ -94,8 +94,9 @@
                                             $vat= \App\Models\Purchase::getTotalPurchasesByDateByVat($start_date,$end_date);
                                             $total_vat += $vat;
                                             $vat_exc= \App\Models\Purchase::getTotalExemptByDate($start_date,$end_date);
+                                            $vat_exc_adjustable= \App\Models\Purchase::getTotalExemptByDateAdjustable($start_date,$end_date);
                                             $vat_exc_total += $vat_exc;
-                                            $adjustment= \App\Models\Purchase::getTotalAdjustmentExpenses($start_date,$end_date);
+                                            $adjustment= \App\Models\Purchase::getTotalAdjustmentExpenses($start_date,$end_date) + $vat_exc_adjustable;
                                             $total_adjustment += $adjustment;
                                             $sales = $exempt+$vat_exc;
                                             $total_sales += $sales;

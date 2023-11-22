@@ -164,12 +164,24 @@ class Purchase extends Model
         return Receipt::whereBetween('date', [$start_date, $end_date])->where('receipt_total_tax','!=',0)->select([DB::raw("SUM(receipt_total_excl_of_tax) as total_amount")])->get()->first()['total_amount'] ?? 0;
 
     }
+    public static function getTotalAutoExemptByDateAdjustable($start_date, $end_date){
+        return Receipt::whereBetween('date', [$start_date, $end_date])->where('is_expense','=','YES')->where('receipt_total_tax','!=',0)->select([DB::raw("SUM(receipt_total_excl_of_tax) as total_amount")])->get()->first()['total_amount'] ?? 0;
+
+    }
     public static function getTotalNormalExemptByDate($start_date, $end_date){
         return Purchase::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->select([DB::raw("SUM(amount_vat_exc) as amount_vat_exc")])->get()->first()['amount_vat_exc'] ?? 0;
 
     }
+    public static function getTotalNormalExemptByDateAdjustable($start_date, $end_date){
+        return Purchase::Where('status','APPROVED')->whereBetween('date', [$start_date, $end_date])->where('is_expense','=','YES')->select([DB::raw("SUM(amount_vat_exc) as amount_vat_exc")])->get()->first()['amount_vat_exc'] ?? 0;
+
+    }
     public static function getTotalExemptByDate($start_date, $end_date){
         return self::getTotalAutoExemptByDate($start_date, $end_date) + self::getTotalNormalExemptByDate($start_date, $end_date);
+
+    }
+    public static function getTotalExemptByDateAdjustable($start_date, $end_date){
+        return self::getTotalAutoExemptByDateAdjustable($start_date, $end_date) + self::getTotalNormalExemptByDateAdjustable($start_date, $end_date);
 
     }
     public static function getTotalAutoVATByDate($start_date, $end_date){
