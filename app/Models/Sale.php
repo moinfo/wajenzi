@@ -116,14 +116,7 @@ class Sale extends Model
         $closing = Stock::getTotalClosingStock($start_date, $end_date);
         $purchases = Purchase::getTotalPurchasesByDate($start_date, $end_date);
         $adjustment = Purchase::getTotalAdjustmentExpenses($start_date, $end_date);
-        return ($opening+$purchases-$adjustment) - $closing;
-    }
-
-    public static function getTestPurchase($start_date, $end_date){
-        return $purchases = Purchase::getTotalPurchasesByDate($start_date, $end_date);
-    }
-
-    public static function getTestAdjustmentExpenses($start_date, $end_date){
-        return $adjustment = Purchase::getTotalAdjustmentExpenses($start_date, $end_date);
+        $adjustment_Exempt = Purchase::getTotalExemptByDateAdjustable($start_date,$end_date);
+        return $opening+$purchases-$adjustment-$adjustment_Exempt- $closing;
     }
 }
