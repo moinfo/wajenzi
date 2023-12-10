@@ -66,8 +66,8 @@
                                             $opening = \App\Models\Stock::getTotalOpeningStock($start_date_year, $end_date_year);
                                             $closing = \App\Models\Stock::getTotalClosingStock($start_date_year, $end_date_year);
                                             $cost_of_sales = \App\Models\Sale::getCostOfSales($start_date_year, $end_date_year);
-                                            $adjustimentsx = \App\Models\Sale::getTotalAdjustmentExpenses($start_date_year, $end_date_year);
-                                            $puchasesx = \App\Models\Sale::getTotalPurchasesByDate($start_date_year, $end_date_year);
+                                            $adjustimentsx = \App\Models\Sale::getTestAdjustmentExpenses($start_date_year, $end_date_year);
+                                            $puchasesx = \App\Models\Sale::getTestPurchase($start_date_year, $end_date_year);
                                 @endphp
                                 <tr>
                                     <th>Monthly</th>
