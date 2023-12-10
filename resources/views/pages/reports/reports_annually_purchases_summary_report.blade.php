@@ -135,7 +135,7 @@
                                 </tr>
                                 <tr>
 
-                                    <td colspan="5">Cost of Sales Adjustment: {{number_format($puchasesx)}}  Purchases: {{number_format($adjustimentsx)}}</td>
+                                    <td colspan="5">Cost of Sales Adjustment: {{number_format($adjustimentsx)}}  Purchases: {{number_format($puchasesx)}}</td>
 
                                     <td class="text-right">{{number_format($cost_of_sales)}}</td>
                                 </tr>
