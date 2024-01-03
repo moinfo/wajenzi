@@ -301,5 +301,9 @@ class Report extends Model
             ->get()->toArray();
     }
 
+    public static function getTotalBankingWhitestar($start_date, $end_date)
+    {
+    }
+
 
 }

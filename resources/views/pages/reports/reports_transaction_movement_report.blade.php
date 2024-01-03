@@ -40,8 +40,8 @@
                                                 </div>
                                                 <select name="system" id="system" class="form-control">
                                                     <option value="1">Mainstore</option>
-                                                    <option value="0">All</option>
-                                                    <option value="2">Whitestar</option>
+{{--                                                    <option value="0">All</option>--}}
+{{--                                                    <option value="2">Whitestar</option>--}}
                                                 </select>
                                             </div>
                                         </div>
@@ -171,10 +171,18 @@
                                     <td class="text-right">{{number_format($amount)}}</td>
                                 </tr>
                             @endforeach
+                            @php
+                                $white_banking = \App\Models\Report::getSupplierBankDepositedWhiteStar($start_date,$end_date);
+                            @endphp
+                            <tr>
+                                <td class="text-center" >4</td>
+                                <td>WHITESTAR</td>
+                                <td class="text-right">{{number_format($white_banking)}}</td>
+                            </tr>
                             <tr>
                                 <th colspan="2" class="text-right">Total</th>
                                 <th style="display: none"></th>
-                                <th class="text-right">{{number_format($total_debit)}}</th>
+                                <th class="text-right">{{number_format($total_debit+$white_banking)}}</th>
                             </tr>
                             <tr>
                                 <th class="text-center" colspan="6">PAYMENT REPORT</th>
@@ -217,7 +225,7 @@
                             </tr>
                             <tr>
                                 <th class="text-right" colspan="2">Difference</th>
-                                <th class="text-right">{{number_format($total_debit - $total_payment)}}</th>
+                                <th class="text-right">{{number_format(($total_debit + $white_banking) - $total_payment)}}</th>
                             </tr>
 
 
