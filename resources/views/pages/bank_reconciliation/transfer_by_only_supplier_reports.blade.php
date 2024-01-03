@@ -50,19 +50,19 @@
                                                 $l_e_nbc = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,196);
                                                 $k_h_nbc = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,197);
                                             @endphp
-                                            <div class="class col-md-2">
+                                            <div class="class col-md-2" title="Kassim Haji Kiwandani">
                                                 K.H.K Balance: {{number_format(abs($kassim))}}
                                             </div>
-                                            <div class="class col-md-2">
+                                            <div class="class col-md-2" title="Lailat Mvungi">
                                                 L.M Balance: {{number_format(abs($lailat))}}
                                             </div>
-                                            <div class="class col-md-2">
+                                            <div class="class col-md-2" title="Leruma Enterprises CRDB">
                                                 L.E CRDB Balance: {{number_format(abs($l_e_crdb))}}
                                             </div>
-                                            <div class="class col-md-2">
+                                            <div class="class col-md-2" title="Leruma Enterprises NBC">
                                                 L.E NBC Balance: {{number_format(abs($l_e_nbc))}}
                                             </div>
-                                            <div class="class col-md-2">
+                                            <div class="class col-md-2" title="Kassim Haji NBC">
                                                 K.H NBC Balance: {{number_format(abs($k_h_nbc))}}
                                             </div>
                                         </div>
