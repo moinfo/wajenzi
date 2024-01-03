@@ -46,12 +46,24 @@
 
                                                 $kassim = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,42);
                                                 $lailat = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,88);
+                                                $l_e_crdb = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,195);
+                                                $l_e_nbc = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,196);
+                                                $k_h_nbc = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,197);
                                             @endphp
-                                            <div class="class col-md-4">
-                                                Kassimu Haji Kassim Balance: {{number_format(abs($kassim))}}
+                                            <div class="class col-md-2">
+                                                K.H.K Balance: {{number_format(abs($kassim))}}
                                             </div>
-                                            <div class="class col-md-4">
-                                                LAILATI MVUNGI Balance: {{number_format(abs($lailat))}}
+                                            <div class="class col-md-2">
+                                                L.M Balance: {{number_format(abs($lailat))}}
+                                            </div>
+                                            <div class="class col-md-2">
+                                                L.E CRDB Balance: {{number_format(abs($l_e_crdb))}}
+                                            </div>
+                                            <div class="class col-md-2">
+                                                L.E NBC Balance: {{number_format(abs($l_e_nbc))}}
+                                            </div>
+                                            <div class="class col-md-2">
+                                                K.H NBC Balance: {{number_format(abs($k_h_nbc))}}
                                             </div>
                                         </div>
                                     </form>
