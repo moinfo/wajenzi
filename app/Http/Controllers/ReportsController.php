@@ -361,8 +361,8 @@ class ReportsController extends Controller
         return view('pages.reports.reports_statutory_payment_report')->with($data);
     }
     public function total_credit_suppliers_report(Request $request){
-        $suppliers_with_bonge = Supplier::where('supplier_depend_on_system','=','BONGE')->where('id','!=','88')->where('id','!=','156')->where('id','!=','192')->where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
-        $suppliers_with_whitestar = Supplier::where('supplier_depend_on_system','=','WHITESTAR')->where('id','!=','52')->where('id','!=','192')->where('id','!=','156')->where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
+        $suppliers_with_bonge = Supplier::where('supplier_depend_on_system','=','BONGE')->where('supplier_type','INDIRECT')->where('id','!=','88')->where('id','!=','156')->where('id','!=','192')->where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
+        $suppliers_with_whitestar = Supplier::where('supplier_depend_on_system','=','WHITESTAR')->where('supplier_type','INDIRECT')->where('id','!=','52')->where('id','!=','192')->where('id','!=','156')->where('is_transferred','!=','CAN BE BOTH')->orderBy('supplier_depend_on_system', 'DESC')->get();
 
         $data = [
             'suppliers_with_bonge' => $suppliers_with_bonge,
