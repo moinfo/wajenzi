@@ -57,4 +57,104 @@ class Utility
             return false;
         }
     }
+
+    public static function expire($expiration_date) // delare the function and get the expiration date as a parameter
+    {
+        $date=strtotime($expiration_date); // get the expiration date in seconds
+        $days_left=ceil(($date-time())/(60*60*24)); // calculate the days left. calculate the expiration date minus the current time in seconds. Devide the difference by the seonds in one day
+        // The result number will be the days left.
+        return $days_left; //return the value
+    }
+    public static function calculate_expiry( $signupDate ) {
+
+        // Convert data into usable timestamp
+        $signupDate = strtotime( $signupDate );
+        $cutoffYear = date('Y', $signupDate) + 1;
+
+        // Set the expiry to be the last day of Feb (the first day of March -1)
+        $expiryDate = new DateTime();
+        $expiryDate->setTimestamp( mktime( 0, 0, 0, 3, 1, $cutoffYear ) );
+        $expiryDate->sub( new DateInterval('P1D') );
+
+    }
+
+    public static function monthNames($start = 1, $end = 12)
+    {
+        $months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        $months = array_combine(range($start, $end), array_slice($months, $start - 1, $end + 1 - $start));
+        return $months;
+    }
+
+    public static function money_format($number, $negative_brackets = true) {
+        if ($number < 0 && $negative_brackets) {
+            $number = ltrim($number, '-');
+            $result = number_format($number, 2);
+            $result = '(' . $result . ')';
+        } else {
+            $result = number_format($number, 2);
+        }
+
+        return $result;
+    }
+
+    public static function dateToDb($date)
+    {
+        $_date = new DateTime($date);
+        return $_date->format('Y-m-d');
+    }
+
+    public static function countDays($start_date, $end_date)
+    {
+        $now = strtotime("$end_date"); // or your date as well
+        $your_date = strtotime("$start_date");
+        $datediff = $now - $your_date;
+
+       return round($datediff / (60 * 60 * 24));
+    }
+
+    public static function sendSingleDestination($phone, $message){
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://messaging-service.co.tz/api/sms/v1/text/single',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS =>'{"from":"LERUMA ENT", "to":"'.$phone.'",  "text": "'.$message.'", "senderID": "LERUMA ENT"}',
+            CURLOPT_HTTPHEADER => array(
+                'Authorization: Basic TXVoaWRpbmk6MDc1NDg2MzgwMg==',
+                'Content-Type: application/json',
+                'Accept: application/json'
+            ),
+        ));
+        $response = curl_exec($curl);
+        curl_close($curl);
+        return $response;
+    }
+
+    public static function sendSingleMessageMultipleDestination($phones, $message){
+        $curl = curl_init();
+        curl_setopt_array($curl, array(
+            CURLOPT_URL => 'https://messaging-service.co.tz/api/sms/v1/text/single',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS =>'{"from":"LERUMA ENT", "to":["'.$phones.'"],  "text": "'.$message.'", "senderID": "LERUMA ENT"}',
+            CURLOPT_HTTPHEADER => array(
+                'Authorization: Basic TXVoaWRpbmk6MDc1NDg2MzgwMg==',
+                'Content-Type: application/json',
+                'Accept: application/json'
+            ),
+        ));
+        $response = curl_exec($curl);
+        curl_close($curl);
+        return $response;
+    }
 }

@@ -106,6 +106,9 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/financial_charges', [App\Http\Controllers\FinancialChargeController::class, 'index'])->name('financial_charges');
     Route::match(['get', 'post'], '/provision_tax', [App\Http\Controllers\ProvisionTaxController::class, 'index'])->name('provision_tax');
 
+    Route::match(['get', 'post'], '/eSMS', [App\Http\Controllers\MessageController::class, 'index'])->name('eSMS');
+    Route::match(['get', 'post'], '/bulk_sms', [App\Http\Controllers\MessageController::class, 'bulk_sms'])->name('bulk_sms');
+
 
     Route::match(['get', 'post'], '/user/profile', [App\Http\Controllers\UserController::class, 'profile'])->name('user_profile');
     Route::match(['get', 'post'], '/user/settings', [App\Http\Controllers\UserController::class, 'settings'])->name('user_settings');
