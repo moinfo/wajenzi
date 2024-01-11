@@ -45,7 +45,7 @@ class MessageController extends Controller
         $users_section = \App\Models\User::select('phone_number','name')->where('status','ACTIVE')->where('phone_number','!=', NULL)->get()->toArray();
         foreach ($users_section as $index => $item) {
             $phone_number =  '255'.$item['phone_number'];
-            Utility::sendSingleDestination($phone_number,$message);
+
             $data = [
                 'name' =>  $item['name'] ?? null,
                 'phone' =>  $item['phone_number'] ?? null,
@@ -53,6 +53,7 @@ class MessageController extends Controller
                 'created_at' =>  date('Y-m-d H:i:s'),
                 'updated_at' =>  date('Y-m-d H:i:s'),
             ];
+            Utility::sendSingleDestination($phone_number,$message);
             \App\Models\Message::insert($data);
         }
         return Redirect::back();
