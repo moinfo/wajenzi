@@ -135,7 +135,7 @@ class Utility
         return $response;
     }
 
-    public static function sendSingleMessageMultipleDestination($phones, $message){
+    public static function sendSingleMessageMultipleDestination($phones,$message){
         $curl = curl_init();
         curl_setopt_array($curl, array(
             CURLOPT_URL => 'https://messaging-service.co.tz/api/sms/v1/text/single',

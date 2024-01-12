@@ -39,22 +39,41 @@ class MessageController extends Controller
     }
     public function bulk_sms(Request $request)
     {
-//        $users = \App\Models\User::select('phone_number')->where('status','ACTIVE')->where('phone_number','!=', NULL)->get()->toArray();
-//        $phone_number =  '255'.implode(",255", array_column($users, "phone_number"));
-        $message = $request->input('message');
-        $users_section = \App\Models\User::select('phone_number','name')->where('status','ACTIVE')->where('phone_number','!=', NULL)->get()->toArray();
-        foreach ($users_section as $index => $item) {
-            $phone_number =  '255'.$item['phone_number'];
 
-            $data = [
-                'name' =>  $item['name'] ?? null,
-                'phone' =>  $item['phone_number'] ?? null,
-                'message' =>  $message,
-                'created_at' =>  date('Y-m-d H:i:s'),
-                'updated_at' =>  date('Y-m-d H:i:s'),
-            ];
-            Utility::sendSingleDestination($phone_number,$message);
-            \App\Models\Message::insert($data);
+        $message = $request->input('message');
+        $department_id = $request->input('department_id');
+        if($department_id != 0){
+            $users = \App\Models\User::select('phone_number')->where('department_id',$department_id)->where('status','ACTIVE')->where('phone_number','!=', NULL)->get()->toArray();
+            $phone_number =  '255'.implode('","255', array_column($users, "phone_number"));
+            Utility::sendSingleMessageMultipleDestination($phone_number,$message);
+            $users_section = \App\Models\User::select('phone_number','name')->where('department_id',$department_id)->where('status','ACTIVE')->where('phone_number','!=', NULL)->get()->toArray();
+            foreach ($users_section as $index => $item) {
+                $phone_number =  '255'.$item['phone_number'];
+                $data = [
+                    'name' =>  $item['name'] ?? null,
+                    'phone' =>  $item['phone_number'] ?? null,
+                    'message' =>  $message,
+                    'created_at' =>  date('Y-m-d H:i:s'),
+                    'updated_at' =>  date('Y-m-d H:i:s'),
+                ];
+                \App\Models\Message::insert($data);
+            }
+        }else {
+            $users = \App\Models\User::select('phone_number')->where('status', 'ACTIVE')->where('phone_number', '!=', NULL)->get()->toArray();
+            $phone_number = '255' . implode('","255', array_column($users, "phone_number"));
+            Utility::sendSingleMessageMultipleDestination($phone_number, $message);
+            $users_section = \App\Models\User::select('phone_number', 'name')->where('status', 'ACTIVE')->where('phone_number', '!=', NULL)->get()->toArray();
+            foreach ($users_section as $index => $item) {
+                $phone_number = '255' . $item['phone_number'];
+                $data = [
+                    'name' => $item['name'] ?? null,
+                    'phone' => $item['phone_number'] ?? null,
+                    'message' => $message,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ];
+                \App\Models\Message::insert($data);
+            }
         }
         return Redirect::back();
     }
