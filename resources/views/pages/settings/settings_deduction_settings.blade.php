@@ -41,8 +41,8 @@
                                     <td class="font-w600">{{ $deduction_setting->deduction->name ?? null}}</td>
                                     <td class="text-right">{{ number_format($deduction_setting->minimum_amount)}}</td>
                                     <td class="text-right">{{ number_format($deduction_setting->maximum_amount)}}</td>
-                                    <td class="text-right">{{ number_format($deduction_setting->employee_percentage)}}</td>
-                                    <td class="text-right">{{ number_format($deduction_setting->employer_percentage)}}</td>
+                                    <td class="text-right">{{ number_format($deduction_setting->employee_percentage,2)}}</td>
+                                    <td class="text-right">{{ number_format($deduction_setting->employer_percentage,2)}}</td>
                                     <td class="text-right">{{ number_format($deduction_setting->additional_amount)}}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
