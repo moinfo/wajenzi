@@ -22,11 +22,11 @@
         </div>
         <div class="form-group">
             <label for="example-nf-email">Employee Percentage</label>
-            <input type="number" class="form-control" id="input-employee_percentage" name="employee_percentage" value="{{ $object->employee_percentage ?? '' }}" placeholder="Employee Percentage">
+            <input type="number" step="any" class="form-control" id="input-employee_percentage" name="employee_percentage" value="{{ $object->employee_percentage ?? '' }}" placeholder="Employee Percentage">
         </div>
         <div class="form-group">
             <label for="example-nf-email">Employer Percentage</label>
-            <input type="number" class="form-control" id="input-employer_percentage" name="employer_percentage" value="{{ $object->employer_percentage ?? '' }}" placeholder="Employer Percentage">
+            <input type="number" step="any" class="form-control" id="input-employer_percentage" name="employer_percentage" value="{{ $object->employer_percentage ?? '' }}" placeholder="Employer Percentage">
         </div>
         <div class="form-group">
             <label for="example-nf-email">Additional Amount</label>
