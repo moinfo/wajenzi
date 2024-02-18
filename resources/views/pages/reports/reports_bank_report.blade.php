@@ -65,16 +65,23 @@
                                 foreach ($period as $date) {
                                     $dates[] = $date->format("Y-m-d");
                                 }
+                                $total_turnover = 0;
+                                $total_bank_deposit = 0;
+                                $total_difference = 0;
                                 ?>
                                 @foreach(array_reverse($dates) as $date)
                                   @php
                                       $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($date)));
                                         $turnover = \App\Models\Sale::getTotalTurnover($date,$date,null);
+                                        $total_turnover += $turnover;
                                         $bank_deposit = \App\Models\BankReconciliation::getTotalDepositPerSupplierBank($date,$date);
+                                        $total_bank_deposit += $bank_deposit;
                                         $difference = $bank_deposit - $turnover;
+                                        $total_difference += $difference;
                                         $all_time_turnover = \App\Models\Sale::getTotalTurnover($date_from_began,$yesterday,null);
                                         $all_time_bank_deposit = \App\Models\BankReconciliation::getTotalDepositPerSupplierBank($date_from_began,$yesterday,null);
                                         $all_time_difference = $difference - ($all_time_turnover - $all_time_bank_deposit);
+
 
 
                                   @endphp
@@ -88,6 +95,16 @@
                                     </tr>
                                 @endforeach
                                 </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th>{{number_format($total_bank_deposit,2)}}</th>
+                                        <th>{{number_format($total_turnover,2)}}</th>
+                                        <th>{{number_format($total_difference,2)}}</th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
                     </div>
