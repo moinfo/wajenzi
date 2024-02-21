@@ -549,7 +549,7 @@ class ReportsController extends Controller
 
     public function transaction_movement_report(Request $request){
         $efds = Efd::all();
-        $systems = System::where('id','!=',6)->where('id','!=',5)->get();
+        $systems = System::where('id','!=',7)->where('id','!=',6)->where('id','!=',5)->get();
         $few_systems = System::where('id','!=',1)->where('id','!=',2)->where('id','!=',3)->get();
         $all_systems = system::all();
         $data = [
