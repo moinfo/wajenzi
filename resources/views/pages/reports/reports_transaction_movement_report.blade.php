@@ -191,7 +191,7 @@
                             @foreach($systems as $system)
                                 @php
                                     $system_id = $system->id;
-                                    $suppliers = \App\Models\Supplier::where('id',201)->where('system_id',$system_id)->get();
+                                    $suppliers = \App\Models\Supplier::where('id','!=',201)->where('system_id',$system_id)->get();
 
                                 @endphp
                                 @foreach($suppliers as $supplier)
