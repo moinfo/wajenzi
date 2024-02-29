@@ -93,7 +93,7 @@
                                                 $total_target += $supplier_targets_report->total_target;
                                                 $deposited = \App\Models\BankReconciliation::getTotalDepositBySupplier($supplier_targets_report->target_date, $supplier_targets_report->target_date, $supplier_targets_report->supplier_id);
                                                  $total_deposited += $deposited;
-                                                 $transfers = \App\Models\BankReconciliation::getOnlyTransferedBySupplierSingle($supplier_targets_report->target_date, $supplier_targets_report->target_date,$efd_id,$supplier_targets_report->supplier_id)->debit_amount ?? 0;
+                                                 $transfers = \App\Models\BankReconciliation::getOnlyTransferedBySupplierSingle($supplier_targets_report->target_date, $supplier_targets_report->target_date,$supplier_targets_report->supplier_id)->debit_amount ?? 0;
                                                  $total_transfers += $transfers;
                                                  $difference =  $supplier_targets_report->total_target - $deposited - $transfers;
                                                 $total_difference += $difference;
@@ -105,7 +105,7 @@
                                                     <td class="font-w600">{{ $supplier_targets_report->supplier_name }}</td>
                                                     <td class="text-right">{{ number_format($supplier_targets_report->total_target, 2) }}</td>
                                                     <td class="text-right">{{ number_format($deposited, 2) }}</td>
-                                                    <td class="text-right">{{ number_format($total_transfers, 2) }}</td>
+                                                    <td class="text-right">{{ number_format(abs($transfers))}}</td>
                                                     <td class="text-right">{{ number_format($difference, 2) }}</td>
                                                 </tr>
                                             @endforeach
@@ -116,8 +116,8 @@
                                                     <th class="text-right" colspan="2">TOTAL</th>
                                                     <th class="text-right">{{number_format($total_target)}}</th>
                                                     <th class="text-right">{{number_format($total_deposited)}}</th>
+                                                    <th class="text-right">{{number_format(abs($total_transfers))}}</th>
                                                     <th class="text-right">{{number_format($total_difference)}}</th>
-                                                    <th class="text-right">{{number_format($total_transfers)}}</th>
                                                 </tr>
                                             </tfoot>
                                         </table>

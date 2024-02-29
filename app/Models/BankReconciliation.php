@@ -369,7 +369,7 @@ class BankReconciliation extends Model
         $bank_reconciliation = DB::table('bank_reconciliations')
             ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
-            ->select(DB::raw('SUM(bank_reconciliations.debit) as debit_amount,suppliers.name as supplier,bank_reconciliations.date as date,bank_reconciliations.payment_type as payment_type,bank_reconciliations.reference as reference'))
+            ->select(DB::raw('SUM(bank_reconciliations.debit) as debit_amount,bank_reconciliations.to_id,suppliers.name as supplier,bank_reconciliations.date as date,bank_reconciliations.payment_type as payment_type,bank_reconciliations.reference as reference'))
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date)
             ->where('bank_reconciliations.debit','<',0)
@@ -384,23 +384,20 @@ class BankReconciliation extends Model
         return $bank_reconciliation->groupBy('from_to_id')->get();
     }
 
-    public static function getOnlyTransferedBySupplierSingle($start_date,$end_date,$efd_id = null,$supplier_id = null){
+    public static function getOnlyTransferedBySupplierSingle($start_date,$end_date,$supplier_id = null){
         $bank_reconciliation = DB::table('bank_reconciliations')
             ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
-            ->select(DB::raw('SUM(bank_reconciliations.debit) as debit_amount,suppliers.name as supplier,bank_reconciliations.date as date,bank_reconciliations.payment_type as payment_type,bank_reconciliations.reference as reference'))
+            ->select(DB::raw('SUM(bank_reconciliations.debit) as debit_amount,bank_reconciliations.supplier_id,suppliers.name as supplier,bank_reconciliations.date as date,bank_reconciliations.payment_type as payment_type,bank_reconciliations.reference as reference'))
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date)
             ->where('bank_reconciliations.debit','<',0)
             ->where('reference', 'LIKE', "%TRANSFER%");
 
-        if($efd_id != null){
-            $bank_reconciliation->where('efd_id','=',$efd_id);
-        }
         if($supplier_id != null){
-            $bank_reconciliation->where('supplier_id','=',$supplier_id);
+            $bank_reconciliation->where('bank_reconciliations.supplier_id','=',$supplier_id);
         }
-        return $bank_reconciliation->get()->first();
+        return $bank_reconciliation->groupBy('from_to_id')->get()->first();
     }
     public static function getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,$supplier_id = null){
         $bank_reconciliation = DB::table('bank_reconciliations')
