@@ -93,7 +93,7 @@
                                                 $total_target += $supplier_targets_report->total_target;
                                                 $deposited = \App\Models\BankReconciliation::getTotalDepositBySupplier($supplier_targets_report->target_date, $supplier_targets_report->target_date, $supplier_targets_report->supplier_id);
                                                  $total_deposited += $deposited;
-                                                 $transfers = \App\Models\BankReconciliation::getOnlyTransferedBySupplier($supplier_targets_report->target_date, $supplier_targets_report->target_date,$efd_id,$supplier_targets_report->supplier_id);
+                                                 $transfers = \App\Models\BankReconciliation::getOnlyTransferedBySupplier($supplier_targets_report->target_date, $supplier_targets_report->target_date,$efd_id,$supplier_targets_report->supplier_id)->debit_amount ?? 0;
                                                  $total_transfers += $transfers;
                                                  $difference =  $supplier_targets_report->total_target - $deposited - $transfers;
                                                 $total_difference += $difference;
