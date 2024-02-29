@@ -400,7 +400,7 @@ class BankReconciliation extends Model
         if($supplier_id != null){
             $bank_reconciliation->where('supplier_id','=',$supplier_id);
         }
-        return $bank_reconciliation->groupBy('from_to_id')->get()->first();
+        return $bank_reconciliation->get()->first();
     }
     public static function getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,$supplier_id = null){
         $bank_reconciliation = DB::table('bank_reconciliations')
