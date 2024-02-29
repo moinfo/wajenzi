@@ -23,7 +23,7 @@
                                     <form  name="collection_search" action="" id="filter-form" method="post" autocomplete="off">
                                         @csrf
                                         <div class="row">
-                                            <div class="class col-md-3">
+                                            <div class="class col-md-5">
                                                 <div class="input-group mb-3">
                                                     <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
 
@@ -35,7 +35,7 @@
                                                 </div>
 
                                             </div>
-                                            <div class="class col-md-3">
+                                            <div class="class col-md-4">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon3">Supplier</span>
@@ -76,6 +76,7 @@
                                                 <th>Supplier</th>
                                                 <th>Target</th>
                                                 <th>Deposited</th>
+                                                <th>Transfers</th>
                                                 <th>Difference</th>
                                             </tr>
                                             </thead>
@@ -84,13 +85,17 @@
                                                 $total_target = 0;
                                                 $total_difference = 0;
                                                 $total_deposited = 0;
+                                                $total_transfers = 0;
+                                                $efd_id = null;
                                             @endphp
                                             @foreach($supplier_targets_reports as $supplier_targets_report)
                                             @php
                                                 $total_target += $supplier_targets_report->total_target;
                                                 $deposited = \App\Models\BankReconciliation::getTotalDepositBySupplier($supplier_targets_report->target_date, $supplier_targets_report->target_date, $supplier_targets_report->supplier_id);
                                                  $total_deposited += $deposited;
-                                                 $difference =  $supplier_targets_report->total_target - $deposited ;
+                                                 $transfers = \App\Models\BankReconciliation::getOnlyTransferedBySupplier($supplier_targets_report->target_date, $supplier_targets_report->target_date,$efd_id,$supplier_targets_report->supplier_id);
+                                                 $total_transfers += $transfers;
+                                                 $difference =  $supplier_targets_report->total_target - $deposited - $transfers;
                                                 $total_difference += $difference;
                                             @endphp
                                                 <tr id="supplier_targets_report-tr-{{$supplier_targets_report->id}}">
@@ -100,6 +105,7 @@
                                                     <td class="font-w600">{{ $supplier_targets_report->supplier_name }}</td>
                                                     <td class="text-right">{{ number_format($supplier_targets_report->total_target, 2) }}</td>
                                                     <td class="text-right">{{ number_format($deposited, 2) }}</td>
+                                                    <td class="text-right">{{ number_format($transfers, 2) }}</td>
                                                     <td class="text-right">{{ number_format($difference, 2) }}</td>
                                                 </tr>
                                             @endforeach
@@ -111,6 +117,7 @@
                                                     <th class="text-right">{{number_format($total_target)}}</th>
                                                     <th class="text-right">{{number_format($total_deposited)}}</th>
                                                     <th class="text-right">{{number_format($total_difference)}}</th>
+                                                    <th class="text-right">{{number_format($total_transfers)}}</th>
                                                 </tr>
                                             </tfoot>
                                         </table>
