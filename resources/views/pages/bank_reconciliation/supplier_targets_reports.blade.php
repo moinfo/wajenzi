@@ -105,7 +105,7 @@
                                                     <td class="font-w600">{{ $supplier_targets_report->supplier_name }}</td>
                                                     <td class="text-right">{{ number_format($supplier_targets_report->total_target, 2) }}</td>
                                                     <td class="text-right">{{ number_format($deposited, 2) }}</td>
-                                                    <td class="text-right">{{ number_format($transfers, 2) }}</td>
+                                                    <td class="text-right">{{ number_format($total_transfers, 2) }}</td>
                                                     <td class="text-right">{{ number_format($difference, 2) }}</td>
                                                 </tr>
                                             @endforeach

@@ -37,7 +37,10 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
             <select name="to" id="to" class="form-control select2" required>
 
                 <option value="">Select Supplier</option>
-
+                @php
+                    $end_date = date('Y-m-d');
+            $yesterday = date('Y-m-d', strtotime('-1 day', strtotime($end_date)));
+                @endphp
                 @foreach ($transfer_suppliers_with_balances as $supplier)
                     @php
                         if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
@@ -49,8 +52,9 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
                         }
                         $debit = \App\Models\Supplier::getLemuruSupplierWithDebitWithoutTransferToday($supplier->id) + \App\Models\Supplier::getLemuruSupplierWithDebitWithTransfer($supplier->id) + $supplier->debit + $debit_cash;
                          $balance = $credit - $debit;
+                         $target = \App\Models\SupplierTarget::getTotalSupplierWithDeposit($supplier->id, $yesterday, $yesterday);
                     @endphp
-                    @if($balance != 0)
+                    @if($balance != 0 && $target != 0 )
                         <option value="{{$supplier->id}}" {{( $supplier->id == $object->supplier_id) ? 'selected' : ''}}> {{ $supplier->name . ' - '. number_format($balance) }} </option>
                     @endif
                 @endforeach
