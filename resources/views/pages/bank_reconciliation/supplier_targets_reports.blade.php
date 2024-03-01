@@ -95,7 +95,7 @@
                                                  $total_deposited += $deposited;
                                                  $transfers = \App\Models\BankReconciliation::getOnlyTransferedBySupplierSingle($supplier_targets_report->target_date, $supplier_targets_report->target_date,$supplier_targets_report->supplier_id)->debit_amount ?? 0;
                                                  $total_transfers += $transfers;
-                                                 $difference =  $supplier_targets_report->total_target - $deposited - $transfers;
+                                                 $difference =  $supplier_targets_report->total_target + $transfers  - $deposited;
                                                 $total_difference += $difference;
                                             @endphp
                                                 <tr id="supplier_targets_report-tr-{{$supplier_targets_report->id}}">

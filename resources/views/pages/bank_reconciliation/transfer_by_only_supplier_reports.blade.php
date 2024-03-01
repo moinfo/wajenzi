@@ -105,7 +105,7 @@
                                                 <td class="text-center">
                                                     {{$loop->iteration}}
                                                 </td>
-                                                <td class="font-w600">{{ $bank_reconciliation->date }}</td>
+                                                <td class="font-w600">{{ $bank_reconciliation->supplier_id }}</td>
                                                 <td class="font-w600">{{ $bank_reconciliation->supplier }}</td>
                                                 <td class="font-w600">{{ $supplier_to }}</td>
                                                 <td class="font-w600">{{ $supplier->description }}</td>
