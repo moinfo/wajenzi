@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class ExpensesSubCategory extends Model
 {
@@ -15,5 +16,6 @@ class ExpensesSubCategory extends Model
     public function expensesCategory(){
         return $this->belongsTo(ExpensesCategory::class);
     }
+
 
 }

@@ -207,6 +207,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/reports/annually_wcf_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_wcf_summary_report'])->name('reports_annually_wcf_summary_report');
     Route::match(['get', 'post'], '/reports/annually_paye_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_paye_summary_report'])->name('reports_annually_paye_summary_report');
     Route::match(['get', 'post'], '/reports/annually_nssf_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_nssf_summary_report'])->name('reports_annually_nssf_summary_report');
+    Route::match(['get', 'post'], '/reports/annually_deduction_report', [App\Http\Controllers\ReportsController::class, 'annually_deduction_report'])->name('reports_annually_deduction_report');
     Route::match(['get', 'post'], '/reports/annually_nhif_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_nhif_summary_report'])->name('reports_annually_nhif_summary_report');
     Route::match(['get', 'post'], '/reports/annually_net_salary_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_net_salary_summary_report'])->name('reports_annually_net_salary_summary_report');
     Route::match(['get', 'post'], '/reports/annually_heslb_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_heslb_summary_report'])->name('reports_annually_heslb_summary_report');

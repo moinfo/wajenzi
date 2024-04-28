@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Allowance;
 use App\Models\BankReconciliation;
 use App\Models\Collection;
+use App\Models\Deduction;
 use App\Models\Efd;
 use App\Models\Expense;
 use App\Models\ExpensesCategory;
@@ -82,6 +83,7 @@ class ReportsController extends Controller
             ['name' => 'Annually Net Salary Summary Report', 'route' => 'reports_annually_net_salary_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Annually NHIF Summary Report', 'route' => 'reports_annually_nhif_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Annually NSSF Summary Report', 'route' => 'reports_annually_nssf_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name' => 'Annually Deduction Report', 'route' => 'reports_annually_deduction_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Annually PAYE Summary Report', 'route' => 'reports_annually_paye_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Annually WCF Summary Report', 'route' => 'reports_annually_wcf_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Commission Vs Deposit Report', 'route' => 'reports_commission_vs_deposit_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -166,6 +168,17 @@ class ReportsController extends Controller
             'suppliers' => $suppliers
         ];
         return view('pages.reports.reports_annually_nssf_summary_report')->with($data);
+    }
+
+    public function annually_deduction_report(Request $request){
+        $deductions = Deduction::where('is_financial','YES')->get();
+        $sub_expenses = ExpensesSubCategory::where('is_financial','YES')->get();
+
+        $data = [
+            'deductions' => $deductions,
+            'sub_expenses' => $sub_expenses
+        ];
+        return view('pages.reports.reports_annually_deduction_report')->with($data);
     }
 
     public function annually_paye_summary_report(Request $request){

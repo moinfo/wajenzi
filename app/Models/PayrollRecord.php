@@ -61,6 +61,13 @@ class PayrollRecord extends Model
             ->get()->first()['sdl'];
     }
 
+    public static function getTotalDeduction($start_date, $end_date,$type)
+    {
+        return PayrollRecord::select([DB::raw("SUM($type) as $type")])
+            ->whereBetween('date',[$start_date,$end_date])
+            ->get()->first()["$type"];
+    }
+
     public static function getTotalPAYE($start_date, $end_date)
     {
         return PayrollRecord::select([DB::raw("SUM(paye) as paye")])

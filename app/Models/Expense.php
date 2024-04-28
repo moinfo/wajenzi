@@ -52,6 +52,15 @@ class Expense extends Model
 
         return $expenses->get()->first()['total_amount'];
     }
+    public static function getTotalExpensesGroupBySubExpensesCategoryOnlyFinancial($start_date,$end_date){
+        $expenses = Expense::select(DB::raw("SUM(expenses.amount) as total_amount"))
+            ->join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
+            ->WhereBetween('expenses.date',[$start_date,$end_date])
+             ->Where('expenses.status','APPROVED')
+        ->Where('expenses_sub_categories.is_financial','YES');
+
+        return $expenses->get()->first()['total_amount'];
+    }
 
     public static function getTotalFinancialCharges($start_date,$end_date){
      return   Expense::select(DB::raw("SUM(amount) as total_amount"))
