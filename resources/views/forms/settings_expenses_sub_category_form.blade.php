@@ -19,6 +19,16 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-system" class="control-label required">is Financial</label>
+            <select name="is_financial" id="is_financial" class="form-control" required>
+                @foreach ($transfers as $transfer)
+                    @if($transfer['name'] != 'CAN BE BOTH')
+                    <option value="{{ $transfer['name'] }}" {{ ( $transfer['name'] == $object->is_financial) ? 'selected' : '' }}> {{ $transfer['name'] }} </option>
+                    @endif
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>

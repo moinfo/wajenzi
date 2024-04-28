@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ExpensesSubCategory extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name', 'expenses_category_id'];
+    public $fillable = ['id', 'name', 'expenses_category_id', 'is_financial'];
     public function expensesCategories(){
         return $this->hasMany(ExpensesCategory::class);
     }

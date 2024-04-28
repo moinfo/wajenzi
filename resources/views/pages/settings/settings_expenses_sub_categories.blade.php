@@ -22,6 +22,7 @@
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Expenses Sub Category</th>
                                 <th>Expenses Category</th>
+                                <th>IS Financial</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
@@ -33,6 +34,7 @@
                                     </td>
                                     <td class="font-w600">{{ $expenses_sub_category->name }}</td>
                                     <td class="font-w600">{{ $expenses_sub_category->expensesCategory->name ?? null}}</td>
+                                    <td class="font-w600">{{ $expenses_sub_category->is_financial }}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Expenses Sub Category"))
