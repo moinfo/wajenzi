@@ -19,7 +19,7 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-system" class="control-label required">is Financial</label>
+            <label for="example-nf-system" class="control-label required">is Deducted</label>
             <select name="is_financial" id="is_financial" class="form-control" required>
                 @foreach ($transfers as $transfer)
                     @if($transfer['name'] != 'CAN BE BOTH')

@@ -22,7 +22,7 @@
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Expenses Sub Category</th>
                                 <th>Expenses Category</th>
-                                <th>IS Financial</th>
+                                <th>IS Deducted</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
