@@ -130,7 +130,7 @@ class Controller extends BaseController
                 'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                 'deduction' => Utility::strip_commas($request->input('deduction')),
                 'price' => Utility::strip_commas($request->input('price')),
-                'password' => bcrypt($request->input('password')),
+//                'password' => bcrypt($request->input('password')),
             ]);
             $newObj->fill($request->all());
             $name = time().'_'.$request->file->getClientOriginalName();
@@ -157,7 +157,7 @@ class Controller extends BaseController
                 'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                 'deduction' => Utility::strip_commas($request->input('deduction')),
                 'price' => Utility::strip_commas($request->input('price')),
-                'password' => bcrypt($request->input('password')),
+//                'password' => bcrypt($request->input('password')),
             ]);
             $newObj->fill($request->all());
             if($newObj->save()) {
