@@ -37,6 +37,7 @@ class AjaxController
             switch ($fx) {
                 case 'form': // Load form from forms directory
                     $in_date = date('Y-m-d');
+                    $withdraw_suppliers = Supplier::where('is_withdraw','YES')->get();
                     $suppliers = Supplier::all();
                     $whitestar_suppliers = Supplier::getWhitestarSuppliers();
                     $bonge_suppliers = Supplier::getBongeSuppliers();
@@ -140,6 +141,10 @@ class AjaxController
                         ['name'=>'INDIRECT'],
                         ['name'=>'DIRECT']
                     ];
+                    $is_withdraws = [
+                        ['name'=>'YES'],
+                        ['name'=>'NO']
+                    ];
                     $status = [
                         ['name'=>'ACTIVE'],
                         ['name'=>'INACTIVE'],
@@ -168,7 +173,9 @@ class AjaxController
                             'whitestar_suppliers' => $whitestar_suppliers,
                             'bonge_suppliers' => $bonge_suppliers,
                             'supplier_types' => $supplier_types,
+                            'is_withdraws' => $is_withdraws,
                             'users' => $users,
+                            'withdraw_suppliers' => $withdraw_suppliers,
                             'sellers' => $sellers,
                             'kassim_supplier' => $kassim_supplier,
                             'transfers' => $transfers,

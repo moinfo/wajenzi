@@ -33,6 +33,7 @@
                                     <th>Is Transferred</th>
                                     <th>Whitestar Supplier</th>
                                     <th>Default Debit</th>
+                                    <th>is Withdraw?</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -62,6 +63,7 @@
                                         <td class="font-w400">{{ $supplier->is_transferred }}</td>
                                         <td class="font-w400">{{ ($whitestar_supplier->first_name ?? null) .' '. ($whitestar_supplier->last_name ?? null)}}</td>
                                         <td class="text-right">{{ number_format($supplier->debit) }}</td>
+                                        <td class="text-right">{{ $supplier->is_withdraw }}</td>
 
                                         <td class="text-center" >
                                             <div class="btn-group">
@@ -95,6 +97,7 @@
                                         <th style="display: none;"></th>
                                         <th style="display: none;"></th>
                                         <th style="display: none;"></th>
+                                        <th></th>
                                         <th class="text-center" style="width: 100px;">Actions</th>
                                     </tr>
                                     @foreach($supplier_contacts as $supplier_contact)
@@ -109,6 +112,7 @@
                                             <th style="display: none;"></th>
                                             <th style="display: none;"></th>
                                             <th style="display: none;"></th>
+                                            <th></th>
                                             <td class="text-center" >
                                                 <div class="btn-group">
                                                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier"))

@@ -114,6 +114,14 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-system" class="control-label required">Is Withdraw?</label>
+            <select name="is_withdraw" id="input-is_withdraw" class="form-control" required>
+                @foreach ($is_withdraws as $is_withdraw)
+                    <option value="{{ $is_withdraw['name'] }}" {{ ( $is_withdraw['name'] == $object->is_withdraw) ? 'selected' : '' }}> {{ $is_withdraw['name'] }} </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem" value="Supplier"><i class="si si-check"></i> Update</button>

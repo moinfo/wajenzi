@@ -10,7 +10,7 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
 
                 <option value="">Select Supplier</option>
 
-                @foreach ($suppliers as $supplier)
+                @foreach ($withdraw_suppliers as $supplier)
                     <option value="{{ $supplier->id }}" {{ ( $supplier->id == $object->supplier_id) ? 'selected' : '' }}> {{ $supplier->name }} </option>
                 @endforeach
 
