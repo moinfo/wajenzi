@@ -76,14 +76,14 @@
         </div>
         <div class="form-group">
             <label for="example-nf-debit">Amount/Debit</label>
-            <input type="number" step=".01" class="form-control amount" id="input-debit" name="debit"
+            <input type="number" min="0" step=".01" class="form-control amount" onkeydown="return preventNegative(event)" id="input-debit" name="debit"
                    value="{{ $object->debit ?? '' }}" placeholder="Total Amount" required>
         </div>
         @if($object->id ?? null)
 
             <div class="form-group">
                 <label for="example-nf-credit">Credit</label>
-                <input type="number" step=".01" class="form-control amount" id="input-credit" name="credit"
+                <input type="number" step=".01" min="0" onkeydown="return preventNegative(event)"  class="form-control amount" id="input-credit" name="credit"
                        value="{{ $object->credit ?? '' }}" placeholder="Total Amount" required>
             </div>
         @endif
@@ -117,6 +117,14 @@
         </div>
     </form>
 </div>
+<script>
+    function preventNegative(event) {
+        // Prevent the user from entering a minus sign
+        if (event.key === '-' || event.key === 'e') {
+            event.preventDefault();
+        }
+    }
+</script>
 <script>
     $("input.amount").each((i, ele) => {
         let clone = $(ele).clone(false)

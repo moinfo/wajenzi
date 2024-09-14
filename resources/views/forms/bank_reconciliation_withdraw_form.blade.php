@@ -61,7 +61,7 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-credit">Amount/Credit</label>
-            <input type="number" step=".01" class="form-control amount" id="input-credit" name="credit"
+            <input type="number" min="0" onkeydown="return preventNegative(event)"  step=".01" class="form-control amount" id="input-credit" name="credit"
                    value="{{ $object->credit ?? '' }}" placeholder="Total Amount" required>
         </div>
         @if($object->id ?? null)
@@ -97,6 +97,12 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
     </form>
 </div>
 <script>
+    function preventNegative(event) {
+        // Prevent the user from entering a minus sign
+        if (event.key === '-' || event.key === 'e') {
+            event.preventDefault();
+        }
+    }
     $("input.amount").each((i,ele)=>{
         let clone=$(ele).clone(false)
         clone.attr("type","text")
