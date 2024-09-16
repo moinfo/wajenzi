@@ -67,17 +67,20 @@ class SupplierTarget extends Model
         return $target->get()->first()['total_target'];
     }
 
-    public static function getTotalSupplierWithDeposit($supplier_id,$start_date, $end_date)
+    public static function getTotalSupplierWithDeposit($supplier_id, $start_date, $end_date)
     {
-        $target = SupplierTarget::select([DB::raw('SUM(supplier_targets.amount) AS total_target')])
-            ->join('suppliers','suppliers.id','=','supplier_targets.supplier_id');
-        if ($supplier_id != 0){
-            $target ->where('supplier_targets.supplier_id',$supplier_id);
+        $target = SupplierTarget::selectRaw('SUM(supplier_targets.amount) AS total_target')
+            ->join('suppliers', 'suppliers.id', '=', 'supplier_targets.supplier_id');
+
+        if ($supplier_id != 0) {
+            $target->where('supplier_targets.supplier_id', $supplier_id);
         }
-//        $target ->where('supplier_targets.type','COMMISSION');
-        $target->whereBetween('supplier_targets.date',[$start_date,$end_date]);
-        return $target->get()->first()['total_target'];
+
+        $target->whereBetween('supplier_targets.date', [$start_date, $end_date]);
+
+        return $target->first()->total_target ?? 0; // Return 0 if no result is found
     }
+
 
     public function supplier(){
         return $this->belongsTo(Supplier::class);

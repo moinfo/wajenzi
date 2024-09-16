@@ -35,16 +35,20 @@ class Supplier extends Model
     {
         $start_date = '2010-01-01';
         $end_date = date('Y-m-d');
-        return DB::connection('mysql6')->table('whitestar.ospos_debits_credits')
-            ->select(DB::raw('SUM(dr) as dr'))
-            ->where('payment_type', '=','SUPPLIER')
-            ->where('delete', '=','0')
-            ->where('paid_payment_type', '=',1)
-            ->where('payment_mode', '=',1)
-            ->where('client_id','=', $whitestar_supplier_id)
+
+        return DB::connection('mysql6')
+            ->table('whitestar.ospos_debits_credits')
+            ->where('payment_type', 'SUPPLIER')
+            ->where('delete', '0')
+            ->where('paid_payment_type', 1)
+            ->where('payment_mode', 1)
+            ->where('client_id', $whitestar_supplier_id)
             ->whereBetween('date', [$start_date, $end_date])
-            ->get()->first()->dr;
+            ->selectRaw('SUM(dr) as dr')
+            ->first()
+            ->dr;
     }
+
     public static function getWhitestarSupplierWithDebitInWithdraw($whitestar_supplier_id)
     {
         $start_date = '2010-01-01';
@@ -130,21 +134,26 @@ class Supplier extends Model
     }
     public static function getBongeSupplierWithCredit($supplier_id)
     {
-        return DB::connection('mysql5')->table('bonge.ospos_receivings_items')
-            ->select(DB::raw("sum(quantity_purchased*item_unit_price) AS credit"))
-            ->join('bonge.ospos_receivings','ospos_receivings.receiving_id','=','ospos_receivings_items.receiving_id')
+        return DB::connection('mysql5')
+            ->table('bonge.ospos_receivings_items')
+            ->join('bonge.ospos_receivings', 'ospos_receivings.receiving_id', '=', 'ospos_receivings_items.receiving_id')
             ->where('ospos_receivings.payment_type', 'Credit Card')
             ->where('ospos_receivings.supplier_id', $supplier_id)
-            ->get()->first()->credit;
+            ->selectRaw('SUM(quantity_purchased * item_unit_price) AS credit')
+            ->first()
+            ->credit;
     }
+
     public static function getWhitestarSupplierWithCredit($supplier_id)
     {
-        return DB::connection('mysql6')->table('whitestar.ospos_receivings_items')
-            ->select(DB::raw("sum(quantity_purchased*item_unit_price) AS credit"))
-            ->join('whitestar.ospos_receivings','ospos_receivings.receiving_id','=','ospos_receivings_items.receiving_id')
+        return DB::connection('mysql6')
+            ->table('whitestar.ospos_receivings_items')
+            ->join('whitestar.ospos_receivings', 'ospos_receivings.receiving_id', '=', 'ospos_receivings_items.receiving_id')
             ->where('ospos_receivings.payment_type', 'Credit Card')
             ->where('ospos_receivings.supplier_id', $supplier_id)
-            ->get()->first()->credit;
+            ->selectRaw('SUM(quantity_purchased * item_unit_price) AS credit')
+            ->first()
+            ->credit;
     }
     public static function getWhitestarSupplierWithCreditInPackage($supplier_id)
     {
@@ -169,25 +178,29 @@ class Supplier extends Model
     public static function getLemuruSupplierWithDebitWithoutTransferToday($supplier_id)
     {
         $end_date = date('Y-m-d');
-//        $end_date = date('Y-m-d', strtotime('-1 day', strtotime($date)));
-        return DB::connection('mysql')->table('bank_reconciliations')
-            ->select(DB::raw("SUM(debit) AS debit"))
+
+        return DB::connection('mysql')
+            ->table('bank_reconciliations')
+            ->selectRaw("SUM(debit) AS debit")
             ->where('payment_type', 'SALES')
             ->where('supplier_id', $supplier_id)
             ->where('reference', 'NOT LIKE', "%TRANSFER%")
-            ->whereBetween('date', ['2010-01-01',$end_date])
-            ->get()->first()->debit;
+            ->whereBetween('date', ['2010-01-01', $end_date])
+            ->first()
+            ->debit;
     }
+
     public static function getLemuruSupplierWithDebitWithTransfer($supplier_id)
     {
         $date = date('Y-m-d');
-//        $end_date = date('Y-m-d', strtotime('-1 day', strtotime($date)));
+
         return DB::connection('mysql')->table('bank_reconciliations')
-            ->select(DB::raw("SUM(debit) AS debit"))
+            ->selectRaw("SUM(debit) AS debit")
             ->where('payment_type', 'SALES')
             ->where('supplier_id', $supplier_id)
             ->where('reference', 'LIKE', "%TRANSFER%")
-            ->whereBetween('date', ['2010-01-01',$date])
-            ->get()->first()->debit;
+            ->whereBetween('date', ['2010-01-01', $date])
+            ->first()->debit ?? 0; // Return 0 if no result is found
     }
+
 }
