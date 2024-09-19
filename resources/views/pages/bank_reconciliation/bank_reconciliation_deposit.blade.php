@@ -125,7 +125,7 @@
                                         <td class="text-right">{{ number_format($bank_reconciliation->debit, 2) }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Bank Reconciliation"))
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Office Bank Reconciliation"))
                                                     <button type="button"
                                                             onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation', id: {{$bank_reconciliation->id}}}, 'Edit {{$bank_reconciliation->efd}}', 'modal-md');"
                                                             class="btn btn-sm btn-primary js-tooltip-enabled"
@@ -134,7 +134,7 @@
                                                     </button>
                                                 @endif
 
-                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Bank Reconciliation"))
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Office Bank Reconciliation"))
                                                     <button type="button"
                                                             onclick="deleteModelItem('BankReconciliation', {{$bank_reconciliation->id}}, 'bank_reconciliation-tr-{{$bank_reconciliation->id}}');"
                                                             class="btn btn-sm btn-danger js-tooltip-enabled"
