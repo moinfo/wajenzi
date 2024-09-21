@@ -18,7 +18,7 @@
                         <h3 class="block-title">All Supplier Target</h3>
                     </div>
                     <div class="block-content">
-                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Reconciliation"))
+                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Supplier Target"))
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">

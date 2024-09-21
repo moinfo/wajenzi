@@ -16,7 +16,7 @@
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
-                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Reconciliation"))
+                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Supplier Targets Report"))
 
                             <div class="class col-md-9">
                                 <div class="class card-box">

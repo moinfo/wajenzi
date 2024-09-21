@@ -4,7 +4,7 @@
 
     <div class="main-container">
         <div class="content">
-            <div class="content-heading">Supplier Target
+            <div class="content-heading">Supplier Commission
                 <div class="float-right">
                     <a href="{{route('supplier_targets')}}" class="btn btn-rounded btn-outline-warning min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Supplier Targets</a>
                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Supplier Target"))
@@ -15,10 +15,10 @@
             <div>
                 <div class="block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">All Supplier Target</h3>
+                        <h3 class="block-title">All Supplier Commission</h3>
                     </div>
                     <div class="block-content">
-                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Reconciliation"))
+                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Supplier Commission"))
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
