@@ -20,7 +20,7 @@
                 <option value="">Select Supplier</option>
 
                 @foreach ($beneficiaries as $beneficiary)
-                    <option value="{{ $beneficiary->id }}" {{ ( $beneficiary->id == $object->beneficiary_id) ? 'selected' : '' }}> {{ $beneficiary->account_name }} </option>
+                    <option value="{{ $beneficiary->id }}" {{ ( $beneficiary->id == $object->beneficiary_id) ? 'selected' : '' }}> {{ $beneficiary->name }} </option>
                 @endforeach
 
             </select>

@@ -59,12 +59,12 @@
                                                         <!-- WhatsApp and Copy to Clipboard Buttons -->
                                                         <div style="position: absolute; top: 0; right: 0;">
                                                             <!-- WhatsApp Share Button -->
-                                                            <button type="button" onclick="shareViaWhatsApp('{{$beneficiary->name}}', '@foreach($beneficiary->accounts as $account){{ $account->bank->name }} - ACC NO: {{ $account->account }}\n @endforeach');" class="btn btn-success btn-sm" title="Share via WhatsApp">
+                                                            <button type="button" onclick="shareViaWhatsApp('{{$beneficiary->name}}', '@foreach($beneficiary->accounts as $account){{ $account->bank->name }} -  {{ $account->account }}\n @endforeach');" class="btn btn-success btn-sm" title="Share via WhatsApp">
                                                                 <i class="fa fa-whatsapp"></i>
                                                             </button>
 
                                                             <!-- Copy to Clipboard Button -->
-                                                            <button type="button" onclick="copyToClipboard('ACC NAME: {{$beneficiary->name}} @foreach($beneficiary->accounts as $account)\n{{ $account->bank->name }} - ACC NO: {{ $account->account }} @endforeach');" class="btn btn-info btn-sm" title="Copy to Clipboard">
+                                                            <button type="button" onclick="copyToClipboard('ACC NAME: {{$beneficiary->name}} @foreach($beneficiary->accounts as $account)\n{{ $account->bank->name }} -  {{ $account->account }} @endforeach');" class="btn btn-info btn-sm" title="Copy to Clipboard">
                                                                 <i class="fa fa-copy"></i>
                                                             </button>
 
@@ -85,7 +85,7 @@
                                                             <b>ACC NAME: {{$beneficiary->name}}</b>
                                                             @foreach($beneficiary->accounts as $account)
                                                                 <li style="list-style-type: none; margin: 0; padding: 0;">
-                                                                    <i>{{ $account->bank->name }}</i> - ACC NO: {{ $account->account }}
+                                                                    <i>{{ $account->bank->name }}</i> -  {{ $account->account }}
 
                                                                     <div class="btn-group btn-groups">
                                                                         @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Beneficiary"))

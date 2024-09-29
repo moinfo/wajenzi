@@ -154,7 +154,7 @@ class BeneficiaryController extends Controller
             $beneficiary_arr[] = [
                 "id" => $beneficiary_account->id,
                 // Make sure this matches the JavaScript expectation
-                "account_name" => $beneficiary_account->bank->name . ' - ACC NO. ' . $beneficiary_account->account,
+                "account_name" => $beneficiary_account->bank->name . ' - ' . $beneficiary_account->account,
             ];
         }
 
