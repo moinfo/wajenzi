@@ -44,6 +44,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redirect;
 
 class SettingsController extends Controller
 {
@@ -99,9 +100,19 @@ class SettingsController extends Controller
         }
 
         $data = [
-            'beneficiaries' => Beneficiary::all()
+            'beneficiaries' => Beneficiary::with('accounts')->get()
         ];
+
         return view('pages.beneficiary.beneficiary_index')->with($data);
+    }
+
+    public function beneficiary_account(Request $request)
+    {
+        if($this->handleCrud($request, 'BeneficiaryAccount')) {
+            return back();
+        }
+
+       Redirect::back();
     }
 
     public function wakalas(Request $request)

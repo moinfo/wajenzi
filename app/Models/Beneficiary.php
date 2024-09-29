@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Beneficiary extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'bank_id', 'account_name', 'account_number'];
+    public $fillable = ['id', 'name'];
 
-    public function bank(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    // Define the relationship with BeneficiaryAccount
+    public function accounts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->belongsTo(Bank::class);
+        return $this->hasMany(BeneficiaryAccount::class, 'beneficiary_id');
     }
-
 }

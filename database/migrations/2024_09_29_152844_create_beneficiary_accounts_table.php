@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddBeneficiaryIdOnBankReconciliationsTable extends Migration
+class CreateBeneficiaryAccountsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,12 @@ class AddBeneficiaryIdOnBankReconciliationsTable extends Migration
      */
     public function up()
     {
-        Schema::table('bank_reconciliations', function (Blueprint $table) {
-            $table->integer('beneficiary_account_id')->default(1);
+        Schema::create('beneficiary_accounts', function (Blueprint $table) {
+            $table->id();
+            $table->string('bank_id');
+            $table->string('account');
+            $table->integer('beneficiary_id');
+            $table->timestamps();
         });
     }
 
@@ -25,8 +29,6 @@ class AddBeneficiaryIdOnBankReconciliationsTable extends Migration
      */
     public function down()
     {
-        Schema::table('bank_reconciliations', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('beneficiary_accounts');
     }
 }

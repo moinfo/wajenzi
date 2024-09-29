@@ -9,16 +9,16 @@ use Illuminate\Support\Facades\DB;
 class BankReconciliation extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'to_id','type', 'bank_id','from_to_id','supplier_id','wakala_id','beneficiary_id', 'efd_id', 'description', 'date', 'debit', 'status', 'credit', 'payment_type', 'reference'];
+    public $fillable = ['id', 'to_id','type', 'bank_id','from_to_id','supplier_id','wakala_id','beneficiary_account_id', 'efd_id', 'description', 'date', 'debit', 'status', 'credit', 'payment_type', 'reference'];
 
 
     public function wakala(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Wakala::Class);
     }
-    public function beneficiary(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function beneficiary_account(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(Beneficiary::Class);
+        return $this->belongsTo(BeneficiaryAccount::Class);
     }
 
 
