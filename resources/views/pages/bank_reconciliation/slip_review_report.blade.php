@@ -18,7 +18,7 @@
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form  name="collection_search" action="" id="filter-form" method="post" autocomplete="off">
+                                    <form id="filter-form" method="post" autocomplete="off">
                                         @csrf
                                         <div class="row">
                                             <div class="class col-md-4">

@@ -98,7 +98,11 @@ class BankReconciliationController extends Controller
     {
         $start_date = $request->input('start_date') ?? date('Y-m-d');
         $end_date = $request->input('end_date') ?? date('Y-m-d');
-        $bank_reconciliations = \App\Models\BankReconciliation::getAll($start_date,$end_date);
+
+//        dump($start_date);
+//        dump($end_date);
+//        return;
+        $bank_reconciliations = \App\Models\BankReconciliation::getAll($start_date,$end_date,null,null,null);
         $data = [
             'bank_reconciliations' => $bank_reconciliations,
         ];

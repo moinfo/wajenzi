@@ -341,7 +341,7 @@ class BankReconciliation extends Model
 
     public static function getAll($start_date,$end_date,$efd_id = null,$supplier_id = null,$payment_type = null){
         $bank_reconciliation = DB::table('bank_reconciliations')
-            ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier','banks.name as bank','beneficiaries.name as beneficiary','beneficiary_accounts.account as account_number','wakalas.name as wakala')
+            ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier','banks.name as bank','beneficiaries.name as beneficiary','beneficiary_accounts.account as account_number','banks.name as account_name','wakalas.name as wakala')
             ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->join('banks', 'banks.id', '=', 'bank_reconciliations.bank_id')
             ->join('beneficiary_accounts', 'beneficiary_accounts.id', '=', 'bank_reconciliations.beneficiary_account_id')

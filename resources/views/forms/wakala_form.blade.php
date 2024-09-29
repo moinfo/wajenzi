@@ -10,6 +10,10 @@
             <input type="text" class="form-control" id="agent_id" name="agent_id" value="{{ $object->agent_id ?? '' }}" placeholder="Agent ID" required>
         </div>
         <div class="form-group">
+            <label for="example-nf-phone_number" class="control-label required">Phone Number</label>
+            <input type="number" class="form-control" id="phone_number" name="phone_number" value="{{ $object->phone_number ?? '' }}" placeholder="Phone Number" required>
+        </div>
+        <div class="form-group">
             <label for="example-nf-location" class="control-label required">Location</label>
             <input type="text" class="form-control" id="location" name="location" value="{{ $object->name ?? '' }}" placeholder="Location" required>
         </div>

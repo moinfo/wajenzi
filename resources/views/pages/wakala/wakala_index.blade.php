@@ -32,6 +32,7 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>Name</th>
+                                                <th>Phone Number</th>
                                                 <th>Location</th>
                                                 <th>Agent ID</th>
                                                 <th>Action</th>
@@ -42,6 +43,7 @@
                                                 <tr>
                                                     <td>{{$loop->iteration}}</td>
                                                     <td>{{$wakala->name}}</td>
+                                                    <td>{{$wakala->phone_number}}</td>
                                                     <td>{{$wakala->location}}</td>
                                                     <td>{{$wakala->agent_id}}</td>
                                                     <td class="text-center" >

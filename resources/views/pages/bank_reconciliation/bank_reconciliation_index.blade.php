@@ -376,6 +376,7 @@
                                     <th>Type</th>
                                     <th>Supplier Name</th>
                                     <th>Beneficiary</th>
+                                    <th>Account Details</th>
                                     <th>Wakala</th>
                                     <th>EFD Name</th>
                                     <th>Payment Type</th>
@@ -422,6 +423,7 @@
                                         <td class="font-w600">{{ $bank_reconciliation->type }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->supplier }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->beneficiary }}</td>
+                                        <td class="font-w600">{{ $bank_reconciliation->account_name.' - '.$bank_reconciliation->account_number }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->wakala }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->efd }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->bank }}</td>
