@@ -16,79 +16,112 @@
 
             </select>
         </div>
-        <div class="form-group">
-            <label for="example-nf-cost">Beneficiary</label>
-            <select name="beneficiary_id" id="beneficiary_id" class="form-control" required>
-                <option></option>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-cost">Beneficiary</label>
+                    <select name="beneficiary_id" id="beneficiary_id" class="form-control" required>
+                        <option value="">Choose</option>
 
-            </select>
+
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-cost">Account</label>
+                    <select name="beneficiary_account_id" id="beneficiary_account_id" class="form-control" required>
+                        <option value="">Choose</option>
+                    </select>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="example-nf-email">Efd Name</label>
-            <select name="efd_id" id="input-ifd-id" class="form-control select2" required>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-email">Efd Name</label>
+                    <select name="efd_id" id="input-ifd-id" class="form-control select2" required>
+                        <option value="">Choose</option>
 
-                <option value="">Select Efd</option>
+                    @foreach ($efds as $efd)
+                            <option
+                                value="{{$efd->id}}" {{ ( $efd->id == $object->efd_id) ? 'selected' : '' }}> {{ $efd->name }} </option>
+                        @endforeach
 
-                @foreach ($efds as $efd)
-                    <option
-                        value="{{$efd->id}}" {{ ( $efd->id == $object->efd_id) ? 'selected' : '' }}> {{ $efd->name }} </option>
-                @endforeach
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-email">Wakala Name</label>
+                    <select name="wakala_id" id="input-wakala-id" class="form-control select2" required>
 
-            </select>
+                        <option value="">Select Wakala</option>
+
+                        @foreach ($wakalas as $wakala)
+                            <option
+                                value="{{$wakala->id}}" {{ ( $wakala->id == $object->wakala_id) ? 'selected' : '' }}> {{ $wakala->name }} </option>
+                        @endforeach
+
+                    </select>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="example-nf-email">Wakala Name</label>
-            <select name="wakala_id" id="input-wakala-id" class="form-control select2" required>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-reference">Reference</label>
+                    <input type="text" class="form-control" id="input-reference" name="reference"
+                           value="{{ $object->reference ?? '' }}" required>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-email">Supplier Means</label>
+                    <select name="type" id="type" class="form-control" required>
+                        <option value="">Choose</option>
+                        @foreach ($supplier_target_types as $supplier_target_type)
+                            <option value="{{ $supplier_target_type['name'] }}" {{ ( $supplier_target_type['name'] == $object->type) ? 'selected' : '' }}> {{ $supplier_target_type['name'] }} </option>
+                        @endforeach
 
-                <option value="">Select Wakala</option>
-
-                @foreach ($wakalas as $wakala)
-                    <option
-                        value="{{$wakala->id}}" {{ ( $wakala->id == $object->wakala_id) ? 'selected' : '' }}> {{ $wakala->name }} </option>
-                @endforeach
-
-            </select>
+                    </select>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="example-nf-email">Supplier Means</label>
-            <select name="type" id="type" class="form-control" required>
-                @foreach ($supplier_target_types as $supplier_target_type)
-                    <option value="{{ $supplier_target_type['name'] }}" {{ ( $supplier_target_type['name'] == $object->type) ? 'selected' : '' }}> {{ $supplier_target_type['name'] }} </option>
-                @endforeach
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-email">Payment Type</label>
+                    <select name="bank_id" id="bank-id" class="form-control" required>
 
-            </select>
+                            <option value="">Choose</option>
+
+                        @foreach ($banks as $bank)
+                            <option
+                                value="{{$bank->id}}" {{ ( $bank->id == $object->bank_id) ? 'selected' : '' }}> {{ $bank->name }} </option>
+                        @endforeach
+
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-6">
+
+                <div class="form-group">
+                    <label for="example-nf-email">Payment Mode</label>
+                    <select name="payment_type" id="payment_type" class="form-control" required>
+
+                        <option value="">Choose</option>
+
+                        @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
+                            <option
+                                value="{{$bank_reconciliation_payment_type['name']}}" {{ ( $bank_reconciliation_payment_type['name'] == $object->payment_type) ? 'selected' : '' }}> {{ $bank_reconciliation_payment_type['name'] }} </option>
+                        @endforeach
+
+                    </select>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label for="example-nf-email">Payment Type</label>
-            <select name="bank_id" id="bank-id" class="form-control" required>
 
-                <option value="">Select Payment Type</option>
-
-                @foreach ($banks as $bank)
-                    <option
-                        value="{{$bank->id}}" {{ ( $bank->id == $object->bank_id) ? 'selected' : '' }}> {{ $bank->name }} </option>
-                @endforeach
-
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="example-nf-email">Payment Mode</label>
-            <select name="payment_type" id="payment_type" class="form-control" required>
-
-                <option value="">Select Payment Mode</option>
-
-                @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
-                    <option
-                        value="{{$bank_reconciliation_payment_type['name']}}" {{ ( $bank_reconciliation_payment_type['name'] == $object->payment_type) ? 'selected' : '' }}> {{ $bank_reconciliation_payment_type['name'] }} </option>
-                @endforeach
-
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="example-nf-reference">Reference</label>
-            <input type="text" class="form-control" id="input-reference" name="reference"
-                   value="{{ $object->reference ?? '' }}" required>
-        </div>
         <div class="form-group">
             <label for="example-nf-description">Description</label>
             <textarea type="text" row="3" class="form-control" id="input-description"
@@ -140,25 +173,50 @@
 <script>
     $("#supplier_id").change(function () {
         var supplier_id = $(this).val();
-        var url = '/supplier_beneficiary';
         $.ajax({
-            url: url,
-            type: 'post',
+            url: '/supplier_beneficiary',
+            type: 'POST',
             data: {supplier_id: supplier_id, _token: csrf_token},
             dataType: 'json',
             success: function (response) {
-                var len = response.length;
-                $("#beneficiary_id").empty();
-                for (var i = 0; i < len; i++) {
-                    var id = response[i]['id'];
-                    var account_name = response[i]['account_name'];
+                // Clear previous options
+                $("#beneficiary_id").empty().append("<option value=''>Choose</option>");
+                $("#beneficiary_account_id").empty().append("<option value=''>Choose</option>");
 
-                    $("#beneficiary_id").append("<option value='" + id + "'>" + account_name + "</option>");
-
-                }
+                // Populate beneficiaries
+                response.forEach(function (beneficiary) {
+                    $("#beneficiary_id").append("<option value='" + beneficiary.id + "'>" + beneficiary.account_name + "</option>");
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("An error occurred: " + error);
             }
         });
     });
+    // When beneficiary is changed, update the account dropdown
+    $("#beneficiary_id").change(function () {
+        var beneficiary_id = $(this).val();
+        var url = '/supplier_beneficiary_account'; // URL to get accounts by beneficiary
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: { beneficiary_id: beneficiary_id, _token: csrf_token }, // CSRF token for security
+            dataType: 'json',
+            success: function (response) {
+                $("#beneficiary_account_id").empty();
+                $("#beneficiary_account_id").append("<option value=''>Choose</option>");
+                response.forEach(function (beneficiary) {
+                    // Ensure this matches the property defined in the PHP response
+                    $("#beneficiary_account_id").append("<option value='" + beneficiary.id + "'>" + beneficiary.account_name + "</option>");
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("An error occurred: " + error);
+            }
+        });
+    });
+
+
     function preventNegative(event) {
         // Prevent the user from entering a minus sign
         if (event.key === '-' || event.key === 'e') {
