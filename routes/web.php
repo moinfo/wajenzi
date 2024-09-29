@@ -125,6 +125,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/reports/bank_report', [App\Http\Controllers\ReportsController::class, 'bank_report'])->name('reports_bank_report');
     Route::match(['get', 'post'], '/settings', [App\Http\Controllers\SettingsController::class, 'index'])->name('hr_settings');
     Route::match(['get', 'post'], '/settings/supervisor', [App\Http\Controllers\SettingsController::class, 'supervisors'])->name('hr_settings_supervisors');
+    Route::match(['get', 'post'], '/settings/beneficiaries', [App\Http\Controllers\SettingsController::class, 'beneficiaries'])->name('beneficiaries');
+    Route::match(['get', 'post'], '/settings/wakalas', [App\Http\Controllers\SettingsController::class, 'wakalas'])->name('wakalas');
     Route::match(['get', 'post'], '/settings/departments', [App\Http\Controllers\SettingsController::class, 'departments'])->name('hr_settings_departments');
     Route::match(['get', 'post'], '/settings/allowances', [App\Http\Controllers\SettingsController::class, 'allowances'])->name('hr_settings_allowances');
     Route::match(['get', 'post'], '/settings/staff_salaries', [App\Http\Controllers\SettingsController::class, 'staff_salaries'])->name('hr_settings_staff_salary');

@@ -13,6 +13,7 @@ use App\Models\Asset;
 use App\Models\AssetProperty;
 use App\Models\AssignUserGroup;
 use App\Models\Bank;
+use App\Models\Beneficiary;
 use App\Models\Category;
 use App\Models\Deduction;
 use App\Models\DeductionSetting;
@@ -38,6 +39,7 @@ use App\Models\System;
 use App\Models\User;
 use App\Models\UserGroup;
 use App\Models\UsersPermission;
+use App\Models\Wakala;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -80,6 +82,8 @@ class SettingsController extends Controller
             ['name'=>'Statutory Payment Category', 'route'=>'hr_settings_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Statutory Payment Sub Category', 'route'=>'hr_settings_sub_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Stock', 'route'=>'hr_settings_stock', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Beneficiaries', 'route'=>'beneficiaries', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Mawakala', 'route'=>'wakalas', 'icon' => 'si si-settings', 'badge' => 0],
         ];
         $data = [
             'settings' => $settings
@@ -88,6 +92,29 @@ class SettingsController extends Controller
         return view('pages.settings.settings_index')->with($data);
     }
 
+    public function beneficiaries(Request $request)
+    {
+        if($this->handleCrud($request, 'Beneficiary')) {
+            return back();
+        }
+
+        $data = [
+            'beneficiaries' => Beneficiary::all()
+        ];
+        return view('pages.beneficiary.beneficiary_index')->with($data);
+    }
+
+    public function wakalas(Request $request)
+    {
+        if($this->handleCrud($request, 'Wakala')) {
+            return back();
+        }
+
+        $data = [
+            'wakalas' => Wakala::all()
+        ];
+        return view('pages.wakala.wakala_index')->with($data);
+    }
     public function stock(Request $request){
         if($this->handleCrud($request, 'Stock')) {
             return back();
