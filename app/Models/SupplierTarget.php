@@ -14,8 +14,14 @@ class SupplierTarget extends Model
       'type',
       'amount',
       'description',
+      'beneficiary_id',
       'date'
     ];
+
+    public function beneficiary(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Beneficiary::Class);
+    }
 
     public static function getAll($start_date,$end_date,$supplier_id)
     {

@@ -17,6 +17,13 @@
             </select>
         </div>
         <div class="form-group">
+            <label for="example-nf-cost">Beneficiary</label>
+            <select name="beneficiary_id" id="beneficiary_id" class="form-control" required>
+                <option></option>
+
+            </select>
+        </div>
+        <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
             <select name="efd_id" id="input-ifd-id" class="form-control select2" required>
 
@@ -30,7 +37,20 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-email">Type</label>
+            <label for="example-nf-email">Wakala Name</label>
+            <select name="wakala_id" id="input-wakala-id" class="form-control select2" required>
+
+                <option value="">Select Wakala</option>
+
+                @foreach ($wakalas as $wakala)
+                    <option
+                        value="{{$wakala->id}}" {{ ( $wakala->id == $object->wakala_id) ? 'selected' : '' }}> {{ $wakala->name }} </option>
+                @endforeach
+
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="example-nf-email">Supplier Means</label>
             <select name="type" id="type" class="form-control" required>
                 @foreach ($supplier_target_types as $supplier_target_type)
                     <option value="{{ $supplier_target_type['name'] }}" {{ ( $supplier_target_type['name'] == $object->type) ? 'selected' : '' }}> {{ $supplier_target_type['name'] }} </option>
@@ -39,10 +59,10 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-email">Bank Name</label>
+            <label for="example-nf-email">Payment Type</label>
             <select name="bank_id" id="bank-id" class="form-control" required>
 
-                <option value="">Select Bank</option>
+                <option value="">Select Payment Type</option>
 
                 @foreach ($banks as $bank)
                     <option
@@ -52,10 +72,10 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-email">Payment Type</label>
+            <label for="example-nf-email">Payment Mode</label>
             <select name="payment_type" id="payment_type" class="form-control" required>
 
-                <option value="">Select Payment Type</option>
+                <option value="">Select Payment Mode</option>
 
                 @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
                     <option
@@ -118,6 +138,27 @@
     </form>
 </div>
 <script>
+    $("#supplier_id").change(function () {
+        var supplier_id = $(this).val();
+        var url = '/supplier_beneficiary';
+        $.ajax({
+            url: url,
+            type: 'post',
+            data: {supplier_id: supplier_id, _token: csrf_token},
+            dataType: 'json',
+            success: function (response) {
+                var len = response.length;
+                $("#beneficiary_id").empty();
+                for (var i = 0; i < len; i++) {
+                    var id = response[i]['id'];
+                    var account_name = response[i]['account_name'];
+
+                    $("#beneficiary_id").append("<option value='" + id + "'>" + account_name + "</option>");
+
+                }
+            }
+        });
+    });
     function preventNegative(event) {
         // Prevent the user from entering a minus sign
         if (event.key === '-' || event.key === 'e') {

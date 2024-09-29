@@ -6,16 +6,17 @@
         <div class="content">
             <div class="content-heading">BR
                 <div class="float-right">
-                    <a href="{{route('bank_deposit_report')}}" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>BD</a>
-                    <a href="{{route('supplier_targets')}}" class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>ST</a>
-                    <a href="{{route('supplier_targets_report')}}" class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>STR</a>
-                    <a href="{{route('transfer_reports')}}" class="btn btn-rounded btn-outline-success min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>TRR</a>
-                    <a href="{{route('bank_withdraw_reports')}}" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>WR</a>
-                    <a href="{{route('bank_deposit_reports')}}" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>DR</a>
+                    <a href="{{route('slip_review_report')}}" title="Slip Review Report" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>SRR</a>
+                    <a href="{{route('bank_deposit_report')}}" title="Bank deposit View" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>BDV</a>
+                    <a href="{{route('supplier_targets')}}" title="Supplier Target"  class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>ST</a>
+                    <a href="{{route('supplier_targets_report')}}" title="Supplier Target Report" class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>STR</a>
+                    <a href="{{route('transfer_reports')}}" title="Transfer Report" class="btn btn-rounded btn-outline-success min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>TR</a>
+                    <a href="{{route('bank_withdraw_reports')}}" title="Withdraw Office Report" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>WOR</a>
+                    <a href="{{route('bank_deposit_reports')}}" title="Deposit Office Report" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>DOR</a>
                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Bank Reconciliation"))
-                        <button type="button" onclick="loadFormModal('bank_reconciliation_transfer_form', {className: 'BankReconciliation'}, 'Transfer', 'modal-md');" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>TR</button>
-                        <button type="button" onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation'}, 'Create New Bank Reconciliation', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>ND</button>
-                        <button type="button" onclick="loadFormModal('bank_reconciliation_withdraw_form', {className: 'BankReconciliation'}, 'Create New Withdraw', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>NW</button>
+                        <button type="button" title="Transfer" onclick="loadFormModal('bank_reconciliation_transfer_form', {className: 'BankReconciliation'}, 'Transfer', 'modal-md');" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>T</button>
+                        <button type="button" title="Deposit" onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation'}, 'Create New Deposit', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>D</button>
+                        <button type="button" title="Withdraw" onclick="loadFormModal('bank_reconciliation_withdraw_form', {className: 'BankReconciliation'}, 'Create New Withdraw', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>W</button>
                     @endif
                 </div>
             </div>
@@ -374,9 +375,11 @@
                                     <th>Description</th>
                                     <th>Type</th>
                                     <th>Supplier Name</th>
+                                    <th>Beneficiary</th>
+                                    <th>Wakala</th>
                                     <th>EFD Name</th>
-                                    <th>Bank Name</th>
                                     <th>Payment Type</th>
+                                    <th>Payment Mode</th>
                                     <th>Credit</th>
                                     <th>Debit</th>
                                     <th>Status</th>
@@ -418,6 +421,8 @@
                                         <td class="font-w600">{{ $bank_reconciliation->description }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->type }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->supplier }}</td>
+                                        <td class="font-w600">{{ $bank_reconciliation->beneficiary }}</td>
+                                        <td class="font-w600">{{ $bank_reconciliation->wakala }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->efd }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->bank }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
@@ -471,9 +476,10 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <td colspan="9"></td>
+                                    <td colspan="11"></td>
                                     <td class="text-right">{{ number_format($total_credit, 2) }}</td>
                                     <td class="text-right">{{ number_format($total_debit, 2) }}</td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                                 </tfoot>

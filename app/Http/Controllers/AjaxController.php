@@ -7,6 +7,7 @@ use App\Models\AllowanceSubscription;
 use App\Models\ApprovalDocumentType;
 use App\Models\Asset;
 use App\Models\Bank;
+use App\Models\Beneficiary;
 use App\Models\BongeCustomer;
 use App\Models\Category;
 use App\Models\Deduction;
@@ -24,6 +25,7 @@ use App\Models\Supplier;
 use App\Models\System;
 use App\Models\User;
 use App\Models\UserGroup;
+use App\Models\Wakala;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -163,7 +165,11 @@ class AjaxController
                     $expenses_sub_categories = ExpensesSubCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
                     $bonge_customers = BongeCustomer::all();
+                    $beneficiaries = Beneficiary::all();
+                    $wakalas = Wakala::all();
                     $data = $request->input('data') ?? [
+                            'beneficiaries' => $beneficiaries,
+                            'wakalas' => $wakalas,
                             'bonge_customers' => $bonge_customers,
                             'expenses_sub_categories' => $expenses_sub_categories,
                             'suppliers' => $suppliers,

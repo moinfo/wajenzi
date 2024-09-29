@@ -75,6 +75,9 @@
                                                 <th>Supplier</th>
                                                 <th>Type</th>
                                                 <th>Amount</th>
+                                                <th>Beneficiary Name</th>
+                                                <th>Beneficiary Account</th>
+                                                <th>Beneficiary Bank</th>
                                                 <th>Action</th>
                                             </tr>
                                             </thead>
@@ -95,6 +98,9 @@
                                                     <td class="font-w600">{{ $supplier_target->supplier->name }}</td>
                                                     <td class="font-w600">{{ $supplier_target->type }}</td>
                                                     <td class="text-right">{{ number_format($supplier_target->amount, 2) }}</td>
+                                                    <td class="font-w600">{{ $supplier_target->beneficiary->account_name }}</td>
+                                                    <td class="font-w600">{{ $supplier_target->beneficiary->account_number }}</td>
+                                                    <td class="font-w600">{{ $supplier_target->beneficiary->bank->name }}</td>
                                                     <td class="text-center">
                                                         <div class="btn-group">
                                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Supplier Target"))
@@ -126,6 +132,9 @@
                                                 <tr>
                                                     <th class="text-right" colspan="5">TOTAL</th>
                                                     <th class="text-right">{{number_format($sum)}}</th>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th></th>
                                                     <th></th>
                                                 </tr>
                                             </tfoot>

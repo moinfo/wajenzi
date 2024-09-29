@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AssetProperty;
 use App\Models\Beneficiary;
+use App\Models\SupplierTarget;
 use Illuminate\Http\Request;
 
 class BeneficiaryController extends Controller
@@ -88,5 +90,18 @@ class BeneficiaryController extends Controller
     public function destroy(Beneficiary $beneficiary)
     {
         //
+    }
+
+    public function getSupplierBeneficiary(Request $request){
+        $supplier_id = $request->input('supplier_id');
+        $supplier_targets = SupplierTarget::where('supplier_id',$supplier_id)->where('date',date('Y-m-d'))->get();
+
+        foreach ($supplier_targets as $index => $supplier_target) {
+            $id = $supplier_target->beneficiary_id;
+            $account_name = $supplier_target->beneficiary->account_name;
+            $beneficiary_arr[] = array("id" => $id, "account_name" => $account_name);
+        }
+        echo json_encode($beneficiary_arr);
+
     }
 }

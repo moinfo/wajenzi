@@ -13,6 +13,18 @@
 
             </select>
         </div>
+        <div class="form-group">
+            <label for="example-nf-email">Beneficiary</label>
+            <select name="beneficiary_id" id="beneficiary_id" class="form-control select2" required>
+
+                <option value="">Select Supplier</option>
+
+                @foreach ($beneficiaries as $beneficiary)
+                    <option value="{{ $beneficiary->id }}" {{ ( $beneficiary->id == $object->beneficiary_id) ? 'selected' : '' }}> {{ $beneficiary->account_name }} </option>
+                @endforeach
+
+            </select>
+        </div>
 
         <div class="form-group">
             <label for="example-nf-email">Type</label>

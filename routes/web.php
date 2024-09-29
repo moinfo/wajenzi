@@ -29,6 +29,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/bank_reconciliation', [App\Http\Controllers\BankReconciliationController::class, 'index'])->name('bank_reconciliation');
     Route::match(['get', 'post'], '/supplier_targets', [App\Http\Controllers\BankReconciliationController::class, 'supplier_targets'])->name('supplier_targets');
     Route::match(['get', 'post'], '/bank_deposit_report', [App\Http\Controllers\BankReconciliationController::class, 'bank_deposit_report'])->name('bank_deposit_report');
+    Route::match(['get', 'post'], '/slip_review_report', [App\Http\Controllers\BankReconciliationController::class, 'slip_review_report'])->name('slip_review_report');
     Route::match(['get', 'post'], '/supplier_commissions', [App\Http\Controllers\BankReconciliationController::class, 'supplier_commissions'])->name('supplier_commissions');
     Route::match(['get', 'post'], '/supplier_targets_report', [App\Http\Controllers\BankReconciliationController::class, 'supplier_targets_report'])->name('supplier_targets_report');
     Route::match(['get', 'post'], '/bank_withdraw_reports', [App\Http\Controllers\BankReconciliationController::class, 'bank_withdraw_reports'])->name('bank_withdraw_reports');
@@ -61,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/staff', [App\Http\Controllers\StaffController::class, 'index'])->name('staff');
     Route::match(['get', 'post'], '/accounting', [App\Http\Controllers\AccoutingController::class, 'index'])->name('accounting');
     Route::match(['get', 'post'], '/list_asset_properties', [App\Http\Controllers\AssetPropertyController::class, 'getAssetProperties'])->name('list_asset_properties');
+    Route::match(['get', 'post'], '/supplier_beneficiary', [App\Http\Controllers\BeneficiaryController::class, 'getSupplierBeneficiary'])->name('supplier_beneficiary');
     Route::match(['get', 'post'], '/transfer_balance', [App\Http\Controllers\BankReconciliationController::class, 'getTransferredBalance'])->name('transfer_balance');
     Route::match(['get', 'post'], '/sub_category_list', [App\Http\Controllers\SubCategoryController::class, 'getSubCategories'])->name('sub_category_list');
     Route::match(['get', 'post'], '/charge', [App\Http\Controllers\FinancialChargeController::class, 'getCharges'])->name('charge');
