@@ -74,6 +74,7 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>Supplier</th>
+                                                <th>Beneficiary</th>
                                                 <th>Target</th>
                                                 <th>Deposited</th>
                                                 <th>Transfers</th>
@@ -103,6 +104,7 @@
                                                         {{$loop->iteration}}
                                                     </td>
                                                     <td class="font-w600">{{ $supplier_targets_report->supplier_name }}</td>
+                                                    <td class="font-w600">{{ $supplier_targets_report->beneficiary_name }}</td>
                                                     <td class="text-right">{{ number_format($supplier_targets_report->total_target, 2) }}</td>
                                                     <td class="text-right">{{ number_format($deposited, 2) }}</td>
                                                     <td class="text-right">{{ number_format(abs($transfers))}}</td>
@@ -113,7 +115,7 @@
                                             </tbody>
                                             <tfoot>
                                                 <tr>
-                                                    <th class="text-right" colspan="2">TOTAL</th>
+                                                    <th class="text-right" colspan="3">TOTAL</th>
                                                     <th class="text-right">{{number_format($total_target)}}</th>
                                                     <th class="text-right">{{number_format($total_deposited)}}</th>
                                                     <th class="text-right">{{number_format(abs($total_transfers))}}</th>
