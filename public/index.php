@@ -8,6 +8,8 @@
  */
 
 define('LARAVEL_START', microtime(true));
+ini_set('memory_limit', '512M'); // Or '512M', '1G', etc.
+
 
 /*
 |--------------------------------------------------------------------------
