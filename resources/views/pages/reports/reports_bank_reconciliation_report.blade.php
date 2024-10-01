@@ -101,7 +101,9 @@
                                     @endforeach
                                     <td class="text-right"></td>
                                 </tr>
-                                @php {{ $totalSum = 0; }} @endphp
+                                @php {{ $totalSum = 0;
+ $maxTransactions = 600;
+ }} @endphp
                                 @foreach(range(0, $maxTransactions - 1) as $rowIndex => $rowIndex)
                                     @php {{ $rowSum = 0; }} @endphp
                                     <tr>
