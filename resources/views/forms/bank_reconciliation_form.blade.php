@@ -22,7 +22,10 @@
                     <label for="example-nf-cost">Beneficiary</label>
                     <select name="beneficiary_id" id="beneficiary_id" class="form-control" required>
                         <option value="">Choose</option>
-
+                        @foreach ($beneficiaries as $beneficiary)
+                            <option
+                                value="{{$beneficiary->id}}" {{ ( $beneficiary->id == $object->beneficiary_id) ? 'selected' : '' }}> {{ $beneficiary->name }} </option>
+                        @endforeach
 
                     </select>
                 </div>
@@ -32,6 +35,10 @@
                     <label for="example-nf-cost">Account</label>
                     <select name="beneficiary_account_id" id="beneficiary_account_id" class="form-control" required>
                         <option value="">Choose</option>
+                        @foreach ($beneficiary_accounts as $beneficiary_account)
+                            <option
+                                value="{{$beneficiary_account->id}}" {{ ( $beneficiary_account->id == $object->beneficiary_account_id) ? 'selected' : '' }}> {{ $beneficiary_account->account }} </option>
+                        @endforeach
                     </select>
                 </div>
             </div>

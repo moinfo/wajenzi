@@ -79,7 +79,7 @@
             'main-content-boxed'                        Full width Main Content with a specific maximum width (screen width > 1200px)
             'main-content-narrow'                       Full width Main Content with a percentage width (screen width > 1200px)
         -->
-        <div id="page-container" class="sidebar-o enable-page-overlay side-scroll page-header-modern main-content-boxed
+        <div id="page-container" class="enable-cookies sidebar-o enable-page-overlay side-scroll page-header-modern main-content-narrow
         {{$theme['header']['inverse'] ? 'page-header-inverse' : ''}}
         {{$theme['header']['fixed'] ? 'page-header-fixed' : ''}}
         {{$theme['sidebar']['inverse'] ? 'sidebar-inverse' : ''}}
@@ -107,7 +107,7 @@
             <footer id="page-footer" class="opacity-0">
                 <div class="content py-20 font-size-sm clearfix">
                     <div class="float-right">
-                        Crafted with <i class="fa fa-heart text-pulse"></i> by <a class="font-w600" href="https://kibahaonline.co.tz" target="_blank">KibahaOnline</a>
+                        Crafted with <i class="fa fa-heart text-pulse"></i> by <a class="font-w600" href="https://moinfo.co.tz" target="_blank">MoinfoTech Company Limited</a>
                     </div>
                     <div class="float-left">
                         <a class="font-w600" href="#" target="_blank">Financial Analysis</a> &copy; <span class="js-year-copy"></span>

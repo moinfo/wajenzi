@@ -27,6 +27,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::match(['get', 'post'], '/expense_adjustable', [App\Http\Controllers\AdjustmentExpenseController::class, 'index'])->name('expense_adjustable');
     Route::match(['get', 'post'], '/bank_reconciliation', [App\Http\Controllers\BankReconciliationController::class, 'index'])->name('bank_reconciliation');
+    Route::match(['get', 'post'], '/bank_reconciliation/bank_deposits', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_deposits'])->name('bank_reconciliation_deposits');
+    Route::match(['get', 'post'], '/bank_reconciliation/bank_withdraws', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_withdraws'])->name('bank_reconciliation_withdraws');
+    Route::match(['get', 'post'], '/bank_reconciliation/bank_transfers', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_transfers'])->name('bank_reconciliation_transfers');
+    Route::match(['get', 'post'], '/bank_reconciliation/sales_bank_deposited', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_sales_bank_deposited'])->name('bank_reconciliation_sales_bank_deposited');
+    Route::match(['get', 'post'], '/bank_reconciliation/bank_reconciliation_suppliers_statement', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_suppliers_statement'])->name('bank_reconciliation_suppliers_statement');
+    Route::match(['get', 'post'], '/bank_reconciliation/bank_reconciliation_bank_reconciliation_statement', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_bank_reconciliation_statement'])->name('bank_reconciliation_bank_reconciliation_statement');
     Route::match(['get', 'post'], '/supplier_targets', [App\Http\Controllers\BankReconciliationController::class, 'supplier_targets'])->name('supplier_targets');
     Route::match(['get', 'post'], '/bank_deposit_report', [App\Http\Controllers\BankReconciliationController::class, 'bank_deposit_report'])->name('bank_deposit_report');
     Route::match(['get', 'post'], '/slip_review_report', [App\Http\Controllers\BankReconciliationController::class, 'slip_review_report'])->name('slip_review_report');

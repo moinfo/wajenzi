@@ -11,6 +11,86 @@ class BankReconciliation extends Model
     use HasFactory;
     public $fillable = ['id', 'to_id','type', 'bank_id','from_to_id','supplier_id','wakala_id','beneficiary_account_id', 'efd_id', 'description', 'date', 'debit', 'status', 'credit', 'payment_type', 'reference'];
 
+    public static function bankDeposits($start_date, $end_date, $efd_id, $supplier_id, string $payment_type): \Illuminate\Support\Collection
+    {
+        $bank_reconciliation = DB::table('bank_reconciliations')
+            ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier','banks.name as bank','beneficiaries.name as beneficiary','beneficiary_accounts.account as account_number','banks.name as account_name','wakalas.name as wakala')
+            ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('banks', 'banks.id', '=', 'bank_reconciliations.bank_id')
+            ->join('beneficiary_accounts', 'beneficiary_accounts.id', '=', 'bank_reconciliations.beneficiary_account_id')
+            ->join('beneficiaries', 'beneficiaries.id', '=', 'beneficiary_accounts.beneficiary_id')
+            ->join('wakalas', 'wakalas.id', '=', 'bank_reconciliations.wakala_id')
+            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->where('credit','=',Null)
+            ->where('from_to_id','=',Null)
+            ->where('to_id','=',Null);
+
+        if($efd_id != null){
+            $bank_reconciliation->where('efd_id','=',$efd_id);
+        }
+        if($payment_type != null){
+            $bank_reconciliation->where('payment_type','=', "$payment_type");
+        }
+        if($supplier_id != null){
+            $bank_reconciliation->where('supplier_id','=',$supplier_id);
+        }
+        return $bank_reconciliation->orderBy('created_at','asc')->get();
+    }
+
+    public static function bankWithdraws($start_date, $end_date, $efd_id, $supplier_id, string $payment_type): \Illuminate\Support\Collection
+    {
+        $bank_reconciliation = DB::table('bank_reconciliations')
+            ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier','banks.name as bank')
+            ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('banks', 'banks.id', '=', 'bank_reconciliations.bank_id')
+            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+            ->where('credit','!=',Null)
+            ->where('credit','!=',0)
+            ->where('from_to_id','=',Null)
+            ->where('to_id','=',Null);
+
+        if($efd_id != null){
+            $bank_reconciliation->where('efd_id','=',$efd_id);
+        }
+        if($payment_type != null){
+            $bank_reconciliation->where('payment_type','=', "$payment_type");
+        }
+        if($supplier_id != null){
+            $bank_reconciliation->where('supplier_id','=',$supplier_id);
+        }
+        return $bank_reconciliation->orderBy('created_at','asc')->get();
+    }
+
+
+    public static function bankTransfers($start_date, $end_date, $efd_id, $supplier_id, string $payment_type): \Illuminate\Support\Collection
+    {
+        $bank_reconciliation = DB::table('bank_reconciliations')
+            ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier','banks.name as bank')
+            ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
+            ->join('banks', 'banks.id', '=', 'bank_reconciliations.bank_id')
+            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->where('date','>=',$start_date)
+            ->where('date','<=',$end_date)
+//            ->where('credit','=',Null)
+            ->where('from_to_id','!=',Null)
+            ->where('to_id','!=',Null);
+
+        if($efd_id != null){
+            $bank_reconciliation->where('efd_id','=',$efd_id);
+        }
+        if($payment_type != null){
+            $bank_reconciliation->where('payment_type','=', "$payment_type");
+        }
+        if($supplier_id != null){
+            $bank_reconciliation->where('supplier_id','=',$supplier_id);
+        }
+        return $bank_reconciliation->orderBy('created_at','asc')->get();
+    }
+
 
     public function wakala(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -344,9 +424,9 @@ class BankReconciliation extends Model
             ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier','banks.name as bank','beneficiaries.name as beneficiary','beneficiary_accounts.account as account_number','banks.name as account_name','wakalas.name as wakala')
             ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
             ->join('banks', 'banks.id', '=', 'bank_reconciliations.bank_id')
-            ->join('beneficiary_accounts', 'beneficiary_accounts.id', '=', 'bank_reconciliations.beneficiary_account_id')
-            ->join('beneficiaries', 'beneficiaries.id', '=', 'beneficiary_accounts.beneficiary_id')
-            ->join('wakalas', 'wakalas.id', '=', 'bank_reconciliations.wakala_id')
+            ->join('beneficiary_accounts', 'beneficiary_accounts.id', '=', 'bank_reconciliations.beneficiary_account_id','left')
+            ->join('beneficiaries', 'beneficiaries.id', '=', 'beneficiary_accounts.beneficiary_id','left')
+            ->join('wakalas', 'wakalas.id', '=', 'bank_reconciliations.wakala_id','left')
             ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date);

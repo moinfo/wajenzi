@@ -6,17 +6,71 @@
         <div class="content">
             <div class="content-heading">BR
                 <div class="float-right">
-                    <a href="{{route('slip_review_report')}}" title="Slip Review Report" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>SRR</a>
-                    <a href="{{route('bank_deposit_report')}}" title="Bank deposit View" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>BDV</a>
-                    <a href="{{route('supplier_targets')}}" title="Supplier Target"  class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>ST</a>
-                    <a href="{{route('supplier_targets_report')}}" title="Supplier Target Report" class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>STR</a>
-                    <a href="{{route('transfer_reports')}}" title="Transfer Report" class="btn btn-rounded btn-outline-success min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>TR</a>
-                    <a href="{{route('bank_withdraw_reports')}}" title="Withdraw Office Report" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>WOR</a>
-                    <a href="{{route('bank_deposit_reports')}}" title="Deposit Office Report" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-graph">&nbsp;</i>DOR</a>
-                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Bank Reconciliation"))
-                        <button type="button" title="Transfer" onclick="loadFormModal('bank_reconciliation_transfer_form', {className: 'BankReconciliation'}, 'Transfer', 'modal-md');" class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>T</button>
-                        <button type="button" title="Deposit" onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation'}, 'Create New Deposit', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>D</button>
-                        <button type="button" title="Withdraw" onclick="loadFormModal('bank_reconciliation_withdraw_form', {className: 'BankReconciliation'}, 'Create New Withdraw', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i class="si si-plus">&nbsp;</i>W</button>
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Sales Bank Deposited"))
+                        <a href="{{route('bank_reconciliation_sales_bank_deposited')}}" title="Sales Bank Deposited"
+                           class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>SBD</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Supplier Statement"))
+                        <a href="{{route('bank_reconciliation_suppliers_statement')}}" title="Supplier Statement"
+                           class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>SS</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Bank Reconciliation Statement"))
+                        <a href="{{route('bank_reconciliation_bank_reconciliation_statement')}}"
+                           title="Bank Reconciliation Statement"
+                           class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>BRS</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Slip Review Report"))
+                        <a href="{{route('slip_review_report')}}" title="Slip Review Report"
+                           class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>SRR</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Bank deposit View"))
+                        <a href="{{route('bank_deposit_report')}}" title="Bank deposit View"
+                           class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>BDV</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Supplier Target"))
+                        <a href="{{route('supplier_targets')}}" title="Supplier Target"
+                           class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>ST</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Supplier Target Report"))
+                        <a href="{{route('supplier_targets_report')}}" title="Supplier Target Report"
+                           class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>STR</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Transfer Report"))
+                        <a href="{{route('transfer_reports')}}" title="Transfer Report"
+                           class="btn btn-rounded btn-outline-success min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>TR</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Withdraw Office Report"))
+                        <a href="{{route('bank_withdraw_reports')}}" title="Withdraw Office Report"
+                           class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>WOR</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Deposit Office Report"))
+                        <a href="{{route('bank_deposit_reports')}}" title="Deposit Office Report"
+                           class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>DOR</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Deposit"))
+                        <a href="{{route('bank_reconciliation_deposits')}}" type="button" title="Deposit"
+                           class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>D</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Withdraw"))
+                        <a href="{{route('bank_reconciliation_withdraws')}}" type="button" title="Withdraw"
+                           class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>W</a>
+                    @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Transfer"))
+                        <a href="{{route('bank_reconciliation_transfers')}}" type="button" title="Transfer"
+                           class="btn btn-rounded btn-outline-danger min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>T</a>
                     @endif
                 </div>
             </div>
@@ -27,81 +81,67 @@
                     </div>
                     <div class="block-content">
                         @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Reconciliation"))
-                        <div class="row no-print m-t-10">
-                            <div class="class col-md-12">
-                                <div class="class card-box">
-                                    <form  name="collection_search" action="" id="filter-form" method="post" autocomplete="off">
-                                        @csrf
-                                        <div class="row">
-                                            <div class="class col-md-3">
-                                                <div class="input-group mb-3">
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
+                            <div class="row no-print m-t-10">
+                                <div class="class col-md-12">
+                                    <div class="class card-box">
+                                        <form name="collection_search" action="" id="filter-form" method="post"
+                                              autocomplete="off">
+                                            @csrf
+                                            <div class="row">
+                                                <div class="class col-md-3">
+                                                    <div class="input-group mb-3">
+                                                        <input type="text" name="start_date" id="start_date"
+                                                               class="form-control datepicker-index-form datepicker"
+                                                               aria-describedby="basic-addon1"
+                                                               value="{{date('Y-m-d')}}">
 
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="basic-addon1">Date</span>
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="basic-addon1">Date</span>
+                                                        </div>
+                                                        <input type="text" name="end_date" id="end_date"
+                                                               class="form-control datepicker-index-form datepicker"
+                                                               aria-describedby="basic-addon2"
+                                                               value="{{date('Y-m-d')}}">
+
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
 
                                                 </div>
+                                                <div class="class col-md-2">
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="basic-addon3">Type</span>
+                                                        </div>
+                                                        <select name="payment_type" id="payment_type"
+                                                                class="form-control">
+                                                            <option value="">ALL</option>
 
-                                            </div>
-                                            <div class="class col-md-3">
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="basic-addon3">Supplier</span>
-                                                    </div>
-                                                    <select name="supplier_id" id="input-supplier-id" class="form-control" aria-describedby="basic-addon3">
-                                                        <option value="">All Suppliers</option>
-                                                        @foreach ($suppliers as $supplier)
-                                                            <option value="{{ $supplier->id }}"> {{ $supplier->name }} </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="class col-md-3">
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="basic-addon3">EFD</span>
-                                                    </div>
-                                                    <select name="efd_id" id="input-efd-id" class="form-control" aria-describedby="basic-addon3">
-                                                        <option value="">All EFD</option>
-                                                        @foreach ($efds as $efd)
-                                                            <option value="{{ $efd->id }}"> {{ $efd->name }} </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="class col-md-2">
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="basic-addon3">Type</span>
-                                                    </div>
-                                                    <select name="payment_type" id="payment_type" class="form-control">
-                                                    <option value="">ALL</option>
-
-                                                    @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
-                                                        <option value="{{$bank_reconciliation_payment_type['name']}}"> {{ $bank_reconciliation_payment_type['name'] }} </option>
-                                                        @endforeach
+                                                            @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
+                                                                <option
+                                                                    value="{{$bank_reconciliation_payment_type['name']}}"> {{ $bank_reconciliation_payment_type['name'] }} </option>
+                                                            @endforeach
                                                         </select>
+                                                    </div>
+                                                </div>
+                                                <div class="class col-md-1">
+                                                    <div>
+                                                        <button type="submit" name="submit"
+                                                                class="btn btn-sm btn-primary">Show
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="class col-md-1">
-                                                <div>
-                                                    <button type="submit" name="submit"  class="btn btn-sm btn-primary">Show</button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </form>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                         @endif
                         <div class="row">
                             <div class="col-sm-2"></div>
                             <div class="col-sm-8">
                                 <h4>Actual Deposit Summary</h4>
                                 <div class="table-responsive">
-                                    <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
+                                    <table class="table table-bordered table-striped table-vcenter js-dataTable-full"
+                                           data-ordering="false">
                                         <thead>
                                         <tr>
                                             <th>#</th>
@@ -139,7 +179,7 @@
                                             </tr>
                                         @endforeach
                                         @php
-                                        $white = \App\Models\BankReconciliation::getTotalDepositWhitestar($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositWhitestarAuto($start_date,$end_date,16);
+                                            $white = \App\Models\BankReconciliation::getTotalDepositWhitestar($start_date,$end_date,16) - \App\Models\BankReconciliation::getTotalDepositWhitestarAuto($start_date,$end_date,16);
                                         @endphp
                                         <tr>
                                             <td>5</td>
@@ -174,318 +214,6 @@
                                 </div>
                             </div>
                             <div class="col-sm-2"></div>
-                        </div>
-
-                        <br>
-                        <h4>BANK RECONCILIATION STATEMENT</h4>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
-                                <thead>
-                                <tr>
-                                    <th width="40">#</th>
-                                    @foreach($efdTransactions as $index => $efd)
-                                        <th>{{$efd->name}}</th>
-                                    @endforeach
-                                    <th>Total</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <?php
-                                $sale = new \App\Models\Sale();
-                                $start_date = $_POST['start_date'] ?? date('Y-m-d');
-                                $end_date = $_POST['end_date'] ?? date('Y-m-d');
-
-                                ?>
-                                <tr>
-                                    <td>Receiving</td>
-                                    @foreach($efds as $efd)
-                                        @php
-                                            $efd_id = $efd->id;
-                                            $receiving = \App\Models\Report::getTotalDaysSalesBonge($start_date,$end_date,$efd->bonge_customer_id);
-                                        @endphp
-                                        <td class="text-right">{{number_format($receiving,2)}}</td>
-                                    @endforeach
-                                    @php
-                                        $total_receiving = \App\Models\Receiving::getTotalReceivingPerDayPerSupervisor($start_date,$end_date,null);
-                                    @endphp
-                                    <td class="text-right">{{number_format($total_receiving,2)}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Balance</td>
-                                    @foreach($efds as $efd)
-                                        @php
-                                            $efd_id = $efd->id;
-                                            $receiving = \App\Models\Receiving::getTotalReceivingPerDayPerSupervisor($start_date,$end_date,$efd_id);
-                                            $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupervisor($start_date,$end_date,$efd_id);
-                                        @endphp
-                                        <td class="text-right">{{number_format($receiving-$deposit,2)}}</td>
-                                    @endforeach
-                                    @php
-                                        $total_receiving = \App\Models\Receiving::getTotalReceivingPerDayPerSupervisor($start_date,$end_date,null);
-                                        $total_deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupervisor($start_date,$end_date,null);
-
-                                    @endphp
-                                    <td class="text-right">{{number_format($total_receiving-$total_deposit,2)}}</td>
-                                </tr>
-                                <tr>
-                                    <td>Deposits</td>
-                                    @foreach($efds as $efd)
-
-                                        <td class="text-right"></td>
-                                    @endforeach
-                                    <td class="text-right"></td>
-                                </tr>
-                                @php {{ $totalSum = 0; }} @endphp
-                                @foreach(range(0, 30) as $rowIndex => $rowIndex)
-                                    @php {{ $rowSum = 0; }} @endphp
-                                    <tr>
-                                        <td>{{$loop->index + 1}}</td>
-                                        @foreach($efdTransactions as $columnIndex => $efd)
-                                            @php {{
-                                                    $val = isset($efd->transactions[$rowIndex]) ? $efd->transactions[$rowIndex]->debit : '';
-                                                    $rowSum += is_numeric($val) ? $val : 0;
-                                                }}
-                                            @endphp
-                                            <td class="text-right">
-                                                {{ $val }}
-                                            </td>
-                                        @endforeach
-                                        <td class="text-right">{{ number_format($rowSum) }}</td>
-                                    </tr>
-
-                                    @php {{ $totalSum += $rowSum; }} @endphp
-                                @endforeach
-                                <tr>
-                                    <th></th>
-                                    @foreach($efds as $efd)
-
-                                        <th class="">{{$efd->name}}</th>
-                                    @endforeach
-                                    <th class="text-right"></th>
-                                </tr>
-                                <tr>
-                                    <th>All Total</th>
-                                    @foreach($efdTransactions as $footerIndex => $efd)
-                                        <td class="text-right">
-                                            {{ array_sum(array_column($efd->transactions->toArray(), 'debit')) }}
-                                        </td>
-                                    @endforeach
-                                    <th class="text-right">{{ number_format($totalSum,2) }}</th>
-                                </tr>
-                                <tr>
-                                    <th>Unspent Total</th>
-                                    @foreach($efdTransactions_2 as $footerIndex => $efd)
-                                        <td class="text-right">
-                                            {{ array_sum(array_column($efd->transactions->toArray(), 'debit')) }}
-                                        </td>
-                                    @endforeach
-                                    <th class="text-right"></th>
-                                </tr>
-                                <tr>
-                                    <th>Actual Total</th>
-                                    @foreach($efdTransactions_3 as $footerIndex => $efd)
-                                        <td class="text-right">
-                                            {{ array_sum(array_column($efd->transactions->toArray(), 'debit')) }}
-                                        </td>
-                                    @endforeach
-                                    <th class="text-right"></th>
-                                </tr>
-                                </tbody>
-                            </table>
-
-                        </div>
-                        <br>
-                        <h4>SUPPLIERS STATEMENT</h4>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full"  data-ordering="false">
-                                <thead>
-                                <tr>
-                                    <th>EFDs/SUPPLIERS</th>
-                                    <th>MASHINENI</th>
-                                    @foreach($supplier_with_deposits as $supplier)
-                                        <th>{{$supplier->name}}</th>
-                                    @endforeach
-                                    <th>Total</th>
-
-                                </tr>
-                                </thead>
-                                <tbody>
-                                @php
-                                    @endphp
-                                @foreach($efds as $efd)
-                                    @php
-                                        $efd_id = $efd->id;
-                                    @endphp
-                                    <tr>
-                                        <td>{{$efd->name}}</td>
-                                        @php
-                                            $deposit_whitestar = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplierInWhitestar($start_date,$end_date,$efd_id);
-                                        @endphp
-                                        <td class="text-right">{{number_format($deposit_whitestar)}}</td>
-                                        @foreach($supplier_with_deposits as $supplier)
-                                            @php {{
-                                            $supplier_id = $supplier->supplier_id;
-                                            $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplier($start_date,$end_date,$efd_id,$supplier_id);
-
-                                            }} @endphp
-                                            <td class="text-right">{{number_format($deposit,2)}}</td>
-                                        @endforeach
-                                        @php {{
-                                            $total_deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplier($start_date,$end_date,$efd_id,null);
-
-                                            }} @endphp
-                                        <td class="text-right">{{number_format($total_deposit,2)}}</td>
-                                    </tr>
-                                @endforeach
-
-                                </tbody>
-                                <tfoot>
-                                <tr>
-                                    <td>Total</td>
-                                    @php
-                                        $total_deposit_whitestar = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplierInWhitestar($start_date,$end_date,null);
-                                    @endphp
-                                    <td class="text-right">{{number_format($total_deposit_whitestar)}}</td>
-                                    @foreach($supplier_with_deposits as $supplier)
-                                        @php {{
-                                            $supplier_id = $supplier->supplier_id;
-                                            $deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplier($start_date,$end_date,null,$supplier_id);
-
-                                            }} @endphp
-                                        <td class="text-right">{{number_format($deposit,2)}}</td>
-                                    @endforeach
-                                    @php {{
-                                            $total_deposit = \App\Models\BankReconciliation::getTotalDepositPerDayPerSupplier($start_date,$end_date,null,null);
-
-                                            }} @endphp
-                                    <td class="text-right">{{number_format($total_deposit,2)}}</td>
-                                </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                        <br>
-                        <h4>SALES BANK DEPOSITED</h4>
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
-                            <thead>
-                                <tr>
-                                    <th class="text-center" style="width: 100px;">#</th>
-                                    <th>Date</th>
-                                    <th>REFERENCE</th>
-                                    <th>Description</th>
-                                    <th>Type</th>
-                                    <th>Supplier Name</th>
-                                    <th>Beneficiary</th>
-                                    <th>Account Details</th>
-                                    <th>Wakala</th>
-                                    <th>EFD Name</th>
-                                    <th>Payment Type</th>
-                                    <th>Payment Mode</th>
-                                    <th>Credit</th>
-                                    <th>Debit</th>
-                                    <th>Status</th>
-                                    <th class="text-center" style="width: 100px;">Actions</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <?php
-                                $start_date = $_POST['start_date'] ?? date('Y-m-d');
-                                $end_date = $_POST['end_date'] ?? date('Y-m-d');
-                                $efd_id = $_POST['efd_id'] ?? null;
-                                $supplier_id = $_POST['supplier_id'] ?? null;
-                                $payment_type = 'SALES';
-
-                               // dump($_GET);
-                                // dump($_GET);
-                                //                                dump($_GET['end_date']);
-
-                                $bank_reconciliations = \App\Models\BankReconciliation::getAll($start_date,$end_date,$efd_id,$supplier_id,$payment_type);
-                                $total_credit = 0;
-                                $total_debit = 0;
-                                $total_tax = 0;
-                                $total_turn_over = 0;
-                                ?>
-                                @foreach($bank_reconciliations as $bank_reconciliation)
-                                    <?php
-                                    $credit = $bank_reconciliation->credit;
-                                    $total_credit += $credit;
-                                    $debit = $bank_reconciliation->debit;
-                                    $total_debit += $debit;
-
-                                    ?>
-                                    <tr id="bank_reconciliation-tr-{{$bank_reconciliation->id}}">
-                                        <td class="text-center">
-                                            {{$loop->iteration}}
-                                        </td>
-                                        <td class="font-w600">{{ $bank_reconciliation->date }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->reference }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->description }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->type }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->supplier }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->beneficiary }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->account_name.' - '.$bank_reconciliation->account_number }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->wakala }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->efd }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->bank }}</td>
-                                        <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
-                                        <td class="text-right">{{ number_format($bank_reconciliation->credit, 2) }}</td>
-                                        <td class="text-right">{{ number_format($bank_reconciliation->debit, 2) }}</td>
-                                        <td>
-                                            @if($bank_reconciliation->credit)
-                                                @if($bank_reconciliation->status == 'PENDING')
-                                                    <div class="badge badge-warning">{{ $bank_reconciliation->status}}</div>
-                                                @elseif($bank_reconciliation->status == 'APPROVED')
-                                                    <div class="badge badge-primary">{{ $bank_reconciliation->status}}</div>
-                                                @elseif($bank_reconciliation->status == 'REJECTED')
-                                                    <div class="badge badge-danger">{{ $bank_reconciliation->status}}</div>
-                                                @elseif($bank_reconciliation->status == 'PAID')
-                                                    <div class="badge badge-primary">{{ $bank_reconciliation->status}}</div>
-                                                @elseif($bank_reconciliation->status == 'COMPLETED')
-                                                    <div class="badge badge-success">{{ $bank_reconciliation->status}}</div>
-                                                @else
-                                                    <div class="badge badge-secondary">{{ $bank_reconciliation->status}}</div>
-                                                @endif
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="btn-group">
-                                                @if($bank_reconciliation->credit)
-                                                 <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('bank_reconciliations',['id' => $bank_reconciliation->id,'document_type_id'=>12])}}"><i class="fa fa-eye"></i></a>
-                                                @endif
-                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Bank Reconciliation"))
-                                                    <button type="button"
-                                                            onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation', id: {{$bank_reconciliation->id}}}, 'Edit {{$bank_reconciliation->efd}}', 'modal-md');"
-                                                            class="btn btn-sm btn-primary js-tooltip-enabled"
-                                                            data-toggle="tooltip" title="Edit" data-original-title="Edit">
-                                                        <i class="fa fa-pencil"></i>
-                                                    </button>
-                                                @endif
-
-                                                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Bank Reconciliation"))
-                                                        <button type="button"
-                                                                onclick="deleteModelItem('BankReconciliation', {{$bank_reconciliation->id}}, 'bank_reconciliation-tr-{{$bank_reconciliation->id}}');"
-                                                                class="btn btn-sm btn-danger js-tooltip-enabled"
-                                                                data-toggle="tooltip" title="Delete"
-                                                                data-original-title="Delete">
-                                                            <i class="fa fa-times"></i>
-                                                        </button>
-                                                    @endif
-
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                                </tbody>
-                                <tfoot>
-                                <tr>
-                                    <td colspan="11"></td>
-                                    <td class="text-right">{{ number_format($total_credit, 2) }}</td>
-                                    <td class="text-right">{{ number_format($total_debit, 2) }}</td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
-                                </tfoot>
-                            </table>
                         </div>
                         <br>
                     </div>
