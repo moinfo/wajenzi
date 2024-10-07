@@ -86,7 +86,7 @@
                 <div class="form-group">
                     <label for="example-nf-email">Supplier Means</label>
                     <select name="type" id="type" class="form-control" required>
-                        <option value="">Choose</option>
+{{--                        <option value="">Choose</option>--}}
                         @foreach ($supplier_target_types as $supplier_target_type)
                             <option value="{{ $supplier_target_type['name'] }}" {{ ( $supplier_target_type['name'] == $object->type) ? 'selected' : '' }}> {{ $supplier_target_type['name'] }} </option>
                         @endforeach
@@ -117,7 +117,7 @@
                     <label for="example-nf-email">Payment Mode</label>
                     <select name="payment_type" id="payment_type" class="form-control" required>
 
-                        <option value="">Choose</option>
+{{--                        <option value="">Choose</option>--}}
 
                         @foreach ($bank_reconciliation_payment_types as $bank_reconciliation_payment_type)
                             <option
