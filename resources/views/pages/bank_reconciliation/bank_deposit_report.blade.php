@@ -15,7 +15,7 @@
                         <h3 class="block-title">Bank Deposited</h3>
                     </div>
                     <div class="block-content">
-                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Deposited"))
+                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Date Bank Deposit View"))
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">

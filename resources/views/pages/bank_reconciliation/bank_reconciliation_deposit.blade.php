@@ -94,6 +94,7 @@
                                     <th>EFD Name</th>
                                     <th>Payment Type</th>
                                     <th>Debit</th>
+                                    <th>Slip Presentation</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -123,6 +124,7 @@
                                         <td class="font-w600">{{ $bank_reconciliation->efd }}</td>
                                         <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
                                         <td class="text-right">{{ number_format($bank_reconciliation->debit, 2) }}</td>
+                                        <td class="font-w600">{{ $bank_reconciliation->slip_presentation }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Office Bank Reconciliation"))
@@ -156,6 +158,7 @@
                                 <tr>
                                     <td colspan="6"></td>
                                     <td class="text-right">{{ number_format($total_debit, 2) }}</td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                                 </tfoot>

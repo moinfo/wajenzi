@@ -109,6 +109,7 @@
                                                 <th>Payment Type</th>
                                                 <th>Payment Mode</th>
                                                 <th>Amount</th>
+                                                <th>Slip Presentation</th>
                                                 <th class="text-center" style="width: 100px;">Actions</th>
                                             </tr>
                                             </thead>
@@ -145,6 +146,7 @@
                                                     <td class="font-w600">{{ $bank_reconciliation->bank }}</td>
                                                     <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
                                                     <td class="text-right">{{ number_format($bank_reconciliation->debit, 2) }}</td>
+                                                    <td class="font-w600">{{ $bank_reconciliation->slip_presentation }}</td>
                                                     <td class="text-center">
                                                         <div class="btn-group">
                                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Bank Deposit"))
@@ -175,6 +177,7 @@
                                             <tr>
                                                 <td colspan="12"></td>
                                                 <td class="text-right">{{ number_format($total_debit, 2) }}</td>
+                                                <td></td>
                                                 <td></td>
                                             </tr>
                                             </tfoot>

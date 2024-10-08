@@ -161,6 +161,10 @@ class AjaxController
                         ['name'=>'TARGET'],
                         ['name'=>'COMMISSION']
                     ];
+                    $slip_presentations = [
+                        ['name'=>'yes'],
+                        ['name'=>'no']
+                    ];
                     $users = Staff::all();
                     $expenses_categories = ExpensesCategory::all();
                     $expenses_sub_categories = ExpensesSubCategory::all();
@@ -170,6 +174,7 @@ class AjaxController
                     $beneficiary_accounts = BeneficiaryAccount::all();
                     $wakalas = Wakala::all();
                     $data = $request->input('data') ?? [
+                            'slip_presentations' => $slip_presentations,
                             'beneficiaries' => $beneficiaries,
                             'beneficiary_accounts' => $beneficiary_accounts,
                             'wakalas' => $wakalas,

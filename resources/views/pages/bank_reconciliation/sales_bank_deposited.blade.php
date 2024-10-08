@@ -107,6 +107,7 @@
                                                 <th>Payment Mode</th>
                                                 <th>Credit</th>
                                                 <th>Debit</th>
+                                                <th>Slip Presentation</th>
                                                 <th>Status</th>
                                                 <th class="text-center" style="width: 100px;">Actions</th>
                                             </tr>
@@ -154,6 +155,7 @@
                                                     <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
                                                     <td class="text-right">{{ number_format($bank_reconciliation->credit, 2) }}</td>
                                                     <td class="text-right">{{ number_format($bank_reconciliation->debit, 2) }}</td>
+                                                    <td class="font-w600">{{ $bank_reconciliation->slip_presentation }}</td>
                                                     <td>
                                                         @if($bank_reconciliation->credit)
                                                             @if($bank_reconciliation->status == 'PENDING')
@@ -205,6 +207,7 @@
                                                 <td colspan="11"></td>
                                                 <td class="text-right">{{ number_format($total_credit, 2) }}</td>
                                                 <td class="text-right">{{ number_format($total_debit, 2) }}</td>
+                                                <td></td>
                                                 <td></td>
                                                 <td></td>
                                             </tr>

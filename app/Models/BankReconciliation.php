@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class BankReconciliation extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'to_id','type', 'bank_id','from_to_id','supplier_id','wakala_id','beneficiary_account_id', 'efd_id', 'description', 'date', 'debit', 'status', 'credit', 'payment_type', 'reference'];
+    public $fillable = ['id', 'to_id','slip_presentation','type', 'bank_id','from_to_id','supplier_id','wakala_id','beneficiary_account_id', 'efd_id', 'description', 'date', 'debit', 'status', 'credit', 'payment_type', 'reference'];
 
     public static function bankDeposits($start_date, $end_date, $efd_id, $supplier_id, string $payment_type): \Illuminate\Support\Collection
     {
@@ -36,7 +36,7 @@ class BankReconciliation extends Model
         if($supplier_id != null){
             $bank_reconciliation->where('supplier_id','=',$supplier_id);
         }
-        return $bank_reconciliation->orderBy('created_at','asc')->get();
+        return $bank_reconciliation->orderBy('updated_at','desc')->get();
     }
 
     public static function bankWithdraws($start_date, $end_date, $efd_id, $supplier_id, string $payment_type): \Illuminate\Support\Collection

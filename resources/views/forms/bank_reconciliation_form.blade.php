@@ -128,7 +128,16 @@
                 </div>
             </div>
         </div>
+        <div class="form-group">
+            <label for="example-nf-email">Is Slip Presented?</label>
+            <select name="type" id="type" class="form-control" required>
+                {{--                        <option value="">Choose</option>--}}
+                @foreach ($slip_presentations as $slip_presentation)
+                    <option value="{{ $slip_presentation['name'] }}" {{ ( $slip_presentation['name'] == $object->slip_presentation) ? 'selected' : '' }}> {{ $slip_presentation['name'] }} </option>
+                @endforeach
 
+            </select>
+        </div>
         <div class="form-group">
             <label for="example-nf-description">Description</label>
             <textarea type="text" row="3" class="form-control" id="input-description"
