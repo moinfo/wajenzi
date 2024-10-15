@@ -151,7 +151,7 @@
                                                         <div class="btn-group">
                                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Bank Deposit"))
                                                                 <button type="button"
-                                                                        onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation', id: {{$bank_reconciliation->id}}}, 'Edit {{$bank_reconciliation->efd}}', 'modal-md');"
+                                                                        onclick="loadFormModal('bank_reconciliation_deposit_form', {className: 'BankReconciliation', id: {{$bank_reconciliation->id}}}, 'Edit {{$bank_reconciliation->efd}}', 'modal-md');"
                                                                         class="btn btn-sm btn-primary js-tooltip-enabled"
                                                                         data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                                     <i class="fa fa-pencil"></i>

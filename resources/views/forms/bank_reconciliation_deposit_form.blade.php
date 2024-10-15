@@ -149,14 +149,6 @@
                    value="{{ $object->debit ?? '' }}" placeholder="Total Amount" required>
         </div>
         @if($object->id ?? null)
-
-            <div class="form-group">
-                <label for="example-nf-credit">Credit</label>
-                <input type="number" step=".01" min="0" onkeydown="return preventNegative(event)"  class="form-control amount" id="input-credit" name="credit"
-                       value="{{ $object->credit ?? '' }}" placeholder="Total Amount" required>
-            </div>
-        @endif
-        @if($object->id ?? null)
             <div class="form-group">
                 <label for="example-nf-date">Before Edited Date</label>
                 <input type="text" class="form-control" id="input-date-edited" name="date_edited"
