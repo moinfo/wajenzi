@@ -130,7 +130,7 @@
         </div>
         <div class="form-group">
             <label for="example-nf-email">Is Slip Presented?</label>
-            <select name="type" id="type" class="form-control" required>
+            <select name="slip_presentation" id="slip_presentation" class="form-control" required>
                 {{--                        <option value="">Choose</option>--}}
                 @foreach ($slip_presentations as $slip_presentation)
                     <option value="{{ $slip_presentation['name'] }}" {{ ( $slip_presentation['name'] == $object->slip_presentation) ? 'selected' : '' }}> {{ $slip_presentation['name'] }} </option>

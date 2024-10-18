@@ -11,6 +11,11 @@
                            class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i
                                 class="si si-graph">&nbsp;</i>SBD</a>
                     @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Unrepresented Slip"))
+                        <a href="{{route('unrepresented_slip')}}" title="Unrepresented Slip"
+                           class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>UPS <span class="text-danger">{{$total_unrepresented_slip}}</span></a>
+                    @endif
                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Supplier Statement"))
                         <a href="{{route('bank_reconciliation_suppliers_statement')}}" title="Supplier Statement"
                            class="btn btn-rounded btn-outline-primary min-width-100 mb-10"><i

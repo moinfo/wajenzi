@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/expense_adjustable', [App\Http\Controllers\AdjustmentExpenseController::class, 'index'])->name('expense_adjustable');
     Route::match(['get', 'post'], '/bank_reconciliation', [App\Http\Controllers\BankReconciliationController::class, 'index'])->name('bank_reconciliation');
     Route::match(['get', 'post'], '/bank_reconciliation/bank_deposits', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_deposits'])->name('bank_reconciliation_deposits');
+    Route::match(['get', 'post'], '/bank_reconciliation/unrepresented_slip', [App\Http\Controllers\BankReconciliationController::class, 'unrepresented_slip'])->name('unrepresented_slip');
     Route::match(['get', 'post'], '/bank_reconciliation/bank_withdraws', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_withdraws'])->name('bank_reconciliation_withdraws');
     Route::match(['get', 'post'], '/bank_reconciliation/bank_transfers', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_transfers'])->name('bank_reconciliation_transfers');
     Route::match(['get', 'post'], '/bank_reconciliation/sales_bank_deposited', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_sales_bank_deposited'])->name('bank_reconciliation_sales_bank_deposited');

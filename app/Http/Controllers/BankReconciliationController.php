@@ -33,9 +33,17 @@ class BankReconciliationController extends Controller
             ['name'=>'SALES'],
             ['name'=>'OFFICE']
         ];
+        $start_date = $request->input('start_date') ?? '2020-01-20';
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $efd_id =  $request->input('efd_id') ?? null;
+        $supplier_id =  $request->input('supplier_id') ?? null;
+        $payment_type = 'SALES';
+        $bank_reconciliations = \App\Models\BankReconciliation::unrepresentedSlipCount($start_date,$end_date,$efd_id,$supplier_id,$payment_type);
+
         $data = [
             'bank_reconciliation_payment_types' => $bank_reconciliation_payment_types,
             'systems' => $systems,
+            'total_unrepresented_slip' => $bank_reconciliations,
         ];
         return view('pages.bank_reconciliation.bank_reconciliation_index')->with($data);
     }
@@ -64,6 +72,32 @@ class BankReconciliationController extends Controller
             'efds' => $efds,
         ];
         return view('pages.bank_reconciliation.deposit')->with($data);
+    }
+
+    public function unrepresented_slip(Request $request)
+    {
+        if($this->handleCrud($request, 'BankReconciliation')) {
+            return back();
+        }
+        $start_date = $request->input('start_date') ?? '2020-01-20';
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $efd_id =  $request->input('efd_id') ?? null;
+        $supplier_id =  $request->input('supplier_id') ?? null;
+        $payment_type = 'SALES';
+        $suppliers = Supplier::all();
+        $efds = Efd::all();
+        $bank_reconciliations = \App\Models\BankReconciliation::unrepresentedSlip($start_date,$end_date,$efd_id,$supplier_id,$payment_type);
+        $bank_reconciliation_payment_types = [
+            ['name'=>'SALES'],
+            ['name'=>'OFFICE']
+        ];
+        $data = [
+            'bank_reconciliation_payment_types' => $bank_reconciliation_payment_types,
+            'bank_reconciliations' => $bank_reconciliations,
+            'suppliers' => $suppliers,
+            'efds' => $efds,
+        ];
+        return view('pages.bank_reconciliation.unrepresented_slip')->with($data);
     }
 
     public function bank_reconciliation_suppliers_statement(Request $request)
