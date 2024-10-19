@@ -44,11 +44,11 @@
                                                 $start_date = $_POST['start_date'] ?? date('Y-m-d');
                                                 $end_date = $_POST['end_date'] ?? date('Y-m-d');
 
-                                                $kassim = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,42);
-                                                $lailat = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,88);
-                                                $l_e_crdb = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,195);
-                                                $l_e_nbc = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,196);
-                                                $k_h_nbc = \App\Models\BankReconciliation::getTotalDebitOnlyTransferedBySupplier($start_date,$end_date,197);
+                                                $kassim = \App\Models\BankReconciliation::getTotalTransferBalance($start_date,$end_date,42);
+                                                $lailat = \App\Models\BankReconciliation::getTotalTransferBalance($start_date,$end_date,88);
+                                                $l_e_crdb = \App\Models\BankReconciliation::getTotalTransferBalance($start_date,$end_date,195);
+                                                $l_e_nbc = \App\Models\BankReconciliation::getTotalTransferBalance($start_date,$end_date,196);
+                                                $k_h_nbc = \App\Models\BankReconciliation::getTotalTransferBalance($start_date,$end_date,197);
                                             @endphp
                                             <div class="class col-md-2" title="Kassim Haji Kiwandani">
                                                 K.H.K Balance: {{number_format(abs($kassim))}}

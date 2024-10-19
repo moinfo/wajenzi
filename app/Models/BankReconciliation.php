@@ -686,4 +686,12 @@ class BankReconciliation extends Model
 
     }
 
+    public static function getTotalTransferBalance($start_date, $end_date, $supplier_id)
+    {
+        $deposited = self::getTotalDepositBySupplier($start_date, $end_date, $supplier_id);
+        $transfers = self::getOnlyTransferedBySupplierSingle($start_date, $end_date,$supplier_id)->debit_amount ?? 0;
+        return   $deposited - $transfers;
+    }
+
+
 }
