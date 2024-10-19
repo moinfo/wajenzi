@@ -80,6 +80,7 @@
                                             <th>Date</th>
                                             <th>Supplier From</th>
                                             <th>Supplier To</th>
+                                            <th>Beneficiary</th>
                                             <th>Description</th>
                                             <th>Payment Type</th>
                                             <th>Debit</th>
@@ -108,6 +109,7 @@
                                                 <td class="font-w600">{{ $bank_reconciliation->supplier_id }}</td>
                                                 <td class="font-w600">{{ $bank_reconciliation->supplier }}</td>
                                                 <td class="font-w600">{{ $supplier_to }}</td>
+                                                <td class="font-w600">{{ $bank_reconciliation->beneficiary }}</td>
                                                 <td class="font-w600">{{ $supplier->description }}</td>
                                                 <td class="font-w600">{{ $bank_reconciliation->payment_type }}</td>
                                                 <td class="text-right">{{ number_format(abs($supplier_to_amount), 2) }}</td>
