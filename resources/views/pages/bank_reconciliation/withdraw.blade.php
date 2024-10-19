@@ -156,6 +156,9 @@
                                                     </td>
                                                     <td class="text-center">
                                                         <div class="btn-group">
+                                                            @if($bank_reconciliation->credit)
+                                                                <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('bank_reconciliations',['id' => $bank_reconciliation->id,'document_type_id'=>12])}}"><i class="fa fa-eye"></i></a>
+                                                            @endif
                                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Bank Withdraw"))
                                                                 <button type="button"
                                                                         onclick="loadFormModal('bank_reconciliation_form', {className: 'BankReconciliation', id: {{$bank_reconciliation->id}}}, 'Edit {{$bank_reconciliation->efd}}', 'modal-md');"
