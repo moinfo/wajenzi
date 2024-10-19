@@ -19,14 +19,12 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
         <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
             <select name="efd_id" id="input-ifd-id" class="form-control select2" required>
-
-{{--                <option value="">Select Efd</option>--}}
-
                 @foreach ($efds as $efd)
-                    <option value="{{ $efd->id }}" {{ ( $efd->id == 10) ? 'selected' : '' }}> {{ $efd->name }} </option>
+                    @if ($efd->id == 10)
+                        <option value="{{ $efd->id }}" selected>{{ $efd->name }}</option>
+                    @endif
                 @endforeach
-
-                    </select>
+            </select>
         </div>
 
         <div class="form-group">
