@@ -20,10 +20,10 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
             <label for="example-nf-email">Efd Name</label>
             <select name="efd_id" id="input-ifd-id" class="form-control select2" required>
 
-                <option value="">Select Efd</option>
+{{--                <option value="">Select Efd</option>--}}
 
                 @foreach ($efds as $efd)
-                    <option value="{{ $efd->id }}" {{ ( $efd->id == $object->efd_id) ? 'selected' : '' }}> {{ $efd->name }} </option>
+                    <option value="{{ $efd->id }}" {{ ( $efd->id == 10) ? 'selected' : '' }}> {{ $efd->name }} </option>
                 @endforeach
 
                     </select>
@@ -33,7 +33,7 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
             <label for="example-nf-email">Payment Type</label>
             <select name="bank_id" id="bank-id" class="form-control" required>
 
-                <option value="">Select Payment Type</option>
+{{--                <option value="">Select Payment Type</option>--}}
 
                 @foreach ($banks as $bank)
                     <option
