@@ -61,6 +61,33 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
 
             </select>
         </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-cost">Beneficiary</label>
+                    <select name="beneficiary_id" id="beneficiary_id" class="form-control">
+                        <option>Choose</option>
+                        @foreach ($beneficiaries as $beneficiary)
+                            <option
+                                value="{{$beneficiary->id}}" {{ ( $beneficiary->id == $object->beneficiary_id) ? 'selected' : '' }}> {{ $beneficiary->name }} </option>
+                        @endforeach
+
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-cost">Account</label>
+                    <select name="beneficiary_account_id" id="beneficiary_account_id" class="form-control" required>
+                        <option value="">Choose</option>
+                        @foreach ($beneficiary_accounts as $beneficiary_account)
+                            <option
+                                value="{{$beneficiary_account->id}}" {{ ( $beneficiary_account->id == $object->beneficiary_account_id) ? 'selected' : '' }}> {{ $beneficiary_account->account }} </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+        </div>
         <div class="form-group">
             <label for="example-nf-email">Type</label>
             <select name="type" id="type" class="form-control" required>
@@ -138,6 +165,50 @@ $document_id = \App\Classes\Utility::getLastId('BankReconciliation')+1;
     </form>
 </div>
 <script>
+    $("#supplier_id").change(function () {
+        var supplier_id = $(this).val();
+        $.ajax({
+            url: '/supplier_beneficiary',
+            type: 'POST',
+            data: {supplier_id: supplier_id, _token: csrf_token},
+            dataType: 'json',
+            success: function (response) {
+                // Clear previous options
+                $("#beneficiary_id").empty().append("<option value=''>Choose</option>");
+                $("#beneficiary_account_id").empty().append("<option value=''>Choose</option>");
+
+                // Populate beneficiaries
+                response.forEach(function (beneficiary) {
+                    $("#beneficiary_id").append("<option value='" + beneficiary.id + "'>" + beneficiary.account_name + "</option>");
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("An error occurred: " + error);
+            }
+        });
+    });
+    // When beneficiary is changed, update the account dropdown
+    $("#beneficiary_id").change(function () {
+        var beneficiary_id = $(this).val();
+        var url = '/supplier_beneficiary_account'; // URL to get accounts by beneficiary
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: { beneficiary_id: beneficiary_id, _token: csrf_token }, // CSRF token for security
+            dataType: 'json',
+            success: function (response) {
+                $("#beneficiary_account_id").empty();
+                $("#beneficiary_account_id").append("<option value=''>Choose</option>");
+                response.forEach(function (beneficiary) {
+                    // Ensure this matches the property defined in the PHP response
+                    $("#beneficiary_account_id").append("<option value='" + beneficiary.id + "'>" + beneficiary.account_name + "</option>");
+                });
+            },
+            error: function (xhr, status, error) {
+                console.error("An error occurred: " + error);
+            }
+        });
+    });
     function preventNegative(event) {
         // Prevent the user from entering a minus sign
         if (event.key === '-' || event.key === 'e') {

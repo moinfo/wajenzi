@@ -441,26 +441,27 @@ class BankReconciliationController extends Controller
         $date = $request->input('date');
         $debit = Utility::strip_commas($request->input('debit'));
         $description = $request->input('description');
+        $beneficiary_account_id = $request->input('beneficiary_account_id');
         $reference = $request->input('reference');
         $payment_type = $request->input('payment_type');
         $bank_id = $request->input('bank_id');
         $depend = Supplier::find($to)->supplier_depend_on_system;
         if($depend == 'WHITESTAR'){
             DB::table('bank_reconciliations')->insert([
-                ['bank_id' => $bank_id,'supplier_id' => $from, 'efd_id' => $efd_id, 'type' => $type, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
-                ['bank_id' => $bank_id,'supplier_id' => $to, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type],
-                ['bank_id' => $bank_id,'supplier_id' => 50, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => 16, 'date' => $date, 'reference' => "$reference 2",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
+                ['bank_id' => $bank_id,'supplier_id' => $from, 'beneficiary_account_id' => $beneficiary_account_id, 'efd_id' => $efd_id, 'type' => $type, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
+                ['bank_id' => $bank_id,'supplier_id' => $to,  'beneficiary_account_id' => $beneficiary_account_id, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type],
+                ['bank_id' => $bank_id,'supplier_id' => 50,  'beneficiary_account_id' => $beneficiary_account_id, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => 16, 'date' => $date, 'reference' => "$reference 2",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
             ]);
         }elseif($to == 201){
             DB::table('bank_reconciliations')->insert([
-            ['bank_id' => $bank_id,'supplier_id' => $from, 'efd_id' => $efd_id, 'type' => $type, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
-            ['bank_id' => $bank_id,'supplier_id' => $to, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type],
-            ['bank_id' => $bank_id,'supplier_id' => 183, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => 23, 'date' => $date, 'reference' => "$reference 2",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
+            ['bank_id' => $bank_id,'supplier_id' => $from,  'beneficiary_account_id' => $beneficiary_account_id, 'efd_id' => $efd_id, 'type' => $type, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
+            ['bank_id' => $bank_id,'supplier_id' => $to,  'beneficiary_account_id' => $beneficiary_account_id, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type],
+            ['bank_id' => $bank_id,'supplier_id' => 183,  'beneficiary_account_id' => $beneficiary_account_id, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => 23, 'date' => $date, 'reference' => "$reference 2",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
             ]);
         }else{
             DB::table('bank_reconciliations')->insert([
-                ['bank_id' => $bank_id,'supplier_id' => $from, 'efd_id' => $efd_id, 'type' => $type, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
-                ['bank_id' => $bank_id,'supplier_id' => $to, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
+                ['bank_id' => $bank_id,'supplier_id' => $from, 'beneficiary_account_id' => $beneficiary_account_id,  'efd_id' => $efd_id, 'type' => $type, 'from_to_id' => $from_to_id, 'to_id' => $to, 'date' => $date, 'reference' => $reference, 'description' => $description, 'debit' => $debit*-1, 'payment_type' => $payment_type],
+                ['bank_id' => $bank_id,'supplier_id' => $to,  'beneficiary_account_id' => $beneficiary_account_id, 'to_id' => $from, 'type' => $type,  'from_to_id' => $to.$from, 'efd_id' => $efd_id, 'date' => $date, 'reference' => "$reference 1",'description' => $description, 'debit' => $debit, 'payment_type' => $payment_type]
             ]);
         }
        return Redirect::back();

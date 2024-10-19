@@ -124,7 +124,7 @@
                                             <td style="display: none"></td>
                                             <td style="display: none"></td>
                                             <td style="display: none"></td>
-                                            <td colspan="6"></td>
+                                            <td colspan="7"></td>
                                             <td class="text-right">{{ number_format($total_supplier_to_amount, 2) }}</td>
                                         </tr>
                                         </tfoot>
