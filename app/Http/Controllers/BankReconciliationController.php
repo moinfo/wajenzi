@@ -57,10 +57,10 @@ class BankReconciliationController extends Controller
         $end_date = $request->input('end_date') ?? date('Y-m-d');
         $efd_id =  $request->input('efd_id') ?? null;
         $supplier_id =  $request->input('supplier_id') ?? null;
-        $payment_type = 'SALES';
+//        $payment_type = null;
         $suppliers = Supplier::all();
         $efds = Efd::all();
-        $bank_reconciliations = \App\Models\BankReconciliation::bankDeposits($start_date,$end_date,$efd_id,$supplier_id,$payment_type);
+        $bank_reconciliations = \App\Models\BankReconciliation::bankDeposits($start_date,$end_date,$efd_id,$supplier_id);
         $bank_reconciliation_payment_types = [
             ['name'=>'SALES'],
             ['name'=>'OFFICE']

@@ -11,16 +11,16 @@ class BankReconciliation extends Model
     use HasFactory;
     public $fillable = ['id', 'to_id','slip_presentation','type', 'bank_id','from_to_id','supplier_id','wakala_id','beneficiary_account_id', 'efd_id', 'description', 'date', 'debit', 'status', 'credit', 'payment_type', 'reference'];
 
-    public static function bankDeposits($start_date, $end_date, $efd_id, $supplier_id, string $payment_type): \Illuminate\Support\Collection
+    public static function bankDeposits($start_date, $end_date, $efd_id, $supplier_id, $payment_type = null): \Illuminate\Support\Collection
     {
         $bank_reconciliation = DB::table('bank_reconciliations')
             ->select('bank_reconciliations.*','efds.name as efd','suppliers.name as supplier','banks.name as bank','beneficiaries.name as beneficiary','beneficiary_accounts.account as account_number','banks.name as account_name','wakalas.name as wakala')
-            ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id')
-            ->join('banks', 'banks.id', '=', 'bank_reconciliations.bank_id')
-            ->join('beneficiary_accounts', 'beneficiary_accounts.id', '=', 'bank_reconciliations.beneficiary_account_id')
-            ->join('beneficiaries', 'beneficiaries.id', '=', 'beneficiary_accounts.beneficiary_id')
-            ->join('wakalas', 'wakalas.id', '=', 'bank_reconciliations.wakala_id')
-            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id')
+            ->join('efds', 'efds.id', '=', 'bank_reconciliations.efd_id','left')
+            ->join('banks', 'banks.id', '=', 'bank_reconciliations.bank_id','left')
+            ->join('beneficiary_accounts', 'beneficiary_accounts.id', '=', 'bank_reconciliations.beneficiary_account_id','left')
+            ->join('beneficiaries', 'beneficiaries.id', '=', 'beneficiary_accounts.beneficiary_id','left')
+            ->join('wakalas', 'wakalas.id', '=', 'bank_reconciliations.wakala_id','left')
+            ->join('suppliers', 'suppliers.id', '=', 'bank_reconciliations.supplier_id','left')
             ->where('date','>=',$start_date)
             ->where('date','<=',$end_date)
             ->where('credit','=',Null)
