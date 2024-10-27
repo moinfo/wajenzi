@@ -1,6 +1,30 @@
 <div class="block-content">
     <form method="post" action="{{route('unrepresented_slip')}}" enctype="multipart/form-data" autocomplete="off">
         @csrf
+
+        <div class="form-group">
+            <label for="example-nf-debit">Amount/Debit</label>
+            <input type="number" min="0" step=".01" class="form-control amount" onkeydown="return preventNegative(event)" id="input-debit" name="debit"
+                   value="{{ $object->debit ?? '' }}" placeholder="Total Amount" readonly>
+        </div>
+        <div class="form-group">
+            <label for="example-nf-reference">Reference</label>
+            <input type="text" class="form-control" id="input-reference" name="reference"
+                   value="{{ $object->reference ?? '' }}" required>
+        </div>
+        <div class="form-group">
+            <label for="example-nf-email">Wakala Name</label>
+            <select name="wakala_id" id="input-wakala-id" class="form-control select2" required>
+
+                <option value="">Select Wakala</option>
+
+                @foreach ($wakalas as $wakala)
+                    <option
+                        value="{{$wakala->id}}" {{ ( $wakala->id == $object->wakala_id) ? 'selected' : '' }}> {{ $wakala->name }} </option>
+                @endforeach
+
+            </select>
+        </div>
         <div class="form-group">
             <label for="example-nf-email">Is Slip Presented?</label>
             <select name="slip_presentation" id="slip_presentation" class="form-control" required>
