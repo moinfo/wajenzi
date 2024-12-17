@@ -47,6 +47,11 @@
                            class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i
                                 class="si si-graph">&nbsp;</i>STR</a>
                     @endif
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Supplier Target Preparation"))
+                        <a href="{{route('supplier_target_preparation')}}" title="Supplier Target Preparation"
+                           class="btn btn-rounded btn-outline-warning min-width-100 mb-10"><i
+                                class="si si-graph">&nbsp;</i>STP</a>
+                    @endif
                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Transfer Report"))
                         <a href="{{route('transfer_reports')}}" title="Transfer Report"
                            class="btn btn-rounded btn-outline-success min-width-100 mb-10"><i

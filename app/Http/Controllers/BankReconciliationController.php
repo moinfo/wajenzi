@@ -325,6 +325,25 @@ class BankReconciliationController extends Controller
         return view('pages.bank_reconciliation.supplier_targets_reports')->with($data);
     }
 
+    public function supplier_target_preparation(Request $request)
+    {
+        if($this->handleCrud($request, 'SupplierTarget')) {
+            return back();
+        }
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $supplier_id = $request->input('supplier_id') ?? 0;
+
+        $suppliers = Supplier::all();
+        $supplier_target_preparations = SupplierTarget::getTargetDifference($start_date,$end_date,$supplier_id);
+
+        $data = [
+            'suppliers' => $suppliers,
+            'supplier_target_preparations' => $supplier_target_preparations,
+        ];
+        return view('pages.bank_reconciliation.supplier_target_preparations')->with($data);
+    }
+
     public function bank_deposit_reports(Request $request)
     {
         if($this->handleCrud($request, 'BankReconciliation')) {

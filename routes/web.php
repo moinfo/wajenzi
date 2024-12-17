@@ -35,6 +35,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/bank_reconciliation/bank_reconciliation_suppliers_statement', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_suppliers_statement'])->name('bank_reconciliation_suppliers_statement');
     Route::match(['get', 'post'], '/bank_reconciliation/bank_reconciliation_bank_reconciliation_statement', [App\Http\Controllers\BankReconciliationController::class, 'bank_reconciliation_bank_reconciliation_statement'])->name('bank_reconciliation_bank_reconciliation_statement');
     Route::match(['get', 'post'], '/supplier_targets', [App\Http\Controllers\BankReconciliationController::class, 'supplier_targets'])->name('supplier_targets');
+    Route::match(['get', 'post'], '/supplier_target_preparation', [App\Http\Controllers\BankReconciliationController::class, 'supplier_target_preparation'])->name('supplier_target_preparation');
     Route::match(['get', 'post'], '/bank_deposit_report', [App\Http\Controllers\BankReconciliationController::class, 'bank_deposit_report'])->name('bank_deposit_report');
     Route::match(['get', 'post'], '/slip_review_report', [App\Http\Controllers\BankReconciliationController::class, 'slip_review_report'])->name('slip_review_report');
     Route::match(['get', 'post'], '/supplier_commissions', [App\Http\Controllers\BankReconciliationController::class, 'supplier_commissions'])->name('supplier_commissions');
