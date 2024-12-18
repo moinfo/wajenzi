@@ -99,10 +99,20 @@ class ReportsController extends Controller
         $efd = \App\Models\Efd::find($request->efd_id);
         $date = $request->date;
 
+        // Get Bonge sales
         $bonge_sales = \App\Models\Report::getTotalDaysSalesBonge($date, $date, $efd->bonge_customer_id);
 
+        // Get total amount used in supplier target preparations for this EFD
+        $used_amount = DB::table('supplier_target_preparations')
+            ->where('efd_id', $efd->id)
+            ->whereDate('date', $date)
+            ->sum('amount');
+
         return response()->json([
-            'bonge_sales' => $bonge_sales
+            'efd_name' => $efd->name,
+            'bonge_sales' => $bonge_sales,
+            'used_amount' => $used_amount,
+            'balance' => $bonge_sales - $used_amount
         ]);
     }
     public function commission_vs_deposit_report(Request $request){

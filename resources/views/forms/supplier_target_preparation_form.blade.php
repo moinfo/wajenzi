@@ -1,141 +1,171 @@
-
 <style>
+    /* Card Base Styles */
     .block-rounded {
-        border-radius: 0.25rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         background-color: #fff;
         margin-bottom: 1rem;
-        transition: transform 0.2s ease-in-out;
+        transition: all 0.3s ease;
     }
 
     .block-rounded:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
     }
 
-    .block-content {
+    /* Header Styles */
+    .block-header {
         padding: 1.25rem;
+        border-top-left-radius: 0.75rem;
+        border-top-right-radius: 0.75rem;
+        background: linear-gradient(to right, #34d399, #10b981);
     }
 
-    .border-3x {
-        border-left-width: 4px !important;
+    .block-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.25rem;
     }
 
-    .border-primary {
-        border-left-color: #5c80d1 !important;
+    /* Content Styles */
+    .block-content {
+        padding: 1.5rem;
     }
 
-    .border-info {
-        border-left-color: #3c90df !important;
+    /* Card Border Styles */
+    .border-left {
+        border-left-width: 4px;
+        border-left-style: solid;
     }
 
-    .border-success {
-        border-left-color: #46c37b !important;
-    }
+    .border-primary { border-left-color: #3b82f6 !important; }
+    .border-info { border-left-color: #06b6d4 !important; }
+    .border-success { border-left-color: #10b981 !important; }
+    .border-warning { border-left-color: #f97316 !important; }
+    .border-purple { border-left-color: #8b5cf6 !important; }
 
-    .border-warning {
-        border-left-color: #f3b760 !important;
-    }
+    /* Text Colors */
+    .text-primary { color: #3b82f6 !important; }
+    .text-info { color: #06b6d4 !important; }
+    .text-success { color: #10b981 !important; }
+    .text-warning { color: #f97316 !important; }
+    .text-purple { color: #8b5cf6 !important; }
+    .text-danger { color: #ef4444 !important; }
 
-    .border-purple {
-        border-left-color: #8657ff !important;
-    }
-
-    .text-primary {
-        color: #5c80d1 !important;
-    }
-
-    .text-info {
-        color: #3c90df !important;
-    }
-
-    .text-success {
-        color: #46c37b !important;
-    }
-
-    .text-warning {
-        color: #f3b760 !important;
-    }
-
-    .text-purple {
-        color: #8657ff !important;
-    }
-
-    .text-danger {
-        color: #e04f1a !important;
-    }
-
-    .bg-primary-dark {
-        background-color: #3e4a59;
-    }
-
+    /* Badge Styles */
     .badge {
-        padding: 0.5em 1em;
+        padding: 0.5rem 1rem;
         font-weight: 600;
+        border-radius: 9999px;
     }
 
-    .badge-primary {
-        background-color: #5c80d1;
-        color: #fff;
-    }
-
-    .badge-success {
-        background-color: #46c37b;
-        color: #fff;
-    }
-
-    .badge-warning {
-        background-color: #f3b760;
-        color: #fff;
-    }
-
-    .badge-secondary {
-        background-color: #6c757d;
-        color: #fff;
-    }
-
+    /* Progress Bar */
     .progress {
-        background-color: #e9ecef;
-        border-radius: 2px;
+        background-color: #f3f4f6;
+        border-radius: 9999px;
+        height: 0.5rem;
         overflow: hidden;
+    }
+
+    .progress-bar {
+        border-radius: 9999px;
+    }
+
+    /* Card Content Styles */
+    .stat-card {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+    }
+
+    .stat-icon {
+        width: 2rem;
+        height: 2rem;
+        opacity: 0.8;
+    }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 0.95rem;
+        font-weight: 300;
+        color: #1f2937;
+    }
+
+    .stat-subtitle {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
     }
 </style>
 <div class="block">
-    <div class="block-header bg-success">
-        <h3 class="block-title text-white">Supplier Target Summary</h3>
+    <div class="block-header">
+        <h3 class="block-title text-white">
+            <i class="si si-target me-2"></i>
+            Supplier Target Summary
+        </h3>
     </div>
     <div class="block-content pb-2">
         <div class="row">
-            <!-- Summary Cards -->
+            <!-- Supplier Card -->
             <div class="col-md-3">
-                <div class="block block-rounded border-left border-primary border-3x">
-                    <div class="block-content">
-                        <div class="font-size-sm font-w600 text-uppercase text-primary">Supplier Name</div>
-                        <div class="font-size-h4 font-w600 text-dark">{{ $efd->name ?? null }}</div>
+                <div class="block block-rounded border-left border-primary">
+                    <div class="block-content stat-card">
+                        <div class="stat-content">
+                            <div class="stat-label text-primary">Supplier Name</div>
+                            <div class="stat-value">{{ $efd->name ?? null }}</div>
+                        </div>
+                        <i class="si si-users stat-icon text-primary"></i>
                     </div>
                 </div>
             </div>
+
+            <!-- Beneficiary Card -->
             <div class="col-md-3">
-                <div class="block block-rounded border-left border-info border-3x">
-                    <div class="block-content">
-                        <div class="font-size-sm font-w600 text-uppercase text-info">Beneficiary</div>
-                        <div class="font-size-h4 font-w600 text-dark">{{ $beneficiary->name ?? null }}</div>
+                <div class="block block-rounded border-left border-info">
+                    <div class="block-content stat-card">
+                        <div class="stat-content">
+                            <div class="stat-label text-info">Beneficiary</div>
+                            <div class="stat-value">{{ $beneficiary->name ?? null }}</div>
+                            <div class="stat-subtitle">{{ $beneficiary->bank_name ?? '' }} - {{ $beneficiary->account_number ?? '' }}</div>
+                        </div>
+                        <i class="si si-graph stat-icon text-info"></i>
                     </div>
                 </div>
             </div>
+
+            <!-- Target Amount Card -->
             <div class="col-md-3">
-                <div class="block block-rounded border-left border-success border-3x">
-                    <div class="block-content">
-                        <div class="font-size-sm font-w600 text-uppercase text-success">Target Amount</div>
-                        <div class="font-size-h4 font-w600 text-dark">{{ number_format($object->amount ?? 0) }}</div>
+                <div class="block block-rounded border-left border-success">
+                    <div class="block-content stat-card">
+                        <div class="stat-content">
+                            <div class="stat-label text-success">Target Amount</div>
+                            <div class="stat-value">{{ number_format($object->amount ?? 0) }}</div>
+                        </div>
+                        <i class="si si-target stat-icon text-success"></i>
                     </div>
                 </div>
             </div>
+
+            <!-- Bonge Sales Card -->
             <div class="col-md-3">
-                <div class="block block-rounded border-left border-warning border-3x">
-                    <div class="block-content">
-                        <div class="font-size-sm font-w600 text-uppercase text-warning">Bonge Sales</div>
-                        <div class="font-size-h4 font-w600 text-dark">{{ number_format($bonge_sales ?? 0) }}</div>
+                <div class="block block-rounded border-left border-warning">
+                    <div class="block-content stat-card">
+                        <div class="stat-content">
+                            <div class="stat-label text-warning">Bonge Sales</div>
+                            <div class="stat-value">{{ number_format($bonge_sales ?? 0) }}</div>
+                        </div>
+                        <i class="si si-bag stat-icon text-warning"></i>
                     </div>
                 </div>
             </div>
@@ -143,58 +173,66 @@
 
         <!-- Balance and Status Row -->
         <div class="row mt-4">
+            <!-- Balance Card -->
             <div class="col-md-6">
-                <div class="block block-rounded border-left border-purple border-3x">
+                <div class="block block-rounded border-left border-purple">
                     <div class="block-content">
-                        <div class="font-size-sm font-w600 text-uppercase text-purple">Balance</div>
-                        <div class="font-size-h4 font-w600 text-dark">
-                            @php
-                                $balance = ($object->amount ?? 0) - ($bonge_sales ?? 0);
-                                $balanceClass = $balance > 0 ? 'text-danger' : 'text-success';
-                            @endphp
-                            <span class="{{ $balanceClass }}">
-                                {{ number_format(abs($balance)) }}
-                                @if($balance > 0)
-                                    (Remaining)
-                                @else
-                                    (Exceeded)
-                                @endif
-                            </span>
+                        <div class="stat-card mb-3">
+                            <div class="stat-content">
+                                <div class="stat-label text-purple">Balance</div>
+                                @php
+                                    // Calculate balance
+                                    $balance = ($object->amount ?? 0) - ($bonge_sales ?? 0);
+                                    // Determine balance class
+                                    $balanceClass = $balance > 0 ? 'text-danger' : 'text-success';
+                                    // Calculate percentage for progress bar
+                                    $percentage = 0;
+                                    if (isset($object->amount) && $object->amount > 0) {
+                                        $percentage = min(($bonge_sales ?? 0) / $object->amount * 100, 100);
+                                    }
+                                    // Determine status
+                                    $statusText = $object->status ?? 'Pending';
+                                    $statusClass = '';
+                                    switch(strtolower($statusText)) {
+                                        case 'active':
+                                            $statusClass = 'badge-primary';
+                                            break;
+                                        case 'completed':
+                                            $statusClass = 'badge-success';
+                                            break;
+                                        case 'pending':
+                                            $statusClass = 'badge-warning';
+                                            break;
+                                        default:
+                                            $statusClass = 'badge-secondary';
+                                    }
+                                @endphp
+                                <div class="stat-value {{ $balanceClass }}">
+                                    {{ number_format(abs($balance)) }}
+                                    {{ $balance > 0 ? '(Remaining)' : '(Exceeded)' }}
+                                </div>
+                            </div>
+                            <i class="si si-calculator stat-icon text-purple"></i>
                         </div>
-                        <div class="progress mt-2" style="height: 4px;">
-                            @php
-                                $percentage = $object->amount > 0 ? min(($bonge_sales ?? 0) / $object->amount * 100, 100) : 0;
-                            @endphp
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $percentage }}%"></div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 style="width: {{ $percentage }}%"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="block block-rounded bg-light">
-                    <div class="block-content">
-                        <div class="font-size-sm font-w600 text-uppercase text-muted">Status</div>
-                        <div class="mt-2">
-                            @php
-                                $statusClass = '';
-                                $statusText = $object->status ?? 'Pending';
 
-                                switch(strtolower($statusText)) {
-                                    case 'active':
-                                        $statusClass = 'badge-primary';
-                                        break;
-                                    case 'completed':
-                                        $statusClass = 'badge-success';
-                                        break;
-                                    case 'pending':
-                                        $statusClass = 'badge-warning';
-                                        break;
-                                    default:
-                                        $statusClass = 'badge-secondary';
-                                }
-                            @endphp
-                            <span class="badge {{ $statusClass }} font-size-sm">{{ $statusText }}</span>
+            <!-- Status Card -->
+            <div class="col-md-6">
+                <div class="block block-rounded border-left border-gray">
+                    <div class="block-content stat-card">
+                        <div class="stat-content">
+                            <div class="stat-label text-muted">Status</div>
+                            <div class="mt-2">
+                                <span class="badge {{ $statusClass }}">{{ $statusText }}</span>
+                            </div>
                         </div>
+                        <i class="si si-chart stat-icon text-muted"></i>
                     </div>
                 </div>
             </div>
@@ -238,14 +276,6 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-sm-12">
-                <div class="form-group">
-                    <label for="example-nf-amount">Description</label>
-                    <textarea type="text" class="form-control description" id="input-description" name="description">{{ $object->description ?? '' }}</textarea>
-                </div>
-            </div>
-        </div>
-        <div class="row">
             <div class="col-sm-6">
                 <div class="form-group">
                     <label for="example-nf-amount">Amount</label>
@@ -261,24 +291,92 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <label for="example-nf-amount">Description</label>
+                    <textarea type="text" class="form-control description" id="input-description" name="description">{{ $object->description ?? '' }}</textarea>
+                </div>
+            </div>
+        </div>
         <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update
                 </button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="SupplierTarget">Submit
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="SupplierTargetPreparation">Submit
                 </button>
             @endif
         </div>
     </form>
 </div>
 <script>
+    // Function to hide/show form fields
+    function toggleFormFields(show) {
+        if (show) {
+            $(".form-group:not(:first-child)").fadeIn();
+        } else {
+            $(".form-group:not(:first-child)").fadeOut();
+        }
+    }
+
+    let debounceTimer;
+
+    // Function to clear amount input and reset summary
+    // Updated clearAmountAndSummary function
+    function clearAmountAndSummary() {
+        $("#input-amount").val('');
+        $("#input-amount").next('input').val(''); // Clear formatted display input
+        recalculateBalance(0); // Reset balance with 0
+    }
+
+    // Optimized balance calculation function
+    // Updated balance calculation function
+    function recalculateBalance(currentAmount) {
+        // Get bonge sales and current used amount from the summary
+        const bongeSales = parseFloat($(".text-warning").next('.stat-value').text().replace(/,/g, '')) || 0;
+        const alreadyUsedAmount = parseFloat($("#efd_id option:selected").data('used-amount')) || 0;
+
+        // Add current input amount to already used amount
+        const totalUsedAmount = alreadyUsedAmount + (currentAmount || 0);
+
+        // Calculate remaining balance
+        const remainingBalance = bongeSales - totalUsedAmount;
+
+        // Update Balance Display
+        const balanceElement = $(".text-purple").next('.stat-value');
+        balanceElement.text(
+            Number(Math.abs(remainingBalance)).toLocaleString() +
+            (remainingBalance > 0 ? ' (Remaining)' : ' (Exceeded)')
+        );
+
+        // Update balance color
+        balanceElement.removeClass('text-danger text-success')
+            .addClass(remainingBalance > 0 ? 'text-danger' : 'text-success');
+
+        // Update Progress Bar based on bonge sales
+        const percentage = bongeSales > 0 ? Math.min((totalUsedAmount / bongeSales) * 100, 100) : 0;
+        $('.progress-bar').css('width', percentage + '%');
+    }
+
+    // Optimized amount input handler
+    $("#input-amount").on('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            const amount = parseFloat(this.value) || 0;
+            recalculateBalance(amount);
+        }, 100); // Debounce delay of 100ms
+    });
+
+    // Update EFD change handler
     $("#efd_id").change(function () {
+        clearAmountAndSummary();
         var efd_id = $(this).val();
         var date = $("#input-date").val();
 
-        // AJAX call for Bonge sales
+        if (!efd_id) return;
+
         $.ajax({
             url: '/get-bonge-sales',
             type: 'POST',
@@ -289,27 +387,43 @@
             },
             dataType: 'json',
             success: function (response) {
-                // Update the Bonge sales amount in the summary
-                $(".block-content .text-warning").next('.font-size-h4').text(
+                // Update EFD Name
+                $(".text-primary").next('.stat-value').text(response.efd_name);
+
+                // Update Bonge Sales
+                $(".text-warning").next('.stat-value').text(
                     Number(response.bonge_sales).toLocaleString()
                 );
 
-                // Recalculate balance
-                var targetAmount = parseFloat($(".text-success").next('.font-size-h4').text().replace(/,/g, ''));
-                var bongeSales = parseFloat(response.bonge_sales);
-                var balance = targetAmount - bongeSales;
+                // Check Bonge Sales condition
+                if (response.bonge_sales <= 0) {
+                    // Hide fields and update status
+                    toggleFormFields(false);
+                    var statusBadge = $(".badge");
+                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
+                        .addClass('badge-warning')
+                        .text('INSUFFICIENT');
+                } else {
+                    // Show fields and update status
+                    toggleFormFields(true);
+                    var statusBadge = $(".badge");
+                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
+                        .addClass('badge-primary')
+                        .text('Available');
+                }
 
-                // Update balance display
-                var balanceElement = $(".text-purple").next('.font-size-h4').find('span');
+                // Update Balance
+                const balanceElement = $(".text-purple").next('.stat-value');
                 balanceElement.text(
-                    Number(Math.abs(balance)).toLocaleString() +
-                    (balance > 0 ? ' (Remaining)' : ' (Exceeded)')
+                    Number(Math.abs(response.balance)).toLocaleString() +
+                    (response.balance > 0 ? ' (Remaining)' : ' (Exceeded)')
                 );
                 balanceElement.removeClass('text-danger text-success')
-                    .addClass(balance > 0 ? 'text-danger' : 'text-success');
+                    .addClass(response.balance > 0 ? 'text-danger' : 'text-success');
 
-                // Update progress bar
-                var percentage = targetAmount > 0 ? Math.min((bongeSales / targetAmount) * 100, 100) : 0;
+                // Update Progress Bar
+                const percentage = response.bonge_sales > 0 ?
+                    Math.min((response.used_amount / response.bonge_sales) * 100, 100) : 0;
                 $('.progress-bar').css('width', percentage + '%');
             },
             error: function (xhr, status, error) {
@@ -318,9 +432,13 @@
         });
     });
 
+
+    // Updated supplier target change handler
     $("#supplier_target_id").change(function () {
         var target_id = $(this).val();
         var date = $("#input-date").val();
+
+        if (!target_id) return;
 
         $.ajax({
             url: '/get-target-details',
@@ -332,31 +450,34 @@
             },
             dataType: 'json',
             success: function (response) {
-                // Update summary cards
-                $(".text-primary").next('.font-size-h4').text(response.supplier_name);
-                $(".text-info").next('.font-size-h4').text(
-                    response.beneficiary_name +
-                    ' (' + response.bank_name + ' - ' + response.account_number + ')'
-                );
-                $(".text-success").next('.font-size-h4').text(
+                // Update only beneficiary info and target amount
+                $(".text-info").next('.stat-value').text(response.beneficiary_name);
+                $(".stat-subtitle").text(response.bank_name + ' - ' + response.account_number);
+                $(".text-success").next('.stat-value').text(
                     Number(response.target_amount).toLocaleString()
                 );
 
-                // Update status
-                var statusBadge = $(".badge");
-                statusBadge.removeClass('badge-primary badge-warning')
-                    .addClass(response.is_available ? 'badge-primary' : 'badge-warning')
-                    .text(response.is_available ? 'Available' : 'Not Available');
+                // Check if remaining target is less than bonge sales
+                const bongeSales = parseFloat($(".text-warning").next('.stat-value').text().replace(/,/g, '')) || 0;
+                const remainingTarget = response.target_amount - response.used_amount;
 
-                // Update amount input max value
-                $("#input-amount").attr('max', response.remaining_balance);
+                // Update status and form visibility based on target vs bonge sales
+                if (remainingTarget < bongeSales) {
+                    toggleFormFields(false);
+                    var statusBadge = $(".badge");
+                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
+                        .addClass('badge-warning')
+                        .text('LOW TARGET AMOUNT');
+                } else {
+                    toggleFormFields(true);
+                    var statusBadge = $(".badge");
+                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
+                        .addClass('badge-primary')
+                        .text('Available');
+                }
 
-                // Update balance and progress
-                updateBalanceAndProgress(
-                    response.target_amount,
-                    response.used_amount,
-                    response.remaining_balance
-                );
+                // Set max allowed amount
+                $("#input-amount").attr('max', remainingTarget);
             },
             error: function (xhr, status, error) {
                 console.error("An error occurred: " + error);
@@ -364,20 +485,7 @@
         });
     });
 
-    // Helper function to update balance and progress
-    function updateBalanceAndProgress(targetAmount, usedAmount, remainingBalance) {
-        var balanceElement = $(".text-purple").next('.font-size-h4').find('span');
-        balanceElement.text(
-            Number(Math.abs(remainingBalance)).toLocaleString() +
-            (remainingBalance > 0 ? ' (Remaining)' : ' (Exceeded)')
-        );
-        balanceElement.removeClass('text-danger text-success')
-            .addClass(remainingBalance > 0 ? 'text-danger' : 'text-success');
-
-        var percentage = targetAmount > 0 ? Math.min((usedAmount / targetAmount) * 100, 100) : 0;
-        $('.progress-bar').css('width', percentage + '%');
-    }
-
+    // Update the amount formatting code
     $("input.amount").each((i, ele) => {
         let clone = $(ele).clone(false)
         clone.attr("type", "text")
@@ -385,24 +493,32 @@
         clone.val(Number(ele1.val()).toLocaleString("en"))
         $(ele).after(clone)
         $(ele).hide()
-        clone.mouseenter(() => {
 
+        // Add input event to original input
+        ele1.on('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const amount = parseFloat(this.value) || 0;
+                recalculateBalance(amount);
+            }, 100);
+        });
+
+        clone.mouseenter(() => {
             ele1.show()
             clone.hide()
         })
+
         setInterval(() => {
             let newv = Number(ele1.val()).toLocaleString("en")
             if (clone.val() != newv) {
                 clone.val(newv)
             }
-        }, 10)
+        }, 100) // Increased interval to reduce CPU usage
 
         $(ele).mouseleave(() => {
             $(clone).show()
             $(ele1).hide()
         })
-
-
     });
     $("input").on("change", function () {
         this.setAttribute(
