@@ -1,3 +1,4 @@
+@php use Illuminate\Support\Facades\DB; @endphp
 @extends('layouts.backend')
 
 @section('content')
@@ -115,7 +116,167 @@
                                 <div class="col-sm-2"></div>
                             </div>
                         </div>
+                        <div class="table-responsive">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped table-vcenter">
+                                            <thead>
+                                            @php
+                                                // Get only EFDs with bonge sales
+                                                $efdsWithSales = [];
+                                                $totalBongeSales = 0;
+                                                foreach($efds as $efd) {
+                                                    $bongeSales = \App\Models\Report::getTotalDaysSalesBonge($start_date, $end_date, $efd->bonge_customer_id);
+                                                    if($bongeSales > 0) {
+                                                        $efdsWithSales[] = [
+                                                            'efd' => $efd,
+                                                            'bonge_sales' => $bongeSales
+                                                        ];
+                                                        $totalBongeSales += $bongeSales;
+                                                    }
+                                                }
+                                            @endphp
+                                            <tr>
+                                                <th>EFD NAME</th>
+                                                @foreach($efdsWithSales as $efdData)
+                                                    <th class="text-right">{{ $efdData['efd']->name }}</th>
+                                                @endforeach
+                                                <th class="text-right bg-light">TOTAL</th>
+                                            </tr>
+                                            <tr>
+                                                <th>BONGE SALES</th>
+                                                @foreach($efdsWithSales as $efdData)
+                                                    <th class="text-right">{{ number_format($efdData['bonge_sales'], 2) }}</th>
+                                                @endforeach
+                                                <th class="text-right bg-light">{{ number_format($totalBongeSales, 2) }}</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @php
+                                                $beneficiariesWithAmount = DB::table('beneficiaries as b')
+                                                    ->select('b.*')
+                                                    ->join('supplier_targets as st', 'st.beneficiary_id', '=', 'b.id')
+                                                    ->join('supplier_target_preparations as stp', 'stp.supplier_target_id', '=', 'st.id')
+                                                    ->where('st.type', 'TARGET')
+                                                    ->whereBetween('stp.date', [$start_date, $end_date])
+                                                    ->groupBy('b.id', 'b.name')
+                                                    ->having(DB::raw('SUM(stp.amount)'), '>', 0)
+                                                    ->get();
+                                            @endphp
 
+                                            @foreach($beneficiariesWithAmount as $beneficiary)
+                                                <tr>
+                                                    <td>{{ $beneficiary->name }}</td>
+                                                    @php $rowTotal = 0; @endphp
+                                                    @foreach($efdsWithSales as $efdData)
+                                                        @php
+                                                            $amount = DB::table('supplier_target_preparations as stp')
+                                                                ->join('supplier_targets as st', 'st.id', '=', 'stp.supplier_target_id')
+                                                                ->where('st.beneficiary_id', $beneficiary->id)
+                                                                ->where('stp.efd_id', $efdData['efd']->id)
+                                                                ->where('st.type', 'TARGET')
+                                                                ->whereBetween('stp.date', [$start_date, $end_date])
+                                                                ->sum('stp.amount');
+                                                            $rowTotal += $amount;
+                                                        @endphp
+                                                        <td class="text-right">{{ $amount > 0 ? number_format($amount, 2) : '' }}</td>
+                                                    @endforeach
+                                                    <td class="text-right bg-light">{{ $rowTotal > 0 ? number_format($rowTotal, 2) : '' }}</td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                            <tfoot>
+                                            <tr class="bg-light">
+                                                <th>TOTAL</th>
+                                                @php $grandTotal = 0; @endphp
+                                                @foreach($efdsWithSales as $efdData)
+                                                    @php
+                                                        $totalAmount = DB::table('supplier_target_preparations as stp')
+                                                            ->join('supplier_targets as st', 'st.id', '=', 'stp.supplier_target_id')
+                                                            ->where('stp.efd_id', $efdData['efd']->id)
+                                                            ->where('st.type', 'TARGET')
+                                                            ->whereBetween('stp.date', [$start_date, $end_date])
+                                                            ->sum('stp.amount');
+                                                        $grandTotal += $totalAmount;
+                                                    @endphp
+                                                    <th class="text-right">{{ number_format($totalAmount, 2) }}</th>
+                                                @endforeach
+                                                <th class="text-right">{{ number_format($grandTotal, 2) }}</th>
+                                            </tr>
+                                            <tr class="bg-light-subtle">
+                                                <th>BALANCE</th>
+                                                @php $totalBalance = 0; @endphp
+                                                @foreach($efdsWithSales as $efdData)
+                                                    @php
+                                                        $totalAmount = DB::table('supplier_target_preparations as stp')
+                                                            ->join('supplier_targets as st', 'st.id', '=', 'stp.supplier_target_id')
+                                                            ->where('stp.efd_id', $efdData['efd']->id)
+                                                            ->where('st.type', 'TARGET')
+                                                            ->whereBetween('stp.date', [$start_date, $end_date])
+                                                            ->sum('stp.amount');
+
+                                                        $balance = $efdData['bonge_sales'] - $totalAmount;
+                                                        $totalBalance += $balance;
+                                                    @endphp
+                                                    <th class="text-right {{ $balance > 0 ? 'text-success' : 'text-danger' }}">
+                                                        {{ number_format($balance, 2) }}
+                                                    </th>
+                                                @endforeach
+                                                <th class="text-right {{ $totalBalance > 0 ? 'text-success' : 'text-danger' }}">
+                                                    {{ number_format($totalBalance, 2) }}
+                                                </th>
+                                            </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                                <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 100px;">#</th>
+                                    <th>Date</th>
+                                    <th>Supplier Target Preparation</th>
+                                    <th>Efd</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th class="text-center" style="width: 100px;">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach($supplier_target_preparation_lists as $supplier_target_preparation)
+
+                                    <tr id="collection-tr-{{$supplier_target_preparation->id}}">
+                                        <td>{{$loop->iteration}}</td>
+                                        <td>{{$supplier_target_preparation->date}}</td>
+                                        <td>{{$supplier_target_preparation->supplierTarget->supplier->name ?? null}} {{ number_format($supplier_target_preparation->supplierTarget->amount)}}</td>
+                                        <td>{{$supplier_target_preparation->efd->name ?? null}}</td>
+                                        <td>{{$supplier_target_preparation->description}}</td>
+                                        <td class="text-right">{{number_format($supplier_target_preparation->amount)}}</td>
+                                        <td class="text-center">
+                                            <div class="btn-group">
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Supplier Target Preparation"))
+                                                    <button type="button"
+                                                            onclick="deleteModelItem('SupplierTargetPreparation', {{$supplier_target_preparation->id}}, 'collection-tr-{{$supplier_target_preparation->id}}');"
+                                                            class="btn btn-sm btn-danger js-tooltip-enabled"
+                                                            data-toggle="tooltip" title="Delete"
+                                                            data-original-title="Delete">
+                                                        <i class="fa fa-times"></i>
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                @endforeach
+                                </tbody>
+
+                            </table>
+                        </div>
 
                     </div>
                 </div>

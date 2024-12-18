@@ -22,7 +22,7 @@ class SupplierTargetPreparation extends Model
         return $this->belongsTo(SupplierTarget::Class);
     }
 
-    public static function getAll($start_date,$end_date,$supplier_id)
+    public static function getAll($start_date,$end_date,$supplier_id = null)
     {
         $target = SupplierTargetPreparation::whereBetween('date',[$start_date,$end_date]);
         if($supplier_id){
