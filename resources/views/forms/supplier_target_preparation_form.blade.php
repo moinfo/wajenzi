@@ -401,7 +401,6 @@
             },
             dataType: 'json',
             success: function (response) {
-
                 // Update EFD Name
                 $(".text-primary").next('.stat-value').text(response.efd_name);
 
@@ -409,23 +408,6 @@
                 $(".text-warning").next('.stat-value').text(
                     Number(response.bonge_sales).toLocaleString()
                 );
-
-                // Check Bonge Sales condition
-                if (response.bonge_sales <= 0) {
-                    // Hide fields and update status
-                    toggleFormFields(false);
-                    var statusBadge = $(".badge");
-                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
-                        .addClass('badge-warning')
-                        .text('INSUFFICIENT');
-                } else {
-                    // Show fields and update status
-                    toggleFormFields(true);
-                    var statusBadge = $(".badge");
-                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
-                        .addClass('badge-primary')
-                        .text('Available');
-                }
 
                 // Update Balance
                 const balanceElement = $(".text-purple").next('.stat-value');
@@ -436,12 +418,54 @@
                 balanceElement.removeClass('text-danger text-success')
                     .addClass(response.balance > 0 ? 'text-danger' : 'text-success');
 
+                // Store original balance
+                originalBalance = response.balance;
+
+                // Check Balance condition
+                if (response.balance <= 0) {
+                    // Hide all fields except EFD
+                    toggleFormFields(false);
+
+                    // Update status to Not Available with red color
+                    var statusBadge = $(".badge");
+                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
+                        .addClass('badge-danger')
+                        .text('NOT AVAILABLE');
+
+                    // Add status description
+                    var statusContainer = statusBadge.closest('.mt-2');
+                    if (!statusContainer.next('.status-description').length) {
+                        statusContainer.after(
+                            '<div class="status-description mt-2">' +
+                            '<small class="text-danger font-italic">No balance available for preparation</small>' +
+                            '</div>'
+                        );
+                    }
+
+                    // Add warning message below the form
+                    $("#status-message").remove();
+                    $('form').after(
+                        '<div id="status-message" class="alert alert-danger mt-3">' +
+                        '<i class="si si-exclamation mr-1"></i> ' +
+                        'Cannot proceed: No available balance for preparation. Please select another EFD.' +
+                        '</div>'
+                    );
+                } else {
+                    // Show fields and update status
+                    toggleFormFields(true);
+                    var statusBadge = $(".badge");
+                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary badge-danger')
+                        .addClass('badge-primary')
+                        .text('AVAILABLE');
+
+                    // Remove any existing status description and message
+                    $('.status-description, #status-message').remove();
+                }
+
                 // Update Progress Bar
                 const percentage = response.bonge_sales > 0 ?
                     Math.min((response.used_amount / response.bonge_sales) * 100, 100) : 0;
                 $('.progress-bar').css('width', percentage + '%');
-
-                originalBalance = response.balance;
             },
             error: function (xhr, status, error) {
                 console.error("An error occurred while fetching Bonge sales: " + error);
