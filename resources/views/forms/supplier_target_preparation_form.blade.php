@@ -1,4 +1,17 @@
 <style>
+    .status-description {
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+
+    .status-description small {
+        display: block;
+        line-height: 1.4;
+    }
+
+    .font-italic {
+        font-style: italic;
+    }
     /* Card Base Styles */
     .block-rounded {
         border-radius: 0.75rem;
@@ -322,6 +335,7 @@
     }
 
     let debounceTimer;
+    let originalBalance = 0;
 
     // Function to clear amount input and reset summary
     // Updated clearAmountAndSummary function
@@ -387,6 +401,7 @@
             },
             dataType: 'json',
             success: function (response) {
+
                 // Update EFD Name
                 $(".text-primary").next('.stat-value').text(response.efd_name);
 
@@ -425,6 +440,8 @@
                 const percentage = response.bonge_sales > 0 ?
                     Math.min((response.used_amount / response.bonge_sales) * 100, 100) : 0;
                 $('.progress-bar').css('width', percentage + '%');
+
+                originalBalance = response.balance;
             },
             error: function (xhr, status, error) {
                 console.error("An error occurred while fetching Bonge sales: " + error);
@@ -450,34 +467,72 @@
             },
             dataType: 'json',
             success: function (response) {
-                // Update only beneficiary info and target amount
+                // Update beneficiary info and target amount
                 $(".text-info").next('.stat-value').text(response.beneficiary_name);
                 $(".stat-subtitle").text(response.bank_name + ' - ' + response.account_number);
                 $(".text-success").next('.stat-value').text(
                     Number(response.target_amount).toLocaleString()
                 );
 
-                // Check if remaining target is less than bonge sales
-                const bongeSales = parseFloat($(".text-warning").next('.stat-value').text().replace(/,/g, '')) || 0;
+                // Get current bonge sales balance and target remaining
+                const bongeBalance = parseFloat($(".text-purple").next('.stat-value').text().replace(/,/g, '')) || 0;
                 const remainingTarget = response.target_amount - response.used_amount;
 
-                // Update status and form visibility based on target vs bonge sales
-                if (remainingTarget < bongeSales) {
+                // Remove any existing status message
+                $("#status-message").remove();
+
+                // Update status and form visibility based on balance vs target
+                var statusBadge = $(".badge");
+                var statusContainer = statusBadge.closest('.mt-2');
+
+                if (bongeBalance > remainingTarget) {
                     toggleFormFields(false);
-                    var statusBadge = $(".badge");
                     statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
-                        .addClass('badge-warning')
-                        .text('LOW TARGET AMOUNT');
+                        .addClass('badge-danger')
+                        .text('UNAVAILABLE');
+
+                    // Add status description
+                    if (!statusContainer.next('.status-description').length) {
+                        statusContainer.after(
+                            '<div class="status-description mt-2">' +
+                            '<small class="text-danger font-italic">Insufficient Balance</small>' +
+                            '</div>'
+                        );
+                    }
+
+                    // Add warning message below the form
+                    $('form').after(
+                        '<div id="status-message" class="alert alert-danger mt-3">' +
+                        '<i class="si si-exclamation mr-1"></i> ' +
+                        'You cannot continue because amount not available to prepare. Please choose another supplier target list.' +
+                        '</div>'
+                    );
                 } else {
                     toggleFormFields(true);
-                    var statusBadge = $(".badge");
-                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
+                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary badge-danger')
                         .addClass('badge-primary')
-                        .text('Available');
+                        .text('AVAILABLE');
+
+                    // Add status description
+                    if (!statusContainer.next('.status-description').length) {
+                        statusContainer.after(
+                            '<div class="status-description mt-2">' +
+                            '<small class="text-success font-italic">Ready to proceed</small>' +
+                            '</div>'
+                        );
+                    }
+
+                    // Add success message below the form
+                    $('form').after(
+                        '<div id="status-message" class="alert alert-success mt-3">' +
+                        '<i class="si si-check mr-1"></i> ' +
+                        'You can proceed with the target preparation.' +
+                        '</div>'
+                    );
                 }
 
                 // Set max allowed amount
-                $("#input-amount").attr('max', remainingTarget);
+                $("#input-amount").attr('max', Math.min(bongeBalance, remainingTarget));
             },
             error: function (xhr, status, error) {
                 console.error("An error occurred: " + error);
@@ -486,39 +541,113 @@
     });
 
     // Update the amount formatting code
-    $("input.amount").each((i, ele) => {
-        let clone = $(ele).clone(false)
-        clone.attr("type", "text")
-        let ele1 = $(ele)
-        clone.val(Number(ele1.val()).toLocaleString("en"))
-        $(ele).after(clone)
-        $(ele).hide()
+    // Add this function to validate amount
+    function validateAmount(input) {
+        const bongeBalance = parseFloat($(".text-purple").next('.stat-value').text().replace(/,/g, '').replace(/[()Remaining|Exceeded]/g, '')) || 0;
+        const enteredAmount = parseFloat(input.value) || 0;
 
-        // Add input event to original input
-        ele1.on('input', function() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                const amount = parseFloat(this.value) || 0;
-                recalculateBalance(amount);
-            }, 100);
-        });
+        if (enteredAmount > bongeBalance) {
+            input.value = bongeBalance; // Set to max allowed
+            // Show validation message
+            if (!$("#amount-warning").length) {
+                $(input).after(
+                    '<div id="amount-warning" class="text-danger mt-1">' +
+                    '<small><i class="si si-exclamation"></i> Amount cannot exceed available balance of ' +
+                    Number(bongeBalance).toLocaleString() + '</small>' +
+                    '</div>'
+                );
+            }
+        } else {
+            $("#amount-warning").remove();
+        }
+        return input.value;
+    }
+
+    function getCleanNumber(text) {
+        return parseFloat(text.replace(/[^0-9.-]+/g, '').replace(/[()Remaining|Exceeded]/g, '')) || 0;
+    }
+
+    function validateAndUpdateAmount(input) {
+        const currentAmount = parseFloat(input.value) || 0;
+
+        $("#amount-warning").remove();
+
+        // Calculate new balance using original balance
+        const newBalance = originalBalance - currentAmount;
+
+        // If amount exceeds original balance
+        if (currentAmount > originalBalance) {
+            input.value = input.dataset.lastValidValue || '';
+            $(input).after(
+                '<div id="amount-warning" class="text-danger mt-1">' +
+                '<small><i class="si si-exclamation"></i> Cannot exceed available balance of ' +
+                Number(originalBalance).toLocaleString() + '</small>' +
+                '</div>'
+            );
+        } else {
+            input.dataset.lastValidValue = input.value;
+        }
+
+        // Update balance display
+        const balanceElement = $(".text-purple").next('.stat-value');
+        balanceElement.text(
+            Number(Math.abs(newBalance)).toLocaleString() +
+            (newBalance > 0 ? ' (Remaining)' : ' (Exceeded)')
+        );
+        balanceElement.removeClass('text-danger text-success')
+            .addClass(newBalance > 0 ? 'text-danger' : 'text-success');
+
+        // Update progress bar using original balance
+        const percentage = originalBalance > 0 ? Math.min((currentAmount / originalBalance) * 100, 100) : 0;
+        $('.progress-bar').css('width', percentage + '%');
+
+        return input.value;
+    }
+
+    $("#input-amount, input.amount").on('input keyup', function(e) {
+        clearTimeout(debounceTimer);
+
+        const currentValue = parseFloat(this.value) || 0;
+
+        if (currentValue > originalBalance) {
+            e.preventDefault();
+            this.value = this.dataset.lastValidValue || '';
+            return false;
+        }
+
+        debounceTimer = setTimeout(() => {
+            validateAndUpdateAmount(this);
+
+            // Update formatted display if exists
+            const formattedInput = $(this).next('input[type="text"]');
+            if (formattedInput.length) {
+                formattedInput.val(Number(this.value || 0).toLocaleString("en"));
+            }
+        }, 100);
+    });
+
+    // Update amount formatting
+    $("input.amount").each((i, ele) => {
+        let clone = $(ele).clone(false);
+        clone.attr("type", "text");
+        let ele1 = $(ele);
+
+        // Initialize with formatted value
+        clone.val(Number(ele1.val()).toLocaleString("en"));
+        $(ele).after(clone);
+        $(ele).hide();
 
         clone.mouseenter(() => {
-            ele1.show()
-            clone.hide()
-        })
+            ele1.show();
+            clone.hide();
+        });
 
-        setInterval(() => {
-            let newv = Number(ele1.val()).toLocaleString("en")
-            if (clone.val() != newv) {
-                clone.val(newv)
+        ele1.mouseleave(() => {
+            if (document.activeElement !== ele1[0]) {  // Only hide if not focused
+                clone.show();
+                ele1.hide();
             }
-        }, 100) // Increased interval to reduce CPU usage
-
-        $(ele).mouseleave(() => {
-            $(clone).show()
-            $(ele1).hide()
-        })
+        });
     });
     $("input").on("change", function () {
         this.setAttribute(
