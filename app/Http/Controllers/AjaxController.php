@@ -23,6 +23,7 @@ use App\Models\Staff;
 use App\Models\SubCategory;
 use App\Models\Supervisor;
 use App\Models\Supplier;
+use App\Models\SupplierTarget;
 use App\Models\System;
 use App\Models\User;
 use App\Models\UserGroup;
@@ -173,8 +174,11 @@ class AjaxController
                     $beneficiaries = Beneficiary::all();
                     $beneficiary_accounts = BeneficiaryAccount::all();
                     $wakalas = Wakala::all();
+                    $start_date = date('Y-m-d');
+                    $todayTargets = SupplierTarget::getTodayTargets($start_date);
                     $data = $request->input('data') ?? [
                             'slip_presentations' => $slip_presentations,
+                            'todayTargets' => $todayTargets,
                             'beneficiaries' => $beneficiaries,
                             'beneficiary_accounts' => $beneficiary_accounts,
                             'wakalas' => $wakalas,

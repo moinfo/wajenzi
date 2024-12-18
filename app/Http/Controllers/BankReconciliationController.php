@@ -327,7 +327,7 @@ class BankReconciliationController extends Controller
 
     public function supplier_target_preparation(Request $request)
     {
-        if($this->handleCrud($request, 'SupplierTarget')) {
+        if($this->handleCrud($request, 'SupplierTargetPreparation')) {
             return back();
         }
         $start_date = $request->input('start_date') ?? date('Y-m-d');
@@ -341,7 +341,7 @@ class BankReconciliationController extends Controller
             'suppliers' => $suppliers,
             'supplier_target_preparations' => $supplier_target_preparations,
         ];
-        return view('pages.bank_reconciliation.supplier_target_preparations')->with($data);
+        return view('pages.bank_reconciliation.supplier_targets_preparation')->with($data);
     }
 
     public function bank_deposit_reports(Request $request)

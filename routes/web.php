@@ -71,6 +71,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/accounting', [App\Http\Controllers\AccoutingController::class, 'index'])->name('accounting');
     Route::match(['get', 'post'], '/list_asset_properties', [App\Http\Controllers\AssetPropertyController::class, 'getAssetProperties'])->name('list_asset_properties');
     Route::match(['get', 'post'], '/supplier_beneficiary', [App\Http\Controllers\BeneficiaryController::class, 'getSupplierBeneficiary'])->name('supplier_beneficiary');
+    Route::match(['get', 'post'], '/get-bonge-sales', [App\Http\Controllers\ReportsController::class, 'getBongeSales'])->name('get.bonge.sales');
+    Route::match(['get', 'post'], '/get-target-details', [App\Http\Controllers\SupplierTargetController::class, 'getTargetDetails'])->name('get.target.details');
     Route::match(['get', 'post'], '/supplier_beneficiary_account', [App\Http\Controllers\BeneficiaryController::class, 'getSupplierBeneficiaryAccount'])->name('supplier_beneficiary_account');
     Route::match(['get', 'post'], '/transfer_balance', [App\Http\Controllers\BankReconciliationController::class, 'getTransferredBalance'])->name('transfer_balance');
     Route::match(['get', 'post'], '/sub_category_list', [App\Http\Controllers\SubCategoryController::class, 'getSubCategories'])->name('sub_category_list');
