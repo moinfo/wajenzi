@@ -96,22 +96,27 @@ class SupplierTarget extends Model
     // Add to SupplierTarget model
     public static function getTodayTargets($date)
     {
-        return self::select([
-            'supplier_targets.*',
-            'beneficiaries.name as beneficiary_name',
-            'beneficiary_accounts.bank_id',
-            'beneficiary_accounts.account',
-            DB::raw('(supplier_targets.amount - COALESCE((
+        return DB::table('supplier_targets as st')
+            ->select([
+                'st.id',
+                'st.beneficiary_id',
+                'b.name as beneficiary_name',
+                'st.amount',
+                DB::raw('(st.amount - COALESCE((
+                SELECT SUM(amount)
+                FROM supplier_target_preparations
+                WHERE supplier_target_id = st.id
+            ), 0)) as remaining_balance')
+            ])
+            ->join('beneficiaries as b', 'b.id', '=', 'st.beneficiary_id')
+            ->whereDate('st.date', $date)
+            ->where('st.type', 'TARGET')
+            ->groupBy('st.id', 'st.beneficiary_id', 'b.name', 'st.amount') // Group by to prevent duplicates
+            ->having(DB::raw('(st.amount - COALESCE((
             SELECT SUM(amount)
             FROM supplier_target_preparations
-            WHERE supplier_target_id = supplier_targets.id
-        ), 0)) as remaining_balance')
-        ])
-            ->join('beneficiaries', 'beneficiaries.id', '=', 'supplier_targets.beneficiary_id')
-            ->join('beneficiary_accounts', 'beneficiary_accounts.beneficiary_id', '=', 'beneficiaries.id')
-            ->whereDate('supplier_targets.date', $date)
-            ->where('supplier_targets.type', 'TARGET')
-            ->having('remaining_balance', '>', 0)
+            WHERE supplier_target_id = st.id
+        ), 0))'), '>', 0)
             ->get();
     }
 }
