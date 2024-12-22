@@ -77,6 +77,79 @@
     .bg-light { background-color: #f8fafc !important; }
     .bg-light-subtle { background-color: #f1f5f9 !important; }
 </style>
+<style>
+    .beneficiary-block {
+        padding: 0.5rem 0;
+    }
+
+    .beneficiary-block:not(:last-child) {
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .amount-block {
+        padding: 0.5rem 0;
+        font-weight: 600;
+    }
+
+    .amount-block:not(:last-child) {
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .btn-group .btn i {
+        font-size: 1rem;
+    }
+
+    .align-middle {
+        vertical-align: middle !important;
+    }
+</style>
+<style>
+    .beneficiary-details {
+        padding: 10px 0;
+    }
+
+    .acc-name {
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .bank-details {
+        line-height: 1.6;
+    }
+
+    .align-middle {
+        vertical-align: middle !important;
+    }
+
+    .text-right {
+        text-align: right !important;
+    }
+
+    .table td {
+        padding: 0.75rem !important;
+    }
+
+    /* Set fixed width for amount column to align numbers */
+    .table th:nth-child(3),
+    .table td:nth-child(3) {
+        width: 200px;
+        min-width: 200px;
+    }
+
+    /* Ensure consistent spacing in bank details */
+    .bank-details div {
+        padding: 2px 0;
+    }
+
+    /* Add subtle separation between accounts */
+    tr:not(:last-child) td {
+        border-bottom: 1px solid #e2e8f0;
+    }
+</style>
 @extends('layouts.backend')
 
 @section('content')
@@ -291,32 +364,93 @@
                     </div>
                 </div>
 
-                <style>
-                    .table th {
-                        background-color: #f8fafc;
-                        font-weight: 600;
-                        vertical-align: middle;
-                    }
 
-                    .table td {
-                        vertical-align: middle;
-                    }
 
-                    .text-success { color: #0f766e !important; }
-                    .text-danger { color: #dc2626 !important; }
+                <!-- Beneficiary Details Analysis -->
+                <div class="col-12 table-section">
+                    <h5 class="table-title">Beneficiary Account Details Analysis</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                            <tr>
+                                <th style="width: 200px;">EFD NAME</th>
+                                <th>BENEFICIARY DETAILS</th>
+                                <th class="text-right" style="width: 200px;">AMOUNT</th>
+                                <th class="text-center" style="width: 120px;">ACTIONS</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach($efds as $efd)
+                                @php
+                                    $bongeSales = \App\Models\Report::getTotalDaysSalesBonge($start_date, $end_date, $efd->bonge_customer_id);
+                                    if($bongeSales <= 0) continue;
 
-                    .font-weight-bold {
-                        font-weight: 600 !important;
-                    }
+                                    // Get beneficiaries with their accounts for this EFD
+                                    $beneficiaryDetails = DB::table('beneficiaries as b')
+                                        ->select([
+                                            'b.id',
+                                            'b.name',
+                                            'banks.name as bank_name',
+                                            'ba.account',
+                                            DB::raw('SUM(stp.amount) as total_amount')
+                                        ])
+                                        ->join('beneficiary_accounts as ba', 'ba.beneficiary_id', '=', 'b.id')
+                                        ->join('banks', 'banks.id', '=', 'ba.bank_id')
+                                        ->join('supplier_targets as st', 'st.beneficiary_id', '=', 'b.id')
+                                        ->join('supplier_target_preparations as stp', 'stp.supplier_target_id', '=', 'st.id')
+                                        ->where('stp.efd_id', $efd->id)
+                                        ->where('st.type', 'TARGET')
+                                        ->whereBetween('stp.date', [$start_date, $end_date])
+                                        ->groupBy('b.id', 'b.name', 'banks.name', 'ba.account')
+                                        ->having(DB::raw('SUM(stp.amount)'), '>', 0)
+                                        ->get();
 
-                    .bg-light {
-                        background-color: #f8fafc !important;
-                    }
+                                    if($beneficiaryDetails->isEmpty()) continue;
 
-                    .table-bordered td, .table-bordered th {
-                        border: 1px solid #e2e8f0;
-                    }
-                </style>
+                                    $rowCount = $beneficiaryDetails->groupBy('id')->count();
+                                @endphp
+
+                                @foreach($beneficiaryDetails->groupBy('id') as $beneficiaryId => $accounts)
+                                    <tr data-efd="{{ $efd->id }}">
+                                        @if($loop->first)
+                                            <td rowspan="{{ $rowCount }}" class="align-middle font-weight-bold">{{ $efd->name }}</td>
+                                        @endif
+                                        <td>
+                                            <div class="beneficiary-details">
+                                                <div class="acc-name">ACC NAME: {{ $accounts->first()->name }}</div>
+                                                <div class="bank-details ml-3">
+                                                    @foreach($accounts as $account)
+                                                        <div>{{ $account->bank_name }}: {{ $account->account }}</div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-right align-middle">{{ number_format($accounts->first()->total_amount, 2) }}</td>
+                                        @if($loop->first)
+                                            <td rowspan="{{ $rowCount }}" class="text-center align-middle">
+                                                <div class="btn-group">
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-success mr-1"
+                                                            onclick="shareDetailsWhatsApp('{{ $efd->id }}')"
+                                                            title="Share on WhatsApp">
+                                                        <i class="fab fa-whatsapp"></i>
+                                                    </button>
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-info"
+                                                            onclick="copyDetailsToClipboard('{{ $efd->id }}')"
+                                                            title="Copy to Clipboard">
+                                                        <i class="fa fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        @endif
+                                    </tr>
+                                @endforeach
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
                 <!-- Detailed List -->
                 <div class="col-12 table-section">
@@ -369,3 +503,80 @@
         </div>
     </div>
 @endsection
+<script>
+    function shareDetailsWhatsApp(efdId) {
+        const rows = document.querySelectorAll(`tr[data-efd="${efdId}"]`);
+        if (!rows.length) return;
+
+        let message = `EFD Details Report\n\n`;
+        let efdName = '';
+
+        // Find EFD name from the first row with rowspan
+        rows.forEach(row => {
+            const firstCell = row.cells[0];
+            if (firstCell && firstCell.hasAttribute('rowspan')) {
+                efdName = firstCell.textContent.trim();
+            }
+        });
+
+        message += `EFD: ${efdName}\n\n`;
+
+        // Get details from each row
+        rows.forEach(row => {
+            const accName = row.querySelector('.acc-name').textContent.trim();
+            const bankDetails = Array.from(row.querySelectorAll('.bank-details div'))
+                .map(div => div.textContent.trim())
+                .join('\n');
+            const amount = row.querySelector('.text-right').textContent.trim();
+
+            message += `${accName}\n${bankDetails}\n`;
+            message += `Amount: ${amount}\n\n`;
+        });
+
+        const encodedMessage = encodeURIComponent(message);
+        window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+    }
+
+    function copyDetailsToClipboard(efdId) {
+        const rows = document.querySelectorAll(`tr[data-efd="${efdId}"]`);
+        if (!rows.length) return;
+
+        let text = `EFD Details Report\n\n`;
+        let efdName = '';
+
+        // Find EFD name from the first row with rowspan
+        rows.forEach(row => {
+            const firstCell = row.cells[0];
+            if (firstCell && firstCell.hasAttribute('rowspan')) {
+                efdName = firstCell.textContent.trim();
+            }
+        });
+
+        text += `EFD: ${efdName}\n\n`;
+
+        // Get details from each row
+        rows.forEach(row => {
+            const accName = row.querySelector('.acc-name').textContent.trim();
+            const bankDetails = Array.from(row.querySelectorAll('.bank-details div'))
+                .map(div => div.textContent.trim())
+                .join('\n');
+            const amount = row.querySelector('.text-right').textContent.trim();
+
+            text += `${accName}\n${bankDetails}\n`;
+            text += `Amount: ${amount}\n\n`;
+        });
+
+        // Copy to clipboard
+        navigator.clipboard.writeText(text).then(() => {
+            // Show success indicator
+            const button = rows[0].querySelector('.btn-info');
+            const originalHtml = button.innerHTML;
+            button.innerHTML = '<i class="fa fa-check"></i>';
+            setTimeout(() => {
+                button.innerHTML = originalHtml;
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+        });
+    }
+</script>
