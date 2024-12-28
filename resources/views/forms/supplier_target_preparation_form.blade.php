@@ -692,92 +692,83 @@
         dropdownAutoWidth: true,
         allowClear: true,
     });
-    // Format number with commas in real-time
     $(document).ready(function() {
         const amountInput = $("#input-amount");
 
-        // Create a hidden input for the actual value
-        const hiddenInput = $('<input>', {
-            type: 'hidden',
-            name: amountInput.attr('name')
-        });
-
-        // Replace the original input's name to prevent double submission
-        amountInput.after(hiddenInput);
-        amountInput.removeAttr('name');
-
-        // Function to format number with commas
-        function formatNumber(num) {
-            if (!num) return '';
-
-            // Remove existing commas and non-numeric characters (except decimal)
-            num = num.toString().replace(/,/g, '').replace(/[^\d.]/g, '');
-
-            // Split number into whole and decimal parts
-            const parts = num.split('.');
-            const wholePart = parts[0];
-            const decimalPart = parts.length > 1 ? '.' + parts[1] : '';
-
-            // Add commas to whole part
-            return wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + decimalPart;
+        // Single function to format number
+        function formatNumber(value) {
+            if (!value) return '';
+            // Remove any non-digits/decimal
+            value = value.toString().replace(/[^\d.]/g, '');
+            // Ensure only one decimal point
+            const parts = value.split('.');
+            value = parts[0] + (parts.length > 1 ? '.' + parts[1] : '');
+            // Add commas to whole number part
+            return value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
-        // Function to get clean number without formatting
-        function getCleanNumber(value) {
+        // Single function to clean number
+        function cleanNumber(value) {
             return value.toString().replace(/,/g, '');
         }
 
-        // Handle real-time input
+        // Debounced version of validateAndUpdateAmount
+        const debouncedValidate = _.debounce((input) => {
+            const currentAmount = parseFloat(cleanNumber(input.value)) || 0;
+            const newBalance = originalBalance - currentAmount;
+
+            // Update balance display without changing input
+            const balanceElement = $(".text-purple").next('.stat-value');
+            balanceElement.text(
+                Number(Math.abs(newBalance)).toLocaleString() +
+                (newBalance > 0 ? ' (Remaining)' : ' (Exceeded)')
+            );
+            balanceElement.removeClass('text-danger text-success')
+                .addClass(newBalance > 0 ? 'text-danger' : 'text-success');
+
+            // Update progress bar
+            const percentage = originalBalance > 0 ?
+                Math.min((currentAmount / originalBalance) * 100, 100) : 0;
+            $('.progress-bar').css('width', percentage + '%');
+        }, 100);
+
+        // Single input handler
         amountInput.on('input', function(e) {
-            let value = this.value;
-            let cursorPosition = this.selectionStart;
-            let cleanValue = getCleanNumber(value);
+            const cursorPos = this.selectionStart;
+            const originalLength = this.value.length;
 
-            // Store the clean value in hidden input
-            hiddenInput.val(cleanValue);
+            // Get clean number and format
+            let value = cleanNumber(this.value);
+            const formatted = formatNumber(value);
 
-            // Only format if there's a value
-            if (cleanValue) {
-                const formattedValue = formatNumber(cleanValue);
+            // Only update if actually changed to prevent cursor jumping
+            if (this.value !== formatted) {
+                this.value = formatted;
 
-                // Calculate cursor position adjustment
-                const addedCommas = (formattedValue.match(/,/g) || []).length;
-                const oldCommas = (value.substr(0, cursorPosition).match(/,/g) || []).length;
-                cursorPosition += addedCommas - oldCommas;
-
-                // Update the visible input
-                this.value = formattedValue;
-
-                // Restore cursor position
-                this.setSelectionRange(cursorPosition, cursorPosition);
+                // Adjust cursor position
+                const newCursorPos = cursorPos + (formatted.length - originalLength);
+                this.setSelectionRange(newCursorPos, newCursorPos);
             }
 
-            // Trigger validation and balance update
-            validateAndUpdateAmount(this);
+            // Validate and update balance
+            debouncedValidate(this);
         });
 
-        // Handle form submission
-        $('form').on('submit', function() {
-            // Use the clean value from hidden input
-            const cleanValue = getCleanNumber(amountInput.val());
-            hiddenInput.val(cleanValue);
-            return true;
-        });
+        // Remove any other input/keyup handlers
+        amountInput.off('keyup');
 
         // Format initial value if exists
         if (amountInput.val()) {
-            amountInput.trigger('input');
+            amountInput.val(formatNumber(amountInput.val()));
         }
     });
 
-    // Add CSS to maintain consistent input appearance
+    // Add styles for right-aligned input
     $('<style>')
         .text(`
-        .amount {
+        #input-amount {
             text-align: right;
-        }
-        .amount:focus {
-            background-color: #fff !important;
+            direction: ltr;
         }
     `)
         .appendTo('head');
