@@ -1,3 +1,4 @@
+@php use App\Models\SupplierTargetPreparation; @endphp
 <style>
     /* Card Styles */
     .report-section {
@@ -229,6 +230,8 @@
                                             <th>Supplier</th>
                                             <th>Beneficiary</th>
                                             <th>Target</th>
+                                            <th>Targeted</th>
+                                            <th>Balance</th>
                                         </tr>
                                         </thead>
                                         <tbody>
@@ -237,12 +240,20 @@
                                             $total_difference = 0;
                                             $total_deposited = 0;
                                             $total_transfers = 0;
+                                            $total_targeted = 0;
+                                            $total_balance = 0;
                                             $efd_id = null;
                                         @endphp
                                         @foreach($supplier_target_preparations as $supplier_targets_report)
                                             @php
                                                 $total_target += $supplier_targets_report->total_target;
-                                            @endphp
+                                                $targeted = SupplierTargetPreparation::where('supplier_target_id', $supplier_targets_report->id)
+                                                    ->whereBetween('date', [$start_date, $end_date])
+                                                    ->sum('amount');
+                                                $total_targeted += $targeted;
+                                                $balance = $supplier_targets_report->total_target - $targeted;
+                                                $total_balance += $balance;
+                                                @endphp
                                             <tr id="supplier_targets_report-tr-{{$supplier_targets_report->id}}">
                                                 <td class="text-center">
                                                     {{$loop->iteration}}
@@ -250,6 +261,8 @@
                                                 <td class="font-w600">{{ $supplier_targets_report->supplier_name }}</td>
                                                 <td class="font-w600">{{ $supplier_targets_report->beneficiary_name }}</td>
                                                 <td class="text-right">{{ number_format($supplier_targets_report->total_target, 2) }}</td>
+                                                <td class="text-right">{{ number_format($targeted, 2) }}</td>
+                                                <td class="text-right">{{ number_format(($supplier_targets_report->total_target - $targeted), 2) }}</td>
                                             </tr>
                                         @endforeach
 
@@ -258,6 +271,8 @@
                                         <tr>
                                             <th class="text-right" colspan="3">TOTAL</th>
                                             <th class="text-right">{{number_format($total_target)}}</th>
+                                            <th class="text-right">{{number_format($total_targeted)}}</th>
+                                            <th class="text-right">{{number_format($total_balance)}}</th>
                                         </tr>
                                         </tfoot>
                                     </table>

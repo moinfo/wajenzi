@@ -52,7 +52,7 @@ class SupplierTarget extends Model
 
     public static function getTargetDifference($start_date, $end_date, $supplier_id)
     {
-        $target = SupplierTarget::select(DB::raw('supplier_targets.amount AS total_target'),'suppliers.name AS supplier_name','beneficiaries.name AS beneficiary_name','supplier_targets.supplier_id AS supplier_id','supplier_targets.date AS target_date')
+        $target = SupplierTarget::select(DB::raw('supplier_targets.amount AS total_target'),'supplier_targets.id','suppliers.name AS supplier_name','beneficiaries.name AS beneficiary_name','supplier_targets.supplier_id AS supplier_id','supplier_targets.date AS target_date')
             ->join('suppliers','suppliers.id','=','supplier_targets.supplier_id')
             ->join('beneficiaries','beneficiaries.id','=','supplier_targets.beneficiary_id');
         if ($supplier_id){
