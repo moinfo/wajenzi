@@ -400,65 +400,64 @@
                                     $bongeSales = \App\Models\Report::getTotalDaysSalesBonge($start_date, $end_date, $efd->bonge_customer_id);
                                     if($bongeSales <= 0) continue;
 
-                                    // Get beneficiaries with their accounts for this EFD
-                                    $beneficiaryDetails = DB::table('beneficiaries as b')
+                                    // First get all beneficiaries with their total amounts for this EFD
+                                    $beneficiariesWithAmounts = DB::table('supplier_target_preparations as stp')
                                         ->select([
-                                            'b.id',
-                                            'b.name',
-                                            'banks.name as bank_name',
-                                            'ba.account',
+                                            'st.beneficiary_id',
+                                            'b.name as beneficiary_name',
                                             DB::raw('SUM(stp.amount) as total_amount')
                                         ])
-                                        ->join('beneficiary_accounts as ba', 'ba.beneficiary_id', '=', 'b.id')
-                                        ->join('banks', 'banks.id', '=', 'ba.bank_id')
-                                        ->join('supplier_targets as st', 'st.beneficiary_id', '=', 'b.id')
-                                        ->join('supplier_target_preparations as stp', 'stp.supplier_target_id', '=', 'st.id')
+                                        ->join('supplier_targets as st', 'st.id', '=', 'stp.supplier_target_id')
+                                        ->join('beneficiaries as b', 'b.id', '=', 'st.beneficiary_id')
                                         ->where('stp.efd_id', $efd->id)
                                         ->where('st.type', 'TARGET')
                                         ->whereBetween('stp.date', [$start_date, $end_date])
-                                        ->groupBy('b.id', 'b.name', 'banks.name', 'ba.account')
+                                        ->groupBy('st.beneficiary_id', 'b.name')
                                         ->having(DB::raw('SUM(stp.amount)'), '>', 0)
                                         ->get();
 
-                                    if($beneficiaryDetails->isEmpty()) continue;
+                                    if($beneficiariesWithAmounts->isEmpty()) continue;
 
-                                    $rowCount = $beneficiaryDetails->groupBy('id')->count();
+                                    // Then get bank accounts for each beneficiary
+                                    foreach($beneficiariesWithAmounts as $beneficiary) {
+                                        $beneficiary->accounts = DB::table('beneficiary_accounts as ba')
+                                            ->select('banks.name as bank_name', 'ba.account')
+                                            ->join('banks', 'banks.id', '=', 'ba.bank_id')
+                                            ->where('ba.beneficiary_id', $beneficiary->beneficiary_id)
+                                            ->get();
+                                    }
                                 @endphp
 
-                                @foreach($beneficiaryDetails->groupBy('id') as $beneficiaryId => $accounts)
-                                    <tr data-efd="{{ $efd->id }}">
-                                        @if($loop->first)
-                                            <td rowspan="{{ $rowCount }}" class="align-middle font-weight-bold">{{ $efd->name }}</td>
-                                        @endif
+                                @foreach($beneficiariesWithAmounts as $beneficiary)
+                                    <tr data-efd="{{ $efd->id }}" data-row-id="{{ $loop->index }}">
+                                        <td class="efd-name font-weight-bold">{{ $efd->name }}</td>
                                         <td>
                                             <div class="beneficiary-details">
-                                                <div class="acc-name">ACC NAME: {{ $accounts->first()->name }}</div>
+                                                <div class="acc-name">ACC NAME: {{ $beneficiary->beneficiary_name }}</div>
                                                 <div class="bank-details ml-3">
-                                                    @foreach($accounts as $account)
+                                                    @foreach($beneficiary->accounts as $account)
                                                         <div>{{ $account->bank_name }}: {{ $account->account }}</div>
                                                     @endforeach
                                                 </div>
                                             </div>
                                         </td>
-                                        <td class="text-right align-middle">{{ number_format($accounts->first()->total_amount, 2) }}</td>
-                                        @if($loop->first)
-                                            <td rowspan="{{ $rowCount }}" class="text-center align-middle">
-                                                <div class="btn-group">
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-success mr-1"
-                                                            onclick="shareDetailsWhatsApp('{{ $efd->id }}')"
-                                                            title="Share on WhatsApp">
-                                                        <i class="fab fa-whatsapp"></i>
-                                                    </button>
-                                                    <button type="button"
-                                                            class="btn btn-sm btn-info"
-                                                            onclick="copyDetailsToClipboard('{{ $efd->id }}')"
-                                                            title="Copy to Clipboard">
-                                                        <i class="fa fa-copy"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        @endif
+                                        <td class="amount text-right align-middle">{{ number_format($beneficiary->total_amount, 2) }}</td>
+                                        <td class="text-center align-middle">
+                                            <div class="btn-group">
+                                                <button type="button"
+                                                        class="btn btn-sm btn-success mr-1"
+                                                        onclick="shareDetailsWhatsApp('{{ $efd->id }}', '{{ $loop->index }}')"
+                                                        title="Share on WhatsApp">
+                                                    <i class="fab fa-whatsapp"></i>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-info"
+                                                        onclick="copyDetailsToClipboard('{{ $efd->id }}', '{{ $loop->index }}')"
+                                                        title="Copy to Clipboard">
+                                                    <i class="fa fa-copy"></i>
+                                                </button>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforeach
                             @endforeach
@@ -519,72 +518,46 @@
     </div>
 @endsection
 <script>
-    function shareDetailsWhatsApp(efdId) {
-        const rows = document.querySelectorAll(`tr[data-efd="${efdId}"]`);
-        if (!rows.length) return;
+    function shareDetailsWhatsApp(efdId, rowId) {
+        const row = document.querySelector(`tr[data-efd="${efdId}"][data-row-id="${rowId}"]`);
+        if (!row) return;
+
+        const efdName = row.querySelector('.efd-name').textContent.trim();
+        const accName = row.querySelector('.acc-name').textContent.trim();
+        const bankDetails = Array.from(row.querySelectorAll('.bank-details div'))
+            .map(div => div.textContent.trim())
+            .join('\n');
+        const amount = row.querySelector('.amount').textContent.trim();
 
         let message = `EFD Details Report\n\n`;
-        let efdName = '';
-
-        // Find EFD name from the first row with rowspan
-        rows.forEach(row => {
-            const firstCell = row.cells[0];
-            if (firstCell && firstCell.hasAttribute('rowspan')) {
-                efdName = firstCell.textContent.trim();
-            }
-        });
-
-        message += `EFD: ${efdName}\n\n`;
-
-        // Get details from each row
-        rows.forEach(row => {
-            const accName = row.querySelector('.acc-name').textContent.trim();
-            const bankDetails = Array.from(row.querySelectorAll('.bank-details div'))
-                .map(div => div.textContent.trim())
-                .join('\n');
-            const amount = row.querySelector('.text-right').textContent.trim();
-
-            message += `${accName}\n${bankDetails}\n`;
-            message += `Amount: ${amount}\n\n`;
-        });
+        message += `EFD: ${efdName}\n`;
+        message += `${accName}\n`;
+        message += `${bankDetails}\n`;
+        message += `Amount: ${amount}`;
 
         const encodedMessage = encodeURIComponent(message);
         window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
     }
 
-    function copyDetailsToClipboard(efdId) {
-        const rows = document.querySelectorAll(`tr[data-efd="${efdId}"]`);
-        if (!rows.length) return;
+    function copyDetailsToClipboard(efdId, rowId) {
+        const row = document.querySelector(`tr[data-efd="${efdId}"][data-row-id="${rowId}"]`);
+        if (!row) return;
+
+        const efdName = row.querySelector('.efd-name').textContent.trim();
+        const accName = row.querySelector('.acc-name').textContent.trim();
+        const bankDetails = Array.from(row.querySelectorAll('.bank-details div'))
+            .map(div => div.textContent.trim())
+            .join('\n');
+        const amount = row.querySelector('.amount').textContent.trim();
 
         let text = `EFD Details Report\n\n`;
-        let efdName = '';
+        text += `EFD: ${efdName}\n`;
+        text += `${accName}\n`;
+        text += `${bankDetails}\n`;
+        text += `Amount: ${amount}`;
 
-        // Find EFD name from the first row with rowspan
-        rows.forEach(row => {
-            const firstCell = row.cells[0];
-            if (firstCell && firstCell.hasAttribute('rowspan')) {
-                efdName = firstCell.textContent.trim();
-            }
-        });
-
-        text += `EFD: ${efdName}\n\n`;
-
-        // Get details from each row
-        rows.forEach(row => {
-            const accName = row.querySelector('.acc-name').textContent.trim();
-            const bankDetails = Array.from(row.querySelectorAll('.bank-details div'))
-                .map(div => div.textContent.trim())
-                .join('\n');
-            const amount = row.querySelector('.text-right').textContent.trim();
-
-            text += `${accName}\n${bankDetails}\n`;
-            text += `Amount: ${amount}\n\n`;
-        });
-
-        // Copy to clipboard
         navigator.clipboard.writeText(text).then(() => {
-            // Show success indicator
-            const button = rows[0].querySelector('.btn-info');
+            const button = row.querySelector('.btn-info');
             const originalHtml = button.innerHTML;
             button.innerHTML = '<i class="fa fa-check"></i>';
             setTimeout(() => {
