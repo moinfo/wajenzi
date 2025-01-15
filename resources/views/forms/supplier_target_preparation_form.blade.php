@@ -412,11 +412,14 @@
 
         // Function to update displays
         function updateDisplays(data) {
-            $(".text-primary").next('.stat-value').text(data.efd_name);
-            $(".text-info").next('.stat-value').text(data.beneficiary_name);
-            $(".stat-subtitle").text(`${data.bank_name} - ${data.account_number}`);
+            $(".text-primary").next('.stat-value').text(data.efd_name || '-');
+            $(".text-info").next('.stat-value').text(data.beneficiary_name || '-');
+            $(".stat-subtitle").text(
+                `${data.bank_name || '-'} - ${data.account_number || '-'}`
+            );
             $(".text-success").next('.stat-value').text(formatAmount(data.target_amount));
             $(".text-warning").next('.stat-value').text(formatAmount(data.bonge_sales));
+
 
             const balanceElement = $(".text-purple").next('.stat-value');
             const balance = data.balance;
@@ -594,7 +597,13 @@
                 formState.lastTargetId = selectedTargetId;
             }
 
-            if (!selectedTargetId) return;
+            if (!selectedTargetId) {
+                // Reset beneficiary info when no target is selected
+                $(".text-info").next('.stat-value').text('-');
+                $(".stat-subtitle").text('- - -');
+                return;
+            }
+
 
             formState.isProcessing = true;
             $(this).prop('disabled', true);
@@ -614,6 +623,11 @@
                         throw new Error('Invalid server response');
                     }
 
+                    $(".text-info").next('.stat-value').text(response.beneficiary_name || '-');
+                    $(".stat-subtitle").text(
+                        `${response.bank_name || '-'} - ${response.account_number || '-'}`
+                    );
+
                     const bongeBalance = getCleanNumber($(".text-purple").next('.stat-value').text());
                     const remainingTarget = response.target_amount - response.used_amount;
 
@@ -631,6 +645,9 @@
                     }
                 })
                 .fail(function(xhr, status, error) {
+                    // Reset beneficiary info on error
+                    $(".text-info").next('.stat-value').text('-');
+                    $(".stat-subtitle").text('- - -');
                     console.error("Error fetching target details:", error);
                     showStatusMessage('danger', "Failed to fetch target details. Please try again.");
                 })
