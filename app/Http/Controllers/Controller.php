@@ -111,15 +111,22 @@ class Controller extends BaseController
     }
 
     private function crudAdd(Request $request, $class_name) {
-
         if($request->hasFile('file')) {
             $full_class_name = '\App\Models\\'. $class_name;
             $newObj = new $full_class_name();
             $request->validate([
                 'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048',
             ]);
+
+            // Check for amount_formatted and convert to amount if exists
+            if ($request->has('amount_formatted') && !empty($request->input('amount_formatted'))) {
+                $amount = Utility::strip_commas($request->input('amount_formatted'));
+            } else {
+                $amount = Utility::strip_commas($request->input('amount'));
+            }
+
             $request->request->add([
-                'amount' => Utility::strip_commas($request->input('amount')),
+                'amount' => $amount,
                 'credit' => Utility::strip_commas($request->input('credit')),
                 'debit' => Utility::strip_commas($request->input('debit')),
                 'net' => Utility::strip_commas($request->input('net')),
@@ -136,7 +143,7 @@ class Controller extends BaseController
             $name = time().'_'.$request->file->getClientOriginalName();
             $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
             $newObj->file = '/storage/'. $filePath;
-           // dd($newObj);
+            // dd($newObj);
             if($newObj->save()) {
                 return $newObj;
             } else {
@@ -145,8 +152,16 @@ class Controller extends BaseController
         }else{
             $full_class_name = '\App\Models\\'. $class_name;
             $newObj = new $full_class_name();
+
+            // Check for amount_formatted and convert to amount if exists
+            if ($request->has('amount_formatted') && !empty($request->input('amount_formatted'))) {
+                $amount = Utility::strip_commas($request->input('amount_formatted'));
+            } else {
+                $amount = Utility::strip_commas($request->input('amount'));
+            }
+
             $request->request->add([
-                'amount' => Utility::strip_commas($request->input('amount')),
+                'amount' => $amount,
                 'credit' => Utility::strip_commas($request->input('credit')),
                 'debit' => Utility::strip_commas($request->input('debit')),
                 'net' => Utility::strip_commas($request->input('net')),
@@ -166,12 +181,8 @@ class Controller extends BaseController
                 return false;
             }
         }
-
-
     }
-
     private function crudUpdate(Request $request, $class_name, $id = null){
-//        dd($request->updateItem);
         if($request->file()) {
             $full_class_name = '\App\Models\\'. ($class_name ?? $request->updateItem);
             $obj_id = $request->input('id') ?? $id; //TODO or the other way round
@@ -180,8 +191,16 @@ class Controller extends BaseController
             $request->validate([
                 'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048'
             ]);
+
+            // Check for amount_formatted and convert to amount if exists
+            if ($request->has('amount_formatted') && !empty($request->input('amount_formatted'))) {
+                $amount = Utility::strip_commas($request->input('amount_formatted'));
+            } else {
+                $amount = Utility::strip_commas($request->input('amount'));
+            }
+
             $request->request->add([
-                'amount' => Utility::strip_commas($request->input('amount')),
+                'amount' => $amount,
                 'credit' => Utility::strip_commas($request->input('credit')),
                 'debit' => Utility::strip_commas($request->input('debit')),
                 'net' => Utility::strip_commas($request->input('net')),
@@ -199,12 +218,20 @@ class Controller extends BaseController
             $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
             $obj->file = '/storage/'. $filePath;
             return $obj->save();
-        }else {
+        } else {
             $full_class_name = '\App\Models\\'. ($class_name ?? $request->updateItem);
             $obj_id = $request->input('id') ?? $id; //TODO or the other way round
             $obj = $full_class_name::find($request->input('id'));
+
+            // Check for amount_formatted and convert to amount if exists
+            if ($request->has('amount_formatted') && !empty($request->input('amount_formatted'))) {
+                $amount = Utility::strip_commas($request->input('amount_formatted'));
+            } else {
+                $amount = Utility::strip_commas($request->input('amount'));
+            }
+
             $request->request->add([
-                'amount' => Utility::strip_commas($request->input('amount')),
+                'amount' => $amount,
                 'credit' => Utility::strip_commas($request->input('credit')),
                 'debit' => Utility::strip_commas($request->input('debit')),
                 'net' => Utility::strip_commas($request->input('net')),

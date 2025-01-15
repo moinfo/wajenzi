@@ -292,8 +292,9 @@
             <div class="col-sm-6">
                 <div class="form-group">
                     <label for="example-nf-amount">Amount</label>
-                    <input type="number" class="form-control amount" id="input-amount" name="amount"
-                           value="{{ $object->amount ?? '' }}" placeholder="Target Amount" required>
+{{--                    <input type="number" class="form-control amount" id="input-amount" name="amount"--}}
+{{--                           value="{{ $object->amount ?? '' }}" placeholder="Target Amount" required>--}}
+                    <input type="text" class="form-control amount" value="{{ $object->amount ?? '' }}" id="input-amount" name="amount_formatted" placeholder="Target Amount" required>
                 </div>
             </div>
             <div class="col-sm-6">
@@ -325,372 +326,365 @@
     </form>
 </div>
 <script>
-    // Function to hide/show form fields
-    function toggleFormFields(show) {
-        if (show) {
-            $(".form-group:not(:first-child)").fadeIn();
-        } else {
-            $(".form-group:not(:first-child)").fadeOut();
+    $(document).ready(function() {
+        // Cache DOM elements
+        const $efdSelect = $("#efd_id");
+        const $targetSelect = $("#supplier_target_id");
+        const $amountInput = $("#input-amount");
+        const $dateInput = $("#input-date");
+        const $descriptionInput = $("#input-description");
+        const $form = $("form");
+
+        // Form state management
+        const formState = {
+            lastEfdId: null,
+            lastTargetId: null,
+            isProcessing: false,
+            originalBalance: 0
+        };
+
+        // Amount formatting functions
+        function formatAmount(amount) {
+            if (!amount) return '';
+            // Remove any existing commas and non-numeric characters except decimal point
+            amount = amount.toString().replace(/[^\d.]/g, '');
+
+            // Split number into integer and decimal parts
+            let [integerPart, decimalPart] = amount.split('.');
+
+            // Add commas to integer part
+            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+            // Return formatted amount (with decimal if it exists)
+            return decimalPart ? `${integerPart}.${decimalPart}` : integerPart;
         }
-    }
 
-    let debounceTimer;
-    let originalBalance = 0;
-
-    // Function to clear amount input and reset summary
-    // Updated clearAmountAndSummary function
-    function clearAmountAndSummary() {
-        $("#input-amount").val('');
-        $("#input-amount").next('input').val(''); // Clear formatted display input
-        recalculateBalance(0); // Reset balance with 0
-    }
-
-    // Optimized balance calculation function
-    // Updated balance calculation function
-    function recalculateBalance(currentAmount) {
-        // Get bonge sales and current used amount from the summary
-        const bongeSales = parseFloat($(".text-warning").next('.stat-value').text().replace(/,/g, '')) || 0;
-        const alreadyUsedAmount = parseFloat($("#efd_id option:selected").data('used-amount')) || 0;
-
-        // Add current input amount to already used amount
-        const totalUsedAmount = alreadyUsedAmount + (currentAmount || 0);
-
-        // Calculate remaining balance
-        const remainingBalance = bongeSales - totalUsedAmount;
-
-        // Update Balance Display
-        const balanceElement = $(".text-purple").next('.stat-value');
-        balanceElement.text(
-            Number(Math.abs(remainingBalance)).toLocaleString() +
-            (remainingBalance > 0 ? ' (Remaining)' : ' (Exceeded)')
-        );
-
-        // Update balance color
-        balanceElement.removeClass('text-danger text-success')
-            .addClass(remainingBalance > 0 ? 'text-danger' : 'text-success');
-
-        // Update Progress Bar based on bonge sales
-        const percentage = bongeSales > 0 ? Math.min((totalUsedAmount / bongeSales) * 100, 100) : 0;
-        $('.progress-bar').css('width', percentage + '%');
-    }
-
-    // Optimized amount input handler
-    $("#input-amount").on('input', function() {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
-            const amount = parseFloat(this.value) || 0;
-            recalculateBalance(amount);
-        }, 100); // Debounce delay of 100ms
-    });
-
-    // Update EFD change handler
-    $("#efd_id").change(function () {
-        clearAmountAndSummary();
-        var efd_id = $(this).val();
-        var date = $("#input-date").val();
-
-        if (!efd_id) return;
-
-        $.ajax({
-            url: '/get-bonge-sales',
-            type: 'POST',
-            data: {
-                efd_id: efd_id,
-                date: date,
-                _token: csrf_token
-            },
-            dataType: 'json',
-            success: function (response) {
-                // Update EFD Name
-                $(".text-primary").next('.stat-value').text(response.efd_name);
-
-                // Update Bonge Sales
-                $(".text-warning").next('.stat-value').text(
-                    Number(response.bonge_sales).toLocaleString()
-                );
-
-                // Update Balance
-                const balanceElement = $(".text-purple").next('.stat-value');
-                balanceElement.text(
-                    Number(Math.abs(response.balance)).toLocaleString() +
-                    (response.balance > 0 ? ' (Remaining)' : ' (Exceeded)')
-                );
-                balanceElement.removeClass('text-danger text-success')
-                    .addClass(response.balance > 0 ? 'text-danger' : 'text-success');
-
-                // Store original balance
-                originalBalance = response.balance;
-
-                // Check Balance condition
-                if (response.balance <= 0) {
-                    // Hide all fields except EFD
-                    toggleFormFields(false);
-
-                    // Update status to Not Available with red color
-                    var statusBadge = $(".badge");
-                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
-                        .addClass('badge-danger')
-                        .text('NOT AVAILABLE');
-
-                    // Add status description
-                    var statusContainer = statusBadge.closest('.mt-2');
-                    if (!statusContainer.next('.status-description').length) {
-                        statusContainer.after(
-                            '<div class="status-description mt-2">' +
-                            '<small class="text-danger font-italic">No balance available for preparation</small>' +
-                            '</div>'
-                        );
-                    }
-
-                    // Add warning message below the form
-                    $("#status-message").remove();
-                    $('form').after(
-                        '<div id="status-message" class="alert alert-danger mt-3">' +
-                        '<i class="si si-exclamation mr-1"></i> ' +
-                        'Cannot proceed: No available balance for preparation. Please select another EFD.' +
-                        '</div>'
-                    );
-                } else {
-                    // Show fields and update status
-                    toggleFormFields(true);
-                    var statusBadge = $(".badge");
-                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary badge-danger')
-                        .addClass('badge-primary')
-                        .text('AVAILABLE');
-
-                    // Remove any existing status description and message
-                    $('.status-description, #status-message').remove();
-                }
-
-                // Update Progress Bar
-                const percentage = response.bonge_sales > 0 ?
-                    Math.min((response.used_amount / response.bonge_sales) * 100, 100) : 0;
-                $('.progress-bar').css('width', percentage + '%');
-            },
-            error: function (xhr, status, error) {
-                console.error("An error occurred while fetching Bonge sales: " + error);
-            }
-        });
-    });
-
-
-    // Updated supplier target change handler
-    $("#supplier_target_id").change(function () {
-        var target_id = $(this).val();
-        var date = $("#input-date").val();
-
-        if (!target_id) return;
-
-        $.ajax({
-            url: '/get-target-details',
-            type: 'POST',
-            data: {
-                target_id: target_id,
-                date: date,
-                _token: csrf_token
-            },
-            dataType: 'json',
-            success: function (response) {
-                // Update beneficiary info and target amount
-                $(".text-info").next('.stat-value').text(response.beneficiary_name);
-                $(".stat-subtitle").text(response.bank_name + ' - ' + response.account_number);
-                $(".text-success").next('.stat-value').text(
-                    Number(response.target_amount).toLocaleString()
-                );
-
-                // Get current bonge sales balance and target remaining
-                const bongeBalance = parseFloat($(".text-purple").next('.stat-value').text().replace(/,/g, '')) || 0;
-                const remainingTarget = response.target_amount - response.used_amount;
-
-                // Remove any existing status message
-                $("#status-message").remove();
-
-                // Update status and form visibility based on balance vs target
-                var statusBadge = $(".badge");
-                var statusContainer = statusBadge.closest('.mt-2');
-
-                if (bongeBalance > remainingTarget) {
-                    toggleFormFields(false);
-                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary')
-                        .addClass('badge-danger')
-                        .text('UNAVAILABLE');
-
-                    // Add status description
-                    if (!statusContainer.next('.status-description').length) {
-                        statusContainer.after(
-                            '<div class="status-description mt-2">' +
-                            '<small class="text-danger font-italic">Insufficient Balance</small>' +
-                            '</div>'
-                        );
-                    }
-
-                    // Add warning message below the form
-                    $('form').after(
-                        '<div id="status-message" class="alert alert-danger mt-3">' +
-                        '<i class="si si-exclamation mr-1"></i> ' +
-                        'You cannot continue because amount not available to prepare. Please choose another supplier target list.' +
-                        '</div>'
-                    );
-                } else {
-                    toggleFormFields(true);
-                    statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary badge-danger')
-                        .addClass('badge-primary')
-                        .text('AVAILABLE');
-
-                    // Add status description
-                    if (!statusContainer.next('.status-description').length) {
-                        statusContainer.after(
-                            '<div class="status-description mt-2">' +
-                            '<small class="text-success font-italic">Ready to proceed</small>' +
-                            '</div>'
-                        );
-                    }
-
-                    // Add success message below the form
-                    $('form').after(
-                        '<div id="status-message" class="alert alert-success mt-3">' +
-                        '<i class="si si-check mr-1"></i> ' +
-                        'You can proceed with the target preparation.' +
-                        '</div>'
-                    );
-                }
-
-                // Set max allowed amount
-                $("#input-amount").attr('max', Math.min(bongeBalance, remainingTarget));
-            },
-            error: function (xhr, status, error) {
-                console.error("An error occurred: " + error);
-            }
-        });
-    });
-
-    // Update the amount formatting code
-    // Add this function to validate amount
-    function validateAmount(input) {
-        const bongeBalance = parseFloat($(".text-purple").next('.stat-value').text().replace(/,/g, '').replace(/[()Remaining|Exceeded]/g, '')) || 0;
-        const enteredAmount = parseFloat(input.value) || 0;
-
-        if (enteredAmount > bongeBalance) {
-            input.value = bongeBalance; // Set to max allowed
-            // Show validation message
-            if (!$("#amount-warning").length) {
-                $(input).after(
-                    '<div id="amount-warning" class="text-danger mt-1">' +
-                    '<small><i class="si si-exclamation"></i> Amount cannot exceed available balance of ' +
-                    Number(bongeBalance).toLocaleString() + '</small>' +
-                    '</div>'
-                );
-            }
-        } else {
-            $("#amount-warning").remove();
+        function unformatAmount(amount) {
+            if (!amount) return 0;
+            // Remove all commas and return as number
+            return parseFloat(amount.toString().replace(/,/g, '')) || 0;
         }
-        return input.value;
-    }
 
-    function getCleanNumber(text) {
-        return parseFloat(text.replace(/[^0-9.-]+/g, '').replace(/[()Remaining|Exceeded]/g, '')) || 0;
-    }
+        // Function to get clean number from formatted string
+        function getCleanNumber(text) {
+            if (!text) return 0;
+            return parseFloat(text.toString().replace(/[^0-9.-]+/g, '').replace(/[()Remaining|Exceeded]/g, '')) || 0;
+        }
 
-    function validateAndUpdateAmount(input) {
-        const currentAmount = parseFloat(input.value) || 0;
+        // Function to format number with commas
+        function formatNumber(number) {
+            return Number(number || 0).toLocaleString("en");
+        }
 
-        $("#amount-warning").remove();
+        // Function to show/hide form fields
+        function toggleFormFields(show) {
+            const fields = $(".form-group:not(:first-child)");
+            show ? fields.fadeIn() : fields.fadeOut();
+        }
 
-        // Calculate new balance using original balance
-        const newBalance = originalBalance - currentAmount;
+        // Function to reset form fields
+        function resetFormFields(excludeEfd = false) {
+            if (!excludeEfd) {
+                $efdSelect.val('').trigger('change');
+            }
 
-        // If amount exceeds original balance
-        if (currentAmount > originalBalance) {
-            input.value = input.dataset.lastValidValue || '';
-            $(input).after(
-                '<div id="amount-warning" class="text-danger mt-1">' +
-                '<small><i class="si si-exclamation"></i> Cannot exceed available balance of ' +
-                Number(originalBalance).toLocaleString() + '</small>' +
-                '</div>'
+            $targetSelect.val('').trigger('change');
+            $amountInput.val('');
+            $descriptionInput.val('');
+
+            // Reset displays
+            updateDisplays({
+                efd_name: '-',
+                beneficiary_name: '-',
+                bank_name: '-',
+                account_number: '-',
+                target_amount: 0,
+                bonge_sales: 0,
+                balance: 0
+            });
+
+            // Reset progress bar
+            updateProgressBar(0);
+
+            // Remove any messages
+            $("#status-message, #amount-warning").remove();
+        }
+
+        // Function to update displays
+        function updateDisplays(data) {
+            $(".text-primary").next('.stat-value').text(data.efd_name);
+            $(".text-info").next('.stat-value').text(data.beneficiary_name);
+            $(".stat-subtitle").text(`${data.bank_name} - ${data.account_number}`);
+            $(".text-success").next('.stat-value').text(formatAmount(data.target_amount));
+            $(".text-warning").next('.stat-value').text(formatAmount(data.bonge_sales));
+
+            const balanceElement = $(".text-purple").next('.stat-value');
+            const balance = data.balance;
+            balanceElement.text(
+                formatAmount(Math.abs(balance)) +
+                (balance > 0 ? ' (Remaining)' : ' (Exceeded)')
             );
-        } else {
-            input.dataset.lastValidValue = input.value;
+            balanceElement.removeClass('text-danger text-success')
+                .addClass(balance > 0 ? 'text-danger' : 'text-success');
         }
 
-        // Update balance display
-        const balanceElement = $(".text-purple").next('.stat-value');
-        balanceElement.text(
-            Number(Math.abs(newBalance)).toLocaleString() +
-            (newBalance > 0 ? ' (Remaining)' : ' (Exceeded)')
-        );
-        balanceElement.removeClass('text-danger text-success')
-            .addClass(newBalance > 0 ? 'text-danger' : 'text-success');
-
-        // Update progress bar using original balance
-        const percentage = originalBalance > 0 ? Math.min((currentAmount / originalBalance) * 100, 100) : 0;
-        $('.progress-bar').css('width', percentage + '%');
-
-        return input.value;
-    }
-
-    $("#input-amount, input.amount").on('input keyup', function(e) {
-        clearTimeout(debounceTimer);
-
-        const currentValue = parseFloat(this.value) || 0;
-
-        if (currentValue > originalBalance) {
-            e.preventDefault();
-            this.value = this.dataset.lastValidValue || '';
-            return false;
+        // Function to update progress bar
+        function updateProgressBar(percentage) {
+            $('.progress-bar').css('width', `${Math.min(percentage, 100)}%`);
         }
 
-        debounceTimer = setTimeout(() => {
+        // Function to show status message
+        function showStatusMessage(type, message) {
+            $("#status-message").remove();
+            const icon = type === 'success' ? 'check' : 'exclamation';
+            $form.after(`
+            <div id="status-message" class="alert alert-${type} mt-3">
+                <i class="si si-${icon} mr-1"></i> ${message}
+            </div>
+        `);
+        }
+
+        // Function to update status badge
+        function updateStatusBadge(status, description) {
+            const statusBadge = $(".badge");
+            const statusContainer = statusBadge.closest('.mt-2');
+
+            statusBadge.removeClass('badge-primary badge-warning badge-success badge-secondary badge-danger')
+                .addClass(`badge-${status.toLowerCase()}`)
+                .text(status.toUpperCase());
+
+            $('.status-description').remove();
+            if (description) {
+                statusContainer.after(`
+                <div class="status-description mt-2">
+                    <small class="text-${status.toLowerCase()} font-italic">${description}</small>
+                </div>
+            `);
+            }
+        }
+
+        // Function to validate and update amount display
+        function validateAndUpdateAmount(input) {
+            const currentAmount = unformatAmount(input.value);
+            $("#amount-warning").remove();
+
+            const newBalance = formState.originalBalance - currentAmount;
+
+            if (currentAmount > formState.originalBalance) {
+                input.value = formatAmount(input.dataset.lastValidValue || '');
+                $(input).after(`
+                <div id="amount-warning" class="text-danger mt-1">
+                    <small><i class="si si-exclamation"></i> Cannot exceed available balance of ${formatAmount(formState.originalBalance)}</small>
+                </div>
+            `);
+            } else {
+                input.dataset.lastValidValue = unformatAmount(input.value);
+            }
+
+            // Update balance display
+            const balanceElement = $(".text-purple").next('.stat-value');
+            balanceElement.text(
+                formatAmount(Math.abs(newBalance)) +
+                (newBalance > 0 ? ' (Remaining)' : ' (Exceeded)')
+            );
+            balanceElement.removeClass('text-danger text-success')
+                .addClass(newBalance > 0 ? 'text-danger' : 'text-success');
+
+            // Update progress bar
+            updateProgressBar((currentAmount / formState.originalBalance) * 100);
+        }
+
+        // Initialize datepicker
+        $('.datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true
+        });
+
+        // Initialize select2
+        $(".select2").select2({
+            theme: "bootstrap",
+            placeholder: "Choose",
+            width: 'auto',
+            dropdownAutoWidth: true,
+            allowClear: true
+        });
+
+        // Enhanced amount input handling
+        $amountInput.on('input', function(e) {
+            let cursorPosition = this.selectionStart;
+            const originalLength = this.value.length;
+
+            let value = unformatAmount(this.value);
+            const formattedValue = formatAmount(value.toString());
+
+            this.value = formattedValue;
+
+            const lengthDiff = formattedValue.length - originalLength;
+            cursorPosition += lengthDiff;
+            this.setSelectionRange(cursorPosition, cursorPosition);
+
             validateAndUpdateAmount(this);
-
-            // Update formatted display if exists
-            const formattedInput = $(this).next('input[type="text"]');
-            if (formattedInput.length) {
-                formattedInput.val(Number(this.value || 0).toLocaleString("en"));
-            }
-        }, 100);
-    });
-
-    // Update amount formatting
-    $("input.amount").each((i, ele) => {
-        let clone = $(ele).clone(false);
-        clone.attr("type", "text");
-        let ele1 = $(ele);
-
-        // Initialize with formatted value
-        clone.val(Number(ele1.val()).toLocaleString("en"));
-        $(ele).after(clone);
-        $(ele).hide();
-
-        clone.mouseenter(() => {
-            ele1.show();
-            clone.hide();
         });
 
-        ele1.mouseleave(() => {
-            if (document.activeElement !== ele1[0]) {  // Only hide if not focused
-                clone.show();
-                ele1.hide();
+        // EFD change handler
+        $efdSelect.on('change', function() {
+            const selectedEfdId = $(this).val();
+
+            if (formState.isProcessing) return;
+
+            if (selectedEfdId !== formState.lastEfdId) {
+                resetFormFields(true);
+                formState.lastEfdId = selectedEfdId;
+            }
+
+            if (!selectedEfdId) return;
+
+            formState.isProcessing = true;
+            $(this).prop('disabled', true);
+
+            $.ajax({
+                url: '/get-bonge-sales',
+                type: 'POST',
+                data: {
+                    efd_id: selectedEfdId,
+                    date: $dateInput.val(),
+                    _token: csrf_token
+                },
+                dataType: 'json'
+            })
+                .done(function(response) {
+                    if (!response || typeof response !== 'object') {
+                        throw new Error('Invalid server response');
+                    }
+
+                    formState.originalBalance = response.balance;
+                    updateDisplays(response);
+
+                    if (response.balance <= 0) {
+                        toggleFormFields(false);
+                        updateStatusBadge('danger', 'No balance available for preparation');
+                        showStatusMessage('danger', 'Cannot proceed: No available balance for preparation. Please select another EFD.');
+                    } else {
+                        toggleFormFields(true);
+                        updateStatusBadge('primary', 'Ready to proceed');
+                    }
+
+                    updateProgressBar((response.used_amount / response.bonge_sales) * 100);
+                })
+                .fail(function(xhr, status, error) {
+                    console.error("Error fetching Bonge sales:", error);
+                    showStatusMessage('danger', "Failed to fetch EFD data. Please try again.");
+                })
+                .always(function() {
+                    formState.isProcessing = false;
+                    $efdSelect.prop('disabled', false);
+                });
+        });
+
+        // Target change handler
+        $targetSelect.on('change', function() {
+            const selectedTargetId = $(this).val();
+
+            if (formState.isProcessing) return;
+
+            if (selectedTargetId !== formState.lastTargetId) {
+                $amountInput.val('');
+                $descriptionInput.val('');
+                formState.lastTargetId = selectedTargetId;
+            }
+
+            if (!selectedTargetId) return;
+
+            formState.isProcessing = true;
+            $(this).prop('disabled', true);
+
+            $.ajax({
+                url: '/get-target-details',
+                type: 'POST',
+                data: {
+                    target_id: selectedTargetId,
+                    date: $dateInput.val(),
+                    _token: csrf_token
+                },
+                dataType: 'json'
+            })
+                .done(function(response) {
+                    if (!response || typeof response !== 'object') {
+                        throw new Error('Invalid server response');
+                    }
+
+                    const bongeBalance = getCleanNumber($(".text-purple").next('.stat-value').text());
+                    const remainingTarget = response.target_amount - response.used_amount;
+
+                    if (bongeBalance > remainingTarget) {
+                        toggleFormFields(false);
+                        updateStatusBadge('danger', 'Insufficient Balance');
+                        showStatusMessage('danger', 'You cannot continue because amount not available to prepare. Please choose another supplier target list.');
+                    } else {
+                        toggleFormFields(true);
+                        updateStatusBadge('primary', 'Ready to proceed');
+                        showStatusMessage('success', 'You can proceed with the target preparation.');
+
+                        // Set max allowed amount
+                        $amountInput.attr('max', Math.min(bongeBalance, remainingTarget));
+                    }
+                })
+                .fail(function(xhr, status, error) {
+                    console.error("Error fetching target details:", error);
+                    showStatusMessage('danger', "Failed to fetch target details. Please try again.");
+                })
+                .always(function() {
+                    formState.isProcessing = false;
+                    $targetSelect.prop('disabled', false);
+                });
+        });
+
+        // Date change handler
+        $dateInput.on('change', function() {
+            resetFormFields();
+        });
+
+        // Form submission handler
+        $form.on('submit', function(e) {
+            if (formState.isProcessing) {
+                e.preventDefault();
+                return;
+            }
+
+            const amount = unformatAmount($amountInput.val());
+
+            if (!$('#unformatted_amount').length) {
+                $('<input>').attr({
+                    type: 'hidden',
+                    id: 'unformatted_amount',
+                    name: 'amount'
+                }).appendTo($form);
+            }
+
+            $('#unformatted_amount').val(amount);
+
+            if (!$efdSelect.val() || !$targetSelect.val() || !amount) {
+                e.preventDefault();
+                showStatusMessage('danger', "Please fill in all required fields.");
+                return;
+            }
+
+            const balance = unformatAmount($(".text-purple").next('.stat-value').text());
+            if (amount > balance) {
+                e.preventDefault();
+                showStatusMessage('danger', "Amount exceeds available balance.");
+                return;
             }
         });
-    });
-    $("input").on("change", function () {
-        this.setAttribute(
-            "data-date",
-            moment(this.value, "YYYY-MM-DD")
-                .format(this.getAttribute("data-date-format"))
-        )
-    }).trigger("change")
-</script>
-<script>
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
-    });
-    $(".select2").select2({
-        theme: "bootstrap",
-        placeholder: "Choose",
-        width: 'auto',
-        dropdownAutoWidth: true,
-        allowClear: true,
+
+        // Initialize amount formatting if there's an existing value
+        if ($amountInput.val()) {
+            $amountInput.val(formatAmount($amountInput.val()));
+        }
+
+        // Initialize form
+        resetFormFields();
     });
 </script>
 
