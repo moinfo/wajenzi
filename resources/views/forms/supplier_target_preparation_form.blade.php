@@ -340,7 +340,8 @@
             lastEfdId: null,
             lastTargetId: null,
             isProcessing: false,
-            originalBalance: 0
+            originalBalance: 0,
+            remainingTarget: 0
         };
 
         // Amount formatting functions
@@ -471,13 +472,13 @@
             const currentAmount = unformatAmount(input.value);
             $("#amount-warning").remove();
 
-            const newBalance = formState.originalBalance - currentAmount;
+            const newBalance = formState.remainingTarget - currentAmount;
 
-            if (currentAmount > formState.originalBalance) {
+            if (currentAmount > formState.remainingTarget) {
                 input.value = formatAmount(input.dataset.lastValidValue || '');
                 $(input).after(`
                 <div id="amount-warning" class="text-danger mt-1">
-                    <small><i class="si si-exclamation"></i> Cannot exceed available balance of ${formatAmount(formState.originalBalance)}</small>
+                    <small><i class="si si-exclamation"></i> Cannot exceed available balance of ${formatAmount(formState.remainingTarget)}</small>
                 </div>
             `);
             } else {
@@ -494,7 +495,7 @@
                 .addClass(newBalance > 0 ? 'text-danger' : 'text-success');
 
             // Update progress bar
-            updateProgressBar((currentAmount / formState.originalBalance) * 100);
+            updateProgressBar((currentAmount / formState.remainingTarget) * 100);
         }
 
         // Initialize datepicker
@@ -631,7 +632,9 @@
                     const bongeBalance = getCleanNumber($(".text-purple").next('.stat-value').text());
                     const remainingTarget = response.target_amount - response.used_amount;
 
-                    if (bongeBalance > remainingTarget) {
+                    formState.remainingTarget = remainingTarget;
+
+                    if (bongeBalance < remainingTarget) {
                         toggleFormFields(false);
                         updateStatusBadge('danger', 'Insufficient Balance');
                         showStatusMessage('danger', 'You cannot continue because amount not available to prepare. Please choose another supplier target list.');
