@@ -474,16 +474,40 @@
 
             const newBalance = formState.remainingTarget - currentAmount;
 
-            if (currentAmount > formState.remainingTarget) {
-                input.value = formatAmount(input.dataset.lastValidValue || '');
-                $(input).after(`
-                <div id="amount-warning" class="text-danger mt-1">
-                    <small><i class="si si-exclamation"></i> Cannot exceed available balance of ${formatAmount(formState.remainingTarget)}</small>
-                </div>
-            `);
-            } else {
-                input.dataset.lastValidValue = unformatAmount(input.value);
+            if((formState.remainingTarget > formState.originalBalance)){
+                if (currentAmount > formState.originalBalance) {
+                    input.value = formatAmount(input.dataset.lastValidValue || '');
+                    $(input).after(`
+                    <div id="amount-warning" class="text-danger mt-1">
+                        <small><i class="si si-exclamation"></i> Cannot exceed available balance of Bonge Sales ${formatAmount(formState.originalBalance)}</small>
+                    </div>
+                `);
+                } else {
+                    input.dataset.lastValidValue = unformatAmount(input.value);
+                }
+            }else {
+                if (currentAmount > formState.remainingTarget) {
+                    input.value = formatAmount(input.dataset.lastValidValue || '');
+                    $(input).after(`
+                    <div id="amount-warning" class="text-danger mt-1">
+                        <small><i class="si si-exclamation"></i> Cannot exceed available balance of Supplier Target ${formatAmount(formState.remainingTarget)}</small>
+                    </div>
+                `);
+                } else {
+                    input.dataset.lastValidValue = unformatAmount(input.value);
+                }
             }
+
+            // if ( (formState.remainingTarget > formState.originalBalance) ?  currentAmount > formState.originalBalance : currentAmount > formState.remainingTarget) {
+            //     input.value = formatAmount(input.dataset.lastValidValue || '');
+            //     $(input).after(`
+            //     <div id="amount-warning" class="text-danger mt-1">
+            //         <small><i class="si si-exclamation"></i> Cannot exceed available balance of ${formatAmount(formState.remainingTarget)}</small>
+            //     </div>
+            // `);
+            // } else {
+            //     input.dataset.lastValidValue = unformatAmount(input.value);
+            // }
 
             // Update balance display
             const balanceElement = $(".text-purple").next('.stat-value');
@@ -634,18 +658,18 @@
 
                     formState.remainingTarget = remainingTarget;
 
-                    if (bongeBalance < remainingTarget) {
-                        toggleFormFields(false);
-                        updateStatusBadge('danger', 'Insufficient Balance');
-                        showStatusMessage('danger', 'You cannot continue because amount not available to prepare. Please choose another supplier target list.');
-                    } else {
+                    // if (bongeBalance < remainingTarget) {
+                    //     toggleFormFields(false);
+                    //     updateStatusBadge('danger', 'Insufficient Balance');
+                    //     showStatusMessage('danger', 'You cannot continue because amount not available to prepare. Please choose another supplier target list.');
+                    // } else {
                         toggleFormFields(true);
                         updateStatusBadge('primary', 'Ready to proceed');
                         showStatusMessage('success', 'You can proceed with the target preparation.');
 
                         // Set max allowed amount
                         $amountInput.attr('max', Math.min(bongeBalance, remainingTarget));
-                    }
+                    // }
                 })
                 .fail(function(xhr, status, error) {
                     // Reset beneficiary info on error
