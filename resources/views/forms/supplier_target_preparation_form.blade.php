@@ -474,29 +474,29 @@
 
             const newBalance = formState.remainingTarget - currentAmount;
 
-            if((formState.remainingTarget > formState.originalBalance)){
-                if (currentAmount > formState.originalBalance) {
-                    input.value = formatAmount(input.dataset.lastValidValue || '');
-                    $(input).after(`
-                    <div id="amount-warning" class="text-danger mt-1">
-                        <small><i class="si si-exclamation"></i> Cannot exceed available balance of Bonge Sales ${formatAmount(formState.originalBalance)}</small>
-                    </div>
-                `);
-                } else {
-                    input.dataset.lastValidValue = unformatAmount(input.value);
-                }
-            }else {
-                if (currentAmount > formState.remainingTarget) {
-                    input.value = formatAmount(input.dataset.lastValidValue || '');
-                    $(input).after(`
-                    <div id="amount-warning" class="text-danger mt-1">
-                        <small><i class="si si-exclamation"></i> Cannot exceed available balance of Supplier Target ${formatAmount(formState.remainingTarget)}</small>
-                    </div>
-                `);
-                } else {
-                    input.dataset.lastValidValue = unformatAmount(input.value);
-                }
-            }
+            // if((formState.remainingTarget > formState.originalBalance)){
+            //     if (currentAmount > formState.originalBalance) {
+            //         input.value = formatAmount(input.dataset.lastValidValue || '');
+            //         $(input).after(`
+            //         <div id="amount-warning" class="text-danger mt-1">
+            //             <small><i class="si si-exclamation"></i> Cannot exceed available balance of Bonge Sales ${formatAmount(formState.originalBalance)}</small>
+            //         </div>
+            //     `);
+            //     } else {
+            //         input.dataset.lastValidValue = unformatAmount(input.value);
+            //     }
+            // }else {
+            //     if (currentAmount > formState.remainingTarget) {
+            //         input.value = formatAmount(input.dataset.lastValidValue || '');
+            //         $(input).after(`
+            //         <div id="amount-warning" class="text-danger mt-1">
+            //             <small><i class="si si-exclamation"></i> Cannot exceed available balance of Supplier Target ${formatAmount(formState.remainingTarget)}</small>
+            //         </div>
+            //     `);
+            //     } else {
+            //         input.dataset.lastValidValue = unformatAmount(input.value);
+            //     }
+            // }
 
             // if ( (formState.remainingTarget > formState.originalBalance) ?  currentAmount > formState.originalBalance : currentAmount > formState.remainingTarget) {
             //     input.value = formatAmount(input.dataset.lastValidValue || '');
@@ -589,14 +589,14 @@
                     formState.originalBalance = response.balance;
                     updateDisplays(response);
 
-                    if (response.balance <= 0) {
-                        toggleFormFields(false);
-                        updateStatusBadge('danger', 'No balance available for preparation');
-                        showStatusMessage('danger', 'Cannot proceed: No available balance for preparation. Please select another EFD.');
-                    } else {
-                        toggleFormFields(true);
-                        updateStatusBadge('primary', 'Ready to proceed');
-                    }
+                    // if (response.balance <= 0) {
+                    //     toggleFormFields(false);
+                    //     updateStatusBadge('danger', 'No balance available for preparation');
+                    //     showStatusMessage('danger', 'Cannot proceed: No available balance for preparation. Please select another EFD.');
+                    // } else {
+                    //     toggleFormFields(true);
+                    //     updateStatusBadge('primary', 'Ready to proceed');
+                    // }
 
                     updateProgressBar((response.used_amount / response.bonge_sales) * 100);
                 })
@@ -715,11 +715,11 @@
             }
 
             const balance = unformatAmount($(".text-purple").next('.stat-value').text());
-            if (amount > balance) {
-                e.preventDefault();
-                showStatusMessage('danger', "Amount exceeds available balance.");
-                return;
-            }
+            // if (amount > balance) {
+            //     e.preventDefault();
+            //     showStatusMessage('danger', "Amount exceeds available balance.");
+            //     return;
+            // }
         });
 
         // Initialize amount formatting if there's an existing value
