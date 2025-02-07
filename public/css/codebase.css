@@ -22093,3 +22093,313 @@ form label.required:after {
   color: red;
   content: " *";
 }
+     /* Variables */
+ :root {
+     --primary-blue: #4169E1;
+     --primary-green: #32CD32;
+     --light-blue: rgba(65, 105, 225, 0.1);
+     --light-green: rgba(50, 205, 50, 0.1);
+     --text-dark: #333333;
+     --text-muted: #666666;
+     --border-color: #e5e7eb;
+     --white: #ffffff;
+ }
+
+/* Header Styling */
+.content-heading {
+    padding: 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 1.5rem;
+}
+
+/* Button Styling */
+.btn-outline-primary {
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background: var(--primary-blue);
+    color: var(--white);
+}
+
+.btn-primary {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+
+.btn-primary:hover {
+    background: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+/* Form Elements */
+.input-group-text {
+    background: var(--light-blue);
+    color: var(--primary-blue);
+    border: 1px solid var(--border-color);
+}
+
+.form-control {
+    border: 1px solid var(--border-color);
+    padding: 0.625rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px var(--light-blue);
+}
+
+/* Table Styling */
+.table {
+    background: var(--white);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: var(--light-blue);
+    color: var(--text-dark);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    padding: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table tfoot td {
+    background: var(--light-blue);
+    font-weight: 600;
+    padding: 1rem;
+}
+
+/* Status Badges */
+.badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.badge-warning {
+    background: #FEF3C7;
+    color: #92400E;
+}
+
+.badge-primary {
+    background: var(--light-blue);
+    color: var(--primary-blue);
+}
+
+.badge-danger {
+    background: #FEE2E2;
+    color: #991B1B;
+}
+
+.badge-success {
+    background: var(--light-green);
+    color: var(--primary-green);
+}
+
+.badge-secondary {
+    background: #E5E7EB;
+    color: #374151;
+}
+
+/* Action Buttons */
+.btn-group .btn {
+    padding: 0.5rem;
+    margin: 0 0.25rem;
+    border-radius: 6px;
+}
+
+.btn-success {
+    background: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+.btn-danger {
+    background: #EF4444;
+    border-color: #EF4444;
+}
+
+/* Card/Block Styling */
+.block {
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.block-header {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.block-content {
+    padding: 1.5rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .content-heading {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .table-responsive {
+        margin: 0 -1.5rem;
+    }
+
+    .btn-group {
+        display: flex;
+        justify-content: center;
+    }
+}
+
+/* Variables */
+:root {
+    --primary-blue: #4169E1;
+    --primary-green: #32CD32;
+    --gradient-start: #4169E1;
+    --gradient-end: #32CD32;
+}
+
+/* Gradient Header Style */
+.block-header-default {
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    padding: 1.5rem;
+    border-radius: 8px 8px 0 0;
+}
+
+.block-title {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Optional hover effect */
+.block-header-default:hover {
+    background: linear-gradient(135deg, var(--gradient-end), var(--gradient-start));
+    transition: background 0.3s ease;
+}
+
+
+/* Main Container */
+.content {
+    padding: 2rem;
+    background: #F8FAFC;
+}
+
+/* Header/Title Bar */
+.content-heading {
+    background: linear-gradient(90deg, #4461E9 0%, #32CD32 100%);
+    color: white;
+    padding: 1.25rem 2rem;
+    border-radius: 2rem;
+    margin-bottom: 3rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Grid Container */
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    padding: 0 0.5rem;
+}
+
+/* Card Design */
+.setting-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    min-height: 140px;
+    border: 1px solid #EEF2F6;
+}
+
+/* Icon Style */
+.setting-icon {
+    color: #4461E9;
+    font-size: 1.75rem;
+}
+
+/* Card Title */
+.setting-title {
+    color: #444;
+    font-size: 0.875rem;
+    text-align: center;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Header Profile Section */
+.header-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #444;
+}
+
+.notification-badge {
+    background: #32CD32;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+    .settings-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .settings-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .settings-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .content {
+        padding: 1rem;
+    }
+
+    .content-heading {
+        padding: 1rem 1.5rem;
+    }
+}

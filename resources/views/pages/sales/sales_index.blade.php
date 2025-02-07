@@ -1,7 +1,6 @@
 @extends('layouts.backend')
 
 @section('content')
-
     <div class="main-container">
         <div class="content">
             <div class="content-heading">Sales
