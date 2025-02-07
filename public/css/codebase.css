@@ -22307,18 +22307,18 @@ form label.required:after {
 }
 
 /* Header/Title Bar */
-.content-heading {
-    background: linear-gradient(90deg, #4461E9 0%, #32CD32 100%);
-    color: white;
-    padding: 1.25rem 2rem;
-    border-radius: 2rem;
-    margin-bottom: 3rem;
-    font-size: 1.1rem;
-    font-weight: 500;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+/*.content-heading {*/
+/*    background: linear-gradient(90deg, #4461E9 0%, #32CD32 100%);*/
+/*    color: white;*/
+/*    padding: 1.25rem 2rem;*/
+/*    border-radius: 2rem;*/
+/*    margin-bottom: 3rem;*/
+/*    font-size: 1.1rem;*/
+/*    font-weight: 500;*/
+/*    display: flex;*/
+/*    justify-content: space-between;*/
+/*    align-items: center;*/
+/*}*/
 
 /* Grid Container */
 .settings-grid {
