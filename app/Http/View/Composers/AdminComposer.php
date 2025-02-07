@@ -60,7 +60,7 @@ class AdminComposer {
 
     private function getTheme() { // TODO this can be linked to user settings
         return [
-            'sidebar' => ['inverse' => true, 'fixed' => true, 'mini' => true],
+            'sidebar' => ['inverse' => false, 'fixed' => true, 'mini' => false],
             'header' => ['inverse' => false, 'fixed' => false],
         ];
     }

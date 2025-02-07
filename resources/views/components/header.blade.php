@@ -4,216 +4,366 @@ $notification_unread = \App\Models\Notification::getLatestUnreadNotifications(Au
 $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCount(Auth::user()->id);
 //                    dump($notification_unread);
 ?>
-<header id="page-header">
+<header id="page-header" class="modern-header">
     <!-- Header Content -->
     <div class="content-header">
         <!-- Left Section -->
-        <div class="content-header-section">
+        <div class="header-left">
             <!-- Toggle Sidebar -->
-            <!-- Layout API, functionality initialized in Template._uiApiLayout() -->
-            <button type="button" class="btn btn-circle btn-dual-secondary" data-toggle="layout" data-action="sidebar_toggle">
-                <i class="fa fa-navicon"></i>
+            <button type="button" class="header-btn" data-toggle="layout" data-action="sidebar_toggle">
+                <i class="fa fa-bars"></i>
             </button>
-            <!-- END Toggle Sidebar -->
-
-            <!-- Open Search Section -->
-            <!-- Layout API, functionality initialized in Template._uiApiLayout() -->
-            <button type="button" class="btn btn-circle btn-dual-secondary" data-toggle="layout" data-action="header_search_on">
-                <i class="fa fa-search"></i>
-            </button>
-            <!-- END Open Search Section -->
-
-            <!-- Layout Options (used just for demonstration) -->
-            <!-- Layout API, functionality initialized in Template._uiApiLayout() -->
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-circle btn-dual-secondary" id="page-header-options-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fa fa-wrench"></i>
-                </button>
-                <div class="dropdown-menu min-width-300" aria-labelledby="page-header-options-dropdown">
-                    <h5 class="h6 text-center py-10 mb-10 border-b text-uppercase">Settings</h5>
-                    <h6 class="dropdown-header">Color Themes</h6>
-                    <div class="row no-gutters text-center mb-5">
-                        <div class="col-2 mb-5">
-                            <a class="text-default" data-toggle="theme" data-theme="default" href="javascript:void(0)">
-                                <i class="fa fa-2x fa-circle"></i>
-                            </a>
-                        </div>
-                        <div class="col-2 mb-5">
-                            <a class="text-elegance" data-toggle="theme" data-theme="{{ mix('/css/themes/elegance.css') }}" href="javascript:void(0)">
-                                <i class="fa fa-2x fa-circle"></i>
-                            </a>
-                        </div>
-                        <div class="col-2 mb-5">
-                            <a class="text-pulse" data-toggle="theme" data-theme="{{ mix('/css/themes/pulse.css') }}" href="javascript:void(0)">
-                                <i class="fa fa-2x fa-circle"></i>
-                            </a>
-                        </div>
-                        <div class="col-2 mb-5">
-                            <a class="text-flat" data-toggle="theme" data-theme="{{ mix('/css/themes/flat.css') }}" href="javascript:void(0)">
-                                <i class="fa fa-2x fa-circle"></i>
-                            </a>
-                        </div>
-                        <div class="col-2 mb-5">
-                            <a class="text-corporate" data-toggle="theme" data-theme="{{ mix('/css/themes/corporate.css') }}" href="javascript:void(0)">
-                                <i class="fa fa-2x fa-circle"></i>
-                            </a>
-                        </div>
-                        <div class="col-2 mb-5">
-                            <a class="text-earth" data-toggle="theme" data-theme="{{ mix('/css/themes/earth.css') }}" href="javascript:void(0)">
-                                <i class="fa fa-2x fa-circle"></i>
-                            </a>
-                        </div>
-                    </div>
-                    <h6 class="dropdown-header">Header</h6>
-                    <div class="row gutters-tiny text-center mb-5">
-                        <div class="col-6">
-                            <button type="button" class="btn btn-sm btn-block btn-alt-secondary" data-toggle="layout" data-action="header_fixed_toggle">Fixed Mode</button>
-                        </div>
-                        <div class="col-6">
-                            <button type="button" class="btn btn-sm btn-block btn-alt-secondary d-none d-lg-block mb-10" data-toggle="layout" data-action="header_style_classic">Classic Style</button>
-                        </div>
-                    </div>
-                    <h6 class="dropdown-header">Sidebar</h6>
-                    <div class="row gutters-tiny text-center mb-5">
-                        <div class="col-6">
-                            <button type="button" class="btn btn-sm btn-block btn-alt-secondary mb-10" data-toggle="layout" data-action="sidebar_style_inverse_off">Light</button>
-                        </div>
-                        <div class="col-6">
-                            <button type="button" class="btn btn-sm btn-block btn-alt-secondary mb-10" data-toggle="layout" data-action="sidebar_style_inverse_on">Dark</button>
-                        </div>
-                    </div>
-                    <div class="d-none d-xl-block">
-                        <h6 class="dropdown-header">Main Content</h6>
-                        <button type="button" class="btn btn-sm btn-block btn-alt-secondary mb-10" data-toggle="layout" data-action="content_layout_toggle">Toggle Layout</button>
-                    </div>
-                </div>
-            </div>
-            <!-- END Layout Options -->
         </div>
-        <!-- END Left Section -->
 
         <!-- Right Section -->
-        <div class="content-header-section">
+        <div class="header-right">
             <!-- User Dropdown -->
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-rounded btn-dual-secondary" id="page-header-user-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fa fa-user d-sm-none"></i>
-                    <span class="d-none d-sm-inline-block">{{ Auth::user()->name }}</span>
-                    <i class="fa fa-angle-down ml-5"></i>
+            <div class="header-dropdown">
+                <button type="button" class="header-btn user-btn" id="page-header-user-dropdown" data-toggle="dropdown">
+                    <span class="user-name">{{ Auth::user()->name }}</span>
+                    <i class="fa fa-chevron-down"></i>
                 </button>
-                <div class="dropdown-menu dropdown-menu-right min-width-200" aria-labelledby="page-header-user-dropdown">
-{{--                    <h5 class="h6 text-center py-10 mb-5 border-b text-uppercase">User</h5>--}}
+                <div class="dropdown-menu modern-dropdown dropdown-menu-right" aria-labelledby="page-header-user-dropdown">
                     <a class="dropdown-item" href="{{ route('user_profile') }}">
-                        <i class="si si-user mr-5"></i> Profile
+                        <i class="si si-user"></i> Profile
                     </a>
-                    <a class="dropdown-item d-flex align-items-center justify-content-between" href="{{ route('user_inbox') }}">
-                        <span><i class="si si-envelope-open mr-5"></i> Inbox</span>
-                        <span class="badge badge-primary">3</span>
+                    <a class="dropdown-item" href="{{ route('user_inbox') }}">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><i class="si si-envelope-open"></i> Inbox</span>
+                            <span class="badge">3</span>
+                        </div>
                     </a>
-{{--                    <a class="dropdown-item" href="javascript:void(0)">--}}
-{{--                        <i class="si si-note mr-5"></i> Invoices--}}
-{{--                    </a>--}}
-
-
-                    <!-- Toggle Side Overlay -->
-                    <!-- Layout API, functionality initialized in Template._uiApiLayout() -->
-                    <a class="dropdown-item" href="{{ route('user_settings') }}" data-toggle="layout" data-action="side_overlay_toggle">
-                        <i class="si si-wrench mr-5"></i> Settings
+                    <a class="dropdown-item" href="{{ route('user_settings') }}">
+                        <i class="si si-wrench"></i> Settings
                     </a>
-                    <!-- END Side Overlay -->
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item" href="{{ route('logout') }}"
                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                        <i class="si si-logout mr-5"></i> Sign Out
+                        <i class="si si-logout"></i> Sign Out
                     </a>
-                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                        @csrf
-                    </form>
                 </div>
             </div>
-            <!-- END User Dropdown -->
 
             <!-- Notifications -->
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-rounded btn-dual-secondary" id="page-header-notifications" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <i class="fa fa-flag"></i>
-                    <span class="badge badge-primary badge-pill">{{$count_notification_unread}}</span>
+            <div class="header-dropdown">
+                <button type="button" class="header-btn" id="page-header-notifications" data-toggle="dropdown">
+                    <i class="fa fa-bell"></i>
+                    <span class="badge">{{$count_notification_unread}}</span>
                 </button>
-                <div class="dropdown-menu dropdown-menu-right min-width-300" aria-labelledby="page-header-notifications">
-                    <h5 class="h6 text-center py-10 mb-0 border-b text-uppercase">Notifications</h5>
-
-                    <ul class="list-unstyled my-20">
-                        @foreach( Auth::user()->unreadNotifications()->take(3)->get() as $notification)
-                        <?php
-                            $link = $notification->data['link']
-                        ?>
-                        <li>
-                            <a class="text-body-color-dark media mb-15" href="{{url("$link")}}">
-                                <div class="ml-5 mr-15">
-                                    <i class="fa fa-fw fa-clock-o text-success"></i>
+                <div class="dropdown-menu modern-dropdown dropdown-menu-right" aria-labelledby="page-header-notifications">
+                    <h6 class="dropdown-header">Notifications</h6>
+                    <div class="notifications-list">
+                        @foreach(Auth::user()->unreadNotifications()->take(3)->get() as $notification)
+                            <a class="notification-item" href="{{url($notification->data['link'])}}">
+                                <div class="notification-icon">
+                                    <i class="fa fa-clock-o"></i>
                                 </div>
-                                <div class="media-body pr-10">
-                                    <h6 class="mb-0">{{$notification->data['title']}}</h6>
-                                    <p class="mb-0">{{$notification->data['body']}}</p>
-                                    <div class="text-muted font-size-sm font-italic">{{$notification->updated_at}}</div>
+                                <div class="notification-content">
+                                    <h6>{{$notification->data['title']}}</h6>
+                                    <p>{{$notification->data['body']}}</p>
+                                    <span class="notification-time">{{$notification->updated_at}}</span>
                                 </div>
                             </a>
-                        </li>
                         @endforeach
-                    </ul>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item text-center mb-0" href="{{ route('user_notifications') }}">
-                        <i class="fa fa-flag mr-5"></i> View All
+                    </div>
+                    <a class="dropdown-item text-center view-all" href="{{ route('user_notifications') }}">
+                        View All Notifications
                     </a>
                 </div>
             </div>
-            <!-- END Notifications -->
-
-            <!-- Toggle Side Overlay -->
-            <!-- Layout API, functionality initialized in Template._uiApiLayout() -->
-            <button type="button" class="btn btn-circle btn-dual-secondary" data-toggle="layout" data-action="side_overlay_toggle">
-                <i class="fa fa-tasks"></i>
-            </button>
-            <!-- END Toggle Side Overlay -->
         </div>
-        <!-- END Right Section -->
     </div>
-    <!-- END Header Content -->
 
-    <!-- Header Search -->
-    <div id="page-header-search" class="overlay-header">
-        <div class="content-header content-header-fullrow">
-            <form action="/dashboard" method="POST">
-                @csrf
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <!-- Close Search Section -->
-                        <!-- Layout API, functionality initialized in Template._uiApiLayout() -->
-                        <button type="button" class="btn btn-secondary" data-toggle="layout" data-action="header_search_off">
-                            <i class="fa fa-times"></i>
-                        </button>
-                        <!-- END Close Search Section -->
-                    </div>
-                    <input type="text" class="form-control" placeholder="Search or hit ESC.." id="page-header-search-input" name="page-header-search-input">
-                    <div class="input-group-append">
-                        <button type="submit" class="btn btn-secondary">
-                            <i class="fa fa-search"></i>
-                        </button>
-                    </div>
+    <!-- Search Overlay -->
+    <div id="page-header-search" class="modern-search-overlay">
+        <form action="/dashboard" method="POST">
+            @csrf
+            <div class="search-container">
+                <div class="search-input-group">
+                    <button type="button" class="search-close" data-toggle="layout" data-action="header_search_off">
+                        <i class="fa fa-times"></i>
+                    </button>
+                    <input type="text" class="search-input" placeholder="Search..." id="page-header-search-input" name="page-header-search-input">
+                    <button type="submit" class="search-submit">
+                        <i class="fa fa-search"></i>
+                    </button>
                 </div>
-            </form>
-        </div>
-    </div>
-    <!-- END Header Search -->
-
-    <!-- Header Loader -->
-    <!-- Please check out the Activity page under Elements category to see examples of showing/hiding it -->
-    <div id="page-header-loader" class="overlay-header bg-primary">
-        <div class="content-header content-header-fullrow text-center">
-            <div class="content-header-item">
-                <i class="fa fa-sun-o fa-spin text-white"></i>
             </div>
+        </form>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="page-header-loader" class="modern-loader">
+        <div class="loader-content">
+            <i class="fa fa-sun-o fa-spin"></i>
         </div>
     </div>
-    <!-- END Header Loader -->
 </header>
+
+<style>
+    :root {
+        --header-bg: #ffffff;
+        --header-height: 60px;
+        --primary-color: #4169E1;
+        --accent-color: #32CD32;
+        --text-primary: #333333;
+        --text-secondary: #666666;
+        --border-color: #e5e7eb;
+        --hover-bg: #f8f9fa;
+        --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+
+    /* Header Container */
+    .modern-header {
+        background: var(--header-bg);
+        height: var(--header-height);
+        border-bottom: 1px solid var(--border-color);
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1030;
+    }
+
+    .content-header {
+        height: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 1.5rem;
+    }
+
+    /* Header Sections */
+    .header-left, .header-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    /* Buttons */
+    .header-btn {
+        background: transparent;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 8px;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+
+    .header-btn:hover {
+        background: var(--hover-bg);
+        color: var(--primary-color);
+    }
+
+    .header-btn i {
+        font-size: 1.25rem;
+    }
+
+    /* User Button */
+    .user-btn {
+        padding: 0.5rem 1rem;
+        background: var(--hover-bg);
+        border-radius: 20px;
+    }
+
+    .user-name {
+        margin-right: 0.5rem;
+        font-weight: 500;
+    }
+
+    /* Badges */
+    .badge {
+        background: var(--accent-color);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Dropdowns */
+    .modern-dropdown {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        box-shadow: var(--shadow-md);
+        padding: 1rem 0;
+        min-width: 240px;
+    }
+
+    .dropdown-header {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.5rem 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .dropdown-item {
+        padding: 0.625rem 1rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background: var(--hover-bg);
+        color: var(--primary-color);
+    }
+
+    .dropdown-item i {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+    }
+
+    /* Theme Options */
+    .theme-options {
+        padding: 1rem;
+    }
+
+    .theme-header {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.75rem;
+    }
+
+    .theme-colors {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem;
+    }
+
+    .theme-btn {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .theme-btn:hover {
+        transform: scale(1.1);
+    }
+
+    /* Notifications */
+    .notifications-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    #page-header {
+        margin-bottom: 30px!important;
+    }
+
+    .notification-item {
+        display: flex;
+        padding: 1rem;
+        gap: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        text-decoration: none;
+        color: var(--text-primary);
+    }
+
+    .notification-icon {
+        color: var(--accent-color);
+        font-size: 1.25rem;
+    }
+
+    .notification-content h6 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .notification-content p {
+        margin: 0.25rem 0;
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+    }
+
+    .notification-time {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+    }
+
+    /* Search Overlay */
+    .modern-search-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1040;
+    }
+
+    .search-container {
+        width: 100%;
+        max-width: 600px;
+        padding: 2rem;
+    }
+
+    .search-input-group {
+        display: flex;
+        align-items: center;
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .search-input {
+        flex: 1;
+        border: none;
+        padding: 1rem;
+        font-size: 1.125rem;
+    }
+
+    .search-close,
+    .search-submit {
+        background: transparent;
+        border: none;
+        padding: 1rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+    }
+
+    /* Loader */
+    .modern-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--header-height);
+        background: var(--primary-color);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .header-btn span {
+            display: none;
+        }
+
+        .modern-dropdown {
+            position: fixed;
+            top: var(--header-height);
+            left: 0;
+            right: 0;
+            margin: 0;
+            border-radius: 0;
+        }
+    }
+</style>

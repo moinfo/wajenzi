@@ -1,96 +1,296 @@
 @extends('layouts.simple')
 
 @section('content')
-
-<div class="bg-body-dark bg-pattern" style="background-image: url('assets/media/various/bg-pattern-inverse.png');">
-    <div class="row mx-0 justify-content-center">
-        <div class="hero-static col-lg-6 col-xl-4">
-            <div class="content content-full overflow-hidden">
-                <!-- Header -->
-                <div class="py-30 text-center">
-                    <a class="link-effect font-w700" href="#">
-                        <i class="si si-fire"></i>
-                        <span class="font-size-xl text-primary-dark">Financial</span><span class="font-size-xl">Analysis</span>
-                    </a>
-                    <h1 class="h4 font-w700 mt-30 mb-10">Welcome to Your Dashboard</h1>
-                    <h2 class="h5 font-w400 text-muted mb-0">It’s a great day today!</h2>
+    <div class="bg-body-dark bg-pattern custom-bg custom-container" style="background-image: url('assets/media/various/bg-pattern-inverse.png');">
+        <div class="custom-flex-container">
+            <div class="custom-card">
+                <!-- Logo and Header -->
+                <div class="text-center mb-8">
+                    <div class="logo-container">
+                        <img class="custom-logo" src="{{ asset('media/logo/wajenzilogo.png') }}" alt="">
+                    </div>
+                    <h2 class="logo-text">
+                        <span class="text-dark">Financial</span>
+                        <span class="text-accent">Analysis</span>
+                    </h2>
+                    <h1 class="custom-title">Welcome to Your Dashboard</h1>
+                    <p class="custom-subtitle">It's a great day today! Wajenzi Professionals System</p>
                 </div>
-                <!-- END Header -->
 
-                <!-- Sign In Form -->
-                <!-- jQuery Validation functionality is initialized with .js-validation-signin class in js/pages/op_auth_signin.min.js which was auto compiled from _es6/pages/op_auth_signin.js -->
-                <!-- For more examples you can check out https://github.com/jzaefferer/jquery-validation -->
-                    <form class="js-validation-signin" method="POST" action="{{ route('login') }}">
-                        @csrf
-
-                        <div class="block block-themed block-rounded block-shadow">
-                        <div class="block-header bg-gd-cherry">
-                            <h3 class="block-title">Please Sign In</h3>
-                            <div class="block-options">
-                                <button type="button" class="btn-block-option">
-                                    <i class="si si-wrench"></i>
-                                </button>
-                            </div>
+                <!-- Login Form -->
+                <form class="js-validation-signin" method="POST" action="{{ route('login') }}">
+                    @csrf
+                    <div class="custom-form">
+                        <!-- Username Input -->
+                        <div class="form-group">
+                            <label for="email" class="custom-label">Username</label>
+                            <input id="email"
+                                   type="email"
+                                   class="custom-input @error('email') is-invalid @enderror"
+                                   name="email"
+                                   value="{{ old('email') }}"
+                                   required
+                                   autocomplete="email"
+                                   autofocus>
+                            @error('email')
+                            <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                            @enderror
                         </div>
-                        <div class="block-content">
-                            <div class="form-group row">
-                                <div class="col-12">
-                                    <label for="login-username">Username</label>
-                                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
 
-                                    @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="form-group row">
-                                <div class="col-12">
-                                    <label for="login-password">Password</label>
-                                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="current-password">
-
-                                    @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="form-group row mb-0">
-                                <div class="col-sm-6 d-sm-flex align-items-center push">
-                                    <div class="custom-control custom-checkbox mr-auto ml-0 mb-0">
-{{--                                        <input type="checkbox" class="custom-control-input" id="login-remember-me" name="remember" >--}}
-                                        <input class="custom-control-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-
-                                        <label class="form-check-label" for="remember">
-                                            {{ __('Remember Me') }}
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-sm-6 text-sm-right push">
-                                    <button type="submit" class="btn btn-alt-primary">
-                                        <i class="si si-login mr-10"></i> Sign In
-                                    </button>
-
-
-                                </div>
-                            </div>
+                        <!-- Password Input -->
+                        <div class="form-group">
+                            <label for="password" class="custom-label">Password</label>
+                            <input id="password"
+                                   type="password"
+                                   class="custom-input @error('password') is-invalid @enderror"
+                                   name="password"
+                                   required
+                                   autocomplete="current-password">
+                            @error('password')
+                            <span class="invalid-feedback" role="alert">
+                            <strong>{{ $message }}</strong>
+                        </span>
+                            @enderror
                         </div>
-                        <div class="block-content bg-body-light">
-                            <div class="form-group text-center">
-                                @if (Route::has('password.request'))
-                                    <a class="link-effect text-muted mr-10 mb-5 d-inline-block" href="{{ route('password.request') }}">
-                                        <i class="fa fa-warning mr-5"></i> {{ __('Forgot Your Password?') }}
-                                    </a>
-                                @endif
+
+                        <!-- Remember Me & Sign In -->
+                        <div class="form-footer">
+                            <div class="remember-me">
+                                <input type="checkbox"
+                                       class="custom-checkbox"
+                                       name="remember"
+                                       id="remember"
+                                    {{ old('remember') ? 'checked' : '' }}>
+                                <label for="remember">Remember Me</label>
                             </div>
+                            <button type="submit" class="custom-button">
+                                Sign In
+                            </button>
+                        </div>
+
+                        <!-- Forgot Password -->
+                        <div class="forgot-password">
+                            @if (Route::has('password.request'))
+                                <a href="{{ route('password.request') }}" class="custom-link">
+                                    Forgot Your Password?
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </form>
-                <!-- END Sign In Form -->
             </div>
         </div>
     </div>
-</div>
+
+    <style>
+        :root {
+            --primary-blue: #4169E1;
+            --primary-green: #32CD32;
+            --bg-gray: #F0F2F5;
+            --text-dark: #333;
+            --border-color: #E5E7EB;
+        }
+
+        /* Container and Flex Layout */
+        .custom-container {
+            min-height: 100vh;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .custom-flex-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .custom-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 35%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        html {
+            overflow: hidden;
+        }
+
+        .custom-container {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Logo and Header Styles */
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .custom-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            padding: 4px;
+            background: linear-gradient(45deg, var(--primary-blue), var(--primary-green));
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 1rem 0;
+        }
+
+        .text-accent {
+            color: var(--primary-green);
+        }
+
+        .custom-title {
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            margin: 1rem 0;
+        }
+
+        .custom-subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        /* Form Styles */
+        .custom-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .custom-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+
+        .custom-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background-color: #F9FAFB;
+        }
+
+        .custom-input:focus {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(65, 105, 225, 0.1);
+            background-color: white;
+        }
+
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .custom-button {
+            background: linear-gradient(45deg, var(--primary-blue), var(--primary-green));
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .custom-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(65, 105, 225, 0.2);
+        }
+
+        .forgot-password {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .custom-link {
+            color: var(--primary-blue);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .custom-link:hover {
+            color: var(--primary-green);
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 640px) {
+            .custom-card {
+                padding: 1.5rem;
+                margin: 1rem;
+                max-width: 100%;
+            }
+
+            .form-footer {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .custom-button {
+                width: 100%;
+            }
+
+            .remember-me {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .custom-logo {
+                width: 60px;
+                height: 60px;
+            }
+
+            .logo-text {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Additional Mobile Optimizations */
+        @media (max-width: 480px) {
+            .custom-card {
+                padding: 1rem;
+            }
+
+            .custom-title {
+                font-size: 1.25rem;
+            }
+
+            .custom-subtitle {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Fix for very small screens */
+        @media (max-width: 320px) {
+            .custom-container {
+                padding: 10px;
+            }
+        }
+    </style>
 @endsection

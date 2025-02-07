@@ -1,130 +1,232 @@
-<!-- Sidebar -->
-<!--
-    Helper classes
-
-    Adding .sidebar-mini-hide to an element will make it invisible (opacity: 0) when the sidebar is in mini mode
-    Adding .sidebar-mini-show to an element will make it visible (opacity: 1) when the sidebar is in mini mode
-        If you would like to disable the transition, just add the .sidebar-mini-notrans along with one of the previous 2 classes
-
-    Adding .sidebar-mini-hidden to an element will hide it when the sidebar is in mini mode
-    Adding .sidebar-mini-visible to an element will show it only when the sidebar is in mini mode
-        - use .sidebar-mini-visible-b if you would like to be a block when visible (display: block)
--->
-<nav id="sidebar">
-    <!-- Sidebar Content -->
+<nav id="sidebar" class="modern-sidebar">
     <div class="sidebar-content">
-        <!-- Side Header -->
-        <div class="content-header content-header-fullrow px-15">
-            <!-- Mini Mode -->
-            <div class="content-header-section sidebar-mini-visible-b">
-                <!-- Logo -->
-                <span class="content-header-item font-w700 font-size-xl float-left animated fadeIn">
-                                <span class="text-dual-primary-dark">c</span><span class="text-primary">b</span>
-                            </span>
-                <!-- END Logo -->
+        <!-- Logo Header -->
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <i class="si si-users text-accent"></i>
+                <span class="logo-text">
+                    <span class="text-dark">Financial</span>
+                    <span class="text-accent">Analysis</span>
+                </span>
             </div>
-            <!-- END Mini Mode -->
-
-            <!-- Normal Mode -->
-            <div class="content-header-section text-center align-parent sidebar-mini-hidden">
-                <!-- Close Sidebar, Visible only on mobile screens -->
-                <!-- Layout API, functionality initialized in Template._uiApiLayout() -->
-                <button type="button" class="btn btn-circle btn-dual-secondary d-lg-none align-v-r" data-toggle="layout" data-action="sidebar_close">
-                    <i class="fa fa-times text-danger"></i>
-                </button>
-                <!-- END Close Sidebar -->
-
-                <!-- Logo -->
-                <div class="content-header-item">
-                    <a class="link-effect font-w700" href="/">
-                        <i class="si si-users text-primary"></i>
-                        <span class="font-size-xl text-dual-primary-dark">Financial</span><span class="font-size-xl text-primary">Analysis</span>
-                    </a>
-                </div>
-                <!-- END Logo -->
-            </div>
-            <!-- END Normal Mode -->
         </div>
-        <!-- END Side Header -->
 
-        <!-- Side User -->
-        <div class="content-side content-side-full content-side-user px-10 align-parent">
-            <!-- Visible only in mini mode -->
-            <div class="sidebar-mini-visible-b align-v animated fadeIn">
-                <img class="img-avatar img-avatar32" src="{{ asset('media/avatars/avatar15.jpg') }}" alt="">
+        <!-- User Profile -->
+        <div class="user-profile">
+            <div class="profile-image">
+                <img src="{{ asset('media/avatars/avatar15.jpg') }}" alt="Profile">
             </div>
-            <!-- END Visible only in mini mode -->
-
-            <!-- Visible only in normal mode -->
-            <div class="sidebar-mini-hidden-b text-center">
-                <a class="img-link" href="javascript:void(0)">
-                    <img class="img-avatar" src="{{ asset('media/avatars/avatar15.jpg') }}" alt="">
-                </a>
-                <ul class="list-inline mt-10">
-                    <li class="list-inline-item">
-                        <a class="link-effect text-dual-primary-dark font-size-sm font-w600 text-uppercase" href="javascript:void(0)">{{ Auth::user()->name }}</a>
-                    </li>
-                    <li class="list-inline-item">
-                        <!-- Layout API, functionality initialized in Template._uiApiLayout() -->
-                        <a class="link-effect text-dual-primary-dark" data-toggle="layout" data-action="sidebar_style_inverse_toggle" href="javascript:void(0)">
-                            <i class="si si-drop"></i>
-                        </a>
-                    </li>
-                    <li class="list-inline-item">
-                        <a class="link-effect text-dual-primary-dark" href="javascript:void(0)">
-                            <i class="si si-logout"></i>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            <!-- END Visible only in normal mode -->
+            <h3 class="user-name">{{ Auth::user()->name }}</h3>
         </div>
-        <!-- END Side User -->
 
-        <!-- Side Navigation -->
-        <div class="content-side content-side-full">
-            <ul class="nav-main">
-                <li class="nav-main-heading">
-                    <span class="sidebar-mini-visible">VR</span><span class="sidebar-mini-hidden">MENU</span>
-                </li>
-
+        <!-- Navigation Menu -->
+        <div class="sidebar-menu">
+            <div class="menu-header">MENU</div>
+            <ul class="nav-list">
                 @foreach($user_menu as $menu)
-                    <?php
-                    $staff_permissions = \App\Models\UsersPermission::getUserPermissions(Auth::user()->id);
-                   // dump($staff_permissions);
-                    ?>
-                @foreach($staff_permissions as $staff_permission)
-                    @if($staff_permission->permission_name == $menu['name'])
-                    <li class="{{ request()->is( $menu['route'] .'/*') ? ' open' : '' }}">
-                        <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i>{{$menu['name']}}</a>
-                @endif
-                        @endforeach
-
-
-
-                        {{--                        <a class="nav-submenu" data-toggle="nav-submenu" href="{{ route($menu['route']) }}"><i class="si si-bulb"></i><span class="sidebar-mini-hide">{{$menu['name']}}</span></a>--}}
-{{--                        <ul>--}}
-{{--                            <li> <a class="{{ request()->is($menu['route']) ? ' active' : '' }}" href="{{ route($menu['route']) }}">{{$menu['name']}}</a> </li>--}}
-{{--                            @if(count($menu->subMenus))--}}
-{{--                                @foreach($menu->subMenus as $subMenu)--}}
-{{--                                    <li> <a class="{{ request()->is($subMenu['route']) ? ' active' : '' }}" href="{{ route($subMenu['route']) }}">{{$subMenu['name']}}</a> </li>--}}
-{{--                                @endforeach--}}
-{{--                            @endif--}}
-{{--                        </ul>--}}
-                    </li>
+                        <?php
+                        $staff_permissions = \App\Models\UsersPermission::getUserPermissions(Auth::user()->id);
+                        ?>
+                    @foreach($staff_permissions as $staff_permission)
+                        @if($staff_permission->permission_name == $menu['name'])
+                            <li class="nav-item {{ request()->is($menu['route'] .'/*') ? 'active' : '' }}">
+                                <a href="{{ route($menu['route']) }}"
+                                   class="nav-link {{ request()->is($menu['route']) ? 'active' : '' }}">
+                                    <i class="si si-location-pin"></i>
+                                    <span>{{$menu['name']}}</span>
+                                </a>
+                            </li>
+                        @endif
+                    @endforeach
                 @endforeach
-
-{{--                <li class="nav-main-heading">--}}
-{{--                    <span class="sidebar-mini-visible">MR</span><span class="sidebar-mini-hidden">More</span>--}}
-{{--                </li>--}}
-{{--                <li>--}}
-{{--                    <a href="/">--}}
-{{--                        <i class="si si-globe"></i><span class="sidebar-mini-hide">Landing</span>--}}
-{{--                    </a>--}}
-{{--                </li>--}}
             </ul>
         </div>
-        <!-- END Side Navigation -->
     </div>
-    <!-- Sidebar Content -->
 </nav>
+
+<style>
+    :root {
+        --sidebar-bg: #ffffff;
+        --sidebar-width: 280px;
+        --text-primary: #333333;
+        --text-secondary: #666666;
+        --accent-green: #32CD32;
+        --hover-bg: #f8f9fa;
+        --active-color: #32CD32;
+        --border-color: #f0f0f0;
+    }
+
+    .modern-sidebar {
+        width: var(--sidebar-width);
+        background: var(--sidebar-bg);
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        padding: 1.5rem;
+    }
+
+    /* Logo Header */
+    .sidebar-header {
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .logo-container i {
+        font-size: 1.5rem;
+        color: var(--accent-green);
+    }
+
+    .logo-text {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .text-accent {
+        color: var(--accent-green);
+    }
+
+    /* User Profile */
+    .user-profile {
+        padding: 2rem 0;
+        text-align: center;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .profile-image {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+    }
+
+    .profile-image img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--border-color);
+    }
+
+    .user-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    /* Navigation Menu */
+    .menu-header {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin: 1.5rem 0 1rem;
+        padding-left: 0.5rem;
+    }
+
+    .nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .nav-item {
+        margin: 0.25rem 0;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        color: var(--text-primary);
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .nav-link i {
+        font-size: 1.1rem;
+        margin-right: 0.75rem;
+        color: var(--text-secondary);
+        transition: all 0.3s ease;
+    }
+
+    .nav-link span {
+        font-size: 0.9375rem;
+    }
+
+    .nav-link:hover {
+        background: var(--hover-bg);
+        color: var(--active-color);
+    }
+
+    .nav-link:hover i {
+        color: var(--active-color);
+    }
+
+    .nav-link.active {
+        background: var(--hover-bg);
+        color: var(--active-color);
+    }
+
+    .nav-link.active i {
+        color: var(--active-color);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 991.98px) {
+        .modern-sidebar {
+            width: 100%;
+            position: relative;
+            height: auto;
+            padding: 1rem;
+        }
+
+        .profile-image {
+            width: 60px;
+            height: 60px;
+        }
+
+        .nav-link {
+            padding: 0.625rem 0.875rem;
+        }
+    }
+
+    /* Animation for hover states */
+    .nav-link {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 2px;
+        width: 0;
+        background-color: var(--active-color);
+        transition: width 0.3s ease;
+    }
+
+    .nav-link:hover::after,
+    .nav-link.active::after {
+        width: 100%;
+    }
+
+    /* Smooth transitions */
+    * {
+        transition: background-color 0.3s ease,
+        color 0.3s ease,
+        transform 0.3s ease,
+        border-color 0.3s ease;
+    }
+</style>
