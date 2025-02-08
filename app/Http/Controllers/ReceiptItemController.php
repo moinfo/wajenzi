@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Receipt;
 use App\Models\ReceiptItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReceiptItemController extends Controller
 {
@@ -35,16 +37,62 @@ class ReceiptItemController extends Controller
      */
     public function store(Request $request)
     {
-        $receipt = new ReceiptItem;
-        $receipt->receipt_id = $request->receipt_id;
-        $receipt->description = $request->description;
-        $receipt->qty = $request->qty;
-        $receipt->amount = $request->amount;
-        $result = $receipt->save();
-        if ($result){
-            return ['results' => 'add receipt Item successful'];
-        }else{
-            return ['results' => 'add receipt Item failed'];
+        try {
+            // Validate the request
+            $validatedData = $request->validate([
+                'receipt_id' => 'required|exists:receipts,id',
+                'description' => 'required|string|max:255',
+                'qty' => 'required|numeric|min:0',
+                'amount' => 'required|numeric|min:0'
+            ]);
+
+            // Begin transaction
+            DB::beginTransaction();
+
+            // Create receipt item
+            $receiptItem = ReceiptItem::create([
+                'receipt_id' => $validatedData['receipt_id'],
+                'description' => $validatedData['description'],
+                'qty' => $validatedData['qty'],
+                'amount' => $validatedData['amount']
+            ]);
+
+            // If TANESCO receipt and contains specific keywords, update parent receipt
+            $receipt = Receipt::find($validatedData['receipt_id']);
+            if ($receipt->is_tanesco) {
+                $description = strtolower($validatedData['description']);
+
+                if (str_contains($description, 'kwh')) {
+                    $receipt->kwh_charge = $validatedData['amount'];
+                } elseif (str_contains($description, 'kva')) {
+                    $receipt->kva_charge = $validatedData['amount'];
+                } elseif (str_contains($description, 'service charge')) {
+                    $receipt->service_charge = $validatedData['amount'];
+                }
+
+                $receipt->save();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Receipt item added successfully',
+                'data' => $receiptItem
+            ], 201);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'error' => 'Validation failed',
+                'messages' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'error' => 'Failed to add receipt item',
+                'message' => $e->getMessage()
+            ], 500);
         }
     }
 

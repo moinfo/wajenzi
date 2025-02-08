@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\InvoiceAdjustmentController;
+use App\Http\Controllers\InvoicePaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,3 +30,10 @@ Route::match(['get', 'post'], '/add_receipt_item', [App\Http\Controllers\Receipt
 Route::match(['get', 'post'], '/receipts/{id?}', [App\Http\Controllers\ApiController::class, 'receipts'])->name('receipts');
 Route::match(['get', 'post'], '/receipt_items/{id?}', [App\Http\Controllers\ApiController::class, 'receipt_items'])->name('receipt_items');
 Route::match(['get', 'post'], '/employees/{id?}', [App\Http\Controllers\ApiController::class, 'employees'])->name('employees');
+// Invoice Adjustments
+Route::post('/adjustments', [InvoiceAdjustmentController::class, 'store']);
+Route::delete('/adjustments/{adjustment}', [InvoiceAdjustmentController::class, 'destroy']);
+
+// Invoice Payments
+Route::post('/payments', [InvoicePaymentController::class, 'store']);
+Route::delete('/payments/{payment}', [InvoicePaymentController::class, 'destroy']);
