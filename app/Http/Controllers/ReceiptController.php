@@ -45,7 +45,7 @@ class ReceiptController extends Controller
             // Create new receipt
             $receipt = new Receipt;
 
-            // Map basic receipt fields
+            // Basic receipt information
             $receipt->company_name = $request->company_name;
             $receipt->p_o_box = $request->p_o_box;
             $receipt->mobile = $request->mobile;
@@ -54,33 +54,75 @@ class ReceiptController extends Controller
             $receipt->serial_no = $request->serial_no;
             $receipt->uin = $request->uin;
             $receipt->tax_office = $request->tax_office;
+
+            // Customer information
             $receipt->customer_name = $request->customer_name;
             $receipt->customer_id_type = $request->customer_id_type;
             $receipt->customer_id = $request->customer_id;
             $receipt->customer_mobile = $request->customer_mobile;
+
+            // Receipt details
             $receipt->receipt_number = $request->receipt_number;
             $receipt->receipt_z_number = $request->receipt_z_number;
             $receipt->receipt_date = $request->receipt_date;
             $receipt->receipt_time = $request->receipt_time;
             $receipt->receipt_verification_code = $request->receipt_verification_code;
-            $receipt->receipt_total_excl_of_tax = $request->receipt_total_excl_of_tax;
-            $receipt->receipt_total_tax = $request->receipt_total_tax;
-            $receipt->receipt_total_incl_of_tax = $request->receipt_total_incl_of_tax;
+
+            // Financial information
+            $receipt->receipt_total_excl_of_tax = $request->receipt_total_excl_of_tax ?? 0;
+            $receipt->receipt_total_tax = $request->receipt_total_tax ?? 0;
+            $receipt->receipt_total_incl_of_tax = $request->receipt_total_incl_of_tax ?? 0;
+            $receipt->receipt_total_discount = $request->receipt_total_discount ?? 0;
+
+            // TANESCO specific fields
+            $receipt->kwh_charge = $request->kwh_charge ?? null;
+            $receipt->kva_charge = $request->kva_charge ?? null;
+            $receipt->service_charge = $request->service_charge ?? null;
+            $receipt->interest_amount = $request->interest_amount ?? null;
+            $receipt->receipt_rea = $request->receipt_rea ?? null;
+            $receipt->receipt_ewura = $request->receipt_ewura ?? null;
+            $receipt->receipt_property_tax = $request->receipt_property_tax ?? null;
             $receipt->date = $request->receipt_date;
 
-            $result = $receipt->save();
+            // Set TANESCO flag
+            $receipt->is_tanesco = str_contains(strtolower($request->company_name), 'tanzania electric supply') ||
+                str_contains(strtolower($request->company_name), 'tanesco');
+
+            $receipt->save();
 
             // Handle items
             if ($request->has('items') && is_array($request->items)) {
                 foreach($request->items as $item) {
-                    $itemData = [
+                    ReceiptItem::create([
                         'receipt_id' => $receipt->id,
-                        'description' => $item['description'] ?? $item['item_description'] ?? '',
-                        'qty' => $item['qty'] ?? $item['item_qty'] ?? 0,
-                        'amount' => $item['amount'] ?? $item['item_amount'] ?? 0
-                    ];
+                        'description' => $item['description'],
+                        'qty' => $item['qty'],
+                        'amount' => $item['amount']
+                    ]);
+                }
+            }
 
-                    ReceiptItem::create($itemData);
+            // Handle adjustments
+            if ($request->has('adjustments') && is_array($request->adjustments)) {
+                foreach($request->adjustments as $adjustment) {
+                    InvoiceAdjustment::create([
+                        'receipt_id' => $receipt->id,
+                        'type' => $adjustment['type'],
+                        'description' => $adjustment['description'],
+                        'amount' => $adjustment['amount']
+                    ]);
+                }
+            }
+
+            // Handle payments
+            if ($request->has('payments') && is_array($request->payments)) {
+                foreach($request->payments as $payment) {
+                    InvoicePayment::create([
+                        'receipt_id' => $receipt->id,
+                        'type' => $payment['type'],
+                        'description' => $payment['description'],
+                        'amount' => $payment['amount']
+                    ]);
                 }
             }
 
@@ -89,7 +131,7 @@ class ReceiptController extends Controller
             return response()->json([
                 'message' => 'Receipt added successfully',
                 'receipt_id' => $receipt->id
-            ], 200);
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
