@@ -42,7 +42,6 @@ class ReceiptController extends Controller
         try {
             DB::beginTransaction();
 
-            // Create new receipt
             $receipt = new Receipt;
 
             // Basic receipt information
@@ -54,35 +53,28 @@ class ReceiptController extends Controller
             $receipt->serial_no = $request->serial_no;
             $receipt->uin = $request->uin;
             $receipt->tax_office = $request->tax_office;
-
-            // Customer information
             $receipt->customer_name = $request->customer_name;
             $receipt->customer_id_type = $request->customer_id_type;
             $receipt->customer_id = $request->customer_id;
             $receipt->customer_mobile = $request->customer_mobile;
-
-            // Receipt details
             $receipt->receipt_number = $request->receipt_number;
             $receipt->receipt_z_number = $request->receipt_z_number;
             $receipt->receipt_date = $request->receipt_date;
             $receipt->receipt_time = $request->receipt_time;
             $receipt->receipt_verification_code = $request->receipt_verification_code;
-
-            // Financial information
             $receipt->receipt_total_excl_of_tax = $request->receipt_total_excl_of_tax ?? 0;
             $receipt->receipt_total_tax = $request->receipt_total_tax ?? 0;
             $receipt->receipt_total_incl_of_tax = $request->receipt_total_incl_of_tax ?? 0;
-            $receipt->receipt_total_discount = $request->receipt_total_discount ?? 0;
+            $receipt->date = $request->receipt_date;
 
             // TANESCO specific fields
             $receipt->kwh_charge = $request->kwh_charge ?? null;
             $receipt->kva_charge = $request->kva_charge ?? null;
             $receipt->service_charge = $request->service_charge ?? null;
             $receipt->interest_amount = $request->interest_amount ?? null;
-            $receipt->receipt_rea = $request->receipt_rea ?? null;
-            $receipt->receipt_ewura = $request->receipt_ewura ?? null;
-            $receipt->receipt_property_tax = $request->receipt_property_tax ?? null;
-            $receipt->date = $request->receipt_date;
+            $receipt->receipt_rea = $request->receipt_rea ?? 0;
+            $receipt->receipt_property_tax = $request->receipt_property_tax ?? 0;
+            $receipt->receipt_ewura = $request->receipt_ewura ?? 0;
 
             // Set TANESCO flag
             $receipt->is_tanesco = str_contains(strtolower($request->company_name), 'tanzania electric supply') ||
@@ -90,40 +82,59 @@ class ReceiptController extends Controller
 
             $receipt->save();
 
-            // Handle items
+            // Handle items with flexible field names
             if ($request->has('items') && is_array($request->items)) {
                 foreach($request->items as $item) {
                     ReceiptItem::create([
                         'receipt_id' => $receipt->id,
-                        'description' => $item['description'],
-                        'qty' => $item['qty'],
-                        'amount' => $item['amount']
+                        'description' => $item['item_description'] ?? $item['description'] ?? '',
+                        'qty' => $item['item_qty'] ?? $item['qty'] ?? 1,
+                        'amount' => $item['item_amount'] ?? $item['amount'] ?? 0
                     ]);
                 }
             }
 
-            // Handle adjustments
+            // Handle invoice adjustments
             if ($request->has('adjustments') && is_array($request->adjustments)) {
                 foreach($request->adjustments as $adjustment) {
                     InvoiceAdjustment::create([
                         'receipt_id' => $receipt->id,
-                        'type' => $adjustment['type'],
-                        'description' => $adjustment['description'],
-                        'amount' => $adjustment['amount']
+                        'type' => $adjustment['type'] ?? 'CR',
+                        'description' => $adjustment['description'] ?? 'Marekebisho/Adjustment',
+                        'amount' => $adjustment['amount'] ?? 0
                     ]);
                 }
             }
 
-            // Handle payments
+            // Handle invoice payments
             if ($request->has('payments') && is_array($request->payments)) {
                 foreach($request->payments as $payment) {
                     InvoicePayment::create([
                         'receipt_id' => $receipt->id,
-                        'type' => $payment['type'],
-                        'description' => $payment['description'],
-                        'amount' => $payment['amount']
+                        'type' => $payment['type'] ?? 'CR',
+                        'description' => $payment['description'] ?? 'Kiasi kilichobaki/Balance B/Fwd',
+                        'amount' => $payment['amount'] ?? 0
                     ]);
                 }
+            }
+
+            // Additional handling for default TANESCO adjustments and payments if none provided
+            if ($receipt->is_tanesco && !$request->has('adjustments')) {
+                InvoiceAdjustment::create([
+                    'receipt_id' => $receipt->id,
+                    'type' => 'CR',
+                    'description' => 'Marekebisho/Adjustment',
+                    'amount' => 0
+                ]);
+            }
+
+            if ($receipt->is_tanesco && !$request->has('payments')) {
+                InvoicePayment::create([
+                    'receipt_id' => $receipt->id,
+                    'type' => 'CR',
+                    'description' => 'Kiasi kilichobaki/Balance B/Fwd',
+                    'amount' => 0
+                ]);
             }
 
             DB::commit();
@@ -135,6 +146,9 @@ class ReceiptController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Receipt creation failed: ' . $e->getMessage());
+            \Log::error('Request data: ' . json_encode($request->all()));
+
             return response()->json([
                 'error' => 'Failed to add receipt',
                 'message' => $e->getMessage()
