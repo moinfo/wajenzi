@@ -22,24 +22,17 @@
                                 <th class="text-center" style="width: 100px;">#</th>
                                 <th>Name</th>
                                 <th>System</th>
-                                <th>Seller Magari</th>
-                                <th>Bonge Customer</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
                             <tbody>
                             @foreach($efd as $efd)
-                                @php
-                                    $sellers = \App\Models\Efd::getSellerName($efd->seller) ?? '';
-                                @endphp
                                 <tr id="efd-tr-{{$efd->id}}">
                                     <td class="text-center">
                                         {{$loop->index + 1}}
                                     </td>
                                     <td class="font-w600">{{ $efd->name ?? null}}</td>
                                     <td class="font-w600">{{ $efd->system->name ?? null }}</td>
-                                    <td>{{$sellers ?? null}}</td>
-                                    <td>{{($efd->bonge_customer->first_name ?? null) .' '.($efd->bonge_customer->last_name ?? null)}}</td>
                                     <td class="text-center">
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit EFD"))

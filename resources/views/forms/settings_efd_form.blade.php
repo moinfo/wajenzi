@@ -17,26 +17,6 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-system" class="control-label required">Seller</label>
-            <select name="seller" id="seller" class="form-control">
-                <option value="">Select Seller</option>
-
-                @foreach ($sellers as $seller)
-                    <option value="{{ $seller->id }}" {{ ( $seller->id == $object->seller) ? 'selected' : '' }}> {{ $seller->name }} </option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="example-nf-system" class="control-label required">Bonge Customer</label>
-            <select name="bonge_customer_id" id="bonge_customer_id" class="form-control" required>
-                <option value="">Select Bonge Customer</option>
-
-                @foreach ($bonge_customers as $bonge_customer)
-                    <option value="{{ $bonge_customer->person_id }}" {{ ( $bonge_customer->person_id == $object->bonge_customer_id) ? 'selected' : '' }}> {{ $bonge_customer->people->first_name .' '.$bonge_customer->people->last_name }} </option>
-                @endforeach
-            </select>
-        </div>
-        <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
