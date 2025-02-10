@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class Supplier extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name','supplier_type','is_withdraw', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id', 'account_name', 'nmb_account', 'nbc_account', 'crdb_account', 'is_transferred', 'whitestar_supplier_id', 'supplier_depend_on_system', 'debit'];
+    public $fillable = ['id', 'name', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id', 'account_name', 'nmb_account', 'nbc_account', 'crdb_account'];
 
     public static function getSupplierName($supplier_id)
     {

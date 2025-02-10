@@ -29,11 +29,6 @@
                                     <th>Address</th>
                                     <th>VRN</th>
                                     <th>System</th>
-                                    <th>Supplier Type</th>
-                                    <th>Is Transferred</th>
-                                    <th>Whitestar Supplier</th>
-                                    <th>Default Debit</th>
-                                    <th>is Withdraw?</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -42,13 +37,6 @@
                                 @foreach($suppliers as $supplier)
                                     @php
 
-                                    if ($supplier->supplier_depend_on_system == 'WHITESTAR'){
-                                        $whitestar_supplier = \App\Models\Supplier::getWhitestarSupplier($supplier->whitestar_supplier_id);
-                                    }elseif ($supplier->supplier_depend_on_system == 'BONGE'){
-                                          $whitestar_supplier = \App\Models\Supplier::getBongeSupplier($supplier->whitestar_supplier_id);
-                                    }else{
-                                           $whitestar_supplier = '';
-                                    }
                                     @endphp
                                     <tr id="supplier-tr-{{$supplier->id}}">
                                         <td class="text-center">
@@ -59,11 +47,6 @@
                                         <td class="font-w400">{{ $supplier->address }}</td>
                                         <td class="font-w400">{{ $supplier->vrn }}</td>
                                         <td class="font-w400">{{ $supplier->system->name ?? null }}</td>
-                                        <td class="font-w400">{{ $supplier->supplier_type }}</td>
-                                        <td class="font-w400">{{ $supplier->is_transferred }}</td>
-                                        <td class="font-w400">{{ ($whitestar_supplier->first_name ?? null) .' '. ($whitestar_supplier->last_name ?? null)}}</td>
-                                        <td class="text-right">{{ number_format($supplier->debit) }}</td>
-                                        <td class="text-right">{{ $supplier->is_withdraw }}</td>
 
                                         <td class="text-center" >
                                             <div class="btn-group">
