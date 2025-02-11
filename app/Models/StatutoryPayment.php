@@ -28,6 +28,11 @@ class StatutoryPayment extends Model
         return $this->belongsTo(SubCategory::class);
     }
 
+    public static function countUnapproved()
+    {
+        return count(InvoicePayment::where('status','!=','APPROVED')->where('status','!=','REJECTED')->get());
+    }
+
     public function category(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
         return $this->hasOneThrough(Category::class, SubCategory::class, 'category_id', 'id', 'sub_category_id');

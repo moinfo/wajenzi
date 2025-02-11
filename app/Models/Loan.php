@@ -15,6 +15,10 @@ class Loan extends Model
         return $this->belongsTo(Staff::class);
     }
 
+    public static function countUnapproved()
+    {
+        return count(Loan::where('status','!=','APPROVED')->where('status','!=','REJECTED')->get());
+    }
 
     static function getTotalLoanPerDay($date){
         return Loan::select([DB::raw("SUM(amount) as total_amount")])->Where('status','APPROVED')->Where('date',$date)->get()->first()['total_amount'] ?? 0;

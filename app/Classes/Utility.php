@@ -4,6 +4,7 @@
 namespace App\Classes;
 
 
+use App\Models\AssignUserGroup;
 use App\Models\Sale;
 use Illuminate\Support\Facades\Auth;
 
@@ -156,5 +157,17 @@ class Utility
         $response = curl_exec($curl);
         curl_close($curl);
         return $response;
+    }
+
+
+    public static function userGroupsArray($id)
+    {
+        $user_group_id = AssignUserGroup::where('user_id',$id)->get();
+        $user_group_ids = array();
+        foreach ($user_group_id as $group_id) {
+            array_push($user_group_ids, $group_id['user_group_id']);
+        }
+
+        return $user_group_ids;
     }
 }

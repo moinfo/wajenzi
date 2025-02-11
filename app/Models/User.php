@@ -7,6 +7,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
@@ -127,5 +128,29 @@ class User extends Authenticatable
     {
         return $this->hasProjectPermission('manage_project', $project_id) ||
             $this->role->name === 'project_manager';
+    }
+
+    public static function  getUserCounts()
+    {
+        $counts = DB::table('users')
+            ->select(
+                DB::raw('COUNT(CASE WHEN gender = "FEMALE" THEN 1 END) AS total_female'),
+                DB::raw('COUNT(CASE WHEN gender = "MALE" THEN 1 END) AS total_male'),
+                DB::raw('COUNT(*) AS total')
+            )->where('type', 'STAFF')
+            ->first();
+
+        return $counts;
+    }
+
+    public static function getDepartmentMemberCounts()
+    {
+        $counts = DB::table('users')
+            ->select('department_id','departments.name', DB::raw('COUNT(*) AS total_members'))
+            ->join('departments', 'departments.id', '=', 'users.department_id')
+            ->groupBy('department_id')
+            ->get();
+
+        return $counts;
     }
 }
