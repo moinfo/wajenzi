@@ -12,6 +12,7 @@ use App\Models\BeneficiaryAccount;
 use App\Models\BongeCustomer;
 use App\Models\Category;
 use App\Models\Deduction;
+use App\Models\Department;
 use App\Models\Division;
 use App\Models\Efd;
 use App\Models\ExpensesCategory;
@@ -180,7 +181,10 @@ class AjaxController
                     $todayTargets = SupplierTarget::getTodayTargets($start_date);
                     $project_clients = ProjectClient::all();
                     $project_types = ProjectType::all();
+                    $departments = Department::all();
+
                     $data = $request->input('data') ?? [
+                            'departments' => $departments,
                             'projectTypes' => $project_types,
                             'clients' => $project_clients,
                             'slip_presentations' => $slip_presentations,

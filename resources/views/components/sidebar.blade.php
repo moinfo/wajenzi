@@ -10,11 +10,14 @@
                 </span>
             </div>
         </div>
+        @php
+            $profile = Auth::user()->profile ?? 'media/avatars/avatar15.jpg';
 
+        @endphp
         <!-- User Profile -->
         <div class="user-profile">
             <div class="profile-image">
-                <img src="{{ asset('media/avatars/avatar15.jpg') }}" alt="Profile">
+                <img src="{{ asset("$profile") }}" alt="Profile">
             </div>
             <h3 class="user-name">{{ Auth::user()->name }}</h3>
         </div>

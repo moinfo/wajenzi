@@ -184,40 +184,77 @@ class Controller extends BaseController
     }
     private function crudUpdate(Request $request, $class_name, $id = null){
         if($request->file()) {
-            $full_class_name = '\App\Models\\'. ($class_name ?? $request->updateItem);
-            $obj_id = $request->input('id') ?? $id; //TODO or the other way round
-            $obj = $full_class_name::find($request->input('id'));
+            if($request->input('profile_image')) {
+                $full_class_name = '\App\Models\\' . ($class_name ?? $request->updateItem);
+                $obj_id = $request->input('id') ?? $id; //TODO or the other way round
+                $obj = $full_class_name::find($request->input('id'));
 
-            $request->validate([
-                'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048'
-            ]);
+                $request->validate([
+                    'profile' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048'
+                ]);
 
-            // Check for amount_formatted and convert to amount if exists
-            if ($request->has('amount_formatted') && !empty($request->input('amount_formatted'))) {
-                $amount = Utility::strip_commas($request->input('amount_formatted'));
-            } else {
-                $amount = Utility::strip_commas($request->input('amount'));
-            }
+                // Check for amount_formatted and convert to amount if exists
+                if ($request->has('amount_formatted') && !empty($request->input('amount_formatted'))) {
+                    $amount = Utility::strip_commas($request->input('amount_formatted'));
+                } else {
+                    $amount = Utility::strip_commas($request->input('amount'));
+                }
 
-            $request->request->add([
-                'amount' => $amount,
-                'credit' => Utility::strip_commas($request->input('credit')),
-                'debit' => Utility::strip_commas($request->input('debit')),
-                'net' => Utility::strip_commas($request->input('net')),
-                'tax' => Utility::strip_commas($request->input('tax')),
-                'turn_over' => Utility::strip_commas($request->input('turn_over')),
-                'total_amount' => Utility::strip_commas($request->input('total_amount')),
-                'amount_vat_exc' => Utility::strip_commas($request->input('amount_vat_exc')),
-                'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
-                'deduction' => Utility::strip_commas($request->input('deduction')),
-                'price' => Utility::strip_commas($request->input('price')),
+                $request->request->add([
+                    'amount' => $amount,
+                    'credit' => Utility::strip_commas($request->input('credit')),
+                    'debit' => Utility::strip_commas($request->input('debit')),
+                    'net' => Utility::strip_commas($request->input('net')),
+                    'tax' => Utility::strip_commas($request->input('tax')),
+                    'turn_over' => Utility::strip_commas($request->input('turn_over')),
+                    'total_amount' => Utility::strip_commas($request->input('total_amount')),
+                    'amount_vat_exc' => Utility::strip_commas($request->input('amount_vat_exc')),
+                    'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
+                    'deduction' => Utility::strip_commas($request->input('deduction')),
+                    'price' => Utility::strip_commas($request->input('price')),
 //                'password' => bcrypt($request->input('password')),
-            ]);
-            $obj->fill($request->all());
-            $name = time().'_'.$request->file->getClientOriginalName();
-            $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
-            $obj->file = '/storage/'. $filePath;
-            return $obj->save();
+                ]);
+                $obj->fill($request->all());
+                $name = time() . '_' . $request->profile->getClientOriginalName();
+                $filePath = $request->file('profile')->storeAs('uploads', $name, 'public');
+                $obj->profile = '/storage/'. $filePath;
+                return $obj->save();
+            }else{
+                $full_class_name = '\App\Models\\'. ($class_name ?? $request->updateItem);
+                $obj_id = $request->input('id') ?? $id; //TODO or the other way round
+                $obj = $full_class_name::find($request->input('id'));
+
+                $request->validate([
+                    'file' => 'required|mimes:png,jpg,jpeg,csv,txt,xlx,xls,xlsx,doc,docx,pdf|max:4048'
+                ]);
+
+                // Check for amount_formatted and convert to amount if exists
+                if ($request->has('amount_formatted') && !empty($request->input('amount_formatted'))) {
+                    $amount = Utility::strip_commas($request->input('amount_formatted'));
+                } else {
+                    $amount = Utility::strip_commas($request->input('amount'));
+                }
+
+                $request->request->add([
+                    'amount' => $amount,
+                    'credit' => Utility::strip_commas($request->input('credit')),
+                    'debit' => Utility::strip_commas($request->input('debit')),
+                    'net' => Utility::strip_commas($request->input('net')),
+                    'tax' => Utility::strip_commas($request->input('tax')),
+                    'turn_over' => Utility::strip_commas($request->input('turn_over')),
+                    'total_amount' => Utility::strip_commas($request->input('total_amount')),
+                    'amount_vat_exc' => Utility::strip_commas($request->input('amount_vat_exc')),
+                    'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
+                    'deduction' => Utility::strip_commas($request->input('deduction')),
+                    'price' => Utility::strip_commas($request->input('price')),
+//                'password' => bcrypt($request->input('password')),
+                ]);
+                $obj->fill($request->all());
+                $name = time().'_'.$request->file->getClientOriginalName();
+                $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
+                $obj->file = '/storage/'. $filePath;
+                return $obj->save();
+            }
         } else {
             $full_class_name = '\App\Models\\'. ($class_name ?? $request->updateItem);
             $obj_id = $request->input('id') ?? $id; //TODO or the other way round
