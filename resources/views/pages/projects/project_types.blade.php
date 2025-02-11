@@ -6,7 +6,7 @@
         <div class="content">
             <div class="content-heading">Project Types
                 <div class="float-right">
-                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Project Type"))
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Create Project Type"))
                         <button type="button" onclick="loadFormModal('project_type_form', {className: 'ProjectType'}, 'Create New Type', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Type</button>
                     @endif
                 </div>

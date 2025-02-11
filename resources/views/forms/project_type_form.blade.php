@@ -3,13 +3,13 @@
     <form method="post" autocomplete="off">
         @csrf
         <div class="row">
-            <div class="col-sm-4">
+            <div class="col-sm-12">
                 <div class="form-group">
                     <label for="name" class="control-label required">Type Name</label>
                     <input type="text" class="form-control" id="input-name" name="name" value="{{ $object->name ?? '' }}" required="required">
                 </div>
             </div>
-            <div class="col-sm-8">
+            <div class="col-sm-12">
                 <div class="form-group">
                     <label for="description">Description</label>
                     <textarea class="form-control" id="input-description" name="description" rows="3">{{ $object->description ?? '' }}</textarea>

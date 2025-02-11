@@ -3,83 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\Approval;
+use App\Models\ProjectType;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
+    public function index(Request $request) {
+        //handle crud operations
+        if($this->handleCrud($request, 'Project')) {
+            return back();
+        }
+
+        $projects = Project::all();
+        $projectTypes = ProjectType::all();
+
+        $data = [
+            'projects' => $projects,
+            'projectTypes' => $projectTypes
+        ];
+        return view('pages.projects.projects')->with($data);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
+    //for approvals process
+    public function project($id, $document_type_id){
+        $project = \App\Models\Project::where('id', $id)->first();
+        $approvalStages = Approval::getApprovalStages($id, $document_type_id);
+        $nextApproval = Approval::getNextApproval($id, $document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id, $document_type_id);
+        $rejected = Approval::isRejected($id, $document_type_id);
+        $document_id = $id;
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Project  $project
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Project $project)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Project  $project
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Project $project)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Project  $project
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Project $project)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Project  $project
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Project $project)
-    {
-        //
+        $data = [
+            'project' => $project,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.projects.project')->with($data);
     }
 }

@@ -6,7 +6,7 @@
         <div class="content">
             <div class="content-heading">Project Materials
                 <div class="float-right">
-                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Material"))
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Create Material"))
                         <button type="button" onclick="loadFormModal('project_material_form', {className: 'ProjectMaterial'}, 'Create New Material', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Material</button>
                     @endif
                 </div>
@@ -78,9 +78,9 @@
                                         <td class="text-right">{{ number_format($material->total_inventory, 2) }} {{ $material->unit }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-success" href="{{route('project_material',['id' => $material->id])}}">
-                                                    <i class="fa fa-eye"></i>
-                                                </a>
+{{--                                                <a class="btn btn-sm btn-success" href="{{route('project_material',['id' => $material->id])}}">--}}
+{{--                                                    <i class="fa fa-eye"></i>--}}
+{{--                                                </a>--}}
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Material"))
                                                     <button type="button"
                                                             onclick="loadFormModal('project_material_form', {className: 'ProjectMaterial', id: {{$material->id}}}, 'Edit Material', 'modal-md');"

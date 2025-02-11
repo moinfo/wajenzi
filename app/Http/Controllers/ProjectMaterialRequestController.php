@@ -2,84 +2,72 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
+use App\Models\Project;
+use App\Models\ProjectMaterial;
+use App\Models\ProjectMaterialInventory;
 use App\Models\ProjectMaterialRequest;
 use Illuminate\Http\Request;
 
 class ProjectMaterialRequestController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
+    public function index(Request $request) {
+        //handle crud operations
+        if($this->handleCrud($request, 'ProjectMaterialRequest')) {
+            return back();
+        }
+
+        $requests = ProjectMaterialRequest::with(['project', 'material', 'requester'])->get();
+        $projects = Project::all();
+        $materials = ProjectMaterial::all();
+
+        $data = [
+            'requests' => $requests,
+            'projects' => $projects,
+            'materials' => $materials
+        ];
+        return view('pages.projects.project_material_requests')->with($data);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+    public function request($id, $document_type_id){
+        $request = ProjectMaterialRequest::where('id', $id)->first();
+        $approvalStages = Approval::getApprovalStages($id, $document_type_id);
+        $nextApproval = Approval::getNextApproval($id, $document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id, $document_type_id);
+        $rejected = Approval::isRejected($id, $document_type_id);
+        $document_id = $id;
+
+        $data = [
+            'request' => $request,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.projects.material_request')->with($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+    // Process approved request
+    public function processRequest($id) {
+        $request = ProjectMaterialRequest::findOrFail($id);
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\ProjectMaterialRequest  $projectMaterialRequest
-     * @return \Illuminate\Http\Response
-     */
-    public function show(ProjectMaterialRequest $projectMaterialRequest)
-    {
-        //
-    }
+        if($request->status !== 'approved') {
+            return back()->with('error', 'Only approved requests can be processed');
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\ProjectMaterialRequest  $projectMaterialRequest
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(ProjectMaterialRequest $projectMaterialRequest)
-    {
-        //
-    }
+        // Update inventory
+        $inventory = ProjectMaterialInventory::firstOrCreate(
+            [
+                'project_id' => $request->project_id,
+                'material_id' => $request->material_id
+            ],
+            ['quantity' => 0]
+        );
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\ProjectMaterialRequest  $projectMaterialRequest
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, ProjectMaterialRequest $projectMaterialRequest)
-    {
-        //
-    }
+        $inventory->increment('quantity', $request->quantity);
+        $request->update(['status' => 'completed']);
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\ProjectMaterialRequest  $projectMaterialRequest
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(ProjectMaterialRequest $projectMaterialRequest)
-    {
-        //
+        return back()->with('success', 'Material request processed successfully');
     }
 }

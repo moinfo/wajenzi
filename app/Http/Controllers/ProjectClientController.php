@@ -5,81 +5,29 @@ namespace App\Http\Controllers;
 use App\Models\ProjectClient;
 use Illuminate\Http\Request;
 
+
 class ProjectClientController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
+    public function index(Request $request) {
+        //handle crud operations
+        if($this->handleCrud($request, 'ProjectClient')) {
+            return back();
+        }
+
+        $clients = \App\Models\ProjectClient::withCount(['projects', 'documents'])->get();
+
+        $data = [
+            'clients' => $clients
+        ];
+        return view('pages.projects.project_clients')->with($data);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
+    public function client($id){
+        $client = \App\Models\ProjectClient::with(['projects', 'documents'])->where('id', $id)->first();
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\ProjectClient  $projectClient
-     * @return \Illuminate\Http\Response
-     */
-    public function show(ProjectClient $projectClient)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\ProjectClient  $projectClient
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(ProjectClient $projectClient)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\ProjectClient  $projectClient
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, ProjectClient $projectClient)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\ProjectClient  $projectClient
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(ProjectClient $projectClient)
-    {
-        //
+        $data = [
+            'client' => $client
+        ];
+        return view('pages.projects.client')->with($data);
     }
 }

@@ -6,7 +6,7 @@
         <div class="content">
             <div class="content-heading">Project BOQs
                 <div class="float-right">
-                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add BOQ"))
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Create BOQ"))
                         <button type="button" onclick="loadFormModal('project_boq_form', {className: 'ProjectBoq'}, 'Create New BOQ', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New BOQ</button>
                     @endif
                 </div>

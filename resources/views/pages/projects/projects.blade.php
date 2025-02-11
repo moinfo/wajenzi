@@ -6,7 +6,7 @@
         <div class="content">
             <div class="content-heading">Projects
                 <div class="float-right">
-                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Project"))
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Create Project"))
                         <button type="button" onclick="loadFormModal('project_form', {className: 'Project'}, 'Create New Project', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Project</button>
                     @endif
                 </div>
@@ -81,8 +81,8 @@
                                     <tr id="project-tr-{{$project->id}}">
                                         <td class="text-center">{{$loop->index + 1}}</td>
                                         <td class="font-w600">{{ $project->project_name }}</td>
-                                        <td>{{ $project->client->first_name }} {{ $project->client->last_name }}</td>
-                                        <td>{{ $project->projectType->name }}</td>
+                                        <td>{{ $project->client->first_name ?? null }} {{ $project->client->last_name ?? null}}</td>
+                                        <td>{{ $project->projectType->name ?? null }}</td>
                                         <td>{{ $project->start_date }}</td>
                                         <td>{{ $project->expected_end_date }}</td>
                                         <td>
@@ -100,9 +100,9 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-success" href="{{route('project',['id' => $project->id])}}">
-                                                    <i class="fa fa-eye"></i>
-                                                </a>
+{{--                                                <a class="btn btn-sm btn-success" href="{{route('project',['id' => $project->id])}}">--}}
+{{--                                                    <i class="fa fa-eye"></i>--}}
+{{--                                                </a>--}}
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Project"))
                                                     <button type="button"
                                                             onclick="loadFormModal('project_form', {className: 'Project', id: {{$project->id}}}, 'Edit {{$project->project_name}}', 'modal-md');"

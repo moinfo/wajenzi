@@ -6,7 +6,7 @@
         <div class="content">
             <div class="content-heading">Project Clients
                 <div class="float-right">
-                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Client"))
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Create Client"))
                         <button type="button" onclick="loadFormModal('project_client_form', {className: 'ProjectClient'}, 'Create New Client', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Client</button>
                     @endif
                 </div>
@@ -41,9 +41,9 @@
                                         <td class="text-center">{{ $client->documents_count }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-success" href="{{route('project_client',['id' => $client->id])}}">
-                                                    <i class="fa fa-eye"></i>
-                                                </a>
+{{--                                                <a class="btn btn-sm btn-success" href="{{route('project_client',['id' => $client->id])}}">--}}
+{{--                                                    <i class="fa fa-eye"></i>--}}
+{{--                                                </a>--}}
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Client"))
                                                     <button type="button"
                                                             onclick="loadFormModal('project_client_form', {className: 'ProjectClient', id: {{$client->id}}}, 'Edit Client', 'modal-md');"

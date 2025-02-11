@@ -3,13 +3,13 @@
     <form method="post" autocomplete="off">
         @csrf
         <div class="row">
-            <div class="col-sm-4">
+            <div class="col-sm-12">
                 <div class="form-group">
                     <label for="project_name" class="control-label required">Project Name</label>
                     <input type="text" class="form-control" id="input-project-name" required="required" name="project_name" value="{{ $object->project_name ?? '' }}" placeholder="Project Name">
                 </div>
             </div>
-            <div class="col-sm-4">
+            <div class="col-sm-12">
                 <div class="form-group">
                     <label for="project_type_id" class="control-label required">Project Type</label>
                     <select name="project_type_id" id="input-project-type" class="form-control" required="required">
@@ -20,40 +20,40 @@
                     </select>
                 </div>
             </div>
-            <div class="col-sm-4">
+            <div class="col-sm-12">
                 <div class="form-group">
                     <label for="client_id" class="control-label required">Client</label>
                     <select name="client_id" id="input-client" class="form-control" required="required">
                         <option value="">Select Client</option>
                         @foreach ($clients as $client)
-                            <option value="{{ $client->id }}" {{ ($client->id == $object->client_id) ? 'selected' : '' }}>{{ $client->name }}</option>
+                            <option value="{{ $client->id }}" {{ ($client->id == $object->client_id) ? 'selected' : '' }}>{{ $client->first_name .' '. $client->last_name }}</option>
                         @endforeach
                     </select>
                 </div>
             </div>
-            <div class="col-sm-4">
+            <div class="col-sm-12">
                 <div class="form-group">
                     <label for="start_date" class="control-label required">Start Date</label>
-                    <input type="text" class="form-control datepicker" id="input-start-date" name="start_date" value="{{ $object->start_date ?? '' }}" required="required">
+                    <input type="text" class="form-control datepicker" id="input-start-date" name="start_date" value="{{ $object->start_date ?? date('Y-m-d') }}" required="required">
                 </div>
             </div>
-            <div class="col-sm-4">
+            <div class="col-sm-12">
                 <div class="form-group">
                     <label for="expected_end_date" class="control-label required">Expected End Date</label>
-                    <input type="text" class="form-control datepicker" id="input-expected-end-date" name="expected_end_date" value="{{ $object->expected_end_date ?? '' }}" required="required">
+                    <input type="text" class="form-control datepicker" id="input-expected-end-date" name="expected_end_date" value="{{ $object->expected_end_date ?? date('Y-m-d') }}" required="required">
                 </div>
             </div>
-            <div class="col-sm-4">
-                <div class="form-group">
-                    <label for="status" class="control-label required">Status</label>
-                    <select name="status" id="input-status" class="form-control" required="required">
-                        <option value="">Select Status</option>
-                        @foreach ($statuses as $status)
-                            <option value="{{ $status }}" {{ ($status == $object->status) ? 'selected' : '' }}>{{ $status }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
+{{--            <div class="col-sm-12">--}}
+{{--                <div class="form-group">--}}
+{{--                    <label for="status" class="control-label required">Status</label>--}}
+{{--                    <select name="status" id="input-status" class="form-control" required="required">--}}
+{{--                        <option value="">Select Status</option>--}}
+{{--                        @foreach ($statuses as $status)--}}
+{{--                            <option value="{{ $status }}" {{ ($status == $object->status) ? 'selected' : '' }}>{{ $status }}</option>--}}
+{{--                        @endforeach--}}
+{{--                    </select>--}}
+{{--                </div>--}}
+{{--            </div>--}}
         </div>
         <div class="form-group">
             @if($object->id ?? null)
@@ -65,3 +65,9 @@
         </div>
     </form>
 </div>
+<script>
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd'
+    });
+</script>
+

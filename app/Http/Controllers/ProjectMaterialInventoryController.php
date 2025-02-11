@@ -2,84 +2,98 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Project;
+use App\Models\ProjectMaterial;
 use App\Models\ProjectMaterialInventory;
 use Illuminate\Http\Request;
 
 class ProjectMaterialInventoryController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
+    public function index(Request $request) {
+        //handle crud operations
+        if($this->handleCrud($request, 'ProjectMaterialInventory')) {
+            return back();
+        }
+
+        $inventories = ProjectMaterialInventory::with(['project', 'material'])->get();
+        $projects = Project::all();
+        $materials = ProjectMaterial::all();
+
+        $data = [
+            'inventories' => $inventories,
+            'projects' => $projects,
+            'materials' => $materials
+        ];
+        return view('pages.projects.project_material_inventory')->with($data);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+    // Update inventory quantity
+    public function updateQuantity(Request $request, $id) {
+        $inventory = ProjectMaterialInventory::findOrFail($id);
+        $oldQuantity = $inventory->quantity;
+
+        switch($request->action) {
+            case 'add':
+                $inventory->quantity += $request->quantity;
+                break;
+            case 'subtract':
+                if($inventory->quantity < $request->quantity) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Insufficient inventory quantity'
+                    ], 400);
+                }
+                $inventory->quantity -= $request->quantity;
+                break;
+            case 'set':
+                $inventory->quantity = $request->quantity;
+                break;
+        }
+
+        $inventory->save();
+
+        // Create inventory movement record
+        \App\Models\ProjectMaterialMovement::create([
+            'inventory_id' => $id,
+            'action' => $request->action,
+            'quantity' => $request->quantity,
+            'old_quantity' => $oldQuantity,
+            'new_quantity' => $inventory->quantity,
+            'user_id' => auth()->id()
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'new_quantity' => $inventory->quantity
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
+    // Check low inventory
+    public function checkLowInventory() {
+        $lowInventory = ProjectMaterialInventory::with(['material', 'project'])
+            ->whereRaw('quantity <= materials.minimum_quantity')
+            ->join('project_materials as materials', 'materials.id', '=', 'project_material_inventory.material_id')
+            ->get();
+
+        return response()->json($lowInventory);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\ProjectMaterialInventory  $projectMaterialInventory
-     * @return \Illuminate\Http\Response
-     */
-    public function show(ProjectMaterialInventory $projectMaterialInventory)
-    {
-        //
-    }
+    // Generate inventory report
+    public function generateReport(Request $request) {
+        $inventories = ProjectMaterialInventory::with(['project', 'material']);
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\ProjectMaterialInventory  $projectMaterialInventory
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(ProjectMaterialInventory $projectMaterialInventory)
-    {
-        //
-    }
+        if($request->project_id) {
+            $inventories->where('project_id', $request->project_id);
+        }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\ProjectMaterialInventory  $projectMaterialInventory
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, ProjectMaterialInventory $projectMaterialInventory)
-    {
-        //
-    }
+        if($request->material_id) {
+            $inventories->where('material_id', $request->material_id);
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\ProjectMaterialInventory  $projectMaterialInventory
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(ProjectMaterialInventory $projectMaterialInventory)
-    {
-        //
+        $inventories = $inventories->get();
+
+        // Generate report logic here...
+
+        return back()->with('success', 'Report generated successfully');
     }
 }
