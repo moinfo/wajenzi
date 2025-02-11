@@ -279,6 +279,15 @@
                     } else {}
                 });
             }
+
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        if (this.nextElementSibling && this.nextElementSibling.classList.contains('nav-treeview')) {
+                            e.preventDefault();
+                            this.closest('.nav-item').classList.toggle('active');
+                        }
+                    });
+                });
         </script>
         <!-- Laravel Scaffolding JS -->
         <!-- <script src="{{ mix('js/laravel.app.js') }}"></script> -->

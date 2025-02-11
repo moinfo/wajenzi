@@ -23,4 +23,17 @@ class Menu extends Model
     public static function getFullMenu(){
         return self::whereNull('parent_id')->where('status', 'ACTIVE')->orderBy('list_order','ASC')->with('subMenus')->get();
     }
+    // Get parent menu
+    public function parent()
+    {
+        return $this->belongsTo(Menu::class, 'parent_id');
+    }
+
+    // Get child menus
+    public function children()
+    {
+        return $this->hasMany(Menu::class, 'parent_id')
+            ->where('status', 'ACTIVE')
+            ->orderBy('list_order');
+    }
 }
