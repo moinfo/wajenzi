@@ -2,84 +2,79 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Project;
 use App\Models\ProjectExpense;
+use App\Models\ProjectPayment;
+use App\Models\ProjectInvoice;
+use App\Models\Approval;
 use Illuminate\Http\Request;
 
 class ProjectExpenseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
+    public function index(Request $request) {
+        //handle crud operations
+        if($this->handleCrud($request, 'ProjectExpense')) {
+            return back();
+        }
+
+        $expenses = ProjectExpense::with(['project', 'creator'])
+            ->when($request->start_date, function($query) use ($request) {
+                return $query->whereDate('expense_date', '>=', $request->start_date);
+            })
+            ->when($request->end_date, function($query) use ($request) {
+                return $query->whereDate('expense_date', '<=', $request->end_date);
+            })
+            ->when($request->project_id, function($query) use ($request) {
+                return $query->where('project_id', $request->project_id);
+            })
+            ->get();
+
+        $projects = Project::all();
+        $total_amount = $expenses->sum('amount');
+
+        $data = [
+            'expenses' => $expenses,
+            'projects' => $projects,
+            'total_amount' => $total_amount
+        ];
+        return view('pages.projects.project_expenses')->with($data);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+    public function expense($id, $document_type_id) {
+        $expense = ProjectExpense::where('id', $id)->first();
+        $approvalStages = Approval::getApprovalStages($id, $document_type_id);
+        $nextApproval = Approval::getNextApproval($id, $document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id, $document_type_id);
+        $rejected = Approval::isRejected($id, $document_type_id);
+        $document_id = $id;
+
+        $data = [
+            'expense' => $expense,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+        ];
+        return view('pages.projects.project_expenses')->with($data);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+    public function monthlyReport(Request $request) {
+        $year = $request->year ?? date('Y');
+        $month = $request->month ?? date('m');
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\ProjectExpense  $projectExpense
-     * @return \Illuminate\Http\Response
-     */
-    public function show(ProjectExpense $projectExpense)
-    {
-        //
-    }
+        $expenses = ProjectExpense::with(['project'])
+            ->whereYear('expense_date', $year)
+            ->whereMonth('expense_date', $month)
+            ->when($request->project_id, function($query) use ($request) {
+                return $query->where('project_id', $request->project_id);
+            })
+            ->get();
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\ProjectExpense  $projectExpense
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(ProjectExpense $projectExpense)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\ProjectExpense  $projectExpense
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, ProjectExpense $projectExpense)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\ProjectExpense  $projectExpense
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(ProjectExpense $projectExpense)
-    {
-        //
+        return response()->json([
+            'success' => true,
+            'expenses' => $expenses,
+            'total' => $expenses->sum('amount')
+        ]);
     }
 }

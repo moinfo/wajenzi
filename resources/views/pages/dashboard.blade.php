@@ -405,7 +405,7 @@
 
         .approvals-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 1rem;
             background: #F3F4F6;
             padding: 1.5rem;
@@ -523,7 +523,204 @@
             }
         }
     </style>
+    <style>
+        :root {
+            --primary-color: #4169E1;
+            --secondary-color: #32CD32;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --chart-blue: rgba(66, 165, 245, 1);
+            --chart-green: rgba(156, 204, 101, 1);
+        }
 
+        /* Dashboard Grid Layout */
+        .modern-dashboard {
+            padding: 1.5rem;
+            background: var(--light-color);
+            display: grid;
+            grid-gap: 1.5rem;
+        }
+
+        /* Stats Overview Section */
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 1.25rem;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .stat-icon.sales { background: var(--primary-color); }
+        .stat-icon.projects { background: var(--success-color); }
+        .stat-icon.tasks { background: var(--warning-color); }
+        .stat-icon.expenses { background: var(--danger-color); }
+
+        .stat-content {
+            margin-top: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        .stat-trend {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .trend-up {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--success-color);
+        }
+
+        .trend-down {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+        }
+
+        /* Project Overview Section */
+        .project-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .project-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .project-card {
+            background: var(--light-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .project-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-ongoing { background: rgba(255, 193, 7, 0.1); color: var(--warning-color); }
+        .status-completed { background: rgba(40, 167, 69, 0.1); color: var(--success-color); }
+        .status-delayed { background: rgba(220, 53, 69, 0.1); color: var(--danger-color); }
+
+        /* Activity Section */
+        .activity-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            color: white;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .modern-dashboard {
+                padding: 1rem;
+            }
+
+            .stats-overview {
+                grid-template-columns: 1fr;
+            }
+
+            .project-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+
+    </style>
     <div class="modern-dashboard">
         <!-- Stats Cards Row -->
         <div class="stats-grid" data-toggle="appear">
@@ -643,6 +840,55 @@
                         <span class="approval-badge">0</span>
                     </div>
                 </div>
+
+                <!-- Project Related Cards -->
+                <div class="approval-card">
+                    <div class="approval-content">
+                        <span class="approval-icon"><i class="fas fa-project-diagram"></i></span>
+                        <span class="approval-text">Project BOQ</span>
+                        <span class="approval-badge">0</span>
+                    </div>
+                </div>
+
+                <div class="approval-card">
+                    <div class="approval-content">
+                        <span class="approval-icon"><i class="fas fa-boxes"></i></span>
+                        <span class="approval-text">Material Request</span>
+                        <span class="approval-badge">0</span>
+                    </div>
+                </div>
+
+                <div class="approval-card">
+                    <div class="approval-content">
+                        <span class="approval-icon"><i class="fas fa-file-alt"></i></span>
+                        <span class="approval-text">Site Visit Report</span>
+                        <span class="approval-badge">0</span>
+                    </div>
+                </div>
+
+                <div class="approval-card">
+                    <div class="approval-content">
+                        <span class="approval-icon"><i class="fas fa-receipt"></i></span>
+                        <span class="approval-text">Project Expense</span>
+                        <span class="approval-badge">0</span>
+                    </div>
+                </div>
+
+                <div class="approval-card">
+                    <div class="approval-content">
+                        <span class="approval-icon"><i class="fas fa-file-invoice-dollar"></i></span>
+                        <span class="approval-text">Project Invoice</span>
+                        <span class="approval-badge">0</span>
+                    </div>
+                </div>
+
+                <div class="approval-card">
+                    <div class="approval-content">
+                        <span class="approval-icon"><i class="fas fa-user-plus"></i></span>
+                        <span class="approval-text">Team Assignment</span>
+                        <span class="approval-badge">0</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -662,6 +908,7 @@
                     </div>
 
                     <div class="staff-gender-grid">
+                        <!-- Left Side -->
                         <div class="gender-card male">
                             <div class="gender-icon">
                                 <i class="fa fa-male"></i>
@@ -679,8 +926,136 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Right Side Analytics -->
+                <div class="analytics-section">
+                    <div class="analytics-grid">
+                        <!-- Project Analytics -->
+                        <div class="analytics-card">
+                            <div class="analytics-icon">
+                                <i class="fa fa-project-diagram"></i>
+                            </div>
+                            <div class="analytics-content">
+                                <div class="analytics-count">{{$active_projects ?? 0}}</div>
+                                <div class="analytics-label">Active Projects</div>
+                            </div>
+                        </div>
+
+                        <!-- Team Analytics -->
+                        <div class="analytics-card">
+                            <div class="analytics-icon">
+                                <i class="fa fa-users-cog"></i>
+                            </div>
+                            <div class="analytics-content">
+                                <div class="analytics-count">{{$project_teams ?? 0}}</div>
+                                <div class="analytics-label">Project Teams</div>
+                            </div>
+                        </div>
+
+                        <!-- Tasks Analytics -->
+                        <div class="analytics-card">
+                            <div class="analytics-icon">
+                                <i class="fa fa-tasks"></i>
+                            </div>
+                            <div class="analytics-content">
+                                <div class="analytics-count">{{$pending_tasks ?? 0}}</div>
+                                <div class="analytics-label">Pending Tasks</div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Analytics -->
+                        <div class="analytics-card">
+                            <div class="analytics-icon">
+                                <i class="fa fa-chart-line"></i>
+                            </div>
+                            <div class="analytics-content">
+                                <div class="analytics-count">{{$completion_rate ?? 0}}%</div>
+                                <div class="analytics-label">Completion Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <style>
+            /* Add to your existing styles */
+            .hr-content {
+                display: grid;
+                grid-template-columns: 1fr 2fr; /* 1/3 for staff section, 2/3 for analytics */
+                gap: 2rem;
+            }
+
+            .analytics-section {
+                padding: 1rem;
+            }
+
+            .analytics-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+                height: 100%;
+            }
+
+            .analytics-card {
+                background: #f8f9fa;
+                border-radius: 10px;
+                padding: 1.25rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                transition: all 0.3s ease;
+            }
+
+            .analytics-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+
+            .analytics-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 10px;
+                background: #2196F3;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.2rem;
+            }
+
+            .analytics-content {
+                flex: 1;
+            }
+
+            .analytics-count {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #333;
+                margin-bottom: 0.25rem;
+            }
+
+            .analytics-label {
+                color: #666;
+                font-size: 0.9rem;
+            }
+
+            /* Different colors for different analytics cards */
+            .analytics-card:nth-child(1) .analytics-icon { background: #4169E1; }
+            .analytics-card:nth-child(2) .analytics-icon { background: #32CD32; }
+            .analytics-card:nth-child(3) .analytics-icon { background: #FFD700; }
+            .analytics-card:nth-child(4) .analytics-icon { background: #FF6B6B; }
+
+            @media (max-width: 1200px) {
+                .hr-content {
+                    grid-template-columns: 1fr;
+                }
+                .analytics-grid {
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                }
+            }
+        </style>
+
 
         <!-- Charts Row -->
         <div class="charts-grid" data-toggle="appear">
