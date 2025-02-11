@@ -60,7 +60,7 @@ class AjaxController
                     $efds = Efd::all();
                     $allowance_subscriptions = Allowance::all();
                     $deduction_subscriptions = Deduction::all();
-                    $staffs = Staff::getList();
+                    $staffs = User::where('type','STAFF')->get();;
                     $systems= System::all();
                     $sellers= Efd::getSellers();
                     $employees = [
@@ -166,7 +166,7 @@ class AjaxController
                         ['name'=>'yes'],
                         ['name'=>'no']
                     ];
-                    $users = Staff::all();
+                    $users = User::all();
                     $expenses_categories = ExpensesCategory::all();
                     $expenses_sub_categories = ExpensesSubCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();

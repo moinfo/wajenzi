@@ -6,6 +6,7 @@ use App\Models\Approval;
 use App\Models\FinancialCharge;
 use App\Models\Payroll;
 use App\Models\Staff;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class PayrollController extends Controller
@@ -15,7 +16,7 @@ class PayrollController extends Controller
         if($this->handleCrud($request, 'Payroll')) {
             return back();
         }
-        $staffs = Staff::getList();
+        $staffs = User::where('type','STAFF')->get();
         $payroll = Payroll::all();
 
         $data = [

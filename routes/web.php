@@ -231,6 +231,211 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/reports/annually_advance_salary_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_advance_salary_summary_report'])->name('reports_annually_advance_salary_summary_report');
     Route::match(['get', 'post'], '/reports/annually_expense_sub_categories_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_expense_sub_categories_summary_report'])->name('reports_annually_expense_sub_categories_summary_report');
 
+
+    // Project Routes
+    Route::match(['get', 'post'], '/projects', [App\Http\Controllers\ProjectController::class, 'index'])->name('projects');
+    Route::match(['get', 'post'], '/project/create', [App\Http\Controllers\ProjectController::class, 'create'])->name('project.create');
+    Route::match(['get', 'post'], '/project/edit/{id}', [App\Http\Controllers\ProjectController::class, 'edit'])->name('project.edit');
+    Route::match(['get', 'post'], '/project/show/{id}', [App\Http\Controllers\ProjectController::class, 'show'])->name('project.show');
+    Route::post('/project/store', [App\Http\Controllers\ProjectController::class, 'store'])->name('project.store');
+    Route::post('/project/update/{id}', [App\Http\Controllers\ProjectController::class, 'update'])->name('project.update');
+    Route::post('/project/delete/{id}', [App\Http\Controllers\ProjectController::class, 'destroy'])->name('project.delete');
+
+    // Project Client Routes
+    Route::match(['get', 'post'], '/project_clients', [App\Http\Controllers\ProjectClientController::class, 'index'])->name('project_clients');
+    Route::match(['get', 'post'], '/project_client/create', [App\Http\Controllers\ProjectClientController::class, 'create'])->name('project_client.create');
+    Route::match(['get', 'post'], '/project_client/edit/{id}', [App\Http\Controllers\ProjectClientController::class, 'edit'])->name('project_client.edit');
+    Route::match(['get', 'post'], '/project_client/show/{id}', [App\Http\Controllers\ProjectClientController::class, 'show'])->name('project_client.show');
+    Route::post('/project_client/store', [App\Http\Controllers\ProjectClientController::class, 'store'])->name('project_client.store');
+    Route::post('/project_client/update/{id}', [App\Http\Controllers\ProjectClientController::class, 'update'])->name('project_client.update');
+    Route::post('/project_client/delete/{id}', [App\Http\Controllers\ProjectClientController::class, 'destroy'])->name('project_client.delete');
+
+    // Project Type Routes
+    Route::match(['get', 'post'], '/project_types', [App\Http\Controllers\ProjectTypeController::class, 'index'])->name('project_types');
+    Route::match(['get', 'post'], '/project_type/create', [App\Http\Controllers\ProjectTypeController::class, 'create'])->name('project_type.create');
+    Route::match(['get', 'post'], '/project_type/edit/{id}', [App\Http\Controllers\ProjectTypeController::class, 'edit'])->name('project_type.edit');
+    Route::match(['get', 'post'], '/project_type/show/{id}', [App\Http\Controllers\ProjectTypeController::class, 'show'])->name('project_type.show');
+    Route::post('/project_type/store', [App\Http\Controllers\ProjectTypeController::class, 'store'])->name('project_type.store');
+    Route::post('/project_type/update/{id}', [App\Http\Controllers\ProjectTypeController::class, 'update'])->name('project_type.update');
+    Route::post('/project_type/delete/{id}', [App\Http\Controllers\ProjectTypeController::class, 'destroy'])->name('project_type.delete');
+
+    // Project BOQ Routes
+    Route::match(['get', 'post'], '/project_boqs', [App\Http\Controllers\ProjectBoqController::class, 'index'])->name('project_boqs');
+    Route::match(['get', 'post'], '/project_boq/create', [App\Http\Controllers\ProjectBoqController::class, 'create'])->name('project_boq.create');
+    Route::match(['get', 'post'], '/project_boq/edit/{id}', [App\Http\Controllers\ProjectBoqController::class, 'edit'])->name('project_boq.edit');
+    Route::match(['get', 'post'], '/project_boq/show/{id}', [App\Http\Controllers\ProjectBoqController::class, 'show'])->name('project_boq.show');
+    Route::post('/project_boq/store', [App\Http\Controllers\ProjectBoqController::class, 'store'])->name('project_boq.store');
+    Route::post('/project_boq/update/{id}', [App\Http\Controllers\ProjectBoqController::class, 'update'])->name('project_boq.update');
+    Route::post('/project_boq/delete/{id}', [App\Http\Controllers\ProjectBoqController::class, 'destroy'])->name('project_boq.delete');
+
+    // Project BOQ Items Routes
+    Route::match(['get', 'post'], '/project_boq_items', [App\Http\Controllers\ProjectBoqItemController::class, 'index'])->name('project_boq_items');
+    Route::match(['get', 'post'], '/project_boq_item/create', [App\Http\Controllers\ProjectBoqItemController::class, 'create'])->name('project_boq_item.create');
+    Route::match(['get', 'post'], '/project_boq_item/edit/{id}', [App\Http\Controllers\ProjectBoqItemController::class, 'edit'])->name('project_boq_item.edit');
+    Route::match(['get', 'post'], '/project_boq_item/show/{id}', [App\Http\Controllers\ProjectBoqItemController::class, 'show'])->name('project_boq_item.show');
+    Route::post('/project_boq_item/store', [App\Http\Controllers\ProjectBoqItemController::class, 'store'])->name('project_boq_item.store');
+    Route::post('/project_boq_item/update/{id}', [App\Http\Controllers\ProjectBoqItemController::class, 'update'])->name('project_boq_item.update');
+    Route::post('/project_boq_item/delete/{id}', [App\Http\Controllers\ProjectBoqItemController::class, 'destroy'])->name('project_boq_item.delete');
+
+    // Project Expense Routes
+    Route::match(['get', 'post'], '/project_expenses', [App\Http\Controllers\ProjectExpenseController::class, 'index'])->name('project_expenses');
+    Route::match(['get', 'post'], '/project_expense/create', [App\Http\Controllers\ProjectExpenseController::class, 'create'])->name('project_expense.create');
+    Route::match(['get', 'post'], '/project_expense/edit/{id}', [App\Http\Controllers\ProjectExpenseController::class, 'edit'])->name('project_expense.edit');
+    Route::match(['get', 'post'], '/project_expense/show/{id}', [App\Http\Controllers\ProjectExpenseController::class, 'show'])->name('project_expense.show');
+    Route::post('/project_expense/store', [App\Http\Controllers\ProjectExpenseController::class, 'store'])->name('project_expense.store');
+    Route::post('/project_expense/update/{id}', [App\Http\Controllers\ProjectExpenseController::class, 'update'])->name('project_expense.update');
+    Route::post('/project_expense/delete/{id}', [App\Http\Controllers\ProjectExpenseController::class, 'destroy'])->name('project_expense.delete');
+
+    // Project Material Routes
+    Route::match(['get', 'post'], '/project_materials', [App\Http\Controllers\ProjectMaterialController::class, 'index'])->name('project_materials');
+    Route::match(['get', 'post'], '/project_material/create', [App\Http\Controllers\ProjectMaterialController::class, 'create'])->name('project_material.create');
+    Route::match(['get', 'post'], '/project_material/edit/{id}', [App\Http\Controllers\ProjectMaterialController::class, 'edit'])->name('project_material.edit');
+    Route::match(['get', 'post'], '/project_material/show/{id}', [App\Http\Controllers\ProjectMaterialController::class, 'show'])->name('project_material.show');
+    Route::post('/project_material/store', [App\Http\Controllers\ProjectMaterialController::class, 'store'])->name('project_material.store');
+    Route::post('/project_material/update/{id}', [App\Http\Controllers\ProjectMaterialController::class, 'update'])->name('project_material.update');
+    Route::post('/project_material/delete/{id}', [App\Http\Controllers\ProjectMaterialController::class, 'destroy'])->name('project_material.delete');
+
+    // Project Material Inventory Routes
+    Route::match(['get', 'post'], '/project_material_inventory', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'index'])->name('project_material_inventory');
+    Route::match(['get', 'post'], '/project_material_inventory/create', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'create'])->name('project_material_inventory.create');
+    Route::match(['get', 'post'], '/project_material_inventory/edit/{id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'edit'])->name('project_material_inventory.edit');
+    Route::match(['get', 'post'], '/project_material_inventory/show/{id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'show'])->name('project_material_inventory.show');
+    Route::post('/project_material_inventory/store', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'store'])->name('project_material_inventory.store');
+    Route::post('/project_material_inventory/update/{id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'update'])->name('project_material_inventory.update');
+    Route::post('/project_material_inventory/delete/{id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'destroy'])->name('project_material_inventory.delete');
+
+
+// Project Site Visits Routes
+    Route::match(['get', 'post'], '/project_site_visits', [App\Http\Controllers\ProjectSiteVisitController::class, 'index'])->name('project_site_visits');
+    Route::match(['get', 'post'], '/project_site_visit/create', [App\Http\Controllers\ProjectSiteVisitController::class, 'create'])->name('project_site_visit.create');
+    Route::match(['get', 'post'], '/project_site_visit/edit/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'edit'])->name('project_site_visit.edit');
+    Route::match(['get', 'post'], '/project_site_visit/show/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'show'])->name('project_site_visit.show');
+    Route::post('/project_site_visit/store', [App\Http\Controllers\ProjectSiteVisitController::class, 'store'])->name('project_site_visit.store');
+    Route::post('/project_site_visit/update/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'update'])->name('project_site_visit.update');
+    Route::post('/project_site_visit/delete/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'destroy'])->name('project_site_visit.delete');
+
+// Project Design Routes
+    Route::match(['get', 'post'], '/project_designs', [App\Http\Controllers\ProjectDesignController::class, 'index'])->name('project_designs');
+    Route::match(['get', 'post'], '/project_design/create', [App\Http\Controllers\ProjectDesignController::class, 'create'])->name('project_design.create');
+    Route::match(['get', 'post'], '/project_design/edit/{id}', [App\Http\Controllers\ProjectDesignController::class, 'edit'])->name('project_design.edit');
+    Route::match(['get', 'post'], '/project_design/show/{id}', [App\Http\Controllers\ProjectDesignController::class, 'show'])->name('project_design.show');
+    Route::post('/project_design/store', [App\Http\Controllers\ProjectDesignController::class, 'store'])->name('project_design.store');
+    Route::post('/project_design/update/{id}', [App\Http\Controllers\ProjectDesignController::class, 'update'])->name('project_design.update');
+    Route::post('/project_design/delete/{id}', [App\Http\Controllers\ProjectDesignController::class, 'destroy'])->name('project_design.delete');
+
+// Project Construction Phase Routes
+    Route::match(['get', 'post'], '/project_construction_phases', [App\Http\Controllers\ProjectConstructionPhaseController::class, 'index'])->name('project_construction_phases');
+    Route::match(['get', 'post'], '/project_construction_phase/create', [App\Http\Controllers\ProjectConstructionPhaseController::class, 'create'])->name('project_construction_phase.create');
+    Route::match(['get', 'post'], '/project_construction_phase/edit/{id}', [App\Http\Controllers\ProjectConstructionPhaseController::class, 'edit'])->name('project_construction_phase.edit');
+    Route::match(['get', 'post'], '/project_construction_phase/show/{id}', [App\Http\Controllers\ProjectConstructionPhaseController::class, 'show'])->name('project_construction_phase.show');
+    Route::post('/project_construction_phase/store', [App\Http\Controllers\ProjectConstructionPhaseController::class, 'store'])->name('project_construction_phase.store');
+    Route::post('/project_construction_phase/update/{id}', [App\Http\Controllers\ProjectConstructionPhaseController::class, 'update'])->name('project_construction_phase.update');
+    Route::post('/project_construction_phase/delete/{id}', [App\Http\Controllers\ProjectConstructionPhaseController::class, 'destroy'])->name('project_construction_phase.delete');
+
+// Project Daily Report Routes
+    Route::match(['get', 'post'], '/project_daily_reports', [App\Http\Controllers\ProjectDailyReportController::class, 'index'])->name('project_daily_reports');
+    Route::match(['get', 'post'], '/project_daily_report/create', [App\Http\Controllers\ProjectDailyReportController::class, 'create'])->name('project_daily_report.create');
+    Route::match(['get', 'post'], '/project_daily_report/edit/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'edit'])->name('project_daily_report.edit');
+    Route::match(['get', 'post'], '/project_daily_report/show/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'show'])->name('project_daily_report.show');
+    Route::post('/project_daily_report/store', [App\Http\Controllers\ProjectDailyReportController::class, 'store'])->name('project_daily_report.store');
+    Route::post('/project_daily_report/update/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'update'])->name('project_daily_report.update');
+    Route::post('/project_daily_report/delete/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'destroy'])->name('project_daily_report.delete');
+
+// Project Invoice Routes
+    Route::match(['get', 'post'], '/project_invoices', [App\Http\Controllers\ProjectInvoiceController::class, 'index'])->name('project_invoices');
+    Route::match(['get', 'post'], '/project_invoice/create', [App\Http\Controllers\ProjectInvoiceController::class, 'create'])->name('project_invoice.create');
+    Route::match(['get', 'post'], '/project_invoice/edit/{id}', [App\Http\Controllers\ProjectInvoiceController::class, 'edit'])->name('project_invoice.edit');
+    Route::match(['get', 'post'], '/project_invoice/show/{id}', [App\Http\Controllers\ProjectInvoiceController::class, 'show'])->name('project_invoice.show');
+    Route::post('/project_invoice/store', [App\Http\Controllers\ProjectInvoiceController::class, 'store'])->name('project_invoice.store');
+    Route::post('/project_invoice/update/{id}', [App\Http\Controllers\ProjectInvoiceController::class, 'update'])->name('project_invoice.update');
+    Route::post('/project_invoice/delete/{id}', [App\Http\Controllers\ProjectInvoiceController::class, 'destroy'])->name('project_invoice.delete');
+
+// Project Payment Routes
+    Route::match(['get', 'post'], '/project_payments', [App\Http\Controllers\ProjectPaymentController::class, 'index'])->name('project_payments');
+    Route::match(['get', 'post'], '/project_payment/create', [App\Http\Controllers\ProjectPaymentController::class, 'create'])->name('project_payment.create');
+    Route::match(['get', 'post'], '/project_payment/edit/{id}', [App\Http\Controllers\ProjectPaymentController::class, 'edit'])->name('project_payment.edit');
+    Route::match(['get', 'post'], '/project_payment/show/{id}', [App\Http\Controllers\ProjectPaymentController::class, 'show'])->name('project_payment.show');
+    Route::post('/project_payment/store', [App\Http\Controllers\ProjectPaymentController::class, 'store'])->name('project_payment.store');
+    Route::post('/project_payment/update/{id}', [App\Http\Controllers\ProjectPaymentController::class, 'update'])->name('project_payment.update');
+    Route::post('/project_payment/delete/{id}', [App\Http\Controllers\ProjectPaymentController::class, 'destroy'])->name('project_payment.delete');
+
+// Project Activity Log Routes
+    Route::match(['get', 'post'], '/project_activity_logs', [App\Http\Controllers\ProjectActivityLogController::class, 'index'])->name('project_activity_logs');
+    Route::match(['get', 'post'], '/project_activity_log/show/{id}', [App\Http\Controllers\ProjectActivityLogController::class, 'show'])->name('project_activity_log.show');
+
+// Project System Backup Routes
+    Route::match(['get', 'post'], '/project_system_backups', [App\Http\Controllers\ProjectSystemBackupController::class, 'index'])->name('project_system_backups');
+    Route::post('/project_system_backup/create', [App\Http\Controllers\ProjectSystemBackupController::class, 'create'])->name('project_system_backup.create');
+    Route::post('/project_system_backup/restore/{id}', [App\Http\Controllers\ProjectSystemBackupController::class, 'restore'])->name('project_system_backup.restore');
+    Route::post('/project_system_backup/delete/{id}', [App\Http\Controllers\ProjectSystemBackupController::class, 'destroy'])->name('project_system_backup.delete');
+
+
+// routes/web.php
+
+// Project Material Request Routes
+    Route::match(['get', 'post'], '/project_material_requests', [App\Http\Controllers\ProjectMaterialRequestController::class, 'index'])->name('project_material_requests');
+    Route::match(['get', 'post'], '/project_material_request/create', [App\Http\Controllers\ProjectMaterialRequestController::class, 'create'])->name('project_material_request.create');
+    Route::match(['get', 'post'], '/project_material_request/edit/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'edit'])->name('project_material_request.edit');
+    Route::match(['get', 'post'], '/project_material_request/show/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'show'])->name('project_material_request.show');
+    Route::post('/project_material_request/store', [App\Http\Controllers\ProjectMaterialRequestController::class, 'store'])->name('project_material_request.store');
+    Route::post('/project_material_request/update/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'update'])->name('project_material_request.update');
+    Route::post('/project_material_request/delete/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'destroy'])->name('project_material_request.delete');
+
+// Project Client Document Routes
+    Route::match(['get', 'post'], '/project_client_documents', [App\Http\Controllers\ProjectClientDocumentController::class, 'index'])->name('project_client_documents');
+    Route::match(['get', 'post'], '/project_client_document/create', [App\Http\Controllers\ProjectClientDocumentController::class, 'create'])->name('project_client_document.create');
+    Route::match(['get', 'post'], '/project_client_document/edit/{id}', [App\Http\Controllers\ProjectClientDocumentController::class, 'edit'])->name('project_client_document.edit');
+    Route::match(['get', 'post'], '/project_client_document/show/{id}', [App\Http\Controllers\ProjectClientDocumentController::class, 'show'])->name('project_client_document.show');
+    Route::post('/project_client_document/store', [App\Http\Controllers\ProjectClientDocumentController::class, 'store'])->name('project_client_document.store');
+    Route::post('/project_client_document/update/{id}', [App\Http\Controllers\ProjectClientDocumentController::class, 'update'])->name('project_client_document.update');
+    Route::post('/project_client_document/delete/{id}', [App\Http\Controllers\ProjectClientDocumentController::class, 'destroy'])->name('project_client_document.delete');
+
+// Project Team Member Routes
+    Route::match(['get', 'post'], '/project_team_members', [App\Http\Controllers\ProjectTeamMemberController::class, 'index'])->name('project_team_members');
+    Route::match(['get', 'post'], '/project_team_member/create', [App\Http\Controllers\ProjectTeamMemberController::class, 'create'])->name('project_team_member.create');
+    Route::match(['get', 'post'], '/project_team_member/edit/{id}', [App\Http\Controllers\ProjectTeamMemberController::class, 'edit'])->name('project_team_member.edit');
+    Route::match(['get', 'post'], '/project_team_member/show/{id}', [App\Http\Controllers\ProjectTeamMemberController::class, 'show'])->name('project_team_member.show');
+    Route::post('/project_team_member/store', [App\Http\Controllers\ProjectTeamMemberController::class, 'store'])->name('project_team_member.store');
+    Route::post('/project_team_member/update/{id}', [App\Http\Controllers\ProjectTeamMemberController::class, 'update'])->name('project_team_member.update');
+    Route::post('/project_team_member/delete/{id}', [App\Http\Controllers\ProjectTeamMemberController::class, 'destroy'])->name('project_team_member.delete');
+
+// Project Report Routes
+    Route::match(['get', 'post'], '/project_reports', [App\Http\Controllers\ProjectReportController::class, 'index'])->name('project_reports');
+    Route::get('/project_report/generate/{type}', [App\Http\Controllers\ProjectReportController::class, 'generate'])->name('project_report.generate');
+    Route::get('/project_report/download/{id}', [App\Http\Controllers\ProjectReportController::class, 'download'])->name('project_report.download');
+
+// Project Dashboard Routes
+    Route::get('/project_dashboard', [App\Http\Controllers\ProjectDashboardController::class, 'index'])->name('project_dashboard');
+    Route::get('/project_dashboard/stats', [App\Http\Controllers\ProjectDashboardController::class, 'getStats'])->name('project_dashboard.stats');
+    Route::get('/project_dashboard/charts', [App\Http\Controllers\ProjectDashboardController::class, 'getCharts'])->name('project_dashboard.charts');
+
+// Project Document Routes (General Documents)
+    Route::match(['get', 'post'], '/project_documents', [App\Http\Controllers\ProjectDocumentController::class, 'index'])->name('project_documents');
+    Route::match(['get', 'post'], '/project_document/create', [App\Http\Controllers\ProjectDocumentController::class, 'create'])->name('project_document.create');
+    Route::match(['get', 'post'], '/project_document/edit/{id}', [App\Http\Controllers\ProjectDocumentController::class, 'edit'])->name('project_document.edit');
+    Route::match(['get', 'post'], '/project_document/show/{id}', [App\Http\Controllers\ProjectDocumentController::class, 'show'])->name('project_document.show');
+    Route::post('/project_document/store', [App\Http\Controllers\ProjectDocumentController::class, 'store'])->name('project_document.store');
+    Route::post('/project_document/update/{id}', [App\Http\Controllers\ProjectDocumentController::class, 'update'])->name('project_document.update');
+    Route::post('/project_document/delete/{id}', [App\Http\Controllers\ProjectDocumentController::class, 'destroy'])->name('project_document.delete');
+    Route::get('/project_document/download/{id}', [App\Http\Controllers\ProjectDocumentController::class, 'download'])->name('project_document.download');
+
+// Project Comment Routes
+    Route::match(['get', 'post'], '/project_comments', [App\Http\Controllers\ProjectCommentController::class, 'index'])->name('project_comments');
+    Route::post('/project_comment/store', [App\Http\Controllers\ProjectCommentController::class, 'store'])->name('project_comment.store');
+    Route::post('/project_comment/update/{id}', [App\Http\Controllers\ProjectCommentController::class, 'update'])->name('project_comment.update');
+    Route::post('/project_comment/delete/{id}', [App\Http\Controllers\ProjectCommentController::class, 'destroy'])->name('project_comment.delete');
+
+// Project Search Routes
+    Route::get('/project_search', [App\Http\Controllers\ProjectSearchController::class, 'index'])->name('project_search');
+    Route::post('/project_search/results', [App\Http\Controllers\ProjectSearchController::class, 'search'])->name('project_search.results');
+
+// Project Export Routes
+    Route::get('/project_export/{type}', [App\Http\Controllers\ProjectExportController::class, 'export'])->name('project_export');
+    Route::post('/project_export/custom', [App\Http\Controllers\ProjectExportController::class, 'customExport'])->name('project_export.custom');
+
+// Project Import Routes
+    Route::get('/project_import', [App\Http\Controllers\ProjectImportController::class, 'showForm'])->name('project_import');
+    Route::post('/project_import/process', [App\Http\Controllers\ProjectImportController::class, 'process'])->name('project_import.process');
 });
 
 Auth::routes(['register' => false]);

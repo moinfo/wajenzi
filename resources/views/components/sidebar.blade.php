@@ -53,7 +53,7 @@
                                     <i class="{{$menu['icon']}}"></i>
                                     <span>{{$menu['name']}}</span>
                                     @if(isset($menu['children']) && count($menu['children']) > 0)
-                                        <i class="fas fa-angle-right right"></i>
+                                        <i class="fa fa-angle-right right"></i>
                                     @endif
                                 </a>
                                 @if(isset($menu['children']) && count($menu['children']) > 0)
