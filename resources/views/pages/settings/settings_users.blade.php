@@ -80,7 +80,7 @@
                                         </td>
                                         <td class="text-center">
                                             @if($user->profile != null)
-                                                <a href="{{ url("$user->profile") }}">Signature</a>
+                                                <a href="{{ url("$user->profile") }}">Profile</a>
                                             @else
                                                 No Profile
                                             @endif
