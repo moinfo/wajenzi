@@ -20,6 +20,7 @@ class User extends Authenticatable
         'password',
         'employee_number',
         'employee_type',
+        'employment_type',
         'recruitment_date',
         'employment_date',
         'address',
