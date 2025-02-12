@@ -4,12 +4,7 @@
 
     <div class="main-container">
         <div class="content">
-            <div class="content-heading">Settings
-                @include('components.headed_paper_settings')
-                <br/>
-                <div class="block-header text-center">
-                    <h3 class="block-title">Staff Departments</h3>
-                </div>
+            <div class="content-heading">Staff Departments
                 <div class="float-right">
                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Department"))
                         <button type="button" onclick="loadFormModal('settings_department_form', {className: 'Department'}, 'Create New Department', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
@@ -20,7 +15,9 @@
             </div>
             <div>
                 <div class="block">
-
+                    <div class="block-header block-header-default">
+                        <h3 class="block-title">Staff Departments</h3>
+                    </div>
                     <div class="block-content">
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                             <thead>
