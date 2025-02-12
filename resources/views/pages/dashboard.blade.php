@@ -740,7 +740,7 @@
                 background-color: #f8f9fa;
                 padding: 1.5rem;
                 border-radius: 0.75rem;
-                margin-bottom: 2rem;
+                /*margin-bottom: 2rem;*/
             }
 
             .approvals-header {
@@ -950,7 +950,7 @@
             }
 
             .dashboard-header {
-                margin-bottom: 1.5rem;
+                /*margin-bottom: 1.5rem;*/
             }
 
             .section-title {
@@ -1113,6 +1113,394 @@
             @media (max-width: 640px) {
                 .stat-count {
                     font-size: 1.25rem;
+                }
+            }
+        </style>
+        <!-- Main Dashboard Container -->
+        <div class="dashboard-container">
+            <!-- Header Section -->
+            <div class="dashboard-header">
+                <div class="header-left">
+                    <h2 class="main-title">Construction Management System</h2>
+                    <p class="subtitle">Project Overview & Analytics</p>
+                </div>
+                <div class="header-right">
+                    <div class="year-selector">
+                        <span>YEAR</span>
+                        <select class="year-dropdown">
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Progress Section -->
+            <div class="progress-section">
+                <div class="progress-card main-progress">
+                    <div class="progress-info">
+                        <h3>Project Completion</h3>
+                        <div class="progress-circle">
+                            <svg viewBox="0 0 36 36" class="circular-chart">
+                                <path d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      fill="none"
+                                      stroke="#eee"
+                                      stroke-width="3"/>
+                                <path d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      fill="none"
+                                      stroke="#2563eb"
+                                      stroke-width="3"
+                                      stroke-dasharray="75, 100"/>
+                            </svg>
+                            <div class="percentage">75%</div>
+                        </div>
+                        <p class="progress-desc">Overall project completion rate</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fa fa-building"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">12</div>
+                            <div class="stat-label">Active Projects</div>
+                        </div>
+                    </div>
+                    <div class="stat-trend positive">
+                        <i class="fa fa-arrow-up"></i>
+                        <span>20% vs last month</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fa fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">45</div>
+                            <div class="stat-label">Site Workers</div>
+                        </div>
+                    </div>
+                    <div class="stat-trend positive">
+                        <i class="fa fa-arrow-up"></i>
+                        <span>15% vs last month</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-icon">
+                            <i class="fa fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value">85%</div>
+                            <div class="stat-label">On-Time Completion</div>
+                        </div>
+                    </div>
+                    <div class="stat-trend negative">
+                        <i class="fa fa-arrow-down"></i>
+                        <span>5% vs last month</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Details Section -->
+            <div class="details-grid">
+                <!-- Contracts Section -->
+                <div class="detail-card">
+                    <div class="card-header">
+                        <h3>CONTRACTS</h3>
+                        <p class="card-subtitle">All entered contracts and encumbrance</p>
+                    </div>
+                    <div class="card-content">
+                        <div class="metric-group">
+                            <div class="metric">
+                                <span class="metric-value">24</span>
+                                <span class="metric-label">Contracts Entered</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value">18</span>
+                                <span class="metric-label"># of Encumbrance</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Budget Section -->
+                <div class="detail-card">
+                    <div class="card-header">
+                        <h3>BUDGET UTILIZATION</h3>
+                        <p class="card-subtitle">Current budget status and utilization</p>
+                    </div>
+                    <div class="card-content">
+                        <div class="budget-circle">
+                            <svg viewBox="0 0 36 36" class="circular-chart orange">
+                                <path d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      fill="none"
+                                      stroke="#eee"
+                                      stroke-width="3"/>
+                                <path d="M18 2.0845
+                            a 15.9155 15.9155 0 0 1 0 31.831
+                            a 15.9155 15.9155 0 0 1 0 -31.831"
+                                      fill="none"
+                                      stroke="#ff6b6b"
+                                      stroke-width="3"
+                                      stroke-dasharray="65, 100"/>
+                            </svg>
+                            <div class="percentage">65%</div>
+                        </div>
+                        <div class="budget-info">
+                            <div class="budget-amount">TZS 1,850,000</div>
+                            <div class="budget-label">Total Budget Used</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            /* Base Styles */
+            .dashboard-container {
+                padding: 1.5rem;
+                background-color: #f8f9fa;
+            }
+
+            .dashboard-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                /*margin-bottom: 2rem;*/
+            }
+
+            .main-title {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #1a202c;
+                margin: 0;
+            }
+
+            .subtitle {
+                color: #6b7280;
+                font-size: 0.875rem;
+                margin: 0.25rem 0 0 0;
+            }
+
+            .year-selector {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                background: #fff;
+                padding: 0.5rem 1rem;
+                border-radius: 0.5rem;
+                border: 1px solid #e5e7eb;
+            }
+
+            .year-dropdown {
+                padding: 0.25rem 0.5rem;
+                border: none;
+                background: #fbbf24;
+                color: #000;
+                border-radius: 0.25rem;
+                font-weight: 500;
+            }
+
+            /* Progress Section */
+            .progress-section {
+                margin-bottom: 2rem;
+            }
+
+            .progress-card {
+                background: white;
+                border-radius: 0.75rem;
+                padding: 1.5rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+
+            .progress-info {
+                text-align: center;
+            }
+
+            .progress-circle {
+                width: 150px;
+                height: 150px;
+                margin: 1rem auto;
+                position: relative;
+            }
+
+            .circular-chart {
+                width: 150px;
+                height: 150px;
+            }
+
+            .percentage {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #2563eb;
+            }
+
+            /* Stats Grid */
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1.5rem;
+                margin-bottom: 2rem;
+            }
+
+            .stat-card {
+                background: white;
+                border-radius: 0.75rem;
+                padding: 1.5rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+
+            .stat-content {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .stat-icon {
+                width: 3rem;
+                height: 3rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #e0e7ff;
+                color: #2563eb;
+                border-radius: 0.75rem;
+                font-size: 1.25rem;
+            }
+
+            .stat-info {
+                flex: 1;
+            }
+
+            .stat-value {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #1a202c;
+            }
+
+            .stat-label {
+                color: #6b7280;
+                font-size: 0.875rem;
+            }
+
+            .stat-trend {
+                font-size: 0.875rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .stat-trend.positive {
+                color: #10b981;
+            }
+
+            .stat-trend.negative {
+                color: #ef4444;
+            }
+
+            /* Details Grid */
+            .details-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 1.5rem;
+            }
+
+            .detail-card {
+                background: white;
+                border-radius: 0.75rem;
+                padding: 1.5rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+
+            .card-header {
+                margin-bottom: 1.5rem;
+            }
+
+            .card-header h3 {
+                font-size: 1rem;
+                font-weight: 600;
+                color: #1a202c;
+                margin: 0;
+            }
+
+            .card-subtitle {
+                color: #6b7280;
+                font-size: 0.875rem;
+                margin: 0.25rem 0 0 0;
+            }
+
+            .metric-group {
+                display: flex;
+                justify-content: space-around;
+                text-align: center;
+            }
+
+            .metric-value {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #1a202c;
+                display: block;
+            }
+
+            .metric-label {
+                color: #6b7280;
+                font-size: 0.875rem;
+            }
+
+            .budget-circle {
+                width: 120px;
+                height: 120px;
+                margin: 0 auto 1rem auto;
+                position: relative;
+            }
+
+            .budget-info {
+                text-align: center;
+            }
+
+            .budget-amount {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: #1a202c;
+            }
+
+            .budget-label {
+                color: #6b7280;
+                font-size: 0.875rem;
+            }
+
+            /* Responsive Design */
+            @media (max-width: 768px) {
+                .dashboard-container {
+                    padding: 1rem;
+                }
+
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .details-grid {
+                    grid-template-columns: 1fr;
                 }
             }
         </style>
