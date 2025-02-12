@@ -8,12 +8,12 @@
             </div>
             <div>
                 <div class="block block-themed">
-                    <div class="block-header bg-gd-dusk">
-                        <h3 class="block-title">Gross Profit Report</h3>
-                    </div>
+
                     <div class="block-content">
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
+                                @include('components.headed_paper')
+                                <br/>
                                 <div class="class card-box">
                                     <form  name="gross_search" action="" id="filter-form" method="post" autocomplete="off">
                                         @csrf
@@ -41,6 +41,9 @@
                                             </div>
                                         </div>
                                     </form>
+                                </div>
+                                <div class="block-header text-center">
+                                    <h3 class="block-title">Gross Profit Report</h3>
                                 </div>
                             </div>
                         </div>

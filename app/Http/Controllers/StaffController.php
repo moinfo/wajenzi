@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Adjustment;
 use App\Models\Staff;
+use App\Models\StaffBankDetail;
 use Illuminate\Http\Request;
 
 class StaffController extends Controller
@@ -85,4 +87,27 @@ class StaffController extends Controller
     {
         //
     }
+
+    public function staff_bank_details(Request $request)
+    {
+        if($this->handleCrud($request, 'StaffBankDetail')) {
+            return back();
+        }
+        $data = [
+            'staff_bank_details' => StaffBankDetail::all()
+        ];
+        return view('pages.staff.staff_bank_details')->with($data);
+    }
+
+    public function adjustment(Request $request)
+    {
+        if($this->handleCrud($request, 'Adjustment')) {
+            return back();
+        }
+        $data = [
+            'adjustments' => Adjustment::all()
+        ];
+        return view('pages.staff.adjustment')->with($data);
+    }
+
 }

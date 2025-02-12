@@ -7,12 +7,11 @@
         </div>
         <div>
             <div class="block block-themed">
-                <div class="block-header bg-gd-dusk">
-                    <h3 class="block-title">Allowance Subscriptions Report</h3>
-                </div>
                 <div class="block-content">
                     <div class="row no-print m-t-10">
                         <div class="class col-md-12">
+                            @include('components.headed_paper')
+                            <br/>
                             <div class="class card-box">
                                 <form  name="collection_search" action="" id="filter-form" method="post" autocomplete="off">
                                     @csrf
@@ -40,6 +39,9 @@
                                         </div>
                                     </div>
                                 </form>
+                            </div>
+                            <div class="block-header text-center">
+                                <h3 class="block-title">Allowance Subscriptions Report</h3>
                             </div>
                         </div>
                     </div>
@@ -83,12 +85,12 @@
                                     @foreach($allowances as $allowance)
                                         <?php
                                         // use Illuminate\Support\Facades\DB;
-                                        $allowance_subscription_per_allowance = \App\Models\AllowanceSubscription::Where('allowance_id',$allowance->id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('staff_id')->get()->first();
+                                        $allowance_subscription_per_allowance = \App\Models\AllowanceSubscription::Where('allowance_id',$allowance->id)->select([DB::raw("SUM(amount) as total_amount")])->get()->first();
                                         ?>
                                         <th class="text-right">{{number_format($allowance_subscription_per_allowance['total_amount'] ?? 0)}}</th>
                                     @endforeach
                                     <?php
-                                    $allowance_subscription_all_staff = \App\Models\AllowanceSubscription::select([DB::raw("SUM(amount) as total_amount")])->groupBy('staff_id')->get()->first()['total_amount'] ?? 0;
+                                    $allowance_subscription_all_staff = \App\Models\AllowanceSubscription::select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
 
                                     ?>
                                     <th class="text-right">{{number_format($allowance_subscription_all_staff)}}</th>

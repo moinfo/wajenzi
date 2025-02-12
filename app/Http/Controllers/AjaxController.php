@@ -20,6 +20,7 @@ use App\Models\ExpensesSubCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
 use App\Models\Payroll;
+use App\Models\PayrollType;
 use App\Models\ProjectClient;
 use App\Models\ProjectType;
 use App\Models\Staff;
@@ -63,7 +64,7 @@ class AjaxController
                     $efds = Efd::all();
                     $allowance_subscriptions = Allowance::all();
                     $deduction_subscriptions = Deduction::all();
-                    $staffs = User::where('type','STAFF')->get();;
+                    $staffs = Staff::onlyStaffs();;
                     $systems= System::all();
                     $sellers= Efd::getSellers();
                     $employees = [
@@ -182,8 +183,10 @@ class AjaxController
                     $project_clients = ProjectClient::all();
                     $project_types = ProjectType::all();
                     $departments = Department::all();
+                    $payroll_types = PayrollType::all();
 
                     $data = $request->input('data') ?? [
+                            'payroll_types' => $payroll_types,
                             'departments' => $departments,
                             'projectTypes' => $project_types,
                             'clients' => $project_clients,

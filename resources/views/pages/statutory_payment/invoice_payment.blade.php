@@ -43,7 +43,7 @@
                                              height="100">
                                     </div>
                                     <div class="col-md-6 text-center">
-                                        <span class="text-center font-size-h3">LERUMA ENTERPRISES</span><br/>
+                                        <span class="text-center font-size-h3">WAJENZI PROFESSIONALS</span><br/>
                                         <span class="text-center font-size-h5">BOX 30133, KIBAHA - COAST, Mobile 0657 798 062</span><br/>
                                         <span class="text-center font-size-h5">TIN 113 - 882 - 384</span>
                                     </div>

@@ -25,12 +25,20 @@ $document_id = \App\Classes\Utility::getLastId('Gross')+1;
             <input type="text" class="form-control" id="input-description" name="description"
                    value="{{ $object->description ?? '' }}" placeholder="Description">
         </div>
-        <div class="form-group">
-            <label for="example-nf-date" class="control-label required">Date</label>
-            <input type="text" class="form-control datepicker"  id="input-date" name="date"
-                   value="{{ $object->date ?? date('Y-m-d') }}" required>
-            {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
-        </div>
+        @if(\App\Classes\Utility::isAdmin())
+            <div class="form-group">
+                <label for="example-nf-date" class="control-label required">Date</label>
+                <input type="text" class="form-control datepicker"  id="input-date" name="date"
+                       value="{{ $object->date ?? date('Y-m-d') }}" required>
+            </div>
+        @else
+            <div class="form-group">
+                <label for="example-nf-date" class="control-label required">Date</label>
+                <input type="text" class="form-control "  id="input-date" name="date"
+                       value="{{ $object->date ?? date('Y-m-d') }}" readonly>
+            </div>
+        @endif
+        <input type="hidden" name="payment_type_id" id="input-payment_type-id" value="1">
         <div class="form-group">
             <label class="control-label" for="chooseFile">Choose file</label>
             <input type="file" name="file" class="form-control" id="chooseFile">
