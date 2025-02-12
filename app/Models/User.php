@@ -1,23 +1,17 @@
 <?php
-
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\DB;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
-    public $table = 'users';
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
 
     protected $fillable = [
         'name',
@@ -33,61 +27,130 @@ class User extends Authenticatable
         'status',
         'marital_status',
         'designation',
+        'profile',
+        'file',
+        'department_id',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-
-    public function department() {
-        return $this->belongsTo(Department::class, 'department_id');
-    }
-
-    public function position() {
-        return $this->belongsTo(Position::class, 'position_id');
-    }
-
-    /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    public function getAvatar() {
-        return 'media/avatars/avatar15.jpg';
-    }
+    // Existing relationships
+    /**
+     * @var mixed
+     */
+    private $role;
 
-    public function getResignation() {
-        return 'Weird Resignation';
-        // TODO work on it
-    }
-
-    public function getName(){
-        return $this->name;
-    }
-
-    public static function getCount() {
-        return count(self::all());
-    }
-
-    public function approvals(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function department(): BelongsTo
     {
-        return $this->hasMany(Approval::class);
+        return $this->belongsTo(Department::class);
     }
 
-    public function assignUserGroups(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function position(): BelongsTo
     {
-        return $this->hasMany(AssignUserGroup::class);
+        return $this->belongsTo(Position::class);
     }
 
+    // Project Management relationships
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
+    }
+
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_team_members')
+            ->withPivot('role', 'assigned_date', 'end_date', 'status')
+            ->withTimestamps();
+    }
+
+    public function siteVisits(): HasMany
+    {
+        return $this->hasMany(ProjectSiteVisit::class, 'inspector_id');
+    }
+
+    public function projectDesigns(): HasMany
+    {
+        return $this->hasMany(ProjectDesign::class, 'designer_id');
+    }
+
+    public function materialRequests(): HasMany
+    {
+        return $this->hasMany(ProjectMaterialRequest::class, 'requester_id');
+    }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(ProjectExpense::class, 'created_by');
+    }
+
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ProjectActivityLog::class);
+    }
+
+    // Permission handling methods
+    public function hasProjectPermission($permission, $project_id = null)
+    {
+        return UsersPermission::isUserAllowed(
+            $this->id,
+            'project',
+            $permission,
+            $project_id
+        );
+    }
+
+    public function assignProjectRole($project_id, $role)
+    {
+        return $this->projects()->attach($project_id, [
+            'role' => $role,
+            'assigned_date' => now(),
+            'status' => 'active'
+        ]);
+    }
+
+    // Helper methods for project access
+    public function getActiveProjects()
+    {
+        return $this->projects()
+            ->wherePivot('status', 'active')
+            ->wherePivot('end_date', null)
+            ->get();
+    }
+
+    public function canManageProject($project_id)
+    {
+        return $this->hasProjectPermission('manage_project', $project_id) ||
+            $this->role->name === 'project_manager';
+    }
+
+    public static function  getUserCounts()
+    {
+        $counts = DB::table('users')
+            ->select(
+                DB::raw('COUNT(CASE WHEN gender = "FEMALE" THEN 1 END) AS total_female'),
+                DB::raw('COUNT(CASE WHEN gender = "MALE" THEN 1 END) AS total_male'),
+                DB::raw('COUNT(*) AS total')
+            )->where('type', 'STAFF')
+            ->first();
+
+        return $counts;
+    }
+
+    public static function getDepartmentMemberCounts()
+    {
+        $counts = DB::table('users')
+            ->select('department_id','departments.name', DB::raw('COUNT(*) AS total_members'))
+            ->join('departments', 'departments.id', '=', 'users.department_id')
+            ->groupBy('department_id')
+            ->get();
+
+        return $counts;
+    }
 }

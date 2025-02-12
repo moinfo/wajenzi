@@ -49,8 +49,19 @@ class AdminComposer {
         $view->with($data);
     }
 
-    private function getUserMenu($user) {
-        return Menu::getFullMenu();
+//    private function getUserMenu($user) {
+//        return Menu::getFullMenu();
+//    }
+
+    public function getUserMenu($user)
+    {
+        $menus = Menu::with('children')
+            ->whereNull('parent_id')
+            ->where('status', 'ACTIVE')
+            ->orderBy('list_order')
+            ->get();
+
+        return $menus;
     }
 
     private function getNotifications() {

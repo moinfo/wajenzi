@@ -10,15 +10,36 @@
                 </span>
             </div>
         </div>
+        @php
+            $profile = Auth::user()->profile ?? 'media/avatars/avatar15.jpg';
 
+        @endphp
         <!-- User Profile -->
         <div class="user-profile">
             <div class="profile-image">
-                <img src="{{ asset('media/avatars/avatar15.jpg') }}" alt="Profile">
+                <img src="{{ asset("$profile") }}" alt="Profile">
             </div>
             <h3 class="user-name">{{ Auth::user()->name }}</h3>
         </div>
+        <style>
+            .nav-treeview {
+                padding-left: 1rem;
+                display: none;
+            }
 
+            .nav-item.active > .nav-treeview {
+                display: block;
+            }
+
+            .nav-link .right {
+                float: right;
+                transition: transform .3s ease-in-out;
+            }
+
+            .nav-item.active > .nav-link .right {
+                transform: rotate(90deg);
+            }
+        </style>
         <!-- Navigation Menu -->
         <div class="sidebar-menu">
             <div class="menu-header">MENU</div>
@@ -32,9 +53,29 @@
                             <li class="nav-item {{ request()->is($menu['route'] .'/*') ? 'active' : '' }}">
                                 <a href="{{ route($menu['route']) }}"
                                    class="nav-link {{ request()->is($menu['route']) ? 'active' : '' }}">
-                                    <i class="si si-location-pin"></i>
+                                    <i class="{{$menu['icon']}}"></i>
                                     <span>{{$menu['name']}}</span>
+                                    @if(isset($menu['children']) && count($menu['children']) > 0)
+                                        <i class="fa fa-angle-right right"></i>
+                                    @endif
                                 </a>
+                                @if(isset($menu['children']) && count($menu['children']) > 0)
+                                    <ul class="nav nav-treeview">
+                                        @foreach($menu['children'] as $submenu)
+                                            @foreach($staff_permissions as $staff_permission)
+                                                @if($staff_permission->permission_name == $submenu['name'])
+                                                    <li class="nav-item">
+                                                        <a href="{{ route($submenu['route']) }}"
+                                                           class="nav-link {{ request()->is($submenu['route']) ? 'active' : '' }}">
+                                                            <i class="{{$submenu['icon']}}"></i>
+                                                            <span>{{$submenu['name']}}</span>
+                                                        </a>
+                                                    </li>
+                                                @endif
+                                            @endforeach
+                                        @endforeach
+                                    </ul>
+                                @endif
                             </li>
                         @endif
                     @endforeach

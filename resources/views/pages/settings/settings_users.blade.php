@@ -26,6 +26,7 @@
                                     <th class="d-none d-sm-table-cell" style="width: 30%;">Email</th>
                                     <th>Address</th>
                                     <th>Designation</th>
+                                    <th>Department</th>
                                     <th>Type</th>
                                     <th>Gender</th>
                                     <th>Employee No.</th>
@@ -34,6 +35,7 @@
                                     <th>TIN</th>
                                     <th>EMPLOYMENT TYPE</th>
                                     <th>MARITAL STATUS</th>
+                                    <th>Signature</th>
                                     <th>STATUS</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
@@ -57,6 +59,7 @@
                                         </td>
                                         <td>{{ $user->address }}</td>
                                         <td>{{ $user->designation }}</td>
+                                        <td>{{ $user->department->name  ?? ''}}</td>
                                         <td>{{ $user->type }}</td>
                                         <td>{{ $user->gender }}</td>
                                         <td>{{ $user->employee_number }}</td>
@@ -65,6 +68,13 @@
                                         <td>{{ $user->tin }}</td>
                                         <td>{{ $user->employment_type }}</td>
                                         <td>{{ $user->marital_status }}</td>
+                                        <td class="text-center">
+                                            @if($user->file != null)
+                                                <a href="{{ url("$user->file") }}">Signature</a>
+                                            @else
+                                                No Signature
+                                            @endif
+                                        </td>
                                         <td>{{ $user->status }}</td>
                                         <td class="text-center" >
                                             <div class="btn-group">
@@ -77,6 +87,9 @@
                                                     <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User', id: {{$user->id}}}, 'Edit {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                         <i class="fa fa-pencil"></i>
                                                     </button>
+                                                        <button type="button" onclick="loadFormModal('settings_user_profile_form', {className: 'User', id: {{$user->id}}}, 'Upload Profile {{$user->name}}', 'modal-lg');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Upload Profile" data-original-title="Upload Profile">
+                                                            <i class="fa fa-user"></i>
+                                                        </button>
                                                 @endif
 
                                                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete User"))

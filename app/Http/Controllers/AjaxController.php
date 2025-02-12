@@ -12,6 +12,7 @@ use App\Models\BeneficiaryAccount;
 use App\Models\BongeCustomer;
 use App\Models\Category;
 use App\Models\Deduction;
+use App\Models\Department;
 use App\Models\Division;
 use App\Models\Efd;
 use App\Models\ExpensesCategory;
@@ -19,6 +20,8 @@ use App\Models\ExpensesSubCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
 use App\Models\Payroll;
+use App\Models\ProjectClient;
+use App\Models\ProjectType;
 use App\Models\Staff;
 use App\Models\SubCategory;
 use App\Models\Supervisor;
@@ -60,7 +63,7 @@ class AjaxController
                     $efds = Efd::all();
                     $allowance_subscriptions = Allowance::all();
                     $deduction_subscriptions = Deduction::all();
-                    $staffs = Staff::getList();
+                    $staffs = User::where('type','STAFF')->get();;
                     $systems= System::all();
                     $sellers= Efd::getSellers();
                     $employees = [
@@ -166,7 +169,7 @@ class AjaxController
                         ['name'=>'yes'],
                         ['name'=>'no']
                     ];
-                    $users = Staff::all();
+                    $users = User::all();
                     $expenses_categories = ExpensesCategory::all();
                     $expenses_sub_categories = ExpensesSubCategory::all();
                     $financial_charge_categories = FinancialChargeCategory::all();
@@ -176,7 +179,14 @@ class AjaxController
                     $wakalas = Wakala::all();
                     $start_date = date('Y-m-d');
                     $todayTargets = SupplierTarget::getTodayTargets($start_date);
+                    $project_clients = ProjectClient::all();
+                    $project_types = ProjectType::all();
+                    $departments = Department::all();
+
                     $data = $request->input('data') ?? [
+                            'departments' => $departments,
+                            'projectTypes' => $project_types,
+                            'clients' => $project_clients,
                             'slip_presentations' => $slip_presentations,
                             'todayTargets' => $todayTargets,
                             'beneficiaries' => $beneficiaries,

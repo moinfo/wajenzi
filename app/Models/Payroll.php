@@ -25,4 +25,11 @@ class Payroll extends Model
     }
 
 
+    public static function countUnapproved()
+    {
+        return count(Payroll::where('status','!=','APPROVED')->where('status','!=','REJECTED')->get());
+    }
+
+
+
 }

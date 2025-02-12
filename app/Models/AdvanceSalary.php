@@ -16,6 +16,11 @@ class AdvanceSalary extends Model
         return AdvanceSalary::select([DB::raw("SUM(amount) as total_amount")])->Where('status','APPROVED')->Where('date',$date)->groupBy('date')->get()->first()['total_amount'] ?? 0;
     }
 
+    public static function countUnapproved()
+    {
+        return count(AdvanceSalary::where('status','!=','APPROVED')->where('status','!=','REJECTED')->get());
+    }
+
 
     public static function getTotalAdvanceSalaryAmountFromBeginning($end_date)
     {
