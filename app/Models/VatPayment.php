@@ -22,6 +22,13 @@ class VatPayment extends Model
         return $vat_payments;
     }
 
+    public function bank(){
+        return $this->belongsTo(Bank::class, 'bank_id');
+    }
+    public function user(){
+        return $this->belongsTo(User::class, 'bank_id');
+    }
+
     public static function getTotalPayments($end_date,$start_date=null){
         $start_date = $start_date ?? '2010-01-01';
         return DB::table('vat_payments')

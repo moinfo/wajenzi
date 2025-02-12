@@ -156,4 +156,15 @@ class User extends Authenticatable
 
         return $counts;
     }
+
+    public static function getUserName($user_id)
+    {
+        return User::where('id','=', $user_id)->get()->first()->name ?? null;
+    }
+    public static function getUserSignature($user_id)
+    {
+        return User::where('id','=', $user_id)->get()->first()->file ?? null;
+    }
+
+
 }

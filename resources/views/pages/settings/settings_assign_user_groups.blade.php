@@ -35,8 +35,8 @@
                                         <a href="#">{{$loop->iteration}}</a>
                                     </th>
                                     <td>{{ $value->updated_at }}</td>
-                                    <td>{{ $value->user->name }}</td>
-                                    <td>{{ $value->userGroup->name }}</td>
+                                    <td>{{ $value->user->name ?? null }}</td>
+                                    <td>{{ $value->userGroup->name ?? null }}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Assign User Group"))
