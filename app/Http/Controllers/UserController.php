@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\UsersPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 
 class UserController extends Controller
@@ -65,5 +66,19 @@ class UserController extends Controller
             ]);
 
         return Redirect::back();
+    }
+
+    public function update_profile(Request $request){
+
+        if($this->handleCrud($request, 'User')) {
+            return back();
+        }
+
+        return Redirect::back();
+
+//        $data = [
+//            'users' => User::all()
+//        ];
+//        return view('pages.settings.settings_users')->with($data);
     }
 }

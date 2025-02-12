@@ -13,7 +13,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = [
+    public $fillable = [
         'name',
         'email',
         'gender',
@@ -149,7 +149,7 @@ class User extends Authenticatable
     public static function getDepartmentMemberCounts()
     {
         $counts = DB::table('users')
-            ->select('department_id','departments.name', DB::raw('COUNT(*) AS total_members'))
+            ->select('department_id','departments.name AS name', DB::raw('COUNT(*) AS total_members'))
             ->join('departments', 'departments.id', '=', 'users.department_id')
             ->groupBy('department_id')
             ->get();

@@ -436,6 +436,11 @@ Route::middleware(['auth'])->group(function () {
 // Project Import Routes
     Route::get('/project_import', [App\Http\Controllers\ProjectImportController::class, 'showForm'])->name('project_import');
     Route::post('/project_import/process', [App\Http\Controllers\ProjectImportController::class, 'process'])->name('project_import.process');
+
+//    Route::put('/profile', 'SettingsController@users')->name('profile.update');
+    Route::match(['get', 'post'], '/profile', [App\Http\Controllers\UserController::class, 'update_profile'])->name('profile.update');
+    Route::match(['get', 'post'], '/profile/password', [App\Http\Controllers\UserController::class, 'update_password'])->name('profile.password.update');
+
 });
 
 Auth::routes(['register' => false]);
