@@ -6,7 +6,7 @@
     $notifiable_id = Auth::user()->id;
     $route_id =request()->route('id');
     $route_document_type_id =request()->route('document_type_id');
-    $base_route = 'sales/'.$route_id.'/'.$route_document_type_id;
+    $base_route = 'vat_payment/'.$route_id.'/'.$route_document_type_id;
     foreach( Auth::user()->unreadNotifications as $notification){
         if($notification->data['link'] == $base_route){
             $notification_id= \App\Models\Notification::Where('notifiable_id',$notifiable_id)->where('data->link', $base_route)->get()->first()->id;
@@ -16,6 +16,8 @@
             }
         }
     }
+    $sale_id = $sales->id;
+//dd($sales);
     ?>
     @if($sales == null)
         @php
@@ -23,162 +25,187 @@
             exit();
         @endphp
     @endif
+    <!-- Main Container -->
     <div class="main-container">
         <div class="content">
-            <div class="content-heading">Sales
-                <div class="float-right">
+            <!-- Header Section -->
+            <div class="page-header">
+                <div class="header-content">
+                    <h1 class="page-title">Individual Sales</h1>
+                    <div class="bank-name">{{$sales->efd->name}}</div>
                 </div>
             </div>
-            <div>
-                <div class="block block-themed">
-                    <div class="block-header bg-gd-lake">
-                        <h3 class="block-title">{{$sales->efd->name}}</h3>
-                    </div>
-                    <div class="block-content">
-                        <form method="post" action="{{route('hr_settings_approvals')}}" enctype="multipart/form-data">
-                            @csrf
-                            <table class="table table-bordered table-striped table-vcenter">
-                                <tbody>
-                                <tr>
-                                    <th width="30%">Turnover</th>
-                                    <td>{{number_format($sales->amount)}}</td>
-                                </tr>
-                                <tr>
-                                    <th width="30%">NET (A+B+C)</th>
-                                    <td>{{number_format($sales->net)}}</td>
-                                </tr>
-                                <tr>
-                                    <th width="30%">Tax</th>
-                                    <td>{{number_format($sales->tax)}}</td>
-                                </tr>
-                                <tr>
-                                    <th width="30%">Turnover (EX + SR)</th>
-                                    <td>{{number_format($sales->turn_over)}}</td>
-                                </tr>
-                                <tr>
-                                    <th>Date</th>
-                                    <td>{{$sales->date}}</td>
-                                </tr>
-                                <tr>
-                                    <th width="30%">Uploaded File</th>
-                                    <td width="70%" class="bold">
-                                        @if($sales->file != null)
-                                        <a href="{{ url($sales->file) }}" target="_blank">View</a>
-                                            @endif
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th width="30%">status</th>
-                                    @if($sales->status == 'PENDING')
-                                        <td width="70%" class="bold text-capitalize"
-                                            style="font-size: 16px!important">
-                                            <div
-                                                class="badge badge-warning badge-pill">{{ $sales->status}}</div>
-                                        </td>
-                                    @elseif($sales->status == 'APPROVED')
-                                        <td width="70%" class="bold text-capitalize"
-                                            style="font-size: 16px!important">
-                                            <div
-                                                class="badge badge-primary badge-pill">{{ $sales->status}}</div>
-                                        </td>
-                                    @elseif($sales->status == 'REJECTED')
-                                        <td width="70%" class="bold text-capitalize"
-                                            style="font-size: 16px!important">
-                                            <div
-                                                class="badge badge-danger badge-pill">{{ $sales->status}}</div>
-                                        </td>
-                                    @elseif($sales->status == 'PAID')
-                                        <td width="70%" class="bold text-capitalize"
-                                            style="font-size: 16px!important">
-                                            <div
-                                                class="badge badge-primary badge-pill">{{ $sales->status}}</div>
-                                        </td>
-                                    @elseif($sales->status == 'COMPLETED')
-                                        <td width="70%" class="bold text-capitalize"
-                                            style="font-size: 16px!important">
-                                            <div
-                                                class="badge badge-success badge-pill">{{ $sales->status}}</div>
-                                        </td>
-                                    @else
-                                        <td width="70%" class="bold text-capitalize"
-                                            style="font-size: 16px!important">
-                                            <div
-                                                class="badge badge-secondary badge-pill">{{ $sales->status}}</div>
-                                        </td>
-                                    @endif
-                                </tr>
-                                </tbody>
-                            </table>
-                            <div class="row">
-                                <?php
-                                $get_user_group_id = \App\Models\AssignUserGroup::getAssignUserGroup(Auth::user()->id);
-                                foreach ($get_user_group_id as $index => $item) {
-                                    $arr[] = $item->user_group_id;
-                                }
-                                ?>
-                                @if($nextApproval)
-                                    @if($rejected)
-                                        <div class="col-md-9">
-                                            <span class='pull-right'>This Sales was rejected <i class='text-light'>Comment: {{$rejected->comments}}</i></span>
-                                        </div>
-                                        <div class="col-md-3">
-                                        </div>
-                                    @else
-                                        @if(!in_array($nextApproval->user_group_id,$arr))
-                                            <div class="col-md-12">
-                                                <span class='pull-left'><i class='fa fa-clock'>&nbsp;&nbsp;&nbsp;&nbsp;</i> Waiting {{$nextApproval->user_group_name}} for Approval</span>
-                                            </div>
-                                        @else
-                                            <div class="col-md-12">
-                                                <input type="hidden" name="status" id="status" value="APPROVED">
-                                                <input type="hidden" name="approval_document_types_id" id="approval_document_types_id" value="{{$nextApproval->document_id}}">
-                                                <input type="hidden" name="link" id="link" value="sales/{{$document_id}}/2">
-                                                <input type="hidden" name="user_id" id="user_id" value="{{Auth::user()->id }}">
-                                                <input type="hidden" name="approval_level_id" id="approval_level_id" value="{{$nextApproval->order_id ?? null}}">
-                                                <input type="hidden" name="user_group_id" id="user_group_id" value="{{$nextApproval->user_group_id ?? null}}">
-                                                <input type="hidden" name="document_id" id="document_id" value="{{$document_id}}">
-                                                <input type="hidden" name="document_type_id" id="document_type_id" value="2">
-                                                <input type="hidden" name="approval_date" id="approval_date" value="<?=date('Y-m-d H:i:s')?>">
-                                                <br/>
-                                                <div class="form-group row">
-                                                    <label for="example-text-input" class="col-md-2 col-form-label">Comments</label>
-                                                    <div class="col-md-10">
-                                                        <textarea class="form-control" type="text" id="comments" name="comments" rows="3" required></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="form-group">
-                                                    <div class="btn-group pull-right">
-                                                        <button type="submit" class="btn btn-alt-primary btn-sm" name="approveItem" value="Sale">Approve now</button>
-                                                        <button type="submit" class="btn btn-alt-danger btn-sm" name="rejectItem" value="Sale">Reject</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    @endif
-                                @elseif($approvalCompleted)
-                                    <div class="col-md-9">
-                                        <span class='text-primary'><i class='fa fa-check '>&nbsp;&nbsp;&nbsp;</i> Sales Approved</span>
-                                    </div>
-                                    <div class="col-md-3">
 
+            <!-- Payment Details Card -->
+            <div class="details-card">
+                <div class="card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Turnover</label>
+                            <div class="info-value">{{number_format($sales->amount)}}</div>
+                        </div>
+                        <div class="info-item">
+                            <label>NET (A+B+C)</label>
+                            <div class="info-value amount"> {{number_format($sales->net)}}</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Tax</label>
+                            <div class="info-value amount">{{number_format($sales->tax)}}</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Turnover (EX + SR)</label>
+                            <div class="info-value amount">{{number_format($sales->turn_over)}}</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Date</label>
+                            <div class="info-value">{{$sales->date}}</div>
+                        </div>
+                        <div class="info-item">
+                            <label>Uploaded File</label>
+                            <div class="info-value">
+                                @if($sales->file != null)
+                                    <a href="{{ url($sales->file) }}" target="_blank" class="file-link">
+                                        <i class="fa fa-file-pdf"></i> View Document
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <label>Status</label>
+                            <div class="info-value">
+                                @if($sales->status == 'PENDING')
+                                    <span class="status-badge pending">{{ $sales->status}}</span>
+                                @elseif($sales->status == 'APPROVED')
+                                    <span class="status-badge approved">{{ $sales->status}}</span>
+                                @elseif($sales->status == 'REJECTED')
+                                    <span class="status-badge rejected">{{ $sales->status}}</span>
+                                @elseif($sales->status == 'PAID')
+                                    <span class="status-badge paid">{{ $sales->status}}</span>
+                                @elseif($sales->status == 'COMPLETED')
+                                    <span class="status-badge completed">{{ $sales->status}}</span>
+                                @else
+                                    <span class="status-badge default">{{ $sales->status}}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approvals Section -->
+            <div class="approvals-section">
+                <h2 class="section-title">Approval Flow</h2>
+
+                <div class="approval-timeline">
+                    <!-- Prepared By -->
+                    <div class="timeline-item active">
+                        <div class="timeline-content">
+                            <div class="approver-info">
+                                <div class="approver-role">Prepared By</div>
+                                <div class="approver-name">{{$sales->user->name ?? null}}</div>
+                                @if($sales->user->file)
+                                    <div class="signature">
+                                        <img src="{{ asset($sales->user->file) }}" alt="signature">
                                     </div>
                                 @endif
+                                <div class="approval-date">{{$sales->created_at}}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @php
+                        $approval_document_types_id = 2;
+                        $approvals = \App\Models\ApprovalLevel::getUsersApprovals($approval_document_types_id);
+                    @endphp
+                        <!-- Approval Steps -->
+                    @foreach($approvals as $index => $approval)
+                        @php
+                            $group_name = \App\Models\ApprovalLevel::getUserGroupName($approval->id);
+                            $approved = \App\Models\Approval::getApprovedDocument($approval->id,$approval_document_types_id,$sale_id);
+                            $approver = \App\Models\User::getUserName($approved['user_id']);
+                            $signature = \App\Models\User::getUserSignature($approved['user_id']);
+                        @endphp
+                        <div class="timeline-item {{$approved['created_at'] ? 'active' : ''}}">
+                            <div class="timeline-content">
+                                <div class="approver-info">
+                                    <div class="approver-role">{{$group_name ?? null}} Approval</div>
+                                    <div class="approver-name">{{$approver}}</div>
+                                    @if($signature)
+                                        <div class="signature">
+                                            <img src="{{ asset($signature) }}" alt="signature">
+                                        </div>
+                                    @endif
+                                    @if($approved['created_at'])
+                                        <div class="approval-date">
+                                            {{$approved['created_at']}}
+                                            @if($approved['comments'])
+                                                <span class="comments-link" onclick='showComments("{{$approved['comments']}}")'>
+                                                <i class="fa fa-comment"></i> View Comments
+                                            </span>
+                                            @endif
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <?php
+                $get_user_group_id = \App\Models\AssignUserGroup::getAssignUserGroup(Auth::user()->id);
+                foreach ($get_user_group_id as $index => $item) {
+                    $arr[] = $item->user_group_id;
+                }
+                ?>
+                    <!-- Approval Actions -->
+                @if($nextApproval && !$rejected && in_array($nextApproval->user_group_id,$arr))
+                    <div class="approval-actions">
+                        <form method="post" action="{{route('hr_settings_approvals')}}" class="approval-form">
+
+                            @csrf
+                            <input type="hidden" name="status" value="APPROVED">
+                            <input type="hidden" name="approval_document_types_id" value="{{$nextApproval->document_id}}">
+                            <input type="hidden" name="link" value="sales/{{$document_id}}/2">
+                            <input type="hidden" name="user_id" value="{{Auth::user()->id}}">
+                            <input type="hidden" name="approval_level_id" value="{{$nextApproval->order_id ?? null}}">
+                            <input type="hidden" name="user_group_id" value="{{$nextApproval->user_group_id ?? null}}">
+                            <input type="hidden" name="document_id" value="{{$document_id}}">
+                            <input type="hidden" name="document_type_id" value="2">
+                            <input type="hidden" name="approval_date" value="<?=date('Y-m-d H:i:s')?>">
+                            <input type="hidden" name="route" value="sale">
+
+                            <div class="comments-field">
+                                <label>Comments</label>
+                                <textarea name="comments" required placeholder="Enter your comments here..."></textarea>
+                            </div>
+
+                            <div class="action-buttons">
+                                <button type="submit" name="approveItem" value="VatPayment" class="btn-approve">
+                                    <i class="fa fa-check"></i> Approve
+                                </button>
+                                <button type="submit" name="rejectItem" value="VatPayment" class="btn-reject">
+                                    <i class="fa fa-times"></i> Reject
+                                </button>
                             </div>
                         </form>
                     </div>
-                </div>
+                @elseif($rejected)
+                    <div class="rejection-notice">
+                        <i class="fa fa-exclamation-circle"></i>
+                        <span>This payment was rejected</span>
+                        <p class="rejection-comment">{{$rejected->comments}}</p>
+                    </div>
+                @elseif($approvalCompleted)
+                    <div class="approval-complete">
+                        <i class="fa fa-check-circle"></i>
+                        <span>Sales Approved</span>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
 
+
 @endsection
-
-
-<script>
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
-    });
-</script>
 
 
 

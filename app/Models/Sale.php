@@ -9,12 +9,15 @@ use Illuminate\Support\Facades\DB;
 class Sale extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'efd_id', 'amount', 'date', 'net', 'tax', 'turn_over', 'file', 'status', 'efd_number'];
+    public $fillable = ['id', 'efd_id', 'amount', 'date', 'net', 'tax', 'turn_over', 'file', 'status', 'efd_number', 'create_by_id'];
 
     public function efd(){
         return $this->belongsTo(Efd::class);
     }
 
+    public function user(){
+        return $this->belongsTo(User::class, 'create_by_id');
+    }
 
     public static function getLastEfdNumber($efd_id){
         return Sale::where('efd_id',$efd_id)->orderBy('id','DESC')->get()->first()['efd_number'] ?? 0;

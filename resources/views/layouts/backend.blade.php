@@ -180,6 +180,29 @@
 
         <script>
 
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Enhance Comments Display
+            function showComments(comment) {
+                Swal.fire({
+                    title: 'Comments',
+                    text: comment,
+                    confirmButtonColor: '#2563eb',
+                    customClass: {
+                        popup: 'swal-wide',
+                        title: 'swal-title',
+                        content: 'swal-content'
+                    }
+                });
+            }
+
             $('.datepicker').datepicker({
                 format: 'yyyy-mm-dd'
             });
