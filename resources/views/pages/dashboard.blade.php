@@ -39,31 +39,21 @@
     $user_id = Auth::user()->id;
     $user_group_ids = Utility::userGroupsArray($user_id);
     $user_id = Auth::user()->id;
-    //    $user_department_id = Auth::user()->department_id;
-    //    $operating_expenses_counting = OperatingExpense::countUnapproved();
-    //    $statutory_payment_counting = StatutoryPayment::countUnapproved();
     $advance_salary_counting = AdvanceSalary::countUnapproved();
-    //    $leave_request_counting = LeaveRequest::countUnapproved();
-    //        $leave_plan_request_counting = LeavePlanRequest::countUnapproved();
     $staff_loan_counting = Loan::countUnapproved();
     $payroll_counting = Payroll::countUnapproved();
-    //    $rent_payment_counting = RentPayment::countUnapproved();
 
     $status_docs = [
-//        ['name' => 'Statutory Payment', 'count' => "$statutory_payment_counting", 'class' => 'StatutoryPayment', 'icon' => 'fa fa-envelope-o', 'list_link' => "$statutory_payment_link"],
-//        ['name' => 'Operating Expenses', 'count' => "$operating_expenses_counting", 'class' => 'OperatingExpenses', 'icon' => 'fa fa-envelope-o', 'list_link' => "$operating_expenses_link"],
         ['name' => 'Payroll', 'class' => 'Payroll', 'count' => "$payroll_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$payroll_link"],
-//        ['name' => 'Leave Request', 'class' => 'LeaveRequest', 'count' => "$leave_request_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$leave_request_link"],
-//        ['name' => 'Leave Plan Request', 'class' => 'LeavePlanRequest', 'count' => "$leave_plan_request_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$leave_plan_request_link"],
         ['name' => 'Advance Salary', 'class' => 'AdvanceSalary', 'count' => "$advance_salary_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$advance_salary_link"],
         ['name' => 'Staff Loan', 'class' => 'Loan', 'count' => "$staff_loan_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$staff_loan_link"],
-//        ['name' => 'Rent Payment', 'class' => 'RentPayment', 'count' => "$rent_payment_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$rent_payment_link"],
-    ];
-    //    $staffSummary = Staff::staffSummary();
-    //    $staff_board = Staff::staffBoard();
-    //    $staff_count = $staffSummary['staff_gender']['male'] + $staffSummary['staff_gender']['female'];
+        ['name' => 'Material Request', 'class' => 'Loan', 'count' => "$staff_loan_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$staff_loan_link"],
+        ['name' => 'Project BOQ', 'class' => 'Loan', 'count' => "$staff_loan_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$staff_loan_link"],
+        ['name' => 'Project Expense', 'class' => 'Loan', 'count' => "$staff_loan_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$staff_loan_link"],
+        ['name' => 'Project Invoice', 'class' => 'Loan', 'count' => "$staff_loan_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$staff_loan_link"],
+        ['name' => 'Site Visit', 'class' => 'Loan', 'count' => "$staff_loan_counting", 'icon' => 'fa fa-envelope-o', 'list_link' => "$staff_loan_link"],
 
-    //    return;
+        ];
     $counts = User::getUserCounts();
     $departmentCounts = User::getDepartmentMemberCounts();
     ?>
@@ -405,7 +395,7 @@
 
         .approvals-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 1rem;
             background: #F3F4F6;
             padding: 1.5rem;
@@ -415,7 +405,7 @@
         .approval-card {
             background: white;
             border-radius: 8px;
-            padding: 1rem;
+            padding: 10px;
         }
 
         .approval-content {
@@ -722,255 +712,229 @@
 
     </style>
     <div class="modern-dashboard">
-        <!-- Stats Cards Row -->
-        <div class="stats-grid" data-toggle="appear">
-            <!-- Sales Card -->
-            <div class="stats-card">
-                <div class="stats-content">
-                    <div class="stats-icon">
-                        <i class="si si-bag"></i>
-                    </div>
-                    <div class="stats-info">
-                        <div class="stats-value" data-toggle="countTo" data-speed="1000" data-to="{{$sales}}">
-                            {{$sales}}
-                        </div>
-                        <div class="stats-label">Sales</div>
-                    </div>
-                </div>
-                <div class="stats-chart">
-                    <div class="stats-trend stats-trend-up">
-                        <i class="fa fa-arrow-up"></i>
-                        <span>12%</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Purchases Card -->
-            <div class="stats-card">
-                <div class="stats-content">
-                    <div class="stats-icon purchases-icon">
-                        <i class="si si-wallet"></i>
-                    </div>
-                    <div class="stats-info">
-                        <div class="stats-value" data-toggle="countTo" data-speed="1000" data-to="{{$purchases}}">
-                            {{$purchases}}
-                        </div>
-                        <div class="stats-label">Purchases</div>
-                    </div>
-                </div>
-                <div class="stats-chart">
-                    <div class="stats-trend stats-trend-down">
-                        <i class="fa fa-arrow-down"></i>
-                        <span>5%</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Last Month VAT -->
-            <div class="stats-card">
-                <div class="stats-content">
-                    <div class="stats-icon vat-icon">
-                        <i class="si si-globe-alt"></i>
-                    </div>
-                    <div class="stats-info">
-                        <div class="stats-value" data-toggle="countTo" data-speed="1000"
-                             data-to="{{$last_month_tax_payable}}">
-                            {{$last_month_tax_payable}}
-                        </div>
-                        <div class="stats-label">Last Month VAT</div>
-                    </div>
-                </div>
-                <div class="stats-chart">
-                    <div class="stats-trend stats-trend-up">
-                        <i class="fa fa-arrow-up"></i>
-                        <span>8%</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- This Month VAT -->
-            <div class="stats-card">
-                <div class="stats-content">
-                    <div class="stats-icon current-vat-icon">
-                        <i class="si si-bar-chart"></i>
-                    </div>
-                    <div class="stats-info">
-                        <div class="stats-value" data-toggle="countTo" data-speed="1000"
-                             data-to="{{$this_month_tax_payable}}">
-                            {{$this_month_tax_payable}}
-                        </div>
-                        <div class="stats-label">This Month VAT</div>
-                    </div>
-                </div>
-                <div class="stats-chart">
-                    <div class="stats-trend stats-trend-up">
-                        <i class="fa fa-arrow-up"></i>
-                        <span>15%</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Approvals Section -->
-        <div class="approvals-section">
-            <h2 class="section-title">Approvals</h2>
-            <p class="section-desc">Things that are waiting for your action</p>
+        <!-- Approvals Section -->
+        <div class="approvals-container">
+            <div class="approvals-header">
+                <h2 class="approvals-title">Approvals</h2>
+                <p class="approvals-subtitle">Things that are waiting for your action</p>
+            </div>
 
             <div class="approvals-grid">
-                <div class="approval-card">
-                    <div class="approval-content">
-                        <span class="approval-icon"><i class="fas fa-file-invoice"></i></span>
-                        <span class="approval-text">Payroll</span>
-                        <span class="approval-badge">0</span>
+                @foreach($status_docs as $doc)
+                    <div class="approval-card">
+                        <div class="approval-content">
+                            <div class="approval-icon">
+                                <i class="fa fa-envelope-o"></i>
+                            </div>
+                            <span class="approval-text">{{ $doc['name'] }}</span>
+                            <span class="approval-badge">{{ $doc['count'] }}</span>
+                        </div>
                     </div>
-                </div>
-
-                <div class="approval-card">
-                    <div class="approval-content">
-                        <span class="approval-icon"><i class="fas fa-money-bill-wave"></i></span>
-                        <span class="approval-text">Advance Salary</span>
-                        <span class="approval-badge">0</span>
-                    </div>
-                </div>
-
-                <div class="approval-card">
-                    <div class="approval-content">
-                        <span class="approval-icon"><i class="fas fa-hand-holding-usd"></i></span>
-                        <span class="approval-text">Staff Loan</span>
-                        <span class="approval-badge">0</span>
-                    </div>
-                </div>
-
-                <!-- Project Related Cards -->
-                <div class="approval-card">
-                    <div class="approval-content">
-                        <span class="approval-icon"><i class="fas fa-project-diagram"></i></span>
-                        <span class="approval-text">Project BOQ</span>
-                        <span class="approval-badge">0</span>
-                    </div>
-                </div>
-
-                <div class="approval-card">
-                    <div class="approval-content">
-                        <span class="approval-icon"><i class="fas fa-boxes"></i></span>
-                        <span class="approval-text">Material Request</span>
-                        <span class="approval-badge">0</span>
-                    </div>
-                </div>
-
-                <div class="approval-card">
-                    <div class="approval-content">
-                        <span class="approval-icon"><i class="fas fa-file-alt"></i></span>
-                        <span class="approval-text">Site Visit Report</span>
-                        <span class="approval-badge">0</span>
-                    </div>
-                </div>
-
-                <div class="approval-card">
-                    <div class="approval-content">
-                        <span class="approval-icon"><i class="fas fa-receipt"></i></span>
-                        <span class="approval-text">Project Expense</span>
-                        <span class="approval-badge">0</span>
-                    </div>
-                </div>
-
-                <div class="approval-card">
-                    <div class="approval-content">
-                        <span class="approval-icon"><i class="fas fa-file-invoice-dollar"></i></span>
-                        <span class="approval-text">Project Invoice</span>
-                        <span class="approval-badge">0</span>
-                    </div>
-                </div>
-
-                <div class="approval-card">
-                    <div class="approval-content">
-                        <span class="approval-icon"><i class="fas fa-user-plus"></i></span>
-                        <span class="approval-text">Team Assignment</span>
-                        <span class="approval-badge">0</span>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
 
-        <!-- HR Dashboard Section -->
-        <div class="hr-dashboard">
-            <h2 class="section-title">HR & Payroll Dashboard</h2>
-            <p class="section-desc">Important analytics related to Human Resources management</p>
+        <style>
+            .approvals-container {
+                background-color: #f8f9fa;
+                padding: 1.5rem;
+                border-radius: 0.75rem;
+                margin-bottom: 2rem;
+            }
 
-            <div class="hr-content">
-                <div class="staff-section">
-                    <div class="total-staff-card">
-                        <div class="staff-icon">
-                            <i class="fa fa-users"></i>
+            .approvals-header {
+                margin-bottom: 1.5rem;
+            }
+
+            .approvals-title {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #1a202c;
+                margin-bottom: 0.5rem;
+            }
+
+            .approvals-subtitle {
+                color: #4a5568;
+                font-size: 0.875rem;
+            }
+
+            .approvals-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+                background-color: #fff;
+                padding: 1.5rem;
+                border-radius: 0.75rem;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+
+            .approval-card {
+                background-color: #ffffff;
+                border-radius: 0.5rem;
+                padding: 1rem;
+                transition: all 0.3s ease;
+                border: 1px solid #e5e7eb;
+            }
+
+            .approval-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+
+            .approval-content {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+            }
+
+            .approval-icon {
+                color: #4169E1;
+                font-size: 1.25rem;
+                width: 2.5rem;
+                height: 2.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background-color: rgba(65, 105, 225, 0.1);
+                border-radius: 0.5rem;
+            }
+
+            .approval-text {
+                flex: 1;
+                font-size: 0.875rem;
+                color: #4b5563;
+                font-weight: 500;
+            }
+
+            .approval-badge {
+                background-color: #4169E1;
+                color: white;
+                padding: 0.25rem 0.75rem;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 600;
+                min-width: 1.5rem;
+                text-align: center;
+            }
+
+            /* Responsive Design */
+            @media (max-width: 768px) {
+                .approvals-container {
+                    padding: 1rem;
+                }
+
+                .approvals-grid {
+                    grid-template-columns: 1fr;
+                    padding: 1rem;
+                }
+
+                .approval-card {
+                    padding: 0.75rem;
+                }
+            }
+        </style>
+
+        <!-- HR Dashboard Section -->
+        <!-- HR Dashboard Section -->
+        <!-- HR Dashboard -->
+        <div class="modern-dashboard">
+            <div class="dashboard-header">
+                <h2 class="section-title">HR & Payroll Dashboard</h2>
+                <p class="section-desc">Important analytics related to Human Resources management</p>
+            </div>
+
+            <div class="dashboard-content">
+                <!-- Staff Overview Cards -->
+                <div class="stats-section">
+                    <div class="stat-card total-staff">
+                        <div class="stat-content">
+                            <div class="stat-icon">
+                                <i class="fa fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-count">{{$counts->total}}</div>
+                                <div class="stat-label">All staff in the organization</div>
+                            </div>
                         </div>
-                        <div class="staff-count">{{$counts->total}}</div>
-                        <div class="staff-label">All staff in the organization</div>
                     </div>
 
-                    <div class="staff-gender-grid">
-                        <!-- Left Side -->
-                        <div class="gender-card male">
-                            <div class="gender-icon">
+                    <div class="stat-card male-staff">
+                        <div class="stat-content">
+                            <div class="stat-icon">
                                 <i class="fa fa-male"></i>
                             </div>
-                            <div class="gender-count">{{$counts->total_male}}</div>
-                            <div class="gender-label">Male staff</div>
+                            <div class="stat-info">
+                                <div class="stat-count">{{$counts->total_male}}</div>
+                                <div class="stat-label">Male staff</div>
+                            </div>
                         </div>
+                    </div>
 
-                        <div class="gender-card female">
-                            <div class="gender-icon">
+                    <div class="stat-card female-staff">
+                        <div class="stat-content">
+                            <div class="stat-icon">
                                 <i class="fa fa-female"></i>
                             </div>
-                            <div class="gender-count">{{$counts->total_female}}</div>
-                            <div class="gender-label">Female staff</div>
+                            <div class="stat-info">
+                                <div class="stat-count">{{$counts->total_female}}</div>
+                                <div class="stat-label">Female staff</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right Side Analytics -->
-                <div class="analytics-section">
-                    <div class="analytics-grid">
-                        <!-- Project Analytics -->
-                        <div class="analytics-card">
-                            <div class="analytics-icon">
-                                <i class="fa fa-project-diagram"></i>
-                            </div>
-                            <div class="analytics-content">
-                                <div class="analytics-count">{{$active_projects ?? 0}}</div>
-                                <div class="analytics-label">Active Projects</div>
-                            </div>
+                <!-- Department Section -->
+                <div class="info-section">
+                    <div class="info-card departments">
+                        <div class="card-header">
+                            <h3>DEPARTMENTS</h3>
+                            <span class="total-count">{{count($departmentCounts)}}</span>
                         </div>
-
-                        <!-- Team Analytics -->
-                        <div class="analytics-card">
-                            <div class="analytics-icon">
-                                <i class="fa fa-users-cog"></i>
-                            </div>
-                            <div class="analytics-content">
-                                <div class="analytics-count">{{$project_teams ?? 0}}</div>
-                                <div class="analytics-label">Project Teams</div>
-                            </div>
+                        <div class="card-content">
+                            @foreach($departmentCounts as $dept => $count)
+                                <div class="list-item">
+                                    <span class="item-name">{{$count->name ?? null}}</span>
+                                    <span class="item-count">{{$count->total_members}}</span>
+                                </div>
+                            @endforeach
                         </div>
+                    </div>
 
-                        <!-- Tasks Analytics -->
-                        <div class="analytics-card">
-                            <div class="analytics-icon">
-                                <i class="fa fa-tasks"></i>
-                            </div>
-                            <div class="analytics-content">
-                                <div class="analytics-count">{{$pending_tasks ?? 0}}</div>
-                                <div class="analytics-label">Pending Tasks</div>
-                            </div>
+                    <!-- Staff Board Section -->
+                    <div class="info-card staff-board">
+                        <div class="card-header">
+                            <h3>STAFF BOARD</h3>
                         </div>
-
-                        <!-- Progress Analytics -->
-                        <div class="analytics-card">
-                            <div class="analytics-icon">
-                                <i class="fa fa-chart-line"></i>
+                        <div class="card-content">
+                            <div class="list-item">
+                                <div class="status-info">
+                                    <span class="status-indicator"></span>
+                                    <span>On Leave</span>
+                                </div>
+                                <span class="status-count">0</span>
                             </div>
-                            <div class="analytics-content">
-                                <div class="analytics-count">{{$completion_rate ?? 0}}%</div>
-                                <div class="analytics-label">Completion Rate</div>
+                            <div class="list-item">
+                                <div class="status-info">
+                                    <span class="status-indicator"></span>
+                                    <span>Out of Office</span>
+                                </div>
+                                <span class="status-count">0</span>
+                            </div>
+                            <div class="list-item">
+                                <div class="status-info">
+                                    <span class="status-indicator"></span>
+                                    <span>In Office Premises</span>
+                                </div>
+                                <span class="status-count">0</span>
+                            </div>
+                            <div class="list-item">
+                                <div class="status-info">
+                                    <span class="status-indicator"></span>
+                                    <span>On the field</span>
+                                </div>
+                                <span class="status-count">0</span>
                             </div>
                         </div>
                     </div>
@@ -979,170 +943,180 @@
         </div>
 
         <style>
-            /* Add to your existing styles */
-            .hr-content {
-                display: grid;
-                grid-template-columns: 1fr 2fr; /* 1/3 for staff section, 2/3 for analytics */
-                gap: 2rem;
+            .modern-dashboard {
+                background-color: #f8f9fa;
+                padding: 1.5rem;
+                border-radius: 8px;
             }
 
-            .analytics-section {
-                padding: 1rem;
+            .dashboard-header {
+                margin-bottom: 1.5rem;
             }
 
-            .analytics-grid {
+            .section-title {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: #1a202c;
+                margin-bottom: 0.5rem;
+            }
+
+            .section-desc {
+                color: #6b7280;
+                font-size: 0.875rem;
+            }
+
+            /* Stats Section */
+            .stats-section {
                 display: grid;
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
                 gap: 1rem;
-                height: 100%;
+                margin-bottom: 1.5rem;
             }
 
-            .analytics-card {
-                background: #f8f9fa;
-                border-radius: 10px;
-                padding: 1.25rem;
+            .stat-card {
+                background: white;
+                border-radius: 8px;
+                padding: 1rem;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e5e7eb;
+            }
+
+            .stat-content {
                 display: flex;
                 align-items: center;
                 gap: 1rem;
-                transition: all 0.3s ease;
             }
 
-            .analytics-card:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            }
-
-            .analytics-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: 10px;
-                background: #2196F3;
-                color: white;
+            .stat-icon {
+                width: 2.5rem;
+                height: 2.5rem;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 1.2rem;
+                background-color: #e0e7ff;
+                border-radius: 8px;
+                color: #2563eb;
             }
 
-            .analytics-content {
-                flex: 1;
-            }
-
-            .analytics-count {
+            .stat-count {
                 font-size: 1.5rem;
                 font-weight: 600;
-                color: #333;
+                color: #1a202c;
                 margin-bottom: 0.25rem;
             }
 
-            .analytics-label {
-                color: #666;
-                font-size: 0.9rem;
+            .stat-label {
+                color: #6b7280;
+                font-size: 0.875rem;
             }
 
-            /* Different colors for different analytics cards */
-            .analytics-card:nth-child(1) .analytics-icon { background: #4169E1; }
-            .analytics-card:nth-child(2) .analytics-icon { background: #32CD32; }
-            .analytics-card:nth-child(3) .analytics-icon { background: #FFD700; }
-            .analytics-card:nth-child(4) .analytics-icon { background: #FF6B6B; }
+            /* Info Section */
+            .info-section {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 1.5rem;
+            }
 
-            @media (max-width: 1200px) {
-                .hr-content {
+            .info-card {
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e5e7eb;
+            }
+
+            .card-header {
+                padding: 1rem;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .card-header h3 {
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: #1a202c;
+            }
+
+            .total-count {
+                background: #2563eb;
+                color: white;
+                padding: 0.25rem 0.75rem;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 600;
+            }
+
+            .card-content {
+                padding: 1rem;
+            }
+
+            .list-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            .list-item:last-child {
+                border-bottom: none;
+            }
+
+            .item-name {
+                color: #4b5563;
+                font-size: 0.875rem;
+            }
+
+            .item-count {
+                background: #e0e7ff;
+                color: #2563eb;
+                padding: 0.25rem 0.75rem;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 500;
+            }
+
+            .status-info {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+            .status-indicator {
+                width: 0.5rem;
+                height: 0.5rem;
+                border-radius: 9999px;
+                background-color: #fbbf24;
+            }
+
+            .status-count {
+                color: #6b7280;
+                font-weight: 500;
+            }
+
+            /* Responsive Design */
+            @media (max-width: 1024px) {
+                .modern-dashboard {
+                    padding: 1rem;
+                }
+
+                .stats-section {
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                }
+
+                .info-section {
                     grid-template-columns: 1fr;
                 }
-                .analytics-grid {
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            @media (max-width: 640px) {
+                .stat-count {
+                    font-size: 1.25rem;
                 }
             }
         </style>
 
-
-        <!-- Charts Row -->
-        <div class="charts-grid" data-toggle="appear">
-            <!-- Sales Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div class="chart-title">
-                        <h3>Sales</h3>
-                        <span>This week</span>
-                    </div>
-                    <div class="chart-actions">
-                        <button type="button" class="chart-action" data-toggle="block-option" data-action="state_toggle"
-                                data-action-mode="demo">
-                            <i class="si si-refresh"></i>
-                        </button>
-                        <button type="button" class="chart-action">
-                            <i class="si si-wrench"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="chart-body">
-                    <canvas class="js-chartjs-dashboard-lines"></canvas>
-                </div>
-                <div class="chart-footer">
-                    <div class="chart-stats">
-                        <div class="stat-item">
-                            <div class="stat-trend up">
-                                <i class="fa fa-caret-up"></i>
-                                +16%
-                            </div>
-                            <div class="stat-value">{{$collection_in_month['total_amount']}}</div>
-                            <div class="stat-label">This Month</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-trend down">
-                                <i class="fa fa-caret-down"></i>
-                                -3%
-                            </div>
-                            <div class="stat-value">{{$collection_in_week['total_amount']}}</div>
-                            <div class="stat-label">This Week</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Purchases Chart -->
-            <div class="chart-card">
-                <div class="chart-header">
-                    <div class="chart-title">
-                        <h3>Purchases</h3>
-                        <span>This week</span>
-                    </div>
-                    <div class="chart-actions">
-                        <button type="button" class="chart-action" data-toggle="block-option" data-action="state_toggle"
-                                data-action-mode="demo">
-                            <i class="si si-refresh"></i>
-                        </button>
-                        <button type="button" class="chart-action">
-                            <i class="si si-wrench"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="chart-body">
-                    <canvas class="js-chartjs-dashboard-lines2"></canvas>
-                </div>
-                <div class="chart-footer">
-                    <div class="chart-stats">
-                        <div class="stat-item">
-                            <div class="stat-trend up">
-                                <i class="fa fa-caret-up"></i>
-                                +4%
-                            </div>
-                            <div class="stat-value">{{$expenses_in_month['total_amount']}}</div>
-                            <div class="stat-label">This Month</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-trend down">
-                                <i class="fa fa-caret-down"></i>
-                                -7%
-                            </div>
-                            <div class="stat-value">{{$expenses_in_month['total_amount']}}</div>
-                            <div class="stat-label">This Week</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
 
