@@ -31,11 +31,13 @@
                                     <th>Gender</th>
                                     <th>Employee No.</th>
                                     <th>Date of Birth</th>
+                                    <th>Date of Job</th>
                                     <th>National ID</th>
                                     <th>TIN</th>
                                     <th>EMPLOYMENT TYPE</th>
                                     <th>MARITAL STATUS</th>
                                     <th>Signature</th>
+                                    <th>Profile</th>
                                     <th>STATUS</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
@@ -64,6 +66,7 @@
                                         <td>{{ $user->gender }}</td>
                                         <td>{{ $user->employee_number }}</td>
                                         <td>{{ $user->dob }}</td>
+                                        <td>{{ $user->employment_date }}</td>
                                         <td>{{ $user->national_id }}</td>
                                         <td>{{ $user->tin }}</td>
                                         <td>{{ $user->employment_type }}</td>
@@ -73,6 +76,13 @@
                                                 <a href="{{ url("$user->file") }}">Signature</a>
                                             @else
                                                 No Signature
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            @if($user->profile != null)
+                                                <a href="{{ url("$user->profile") }}">Signature</a>
+                                            @else
+                                                No Profile
                                             @endif
                                         </td>
                                         <td>{{ $user->status }}</td>
