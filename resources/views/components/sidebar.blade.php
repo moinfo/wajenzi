@@ -17,7 +17,7 @@
         <!-- User Profile -->
         <div class="user-profile">
             <div class="profile-image">
-                <img src="{{ asset("$profile") }}" alt="Profile">
+                <img src="{{ asset("$profile") }}" alt="Profile" width="100">
             </div>
             <h3 class="user-name">{{ Auth::user()->name }}</h3>
         </div>
