@@ -17,7 +17,7 @@
             @include('approvals._header', ['page_name'=> $page_name,'approval_data_name'=> $approval_data_name ])
 
             <!-- Payment Details Card -->
-            @include('approvals._payment_details', ['sales' => $approval_data])
+            @include('approvals._payment_details', ['approval_data' => $approval_data])
 
             <!-- Approvals Section -->
             <div class="approvals-section">
@@ -25,10 +25,10 @@
 
                 <div class="approval-timeline">
                     <!-- Prepared By -->
-                    @include('approvals._prepared_by', ['sales' => $approval_data])
+                    @include('approvals._prepared_by', ['approval_data' => $approval_data])
 
                     <!-- Approval Steps -->
-                    @foreach($approvalService->getApprovalTimeline(2, $approval_data->id) as $timelineItem)
+                    @foreach($approvalService->getApprovalTimeline($approval_document_type_id, $approval_data->id) as $timelineItem)
                         @include('approvals._timeline_item', ['item' => $timelineItem])
                     @endforeach
                 </div>

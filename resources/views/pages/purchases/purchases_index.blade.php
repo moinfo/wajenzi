@@ -80,12 +80,17 @@
                                     <th>VAT Amount</th>
                                     <th>Is Expenses</th>
                                     <th>Attachment</th>
+                                    <th scope="col">Approvals</th>
                                     <th scope="col">Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach($purchases as $purchase)
+                                    @php
+                                        $approval_document_types_id = 3;
+                                        $approvals = \App\Models\ApprovalLevel::getUsersApprovals($approval_document_types_id);
+                                    @endphp
                                     <tr id="purchase-tr-{{$purchase->id}}">
                                         <td class="text-center">
                                             {{$loop->index + 1}}
@@ -106,6 +111,35 @@
                                             @else
                                                 No File
                                             @endif
+                                        </td>
+                                        <td class="approvals-cell">
+                                            <div class="approval-badges">
+                                                @foreach($approvals as $approval)
+                                                    @php
+                                                        $approval_level_id = $approval->id;
+                                                        $document_id = $purchase->id;
+                                                        $group_name = \App\Models\ApprovalLevel::getUserGroupName($approval_level_id);
+                                                        $approves = \App\Models\Approval::getApproved($approval_level_id,$document_id);
+                                                    @endphp
+                                                    @if(count($approves))
+                                                        @foreach($approves as $approve)
+                                                            @if($approve->user_group_id == $approval->user_group_id)
+                                                                <span class="approval-badge approved">
+                            <i class="fa fa-check"></i>{{$group_name ?? null}}
+                        </span>
+                                                            @else
+                                                                <span class="approval-badge pending">
+                            <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                        </span>
+                                                            @endif
+                                                        @endforeach
+                                                    @else
+                                                        <span class="approval-badge pending">
+                    <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                </span>
+                                                    @endif
+                                                @endforeach
+                                            </div>
                                         </td>
                                         <td>
                                             @if($purchase->status == 'PENDING')

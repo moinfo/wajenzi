@@ -75,7 +75,7 @@ class SaleController extends Controller
             'approvalCompleted' => $approvalCompleted,
             'rejected' => $rejected,
             'document_id' => $document_id,
-            'approval_document_type_id' => 2, //improve $approval_document_type_id
+            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
             'page_name' => 'Sales',
             'approval_data_name' => $approval_data->efd->name,
             'details' => $details,
@@ -83,7 +83,7 @@ class SaleController extends Controller
             'route' => 'sales',
 
         ];
-        return view('pages.sales.sales')->with($data);
+        return view('approvals._approve_page')->with($data);
     }
 
     public function getLastEfdNumber(Request $request){
