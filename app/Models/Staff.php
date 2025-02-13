@@ -120,10 +120,6 @@ class Staff extends User
         return $total;
     }
 
-    public static function getStaffSalaryPaid($staff_id, $payroll_id)
-    {
-        return PayrollSalary::Where('staff_id', $staff_id)->Where('payroll_id', $payroll_id)->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
-    }
 
     public static function getAllStaffSalaryPaid($payroll_id, $payroll_type_id)
     {
@@ -241,7 +237,7 @@ class Staff extends User
 
     public static function getList()
     {
-        return self::with('department', 'position')->get();
+        return User::with('department', 'position')->get();
     }
 
     /**
@@ -272,7 +268,7 @@ class Staff extends User
 
     public static function onlyMailimojaStaffs()
     {
-        return self::where('system_id', '!=', 7)->where('system_id', '!=', 2)->where('status', 'ACTIVE')->get();
+        return User::where('system_id', '!=', 7)->where('system_id', '!=', 2)->where('status', 'ACTIVE')->get();
     }
 
     public static function getStaffSalary($staff_id)
@@ -325,8 +321,8 @@ class Staff extends User
 
     public static function getStaffGrossPay($staff_id, $month)
     {
-        return self::getStaffSalary($staff_id);
-//        return self::getStaffAllowance($staff_id,$month) + (new Staff)->getStaffSalary($staff_id);
+        return User::getStaffSalary($staff_id);
+//        return User::getStaffAllowance($staff_id,$month) + (new Staff)->getStaffSalary($staff_id);
 //        return (new Staff)->getStaffSalary($staff_id);
     }
 
@@ -349,20 +345,12 @@ class Staff extends User
         return Loan::Where('staff_id', $staff_id)->select([DB::raw("deduction as total_amount")])->orderBy('id', 'desc')->get()->first()['total_amount'] ?? 0;
     }
 
-    public static function getStaffLoanDeductionAllTheTime($staff_id)
-    {
-        return PayrollRecord::Where('staff_id', $staff_id)->select([DB::raw("SUM(loanDeduction) as total_amount")])->groupBy('staff_id')->get()->first()['total_amount'] ?? 0;
-    }
 
-    public static function getStaffLoanAllTheTime($staff_id)
-    {
-        return Loan::Where('staff_id', $staff_id)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('staff_id')->get()->first()['total_amount'] ?? 0;
-    }
 
     public static function isStaffHasLoan($staff_id)
     {
-        $total_loan = self::getStaffLoanAllTheTime($staff_id);
-        $total_deduction = self::getStaffLoanDeductionAllTheTime($staff_id);
+        $total_loan = User::getStaffLoanAllTheTime($staff_id);
+        $total_deduction = User::getStaffLoanDeductionAllTheTime($staff_id);
         $balance = $total_loan - $total_deduction;
         if ($balance != 0) {
             return true;

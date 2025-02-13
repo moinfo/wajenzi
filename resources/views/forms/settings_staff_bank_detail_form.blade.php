@@ -1,6 +1,6 @@
 
 <div class="block-content">
-    <form  method="post" action="{{route('allowance_subscriptions')}}"  autocomplete="off">
+    <form  method="post"  autocomplete="off">
         @csrf
         <div class="form-group">
             <label for="example-nf-details" class="control-label required">Staff</label>
@@ -13,31 +13,30 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-details" class="control-label required">Allowance</label>
-            <select name="allowance_id" id="input-allowance-id" class="form-control" required>
+            <label for="example-nf-details" class="control-label required">Staff</label>
+            <select name="bank_id" id="input-employee-id" class="form-control" required>
 
-                <option value="">Select Allowance</option>
-                @foreach ($allowance_subscriptions as $allowance_subscription)
-                    <option value="{{ $allowance_subscription['id'] }}" {{ ( $allowance_subscription['id'] == $object->allowance_subscription_id) ? 'selected' : '' }}> {{ $allowance_subscription['name'] }} </option>
+                <option value="">Select Staff</option>
+                @foreach ($banks as $bank)
+                    <option value="{{ $bank['id'] }}" {{ ( $bank['id'] == $object->bank_id) ? 'selected' : '' }}> {{ $bank['name'] }} </option>
                 @endforeach
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-email">Amount</label>
-            <input type="text" class="form-control amount" id="input-amount" name="amount" value="{{ $object->amount ?? '' }}" placeholder="Amount" required>
+            <label for="example-nf-email">Account Number</label>
+            <input type="text" class="form-control" id="input-account_number" name="account_number" value="{{ $object->account_number ?? '' }}" required>
         </div>
         <div class="form-group">
-            <label for="example-nf-date" class="control-label required">Date</label>
-            <input type="text" class="form-control datepicker"  id="input-date" name="date"
-                   value="{{ $object->date ?? date('Y-m-d') }}" required>
-            {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
+            <label for="example-nf-email">Branch</label>
+            <textarea type="text" class="form-control" id="input-branch" name="branch" required>{{ $object->branch ?? '' }}</textarea>
         </div>
         <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="AllowanceSubscription">Submit</button>
+
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="StaffBankDetail">Submit</button>
             @endif
         </div>
     </form>

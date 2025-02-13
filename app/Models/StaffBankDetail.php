@@ -11,7 +11,7 @@ class StaffBankDetail extends Model
     public $fillable = ['staff_id','bank_id','account_number','branch'];
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
     public function bank(){

@@ -170,6 +170,11 @@ class AjaxController
                         ['name'=>'yes'],
                         ['name'=>'no']
                     ];
+                    $allowance_types = [
+                        ['name'=>'DAILY'],
+                        ['name'=>'MONTHLY']
+                    ];
+
                     $users = User::all();
                     $expenses_categories = ExpensesCategory::all();
                     $expenses_sub_categories = ExpensesSubCategory::all();
@@ -186,6 +191,7 @@ class AjaxController
                     $payroll_types = PayrollType::all();
 
                     $data = $request->input('data') ?? [
+                            'allowance_types' => $allowance_types,
                             'payroll_types' => $payroll_types,
                             'departments' => $departments,
                             'projectTypes' => $project_types,

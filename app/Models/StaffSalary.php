@@ -13,7 +13,7 @@ class StaffSalary extends Model
     public $fillable = ['id', 'staff_id', 'amount'];
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
 

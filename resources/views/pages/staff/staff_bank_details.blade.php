@@ -3,11 +3,8 @@
 @section('content')
     <div class="main-container">
         <div class="content">
-            <div class="content-heading">Settings
-                <br/>
-                <div class="block-header text-center">
-                    <h3 class="block-title">Staff Bank Details</h3>
-                </div>
+            <div class="content-heading">Employee Management
+
                 <div class="float-right">
                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Staff Bank Detail"))
                         <button type="button" onclick="loadFormModal('settings_staff_bank_detail_form', {className: 'StaffBankDetail'}, 'Create New Staff Bank Detail', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
@@ -19,7 +16,9 @@
             <div>
 
                 <div class="block">
-
+                    <div class="block-header  block-header-default">
+                        <h3 class="block-title">Staff Bank Details</h3>
+                    </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
                         </div>

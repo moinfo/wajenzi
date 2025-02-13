@@ -12,7 +12,7 @@ class PayrollGrossPay extends Model
     public $fillable = ['staff_id','payroll_id','amount'];
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
     public function payroll(){
         return $this->belongsTo(Payroll::class);

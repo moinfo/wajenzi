@@ -85,7 +85,7 @@
                                 <div class="class card-box">
                                     <div class="row" style="border-bottom: 3px solid gray">
                                         <div class="col-md-3 text-right">
-                                            <img class="" src="{{ asset('media/avatars/logo.png') }}" alt="" height="100">
+                                            <img class="" src="{{ asset('media/logo/wajenzilogo.png') }}" alt="" height="100">
                                         </div>
                                         <div class="col-md-6 text-center">
                                             <span class="text-center font-size-h3">WAJENZI PROFESSIONALS</span><br/>
@@ -103,7 +103,7 @@
                                           autocomplete="off">
                                         @csrf
                                         <div class="row">
-                                            <div class="class col-md-2">
+                                            <div class="class col-md-3">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Month</span>
@@ -124,7 +124,7 @@
                                                     </select>
                                                 </div>
                                             </div>
-                                            <div class="class col-md-2">
+                                            <div class="class col-md-3">
                                                 <div class="input-group mb-3">
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Year</span>

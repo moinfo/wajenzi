@@ -13,7 +13,7 @@ class PayrollSalary extends Model
     public $fillable = ['staff_id','payroll_id','staff_salary_id','amount'];
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
     public static function getTotalSalaryByPayroll($payroll_id)

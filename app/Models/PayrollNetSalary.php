@@ -34,7 +34,7 @@ class PayrollNetSalary extends Model
     }
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
     public function payroll(){
         return $this->belongsTo(Payroll::class);

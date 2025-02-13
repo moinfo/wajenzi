@@ -11,7 +11,7 @@ class Adjustment extends Model
     public $fillable = ['staff_id','date','amount'];
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
 }

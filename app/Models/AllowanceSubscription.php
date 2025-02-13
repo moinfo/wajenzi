@@ -11,7 +11,7 @@ class AllowanceSubscription extends Model
     public $fillable = ['id', 'staff_id', 'amount', 'date', 'allowance_id'];
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
     public function allowance(){

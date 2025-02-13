@@ -7,6 +7,16 @@
                 <input type="text" class="form-control" id="input-allowance-name" name="name" value="{{ $object->name ?? '' }}" placeholder="Allowance Name" required>
             </div>
             <div class="form-group">
+                <label for="example-nf-details" class="control-label required">Allowance Type</label>
+                <select name="allowance_type" id="input-employee-id" class="form-control" required>
+
+                    <option value="">Select Allowance Type</option>
+                    @foreach ($allowance_types as $allowance_type)
+                        <option value="{{ $allowance_type['name'] }}" {{ ( $allowance_type['name'] == $object->allowance_type) ? 'selected' : '' }}> {{ $allowance_type['name'] }} </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="example-nf-password">Description</label>
                 <textarea class="form-control" id="input-allowance-description" name="description" placeholder="Short Description" required>{{$object->description ?? ''}}</textarea>
             </div>

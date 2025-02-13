@@ -9,10 +9,13 @@ use Illuminate\Support\Facades\DB;
 class Loan extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'staff_id', 'amount', 'date', 'deduction','payment_type_id'];
+    public $fillable = ['id', 'staff_id', 'amount', 'date', 'deduction','payment_type_id','create_by_id'];
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
+    }
+    public function user(){
+        return $this->belongsTo(User::class,'create_by_id');
     }
 
     public static function countUnapproved()
