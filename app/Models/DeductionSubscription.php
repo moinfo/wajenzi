@@ -12,7 +12,7 @@ class DeductionSubscription extends Model
     public $fillable = ['id', 'staff_id', 'deduction_id', 'membership_number'];
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
     public function deduction(){

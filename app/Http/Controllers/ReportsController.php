@@ -87,13 +87,164 @@ class ReportsController extends Controller
             ['name' => 'Annually PAYE Summary Report', 'route' => 'reports_annually_paye_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Annually WCF Summary Report', 'route' => 'reports_annually_wcf_summary_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name' => 'Commission Vs Deposit Report', 'route' => 'reports_commission_vs_deposit_report', 'icon' => 'si si-book-open', 'badge' => 0],
-        ];
+
+            ];
         $data = [
             'reports' => $reports
         ];
         return view('pages.reports.reports_index')->with($data);
     }
 
+    public function net_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_net_report')->with($data);
+    }
+    public function sdl_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_sdl_report')->with($data);
+    }
+    public function paye_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_paye_report')->with($data);
+    }
+    public function nssf_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_nssf_report')->with($data);
+    }
+    public function nhif_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_nhif_report')->with($data);
+    }
+    public function heslb_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_heslb_report')->with($data);
+    }
+    public function advance_salary_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_advance_salary_report')->with($data);
+    }
+    public function loan_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_loan_report')->with($data);
+    }
+    public function wcf_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_wcf_report')->with($data);
+    }
+    public function allowance_report(Request $request){
+        $this_month = $request->input('month')  ?? date('m');
+        $this_year = $request->input('year')  ?? date('Y');
+        $payroll = \App\Models\Payroll::getThisPayroll($this_month,$this_year);
+        $payroll_id = $payroll->id ?? 0;
+        $staffs = \App\Models\Staff::onlyStaffs();
+        $data = [
+            'this_month' => $this_month,
+            'this_year' => $this_year,
+            'payroll' => $payroll,
+            'payroll_id' => $payroll_id,
+            'staffs' => $staffs,
+        ];
+        return view('pages.reports.reports_allowance_report')->with($data);
+    }
     public function getBongeSales(Request $request)
     {
         $efd = \App\Models\Efd::find($request->efd_id);

@@ -9,11 +9,16 @@ use Illuminate\Support\Facades\DB;
 class AdvanceSalary extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'staff_id', 'amount', 'date', 'description', 'status'];
+    public $fillable = ['id', 'staff_id', 'amount', 'date', 'description', 'status', 'create_by_id'];
 
     public static function getTotalAdvanceSalaryPerDay($date)
     {
         return AdvanceSalary::select([DB::raw("SUM(amount) as total_amount")])->Where('status','APPROVED')->Where('date',$date)->groupBy('date')->get()->first()['total_amount'] ?? 0;
+    }
+
+
+    public function user(){
+        return $this->belongsTo(User::class, 'create_by_id');
     }
 
     public static function countUnapproved()
@@ -29,7 +34,7 @@ class AdvanceSalary extends Model
     }
 
     public function staff(){
-        return $this->belongsTo(Staff::class);
+        return $this->belongsTo(User::class);
     }
 
 

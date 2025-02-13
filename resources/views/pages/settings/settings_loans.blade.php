@@ -26,6 +26,7 @@
                                 <th>Deduction</th>
                                 <th>Amount</th>
                                 <th scope="col">Status</th>
+                                <th scope="col">Approvals</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                             </thead>
@@ -37,6 +38,11 @@
                                 <?php
                                     $sum += $loan->amount;
                                 ?>
+                                @php
+                                    $approval_document_types_id = 7;
+                                    $approvals = \App\Models\ApprovalLevel::getUsersApprovals($approval_document_types_id);
+                                @endphp
+
                                 <tr id="loan-tr-{{$loan->id}}">
                                     <td class="text-center">
                                         {{$loop->index + 1}}
@@ -45,6 +51,35 @@
                                     <td class="font-w600">{{ $loan->staff->name  ?? null}}</td>
                                     <td class="text-right">{{ number_format($loan->deduction)}}</td>
                                     <td class="text-right">{{ number_format($loan->amount) }}
+                                    </td>
+                                    <td class="approvals-cell">
+                                        <div class="approval-badges">
+                                            @foreach($approvals as $approval)
+                                                @php
+                                                    $approval_level_id = $approval->id;
+                                                    $document_id = $loan->id;
+                                                    $group_name = \App\Models\ApprovalLevel::getUserGroupName($approval_level_id);
+                                                    $approves = \App\Models\Approval::getApproved($approval_level_id,$document_id);
+                                                @endphp
+                                                @if(count($approves))
+                                                    @foreach($approves as $approve)
+                                                        @if($approve->user_group_id == $approval->user_group_id)
+                                                            <span class="approval-badge approved">
+                            <i class="fa fa-check"></i>{{$group_name ?? null}}
+                        </span>
+                                                        @else
+                                                            <span class="approval-badge pending">
+                            <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                        </span>
+                                                        @endif
+                                                    @endforeach
+                                                @else
+                                                    <span class="approval-badge pending">
+                    <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                </span>
+                                                @endif
+                                            @endforeach
+                                        </div>
                                     </td>
                                     <td>
                                         @if($loan->status == 'PENDING')
@@ -63,7 +98,7 @@
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('staff_loan',['id' => $loan->id,'document_type_id'=>2])}}"><i class="fa fa-eye"></i></a>
+                                            <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('staff_loan',['id' => $loan->id,'document_type_id'=>7])}}"><i class="fa fa-eye"></i></a>
                                         @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Staff Loan"))
                                                 <button type="button" onclick="loadFormModal('loan_form', {className: 'Loan', id: {{$loan->id}}}, 'Edit {{$loan->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
@@ -88,6 +123,7 @@
                                     <td></td>
                                     <td></td>
                                     <td class="text-right">{{number_format($sum)}}</td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                 </tr>

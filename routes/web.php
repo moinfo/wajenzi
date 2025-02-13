@@ -99,6 +99,9 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/auto_purchases', [App\Http\Controllers\AutoPurchaseController::class, 'index'])->name('auto_purchases');
     Route::match(['get', 'post'], '/purchases/{id}/{document_type_id}', [App\Http\Controllers\PurchaseController::class, 'purchase'])->name('purchase');
     Route::match(['get', 'post'], '/payroll', [App\Http\Controllers\PayrollController::class, 'index'])->name('payroll');
+    Route::match(['get', 'post'], '/payroll/{id}/{document_type_id}', [App\Http\Controllers\PayrollController::class, 'payroll_view'])->name('payroll_view');
+    Route::match(['get', 'post'], '/payroll/create_payroll', [App\Http\Controllers\PayrollController::class, 'create_payroll'])->name('create_payroll');
+    Route::match(['get', 'post'], '/payroll/payroll_administration', [App\Http\Controllers\PayrollController::class, 'payroll_administration'])->name('payroll_administration');
     Route::match(['get', 'post'], '/system_inventory', [App\Http\Controllers\SystemInventoryController::class, 'index'])->name('system_inventory');
     Route::match(['get', 'post'], '/system_inventory/{id}/{document_type_id}', [App\Http\Controllers\SystemInventoryController::class, 'system_inventory'])->name('system_inventories');
     Route::match(['get', 'post'], '/system_credit', [App\Http\Controllers\SystemCreditController::class, 'index'])->name('system_credit');
@@ -119,7 +122,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::match(['get', 'post'], '/expenses', [App\Http\Controllers\ExpenseController::class, 'index'])->name('expenses');
     Route::match(['get', 'post'], '/expenses/{id}/{document_type_id}', [App\Http\Controllers\ExpenseController::class, 'expense'])->name('expense');
-    Route::match(['get', 'post'], '/payroll/payroll_view/{month}/{year}', [App\Http\Controllers\PayrollController::class, 'payroll_view'])->name('payroll_view');
+//    Route::match(['get', 'post'], '/payroll/payroll_view/{month}/{year}', [App\Http\Controllers\PayrollController::class, 'payroll_view'])->name('payroll_view');
     Route::match(['get', 'post'], '/expenses_search', [App\Http\Controllers\ExpenseController::class, 'search'])->name('expenses_search');
 
     Route::match(['get', 'post'], '/financial_charges', [App\Http\Controllers\FinancialChargeController::class, 'index'])->name('financial_charges');
@@ -127,6 +130,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::match(['get', 'post'], '/eSMS', [App\Http\Controllers\MessageController::class, 'index'])->name('eSMS');
     Route::match(['get', 'post'], '/bulk_sms', [App\Http\Controllers\MessageController::class, 'bulk_sms'])->name('bulk_sms');
+
 
 
     Route::match(['get', 'post'], '/user/profile', [App\Http\Controllers\UserController::class, 'profile'])->name('user_profile');
@@ -178,6 +182,10 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/statutory_payments/{id}/{document_type_id}', [App\Http\Controllers\SettingsController::class, 'statutory_payment'])->name('hr_settings_statutory_payment');
     Route::match(['get', 'post'], '/settings/user_group', [App\Http\Controllers\SettingsController::class, 'user_group'])->name('hr_settings_user_group');
     Route::match(['get', 'post'], '/settings/stock', [App\Http\Controllers\SettingsController::class, 'stock'])->name('hr_settings_stock');
+
+
+
+
     Route::match(['get', 'post'], '/reports', [App\Http\Controllers\ReportsController::class, 'index'])->name('reports');
     Route::match(['get', 'post'], '/reports/allowance_subscriptions_report', [App\Http\Controllers\ReportsController::class, 'allowance_subscriptions_report'])->name('reports_allowance_subscriptions_report');
     Route::match(['get', 'post'], '/reports/general_report', [App\Http\Controllers\ReportsController::class, 'general_report'])->name('reports_general_report');
@@ -230,6 +238,21 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/reports/annually_allowance_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_allowance_summary_report'])->name('reports_annually_allowance_summary_report');
     Route::match(['get', 'post'], '/reports/annually_advance_salary_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_advance_salary_summary_report'])->name('reports_annually_advance_salary_summary_report');
     Route::match(['get', 'post'], '/reports/annually_expense_sub_categories_summary_report', [App\Http\Controllers\ReportsController::class, 'annually_expense_sub_categories_summary_report'])->name('reports_annually_expense_sub_categories_summary_report');
+    Route::match(['get', 'post'], '/reports/net_report', [App\Http\Controllers\ReportsController::class, 'net_report'])->name('reports_net_report');
+    Route::match(['get', 'post'], '/reports/paye_report', [App\Http\Controllers\ReportsController::class, 'paye_report'])->name('reports_paye_report');
+    Route::match(['get', 'post'], '/reports/nhif_report', [App\Http\Controllers\ReportsController::class, 'nhif_report'])->name('reports_nhif_report');
+    Route::match(['get', 'post'], '/reports/nssf_report', [App\Http\Controllers\ReportsController::class, 'nssf_report'])->name('reports_nssf_report');
+    Route::match(['get', 'post'], '/reports/wcf_report', [App\Http\Controllers\ReportsController::class, 'wcf_report'])->name('reports_wcf_report');
+    Route::match(['get', 'post'], '/reports/sdl_report', [App\Http\Controllers\ReportsController::class, 'sdl_report'])->name('reports_sdl_report');
+    Route::match(['get', 'post'], '/reports/heslb_report', [App\Http\Controllers\ReportsController::class, 'heslb_report'])->name('reports_heslb_report');
+    Route::match(['get', 'post'], '/reports/loan_report', [App\Http\Controllers\ReportsController::class, 'loan_report'])->name('reports_loan_report');
+    Route::match(['get', 'post'], '/reports/advance_salary_report', [App\Http\Controllers\ReportsController::class, 'advance_salary_report'])->name('reports_advance_salary_report');
+    Route::match(['get', 'post'], '/reports/allowance_report', [App\Http\Controllers\ReportsController::class, 'allowance_report'])->name('reports_allowance_report');
+    Route::match(['get', 'post'], '/payroll/staff_bank_details', [App\Http\Controllers\StaffController::class, 'staff_bank_details'])->name('staff_bank_details');
+    Route::match(['get', 'post'], '/payroll/salary_slips', [App\Http\Controllers\PayrollController::class, 'salary_slips'])->name('salary_slips');
+    Route::match(['get', 'post'], '/payroll/employee_salary_slip/{staff_id}/{month}/{year}', [App\Http\Controllers\PayrollController::class, 'employee_salary_slip'])->name('employee_salary_slip');
+    Route::match(['get', 'post'], '/payroll/monthly_workdays', [App\Http\Controllers\PayrollController::class, 'monthly_workdays'])->name('monthly_workdays');
+    Route::match(['get', 'post'], '/payroll/update_monthly_allowance', [App\Http\Controllers\PayrollController::class, 'update_monthly_allowance'])->name('update_monthly_allowance');
 
 
     // Project Routes

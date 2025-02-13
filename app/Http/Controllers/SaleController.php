@@ -8,9 +8,16 @@ use App\Models\Sale;
 use App\Models\SubCategory;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
-
+use App\Services\ApprovalService;
 class SaleController extends Controller
 {
+    protected $approvalService;
+
+    public function __construct(ApprovalService $approvalService)
+    {
+        $this->approvalService = $approvalService;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -20,32 +27,63 @@ class SaleController extends Controller
         if($this->handleCrud($request, 'Sale')) {
             return back();
         }
-       //$sales = Sale::all();
+
+        $sale = new \App\Models\Sale();
+        $start_date = $request->input('start_date') ?? date('Y-m-d');
+        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $efd_id = $request->input('efd_id') ?? null;
+
+        $sales = $sale->getAll($start_date,$end_date,$efd_id);
         $efds = Efd::all();
 
         $data = [
             'efds' => $efds,
-          // 'sales' => $sales
+           'sales' => $sales
         ];
         return view('pages.sales.sales_index')->with($data);
     }
 
     public function sale($id,$document_type_id){
-        $sales = \App\Models\Sale::where('id',$id)->get()->first();
+        // Mark notification as read
+        $this->approvalService->markNotificationAsRead($id, $document_type_id,'sales');
+
+        // Get timeline data
+        $timeline = $this->approvalService->getApprovalTimeline($document_type_id, $id);
+
+        $approval_data = \App\Models\Sale::where('id',$id)->get()->first();
+
         $approvalStages = Approval::getApprovalStages($id,$document_type_id);
         $nextApproval = Approval::getNextApproval($id,$document_type_id);
         $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
         $rejected = Approval::isRejected($id,$document_type_id);
         $document_id = $id;
+
+        $details = [
+            'Turnover' => number_format($approval_data->amount),
+            'NET (A+B+C)' => number_format($approval_data->net),
+            'Tax' => number_format($approval_data->tax),
+            'Turnover (EX + SR)' => number_format($approval_data->turn_over),
+            'Date' => $approval_data->date,
+            'Uploaded File' => $approval_data->file
+        ];
+
         $data = [
-            'sales' => $sales,
+            'timeline' => $timeline,
+            'approval_data' => $approval_data,
             'approvalStages' => $approvalStages,
             'nextApproval' => $nextApproval,
             'approvalCompleted' => $approvalCompleted,
             'rejected' => $rejected,
             'document_id' => $document_id,
+            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
+            'page_name' => 'Sales',
+            'approval_data_name' => $approval_data->efd->name,
+            'details' => $details,
+            'model' => 'Sale',
+            'route' => 'sales',
+
         ];
-        return view('pages.sales.sales')->with($data);
+        return view('approvals._approve_page')->with($data);
     }
 
     public function getLastEfdNumber(Request $request){

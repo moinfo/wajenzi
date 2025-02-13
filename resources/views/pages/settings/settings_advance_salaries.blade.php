@@ -27,6 +27,7 @@
                                 <th>Name</th>
                                 <th>Description</th>
                                 <th>Amount</th>
+                                <th scope="col">Approvals</th>
                                 <th scope="col">Status</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
@@ -39,6 +40,12 @@
                                 <?php
                                     $sum += $advance_salary->amount;
                                 ?>
+                                @php
+                                    $approval_document_types_id = 6;
+                                    $approvals = \App\Models\ApprovalLevel::getUsersApprovals($approval_document_types_id);
+                                @endphp
+
+
                                 <tr id="advance_salary-tr-{{$advance_salary->id}}">
                                     <td class="text-center">
                                         {{$loop->index + 1}}
@@ -48,6 +55,36 @@
                                     <td class="font-w600">{{ $advance_salary->description}}</td>
                                     <td class="text-right">{{ number_format($advance_salary->amount) }}
                                     </td>
+                                    <td class="approvals-cell">
+                                        <div class="approval-badges">
+                                            @foreach($approvals as $approval)
+                                                @php
+                                                    $approval_level_id = $approval->id;
+                                                    $document_id = $advance_salary->id;
+                                                    $group_name = \App\Models\ApprovalLevel::getUserGroupName($approval_level_id);
+                                                    $approves = \App\Models\Approval::getApproved($approval_level_id,$document_id);
+                                                @endphp
+                                                @if(count($approves))
+                                                    @foreach($approves as $approve)
+                                                        @if($approve->user_group_id == $approval->user_group_id)
+                                                            <span class="approval-badge approved">
+                            <i class="fa fa-check"></i>{{$group_name ?? null}}
+                        </span>
+                                                        @else
+                                                            <span class="approval-badge pending">
+                            <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                        </span>
+                                                        @endif
+                                                    @endforeach
+                                                @else
+                                                    <span class="approval-badge pending">
+                    <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                </span>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    </td>
+
                                     <td>
                                         @if($advance_salary->status == 'PENDING')
                                             <div class="badge badge-warning">{{ $advance_salary->status}}</div>
@@ -65,7 +102,7 @@
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-                                            <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('advance_salary',['id' => $advance_salary->id,'document_type_id'=>2])}}"><i class="fa fa-eye"></i></a>
+                                            <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('advance_salary',['id' => $advance_salary->id,'document_type_id'=>6])}}"><i class="fa fa-eye"></i></a>
                                         @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Advance Salary"))
                                                 <button type="button" onclick="loadFormModal('settings_advance_salary_form', {className: 'AdvanceSalary', id: {{$advance_salary->id}}}, 'Edit {{$advance_salary->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
@@ -90,6 +127,7 @@
                                     <td></td>
                                     <td></td>
                                     <td class="text-right">{{number_format($sum)}}</td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                 </tr>

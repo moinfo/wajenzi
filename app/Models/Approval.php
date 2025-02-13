@@ -16,6 +16,16 @@ class Approval extends Model
 
     ];
 
+    public static function getApproved($approval_level_id,$document_id)
+    {
+        return Approval::Where('approval_level_id',$approval_level_id)->Where('document_id',$document_id)->get() ?? [];
+    }
+
+    public static function getApprovedDocument($approval_level_id,$approval_document_type_id,$document_id)
+    {
+        return Approval::Where('approval_document_types_id',$approval_document_type_id)->Where('document_id',$document_id)->Where('approval_level_id',$approval_level_id)->get()->first() ?? 0;
+    }
+
     public function approvalDocumentTypes(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(ApprovalDocumentType::class);

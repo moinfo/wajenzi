@@ -1,6 +1,6 @@
 
 <div class="block-content">
-    <form  method="post"  autocomplete="off">
+    <form  method="post" action="{{route('allowance_subscriptions')}}"  autocomplete="off">
         @csrf
         <div class="form-group">
             <label for="example-nf-details" class="control-label required">Staff</label>
@@ -37,7 +37,7 @@
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Bank">Submit</button>
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="AllowanceSubscription">Submit</button>
             @endif
         </div>
     </form>

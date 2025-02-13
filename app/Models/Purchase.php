@@ -23,7 +23,7 @@ class Purchase extends Model
     public function supplier() {
         return $this->belongsTo(Supplier::class);
     }
-    public $fillable = ['id', 'supplier_id','is_expense', 'item_id', 'tax_invoice', 'invoice_date', 'total_amount', 'amount_vat_exc', 'vat_amount', 'purchase_type', 'file', 'date', 'status'];
+    public $fillable = ['id', 'supplier_id','is_expense', 'item_id', 'tax_invoice', 'invoice_date', 'create_by_id', 'total_amount', 'amount_vat_exc', 'vat_amount', 'purchase_type', 'file', 'date', 'status'];
 
     public function getAll($start_date, $end_date, $supplier_id = null, $purchase_type = null){
         $purchases = DB::table('purchases')
@@ -42,7 +42,9 @@ class Purchase extends Model
     }
 
 
-
+    public function user(){
+        return $this->belongsTo(User::class, 'create_by_id');
+    }
 
     public static function getTotalPurchases($end_date, $supplier_id = null, $purchase_type = null){
         $start_date = '2020-01-01';

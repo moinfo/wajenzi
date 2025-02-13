@@ -5,11 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\Approval;
 use App\Models\Supervisor;
 use App\Models\VatPayment;
+use App\Services\ApprovalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class VatPaymentController extends Controller
 {
+
+    protected $approvalService;
+
+    public function __construct(ApprovalService $approvalService)
+    {
+        $this->approvalService = $approvalService;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -30,22 +38,46 @@ class VatPaymentController extends Controller
         ];
         return view('pages.vat_payment.vat_payment_index')->with($data);
     }
+
     public function vat_payment($id,$document_type_id){
-        $vat_payment = \App\Models\VatPayment::where('id',$id)->get()->first();
+        // Mark notification as read
+        $this->approvalService->markNotificationAsRead($id, $document_type_id,'vat_payment');
+
+        // Get timeline data
+        $timeline = $this->approvalService->getApprovalTimeline($document_type_id, $id);
+
+        $approval_data = \App\Models\VatPayment::where('id',$id)->get()->first();
+
         $approvalStages = Approval::getApprovalStages($id,$document_type_id);
         $nextApproval = Approval::getNextApproval($id,$document_type_id);
         $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
         $rejected = Approval::isRejected($id,$document_type_id);
         $document_id = $id;
+
+        $details = [
+            'Description' => $approval_data->description,
+            'Total Amount' => number_format($approval_data->total_amount),
+            'Date' => $approval_data->date,
+            'Uploaded File' => $approval_data->file
+        ];
+
         $data = [
-            'vat_payment' => $vat_payment,
+            'timeline' => $timeline,
+            'approval_data' => $approval_data,
             'approvalStages' => $approvalStages,
             'nextApproval' => $nextApproval,
             'approvalCompleted' => $approvalCompleted,
             'rejected' => $rejected,
             'document_id' => $document_id,
+            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
+            'page_name' => 'Vat Payment',
+            'approval_data_name' => $approval_data->bank_name,
+            'details' => $details,
+            'model' => 'VatPayment',
+            'route' => 'vat_payment',
+
         ];
-        return view('pages.vat_payment.vat_payment')->with($data);
+        return view('approvals._approve_page')->with($data);
     }
 
     /**

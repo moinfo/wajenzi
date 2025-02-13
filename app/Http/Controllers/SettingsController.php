@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Classes\Utility;
 use App\Models\AdvanceSalary;
 use App\Models\Allowance;
+use App\Models\AllowancePayment;
 use App\Models\AllowanceSubscription;
 use App\Models\Approval;
 use App\Models\ApprovalDocumentType;
@@ -40,6 +41,7 @@ use App\Models\User;
 use App\Models\UserGroup;
 use App\Models\UsersPermission;
 use App\Models\Wakala;
+use App\Services\ApprovalService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -48,6 +50,12 @@ use Illuminate\Support\Facades\Redirect;
 
 class SettingsController extends Controller
 {
+    protected $approvalService;
+
+    public function __construct(ApprovalService $approvalService)
+    {
+        $this->approvalService = $approvalService;
+    }
     public function index(Request $request){
         $settings = [
             ['name'=>'Staff Allowances', 'route'=>'hr_settings_allowances', 'icon' => 'si si-settings', 'badge' => 0],
@@ -140,8 +148,19 @@ class SettingsController extends Controller
         if($this->handleCrud($request, 'Allowance')) {
             return back();
         }
+        $start_date = $request->input('start_date') ?? date('Y-01-01');
+        $end_date = $request->input('end_date') ?? date('Y-m-t');
+        $allowance_payments = AllowancePayment::whereBetween('date',[$start_date,$end_date])->get();
+
         $data = [
-            'allowances' => Allowance::all()
+            'allowances' => Allowance::all(),
+            'allowance_payments' => $allowance_payments,
+            'staffs' => User::where('users.status','ACTIVE')->with('allowance_subscriptions.allowance')->get(),
+            'deductions' => Deduction::all(),
+            'deduction_settings' => DeductionSetting::all(),
+            'only_staffs' => Staff::onlyStaffsWithBreakfastOrLunch(),
+//            'deduction_subscriptions' => Staff::with('deductionSubscriptions')->get(),
+            'deduction_subscriptions' => DeductionSubscription::all(),
         ];
         return view('pages.settings.settings_allowances')->with($data);
     }
@@ -470,40 +489,87 @@ class SettingsController extends Controller
     }
 
     public function advance_salary($id,$document_type_id){
-        $advance_salary = \App\Models\AdvanceSalary::where('id',$id)->get()->first();
+        // Mark notification as read
+        $this->approvalService->markNotificationAsRead($id, $document_type_id,'advance_salaries');
+
+        // Get timeline data
+        $timeline = $this->approvalService->getApprovalTimeline($document_type_id, $id);
+
+        $approval_data = \App\Models\AdvanceSalary::where('id',$id)->get()->first();
+
         $approvalStages = Approval::getApprovalStages($id,$document_type_id);
         $nextApproval = Approval::getNextApproval($id,$document_type_id);
         $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
         $rejected = Approval::isRejected($id,$document_type_id);
         $document_id = $id;
+
+        $details = [
+            'Total Amount' => number_format($approval_data->amount),
+            'Description' => $approval_data->description,
+            'Date' => $approval_data->date,
+            'Uploaded File' => $approval_data->file
+        ];
+
         $data = [
-            'advance_salary' => $advance_salary,
+            'timeline' => $timeline,
+            'approval_data' => $approval_data,
             'approvalStages' => $approvalStages,
             'nextApproval' => $nextApproval,
             'approvalCompleted' => $approvalCompleted,
             'rejected' => $rejected,
             'document_id' => $document_id,
+            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
+            'page_name' => 'Advance Salaries',
+            'approval_data_name' => $approval_data->staff->name,
+            'details' => $details,
+            'model' => 'AdvanceSalary',
+            'route' => 'advance_salaries',
+
         ];
-        return view('pages.advance_salaries.advance_salary')->with($data);
+        return view('approvals._approve_page')->with($data);
     }
 
     public function staff_loan($id,$document_type_id){
-        $staff_loan = \App\Models\Loan::where('id',$id)->get()->first();
+        // Mark notification as read
+        $this->approvalService->markNotificationAsRead($id, $document_type_id,'staff_loans');
+
+        // Get timeline data
+        $timeline = $this->approvalService->getApprovalTimeline($document_type_id, $id);
+
+        $approval_data = \App\Models\Loan::where('id',$id)->get()->first();
+
         $approvalStages = Approval::getApprovalStages($id,$document_type_id);
         $nextApproval = Approval::getNextApproval($id,$document_type_id);
         $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
         $rejected = Approval::isRejected($id,$document_type_id);
         $document_id = $id;
+
+        $details = [
+            'Total Amount' => number_format($approval_data->amount),
+            'Description' => $approval_data->description,
+            'Date' => $approval_data->date,
+            'Uploaded File' => $approval_data->file
+        ];
+
         $data = [
-            'staff_loan' => $staff_loan,
+            'timeline' => $timeline,
+            'approval_data' => $approval_data,
             'approvalStages' => $approvalStages,
             'nextApproval' => $nextApproval,
             'approvalCompleted' => $approvalCompleted,
             'rejected' => $rejected,
             'document_id' => $document_id,
+            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
+            'page_name' => 'Staff Loan',
+            'approval_data_name' => $approval_data->staff->name,
+            'details' => $details,
+            'model' => 'Loan',
+            'route' => 'staff_loans',
+
         ];
-        return view('pages.loan.staff_loan')->with($data);
+        return view('approvals._approve_page')->with($data);
     }
+
 
 
 
