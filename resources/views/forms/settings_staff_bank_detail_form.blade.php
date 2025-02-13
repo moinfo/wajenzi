@@ -13,10 +13,10 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-details" class="control-label required">Staff</label>
+            <label for="example-nf-details" class="control-label required">Bank</label>
             <select name="bank_id" id="input-employee-id" class="form-control" required>
 
-                <option value="">Select Staff</option>
+                <option value="">Select Bank</option>
                 @foreach ($banks as $bank)
                     <option value="{{ $bank['id'] }}" {{ ( $bank['id'] == $object->bank_id) ? 'selected' : '' }}> {{ $bank['name'] }} </option>
                 @endforeach
