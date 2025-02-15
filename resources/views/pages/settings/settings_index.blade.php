@@ -4,7 +4,7 @@
     <div class="content">
         <!-- Heading -->
         <h2 class="content-heading">
-            Financial Analysis Related Settings
+            {{settings('SYSTEM_NAME')}} Related Settings
             <small>| All</small>
         </h2>
 

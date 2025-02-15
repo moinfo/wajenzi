@@ -56,10 +56,10 @@
                                             <div class="class col-md-2" title="Lailat Mvungi">
                                                 L.M Balance: {{number_format(abs($lailat))}}
                                             </div>
-                                            <div class="class col-md-2" title="WAJENZI PROFESSIONALS CRDB">
+                                            <div class="class col-md-2" title="{{settings('ORGANIZATION_NAME')}} CRDB">
                                                 L.E CRDB Balance: {{number_format(abs($l_e_crdb))}}
                                             </div>
-                                            <div class="class col-md-2" title="WAJENZI PROFESSIONALS NBC">
+                                            <div class="class col-md-2" title="{{settings('ORGANIZATION_NAME')}} NBC">
                                                 L.E NBC Balance: {{number_format(abs($l_e_nbc))}}
                                             </div>
                                             <div class="class col-md-2" title="Kassim Haji NBC">

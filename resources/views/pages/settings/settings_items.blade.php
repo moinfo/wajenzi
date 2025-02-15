@@ -15,6 +15,8 @@
                     <div class="block-header block-header-default">
                         <h3 class="block-title">ITEMS</h3>
                     </div>
+                    @include('components.headed_paper_settings')
+                    <br/>
                     <div class="block-content">
                         <table class="table table-striped table-vcenter">
                             <thead>

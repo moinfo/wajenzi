@@ -16,6 +16,8 @@
                     <div class="block-header block-header-default">
                         <h3 class="block-title">Stock</h3>
                     </div>
+                    @include('components.headed_paper_settings')
+                    <br/>
                     <div class="block-content">
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                         <thead>

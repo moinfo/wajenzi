@@ -6,9 +6,7 @@
             <div class="content-heading">Settings
 {{--                @include('components.headed_paper_settings')--}}
                 <br/>
-                <div class="block-header text-center">
-                    <h3 class="block-title">User Groups</h3>
-                </div>
+
                 <div class="float-right">
                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add User Group"))
                         <button type="button" onclick="loadFormModal('settings_user_group_form', {className: 'UserGroup'}, 'Create New User Group', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
@@ -19,7 +17,11 @@
             <div>
 
                 <div class="block">
-
+                    <div class="block-header block-header-default">
+                        <h3 class="block-title">User Groups</h3>
+                    </div>
+                    @include('components.headed_paper_settings')
+                    <br/>
                     <div class="block-content">
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                             <thead>

@@ -4,7 +4,7 @@
     <div class="content">
         <!-- Gradient Header -->
         <div class="content-heading" style="background: linear-gradient(90deg, #4461E9 0%, #32CD32 100%); border-radius: 2rem; padding: 1.25rem 2rem; color: white; margin-bottom: 2rem;">
-            Financial Analysis Related Reports
+            {{settings('SYSTEM_NAME')}} Related Reports
         </div>
 
         <!-- Search Input -->

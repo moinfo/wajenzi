@@ -5,10 +5,10 @@
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
-{{--                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Advance Salary"))--}}
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Advance Salary"))
                         <button type="button" onclick="loadFormModal('settings_advance_salary_form', {className: 'AdvanceSalary'}, 'Create New AdvanceSalary', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
                             <i class="si si-plus">&nbsp;</i>New AdvanceSalary</button>
-{{--                    @endif--}}
+                    @endif
 
                 </div>
             </div>
@@ -18,6 +18,8 @@
                     <div class="block-header block-header-default">
                         <h3 class="block-title">Advanced Salaries</h3>
                     </div>
+                    @include('components.headed_paper_settings')
+                    <br/>
                     <div class="block-content">
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                         <thead>
