@@ -262,10 +262,10 @@
                                                     <div class="form-group">
                                                         <div class="btn-group pull-right">
                                                             <button type="submit" class="btn btn-alt-primary btn-sm"
-                                                                    name="approveItem" value="InvoicePayment">Approve now
+                                                                    name="approveItem" value="StatutoryInvoicePayment">Approve now
                                                             </button>
                                                             <button type="submit" class="btn btn-alt-danger btn-sm"
-                                                                    name="rejectItem" value="InvoicePayment">Reject
+                                                                    name="rejectItem" value="StatutoryInvoicePayment">Reject
                                                             </button>
                                                         </div>
                                                     </div>

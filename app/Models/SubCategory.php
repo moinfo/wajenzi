@@ -21,4 +21,10 @@ class SubCategory extends Model
     {
         return $this->hasMany(StatutoryPayment::class);
     }
+
+    public static function getSubCategoryName($sub_category_id)
+    {
+        return SubCategory::where('id',$sub_category_id)->get()->first()->name ?? '';
+    }
+
 }

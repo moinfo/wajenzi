@@ -255,6 +255,9 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/payroll/employee_salary_slip/{staff_id}/{month}/{year}', [App\Http\Controllers\PayrollController::class, 'employee_salary_slip'])->name('employee_salary_slip');
     Route::match(['get', 'post'], '/payroll/monthly_workdays', [App\Http\Controllers\PayrollController::class, 'monthly_workdays'])->name('monthly_workdays');
     Route::match(['get', 'post'], '/payroll/update_monthly_allowance', [App\Http\Controllers\PayrollController::class, 'update_monthly_allowance'])->name('update_monthly_allowance');
+    Route::match(['get', 'post'], '/reports/statutory_payment_report', [App\Http\Controllers\ReportsController::class, 'statutory_payment_report'])->name('reports_statutory_payment_report');
+    Route::match(['get', 'post'], '/reports/statutory_category_report', [App\Http\Controllers\ReportsController::class, 'statutory_category_report'])->name('reports_statutory_category_report');
+    Route::match(['get', 'post'], '/reports/statutory_schedules_report', [App\Http\Controllers\ReportsController::class, 'statutory_schedules_report'])->name('reports_statutory_schedules_report');
 
 
     // Project Routes

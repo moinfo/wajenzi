@@ -9,7 +9,7 @@
             <div>
                 <div class="block block-themed">
                     <div class="block-header bg-gd-dusk">
-                        <h3 class="block-title">Statutory Sub Category Report</h3>
+                        <h3 class="block-title">Statutory Category Report</h3>
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
@@ -48,8 +48,8 @@
                                 <thead>
                                 <tr>
                                     <th>Date</th>
-                                    @foreach($sub_categories as $sub_category)
-                                    <th>{{$sub_category->name ?? null}}</th>
+                                    @foreach($categories as $category)
+                                    <th>{{$category->name ?? null}}</th>
                                     @endforeach
                                     <th>Total</th>
                                 </tr>
@@ -75,19 +75,19 @@
                                     <tr>
 
                                         <td>{{$dt->format("F, Y")}}</td>
-                                        @foreach($sub_categories as $sub_category)
+                                        @foreach($categories as $category)
                                             @php
-                                                $payment = \App\Models\StatutoryPayment::getTotalPaymentBySubCategory($sub_category->id,$start_date,$end_date);
+                                                $payment = \App\Models\StatutoryPayment::getTotalPaymentByCategory($category->id,$start_date,$end_date);
                                                 $total_payment_per_monthly += $payment;
                                             @endphp
                                             <td class="text-right">
-                                                <a onclick="loadFormModal('statutory_payment_per_sub_category_form', {className: 'StatutoryInvoicePayment',status:'APPROVED',sub_category_id:'{{$sub_category->id}}', start_date:'{{$start_date}}',end_date:'{{$end_date}}',model_type:'date_range',key_name:'invoice_payments.date' }, ' Statutory Payment For {{$start_date}} - {{$end_date}}', 'modal-lg');"
+                                                <a onclick="loadFormModal('statutory_payment_per_sub_category_form', {className: 'StatutoryInvoicePayment',status:'APPROVED',category_id:'{{$category->id}}', start_date:'{{$start_date}}',end_date:'{{$end_date}}',model_type:'date_range',key_name:'invoice_payments.date' }, ' Statutory Payment For {{$start_date}} - {{$end_date}}', 'modal-lg');"
                                                    class=" js-tooltip-enabled"
                                                    data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     {{number_format($payment)}}</a></td>
                                         @endforeach
                                         @php
-                                            $total_payment = \App\Models\StatutoryPayment::getTotalPayment($start_date,$end_date);
+                                            $total_payment = \App\Models\StatutoryPayment::getTotalPaymentByCategoryByDate($start_date,$end_date);
                                         @endphp
                                         <td class="text-right">{{number_format($total_payment)}}</td>
                                     </tr>
@@ -96,14 +96,14 @@
                                 <tfoot>
                                     <tr>
                                         <td></td>
-                                        @foreach($sub_categories as $sub_category)
+                                        @foreach($categories as $category)
                                             @php
-                                                $payment = \App\Models\StatutoryPayment::getTotalPaymentBySubCategory($sub_category->id,$start_date_year,$end_date_year);
+                                                $payment = \App\Models\StatutoryPayment::getTotalPaymentByCategory($category->id,$start_date_year,$end_date_year);
                                             @endphp
                                             <td class="text-right">{{number_format($payment)}}</td>
                                         @endforeach
                                         @php
-                                            $total_payment_year = \App\Models\StatutoryPayment::getTotalPayment($start_date_year,$end_date_year);
+                                            $total_payment_year = \App\Models\StatutoryPayment::getTotalPaymentByCategoryByDate($start_date_year,$end_date_year);
                                         @endphp
                                         <td class="text-right">{{number_format($total_payment_year)}}</td>
                                     </tr>

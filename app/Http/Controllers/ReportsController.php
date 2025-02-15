@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Allowance;
 use App\Models\BankReconciliation;
+use App\Models\Category;
 use App\Models\Collection;
 use App\Models\Deduction;
 use App\Models\Efd;
@@ -12,6 +13,7 @@ use App\Models\ExpensesCategory;
 use App\Models\ExpensesSubCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Gross;
+use App\Models\Product;
 use App\Models\ProvisionTax;
 use App\Models\Report;
 use App\Models\Staff;
@@ -93,6 +95,24 @@ class ReportsController extends Controller
             'reports' => $reports
         ];
         return view('pages.reports.reports_index')->with($data);
+    }
+
+    public function statutory_category_report(Request $request){
+//        $suppliers = Supplier::all();
+        $categories = Category::all();
+        $data = [
+            'categories' => $categories
+        ];
+        return view('pages.reports.reports_statutory_category_report')->with($data);
+    }
+
+    public function statutory_schedules_report(Request $request){
+//        $suppliers = Supplier::all();
+        $products = Product::all();
+        $data = [
+            'products' => $products
+        ];
+        return view('pages.reports.reports_statutory_schedules_report')->with($data);
     }
 
     public function net_report(Request $request){
