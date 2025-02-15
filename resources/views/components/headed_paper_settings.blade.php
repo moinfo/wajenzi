@@ -11,7 +11,7 @@
             <span class="text-center font-size-h5">{{settings('TAX_IDENTIFICATION_NUMBER')}}</span><br/>
         </div>
         <div class="col-md-3 text-right">
-            <a href="{{route('hr_settings')}}"   type="button" class="btn btn-sm btn-danger"><i class="fa fa arrow-left"></i>Back</a>
+            <a href="{{route('hr_settings')}}"   type="button" class="btn btn-sm btn-success"><i class="fa fa arrow-left"></i>Back</a>
         </div>
     </div>
 </div>
