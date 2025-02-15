@@ -462,4 +462,22 @@ class User extends Authenticatable
         return $query->sum('amount');
     }
 
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
+    public function getRemainingLeaveBalance($leaveTypeId)
+    {
+        $leaveType = LeaveType::findOrFail($leaveTypeId);
+        $usedLeaves = $this->leaveRequests()
+            ->where('leave_type_id', $leaveTypeId)
+            ->where('status', 'approved')
+            ->whereYear('start_date', date('Y'))
+            ->sum('total_days');
+
+        return $leaveType->days_allowed - $usedLeaves;
+    }
+
+
 }
