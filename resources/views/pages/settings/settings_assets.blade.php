@@ -4,19 +4,22 @@
     <div class="main-container">
         <div class="content">
             <div class="content-heading">Settings
+                @include('components.headed_paper_settings')
+                <br/>
+                <div class="block-header text-center">
+                    <h3 class="block-title">Assets</h3>
+                </div>
                 <div class="float-right">
-{{--                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Asset"))--}}
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Asset"))
                         <button type="button" onclick="loadFormModal('settings_asset_form', {className: 'Asset'}, 'Create New Asset', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
                             <i class="si si-plus">&nbsp;</i>New Asset</button>
-{{--                    @endif--}}
+                    @endif
 
                 </div>
             </div>
             <div>
                 <div class="block">
-                    <div class="block-header block-header-default">
-                        <h3 class="block-title">Assets</h3>
-                    </div>
+
                     <div class="block-content">
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                         <thead>
@@ -38,17 +41,17 @@
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-{{--                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Asset"))--}}
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Asset"))
                                                 <button type="button" onclick="loadFormModal('settings_asset_form', {className: 'Asset', id: {{$asset->id}}}, 'Edit {{$asset->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
                                                 </button>
-{{--                                            @endif--}}
+                                            @endif
 
-{{--                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Asset"))--}}
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Asset"))
                                                     <button type="button" onclick="deleteModelItem('Asset', {{$asset->id}}, 'asset-tr-{{$asset->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
                                                         <i class="fa fa-times"></i>
                                                     </button>
-{{--                                                @endif--}}
+                                                @endif
 
                                         </div>
                                     </td>

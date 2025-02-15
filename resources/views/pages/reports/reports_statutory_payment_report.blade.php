@@ -9,7 +9,7 @@
             <div>
                 <div class="block block-themed">
                     <div class="block-header bg-gd-dusk">
-                        <h3 class="block-title">Statutory Payment Report</h3>
+                        <h3 class="block-title">Statutory Sub Category Report</h3>
                     </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
@@ -44,7 +44,7 @@
                             </div>
                         </div>
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full" data-ordering="false" data-sorting="false">
                                 <thead>
                                 <tr>
                                     <th>Date</th>
@@ -80,7 +80,11 @@
                                                 $payment = \App\Models\StatutoryPayment::getTotalPaymentBySubCategory($sub_category->id,$start_date,$end_date);
                                                 $total_payment_per_monthly += $payment;
                                             @endphp
-                                            <td class="text-right">{{number_format($payment)}}</td>
+                                            <td class="text-right">
+                                                <a onclick="loadFormModal('statutory_payment_per_sub_category_form', {className: 'StatutoryInvoicePayment',status:'APPROVED',sub_category_id:'{{$sub_category->id}}', start_date:'{{$start_date}}',end_date:'{{$end_date}}',model_type:'date_range',key_name:'invoice_payments.date' }, ' Statutory Payment For {{$start_date}} - {{$end_date}}', 'modal-lg');"
+                                                   class=" js-tooltip-enabled"
+                                                   data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                    {{number_format($payment)}}</a></td>
                                         @endforeach
                                         @php
                                             $total_payment = \App\Models\StatutoryPayment::getTotalPayment($start_date,$end_date);

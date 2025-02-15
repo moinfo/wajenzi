@@ -4,10 +4,10 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
 
-        <title>{{  $page_title }}</title>
+        <title>{{  settings('SYSTEM_NAME') }}</title>
 
-        <meta name="description" content="Financial Analysis">
-        <meta name="author" content="pixelcave">
+        <meta name="description" content="{{  settings('SYSTEM_NAME') }}">
+        <meta name="author" content="Mohamed Amiry">
         <meta name="robots" content="noindex, nofollow">
 
         <!-- CSRF Token -->
@@ -15,8 +15,8 @@
 
         <!-- Icons -->
         <link rel="shortcut icon" href="{{ asset('media/favicons/favicon.png') }}">
-        <link rel="icon" sizes="192x192" type="image/png" href="{{ asset('media/favicons/favicon-192x192.png') }}">
-        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('media/favicons/apple-touch-icon-180x180.png') }}">
+        <link rel="icon" sizes="192x192" type="image/png" href="{{ asset('media/favicons/android-chrome-192x192.png') }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('media/favicons/apple-touch-icon.png') }}">
 
         <!-- Fonts and Styles -->
         @yield('css_before')

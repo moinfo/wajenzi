@@ -15,8 +15,9 @@
                     <div class="block-header block-header-default">
                         <h3 class="block-title">Staff Permissions</h3>
                     </div>
+                    @include('components.headed_paper_settings')
+                    <br/>
                     <div class="block-content">
-                        <p>This is a list containing all the possible permissions that staff can be subscribed to</p>
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                             <thead>
                             <tr>

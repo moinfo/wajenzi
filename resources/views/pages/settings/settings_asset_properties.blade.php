@@ -4,19 +4,21 @@
     <div class="main-container">
         <div class="content">
             <div class="content-heading">Settings
+                @include('components.headed_paper_settings')
+                <br/>
+                <div class="block-header text-center">
+                    <h3 class="block-title">Asset Properties</h3>
+                </div>
                 <div class="float-right">
-{{--                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add AssetProperty"))--}}
+                    @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Add Asset Property"))
                         <button type="button" onclick="loadFormModal('settings_asset_property_form', {className: 'AssetProperty'}, 'Create New AssetProperty', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
                             <i class="si si-plus">&nbsp;</i>New Asset Property</button>
-{{--                    @endif--}}
+                    @endif
 
                 </div>
             </div>
             <div>
                 <div class="block">
-                    <div class="block-header block-header-default">
-                        <h3 class="block-title">Asset Properties</h3>
-                    </div>
                     <div class="block-content">
                         <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                         <thead>
@@ -24,6 +26,7 @@
                                 <th class="text-center">#</th>
                                 <th>Asset</th>
                                 <th>Property</th>
+                                <th>Staff</th>
                                 <th class="d-none d-sm-table-cell" style="width: 30%;">Description</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
@@ -34,23 +37,24 @@
                                     <td class="text-center">
                                         {{$loop->index + 1}}
                                     </td>
-                                    <td class="font-w600">{{ $asset_property->asset->name }}</td>
+                                    <td class="font-w600">{{ $asset_property->asset->name ?? null}}</td>
                                     <td class="font-w600">{{ $asset_property->name }}</td>
+                                    <td class="font-w600">{{ $asset_property->user->name ?? null }}</td>
                                     <td class="d-none d-sm-table-cell">{{ $asset_property->description }}
                                     </td>
                                     <td class="text-center" >
                                         <div class="btn-group">
-{{--                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit AssetProperty"))--}}
+                                            @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Asset Property"))
                                                 <button type="button" onclick="loadFormModal('settings_asset_property_form', {className: 'AssetProperty', id: {{$asset_property->id}}}, 'Edit {{$asset_property->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
                                                 </button>
-{{--                                            @endif--}}
+                                            @endif
 
-{{--                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete AssetProperty"))--}}
+                                                @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Asset Property"))
                                                     <button type="button" onclick="deleteModelItem('AssetProperty', {{$asset_property->id}}, 'asset_property-tr-{{$asset_property->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
                                                         <i class="fa fa-times"></i>
                                                     </button>
-{{--                                                @endif--}}
+                                                @endif
 
                                         </div>
                                     </td>

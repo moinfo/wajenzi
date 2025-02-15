@@ -170,4 +170,18 @@ class Utility
 
         return $user_group_ids;
     }
+
+    public static function check_in_range($start_date, $end_date, $date_from_user) {
+        // Convert to timestamp
+        $start = strtotime($start_date);
+        $end = strtotime($end_date);
+        $check = strtotime($date_from_user);
+
+        // Check that user date is between start & end
+        if(($start <= $check ) && ($check <= $end)){
+            return true;
+        }else{
+            return false;
+        }
+    }
 }

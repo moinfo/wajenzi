@@ -37,6 +37,7 @@ use App\Models\SubCategory;
 use App\Models\Supervisor;
 use App\Models\Supplier;
 use App\Models\System;
+use App\Models\SystemSetting;
 use App\Models\User;
 use App\Models\UserGroup;
 use App\Models\UsersPermission;
@@ -90,7 +91,7 @@ class SettingsController extends Controller
             ['name'=>'Statutory Payment', 'route'=>'hr_settings_statutory_payments', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Statutory Payment Category', 'route'=>'hr_settings_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Statutory Payment Sub Category', 'route'=>'hr_settings_sub_categories', 'icon' => 'si si-settings', 'badge' => 0],
-//            ['name'=>'Stock', 'route'=>'hr_settings_stock', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'System Settings', 'route'=>'system_settings', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Beneficiaries', 'route'=>'beneficiaries', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Mawakala', 'route'=>'wakalas', 'icon' => 'si si-settings', 'badge' => 0],
         ];
@@ -183,6 +184,16 @@ class SettingsController extends Controller
             'allowance_subscriptions' => AllowanceSubscription::all()
         ];
         return view('pages.settings.settings_allowance_subscriptions')->with($data);
+    }
+
+    public function system_settings(Request $request){
+        if($this->handleCrud($request, 'SystemSetting')) {
+            return back();
+        }
+        $data = [
+            'system_settings' => SystemSetting::all()
+        ];
+        return view('pages.settings.settings_system_settings')->with($data);
     }
 
 

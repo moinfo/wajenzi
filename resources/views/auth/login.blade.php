@@ -14,7 +14,7 @@
                         <span class="text-accent">Analysis</span>
                     </h2>
                     <h1 class="custom-title">Welcome to Your Dashboard</h1>
-                    <p class="custom-subtitle">It's a great day today! Wajenzi Professionals System</p>
+                    <p class="custom-subtitle">It's a great day today! {{settings('SYSTEM_NAME')}}</p>
                 </div>
 
                 <!-- Login Form -->

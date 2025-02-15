@@ -8,12 +8,11 @@
             </div>
             <div>
                 <div class="block block-themed">
-                    <div class="block-header bg-gd-dusk">
-                        <h3 class="block-title">Expenses Categories Report</h3>
-                    </div>
                     <div class="block-content">
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
+                                @include('components.headed_paper')
+                                <br/>
                                 <div class="class card-box">
                                     <form  name="expense_search" action="" id="filter-form" method="post" autocomplete="off">
                                         @csrf
@@ -42,6 +41,9 @@
                                         </div>
                                     </form>
                                 </div>
+                                <div class="block-header text-center">
+                                    <h3 class="block-title">Bonge Expenses Categories Report</h3>
+                                </div>
                             </div>
                         </div>
                         <div class="table-responsive">
@@ -58,7 +60,7 @@
                                 </thead>
                                 <tbody>
                                 <?php
-                                use Illuminate\Support\Facades\DB;$start_date = $_POST['start_date'] ?? date('Y-m-01');
+                                $start_date = $_POST['start_date'] ?? date('Y-m-01');
                                 $end_date = $_POST['end_date'] ?? date('Y-m-d');
                                 $period = new DatePeriod(new DateTime("$start_date"), new DateInterval('P1D'), new DateTime("$end_date +1 day"));
                                 foreach ($period as $date) {
@@ -75,21 +77,13 @@
                                             <?php
                                             $id = $expenses_category->id;
                                             $expense = \App\Models\Expense::
-                                            select(DB::raw("*, SUM(expenses.amount) as total_amount"))
-                                                ->join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
+                                                join('expenses_sub_categories', 'expenses_sub_categories.id', '=', 'expenses.expenses_sub_category_id')
                                                 ->join('expenses_categories', 'expenses_categories.id', '=', 'expenses_sub_categories.expenses_category_id')
-                                                ->Where('expenses.date',$date)
-                                                ->Where('expenses.status','APPROVED')
-                                                ->Where('expenses_sub_categories.expenses_category_id',$id)
-                                                ->groupBy('expenses_sub_categories.expenses_category_id')
-                                                ->get()->first()['total_amount'];
+                                               ->Where('expenses.date',$date)->Where('expenses.status','APPROVED')->Where('expenses.expenses_sub_category_id',$id)->select([DB::raw("SUM(expenses.amount) as total_amount")])->groupBy('expenses.date')->get()->first();
                                             $total_expense_per_day = \App\Models\Expense::Where('status','APPROVED')->Where('date',$date)->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
 
                                             ?>
-                                            <td class="text-right">
-                                                <a onclick="loadFormModal('expenses_per_day_form', {className: 'Expense', date_find:'{{$date}}' }, 'All Expenses For {{$date}}', 'modal-md');"
-                                                                      class=" js-tooltip-enabled">{{number_format($expense)}}</a>
-                                            </td>
+                                            <td class="text-right">{{number_format($expense['total_amount'] ?? 0)}}</td>
                                         @endforeach
                                         <td class="text-right">{{number_format($total_expense_per_day['total_amount']  ?? 0)}}</td>
 

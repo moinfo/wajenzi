@@ -30,7 +30,7 @@
                                         <img class="img img-responsive" src="{{ asset('media/logo/wajenzilogo.png') }}" height="100" width="100">
                                     </div>
                                     <div class="col-xs-8 col-md-9 col-lg-10" >
-                                        <p>Wajenzi Professionals</p>
+                                        <p>{{settings('ORGANIZATION_NAME')}}</p>
                                         <p>Morogoro Road, House #49 Dar Tanzania.</p>
                                         <p>P. O. Box 16520, Dar Es Salaam</p>
                                         <p>Tel: +255 657 798 062</p>
