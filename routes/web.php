@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LeaveRequestController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
@@ -184,6 +185,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/statutory_payments/{id}/{document_type_id}', [App\Http\Controllers\SettingsController::class, 'statutory_payment'])->name('hr_settings_statutory_payment');
     Route::match(['get', 'post'], '/settings/user_group', [App\Http\Controllers\SettingsController::class, 'user_group'])->name('hr_settings_user_group');
     Route::match(['get', 'post'], '/settings/stock', [App\Http\Controllers\SettingsController::class, 'stock'])->name('hr_settings_stock');
+    Route::match(['get', 'post'], '/settings/leave_types', [App\Http\Controllers\SettingsController::class, 'leave_types'])->name('hr_settings_leave_types');
 
 
 
@@ -259,6 +261,12 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/reports/statutory_category_report', [App\Http\Controllers\ReportsController::class, 'statutory_category_report'])->name('reports_statutory_category_report');
     Route::match(['get', 'post'], '/reports/statutory_schedules_report', [App\Http\Controllers\ReportsController::class, 'statutory_schedules_report'])->name('reports_statutory_schedules_report');
 
+    Route::match(['get', 'post'], '/leaves/leave_request', [App\Http\Controllers\LeaveRequestController::class, 'index'])->name('leave_request');
+    Route::match(['get', 'post'], '/leaves/leave_dashboard', [App\Http\Controllers\LeaveRequestController::class, 'dashboard'])->name('leave_dashboard');
+    Route::match(['get', 'post'], '/leaves/add_leave_request', [App\Http\Controllers\LeaveRequestController::class, 'store'])->name('leaves.store');
+    Route::match(['get', 'post', 'put'], '/leaves/leave_managements', [App\Http\Controllers\LeaveRequestController::class, 'leave_managements'])->name('leave_managements');
+    Route::match(['get', 'post', 'put'], '/leaves/{leaveRequest}', [App\Http\Controllers\LeaveRequestController::class, 'update'])->name('admin.leaves.update');
+//    Route::resource('leaves', LeaveRequestController::class);
 
     // Project Routes
     Route::match(['get', 'post'], '/projects', [App\Http\Controllers\ProjectController::class, 'index'])->name('projects');

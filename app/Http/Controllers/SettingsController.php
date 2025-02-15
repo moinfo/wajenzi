@@ -25,6 +25,7 @@ use App\Models\ExpensesCategory;
 use App\Models\ExpensesSubCategory;
 use App\Models\FinancialChargeCategory;
 use App\Models\Item;
+use App\Models\LeaveType;
 use App\Models\Loan;
 use App\Models\Permission;
 use App\Models\Position;
@@ -194,6 +195,16 @@ class SettingsController extends Controller
             'system_settings' => SystemSetting::all()
         ];
         return view('pages.settings.settings_system_settings')->with($data);
+    }
+
+    public function leave_types(Request $request){
+        if($this->handleCrud($request, 'LeaveType')) {
+            return back();
+        }
+        $data = [
+            'leave_types' => LeaveType::all()
+        ];
+        return view('pages.settings.settings_leave_types')->with($data);
     }
 
 
