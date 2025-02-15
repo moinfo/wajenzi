@@ -16,5 +16,9 @@ class StaffSalary extends Model
         return $this->belongsTo(User::class);
     }
 
+    public static function staffSalary($user_id)
+    {
+        return StaffSalary::select(DB::raw('SUM(amount) as amount'))->where('staff_id',$user_id)->get()->first()['amount'] ?? 0;
+    }
 
 }

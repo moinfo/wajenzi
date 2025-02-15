@@ -114,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/bank_withdraw/{id}/{document_type_id}', [App\Http\Controllers\BankWithdrawController::class, 'bank_withdraw'])->name('bank_withdraws');
     Route::match(['get', 'post'], '/bank_deposit', [App\Http\Controllers\BankDepositController::class, 'index'])->name('bank_deposit');
     Route::match(['get', 'post'], '/bank_deposit/{id}/{document_type_id}', [App\Http\Controllers\BankDepositController::class, 'bank_deposit'])->name('bank_deposits');
+    Route::match(['get', 'post'], '/employee_profile', [App\Http\Controllers\EmployeeProfileController::class, 'index'])->name('employee_profile');
 
     Route::match(['get', 'post'], '/adjusted_assessment_taxes', [App\Http\Controllers\AdjustedAssessmentTaxController::class, 'index'])->name('adjusted_assessment_taxes');
 
