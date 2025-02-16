@@ -25,6 +25,7 @@
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Phone</th>
+                                    <th>Source</th>
                                     <th>Projects</th>
                                     <th>Documents</th>
                                     <th>Approvals</th>
@@ -43,6 +44,7 @@
                                         <td class="font-w600">{{ $client->first_name }} {{ $client->last_name }}</td>
                                         <td>{{ $client->email }}</td>
                                         <td>{{ $client->phone_number }}</td>
+                                        <td>{{ $client->client_source->name ?? null }}</td>
                                         <td class="text-center">{{ $client->projects_count }}</td>
                                         <td class="text-center">{{ $client->documents_count }}</td>
                                         <td class="approvals-cell">

@@ -41,6 +41,17 @@ $document_id = \App\Classes\Utility::getLastId('ProjectClient')+1;
                     <input type="text" class="form-control" id="input-identification" name="identification_number" value="{{ $object->identification_number ?? '' }}" placeholder="Identification Number">
                 </div>
             </div>
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <label for="client_source_id" class="control-label required">Client Source</label>
+                    <select name="client_source_id" id="input-project-type" class="form-control" required="required">
+                        <option value="">Select Client Source</option>
+                        @foreach ($client_sources as $type)
+                            <option value="{{ $type->id }}" {{ ($type->id == $object->client_source_id) ? 'selected' : '' }}>{{ $type->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
         </div>
         <input type="hidden" name="create_by_id" value="{{ Auth::user()->id }}">
         <div class="form-group">

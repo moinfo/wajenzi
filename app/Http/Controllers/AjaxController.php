@@ -11,6 +11,7 @@ use App\Models\Beneficiary;
 use App\Models\BeneficiaryAccount;
 use App\Models\BongeCustomer;
 use App\Models\Category;
+use App\Models\ClientSource;
 use App\Models\Deduction;
 use App\Models\Department;
 use App\Models\Division;
@@ -189,10 +190,12 @@ class AjaxController
                     $project_types = ProjectType::all();
                     $departments = Department::all();
                     $payroll_types = PayrollType::all();
+                    $client_sources = ClientSource::all();
 
                     $data = $request->input('data') ?? [
                             'allowance_types' => $allowance_types,
                             'payroll_types' => $payroll_types,
+                            'client_sources' => $client_sources,
                             'departments' => $departments,
                             'projectTypes' => $project_types,
                             'clients' => $project_clients,

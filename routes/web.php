@@ -187,6 +187,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/user_group', [App\Http\Controllers\SettingsController::class, 'user_group'])->name('hr_settings_user_group');
     Route::match(['get', 'post'], '/settings/stock', [App\Http\Controllers\SettingsController::class, 'stock'])->name('hr_settings_stock');
     Route::match(['get', 'post'], '/settings/leave_types', [App\Http\Controllers\SettingsController::class, 'leave_types'])->name('hr_settings_leave_types');
+    Route::match(['get', 'post'], '/settings/client_sources', [App\Http\Controllers\SettingsController::class, 'client_sources'])->name('client_sources');
 
 
 

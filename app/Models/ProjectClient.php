@@ -22,11 +22,16 @@ class ProjectClient extends Model
         'identification_number',
         'file',
         'create_by_id',
+        'client_source_id',
         'status'
     ];
 
     public function user(){
         return $this->belongsTo(User::class,'create_by_id');
+    }
+
+    public function client_source(){
+        return $this->belongsTo(ClientSource::class,'client_source_id');
     }
 
     public function documents(): HasMany

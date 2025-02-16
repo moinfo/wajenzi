@@ -16,6 +16,7 @@ use App\Models\AssignUserGroup;
 use App\Models\Bank;
 use App\Models\Beneficiary;
 use App\Models\Category;
+use App\Models\ClientSource;
 use App\Models\Deduction;
 use App\Models\DeductionSetting;
 use App\Models\DeductionSubscription;
@@ -93,6 +94,7 @@ class SettingsController extends Controller
             ['name'=>'Statutory Payment Category', 'route'=>'hr_settings_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Statutory Payment Sub Category', 'route'=>'hr_settings_sub_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'System Settings', 'route'=>'system_settings', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Client Sources', 'route'=>'client_sources', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Beneficiaries', 'route'=>'beneficiaries', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Mawakala', 'route'=>'wakalas', 'icon' => 'si si-settings', 'badge' => 0],
         ];
@@ -205,6 +207,16 @@ class SettingsController extends Controller
             'leave_types' => LeaveType::all()
         ];
         return view('pages.settings.settings_leave_types')->with($data);
+    }
+
+    public function client_sources(Request $request){
+        if($this->handleCrud($request, 'ClientSource')) {
+            return back();
+        }
+        $data = [
+            'client_sources' => ClientSource::all()
+        ];
+        return view('pages.settings.settings_client_sources')->with($data);
     }
 
 
