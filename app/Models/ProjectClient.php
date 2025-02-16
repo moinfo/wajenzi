@@ -19,8 +19,15 @@ class ProjectClient extends Model
         'email',
         'phone_number',
         'address',
-        'identification_number'
+        'identification_number',
+        'file',
+        'create_by_id',
+        'status'
     ];
+
+    public function user(){
+        return $this->belongsTo(User::class,'create_by_id');
+    }
 
     public function documents(): HasMany
     {

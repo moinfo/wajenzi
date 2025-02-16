@@ -15,12 +15,22 @@ class Project extends Model
     protected $fillable = [
         'client_id',
         'project_name',
-        'project_type',
+        'project_type_id',
         'status',
         'start_date',
         'expected_end_date',
         'actual_end_date',
+        'file',
+        'create_by_id',
     ];
+
+    public function user(){
+        return $this->belongsTo(User::class,'create_by_id');
+    }
+    public function projectType(){
+        return $this->belongsTo(ProjectType::class,'project_type_id');
+    }
+
 
     protected $casts = [
         'start_date' => 'date',

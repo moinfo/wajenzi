@@ -185,7 +185,7 @@ class AjaxController
                     $wakalas = Wakala::all();
                     $start_date = date('Y-m-d');
                     $todayTargets = SupplierTarget::getTodayTargets($start_date);
-                    $project_clients = ProjectClient::all();
+                    $project_clients = ProjectClient::where('status','APPROVED')->get();
                     $project_types = ProjectType::all();
                     $departments = Department::all();
                     $payroll_types = PayrollType::all();
