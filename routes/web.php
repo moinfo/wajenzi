@@ -354,6 +354,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_site_visit/store', [App\Http\Controllers\ProjectSiteVisitController::class, 'store'])->name('project_site_visit.store');
     Route::post('/project_site_visit/update/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'update'])->name('project_site_visit.update');
     Route::post('/project_site_visit/delete/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'destroy'])->name('project_site_visit.delete');
+    Route::match(['get', 'post'], '/project_site_visits/{id}/{document_type_id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'project_site_visits'])->name('individual_project_site_visits');
 
 // Project Design Routes
     Route::match(['get', 'post'], '/project_designs', [App\Http\Controllers\ProjectDesignController::class, 'index'])->name('project_designs');

@@ -22,6 +22,7 @@ use App\Models\FinancialChargeCategory;
 use App\Models\Item;
 use App\Models\Payroll;
 use App\Models\PayrollType;
+use App\Models\Project;
 use App\Models\ProjectClient;
 use App\Models\ProjectType;
 use App\Models\Staff;
@@ -187,12 +188,14 @@ class AjaxController
                     $start_date = date('Y-m-d');
                     $todayTargets = SupplierTarget::getTodayTargets($start_date);
                     $project_clients = ProjectClient::where('status','APPROVED')->get();
+                    $projects = Project::where('status','APPROVED')->get();
                     $project_types = ProjectType::all();
                     $departments = Department::all();
                     $payroll_types = PayrollType::all();
                     $client_sources = ClientSource::all();
 
                     $data = $request->input('data') ?? [
+                            'projects' => $projects,
                             'allowance_types' => $allowance_types,
                             'payroll_types' => $payroll_types,
                             'client_sources' => $client_sources,

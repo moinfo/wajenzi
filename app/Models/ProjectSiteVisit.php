@@ -19,7 +19,10 @@ class ProjectSiteVisit extends Model
         'visit_date',
         'status',
         'findings',
-        'recommendations'
+        'recommendations',
+        'location',
+        'description',
+        'create_by_id',
     ];
 
     protected $casts = [
@@ -29,6 +32,10 @@ class ProjectSiteVisit extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class,'create_by_id');
     }
 
     public function inspector(): BelongsTo
