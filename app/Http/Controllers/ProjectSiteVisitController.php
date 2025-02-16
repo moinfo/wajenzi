@@ -2,14 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\Project;
 use App\Models\ProjectDailyReport;
 use App\Models\ProjectSiteVisit;
 use App\Models\User;
+use App\Services\ApprovalService;
 use Illuminate\Http\Request;
 
 class ProjectSiteVisitController extends Controller
 {
+
+    protected $approvalService;
+
+    public function __construct(ApprovalService $approvalService)
+    {
+        $this->approvalService = $approvalService;
+    }
+
     public function index(Request $request) {
         //handle crud operations
         if($this->handleCrud($request, 'ProjectSiteVisit')) {
@@ -32,17 +42,64 @@ class ProjectSiteVisitController extends Controller
             ->get();
 
         $projects = Project::all();
-        $inspectors = User::whereHas('roles', function($query) {
-            $query->where('name', 'inspector');
-        })->get();
+//        $inspectors = User::whereHas('roles', function($query) {
+//            $query->where('name', 'inspector');
+//        })->get();
 
         $data = [
             'visits' => $visits,
             'projects' => $projects,
-            'inspectors' => $inspectors
+//            'inspectors' => $inspectors
         ];
         return view('pages.projects.project_site_visits')->with($data);
     }
+
+    public function project_site_visits($id,$document_type_id){
+        // Mark notification as read
+        $this->approvalService->markNotificationAsRead($id, $document_type_id,'project_site_visits');
+
+        // Get timeline data
+        $timeline = $this->approvalService->getApprovalTimeline($document_type_id, $id);
+
+        $approval_data = \App\Models\ProjectSiteVisit::where('id',$id)->get()->first();
+
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+
+        $details = [
+            'Project Name' => $approval_data->project->project_name ?? null,
+            'Client Name' => $approval_data->project->client->first_name.' '.$approval_data->project->client->last_name,
+            'Project Type' => $approval_data->project->projectType->name,
+            'Phone Number' => $approval_data->project->client->phone_number,
+//            'Total Amount' => number_format($approval_data->total_amount),
+            'Visit Date' => $approval_data->visit_date,
+            'Site Location' => $approval_data->location,
+            'Description' => $approval_data->description,
+//            'Expected End Date' => $approval_data->expected_end_date
+        ];
+
+        $data = [
+            'timeline' => $timeline,
+            'approval_data' => $approval_data,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
+            'page_name' => 'Project Site Visit',
+            'approval_data_name' => $approval_data->project->project_name ?? null,
+            'details' => $details,
+            'model' => 'ProjectSiteVisit',
+            'route' => 'project_site_visits',
+
+        ];
+        return view('approvals._approve_page')->with($data);
+    }
+
 
     public function visit($id, $document_type_id) {
         $visit = ProjectSiteVisit::where('id', $id)->first();

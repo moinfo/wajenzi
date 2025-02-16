@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/vat_payment', [App\Http\Controllers\VatPaymentController::class, 'index'])->name('vat_payment');
     Route::match(['get', 'post'], '/vat_payment/{id}/{document_type_id}', [App\Http\Controllers\VatPaymentController::class, 'vat_payment'])->name('individual_vat_payment');
 
+
     Route::match(['get', 'post'], '/collection', [App\Http\Controllers\CollectionController::class, 'index'])->name('collection');
     Route::match(['get', 'post'], '/collection/{id}/{document_type_id}', [App\Http\Controllers\CollectionController::class, 'collection'])->name('collections');
     Route::match(['get', 'post'], '/collection_search', [App\Http\Controllers\CollectionController::class, 'search'])->name('collection_search');
@@ -186,6 +187,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/user_group', [App\Http\Controllers\SettingsController::class, 'user_group'])->name('hr_settings_user_group');
     Route::match(['get', 'post'], '/settings/stock', [App\Http\Controllers\SettingsController::class, 'stock'])->name('hr_settings_stock');
     Route::match(['get', 'post'], '/settings/leave_types', [App\Http\Controllers\SettingsController::class, 'leave_types'])->name('hr_settings_leave_types');
+    Route::match(['get', 'post'], '/settings/client_sources', [App\Http\Controllers\SettingsController::class, 'client_sources'])->name('client_sources');
 
 
 
@@ -276,6 +278,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project/store', [App\Http\Controllers\ProjectController::class, 'store'])->name('project.store');
     Route::post('/project/update/{id}', [App\Http\Controllers\ProjectController::class, 'update'])->name('project.update');
     Route::post('/project/delete/{id}', [App\Http\Controllers\ProjectController::class, 'destroy'])->name('project.delete');
+    Route::match(['get', 'post'], '/projects/{id}/{document_type_id}', [App\Http\Controllers\ProjectController::class, 'projects'])->name('individual_projects');
 
     // Project Client Routes
     Route::match(['get', 'post'], '/project_clients', [App\Http\Controllers\ProjectClientController::class, 'index'])->name('project_clients');
@@ -285,6 +288,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_client/store', [App\Http\Controllers\ProjectClientController::class, 'store'])->name('project_client.store');
     Route::post('/project_client/update/{id}', [App\Http\Controllers\ProjectClientController::class, 'update'])->name('project_client.update');
     Route::post('/project_client/delete/{id}', [App\Http\Controllers\ProjectClientController::class, 'destroy'])->name('project_client.delete');
+    Route::match(['get', 'post'], '/project_clients/{id}/{document_type_id}', [App\Http\Controllers\ProjectClientController::class, 'project_clients'])->name('individual_project_clients');
+
 
     // Project Type Routes
     Route::match(['get', 'post'], '/project_types', [App\Http\Controllers\ProjectTypeController::class, 'index'])->name('project_types');
@@ -349,6 +354,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_site_visit/store', [App\Http\Controllers\ProjectSiteVisitController::class, 'store'])->name('project_site_visit.store');
     Route::post('/project_site_visit/update/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'update'])->name('project_site_visit.update');
     Route::post('/project_site_visit/delete/{id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'destroy'])->name('project_site_visit.delete');
+    Route::match(['get', 'post'], '/project_site_visits/{id}/{document_type_id}', [App\Http\Controllers\ProjectSiteVisitController::class, 'project_site_visits'])->name('individual_project_site_visits');
 
 // Project Design Routes
     Route::match(['get', 'post'], '/project_designs', [App\Http\Controllers\ProjectDesignController::class, 'index'])->name('project_designs');

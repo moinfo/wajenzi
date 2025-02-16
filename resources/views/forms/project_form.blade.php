@@ -1,4 +1,6 @@
-{{-- Project Form --}}
+<?php
+$document_id = \App\Classes\Utility::getLastId('Project')+1;
+?>
 <div class="block-content">
     <form method="post" autocomplete="off">
         @csrf
@@ -55,11 +57,15 @@
 {{--                </div>--}}
 {{--            </div>--}}
         </div>
+        <input type="hidden" name="create_by_id" value="{{ Auth::user()->id }}">
         <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
+                <input type="hidden" name="document_id" value="{{$document_id}}">
+                <input type="hidden" name="document_type_id" value="10">
+                <input type="hidden" name="link" value="projects/{{$document_id}}/10">
                 <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Project">Submit</button>
             @endif
         </div>

@@ -28,7 +28,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">Start Date</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form  datepicker" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -36,7 +36,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">End Date</span>
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form  datepicker" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -49,19 +49,6 @@
                                                         @foreach ($projects as $project)
                                                             <option value="{{ $project->id }}">{{ $project->project_name }}</option>
                                                         @endforeach
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="class col-md-3">
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text">Status</span>
-                                                    </div>
-                                                    <select name="status" id="input-status" class="form-control">
-                                                        <option value="">All Status</option>
-                                                        <option value="scheduled">Scheduled</option>
-                                                        <option value="completed">Completed</option>
-                                                        <option value="cancelled">Cancelled</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -80,34 +67,77 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
-                                    <th>Project</th>
-                                    <th>Inspector</th>
+                                    <th>Project Name</th>
+                                    <th>Location</th>
+                                    <th>Description</th>
                                     <th>Visit Date</th>
                                     <th>Status</th>
+                                    <th>Approvals</th>
+{{--                                    <th>Inspector</th>--}}
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach($visits as $visit)
+                                    @php
+                                        $approval_document_types_id = 11;
+                                        $approvals = \App\Models\ApprovalLevel::getUsersApprovals($approval_document_types_id);
+                                    @endphp
+
                                     <tr id="visit-tr-{{$visit->id}}">
                                         <td class="text-center">{{$loop->index + 1}}</td>
-                                        <td>{{ $visit->project->project_name }}</td>
-                                        <td>{{ $visit->inspector->name }}</td>
+                                        <td>{{ $visit->project->project_name ?? null }} - {{ $visit->project->client->first_name ?? null }} {{ $visit->project->client->last_name ?? null }}</td>
+                                        <td>{{ $visit->location ?? null }}</td>
+                                        <td>{{ $visit->description ?? null }}</td>
                                         <td>{{ $visit->visit_date }}</td>
+                                        <td class="approvals-cell">
+                                            <div class="approval-badges">
+                                                @foreach($approvals as $approval)
+                                                    @php
+                                                        $approval_level_id = $approval->id;
+                                                        $document_id = $visit->id;
+                                                        $group_name = \App\Models\ApprovalLevel::getUserGroupName($approval_level_id);
+                                                        $approves = \App\Models\Approval::getApproved($approval_level_id,$document_id);
+                                                    @endphp
+                                                    @if(count($approves))
+                                                        @foreach($approves as $approve)
+                                                            @if($approve->user_group_id == $approval->user_group_id)
+                                                                <span class="approval-badge approved">
+                            <i class="fa fa-check"></i>{{$group_name ?? null}}
+                        </span>
+                                                            @else
+                                                                <span class="approval-badge pending">
+                            <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                        </span>
+                                                            @endif
+                                                        @endforeach
+                                                    @else
+                                                        <span class="approval-badge pending">
+                    <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                </span>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        </td>
+
                                         <td>
-                                            @if($visit->status == 'scheduled')
+                                            @if($visit->status == 'PENDING')
                                                 <div class="badge badge-warning">{{ $visit->status}}</div>
-                                            @elseif($visit->status == 'completed')
-                                                <div class="badge badge-success">{{ $visit->status}}</div>
-                                            @elseif($visit->status == 'cancelled')
+                                            @elseif($visit->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $visit->status}}</div>
+                                            @elseif($visit->status == 'REJECTED')
                                                 <div class="badge badge-danger">{{ $visit->status}}</div>
+                                            @elseif($visit->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $visit->status}}</div>
+                                            @elseif($visit->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $visit->status}}</div>
                                             @else
                                                 <div class="badge badge-secondary">{{ $visit->status}}</div>
                                             @endif
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-success" href="{{route('project_site_visit',['id' => $visit->id])}}">
+                                                <a class="btn btn-sm btn-success" href="{{route('individual_project_site_visits',['id' => $visit->id,'document_type_id'=>11])}}">
                                                     <i class="fa fa-eye"></i>
                                                 </a>
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Visit"))

@@ -28,7 +28,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Start Date</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form  datepicker" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -36,7 +36,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon2">End Date</span>
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form  datepicker" value="{{date('Y-m-d')}}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-4">
@@ -72,12 +72,17 @@
                                     <th>Type</th>
                                     <th>Start Date</th>
                                     <th>Expected End Date</th>
+                                    <th>Approvals</th>
                                     <th>Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
                                 @foreach($projects as $project)
+                                    @php
+                                        $approval_document_types_id = 10;
+                                        $approvals = \App\Models\ApprovalLevel::getUsersApprovals($approval_document_types_id);
+                                    @endphp
                                     <tr id="project-tr-{{$project->id}}">
                                         <td class="text-center">{{$loop->index + 1}}</td>
                                         <td class="font-w600">{{ $project->project_name }}</td>
@@ -85,24 +90,55 @@
                                         <td>{{ $project->projectType->name ?? null }}</td>
                                         <td>{{ $project->start_date }}</td>
                                         <td>{{ $project->expected_end_date }}</td>
+                                        <td class="approvals-cell">
+                                            <div class="approval-badges">
+                                                @foreach($approvals as $approval)
+                                                    @php
+                                                        $approval_level_id = $approval->id;
+                                                        $document_id = $project->id;
+                                                        $group_name = \App\Models\ApprovalLevel::getUserGroupName($approval_level_id);
+                                                        $approves = \App\Models\Approval::getApproved($approval_level_id,$document_id);
+                                                    @endphp
+                                                    @if(count($approves))
+                                                        @foreach($approves as $approve)
+                                                            @if($approve->user_group_id == $approval->user_group_id)
+                                                                <span class="approval-badge approved">
+                            <i class="fa fa-check"></i>{{$group_name ?? null}}
+                        </span>
+                                                            @else
+                                                                <span class="approval-badge pending">
+                            <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                        </span>
+                                                            @endif
+                                                        @endforeach
+                                                    @else
+                                                        <span class="approval-badge pending">
+                    <i class="fa fa-clock-o"></i>{{$group_name ?? null}}
+                </span>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        </td>
                                         <td>
-                                            @if($project->status == 'pending')
+                                            @if($project->status == 'PENDING')
                                                 <div class="badge badge-warning">{{ $project->status}}</div>
-                                            @elseif($project->status == 'in_progress')
+                                            @elseif($project->status == 'APPROVED')
                                                 <div class="badge badge-primary">{{ $project->status}}</div>
-                                            @elseif($project->status == 'completed')
-                                                <div class="badge badge-success">{{ $project->status}}</div>
-                                            @elseif($project->status == 'cancelled')
+                                            @elseif($project->status == 'REJECTED')
                                                 <div class="badge badge-danger">{{ $project->status}}</div>
+                                            @elseif($project->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $project->status}}</div>
+                                            @elseif($project->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $project->status}}</div>
                                             @else
                                                 <div class="badge badge-secondary">{{ $project->status}}</div>
                                             @endif
-                                        </td>
-                                        <td class="text-center">
+                                        </td>                                        <td class="text-center">
                                             <div class="btn-group">
-{{--                                                <a class="btn btn-sm btn-success" href="{{route('project',['id' => $project->id])}}">--}}
-{{--                                                    <i class="fa fa-eye"></i>--}}
-{{--                                                </a>--}}
+                                                <a class="btn btn-sm btn-success js-tooltip-enabled"
+                                                   href="{{ route('individual_projects', [$project->id, 10]) }}">
+                                                    <i class="fa fa-eye"></i>
+                                                </a>
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Project"))
                                                     <button type="button"
                                                             onclick="loadFormModal('project_form', {className: 'Project', id: {{$project->id}}}, 'Edit {{$project->project_name}}', 'modal-md');"

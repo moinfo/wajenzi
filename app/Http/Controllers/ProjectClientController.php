@@ -2,12 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Approval;
 use App\Models\ProjectClient;
+use App\Services\ApprovalService;
 use Illuminate\Http\Request;
 
 
 class ProjectClientController extends Controller
 {
+
+    protected $approvalService;
+
+    public function __construct(ApprovalService $approvalService)
+    {
+        $this->approvalService = $approvalService;
+    }
+
     public function index(Request $request) {
         //handle crud operations
         if($this->handleCrud($request, 'ProjectClient')) {
@@ -30,4 +40,49 @@ class ProjectClientController extends Controller
         ];
         return view('pages.projects.client')->with($data);
     }
+
+    public function project_clients($id,$document_type_id){
+        // Mark notification as read
+        $this->approvalService->markNotificationAsRead($id, $document_type_id,'project_clients');
+
+        // Get timeline data
+        $timeline = $this->approvalService->getApprovalTimeline($document_type_id, $id);
+
+        $approval_data = \App\Models\ProjectClient::where('id',$id)->get()->first();
+
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+
+        $details = [
+            'First Name' => $approval_data->first_name,
+            'Last Name' => $approval_data->last_name,
+            'Email' => $approval_data->email,
+            'Phone Number' => $approval_data->phone_number,
+//            'Total Amount' => number_format($approval_data->total_amount),
+            'Date Created' => $approval_data->created_at,
+            'Uploaded File' => $approval_data->file
+        ];
+
+        $data = [
+            'timeline' => $timeline,
+            'approval_data' => $approval_data,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
+            'page_name' => 'Project Client',
+            'approval_data_name' => $approval_data->first_name.' '.$approval_data->last_name,
+            'details' => $details,
+            'model' => 'ProjectClient',
+            'route' => 'project_clients',
+
+        ];
+        return view('approvals._approve_page')->with($data);
+    }
+
 }
