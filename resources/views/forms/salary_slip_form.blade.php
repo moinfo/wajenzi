@@ -31,10 +31,10 @@
                                     </div>
                                     <div class="col-xs-8 col-md-9 col-lg-10" >
                                         <p>{{settings('ORGANIZATION_NAME')}}</p>
-                                        <p>Morogoro Road, House #49 Dar Tanzania.</p>
-                                        <p>P. O. Box 16520, Dar Es Salaam</p>
-                                        <p>Tel: +255 657 798 062</p>
-                                        <!--                        <p>Mob:--><!--</p>-->
+                                        <p>{{settings('COMPANY_ADDRESS_LINE_1')}}</p>
+                                        <p>{{settings('COMPANY_ADDRESS_LINE_2')}}</p>
+                                        <p>{{settings('COMPANY_PHONE_NUMBER')}}</p>
+                                        <p>{{settings('COMPANY_EMAIL_ADDRESS')}}</p>
                                     </div>
                                 </div>
                             </th>
