@@ -135,14 +135,14 @@
                                                         <th width="30%" colspan="3" style="border-right: none;">
                                                             <div class="row">
                                                                 <div class="col-xs-4 col-md-3 col-lg-2">
-                                                                    <img class="img img-responsive" src="{{ asset('media/avatars/logo.png') }}" height="100" width="100">
+                                                                    <img class="img img-responsive" src="{{ asset('media/logo/wajenzilogo.png') }}" height="100" width="100">
                                                                 </div>
                                                                 <div class="col-xs-8 col-md-9 col-lg-10" >
                                                                     <p>{{settings('ORGANIZATION_NAME')}}</p>
-                                                                    <p>Morogoro Road, House #49 Pwani Tanzania.</p>
-                                                                    <p>P. O. Box 16520, KIBAHA - COAST</p>
-                                                                    <p>Tel: +255 657 798 062</p>
-                                                                    <!--                        <p>Mob:--><!--</p>-->
+                                                                    <p>{{settings('COMPANY_ADDRESS_LINE_1')}}</p>
+                                                                    <p>{{settings('COMPANY_ADDRESS_LINE_2')}}</p>
+                                                                    <p>{{settings('COMPANY_PHONE_NUMBER')}}</p>
+                                                                    <p>{{settings('COMPANY_EMAIL_ADDRESS')}}</p>
                                                                 </div>
                                                             </div>
                                                         </th>
