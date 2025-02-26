@@ -9,6 +9,270 @@
     ?>
     <?php
     ?>
+    <style>
+        :root {
+            --primary: #343a40;
+            --secondary: #555555;
+            --accent: #007bff;
+            --light-bg: #f8f9fa;
+            --border: #dee2e6;
+            --text: #212529;
+            --muted: #6c757d;
+        }
+
+        .payslip-premium {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 0.25rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            overflow: hidden;
+            background-color: white;
+            margin-bottom: 30px;
+        }
+
+        .payslip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            background: linear-gradient(to right, var(--light-bg), white);
+        }
+
+        .company-branding {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .logo-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            padding: 5px;
+            background-color: white;
+            border: 1px solid var(--border);
+        }
+
+        .logo-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .company-info {
+            line-height: 1.4;
+        }
+
+        .company-info p {
+            margin: 0;
+            padding: 0;
+            color: var(--secondary);
+        }
+
+        .company-info .company-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .payslip-label {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .employee-details {
+            background-color: white;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .employee-details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .employee-details-table td {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--primary);
+            background-color: rgba(0, 0, 0, 0.02);
+            width: 30%;
+        }
+
+        .detail-value {
+            color: var(--text);
+        }
+
+        .salary-details {
+            padding: 1.5rem;
+        }
+
+        .salary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .salary-table th,
+        .salary-table td {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            text-align: left;
+        }
+
+        .salary-table thead th {
+            background-color: var(--light-bg);
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+        }
+
+        .salary-table tbody th {
+            font-weight: 600;
+            color: var(--primary);
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .section-title {
+            background-color: var(--light-bg);
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .money {
+            font-family: 'Consolas', 'Courier New', monospace;
+            white-space: nowrap;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        .summary-row th {
+            background-color: var(--light-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .net-salary-row td {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 700;
+            padding: 1rem;
+            border: 1px solid var(--primary);
+        }
+
+        .net-salary-label {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+        }
+
+        .net-salary-value {
+            font-size: 1.25rem;
+            letter-spacing: 1px;
+        }
+
+        .payslip-footer {
+            padding: 1rem;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border);
+            background-color: var(--light-bg);
+        }
+
+        /* Button Styles */
+        .action-buttons {
+            padding: 10px 0;
+        }
+
+        .btn {
+            display: inline-block;
+            font-weight: 400;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            border-radius: 0.25rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            border-radius: 0.2rem;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            color: #fff;
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+
+        .btn-success {
+            color: #fff;
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+        .btn-success:hover {
+            color: #fff;
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+        .mr-1 {
+            margin-right: 0.25rem;
+        }
+
+        .mr-2 {
+            margin-right: 0.5rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 1rem;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            .payslip-premium {
+                box-shadow: none;
+                border: 1px solid var(--secondary);
+            }
+
+            body {
+                padding: 0;
+                margin: 0;
+            }
+        }
+    </style>
+
+
     <div class="main-container">
         <div class="content">
             <div class="content-heading">Salary Slip
@@ -44,6 +308,7 @@
                     ];
 
                     $right_side = [
+//                        ['name' => 'PAYEE', 'value' => $advance_salary ],
                         ['name' => 'Advance Salary', 'value' => $advance_salary ],
                         ['name' => 'Loan', 'value' => $loan_balance ],
                         ['name' => 'Loan Deduction', 'value' => $loan_deduction ],
@@ -179,205 +444,20 @@
                 <div>
                     <div class="block block-themed">
                         <div class="block-content">
-                            <div class="row no-print m-t-10">
+                            <div class="row m-t-10">
                                 <div class="class col-md-12">
                                     <div class="class card-box">
-                                        <div class="table-responsive">
-                                            <style>
-                                                :root {
-                                                    --primary: #343a40;
-                                                    --secondary: #555555;
-                                                    --accent: #007bff;
-                                                    --light-bg: #f8f9fa;
-                                                    --border: #dee2e6;
-                                                    --text: #212529;
-                                                    --muted: #6c757d;
-                                                }
+                                        <!-- Action Buttons -->
+                                        <div class="action-buttons no-print mb-3 text-right">
+                                            <button type="button" class="btn btn-primary btn-sm mr-2" onclick="printPayslip()">
+                                                <i class="fa fa-print mr-1"></i> Print Payslip
+                                            </button>
+                                            <button type="button" class="btn btn-success btn-sm" onclick="exportToPDF()">
+                                                <i class="fa fa-file-pdf-o mr-1"></i> Export to PDF
+                                            </button>
+                                        </div>
 
-                                                .payslip-premium {
-                                                    font-family: 'Segoe UI', Arial, sans-serif;
-                                                    color: var(--text);
-                                                    border: 1px solid var(--border);
-                                                    border-radius: 0.25rem;
-                                                    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-                                                    overflow: hidden;
-                                                    background-color: white;
-                                                    margin-bottom: 30px;
-                                                }
-
-                                                .payslip-header {
-                                                    display: flex;
-                                                    justify-content: space-between;
-                                                    align-items: center;
-                                                    padding: 1.5rem;
-                                                    border-bottom: 2px solid var(--border);
-                                                    background: linear-gradient(to right, var(--light-bg), white);
-                                                }
-
-                                                .company-branding {
-                                                    display: flex;
-                                                    align-items: center;
-                                                    gap: 1.5rem;
-                                                }
-
-                                                .logo-wrapper {
-                                                    width: 80px;
-                                                    height: 80px;
-                                                    border-radius: 50%;
-                                                    overflow: hidden;
-                                                    padding: 5px;
-                                                    background-color: white;
-                                                    border: 1px solid var(--border);
-                                                }
-
-                                                .logo-wrapper img {
-                                                    width: 100%;
-                                                    height: 100%;
-                                                    object-fit: contain;
-                                                }
-
-                                                .company-info {
-                                                    line-height: 1.4;
-                                                }
-
-                                                .company-info p {
-                                                    margin: 0;
-                                                    padding: 0;
-                                                    color: var(--secondary);
-                                                }
-
-                                                .company-info .company-name {
-                                                    font-size: 1.25rem;
-                                                    font-weight: 600;
-                                                    color: var(--primary);
-                                                    margin-bottom: 0.25rem;
-                                                }
-
-                                                .payslip-label {
-                                                    font-size: 2rem;
-                                                    font-weight: 700;
-                                                    color: var(--accent);
-                                                    padding: 0.5rem 1rem;
-                                                    border-radius: 0.25rem;
-                                                    letter-spacing: 1px;
-                                                    text-transform: uppercase;
-                                                }
-
-                                                .employee-details {
-                                                    background-color: white;
-                                                    border-bottom: 1px solid var(--border);
-                                                }
-
-                                                .employee-details-table {
-                                                    width: 100%;
-                                                    border-collapse: collapse;
-                                                }
-
-                                                .employee-details-table td {
-                                                    padding: 0.75rem 1rem;
-                                                    border: 1px solid var(--border);
-                                                }
-
-                                                .detail-label {
-                                                    font-weight: 600;
-                                                    color: var(--primary);
-                                                    background-color: rgba(0, 0, 0, 0.02);
-                                                    width: 30%;
-                                                }
-
-                                                .detail-value {
-                                                    color: var(--text);
-                                                }
-
-                                                .salary-details {
-                                                    padding: 1.5rem;
-                                                }
-
-                                                .salary-table {
-                                                    width: 100%;
-                                                    border-collapse: collapse;
-                                                }
-
-                                                .salary-table th,
-                                                .salary-table td {
-                                                    padding: 0.75rem 1rem;
-                                                    border: 1px solid var(--border);
-                                                    text-align: left;
-                                                }
-
-                                                .salary-table thead th {
-                                                    background-color: var(--light-bg);
-                                                    font-weight: 600;
-                                                    color: var(--primary);
-                                                    text-transform: uppercase;
-                                                    font-size: 0.875rem;
-                                                }
-
-                                                .salary-table tbody th {
-                                                    font-weight: 600;
-                                                    color: var(--primary);
-                                                    background-color: rgba(0, 0, 0, 0.02);
-                                                }
-
-                                                .section-title {
-                                                    background-color: var(--light-bg);
-                                                    font-weight: 600;
-                                                    color: var(--accent);
-                                                }
-
-                                                .money {
-                                                    font-family: 'Consolas', 'Courier New', monospace;
-                                                    white-space: nowrap;
-                                                }
-
-                                                .text-right {
-                                                    text-align: right !important;
-                                                }
-
-                                                .summary-row th {
-                                                    background-color: var(--light-bg);
-                                                    border-bottom: 1px solid var(--border);
-                                                }
-
-                                                .net-salary-row td {
-                                                    background-color: var(--primary);
-                                                    color: white;
-                                                    font-weight: 700;
-                                                    padding: 1rem;
-                                                    border: 1px solid var(--primary);
-                                                }
-
-                                                .net-salary-label {
-                                                    font-size: 1.1rem;
-                                                    text-transform: uppercase;
-                                                }
-
-                                                .net-salary-value {
-                                                    font-size: 1.25rem;
-                                                    letter-spacing: 1px;
-                                                }
-
-                                                .payslip-footer {
-                                                    padding: 1rem;
-                                                    text-align: center;
-                                                    color: var(--muted);
-                                                    font-size: 0.875rem;
-                                                    border-top: 1px solid var(--border);
-                                                    background-color: var(--light-bg);
-                                                }
-
-                                                @media print {
-                                                    .no-print {
-                                                        display: none !important;
-                                                    }
-
-                                                    .payslip-premium {
-                                                        box-shadow: none;
-                                                        border: 1px solid var(--secondary);
-                                                    }
-                                                }
-                                            </style>
-
+                                        <div class="table-responsive" id="payslip-container">
                                             <div class="payslip-premium">
                                                 <div class="payslip-header">
                                                     <div class="company-branding">
@@ -471,6 +551,10 @@
                                                         </tfoot>
                                                     </table>
                                                 </div>
+
+                                                <div class="payslip-footer">
+                                                    This is a computer-generated payslip and does not require a signature.
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -479,6 +563,7 @@
                         </div>
                     </div>
                 </div>
+
             @else
                 <div>
                     <div class="block block-themed bg-gray min-height-200 text-center" >
@@ -499,4 +584,92 @@
 
 @endsection
 
+<!-- JavaScript for Print and PDF Export -->
+<script>
+    // Print functionality
+    function printPayslip() {
+        window.print();
+    }
+
+    // PDF Export functionality
+    function exportToPDF() {
+        // Check if jsPDF is available
+        if (typeof window.jspdf === 'undefined') {
+            // Load jsPDF dynamically if it's not already loaded
+            var script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.onload = function() {
+                var script2 = document.createElement('script');
+                script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                script2.onload = function() {
+                    generatePDF();
+                };
+                document.head.appendChild(script2);
+            };
+            document.head.appendChild(script);
+        } else {
+            generatePDF();
+        }
+    }
+
+    function generatePDF() {
+        // Use jsPDF and html2canvas to generate PDF
+        const { jsPDF } = window.jspdf;
+
+        // Get the payslip element
+        var element = document.getElementById('payslip-container');
+
+        // Create a new jsPDF instance
+        var doc = new jsPDF('p', 'mm', 'a4');
+
+        // Hide action buttons for PDF generation
+        var actionButtons = document.querySelector('.action-buttons');
+        if (actionButtons) {
+            actionButtons.style.display = 'none';
+        }
+
+        // Convert the element to canvas
+        html2canvas(element, {
+            scale: 2,
+            logging: false,
+            useCORS: true
+        }).then(function(canvas) {
+            // Show action buttons again
+            if (actionButtons) {
+                actionButtons.style.display = 'block';
+            }
+
+            // Calculate dimensions
+            var imgWidth = 210; // A4 width in mm (210mm)
+            var pageHeight = 297; // A4 height in mm (297mm)
+            var imgHeight = canvas.height * imgWidth / canvas.width;
+            var heightLeft = imgHeight;
+
+            var imgData = canvas.toDataURL('image/png');
+            var position = 0;
+
+            // Add image to PDF
+            doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            // Add new pages if the content is longer than one page
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            // Get employee name for filename or use default
+            var employeeName = '{{$employee->name ?? "Employee"}}';
+            var payrollMonth = '{{date("F_Y", strtotime($payroll->year."-".$payroll->month."-01"))}}';
+
+            // Generate filename
+            var filename = 'Payslip_' + employeeName.replace(/\s+/g, '_') + '_' + payrollMonth + '.pdf';
+
+            // Save the PDF
+            doc.save(filename);
+        });
+    }
+</script>
 
