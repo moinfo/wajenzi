@@ -16,6 +16,11 @@ class PayrollNetSalary extends Model
         return Payroll::whereBetween('submitted_date',[$start_date,$end_date])->where('status','APPROVED')->get();
     }
 
+    public static function getStaffNetPaid($staff_id,$payroll_id)
+    {
+        return  PayrollNetSalary::Where('staff_id',$staff_id)->Where('payroll_id',$payroll_id)->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+
+    }
 
     public static function getTotalNetSalaryByPayroll($payroll_id)
     {

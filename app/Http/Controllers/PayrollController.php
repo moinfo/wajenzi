@@ -19,6 +19,7 @@ use App\Models\PayrollSalary;
 use App\Models\PayrollTaxable;
 use App\Models\PayrollType;
 use App\Models\Staff;
+use App\Models\StaffBankDetail;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -38,6 +39,31 @@ class PayrollController extends Controller
              'staffs' => $staffs
         ];
         return view('pages.payroll.payroll_index')->with($data);
+    }
+    public function crdb_bank_file(Request $request)
+    {
+        $start_date = $request->start_date ?? date('Y-m-01');
+        $end_date = $request->end_date ?? date('Y-m-t');
+
+        $staffs = StaffBankDetail::where('bank_id', 1)->get();
+
+        // Get payrolls within date range if form is submitted
+        $payrolls = [];
+//        if ($request->has('submit')) {
+            $payrolls = PayrollNetSalary::getPayrollList($start_date, $end_date)
+                ->where('status', 'APPROVED')
+                ->pluck('id')
+                ->toArray();
+//        }
+
+        $data = [
+            'staffs' => $staffs,
+            'payrolls' => $payrolls,
+            'start_date' => $start_date,
+            'end_date' => $end_date
+        ];
+
+        return view('pages.payroll.crdb_bank_file')->with($data);
     }
 
     public function salary_slips(Request $request)
