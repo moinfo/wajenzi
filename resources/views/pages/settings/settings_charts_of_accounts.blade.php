@@ -23,7 +23,7 @@
                             <thead>
                             <tr>
                                 <th class="text-center" style="width: 50px;">#</th>
-                                <th>Code</th>
+                                <th colspan="4">Code</th>
                                 <th>Account Name</th>
                                 <th>Currency</th>
                                 <th class="text-center" style="width: 100px;">Option</th>
@@ -34,28 +34,32 @@
                                 // Get top level accounts (parents)
                                 $topAccounts = $account_types;
                                 $counter = 1;
+                                $counter_letter = 'A';
                             @endphp
 
                             @foreach($topAccounts as $accountType)
-                                <tr class="bg-success-light">
-                                    <td class="text-center">{{ $loop->iteration }}</td>
-                                    <td>{{ $accountType->code }}</td>
+                                <tr class="bg-success text-white">
+                                    <td class="text-center">{{ $counter_letter }}</td>
+                                    <td colspan="3">{{ $accountType->code }}</td>
+                                    <td></td>
                                     <td>{{ strtoupper($accountType->type) }}</td>
                                     <td></td>
                                     <td class="text-center"></td>
                                 </tr>
 
                                 @php
-                                    // Get first level children for this account type
-                                    $firstLevelAccounts = $chart_of_accounts->where('account_type', $accountType->id)->whereNull('parent');
+                                    $counter_letter++;
+                                        // Get first level children for this account type
+                                        $firstLevelAccounts = $chart_of_accounts->where('account_type', $accountType->id)->whereNull('parent');
                                 @endphp
 
                                 @foreach($firstLevelAccounts as $firstLevelAccount)
-                                    <tr class="bg-warning-lighter">
+                                    <tr class="bg-warning text-white">
                                         <td class="text-center">{{ $counter++ }}</td>
-                                        <td>{{ $firstLevelAccount->code }}</td>
+                                        <td colspan="3">{{ $firstLevelAccount->code }}</td>
+                                        <td></td>
                                         <td>{{ strtoupper($firstLevelAccount->account_name) }}</td>
-                                        <td>{{ $firstLevelAccount->currency }}</td>
+                                        <td>{{ \App\Models\Currency::find($firstLevelAccount->currency)->symbol }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Chart Account"))
@@ -78,11 +82,14 @@
                                     @endphp
 
                                     @foreach($secondLevelAccounts as $secondLevelAccount)
-                                        <tr>
-                                            <td class="text-center"></td>
-                                            <td>{{ $secondLevelAccount->code }}</td>
+                                        <tr class="bg-primary text-white">
+                                            <td class="text-center">{{ $counter++ }}</td>
+                                            <td></td>
+                                            <td colspan="2">{{ $secondLevelAccount->code }}</td>
+                                            <td></td>
                                             <td>{{ $secondLevelAccount->account_name }}</td>
-                                            <td>{{ $secondLevelAccount->currency }}</td>
+                                            <td>{{ \App\Models\Currency::find($secondLevelAccount->currency)->symbol }}</td>
+
                                             <td class="text-center">
                                                 <div class="btn-group">
                                                     @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Chart Account"))
@@ -105,11 +112,15 @@
                                         @endphp
 
                                         @foreach($thirdLevelAccounts as $thirdLevelAccount)
-                                            <tr>
-                                                <td class="text-center">{{ $loop->iteration }}</td>
+                                            <tr class="bg-secondary text-white">
+                                                <td class="text-center">{{ $counter++ }}</td>
+                                                <td></td>
+                                                <td></td>
                                                 <td style="padding-left: 30px;">{{ $thirdLevelAccount->code }}</td>
+                                                <td></td>
                                                 <td>{{ $thirdLevelAccount->account_name }}</td>
-                                                <td>{{ $thirdLevelAccount->currency }}</td>
+                                                <td>{{ \App\Models\Currency::find($thirdLevelAccount->currency)->symbol }}</td>
+
                                                 <td class="text-center">
                                                     <div class="btn-group">
                                                         @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Chart Account"))
@@ -125,7 +136,39 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                        @endforeach
+
+                                        @php
+                                            // Get third level children (specific accounts)
+                                            $fourthLevelAccounts = $chart_of_accounts->where('parent', $thirdLevelAccount->id);
+                                        @endphp
+
+                                        @foreach($fourthLevelAccounts as $fourthLevelAccount)
+                                            <tr>
+                                                <td class="text-center">{{ $counter++ }}</td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td style="padding-left: 30px;">{{ $fourthLevelAccount->code }}</td>
+                                                <td>{{ $fourthLevelAccount->account_name }}</td>
+                                                <td>{{ \App\Models\Currency::find($fourthLevelAccount->currency)->symbol }}</td>
+
+                                                <td class="text-center">
+                                                    <div class="btn-group">
+                                                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Chart Account"))
+                                                            <button type="button" onclick="loadFormModal('settings_chart_of_account_form', {className: 'ChartAccount', id: {{ $fourthLevelAccount->id }}}, 'Edit {{ $fourthLevelAccount->account_name }}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                                <i class="fa fa-pencil"></i>
+                                                            </button>
+                                                        @endif
+                                                        @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Delete Chart Account"))
+                                                            <button type="button" onclick="deleteModelItem('ChartAccount', {{ $fourthLevelAccount->id }}, 'chart_of_account-tr-{{ $fourthLevelAccount->id }}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
+                                                                <i class="fa fa-times"></i>
+                                                            </button>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                    @endforeach
+                                    @endforeach
                                     @endforeach
                                 @endforeach
                             @endforeach

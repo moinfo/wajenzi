@@ -276,17 +276,68 @@ class SettingsController extends Controller
         return view('pages.settings.settings_account_types')->with($data);
     }
 
-    public function charts_of_accounts(Request $request){
-        if($this->handleCrud($request, 'ChartAccount')) {
+    public function charts_of_accounts(Request $request)
+    {
+        // Handle CRUD operations if any
+        if ($this->handleCrud($request, 'ChartAccount')) {
             return back();
         }
 
+        // If this is an AJAX call to save a new chart account
+        if ($request->ajax() && $request->isMethod('post')) {
+            try {
+                $data = $request->all();
+
+                // Ensure parent field is properly handled
+                if (empty($data['parent'])) {
+                    $data['parent'] = null;
+                }
+
+                if (!empty($data['id'])) {
+                    // Update existing
+                    $chartAccount = ChartAccount::findOrFail($data['id']);
+                    $chartAccount->update($data);
+                    $message = 'Chart account updated successfully';
+                } else {
+                    // Create new
+                    ChartAccount::create($data);
+                    $message = 'Chart account created successfully';
+                }
+
+                return response()->json(['success' => true, 'message' => $message]);
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            }
+        }
+
+        // Load data for view
         $data = [
             'chart_of_accounts' => ChartAccount::with(['accountType', 'parentAccount'])->get(),
             'account_types' => AccountType::all(),
         ];
 
         return view('pages.settings.settings_charts_of_accounts')->with($data);
+    }
+
+    /**
+     * API endpoint to get chart accounts by account type.
+     *
+     * @param Request $request
+     * @param int $accountTypeId
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getChartAccountsByType(Request $request, $accountTypeId)
+    {
+        $excludeId = $request->input('exclude_id');
+        $query = ChartAccount::where('account_type', $accountTypeId);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $accounts = $query->get();
+
+        return response()->json($accounts);
     }
     public function exchange_rates(Request $request){
         if($this->handleCrud($request, 'ExchangeRate')) {

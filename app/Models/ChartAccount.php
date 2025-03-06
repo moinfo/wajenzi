@@ -58,4 +58,9 @@ class ChartAccount extends Model
     {
         return $this->hasMany(ChartAccount::class, 'parent', 'id');
     }
+
+    public function currency()
+    {
+        return $this->belongsTo(Currency::class, 'currency', 'id');
+    }
 }
