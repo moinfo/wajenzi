@@ -280,10 +280,12 @@ class SettingsController extends Controller
         if($this->handleCrud($request, 'ChartAccount')) {
             return back();
         }
+
         $data = [
-            'chart_of_accounts' => ChartAccount::all(),
+            'chart_of_accounts' => ChartAccount::with(['accountType', 'parentAccount'])->get(),
             'account_types' => AccountType::all(),
         ];
+
         return view('pages.settings.settings_charts_of_accounts')->with($data);
     }
     public function exchange_rates(Request $request){

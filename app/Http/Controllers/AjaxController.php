@@ -12,6 +12,7 @@ use App\Models\Beneficiary;
 use App\Models\BeneficiaryAccount;
 use App\Models\BongeCustomer;
 use App\Models\Category;
+use App\Models\ChartAccount;
 use App\Models\ClientSource;
 use App\Models\Currency;
 use App\Models\Deduction;
@@ -198,8 +199,12 @@ class AjaxController
                     $account_types = AccountType::all();
                     $foreign_currencies = Currency::where('is_base','NO')->get();
                     $base_currencies = Currency::where('is_base','YES')->get();
+                    $chart_of_accounts = ChartAccount::with(['accountType', 'parentAccount'])->get();
+                    $currencies = Currency::all();
 
                     $data = $request->input('data') ?? [
+                            'chart_of_accounts' => $chart_of_accounts,
+                            'currencies' => $currencies,
                             'foreign_currencies' => $foreign_currencies,
                             'base_currencies' => $base_currencies,
                             'projects' => $projects,
