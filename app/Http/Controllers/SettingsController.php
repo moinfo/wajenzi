@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Classes\Utility;
+use App\Models\AccountType;
 use App\Models\AdvanceSalary;
 use App\Models\Allowance;
 use App\Models\AllowancePayment;
@@ -16,12 +17,14 @@ use App\Models\AssignUserGroup;
 use App\Models\Bank;
 use App\Models\Beneficiary;
 use App\Models\Category;
+use App\Models\ChartAccount;
 use App\Models\ClientSource;
 use App\Models\Deduction;
 use App\Models\DeductionSetting;
 use App\Models\DeductionSubscription;
 use App\Models\Department;
 use App\Models\Efd;
+use App\Models\ExchangeRate;
 use App\Models\ExpensesCategory;
 use App\Models\ExpensesSubCategory;
 use App\Models\FinancialChargeCategory;
@@ -261,6 +264,36 @@ class SettingsController extends Controller
             'banks' => Bank::all()
         ];
         return view('pages.settings.settings_banks')->with($data);
+    }
+
+    public function account_types(Request $request){
+        if($this->handleCrud($request, 'AccountType')) {
+            return back();
+        }
+        $data = [
+            'account_types' => AccountType::all()
+        ];
+        return view('pages.settings.settings_account_types')->with($data);
+    }
+
+    public function charts_of_accounts(Request $request){
+        if($this->handleCrud($request, 'ChartAccount')) {
+            return back();
+        }
+        $data = [
+            'chart_of_accounts' => ChartAccount::all(),
+            'account_types' => AccountType::all(),
+        ];
+        return view('pages.settings.settings_charts_of_accounts')->with($data);
+    }
+    public function exchange_rates(Request $request){
+        if($this->handleCrud($request, 'ExchangeRate')) {
+            return back();
+        }
+        $data = [
+            'exchange_rates' => ExchangeRate::all()
+        ];
+        return view('pages.settings.settings_exchange_rates')->with($data);
     }
 
     public function assets(Request $request){
