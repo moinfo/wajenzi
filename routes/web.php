@@ -104,6 +104,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/payroll/{id}/{document_type_id}', [App\Http\Controllers\PayrollController::class, 'payroll_view'])->name('payroll_view');
     Route::match(['get', 'post'], '/payroll/create_payroll', [App\Http\Controllers\PayrollController::class, 'create_payroll'])->name('create_payroll');
     Route::match(['get', 'post'], '/payroll/payroll_administration', [App\Http\Controllers\PayrollController::class, 'payroll_administration'])->name('payroll_administration');
+    Route::match(['get', 'post'], '/payroll/crdb_bank_file', [App\Http\Controllers\PayrollController::class, 'crdb_bank_file'])->name('crdb_bank_file');
+    Route::post('/payroll/bank-file-data', 'App\Http\Controllers\PayrollController@getBankFileData')->name('payroll.bank-file-data');
     Route::match(['get', 'post'], '/system_inventory', [App\Http\Controllers\SystemInventoryController::class, 'index'])->name('system_inventory');
     Route::match(['get', 'post'], '/system_inventory/{id}/{document_type_id}', [App\Http\Controllers\SystemInventoryController::class, 'system_inventory'])->name('system_inventories');
     Route::match(['get', 'post'], '/system_credit', [App\Http\Controllers\SystemCreditController::class, 'index'])->name('system_credit');
