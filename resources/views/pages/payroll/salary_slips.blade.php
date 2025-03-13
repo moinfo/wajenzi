@@ -2,7 +2,9 @@
 
 @section('content')
     <?php
+
     use Illuminate\Support\Facades\DB;
+
     $start_date = $_POST['start_date'] ?? date('Y-m-01');
     $end_date = $_POST['end_date'] ?? date('Y-m-t');
 
@@ -295,6 +297,9 @@
                     $loan_deduction = \App\Models\Staff::getStaffLoanDeductionPaid($staff_id,$payroll_id) ?? 0;
                     $taxable = \App\Models\Staff::getStaffTaxablePaid($staff_id,$payroll_id) ?? 0;
 
+
+
+
                     $gross_salary_check = 0;
                     $allowances = \App\Models\Allowance::select('allowance_subscriptions.amount as amount','allowances.name as allowance_name','allowances.allowance_type as allowance_type')->join('allowance_subscriptions','allowance_subscriptions.allowance_id','=','allowances.id')->
                                    where('allowance_subscriptions.staff_id',$staff_id)->get();
@@ -307,32 +312,43 @@
                         ['name' => 'Basic Salary', 'value' => $basic_salary ]
                     ];
 
-                    $right_side = [
-//                        ['name' => 'PAYEE', 'value' => $advance_salary ],
-                        ['name' => 'Advance Salary', 'value' => $advance_salary ],
-                        ['name' => 'Loan', 'value' => $loan_balance ],
-                        ['name' => 'Loan Deduction', 'value' => $loan_deduction ],
-                        ['name' => 'Loan Balance', 'value' => ($current_loan - $loan_deduction) ],
-                    ];
+                $right_side = [
+                    ['name' => 'Advance Salary', 'value' => $advance_salary ],
+                    ['name' => 'Loan', 'value' => $loan_balance ],
+                    ['name' => 'Loan Deduction', 'value' => $loan_deduction ],
+                    ['name' => 'Loan Balance', 'value' => ($current_loan - $loan_deduction) ],
+                ];
 
-                    foreach ($allowances as $allowance) {
-                        $allowance_type = $allowance->allowance_type;
-                        $allowance_amount_first = $allowance->amount;
-                        $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType($allowance_type,$allowance_amount_first,$this_month);
-                        if ($allowance_amount > 0) {
-                            $gross_salary_check += $allowance_amount;
-                            array_push($left_side, ['name' => strtoupper($allowance->allowance_name), 'value' => $allowance_amount]);
-                        }
+                foreach ($allowances as $allowance) {
+                    $allowance_type = $allowance->allowance_type;
+                    $allowance_amount_first = $allowance->amount;
+                    $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType($allowance_type,$allowance_amount_first,$this_month);
+                    if ($allowance_amount > 0) {
+                        $gross_salary_check += $allowance_amount;
+                        array_push($left_side, ['name' => strtoupper($allowance->allowance_name), 'value' => $allowance_amount]);
                     }
+                }
 
-                    foreach ($deductions as $deduction) {
+                // Add PAYEE at the top first
+                $employee_deducted_amount_payee = \App\Models\Staff::getStaffDeductionPaid($staff_id, $payroll_id, 1, 'employee_deduction_amount') ?? 0;
+
+                // Add PAYEE to the total deduction
+                if ($employee_deducted_amount_payee > 0) {
+                    $total_deduction += $employee_deducted_amount_payee;
+                    array_push($right_side, ['name' => 'PAYEE', 'value' => $employee_deducted_amount_payee]);
+                }
+
+                // Then continue with your loop for other deductions
+                foreach ($deductions as $deduction) {
                     $deduction_id = $deduction['deduction_id'];
-                    $deducted_amount = \App\Models\Staff::getStaffDeductionPaid($staff_id, $payroll_id,$deduction_id,'employee_deduction_amount') ?? 0;
+                    $deducted_amount = \App\Models\Staff::getStaffDeductionPaid($staff_id, $payroll_id, $deduction_id, 'employee_deduction_amount') ?? 0;
                     $total_deduction += $deducted_amount;
-                    $percentage = $deduction['employee_deducted_percentage'] > 0 ? "({$deduction['employee_deducted_percentage']}%)" : '' ;
+                    $percentage = $deduction['employee_deducted_percentage'] > 0 ? "({$deduction['employee_deducted_percentage']}%)" : '';
                     $deduction_title = $deduction['keyword'];
-                    if($deducted_amount > 0) {
-                    array_push($right_side, ['name' => strtoupper($deduction_title). $percentage, 'value' => $deducted_amount]);
+
+                    // Include all deductions, but we don't need to add PAYEE twice
+                    if ($deducted_amount > 0 && $deduction_id != 1) {
+                        array_push($right_side, ['name' => strtoupper($deduction_title) . $percentage, 'value' => $deducted_amount]);
                     }
                 }
 
@@ -350,17 +366,23 @@
                                 <div class="class card-box">
                                     <div class="row" style="border-bottom: 3px solid gray">
                                         <div class="col-md-3 text-right">
-                                            <img class="" src="{{ asset('media/logo/wajenzilogo.png') }}" alt="" height="100">
+                                            <img class="" src="{{ asset('media/logo/wajenzilogo.png') }}" alt=""
+                                                 height="100">
                                         </div>
                                         <div class="col-md-6 text-center">
-                                               <span class="text-center font-size-h3">{{settings('ORGANIZATION_NAME')}}</span><br/>
-            <span class="text-center font-size-h5">{{settings('COMPANY_ADDRESS_LINE_1')}}</span><br/>
-            <span class="text-center font-size-h5">{{settings('COMPANY_ADDRESS_LINE_2')}}</span><br/>
-            <span class="text-center font-size-h5">{{settings('COMPANY_PHONE_NUMBER')}}</span><br/>
-            <span class="text-center font-size-h5">{{settings('TAX_IDENTIFICATION_NUMBER')}}</span><br/>
+                                            <span
+                                                class="text-center font-size-h3">{{settings('ORGANIZATION_NAME')}}</span><br/>
+                                            <span
+                                                class="text-center font-size-h5">{{settings('COMPANY_ADDRESS_LINE_1')}}</span><br/>
+                                            <span
+                                                class="text-center font-size-h5">{{settings('COMPANY_ADDRESS_LINE_2')}}</span><br/>
+                                            <span
+                                                class="text-center font-size-h5">{{settings('COMPANY_PHONE_NUMBER')}}</span><br/>
+                                            <span
+                                                class="text-center font-size-h5">{{settings('TAX_IDENTIFICATION_NUMBER')}}</span><br/>
                                         </div>
                                         <div class="col-md-3 text-right">
-{{--                                            <a href="{{route('reports')}}"   type="button" class="btn btn-sm btn-danger"><i class="fa fa arrow-left"></i>Back</a>--}}
+                                            {{--                                            <a href="{{route('reports')}}"   type="button" class="btn btn-sm btn-danger"><i class="fa fa arrow-left"></i>Back</a>--}}
                                         </div>
                                     </div>
                                 </div>
@@ -376,18 +398,42 @@
                                                         <span class="input-group-text" id="basic-addon1">Month</span>
                                                     </div>
                                                     <select name="month" id="month" class="form-control">
-                                                        <option value="1" {{ ($this_month == 1) ? 'selected' : '' }}>Jan</option>
-                                                        <option value="2" {{ ($this_month == 2) ? 'selected' : '' }}>Feb</option>
-                                                        <option value="3" {{ ($this_month == 3) ? 'selected' : '' }}>Mar</option>
-                                                        <option value="4" {{ ($this_month == 4) ? 'selected' : '' }}>Apr</option>
-                                                        <option value="5" {{ ($this_month == 5) ? 'selected' : '' }}>May</option>
-                                                        <option value="6" {{ ($this_month == 6) ? 'selected' : '' }}>Jun</option>
-                                                        <option value="7" {{ ($this_month == 7) ? 'selected' : '' }}>Jul</option>
-                                                        <option value="8" {{ ($this_month == 8) ? 'selected' : '' }}>Aug</option>
-                                                        <option value="9" {{ ($this_month == 9) ? 'selected' : '' }}>Sept</option>
-                                                        <option value="10" {{ ($this_month == 10) ? 'selected' : '' }}>Oct</option>
-                                                        <option value="11" {{ ($this_month == 11) ? 'selected' : '' }}>Nov</option>
-                                                        <option value="12" {{ ($this_month == 12) ? 'selected' : '' }}>Dec</option>
+                                                        <option value="1" {{ ($this_month == 1) ? 'selected' : '' }}>
+                                                            Jan
+                                                        </option>
+                                                        <option value="2" {{ ($this_month == 2) ? 'selected' : '' }}>
+                                                            Feb
+                                                        </option>
+                                                        <option value="3" {{ ($this_month == 3) ? 'selected' : '' }}>
+                                                            Mar
+                                                        </option>
+                                                        <option value="4" {{ ($this_month == 4) ? 'selected' : '' }}>
+                                                            Apr
+                                                        </option>
+                                                        <option value="5" {{ ($this_month == 5) ? 'selected' : '' }}>
+                                                            May
+                                                        </option>
+                                                        <option value="6" {{ ($this_month == 6) ? 'selected' : '' }}>
+                                                            Jun
+                                                        </option>
+                                                        <option value="7" {{ ($this_month == 7) ? 'selected' : '' }}>
+                                                            Jul
+                                                        </option>
+                                                        <option value="8" {{ ($this_month == 8) ? 'selected' : '' }}>
+                                                            Aug
+                                                        </option>
+                                                        <option value="9" {{ ($this_month == 9) ? 'selected' : '' }}>
+                                                            Sept
+                                                        </option>
+                                                        <option value="10" {{ ($this_month == 10) ? 'selected' : '' }}>
+                                                            Oct
+                                                        </option>
+                                                        <option value="11" {{ ($this_month == 11) ? 'selected' : '' }}>
+                                                            Nov
+                                                        </option>
+                                                        <option value="12" {{ ($this_month == 12) ? 'selected' : '' }}>
+                                                            Dec
+                                                        </option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -397,11 +443,14 @@
                                                         <span class="input-group-text" id="basic-addon1">Year</span>
                                                     </div>
                                                     <select name="year" id="year" class="form-control">
-                                                        <option value="2021" {{ ($this_year == 2021) ? 'selected' : '' }}>2021</option>
-                                                        <option value="2022" {{ ($this_year == 2022) ? 'selected' : '' }}>2022</option>
-                                                        <option value="2023" {{ ($this_year == 2023) ? 'selected' : '' }}>2023</option>
-                                                        <option value="2024" {{ ($this_year == 2024) ? 'selected' : '' }}>2024</option>
-                                                        <option value="2025" {{ ($this_year == 2025) ? 'selected' : '' }}>2025</option>
+                                                        {{--                                                        <option value="2021" {{ ($this_year == 2021) ? 'selected' : '' }}>2021</option>--}}
+                                                        {{--                                                        <option value="2022" {{ ($this_year == 2022) ? 'selected' : '' }}>2022</option>--}}
+                                                        {{--                                                        <option value="2023" {{ ($this_year == 2023) ? 'selected' : '' }}>2023</option>--}}
+                                                        {{--                                                        <option value="2024" {{ ($this_year == 2024) ? 'selected' : '' }}>2024</option>--}}
+                                                        <option
+                                                            value="2025" {{ ($this_year == 2025) ? 'selected' : '' }}>
+                                                            2025
+                                                        </option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -410,9 +459,11 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Employee</span>
                                                     </div>
-                                                    <select name="staff_id" id="input-staff-id" class="form-control select2" required>
+                                                    <select name="staff_id" id="input-staff-id"
+                                                            class="form-control select2" required>
                                                         @foreach($staffs as $staff)
-                                                            <option value="{{ $staff->id }}"> {{ $staff->name }} </option>
+                                                            <option
+                                                                value="{{ $staff->id }}"> {{ $staff->name }} </option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -432,7 +483,8 @@
 
 
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full" id="payroll">
+                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full"
+                                   id="payroll">
 
 
                             </table>
@@ -449,10 +501,12 @@
                                     <div class="class card-box">
                                         <!-- Action Buttons -->
                                         <div class="action-buttons no-print mb-3 text-right">
-                                            <button type="button" class="btn btn-primary btn-sm mr-2" onclick="printPayslip()">
+                                            <button type="button" class="btn btn-primary btn-sm mr-2"
+                                                    onclick="printPayslip()">
                                                 <i class="fa fa-print mr-1"></i> Print Payslip
                                             </button>
-                                            <button type="button" class="btn btn-success btn-sm" onclick="exportToPDF()">
+                                            <button type="button" class="btn btn-success btn-sm"
+                                                    onclick="exportToPDF()">
                                                 <i class="fa fa-file-pdf-o mr-1"></i> Export to PDF
                                             </button>
                                         </div>
@@ -462,7 +516,8 @@
                                                 <div class="payslip-header">
                                                     <div class="company-branding">
                                                         <div class="logo-wrapper">
-                                                            <img src="{{ asset('media/logo/wajenzilogo.png') }}" alt="Company Logo">
+                                                            <img src="{{ asset('media/logo/wajenzilogo.png') }}"
+                                                                 alt="Company Logo">
                                                         </div>
                                                         <div class="company-info">
                                                             <p class="company-name">{{settings('ORGANIZATION_NAME')}}</p>
@@ -485,13 +540,16 @@
                                                         </tr>
                                                         <tr>
                                                             <td class="detail-label">Employee Number:</td>
-                                                            <td class="detail-value">HRM/LE/PO-{{$employee->employee_number ?? null}}</td>
+                                                            <td class="detail-value">
+                                                                HRM/LE/PO-{{$employee->employee_number ?? null}}</td>
                                                             <td class="detail-label">Employee Name:</td>
                                                             <td class="detail-value">{{$employee->name ?? null}}</td>
                                                         </tr>
                                                         <tr>
                                                             <td class="detail-label">Department:</td>
-                                                            <td class="detail-value">Human Resources &amp; Administration (HRA)</td>
+                                                            <td class="detail-value">Human Resources &amp;
+                                                                Administration (HRA)
+                                                            </td>
                                                             <td class="detail-label">Designation:</td>
                                                             <td class="detail-value">{{$employee->designation ?? null}}</td>
                                                         </tr>
@@ -553,7 +611,8 @@
                                                 </div>
 
                                                 <div class="payslip-footer">
-                                                    This is a computer-generated payslip and does not require a signature.
+                                                    This is a computer-generated payslip and does not require a
+                                                    signature.
                                                 </div>
                                             </div>
                                         </div>
@@ -566,7 +625,7 @@
 
             @else
                 <div>
-                    <div class="block block-themed bg-gray min-height-200 text-center" >
+                    <div class="block block-themed bg-gray min-height-200 text-center">
                         <div class="block-content">
                             <div class="row no-print m-t-10">
                                 <div class="class col-md-12">
@@ -578,7 +637,7 @@
                         </div>
                     </div>
                 </div>
-                @endif
+            @endif
         </div>
     </div>
 
@@ -598,10 +657,10 @@
             // Load jsPDF dynamically if it's not already loaded
             var script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-            script.onload = function() {
+            script.onload = function () {
                 var script2 = document.createElement('script');
                 script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                script2.onload = function() {
+                script2.onload = function () {
                     generatePDF();
                 };
                 document.head.appendChild(script2);
@@ -614,7 +673,7 @@
 
     function generatePDF() {
         // Use jsPDF and html2canvas to generate PDF
-        const { jsPDF } = window.jspdf;
+        const {jsPDF} = window.jspdf;
 
         // Get the payslip element
         var element = document.getElementById('payslip-container');
@@ -633,7 +692,7 @@
             scale: 2,
             logging: false,
             useCORS: true
-        }).then(function(canvas) {
+        }).then(function (canvas) {
             // Show action buttons again
             if (actionButtons) {
                 actionButtons.style.display = 'block';
@@ -662,7 +721,7 @@
 
             // Get employee name for filename or use default
             var employeeName = '{{$employee->name ?? "Employee"}}';
-            var payrollMonth = '{{date("F_Y", strtotime($payroll->year."-".$payroll->month."-01"))}}';
+            var payrollMonth = '{{date("F_Y", strtotime(($payroll->year ?? date('Y'))."-".($payroll->month ?? date('m'))."-01"))}}';
 
             // Generate filename
             var filename = 'Payslip_' + employeeName.replace(/\s+/g, '_') + '_' + payrollMonth + '.pdf';
