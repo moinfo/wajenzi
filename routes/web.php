@@ -191,6 +191,11 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/leave_types', [App\Http\Controllers\SettingsController::class, 'leave_types'])->name('hr_settings_leave_types');
     Route::match(['get', 'post'], '/settings/client_sources', [App\Http\Controllers\SettingsController::class, 'client_sources'])->name('client_sources');
 
+    Route::match(['get', 'post'], '/finance', [App\Http\Controllers\SettingsController::class, 'finance'])->name('finance');
+    Route::match(['get', 'post'], '/finance/financial_settings/account_types', [App\Http\Controllers\SettingsController::class, 'account_types'])->name('account_types');
+    Route::match(['get', 'post'], '/finance/financial_settings/charts_of_accounts', [App\Http\Controllers\SettingsController::class, 'charts_of_accounts'])->name('charts_of_accounts');
+    Route::match(['get', 'post'], '/finance/financial_settings/exchange_rates', [App\Http\Controllers\SettingsController::class, 'exchange_rates'])->name('exchange_rates');
+
 
 
 

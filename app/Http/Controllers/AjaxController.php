@@ -2,6 +2,7 @@
 
 
 namespace App\Http\Controllers;
+use App\Models\AccountType;
 use App\Models\Allowance;
 use App\Models\AllowanceSubscription;
 use App\Models\ApprovalDocumentType;
@@ -11,7 +12,9 @@ use App\Models\Beneficiary;
 use App\Models\BeneficiaryAccount;
 use App\Models\BongeCustomer;
 use App\Models\Category;
+use App\Models\ChartAccount;
 use App\Models\ClientSource;
+use App\Models\Currency;
 use App\Models\Deduction;
 use App\Models\Department;
 use App\Models\Division;
@@ -193,10 +196,20 @@ class AjaxController
                     $departments = Department::all();
                     $payroll_types = PayrollType::all();
                     $client_sources = ClientSource::all();
+                    $account_types = AccountType::all();
+                    $foreign_currencies = Currency::where('is_base','NO')->get();
+                    $base_currencies = Currency::where('is_base','YES')->get();
+                    $chart_of_accounts = ChartAccount::with(['accountType', 'parentAccount'])->get();
+                    $currencies = Currency::all();
 
                     $data = $request->input('data') ?? [
+                            'chart_of_accounts' => $chart_of_accounts,
+                            'currencies' => $currencies,
+                            'foreign_currencies' => $foreign_currencies,
+                            'base_currencies' => $base_currencies,
                             'projects' => $projects,
                             'allowance_types' => $allowance_types,
+                            'account_types' => $account_types,
                             'payroll_types' => $payroll_types,
                             'client_sources' => $client_sources,
                             'departments' => $departments,
