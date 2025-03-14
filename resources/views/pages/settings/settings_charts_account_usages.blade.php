@@ -41,7 +41,7 @@
                                     <td class="text-center" >
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Charts Account Usage"))
-                                                <button type="button" onclick="loadFormModal('settings_charts_account_usage_form', {className: 'Charts Account Usage', id: {{$charts_account_usage->id}}}, 'Edit {{$charts_account_usage->type}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                <button type="button" onclick="loadFormModal('settings_charts_account_usage_form', {className: 'ChartsAccountUsage', id: {{$charts_account_usage->id}}}, 'Edit {{$charts_account_usage->type}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
                                                 </button>
                                             @endif
