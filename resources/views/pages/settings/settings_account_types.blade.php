@@ -41,7 +41,7 @@
                                     <td class="text-center" >
                                         <div class="btn-group">
                                             @if(\App\Models\UsersPermission::isUserAllowed(Auth::user()->id,"CRUD","Edit Account Type"))
-                                                <button type="button" onclick="loadFormModal('settings_account_type_form', {className: 'Account Type', id: {{$account_type->id}}}, 'Edit {{$account_type->type}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                <button type="button" onclick="loadFormModal('settings_account_type_form', {className: 'AccountType', id: {{$account_type->id}}}, 'Edit {{$account_type->type}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
                                                 </button>
                                             @endif

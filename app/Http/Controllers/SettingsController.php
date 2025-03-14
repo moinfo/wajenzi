@@ -18,6 +18,8 @@ use App\Models\Bank;
 use App\Models\Beneficiary;
 use App\Models\Category;
 use App\Models\ChartAccount;
+use App\Models\ChartAccountUsage;
+use App\Models\ChartAccountVariable;
 use App\Models\ClientSource;
 use App\Models\Deduction;
 use App\Models\DeductionSetting;
@@ -274,6 +276,25 @@ class SettingsController extends Controller
             'account_types' => AccountType::all()
         ];
         return view('pages.settings.settings_account_types')->with($data);
+    }
+    public function chart_of_account_variables(Request $request){
+        if($this->handleCrud($request, 'ChartAccountVariable')) {
+            return back();
+        }
+        $data = [
+            'chart_account_variables' => ChartAccountVariable::all()
+        ];
+        return view('pages.settings.settings_chart_account_variables')->with($data);
+    }
+
+    public function charts_of_account_usages(Request $request){
+        if($this->handleCrud($request, 'ChartAccountUsage')) {
+            return back();
+        }
+        $data = [
+            'charts_account_usages' => ChartAccountUsage::all()
+        ];
+        return view('pages.settings.settings_charts_account_usages')->with($data);
     }
 
     public function charts_of_accounts(Request $request)

@@ -195,6 +195,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/finance/financial_settings/account_types', [App\Http\Controllers\SettingsController::class, 'account_types'])->name('account_types');
     Route::match(['get', 'post'], '/finance/financial_settings/charts_of_accounts', [App\Http\Controllers\SettingsController::class, 'charts_of_accounts'])->name('charts_of_accounts');
     Route::match(['get', 'post'], '/finance/financial_settings/exchange_rates', [App\Http\Controllers\SettingsController::class, 'exchange_rates'])->name('exchange_rates');
+    Route::match(['get', 'post'], '/finance/financial_settings/charts_of_account_usages', [App\Http\Controllers\SettingsController::class, 'charts_of_account_usages'])->name('charts_of_account_usages');
+    Route::match(['get', 'post'], '/finance/financial_settings/chart_of_account_variables', [App\Http\Controllers\SettingsController::class, 'chart_of_account_variables'])->name('chart_of_account_variables');
 
 
 

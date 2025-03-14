@@ -201,9 +201,11 @@ class AjaxController
                     $base_currencies = Currency::where('is_base','YES')->get();
                     $chart_of_accounts = ChartAccount::with(['accountType', 'parentAccount'])->get();
                     $currencies = Currency::all();
+                    $charts_accounts = ChartAccount::all();
 
                     $data = $request->input('data') ?? [
                             'chart_of_accounts' => $chart_of_accounts,
+                            'charts_accounts' => $charts_accounts,
                             'currencies' => $currencies,
                             'foreign_currencies' => $foreign_currencies,
                             'base_currencies' => $base_currencies,
