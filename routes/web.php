@@ -197,6 +197,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/finance/financial_settings/exchange_rates', [App\Http\Controllers\SettingsController::class, 'exchange_rates'])->name('exchange_rates');
     Route::match(['get', 'post'], '/finance/financial_settings/charts_of_account_usages', [App\Http\Controllers\SettingsController::class, 'charts_of_account_usages'])->name('charts_of_account_usages');
     Route::match(['get', 'post'], '/finance/financial_settings/chart_of_account_variables', [App\Http\Controllers\SettingsController::class, 'chart_of_account_variables'])->name('chart_of_account_variables');
+    Route::match(['get', 'post'], '/finance/petty_cash_management/petty_cash_refill_requests', [App\Http\Controllers\SettingsController::class, 'petty_cash_refill_requests'])->name('petty_cash_refill_requests');
+    Route::match(['get', 'post'], '/finance/petty_cash_management/petty_cash_refill_requests/{id}/{document_type_id}', [App\Http\Controllers\SettingsController::class, 'petty_cash_refill_request'])->name('petty_cash_refill_request');
 
 
 
