@@ -36,8 +36,8 @@
             <!-- Request Information -->
             <div class="row" style="margin-top: 15px;">
                 <div class="col-md-6">
-                    <p style="margin-bottom: 5px;">Requested by : {{$requestedBy ?? 'System Admin'}}</p>
-                    <p style="margin-bottom: 5px;">Address : {{settings('COMPANY_ADDRESS_LINE_1')}}</p>
+                    <p style="margin-bottom: 5px;">Requested by : {{$approval_data_name ?? 'System Admin'}}</p>
+{{--                    <p style="margin-bottom: 5px;">Address : {{settings('COMPANY_ADDRESS_LINE_1')}}</p>--}}
                 </div>
                 <div class="col-md-6 text-right">
                     <p style="margin-bottom: 5px;">Created Time : {{$approval_data->created_at}}</p>
@@ -46,6 +46,5 @@
         </div>
 
         <h1 class="page-title"></h1>
-        <div class="bank-name">{{ $approval_data_name }}</div>
 </div>
 </div>
