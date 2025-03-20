@@ -30,10 +30,12 @@ use App\Models\ExchangeRate;
 use App\Models\ExpensesCategory;
 use App\Models\ExpensesSubCategory;
 use App\Models\FinancialChargeCategory;
+use App\Models\ImprestRequest;
 use App\Models\Item;
 use App\Models\LeaveType;
 use App\Models\Loan;
 use App\Models\Permission;
+use App\Models\PettyCashRefillRequest;
 use App\Models\Position;
 use App\Models\Role;
 use App\Models\Staff;
@@ -277,6 +279,112 @@ class SettingsController extends Controller
         ];
         return view('pages.settings.settings_account_types')->with($data);
     }
+    public function petty_cash_refill_requests(Request $request){
+        if($this->handleCrud($request, 'PettyCashRefillRequest')) {
+            return back();
+        }
+        $data = [
+            'petty_cash_refill_requests' => PettyCashRefillRequest::all()
+        ];
+        return view('pages.petty_cash_management.petty_cash_refill_requests')->with($data);
+    }
+
+    public function petty_cash_refill_request($id,$document_type_id){
+        // Mark notification as read
+        $this->approvalService->markNotificationAsRead($id, $document_type_id,'petty_cash_refill_requests');
+
+        // Get timeline data
+        $timeline = $this->approvalService->getApprovalTimeline($document_type_id, $id);
+
+        $approval_data = \App\Models\PettyCashRefillRequest::where('id',$id)->get()->first();
+
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+
+        $details = [
+            'Balance' => number_format($approval_data->balance),
+            'Refill Amount' => number_format($approval_data->refill_amount),
+            'Document Number' => $approval_data->document_number,
+            'Date' => $approval_data->date,
+//            'Uploaded File' => $approval_data->file
+        ];
+
+        $data = [
+            'timeline' => $timeline,
+            'approval_data' => $approval_data,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
+            'page_name' => 'Petty Cash Refill Request',
+            'approval_data_name' => $approval_data->user->name,
+            'details' => $details,
+            'model' => 'PettyCashRefillRequest',
+            'route' => 'petty_cash_refill_requests',
+
+        ];
+        return view('approvals._approve_page')->with($data);
+    }
+
+    public function imprest_requests(Request $request){
+        if($this->handleCrud($request, 'ImprestRequest')) {
+            return back();
+        }
+        $data = [
+            'imprest_requests' => ImprestRequest::all()
+        ];
+        return view('pages.imprest.imprest_requests')->with($data);
+    }
+
+    public function imprest_request($id,$document_type_id){
+        // Mark notification as read
+        $this->approvalService->markNotificationAsRead($id, $document_type_id,'imprest_requests');
+
+        // Get timeline data
+        $timeline = $this->approvalService->getApprovalTimeline($document_type_id, $id);
+
+        $approval_data = \App\Models\ImprestRequest::where('id',$id)->get()->first();
+
+        $approvalStages = Approval::getApprovalStages($id,$document_type_id);
+        $nextApproval = Approval::getNextApproval($id,$document_type_id);
+        $approvalCompleted = Approval::isApprovalCompleted($id,$document_type_id);
+        $rejected = Approval::isRejected($id,$document_type_id);
+        $document_id = $id;
+
+        $details = [
+            'Document Number' => $approval_data->document_number,
+            'Description' => $approval_data->description,
+            'Amount' => number_format($approval_data->amount),
+            'Expenses Category' => $approval_data->expenseSubCategory->expensesCategory->name ?? 'N/A',
+            'Expenses Sub Category' => $approval_data->expenseSubCategory->name ?? 'N/A',
+            'Uploaded File' => $approval_data->file,
+            'Date' => $approval_data->date,
+        ];
+
+        $data = [
+            'timeline' => $timeline,
+            'approval_data' => $approval_data,
+            'approvalStages' => $approvalStages,
+            'nextApproval' => $nextApproval,
+            'approvalCompleted' => $approvalCompleted,
+            'rejected' => $rejected,
+            'document_id' => $document_id,
+            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
+            'page_name' => 'Imprest Request',
+            'approval_data_name' => $approval_data->user->name ?? 'N/A',
+            'details' => $details,
+            'model' => 'ImprestRequest',
+            'route' => 'imprest_requests',
+
+        ];
+        return view('approvals._approve_page')->with($data);
+    }
+
     public function chart_of_account_variables(Request $request){
         if($this->handleCrud($request, 'ChartAccountVariable')) {
             return back();
