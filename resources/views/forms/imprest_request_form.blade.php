@@ -15,6 +15,14 @@ $balance = PettyCashRefillRequest::getCurrentBalanceBetweenPettyCashRefillReques
                 @endforeach
             </select>
         </div>
+        <div class="form-group">
+            <label for="example-nf-email" class="control-label required">Project</label>
+            <select name="project_id" id="project_id" class="form-control" required>
+                @foreach ($projects as $project)
+                    <option value="{{ $project->id }}" {{ ( $project->id == $object->project_id) ? 'selected' : '' }}> {{ $project->project_name }} </option>
+                @endforeach
+            </select>
+        </div>
 
         <div class="form-group">
             <label for="example-nf-description" class="control-label required">Description</label>

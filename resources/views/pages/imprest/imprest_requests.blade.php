@@ -60,6 +60,7 @@
                                     <th>Description</th>
                                     <th>Amount</th>
                                     <th>Requested User</th>
+                                    <th>Project</th>
                                     <th scope="col">Attachment</th>
                                     <th scope="col">Approvals</th>
                                     <th scope="col">Status</th>
@@ -89,6 +90,7 @@
                                         <td class="font-w600">{{ $imprest_request->description }}</td>
                                         <td class="font-w600">{{ number_format($imprest_request->amount, 2) }}</td>
                                         <td class="font-w600">{{ $imprest_request->user->name ?? ''}}</td>
+                                        <td class="font-w600">{{ $imprest_request->project->project_name ?? ''}}</td>
                                         <td class="text-center">
                                             @if($imprest_request->file != null)
                                                 <a href="{{ url("$imprest_request->file") }}">Attachment</a>
@@ -171,6 +173,7 @@
                                 <tfoot>
                                 <tr>
                                     <td class="text-right text-dark" colspan="5"><b>{{number_format($imprest_amount,2)}}</b></td>
+                                    <td></td>
                                     <td></td>
                                     <td></td>
                                     <td></td>
