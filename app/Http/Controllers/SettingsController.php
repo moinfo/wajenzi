@@ -362,6 +362,7 @@ class SettingsController extends Controller
             'Amount' => number_format($approval_data->amount),
             'Expenses Category' => $approval_data->expenseSubCategory->expensesCategory->name ?? 'N/A',
             'Expenses Sub Category' => $approval_data->expenseSubCategory->name ?? 'N/A',
+            'Project Name' => $approval_data->project->project_name ?? 'N/A',
             'Uploaded File' => $approval_data->file,
             'Date' => $approval_data->date,
         ];
