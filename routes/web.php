@@ -199,6 +199,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/finance/financial_settings/chart_of_account_variables', [App\Http\Controllers\SettingsController::class, 'chart_of_account_variables'])->name('chart_of_account_variables');
     Route::match(['get', 'post'], '/finance/petty_cash_management/petty_cash_refill_requests', [App\Http\Controllers\SettingsController::class, 'petty_cash_refill_requests'])->name('petty_cash_refill_requests');
     Route::match(['get', 'post'], '/finance/petty_cash_management/petty_cash_refill_requests/{id}/{document_type_id}', [App\Http\Controllers\SettingsController::class, 'petty_cash_refill_request'])->name('petty_cash_refill_request');
+    Route::match(['get', 'post'], '/finance/imprest_management/imprest_requests', [App\Http\Controllers\SettingsController::class, 'imprest_requests'])->name('imprest_requests');
+    Route::match(['get', 'post'], '/finance/imprest_management/imprest_requests/{id}/{document_type_id}', [App\Http\Controllers\SettingsController::class, 'imprest_request'])->name('imprest_request');
 
 
 

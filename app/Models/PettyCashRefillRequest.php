@@ -17,4 +17,13 @@ class PettyCashRefillRequest extends Model
         return $this->belongsTo(User::class,'create_by_id');
     }
 
+    public function getTotalRefillAmountFromBeginning(){
+        return $this->where('status', 'approved')->sum('refill_amount');
+    }
+
+   public static function getCurrentBalanceBetweenPettyCashRefillRequestAndImprestRequest(){
+    return self::where('status', 'approved')->sum('refill_amount') - \App\Models\ImprestRequest::where('status', 'approved')->sum('amount');
+    }
+
+
 }
