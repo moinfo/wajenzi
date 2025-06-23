@@ -61,184 +61,27 @@
 
         /* Footer Styles */
         .wajenzi-footer {
-            background: linear-gradient(135deg, var(--wajenzi-gray-800) 0%, var(--wajenzi-gray-900) 100%);
+            background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green) 100%);
             color: white;
-            margin-top: 4rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .wajenzi-footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
+            position: fixed;
+            bottom: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            background-image:
-                radial-gradient(circle at 20% 80%, var(--wajenzi-blue-primary) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, var(--wajenzi-green) 0%, transparent 50%);
-            opacity: 0.05;
-            z-index: 0;
+            z-index: 1020;
+            padding: 0.75rem 0;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .footer-content {
-            position: relative;
-            z-index: 1;
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 2rem;
-            padding: 3rem 2rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .footer-section {
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Footer Brand */
-        .footer-logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .footer-logo-img {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .footer-brand-text .brand-name {
-            display: block;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: white;
-            line-height: 1.2;
-        }
-
-        .footer-brand-text .brand-tagline {
-            display: block;
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.7);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .footer-description {
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.6;
-            font-size: 0.875rem;
-            margin: 0;
-        }
-
-        /* Footer Sections */
-        .footer-title {
-            font-size: 1rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 1.5rem;
-            position: relative;
-            padding-bottom: 0.5rem;
-        }
-
-        .footer-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 30px;
-            height: 2px;
-            background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green) 100%);
-            border-radius: 1px;
-        }
-
-        .footer-menu {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .footer-menu li {
-            margin-bottom: 0.75rem;
-        }
-
-        .footer-menu a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
-
-        .footer-menu a:hover {
-            color: var(--wajenzi-green);
-            transform: translateX(4px);
-        }
-
-        .footer-menu a i {
-            font-size: 0.875rem;
-            width: 16px;
-            text-align: center;
-        }
-
-        /* System Stats */
-        .system-stats {
-            margin-bottom: 1.5rem;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.75rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.875rem;
-        }
-
-        .stat-item i {
-            color: var(--wajenzi-blue-primary);
-            font-size: 1rem;
-        }
-
-        .footer-contact p {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.875rem;
-        }
-
-        .footer-contact i {
-            color: var(--wajenzi-green);
-            font-size: 0.875rem;
-            width: 16px;
-            text-align: center;
-        }
-
-        /* Footer Bottom */
-        .footer-bottom {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            position: relative;
-            z-index: 1;
-        }
-
-        .footer-bottom-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.5rem 2rem;
             max-width: 1200px;
             margin: 0 auto;
+            padding: 0 2rem;
+            height: 100%;
         }
+
 
         .footer-copyright p,
         .footer-credits p {
@@ -274,69 +117,36 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 1024px) {
-            .footer-content {
-                grid-template-columns: 2fr 1fr 1fr;
-                gap: 1.5rem;
-            }
-
-            .footer-info {
-                grid-column: span 3;
-                margin-top: 1rem;
-            }
-        }
-
         @media (max-width: 768px) {
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-                padding: 2rem 1rem 1rem;
+            .wajenzi-footer {
+                padding: 0.5rem 0;
             }
 
-            .footer-bottom-content {
+            .footer-content {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 0.25rem;
                 text-align: center;
-                padding: 1rem;
+                padding: 0 1rem;
             }
 
-            .footer-logo {
-                justify-content: center;
-            }
-
-            .footer-description {
-                text-align: center;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .footer-logo-img {
-                width: 40px;
-                height: 40px;
-            }
-
-            .footer-brand-text .brand-name {
-                font-size: 1.25rem;
-            }
-
-            .footer-content {
-                padding: 1.5rem 1rem 1rem;
+            .footer-copyright p,
+            .footer-credits p {
+                font-size: 0.75rem;
             }
         }
 
         /* Main Layout Structure */
         .wajenzi-main {
-            /*margin-left: 280px;*/
-            /*margin-top: 80px;*/
-            min-height: calc(100vh - 80px);
+            min-height: calc(100vh - 80px - 60px);
             background: var(--wajenzi-gray-50);
             transition: margin-left 0.3s ease;
-            /*width: calc(100vw - 280px);*/
+            width: calc(100vw - 280px);
             display: flex;
             justify-content: center;
             align-items: flex-start;
             box-sizing: border-box;
             padding: 0;
+            padding-bottom: 60px;
         }
 
         .main-content {
@@ -561,6 +371,7 @@
                 margin-top: 80px;
                 width: 100vw;
                 padding: 0;
+                padding-bottom: 80px;
                 display: flex;
                 justify-content: center;
                 align-items: flex-start;
@@ -729,68 +540,11 @@ MAIN CONTENT LAYOUT
     <!-- Footer -->
     <footer id="page-footer" class="wajenzi-footer">
         <div class="footer-content">
-            <div class="footer-section footer-brand">
-                <div class="footer-logo">
-                    <img src="{{ asset('media/logo/wajenzilogo.png') }}" alt="Wajenzi Logo" class="footer-logo-img">
-                    <div class="footer-brand-text">
-                        <span class="brand-name">Wajenzi</span>
-                        <span class="brand-tagline">Construction Management System</span>
-                    </div>
-                </div>
-                <p class="footer-description">
-                    Streamlining construction projects with intelligent management tools and comprehensive project oversight.
-                </p>
+            <div class="footer-copyright">
+                <p>&copy; {{ date('Y') }} <strong>Wajenzi</strong> Construction Management System. All rights reserved.</p>
             </div>
-
-            <div class="footer-section footer-links">
-                <h4 class="footer-title">Quick Links</h4>
-                <ul class="footer-menu">
-                    <li><a href="{{ route('dashboard') }}"><i class="fa fa-home"></i> Dashboard</a></li>
-                    <li><a href="#"><i class="fa fa-project-diagram"></i> Projects</a></li>
-                    <li><a href="#"><i class="fa fa-users"></i> Team</a></li>
-                    <li><a href="#"><i class="fa fa-file-invoice"></i> Reports</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-section footer-support">
-                <h4 class="footer-title">Support</h4>
-                <ul class="footer-menu">
-                    <li><a href="#"><i class="fa fa-question-circle"></i> Help Center</a></li>
-                    <li><a href="#"><i class="fa fa-life-ring"></i> Contact Support</a></li>
-                    <li><a href="#"><i class="fa fa-book"></i> Documentation</a></li>
-                    <li><a href="#"><i class="fa fa-shield-alt"></i> Privacy Policy</a></li>
-                </ul>
-            </div>
-
-            <div class="footer-section footer-info">
-                <h4 class="footer-title">System Info</h4>
-                <div class="system-stats">
-                    <div class="stat-item">
-                        <i class="fa fa-server"></i>
-                        <span>Version 2.0.1</span>
-                    </div>
-                    <div class="stat-item">
-                        <i class="fa fa-clock"></i>
-                        <span>Uptime: 99.9%</span>
-                    </div>
-                </div>
-                <div class="footer-contact">
-                    <p><i class="fa fa-envelope"></i> support@wajenzi.com</p>
-                    <p><i class="fa fa-phone"></i> +255 123 456 789</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <div class="footer-bottom-content">
-                <div class="footer-copyright">
-                    <p>&copy; <span class="js-year-copy">{{ date('Y') }}</span> <strong>Wajenzi</strong>. All rights reserved.</p>
-                </div>
-                <div class="footer-credits">
-                    <p>Crafted with <i class="fa fa-heart text-wajenzi-green"></i> by
-                        <a href="https://moinfo.co.tz" target="_blank" class="developer-link">MoinfoTech Company Limited</a>
-                    </p>
-                </div>
+            <div class="footer-credits">
+                <p>Developed by <a href="https://moinfo.co.tz" target="_blank" class="developer-link">MoinfoTech Company Limited</a></p>
             </div>
         </div>
     </footer>
