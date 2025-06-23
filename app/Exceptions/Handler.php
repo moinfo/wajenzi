@@ -53,10 +53,14 @@ class Handler extends ExceptionHandler
         if ($exception instanceof \ErrorException &&
             strpos($exception->getMessage(), 'unserialize(): Error at offset') !== false) {
             
-            // Clear the remember token cookie and redirect to login
-            return redirect()->route('login')
-                ->withCookie(\Cookie::forget('remember_web_' . sha1(config('app.name') . '_web')))
-                ->with('error', 'Your session has expired. Please login again.');
+            // Get the cookie name
+            $cookieName = 'remember_web_' . sha1(config('app.name') . '_web');
+            
+            // Create a response that clears the corrupted cookie
+            $response = redirect('/login');
+            $response->withCookie(Cookie::forget($cookieName));
+            
+            return $response;
         }
 
         // Handle JSON requests
