@@ -1,0 +1,67 @@
+{
+    "name": "laravel/laravel",
+    "type": "project",
+    "description": "The Laravel Framework.",
+    "keywords": ["framework", "laravel"],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "filament/filament": "^3.3",
+        "guzzlehttp/guzzle": "^7.0.1",
+        "laravel/framework": "^11.0",
+        "laravel/tinker": "^2.5",
+        "marjose123/filament-lockscreen": "^2.6",
+        "pusher/pusher-php-server": "^5.0.1",
+        "ringlesoft/laravel-process-approval": "^1.1",
+        "spatie/laravel-permission": "^6.16"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.9.1",
+        "laravel/sail": "^1.0",
+        "laravel/ui": "^4.0",
+        "mockery/mockery": "^1.4.2",
+        "nunomaduro/collision": "^8.0",
+        "phpunit/phpunit": "^10.0",
+        "spatie/laravel-ignition": "^2.9"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        },
+        "files": [
+            "app/Helpers/helpers.php"
+        ]
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi"
+        ]
+    }
+}
