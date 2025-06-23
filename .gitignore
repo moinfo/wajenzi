@@ -13,6 +13,4 @@ npm-debug.log
 yarn-error.log
 .idea
 metadata
-composer.json
-composer.lock
-package-lock.json
+
