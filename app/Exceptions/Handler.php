@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Support\Facades\Cookie;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -48,6 +49,16 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
+        // Handle unserialize errors (corrupted remember token)
+        if ($exception instanceof \ErrorException &&
+            strpos($exception->getMessage(), 'unserialize(): Error at offset') !== false) {
+            
+            // Clear the remember token cookie and redirect to login
+            return redirect()->route('login')
+                ->withCookie(\Cookie::forget('remember_web_' . sha1(config('app.name') . '_web')))
+                ->with('error', 'Your session has expired. Please login again.');
+        }
+
         // Handle JSON requests
         if ($request->expectsJson()) {
             return response()->json([
