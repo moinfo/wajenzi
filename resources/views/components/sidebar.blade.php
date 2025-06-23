@@ -247,13 +247,12 @@
         --wajenzi-gray-700: #334155;
         --wajenzi-gray-800: #1E293B;
         --wajenzi-gray-900: #0F172A;
-        --sidebar-width: 280px;
         --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
     .wajenzi-sidebar {
-        width: var(--sidebar-width);
+        width: 280px;
         background: linear-gradient(180deg, var(--wajenzi-gray-50) 0%, white 100%);
         height: 100vh;
         position: fixed;
