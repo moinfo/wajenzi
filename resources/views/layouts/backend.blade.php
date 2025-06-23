@@ -722,12 +722,60 @@ MAIN CONTENT LAYOUT
         });
     }
 
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            if (this.nextElementSibling && this.nextElementSibling.classList.contains('nav-treeview')) {
+    // Enhanced menu functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle submenu toggling
+        const submenuToggles = document.querySelectorAll('[data-toggle="submenu"]');
+        
+        submenuToggles.forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
                 e.preventDefault();
-                this.closest('.nav-item').classList.toggle('active');
+                
+                const navItem = this.closest('.nav-item');
+                const submenu = navItem.querySelector('.nav-treeview');
+                
+                // Close other open submenus
+                document.querySelectorAll('.nav-item.has-children').forEach(item => {
+                    if (item !== navItem) {
+                        item.classList.remove('active');
+                        const otherSubmenu = item.querySelector('.nav-treeview');
+                        if (otherSubmenu) {
+                            otherSubmenu.classList.remove('show');
+                        }
+                    }
+                });
+                
+                // Toggle current submenu
+                navItem.classList.toggle('active');
+                if (submenu) {
+                    submenu.classList.toggle('show');
+                }
+            });
+        });
+
+        // Auto-expand submenu if it contains active item
+        const allSubmenus = document.querySelectorAll('.nav-treeview');
+        
+        allSubmenus.forEach(submenu => {
+            const activeChild = submenu.querySelector('.nav-link.active');
+            if (activeChild) {
+                submenu.classList.add('show');
+                submenu.closest('.nav-item').classList.add('active');
             }
+        });
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
         });
     });
 </script>

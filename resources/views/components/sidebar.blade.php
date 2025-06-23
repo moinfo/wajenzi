@@ -27,22 +27,149 @@
             </div>
         </div>
         <style>
+            /* Enhanced Navigation Styles */
+            .nav-item.has-children {
+                position: relative;
+            }
+
             .nav-treeview {
-                padding-left: 1rem;
-                display: none;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+                opacity: 0;
+                padding: 0;
+                margin-top: 0;
+                background: rgba(37, 99, 235, 0.02);
+                border-radius: 0 0 12px 12px;
+                margin-left: 0.5rem;
+                margin-right: 0.5rem;
+                border-left: 3px solid var(--wajenzi-blue-primary);
+                list-style: none;
             }
 
-            .nav-item.active > .nav-treeview {
-                display: block;
+            .nav-treeview.show {
+                max-height: 300px;
+                opacity: 1;
+                padding: 0.5rem 0;
+                margin-top: 0.5rem;
             }
 
-            .nav-link .right {
-                float: right;
-                transition: transform .3s ease-in-out;
+            /* Force show for active children */
+            .nav-item.has-children.active .nav-treeview,
+            .nav-treeview.show {
+                max-height: 300px !important;
+                opacity: 1 !important;
+                padding: 0.5rem 0 !important;
+                margin-top: 0.5rem !important;
+                display: block !important;
             }
 
-            .nav-item.active > .nav-link .right {
-                transform: rotate(90deg);
+            /* Parent Menu Items with Children */
+            .nav-item.has-children > .nav-link {
+                font-weight: 600;
+                position: relative;
+            }
+
+            /* Parent menu item when it has active children */
+            .nav-item.has-children.active > .nav-link {
+                background: rgba(37, 99, 235, 0.1);
+                color: var(--wajenzi-blue-primary);
+                border-radius: 12px 12px 0 0;
+            }
+
+            .nav-item.has-children.active > .nav-link i,
+            .nav-item.has-children.active > .nav-link .submenu-arrow {
+                color: var(--wajenzi-blue-primary);
+            }
+
+            /* Submenu Arrow */
+            .submenu-arrow {
+                margin-left: auto !important;
+                margin-right: 0 !important;
+                font-size: 0.75rem !important;
+                transition: transform 0.3s ease;
+                width: auto !important;
+                color: var(--wajenzi-gray-500);
+            }
+
+            .nav-item.active .submenu-arrow {
+                transform: rotate(180deg);
+            }
+
+            /* Submenu Items */
+            .submenu-item {
+                margin: 0;
+            }
+
+            .submenu-link {
+                padding: 0.75rem 1.5rem !important;
+                border-radius: 8px !important;
+                margin: 0.25rem 0.5rem;
+                position: relative;
+                transition: all 0.2s ease;
+                background: transparent;
+                font-size: 0.8125rem !important;
+                color: var(--wajenzi-gray-600) !important;
+            }
+
+            .submenu-link:hover {
+                background: rgba(37, 99, 235, 0.08) !important;
+                transform: translateX(4px);
+                color: var(--wajenzi-blue-primary) !important;
+            }
+
+            .submenu-link:hover i {
+                color: var(--wajenzi-blue-primary) !important;
+            }
+
+            .submenu-link.active {
+                background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green) 100%) !important;
+                color: white !important;
+                transform: translateX(4px);
+                box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+                font-weight: 600 !important;
+            }
+
+            .submenu-link.active i {
+                color: white !important;
+            }
+
+            .submenu-link i {
+                font-size: 0.875rem !important;
+                margin-right: 0.75rem !important;
+                width: 16px !important;
+                color: var(--wajenzi-gray-500) !important;
+            }
+
+            /* Active submenu indicator */
+            .submenu-link.active::after {
+                content: '';
+                position: absolute;
+                right: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 3px;
+                height: 16px;
+                background: rgba(255, 255, 255, 0.4);
+                border-radius: 2px;
+            }
+
+            /* Menu item focus states for accessibility */
+            .nav-link:focus {
+                outline: 2px solid var(--wajenzi-blue-primary);
+                outline-offset: 2px;
+            }
+
+            .submenu-link:focus {
+                outline: 2px solid var(--wajenzi-blue-primary);
+                outline-offset: 2px;
+            }
+
+            /* Improve submenu visual hierarchy */
+            .nav-treeview {
+                border-left-color: rgba(37, 99, 235, 0.2);
+                background: rgba(248, 250, 252, 0.8);
+                backdrop-filter: blur(10px);
             }
         </style>
         <!-- Navigation Menu -->
@@ -51,22 +178,47 @@
             <ul class="nav-list">
                 @foreach($user_menu as $menu)
                     @if(auth()->user()->can($menu['name']))
-                        <li class="nav-item {{ request()->is($menu['route'] .'/*') ? 'active' : '' }}">
-                            <a href="{{ route($menu['route']) }}"
-                               class="nav-link {{ request()->is($menu['route']) ? 'active' : '' }}">
-                                <i class="{{$menu['icon']}}"></i>
-                                <span>{{$menu['name']}}</span>
-                                @if(isset($menu['children']) && count($menu['children']) > 0)
-                                    <i class="fa fa-angle-right right"></i>
-                                @endif
-                            </a>
+                        @php
+                            // Check if current route matches menu or any of its children
+                            $isActive = request()->routeIs($menu['route']);
+                            $hasActiveChild = false;
+                            
+                            if(isset($menu['children'])) {
+                                foreach($menu['children'] as $submenu) {
+                                    if(request()->routeIs($submenu['route'])) {
+                                        $hasActiveChild = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            $parentActive = $isActive || $hasActiveChild;
+                        @endphp
+                        
+                        <li class="nav-item {{ $parentActive ? 'active' : '' }} {{ isset($menu['children']) && count($menu['children']) > 0 ? 'has-children' : '' }}">
                             @if(isset($menu['children']) && count($menu['children']) > 0)
-                                <ul class="nav nav-treeview">
+                                <a href="javascript:void(0)" 
+                                   class="nav-link parent-link {{ $parentActive ? 'active' : '' }}"
+                                   data-toggle="submenu">
+                                    <i class="{{$menu['icon']}}"></i>
+                                    <span>{{$menu['name']}}</span>
+                                    <i class="fa fa-chevron-down submenu-arrow"></i>
+                                </a>
+                            @else
+                                <a href="{{ route($menu['route']) }}"
+                                   class="nav-link {{ $isActive ? 'active' : '' }}">
+                                    <i class="{{$menu['icon']}}"></i>
+                                    <span>{{$menu['name']}}</span>
+                                </a>
+                            @endif
+                            
+                            @if(isset($menu['children']) && count($menu['children']) > 0)
+                                <ul class="nav-treeview {{ $hasActiveChild ? 'show' : '' }}">
                                     @foreach($menu['children'] as $submenu)
                                         @if(auth()->user()->can($submenu['name']))
-                                            <li class="nav-item">
+                                            <li class="nav-item submenu-item">
                                                 <a href="{{ route($submenu['route']) }}"
-                                                   class="nav-link {{ request()->is($submenu['route']) ? 'active' : '' }}">
+                                                   class="nav-link submenu-link {{ request()->routeIs($submenu['route']) ? 'active' : '' }}">
                                                     <i class="{{$submenu['icon']}}"></i>
                                                     <span>{{$submenu['name']}}</span>
                                                 </a>
@@ -255,7 +407,8 @@
     }
 
     .nav-item {
-        margin: 0.125rem 0;
+        margin: 0.25rem 0;
+        position: relative;
     }
 
     .nav-link {
@@ -268,6 +421,7 @@
         transition: all 0.2s ease;
         position: relative;
         font-weight: 500;
+        background: transparent;
     }
 
     .nav-link i {
@@ -282,55 +436,72 @@
     .nav-link span {
         font-size: 0.875rem;
         flex: 1;
+        color: inherit;
     }
 
-    .nav-link .right {
-        margin-left: auto;
-        margin-right: 0;
-        font-size: 0.75rem;
-        color: var(--wajenzi-gray-600);
-    }
-
+    /* Hover States */
     .nav-link:hover {
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--wajenzi-blue-primary);
+        transform: translateX(2px);
+    }
+
+    .nav-link:hover i {
+        color: var(--wajenzi-blue-primary);
+    }
+
+    /* Active States for Regular Menu Items */
+    .nav-item:not(.has-children) .nav-link.active {
         background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green) 100%);
         color: white;
-        transform: translateX(4px);
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+        font-weight: 600;
     }
 
-    .nav-link:hover i,
-    .nav-link:hover .right {
+    .nav-item:not(.has-children) .nav-link.active i {
         color: white;
     }
 
-    .nav-link.active {
-        background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green) 100%);
-        color: white;
-        box-shadow: var(--shadow-sm);
+    /* Active indicator for regular items */
+    .nav-item:not(.has-children) .nav-link.active::after {
+        content: '';
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 2px;
     }
 
-    .nav-link.active i,
-    .nav-link.active .right {
-        color: white;
-    }
-
-    /* Submenu Styles */
+    /* Enhanced Submenu Styles */
     .nav-treeview {
-        padding-left: 2.5rem;
-        margin-top: 0.5rem;
-        border-left: 2px solid var(--wajenzi-gray-100);
-        margin-left: 1rem;
+        list-style: none !important;
     }
 
-    .nav-treeview .nav-link {
-        padding: 0.625rem 1rem;
-        font-size: 0.8125rem;
-        background: transparent;
+    /* Consistent spacing for all menu items */
+    .nav-item {
+        border-radius: 12px;
+        overflow: hidden;
     }
 
-    .nav-treeview .nav-link i {
-        font-size: 0.875rem;
-        margin-right: 0.625rem;
+    /* Better visual separation between menu sections */
+    .nav-item + .nav-item {
+        margin-top: 0.25rem;
+    }
+
+    /* Improved contrast for better readability */
+    .nav-link span {
+        font-weight: 500;
+        letter-spacing: 0.025em;
+    }
+
+    /* Ensure consistent icon alignment */
+    .nav-link i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     /* Responsive Design */
