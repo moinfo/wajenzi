@@ -173,7 +173,6 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         --wajenzi-gray-600: #475569;
         --wajenzi-gray-700: #334155;
         --wajenzi-gray-800: #1E293B;
-        --header-height: 80px;
         --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
@@ -182,7 +181,7 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     /* Header Container */
     .wajenzi-header {
         background: linear-gradient(135deg, var(--wajenzi-gray-50) 0%, white 100%);
-        height: var(--header-height);
+        height: 80px;
         border-bottom: 1px solid var(--wajenzi-gray-200);
         position: fixed;
         top: 0;
@@ -200,7 +199,7 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         align-items: center;
         padding: 1.25rem 2rem;
         max-width: 100%;
-        min-height: var(--header-height);
+        min-height: 80px;
         box-sizing: border-box;
     }
 
@@ -692,7 +691,7 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
 
     /* Page Header Spacing */
     #page-header {
-        margin-bottom: 30px!important;
+        /* Removed margin-bottom to prevent gap between header and content */
     }
 
     /* Responsive Design */

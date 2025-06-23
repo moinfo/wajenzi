@@ -137,16 +137,26 @@
 
         /* Main Layout Structure */
         .wajenzi-main {
-            min-height: calc(100vh - 80px - 60px);
+            margin-top: 20px; /* Space for fixed header */
+            /*margin-left: 20px; !* Space for sidebar *!*/
+            min-height: calc(100vh);
             background: var(--wajenzi-gray-50);
             transition: margin-left 0.3s ease;
-            width: calc(100vw - 280px);
+            width: 100%;
             display: flex;
             justify-content: center;
             align-items: flex-start;
             box-sizing: border-box;
             padding: 0;
             padding-bottom: 60px;
+            overflow-y: auto; /* Enable scrolling */
+            position: relative;
+        }
+
+        /* When sidebar is closed */
+        .sidebar-o-xs .wajenzi-main {
+            margin-left: 0;
+            width: 100vw;
         }
 
         .main-content {
@@ -163,6 +173,18 @@
             align-items: flex-start !important;
             padding: 0 !important;
             box-sizing: border-box !important;
+            margin-top: 20px !important; /* Space for fixed header */
+            /*margin-left: 20px !important; !* Space for sidebar *!*/
+            overflow-y: auto !important; /* Enable scrolling */
+            height: calc(100vh) !important;
+            width: calc(100vw) !important;
+            transition: margin-left 0.3s ease !important;
+        }
+
+        /* When sidebar is closed */
+        .sidebar-o-xs #main-container {
+            margin-left: 0 !important;
+            width: 100vw !important;
         }
 
         /* Page Container Adjustments */
@@ -367,13 +389,15 @@
             .wajenzi-main,
             #main-container {
                 margin-left: 0;
-                margin-top: 80px;
+                margin-top: 80px !important;
                 width: 100vw;
                 padding: 0;
                 padding-bottom: 80px;
                 display: flex;
                 justify-content: center;
                 align-items: flex-start;
+                overflow-y: auto !important;
+                height: calc(100vh - 80px - 60px);
             }
 
             .main-content {
