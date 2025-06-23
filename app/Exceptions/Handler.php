@@ -49,19 +49,12 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
-        // Handle unserialize errors (corrupted remember token)
-        if ($exception instanceof \ErrorException &&
-            strpos($exception->getMessage(), 'unserialize(): Error at offset') !== false) {
-            
-            // Get the cookie name
-            $cookieName = 'remember_web_' . sha1(config('app.name') . '_web');
-            
-            // Create a response that clears the corrupted cookie
-            $response = redirect('/login');
-            $response->withCookie(Cookie::forget($cookieName));
-            
-            return $response;
-        }
+        // Temporarily disabled to prevent redirect loops
+        // TODO: Fix unserialize error handling
+        // if ($exception instanceof \ErrorException &&
+        //     strpos($exception->getMessage(), 'unserialize(): Error at offset') !== false) {
+        //     // Handle corrupted remember token
+        // }
 
         // Handle JSON requests
         if ($request->expectsJson()) {
