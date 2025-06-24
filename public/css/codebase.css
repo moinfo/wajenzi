@@ -22533,7 +22533,7 @@ div.tagsinput span.tag a:hover {
           animation: modalFadeInUp 0.3s ease;
 }
 .modal .modal-content .modal-header {
-  background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%);
+  background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
   color: white !important;
   padding: 1.5rem 2rem;
   border-bottom: none;
@@ -22597,7 +22597,7 @@ div.tagsinput span.tag a:hover {
 .modal .modal-content .modal-footer {
   padding: 1.5rem 2rem;
   border-top: none;
-  background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%);
+  background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
   display: flex;
   justify-content: flex-end;
   gap: 1rem;
@@ -22686,6 +22686,25 @@ div.tagsinput span.tag a:hover {
   background-color: rgba(0, 0, 0, 0.6);
   -webkit-backdrop-filter: blur(5px);
           backdrop-filter: blur(5px);
+}
+
+.modal.fade .modal-dialog .modal-content .modal-header,
+.modal .modal-dialog .modal-content .modal-header,
+.modal-content .modal-header {
+  background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
+  color: white !important;
+  border-bottom: none !important;
+}
+
+.modal.fade .modal-dialog .modal-content .modal-footer,
+.modal .modal-dialog .modal-content .modal-footer,
+.modal-content .modal-footer:not(.modal-white-footer .modal-footer) {
+  background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
+  border-top: none !important;
+}
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.6) !important;
 }
 
 @-webkit-keyframes modalFadeInUp {
