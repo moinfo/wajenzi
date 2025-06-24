@@ -64,3 +64,134 @@
         padding-top: 2px !important;
     }
 }
+
+// Global Table Responsive Styles
+// Enhanced horizontal scrolling for all tables across the application
+.table-responsive {
+    display: block !important;
+    width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: white;
+    
+    // Force proper table layout
+    .table {
+        min-width: 600px !important;
+        margin-bottom: 0 !important;
+        width: auto !important;
+        white-space: nowrap;
+        
+        // Prevent text wrapping in cells
+        th, td {
+            white-space: nowrap !important;
+            min-width: 80px;
+            padding: 8px 12px;
+            vertical-align: middle;
+        }
+        
+        // First column (usually row numbers)
+        th:first-child, td:first-child {
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        // Last column (usually actions)
+        th:last-child, td:last-child {
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        // Number columns
+        .text-right {
+            text-align: right !important;
+            min-width: 100px;
+        }
+    }
+    
+    // Custom scrollbar styling
+    &::-webkit-scrollbar {
+        height: 8px;
+        background: transparent;
+    }
+    
+    &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border-radius: 10px;
+        transition: background 0.3s ease;
+    }
+    
+    &::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #0056b3, #004085);
+    }
+}
+
+// DataTables responsive enhancement
+.js-dataTable-full {
+    &.table-responsive {
+        .table {
+            min-width: 800px !important; // DataTables need more space
+        }
+    }
+}
+
+// Specific table enhancements for different page types
+.payroll-table, .employee-table, .staff-table {
+    .table-responsive .table {
+        min-width: 1000px !important; // Payroll tables have many columns
+    }
+}
+
+// Mobile specific enhancements
+@media (max-width: 767.98px) {
+    .table-responsive {
+        font-size: 0.875rem;
+        border-radius: 8px;
+        
+        .table {
+            min-width: 500px !important;
+            
+            th, td {
+                padding: 6px 8px;
+                font-size: 0.8rem;
+            }
+        }
+    }
+}
+
+// Tablet specific enhancements
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .table-responsive {
+        .table {
+            th, td {
+                padding: 7px 10px;
+                font-size: 0.9rem;
+            }
+        }
+    }
+}
+
+// Print media - remove horizontal scroll for printing
+@media print {
+    .table-responsive {
+        overflow: visible !important;
+        
+        .table {
+            min-width: auto !important;
+            width: 100% !important;
+            
+            th, td {
+                white-space: normal !important;
+                word-wrap: break-word;
+                min-width: auto !important;
+            }
+        }
+    }
+}

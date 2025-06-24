@@ -3,23 +3,44 @@
 @section('content')
 
     <style>
-        /*body {*/
-        /*    !*background: #67B26F;  !* fallback for old browsers *!*!*/
-        /*    !*background: -webkit-linear-gradient(to right, #4ca2cd, #67B26F);  !* Chrome 10-25, Safari 5.1-6 *!*!*/
-        /*    !*background: linear-gradient(to right, #4ca2cd, #67B26F); !* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ *!*!*/
-        /*    padding: 0;*/
-        /*    margin: 0;*/
-        /*    font-family: 'Lato', sans-serif;*/
-        /*    color: #000;*/
-        /*}*/
+        .main-container {
+            background: linear-gradient(135deg, #f0f2f5 0%, #f8f9fa 100%);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        .employee-profile-header {
+            background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%);
+            color: white;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+        }
 
         .card {
             background: white !important;
-            padding: 20px
+            border: none;
+            box-shadow: 0 4px 20px rgba(63, 156, 232, 0.1);
+            border-radius: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(63, 156, 232, 0.15);
         }
 
         .student-profile .card {
-            border-radius: 10px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .student-profile .card .card-header {
+            background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
+            color: white !important;
+            border-radius: 15px 15px 0 0;
+            padding: 2rem 1rem;
+            border: none;
         }
 
         .student-profile .card .card-header .profile_img {
@@ -27,29 +48,275 @@
             height: 150px;
             object-fit: cover;
             margin: 10px auto;
-            border: 10px solid #ccc;
+            border: 5px solid rgba(255, 255, 255, 0.8);
             border-radius: 50%;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
-        .student-profile .card h3 {
-            font-size: 20px;
+        .student-profile .card .card-header h3 {
+            font-size: 24px;
             font-weight: 700;
+            color: white !important;
+            margin-top: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .student-profile .card p {
             font-size: 16px;
-            color: #000;
+            color: #575757;
         }
 
-        .student-profile .table th,
-        .student-profile .table td {
-            font-size: 14px;
-            padding: 5px 10px;
-            color: #000;
+        .list-group-item {
+            border: none;
+            padding: 12px 20px;
+            background: rgba(63, 156, 232, 0.05);
+            margin-bottom: 5px;
+            border-radius: 8px;
+        }
+
+        .badge {
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            border-radius: 20px;
+        }
+
+        .bg-primary {
+            background: linear-gradient(135deg, #3f9ce8, #2facb2) !important;
+        }
+
+        .bg-success {
+            background: linear-gradient(135deg, #9ccc65, #70b29c) !important;
+        }
+
+        .bg-danger {
+            background: linear-gradient(135deg, #ef5350, #e74c3c) !important;
+        }
+
+        .bg-warning {
+            background: linear-gradient(135deg, #ffca28, #ffa726) !important;
+        }
+
+        .card-header.bg-transparent {
+            background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
+            color: white !important;
+            border-radius: 15px 15px 0 0;
+            border: none;
+        }
+
+        .card-header.bg-transparent h3 {
+            color: white !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 0;
+        }
+
+        .card-header.bg-transparent i {
+            color: white !important;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            background: rgba(63, 156, 232, 0.1);
+            color: #3f9ce8;
+            font-weight: 600;
+            border: none;
+            padding: 12px 15px;
+        }
+
+        .table td {
+            padding: 12px 15px;
+            color: #575757;
+            border-color: rgba(63, 156, 232, 0.1);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(63, 156, 232, 0.1);
+            border-left: 4px solid #3f9ce8;
+        }
+
+        .stat-card h4 {
+            color: #3f9ce8;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card p {
+            color: #575757;
+            margin-bottom: 0;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3f9ce8, #2facb2);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2a7fc7, #1a5e61);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(63, 156, 232, 0.3);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #3f9ce8;
+            color: #3f9ce8;
+            border-radius: 25px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: linear-gradient(135deg, #3f9ce8, #2facb2);
+            border-color: #3f9ce8;
+            transform: translateY(-2px);
+        }
+
+        .text-success {
+            color: #9ccc65 !important;
+        }
+
+        .text-danger {
+            color: #ef5350 !important;
+        }
+
+        .form-control {
+            border: 2px solid rgba(63, 156, 232, 0.2);
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #3f9ce8;
+            box-shadow: 0 0 0 0.2rem rgba(63, 156, 232, 0.25);
+        }
+
+        .input-group-text {
+            background: linear-gradient(135deg, #3f9ce8, #2facb2);
+            color: white;
+            border: none;
+            border-radius: 10px 0 0 10px;
+            font-weight: 600;
+        }
+
+        .search-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(63, 156, 232, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .search-section h5 {
+            color: #3f9ce8;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .select2-container--default .select2-selection--single {
+            border: 2px solid rgba(63, 156, 232, 0.2) !important;
+            border-radius: 10px !important;
+            height: 48px !important;
+            padding: 8px 12px !important;
+            transition: border-color 0.3s ease;
+        }
+
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #3f9ce8 !important;
+            box-shadow: 0 0 0 0.2rem rgba(63, 156, 232, 0.25) !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 30px !important;
+            color: #575757 !important;
+            padding-left: 0 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 46px !important;
+            right: 10px !important;
+        }
+
+        .select2-dropdown {
+            border: 2px solid rgba(63, 156, 232, 0.2) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 4px 20px rgba(63, 156, 232, 0.1) !important;
+        }
+
+        .no-data-message {
+            text-align: center;
+            padding: 3rem 2rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(63, 156, 232, 0.1);
+            margin-top: 2rem;
+        }
+
+        .no-data-message .icon {
+            font-size: 4rem;
+            color: rgba(63, 156, 232, 0.3);
+            margin-bottom: 1rem;
+        }
+
+        .no-data-message h4 {
+            color: #3f9ce8;
+            margin-bottom: 1rem;
+        }
+
+        .no-data-message p {
+            color: #575757;
+            margin-bottom: 0;
+        }
+
+        .search-form-row {
+            align-items: end;
+        }
+
+        .input-group {
+            height: 48px;
+        }
+
+        .input-group .form-control {
+            height: 100%;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .btn-search {
+            height: 48px;
+            padding: 0 2rem;
+            border-radius: 10px;
+            font-weight: 600;
         }
 
         .d-flex {
             gap: 20px !important;
+        }
+
+        h6.text-uppercase {
+            color: #3f9ce8;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        /* Page-specific table responsive enhancements */
+        .employee-profile .table-responsive::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3f9ce8, #2facb2);
+        }
+
+        .employee-profile .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #2a7fc7, #1a5e61);
         }
     </style>
     <div class="main-container">
@@ -57,49 +324,49 @@
             <div class="col-xl-10 mx-auto">
                 <h6 class="mb-0 text-uppercase">Employee Details Profile</h6>
                 <hr/>
-                <hr/>
-                <div class="card shadow-sm border rounded">
-                    <div class="card-body">
-                        <div class="p-4 border rounded">
-                            <form class="row g-3" action="" method="POST">
-                                @csrf
-                                <div class="class col-md-3">
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text" id="basic-addon1">Start Date</span>
-                                        </div>
-                                        <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-01-01')}}">
-                                    </div>
+                
+                <!-- Search Section -->
+                <div class="search-section">
+                    <h5><i class="fas fa-search"></i> Search Employee</h5>
+                    <form class="row g-3 search-form-row" action="" method="POST">
+                        @csrf
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="basic-addon1"><i class="fas fa-calendar-alt"></i> Start Date</span>
                                 </div>
-                                <div class="class col-md-3">
-                                    <div class="input-group mb-3">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text" id="basic-addon2">End Date</span>
-                                        </div>
-                                        <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="select2 form-control" id="staff_id" name="staff_id" required>
-                                        <option selected disabled value="">Choose...</option>
-                                        @foreach($staffs as $staff)
-                                            <option value="{{ $staff->id }}"> {{ $staff->name }} </option>
-                                        @endforeach
-                                    </select>
-                                    <div class="invalid-feedback">Please select a valid state.</div>
-                                </div>
-                                <div class="col-2">
-                                    <button class="btn btn-success" type="submit"><i class="si si-search"></i>Search
-                                    </button>
-                                </div>
-                            </form>
+                                <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-01-01')}}">
+                            </div>
                         </div>
-
-                    </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="basic-addon2"><i class="fas fa-calendar-alt"></i> End Date</span>
+                                </div>
+                                <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="select2 form-control" id="staff_id" name="staff_id" required>
+                                <option selected disabled value="">Select Employee...</option>
+                                @foreach($staffs as $staff)
+                                    <option value="{{ $staff->id }}"> {{ $staff->name }} ({{ $staff->employee_number }}) </option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback">Please select an employee.</div>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary btn-search w-100" type="submit">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="student-profile py-4">
-                    <div class="container">
-                        <div class="row mb-3">
+
+                @if(isset($employee) && $employee)
+                <!-- Employee Profile Content -->
+                <div class="student-profile employee-profile">
+                    <div class="row mb-3">
                             <div class="col-12 col-lg-5 d-flex">
                                 <div class="card shadow-sm radius-10 w-100">
                                     <div class="card-header bg-transparent text-center">
@@ -107,7 +374,7 @@
                                         $profile = $employee->profile ?? 'media/avatars/avatar15.jpg'
                                         ?>
                                         <img class="profile_img" src="{{ asset("$profile")}}"
-                                             alt="student dp">
+                                             alt="employee profile">
                                         <h3>{{$employee->name}}</h3>
                                     </div>
                                     <div class="card-body">
@@ -136,12 +403,13 @@
                                         <h3 class="mb-0"><i class="far fa-clone pr-1"></i>General Information</h3>
                                     </div>
                                     <div class="card-body">
-                                        <table class="table table-bordered">
-                                            <tr>
-                                                <th width="30%">Employed Date</th>
-                                                <td width="2%">:</td>
-                                                <td>{{ $employee->created_at  ?? ''}}</td>
-                                            </tr>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <tr>
+                                                    <th width="30%">Employed Date</th>
+                                                    <td width="2%">:</td>
+                                                    <td>{{ $employee->created_at  ?? ''}}</td>
+                                                </tr>
                                             <tr>
                                                 <th width="30%">Address</th>
                                                 <td width="2%">:</td>
@@ -205,7 +473,8 @@
                                                     @endif
                                                 </td>
                                             </tr>
-                                        </table>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -303,7 +572,8 @@
                                         <div class="card radius-10 w-100">
                                             <div class="card-body">
                                                 <h3>Loan History</h3>
-                                                <table class="table table-bordered mb-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered mb-0">
                                                     <thead>
                                                     <tr>
                                                         <th scope="col">#</th>
@@ -334,6 +604,7 @@
                                                     </tr>
                                                     </tbody>
                                                 </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -341,7 +612,8 @@
                                         <div class="card radius-10 w-100">
                                             <div class="card-body">
                                                 <h3>Advance Salaries History</h3>
-                                                <table class="table table-bordered mb-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered mb-0">
                                                     <thead>
                                                     <tr>
                                                         <th scope="col">#</th>
@@ -372,7 +644,7 @@
                                                     </tr>
                                                     </tbody>
                                                 </table>
-
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -534,8 +806,9 @@
                                     <div class="col-12 col-lg-6 d-flex">
                                         <div class="card radius-10 w-100">
                                             <div class="card-body">
-                                                <h3>Assest & Benefits History</h3>
-                                                <table class="table table-bordered mb-0">
+                                                <h3>Assets & Benefits History</h3>
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered mb-0">
                                                     <thead>
                                                     <tr>
                                                         <th scope="col">#</th>
@@ -556,6 +829,7 @@
 
                                                     </tbody>
                                                 </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -563,12 +837,62 @@
                                 </div><!--end row-->
                             </div>
                         </div>
-
-                    </div>
                 </div>
+                @else
+                <!-- No Data State -->
+                <div class="no-data-message">
+                    <div class="icon">
+                        <i class="fas fa-user-search"></i>
+                    </div>
+                    <h4>No Employee Selected</h4>
+                    <p>Please use the search form above to select an employee and view their profile details.</p>
+                </div>
+                @endif
             </div>
         </div>
     </div>
+
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2 with search functionality
+            $('#staff_id').select2({
+                placeholder: "Search and select an employee...",
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Form validation before submission
+            $('form').on('submit', function(e) {
+                const staffId = $('#staff_id').val();
+                if (!staffId) {
+                    e.preventDefault();
+                    
+                    // Show validation message
+                    $('#staff_id').addClass('is-invalid');
+                    $('.invalid-feedback').show();
+                    
+                    // Show alert dialog
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Employee Required',
+                        text: 'Please select an employee to view their profile.',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#3f9ce8'
+                    });
+                    
+                    return false;
+                }
+            });
+
+            // Remove validation styling when employee is selected
+            $('#staff_id').on('change', function() {
+                if ($(this).val()) {
+                    $(this).removeClass('is-invalid');
+                    $('.invalid-feedback').hide();
+                }
+            });
+        });
+    </script>
 @endsection
 
 
