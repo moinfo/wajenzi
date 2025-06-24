@@ -45,23 +45,103 @@
                 margin-right: 0.5rem;
                 border-left: 3px solid var(--wajenzi-blue-primary);
                 list-style: none;
+                position: relative;
             }
 
             .nav-treeview.show {
-                max-height: 300px;
+                max-height: 600px; /* Increased from 300px to accommodate more items */
+                min-height: auto;
                 opacity: 1;
                 padding: 0.5rem 0;
                 margin-top: 0.5rem;
+                overflow-y: auto; /* Enable vertical scrolling when needed */
+                overflow-x: hidden;
+            }
+
+            /* Enhanced scrolling for long submenus */
+            .nav-treeview.show.large-submenu {
+                max-height: 70vh; /* Use viewport height for better responsiveness */
+                overflow-y: auto;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(37, 99, 235, 0.3) transparent;
+            }
+
+            /* Custom scrollbar styling for submenus */
+            .nav-treeview.show::-webkit-scrollbar {
+                width: 4px;
+            }
+
+            .nav-treeview.show::-webkit-scrollbar-track {
+                background: rgba(37, 99, 235, 0.05);
+                border-radius: 2px;
+            }
+
+            .nav-treeview.show::-webkit-scrollbar-thumb {
+                background: rgba(37, 99, 235, 0.3);
+                border-radius: 2px;
+                transition: background 0.3s ease;
+            }
+
+            .nav-treeview.show::-webkit-scrollbar-thumb:hover {
+                background: rgba(37, 99, 235, 0.5);
             }
 
             /* Force show for active children */
             .nav-item.has-children.active .nav-treeview,
             .nav-treeview.show {
-                max-height: 300px !important;
+                max-height: 600px !important;
                 opacity: 1 !important;
                 padding: 0.5rem 0 !important;
                 margin-top: 0.5rem !important;
                 display: block !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
+
+            /* Large submenu class for better height management */
+            .nav-item.has-children.active .nav-treeview.large-submenu,
+            .nav-treeview.show.large-submenu {
+                max-height: 70vh !important;
+            }
+
+            /* Responsive adjustments for smaller screens */
+            @media (max-height: 600px) {
+                .nav-treeview.show {
+                    max-height: 50vh !important;
+                }
+                
+                .nav-treeview.show.large-submenu {
+                    max-height: 60vh !important;
+                }
+            }
+
+            @media (max-height: 400px) {
+                .nav-treeview.show {
+                    max-height: 40vh !important;
+                }
+                
+                .nav-treeview.show.large-submenu {
+                    max-height: 50vh !important;
+                }
+            }
+
+            /* Mobile devices (portrait) */
+            @media (max-width: 768px) and (orientation: portrait) {
+                .nav-treeview.show {
+                    max-height: 50vh !important;
+                }
+                
+                .nav-treeview.show.large-submenu {
+                    max-height: 60vh !important;
+                }
+            }
+
+            /* Ensure submenu doesn't go outside viewport on small screens */
+            @media (max-height: 480px) {
+                .nav-treeview.show,
+                .nav-treeview.show.large-submenu {
+                    max-height: 40vh !important;
+                }
             }
 
             /* Parent Menu Items with Children */

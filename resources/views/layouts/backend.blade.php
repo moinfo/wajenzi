@@ -769,6 +769,31 @@ MAIN CONTENT LAYOUT
         // Handle submenu toggling
         const submenuToggles = document.querySelectorAll('[data-toggle="submenu"]');
 
+        // Enhanced submenu height detection function
+        function detectLargeSubmenus() {
+            document.querySelectorAll('.nav-treeview').forEach(submenu => {
+                const submenuItems = submenu.querySelectorAll('.submenu-item');
+                // If submenu has more than 8 items, treat it as large
+                if (submenuItems.length > 8) {
+                    submenu.classList.add('large-submenu');
+                }
+            });
+        }
+
+        // Auto-expand submenu if it contains active item and detect large submenus
+        const allSubmenus = document.querySelectorAll('.nav-treeview');
+
+        allSubmenus.forEach(submenu => {
+            const activeChild = submenu.querySelector('.nav-link.active');
+            if (activeChild) {
+                submenu.classList.add('show');
+                submenu.closest('.nav-item').classList.add('active');
+            }
+        });
+
+        // Detect and mark large submenus on page load
+        detectLargeSubmenus();
+
         submenuToggles.forEach(toggle => {
             toggle.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -791,19 +816,22 @@ MAIN CONTENT LAYOUT
                 navItem.classList.toggle('active');
                 if (submenu) {
                     submenu.classList.toggle('show');
+                    
+                    // Ensure proper scrolling for active item in large submenus
+                    if (submenu.classList.contains('show') && submenu.classList.contains('large-submenu')) {
+                        const activeItem = submenu.querySelector('.submenu-link.active');
+                        if (activeItem) {
+                            // Small delay to ensure animation is complete
+                            setTimeout(() => {
+                                activeItem.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center'
+                                });
+                            }, 300);
+                        }
+                    }
                 }
             });
-        });
-
-        // Auto-expand submenu if it contains active item
-        const allSubmenus = document.querySelectorAll('.nav-treeview');
-
-        allSubmenus.forEach(submenu => {
-            const activeChild = submenu.querySelector('.nav-link.active');
-            if (activeChild) {
-                submenu.classList.add('show');
-                submenu.closest('.nav-item').classList.add('active');
-            }
         });
 
         // Smooth scroll for anchor links
