@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wajenzi Badge Design Showcase</title>
+    <link href="public/css/codebase.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f2f5 0%, #f8f9fa 100%);
+            padding: 2rem;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+        .showcase-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .showcase-title {
+            color: #3f9ce8;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .showcase-subtitle {
+            color: #575757;
+            font-size: 1.2rem;
+        }
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .demo-title {
+            color: #3f9ce8;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #3f9ce8;
+            padding-bottom: 0.5rem;
+        }
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: center;
+        }
+        .badge-example {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .badge-label {
+            font-weight: 500;
+            color: #575757;
+            min-width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase-header">
+        <h1 class="showcase-title">Wajenzi Badge Design System</h1>
+        <p class="showcase-subtitle">Modern, professional badges with gradient styling and animations</p>
+    </div>
+
+    <!-- Standard Color Badges -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-tags"></i> Standard Color Badges</h2>
+        <div class="badge-grid">
+            <div class="badge-example">
+                <span class="badge-label">Primary:</span>
+                <span class="badge badge-primary">Active</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Success:</span>
+                <span class="badge badge-success">Completed</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Danger:</span>
+                <span class="badge badge-danger">Failed</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Warning:</span>
+                <span class="badge badge-warning">Pending</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Info:</span>
+                <span class="badge badge-info">Processing</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Secondary:</span>
+                <span class="badge badge-secondary">Inactive</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Background Class Support -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-palette"></i> Bootstrap Background Classes</h2>
+        <div class="badge-grid">
+            <div class="badge-example">
+                <span class="badge-label">bg-primary:</span>
+                <span class="badge bg-primary">Employee ID</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">bg-success:</span>
+                <span class="badge bg-success">$50,000</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">bg-danger:</span>
+                <span class="badge bg-danger">$2,500</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">bg-warning:</span>
+                <span class="badge bg-warning">Review</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">bg-info:</span>
+                <span class="badge bg-info">Updated</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">bg-secondary:</span>
+                <span class="badge bg-secondary">Archived</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Size Variants -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-expand-arrows-alt"></i> Size Variants</h2>
+        <div class="badge-grid">
+            <div class="badge-example">
+                <span class="badge-label">Small:</span>
+                <span class="badge badge-primary badge-sm">Small Badge</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Default:</span>
+                <span class="badge badge-success">Default Badge</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Large:</span>
+                <span class="badge badge-warning badge-lg">Large Badge</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Badges with Animation -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-heartbeat"></i> Status Badges with Pulse Animation</h2>
+        <div class="badge-grid">
+            <div class="badge-example">
+                <span class="badge-label">Active Status:</span>
+                <span class="badge badge-active">Online</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Pending Status:</span>
+                <span class="badge badge-pending">Processing</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Inactive Status:</span>
+                <span class="badge badge-inactive">Offline</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Light Variants -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-sun"></i> Light Color Variants</h2>
+        <div class="badge-grid">
+            <div class="badge-example">
+                <span class="badge-label">Light Primary:</span>
+                <span class="badge badge-light-primary">Draft</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Light Success:</span>
+                <span class="badge badge-light-success">Approved</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Light Danger:</span>
+                <span class="badge badge-light-danger">Rejected</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Light Warning:</span>
+                <span class="badge badge-light-warning">Under Review</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Light Info:</span>
+                <span class="badge badge-light-info">Information</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badges with Icons -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-icons"></i> Badges with Icons</h2>
+        <div class="badge-grid">
+            <div class="badge-example">
+                <span class="badge-label">With Check:</span>
+                <span class="badge badge-success"><i class="fas fa-check"></i> Verified</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">With User:</span>
+                <span class="badge badge-primary"><i class="fas fa-user"></i> Admin</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">With Warning:</span>
+                <span class="badge badge-warning"><i class="fas fa-exclamation-triangle"></i> Alert</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">With Star:</span>
+                <span class="badge badge-info"><i class="fas fa-star"></i> Featured</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">With Lock:</span>
+                <span class="badge badge-danger"><i class="fas fa-lock"></i> Locked</span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">With Clock:</span>
+                <span class="badge badge-secondary"><i class="fas fa-clock"></i> Scheduled</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Badges -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-bell"></i> Notification Badges</h2>
+        <div class="badge-grid">
+            <div class="badge-example">
+                <span class="badge-label">Message Count:</span>
+                <span style="position: relative; display: inline-block;">
+                    <i class="fas fa-envelope" style="font-size: 1.5rem; color: #3f9ce8;"></i>
+                    <span class="badge badge-notification badge-danger" style="position: absolute; top: -5px; right: -5px;">3</span>
+                </span>
+            </div>
+            <div class="badge-example">
+                <span class="badge-label">Alert Count:</span>
+                <span style="position: relative; display: inline-block;">
+                    <i class="fas fa-bell" style="font-size: 1.5rem; color: #3f9ce8;"></i>
+                    <span class="badge badge-notification badge-primary" style="position: absolute; top: -5px; right: -5px;">12</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-world Examples -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-briefcase"></i> Real-world Usage Examples</h2>
+        
+        <!-- Employee Profile Example -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+            <h6 style="color: #3f9ce8; margin-bottom: 1rem;">Employee Profile Information:</h6>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <span>Employee ID: <span class="badge bg-primary">HRM/0001</span></span>
+                <span>Salary: <span class="badge bg-success">$75,000</span></span>
+                <span>Status: <span class="badge badge-active">Active</span></span>
+                <span>Department: <span class="badge badge-info">Engineering</span></span>
+            </div>
+        </div>
+
+        <!-- Project Status Example -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+            <h6 style="color: #3f9ce8; margin-bottom: 1rem;">Project Status Dashboard:</h6>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <span>Mwanza Project: <span class="badge badge-success"><i class="fas fa-check"></i> Completed</span></span>
+                <span>Dodoma Project: <span class="badge badge-pending"><i class="fas fa-clock"></i> In Progress</span></span>
+                <span>Arusha Project: <span class="badge badge-light-warning">Planning</span></span>
+            </div>
+        </div>
+
+        <!-- Payment Status Example -->
+        <div style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+            <h6 style="color: #3f9ce8; margin-bottom: 1rem;">Payment Processing:</h6>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <span>Invoice #001: <span class="badge badge-success">Paid</span></span>
+                <span>Invoice #002: <span class="badge badge-warning">Pending</span></span>
+                <span>Invoice #003: <span class="badge badge-danger">Overdue</span></span>
+                <span>Invoice #004: <span class="badge badge-light-primary">Draft</span></span>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem; text-align: center; color: #575757;">
+        <p><strong>Badge System Features:</strong></p>
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary">Visual Features</h6>
+                <ul style="list-style: none; padding: 0;">
+                    <li>✅ Gradient backgrounds with wajenzi brand colors</li>
+                    <li>✅ Subtle shadows and hover effects</li>
+                    <li>✅ Perfect pill-shaped border radius</li>
+                    <li>✅ Consistent typography and spacing</li>
+                    <li>✅ Icon support with proper alignment</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary">Functional Features</h6>
+                <ul style="list-style: none; padding: 0;">
+                    <li>✅ Multiple size variants (sm, default, lg)</li>
+                    <li>✅ Status badges with pulse animations</li>
+                    <li>✅ Light variants for better contrast</li>
+                    <li>✅ Notification counter badges</li>
+                    <li>✅ Bootstrap class compatibility</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
