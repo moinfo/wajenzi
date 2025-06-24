@@ -6,7 +6,7 @@
             <div class="content-heading">System Cash
                 <div class="float-right">
                     @can('Add System Cash')
-                        <button type="button" onclick="loadFormModal('system_cash_form', {className: 'SystemCash'}, 'Create New System Cash', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Cash</button>
+                        <button type="button" onclick="loadFormModal('system_cash_form', {className: 'SystemCash'}, 'Create New System Cash', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New System Cash</button>
                     @endcan
                 </div>
             </div>

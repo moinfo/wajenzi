@@ -7,7 +7,7 @@
             <div class="content-heading">Project Expenses
                 <div class="float-right">
                     @can('Add Expense')
-                        <button type="button" onclick="loadFormModal('project_expense_form', {className: 'ProjectExpense'}, 'Create New Expense', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Expense</button>
+                        <button type="button" onclick="loadFormModal('project_expense_form', {className: 'ProjectExpense'}, 'Create New Expense', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Expense</button>
                     @endcan
                 </div>
             </div>

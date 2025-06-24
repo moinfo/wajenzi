@@ -55,7 +55,7 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
                 <div class="header-dropdown">
                     <button type="button" class="header-btn action-btn" data-toggle="dropdown">
                         <i class="fa fa-plus"></i>
-                        <span class="btn-text">New</span>
+                        <span class="btn-text">News</span>
                     </button>
                     <div class="dropdown-menu action-dropdown dropdown-menu-right">
                         <h6 class="dropdown-header">Quick Actions</h6>

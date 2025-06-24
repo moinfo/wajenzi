@@ -9,7 +9,7 @@
                     @can('Add Wakala')
                         <button type="button"
                                 onclick="loadFormModal('wakala_form', {className: 'Wakala'}, 'Create New Wakala', 'modal-md');"
-                                class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                                class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Wakala
                         </button>
                     @endcan

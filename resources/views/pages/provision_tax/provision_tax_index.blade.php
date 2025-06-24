@@ -6,7 +6,7 @@
         <div class="content">
             <div class="content-heading">Provision Taxes
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('provision_tax_form', {className: 'ProvisionTax'}, 'Create New ProvisionTax', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New ProvisionTax</button>
+                    <button type="button" onclick="loadFormModal('provision_tax_form', {className: 'ProvisionTax'}, 'Create New ProvisionTax', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New ProvisionTax</button>
                 </div>
             </div>
             <div>

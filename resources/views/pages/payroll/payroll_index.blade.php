@@ -90,7 +90,7 @@
             <div class="content-heading">Payroll
                 <div class="float-right">
                     @if($is_current_payroll_paid)
-                    <button class="btn btn-rounded btn-outline-success min-width-125 mb-10"><i class="si si-clock">&nbsp;</i>Already Created Payroll This Month</button>
+                    <button class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-clock">&nbsp;</i>Already Created Payroll This Month</button>
                     @else
                         @can('Add Payroll')
                             <button type="button"  class="btn btn-rounded btn-outline-primary min-width-125 mb-10 btn-submit"><i class="si si-plus">&nbsp;</i>Create Payroll</button>

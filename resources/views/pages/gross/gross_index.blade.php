@@ -6,7 +6,7 @@
             <div class="content-heading">Gross Profit
                 <div class="float-right">
                     @can('Add Gross Profit')
-                        <button type="button" onclick="loadFormModal('gross_form', {className: 'Gross'}, 'Create New Gross Profit', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Gross Profit</button>
+                        <button type="button" onclick="loadFormModal('gross_form', {className: 'Gross'}, 'Create New Gross Profit', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Gross Profit</button>
                     @endcan
 
                 </div>

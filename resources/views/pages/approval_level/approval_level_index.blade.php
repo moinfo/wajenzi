@@ -10,7 +10,7 @@
                     @can('Add Collection')
                         <button type="button"
                                 onclick="loadFormModal('collection_form', {className: 'Collection'}, 'Create New Collection', 'modal-md');"
-                                class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New
+                                class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New
                             Collection
                         </button>
                     @endcan

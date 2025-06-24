@@ -6,7 +6,7 @@
             <div class="content-heading">Settings
                 <div class="float-right">
                     @can('Add Statutory Payment')
-                        <button type="button" onclick="loadFormModal('settings_statutory_payment_form', {className: 'StatutoryPayment'}, 'Create New Statutory Payment', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_statutory_payment_form', {className: 'StatutoryPayment'}, 'Create New Statutory Payment', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Statutory Payment</button> @endcan
 
                 </div>

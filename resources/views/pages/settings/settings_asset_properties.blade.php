@@ -11,7 +11,7 @@
                 </div>
                 <div class="float-right">
                     @can('Add Asset Property')
-                        <button type="button" onclick="loadFormModal('settings_asset_property_form', {className: 'AssetProperty'}, 'Create New AssetProperty', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_asset_property_form', {className: 'AssetProperty'}, 'Create New AssetProperty', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Asset Property</button>
                     @endcan
 

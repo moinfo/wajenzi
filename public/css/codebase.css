@@ -22707,6 +22707,153 @@ div.tagsinput span.tag a:hover {
   background-color: rgba(0, 0, 0, 0.6) !important;
 }
 
+.modal .form-select,
+.modal select.form-control {
+  background: white !important;
+  color: #575757 !important;
+}
+.modal .form-select option,
+.modal select.form-control option {
+  background: white !important;
+  color: #575757 !important;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+}
+.modal .form-select option:checked, .modal .form-select option:hover, .modal .form-select option[selected],
+.modal select.form-control option:checked,
+.modal select.form-control option:hover,
+.modal select.form-control option[selected] {
+  background: #3f9ce8 !important;
+  color: white !important;
+}
+.modal .form-select option:disabled,
+.modal select.form-control option:disabled {
+  background: #f8f9fa !important;
+  color: #6c757d !important;
+}
+.modal .form-select:focus,
+.modal select.form-control:focus {
+  border-color: #3f9ce8 !important;
+  box-shadow: 0 0 0 4px rgba(63, 156, 232, 0.15) !important;
+}
+.modal .select2-container .select2-selection {
+  border: 2px solid rgba(63, 156, 232, 0.15) !important;
+  border-radius: 12px !important;
+  background: white !important;
+  color: #575757 !important;
+}
+.modal .select2-container .select2-selection:focus-within, .modal .select2-container .select2-selection.select2-selection--focused {
+  border-color: #3f9ce8 !important;
+  box-shadow: 0 0 0 4px rgba(63, 156, 232, 0.15) !important;
+}
+.modal .select2-container .select2-dropdown {
+  border: 2px solid #3f9ce8 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(63, 156, 232, 0.15) !important;
+}
+.modal .select2-container .select2-dropdown .select2-results__option {
+  background: white !important;
+  color: #575757 !important;
+  padding: 0.75rem 1rem !important;
+}
+.modal .select2-container .select2-dropdown .select2-results__option:hover, .modal .select2-container .select2-dropdown .select2-results__option[aria-selected=true] {
+  background: #3f9ce8 !important;
+  color: white !important;
+}
+.modal .select2-container .select2-dropdown .select2-results__option.select2-results__option--highlighted {
+  background: linear-gradient(135deg, #3f9ce8, #2facb2) !important;
+  color: white !important;
+}
+.modal .input-group .input-group-text {
+  background: linear-gradient(135deg, #3f9ce8, #2facb2) !important;
+  color: white !important;
+  border: none !important;
+}
+.modal .input-group .form-control, .modal .input-group .form-group .form-select, .form-group .modal .input-group .form-select {
+  background: white !important;
+  color: #575757 !important;
+}
+.modal .input-group .form-control:focus, .modal .input-group .form-group .form-select:focus, .form-group .modal .input-group .form-select:focus {
+  background: white !important;
+}
+
+.action-btn {
+  background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 0.75rem 1.5rem !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 3px 12px rgba(63, 156, 232, 0.25) !important;
+  text-transform: none !important;
+}
+.action-btn:hover {
+  background: linear-gradient(135deg, #2a7fc7, #1a5e61) !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(63, 156, 232, 0.35) !important;
+  border: none !important;
+}
+.action-btn:focus {
+  background: linear-gradient(135deg, #2a7fc7, #1a5e61) !important;
+  color: white !important;
+  box-shadow: 0 0 0 4px rgba(63, 156, 232, 0.25), 0 6px 20px rgba(63, 156, 232, 0.35) !important;
+  border: none !important;
+}
+.action-btn:active {
+  background: linear-gradient(135deg, #1f5a9e, #0f4a4f) !important;
+  color: white !important;
+  transform: translateY(0) !important;
+  border: none !important;
+}
+.action-btn.btn-sm, .btn-group-sm > .action-btn.btn {
+  padding: 0.5rem 1rem !important;
+  font-size: 0.875rem !important;
+}
+.action-btn.btn-lg, .btn-group-lg > .action-btn.btn {
+  padding: 1rem 2rem !important;
+  font-size: 1.1rem !important;
+}
+.action-btn i {
+  margin-right: 0.5rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.btn.action-btn.btn-outline-primary, .btn.action-btn.btn-outline-secondary, .btn.action-btn.btn-outline-success, .btn.action-btn.btn-outline-danger, .btn.action-btn.btn-outline-warning, .btn.action-btn.btn-outline-info {
+  background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
+  color: white !important;
+  border: none !important;
+}
+.btn.action-btn.btn-outline-primary:hover, .btn.action-btn.btn-outline-primary:focus, .btn.action-btn.btn-outline-secondary:hover, .btn.action-btn.btn-outline-secondary:focus, .btn.action-btn.btn-outline-success:hover, .btn.action-btn.btn-outline-success:focus, .btn.action-btn.btn-outline-danger:hover, .btn.action-btn.btn-outline-danger:focus, .btn.action-btn.btn-outline-warning:hover, .btn.action-btn.btn-outline-warning:focus, .btn.action-btn.btn-outline-info:hover, .btn.action-btn.btn-outline-info:focus {
+  background: linear-gradient(135deg, #2a7fc7, #1a5e61) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.action-btn.add-btn {
+  background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
+}
+.action-btn.edit-btn {
+  background: linear-gradient(135deg, #ffa726 0%, #ff9800 100%) !important;
+}
+.action-btn.edit-btn:hover {
+  background: linear-gradient(135deg, #f57c00, #e65100) !important;
+}
+.action-btn.delete-btn {
+  background: linear-gradient(135deg, #ef5350 0%, #e74c3c 100%) !important;
+}
+.action-btn.delete-btn:hover {
+  background: linear-gradient(135deg, #d32f2f, #c62828) !important;
+}
+.action-btn.view-btn {
+  background: linear-gradient(135deg, #66bb6a 0%, #4caf50 100%) !important;
+}
+.action-btn.view-btn:hover {
+  background: linear-gradient(135deg, #388e3c, #2e7d32) !important;
+}
+
 @-webkit-keyframes modalFadeInUp {
   from {
     opacity: 0;
@@ -22783,6 +22930,15 @@ div.tagsinput span.tag a:hover {
   background-position: right 1rem center;
   background-size: 16px 12px;
   padding-right: 3rem;
+}
+.form-group .form-select option {
+  background: white !important;
+  color: #575757 !important;
+  padding: 0.5rem;
+}
+.form-group .form-select option:checked, .form-group .form-select option:hover, .form-group .form-select option[selected] {
+  background: linear-gradient(135deg, #3f9ce8, #2facb2) !important;
+  color: white !important;
 }
 .form-group textarea.form-control, .form-group textarea.form-select {
   min-height: 120px;

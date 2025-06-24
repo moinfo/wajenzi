@@ -7,7 +7,7 @@
             <div class="content-heading">Project Documents
                 <div class="float-right">
                     @can('Add Document')
-                        <button type="button" onclick="loadFormModal('project_document_form', {className: 'ProjectDocument'}, 'Upload New Document', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Document</button>
+                        <button type="button" onclick="loadFormModal('project_document_form', {className: 'ProjectDocument'}, 'Upload New Document', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Document</button>
                     @endcan
                 </div>
             </div>

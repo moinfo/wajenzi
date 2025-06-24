@@ -7,10 +7,10 @@
             <div class="content-heading">Messages
                 <div class="float-right">
                     @can('Add Message')
-                        <button type="button" onclick="loadFormModal('bulk_message_form', {className: 'Message'}, 'Create New Bulk Messages', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Bulk Messages To All Staff</button>
+                        <button type="button" onclick="loadFormModal('bulk_message_form', {className: 'Message'}, 'Create New Bulk Messages', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Bulk Messages To All Staff</button>
                     @endcan
                     @can('Add Message')
-                        <button type="button" onclick="loadFormModal('message_form', {className: 'Message'}, 'Create New Messages', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Messages</button>
+                        <button type="button" onclick="loadFormModal('message_form', {className: 'Message'}, 'Create New Messages', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Messages</button>
                     @endcan
 
                 </div>

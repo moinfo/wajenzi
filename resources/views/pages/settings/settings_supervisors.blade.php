@@ -6,7 +6,7 @@
             <div class="content-heading">Settings
                 <div class="float-right">
                     @can('Add Supervisor')
-                        <button type="button" onclick="loadFormModal('settings_supervisor_form', {className: 'Supervisor'}, 'Create New Supervisor', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Supervisor</button>
+                        <button type="button" onclick="loadFormModal('settings_supervisor_form', {className: 'Supervisor'}, 'Create New Supervisor', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Supervisor</button>
                     @endcan
                 </div>
             </div>

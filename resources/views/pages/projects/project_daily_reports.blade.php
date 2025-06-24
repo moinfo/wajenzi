@@ -7,7 +7,7 @@
             <div class="content-heading">Daily Reports
                 <div class="float-right">
                     @can('Add Report')
-                        <button type="button" onclick="loadFormModal('project_daily_report_form', {className: 'ProjectDailyReport'}, 'Create New Report', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Report</button>
+                        <button type="button" onclick="loadFormModal('project_daily_report_form', {className: 'ProjectDailyReport'}, 'Create New Report', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Report</button>
                     @endcan
                 </div>
             </div>

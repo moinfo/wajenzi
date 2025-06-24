@@ -8,7 +8,7 @@
                     @can('Add Role')
                         <button type="button"
                                 onclick="loadFormModal('settings_role_form', {className: 'Role'}, 'Create New Role', 'modal-md');"
-                                class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New
+                                class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New
                             Role
                         </button>
                     @endcan

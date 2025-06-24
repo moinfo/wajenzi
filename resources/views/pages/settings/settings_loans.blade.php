@@ -6,7 +6,7 @@
             <div class="content-heading">Settings
                 <div class="float-right">
                     @can('Add Staff Loan')
-                        <button type="button" onclick="loadFormModal('loan_form', {className: 'Loan'}, 'Create New Loan', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Staff Loan</button>
+                        <button type="button" onclick="loadFormModal('loan_form', {className: 'Loan'}, 'Create New Loan', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Staff Loan</button>
                     @endcan
                 </div>
             </div>

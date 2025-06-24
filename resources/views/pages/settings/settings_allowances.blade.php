@@ -52,7 +52,7 @@
                             <div>
                                 <div class="float-right">
                                     @can('Add Allowance')
-                                        <button type="button" onclick="loadFormModal('settings_allowance_form', {className: 'Allowance'}, 'Create New Allowance', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                                        <button type="button" onclick="loadFormModal('settings_allowance_form', {className: 'Allowance'}, 'Create New Allowance', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                                             <i class="si si-plus">&nbsp;</i>New Allowance</button>
                                     @endcan
                                 </div>
@@ -130,7 +130,7 @@
                             <br/>
                             <div class="float-right">
                                 @can('Add Allowance Subscription')
-                                    <button type="button" onclick="loadFormModal('settings_allowance_subscriptions_form', {className: 'AllowanceSubscription'}, 'Create New AllowanceSubscription', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                                    <button type="button" onclick="loadFormModal('settings_allowance_subscriptions_form', {className: 'AllowanceSubscription'}, 'Create New AllowanceSubscription', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                                         <i class="si si-plus">&nbsp;</i>New AllowanceSubscription</button>@endcan
 
                             </div>
@@ -241,20 +241,20 @@
                                 $allowance_created = \App\Models\AllowancePayment::isCurrentAllowancePaid($start_date,$end_date);
                                 if(Auth::user()->id == 1){
                                 ?>
-                                <button type="button" onclick="loadFormModal('settings_allowance_payment_form', {className: 'AllowancePayment'}, 'Create New Allowance Payment', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                                <button type="button" onclick="loadFormModal('settings_allowance_payment_form', {className: 'AllowancePayment'}, 'Create New Allowance Payment', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                                     <i class="si si-plus">&nbsp;</i>New Allowance Payment</button>
                                 <?php
                                 }else{
 
                                 if($allowance_created){
                                 ?>
-                                <button type="button" class="btn btn-rounded btn-outline-success min-width-125 mb-10">
+                                <button type="button" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                                     <i class="si si-plus">&nbsp;</i>Already Paid Allowance This Month</button>
                                 <?php
                                 }else{
                                 ?>
                                 @can('Add Allowance Payment')
-                                    <button type="button" onclick="loadFormModal('settings_allowance_payment_form', {className: 'AllowancePayment'}, 'Create New Allowance Payment', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                                    <button type="button" onclick="loadFormModal('settings_allowance_payment_form', {className: 'AllowancePayment'}, 'Create New Allowance Payment', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                                         <i class="si si-plus">&nbsp;</i>New Allowance Payment</button> @endcan
                                 <?php
                                 }
@@ -504,7 +504,7 @@
                                 <br/>
                                 <div class="float-right">
                                     @can('Add Deduction Setting')
-                                        <button type="button" onclick="loadFormModal('settings_deduction_settings_form', {className: 'DeductionSetting'}, 'Create New DeductionSetting', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                                        <button type="button" onclick="loadFormModal('settings_deduction_settings_form', {className: 'DeductionSetting'}, 'Create New DeductionSetting', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                                             <i class="si si-plus">&nbsp;</i>New DeductionSetting</button>
                                     @endcan
 

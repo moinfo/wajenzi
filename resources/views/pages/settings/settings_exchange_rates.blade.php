@@ -6,7 +6,7 @@
             <div class="content-heading">Settings
                 <div class="float-right">
                     @can('Add Exchange Rate')
-                        <button type="button" onclick="loadFormModal('settings_exchange_rate_form', {className: 'ExchangeRate'}, 'Create New Exchange Rate', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_exchange_rate_form', {className: 'ExchangeRate'}, 'Create New Exchange Rate', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Exchange Rate</button>@endcan
 
                 </div>

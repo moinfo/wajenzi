@@ -6,7 +6,7 @@
             <div class="content-heading">Settings
                 <div class="float-right">
                     @can('Add Approval Level')
-                        <button type="button" onclick="loadFormModal('settings_approval_level_form', {className: 'ApprovalLevel'}, 'Create New Approval Level', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_approval_level_form', {className: 'ApprovalLevel'}, 'Create New Approval Level', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Approval Level</button> @endcan
 
                 </div>

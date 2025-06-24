@@ -7,7 +7,7 @@
             <div class="content-heading">Petty Cash Refill Request
                 <div class="float-right">
                     @can('Add Petty Cash Refill Request')
-                        <button type="button" onclick="loadFormModal('petty_cash_refill_request_form', {className: 'PettyCashRefillRequest'}, 'Create New Petty Cash Refill Request', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Petty Cash Refill Request</button>
+                        <button type="button" onclick="loadFormModal('petty_cash_refill_request_form', {className: 'PettyCashRefillRequest'}, 'Create New Petty Cash Refill Request', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Petty Cash Refill Request</button>
                     @endcan
                 </div>
             </div>

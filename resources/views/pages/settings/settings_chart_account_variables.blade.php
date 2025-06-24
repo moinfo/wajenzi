@@ -6,7 +6,7 @@
             <div class="content-heading">Settings
                 <div class="float-right">
                     @can('Add Chart Account Variable')
-                        <button type="button" onclick="loadFormModal('settings_chart_account_variable_form', {className: 'ChartAccountVariable'}, 'Create New Chart Account Variable', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_chart_account_variable_form', {className: 'ChartAccountVariable'}, 'Create New Chart Account Variable', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Chart Account Variable</button>@endcan
 
                 </div>

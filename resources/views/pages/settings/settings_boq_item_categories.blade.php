@@ -7,7 +7,7 @@
             <div class="content-heading">BOQ Item Categories
                 <div class="float-right">
                     @can('Add BOQ Item Category')
-                        <button type="button" onclick="loadFormModal('settings_boq_item_category_form', {className: 'BoqItemCategory'}, 'Create New Category', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_boq_item_category_form', {className: 'BoqItemCategory'}, 'Create New Category', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Category</button>
                     @endcan
                 </div>

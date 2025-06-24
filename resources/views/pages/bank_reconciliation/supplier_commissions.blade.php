@@ -8,7 +8,7 @@
                 <div class="float-right">
                     <a href="{{route('supplier_targets')}}" class="btn btn-rounded btn-outline-warning min-width-125 mb-10"><i class="si si-graph">&nbsp;</i>Supplier Targets</a>
                 @can('Add Supplier Target')
-                        <button type="button" onclick="loadFormModal('supplier_target_form', {className: 'SupplierTarget'}, 'Create New Target', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Target</button>
+                        <button type="button" onclick="loadFormModal('supplier_target_form', {className: 'SupplierTarget'}, 'Create New Target', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Target</button>
                     @endcan
                 </div>
             </div>

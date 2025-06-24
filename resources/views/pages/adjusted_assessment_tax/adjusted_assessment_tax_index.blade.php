@@ -6,7 +6,7 @@
         <div class="content">
             <div class="content-heading">Adjusted Assessment Taxes
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('adjusted_assessment_tax_form', {className: 'AdjustedAssessmentTax'}, 'Create New AdjustedAssessmentTax', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New AdjustedAssessmentTax</button>
+                    <button type="button" onclick="loadFormModal('adjusted_assessment_tax_form', {className: 'AdjustedAssessmentTax'}, 'Create New AdjustedAssessmentTax', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New AdjustedAssessmentTax</button>
                 </div>
             </div>
             <div>

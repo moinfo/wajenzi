@@ -7,7 +7,7 @@
             <div class="content-heading">Material Inventory
                 <div class="float-right">
                     @can('Create Material Inventory')
-                        <button type="button" onclick="loadFormModal('project_material_inventory_form', {className: 'ProjectMaterialInventory'}, 'Add Inventory', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>Add Inventory</button>
+                        <button type="button" onclick="loadFormModal('project_material_inventory_form', {className: 'ProjectMaterialInventory'}, 'Add Inventory', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>Add Inventory</button>
                     @endcan
                 </div>
             </div>

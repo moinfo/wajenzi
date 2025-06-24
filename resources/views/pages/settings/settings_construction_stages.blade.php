@@ -7,7 +7,7 @@
             <div class="content-heading">Construction Stages
                 <div class="float-right">
                     @can('Add Construction Stage')
-                        <button type="button" onclick="loadFormModal('settings_construction_stage_form', {className: 'ConstructionStage'}, 'Create New Stage', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_construction_stage_form', {className: 'ConstructionStage'}, 'Create New Stage', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Stage</button>
                     @endcan
                 </div>

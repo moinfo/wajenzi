@@ -7,7 +7,7 @@
             <div class="content-heading">Project BOQs
                 <div class="float-right">
                     @can('Create BOQ')
-                        <button type="button" onclick="loadFormModal('project_boq_form', {className: 'ProjectBoq'}, 'Create New BOQ', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New BOQ</button>
+                        <button type="button" onclick="loadFormModal('project_boq_form', {className: 'ProjectBoq'}, 'Create New BOQ', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New BOQ</button>
                     @endcan
                 </div>
             </div>
