@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wajenzi Modal & Form Design Showcase</title>
+    <link href="public/css/codebase.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f2f5 0%, #f8f9fa 100%);
+            padding: 2rem;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+        .showcase-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .showcase-title {
+            color: #3f9ce8;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .showcase-subtitle {
+            color: #575757;
+            font-size: 1.2rem;
+        }
+        .demo-section {
+            margin-bottom: 3rem;
+        }
+        .demo-title {
+            color: #3f9ce8;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #3f9ce8;
+            padding-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase-header">
+        <h1 class="showcase-title">Wajenzi Modal & Form Design System</h1>
+        <p class="showcase-subtitle">Modern, accessible, and user-friendly interface components</p>
+    </div>
+
+    <!-- Form Design Examples -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-wpforms"></i> Form Design System</h2>
+        
+        <!-- Basic Form Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-user"></i> Employee Information
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="required"><i class="fas fa-user"></i> Full Name</label>
+                    <input type="text" class="form-control" placeholder="Enter full name...">
+                    <div class="form-text">Please enter the employee's complete name</div>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-envelope"></i> Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-at"></i></span>
+                        <input type="email" class="form-control" placeholder="email@example.com">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="required"><i class="fas fa-building"></i> Department</label>
+                    <select class="form-select">
+                        <option value="">Select Department...</option>
+                        <option value="hr">Human Resources</option>
+                        <option value="eng">Engineering</option>
+                        <option value="finance">Finance</option>
+                        <option value="marketing">Marketing</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label><i class="fas fa-phone"></i> Phone Number</label>
+                    <input type="tel" class="form-control is-valid" placeholder="+255 123 456 789" value="+255 784 123 456">
+                    <div class="valid-feedback">Phone number format is correct</div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-comment"></i> Additional Notes</label>
+                <textarea class="form-control" placeholder="Enter any additional information..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="terms">
+                    <label class="form-check-label" for="terms">
+                        I agree to the terms and conditions
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-cloud-upload-alt"></i> Document Upload
+            </div>
+            
+            <div class="form-group">
+                <label><i class="fas fa-file-pdf"></i> CV/Resume</label>
+                <div class="file-upload">
+                    <input type="file" class="file-input" accept=".pdf,.doc,.docx">
+                    <div class="file-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <div class="upload-text">
+                            <div class="main-text">Drop files here or click to browse</div>
+                            <div class="sub-text">PDF, DOC, DOCX files only (Max: 5MB)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form with Validation States -->
+        <div class="form-section">
+            <div class="section-title">
+                <i class="fas fa-exclamation-triangle"></i> Validation Examples
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="required">Valid Input</label>
+                    <input type="text" class="form-control is-valid" value="John Doe">
+                    <div class="valid-feedback">This field is correctly filled</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="required">Invalid Input</label>
+                    <input type="email" class="form-control is-invalid" value="invalid-email">
+                    <div class="invalid-feedback">Please enter a valid email address</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Triggers -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-window-maximize"></i> Modal Design System</h2>
+        
+        <div class="d-flex gap-3 flex-wrap">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#basicModal">
+                <i class="fas fa-eye"></i> Gradient Modal (Default)
+            </button>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#formModal">
+                <i class="fas fa-plus"></i> Form Modal
+            </button>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#confirmModal">
+                <i class="fas fa-trash"></i> Confirmation Modal
+            </button>
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#whiteFooterModal">
+                <i class="fas fa-palette"></i> White Footer Modal
+            </button>
+            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#largeModal">
+                <i class="fas fa-expand"></i> Large Modal
+            </button>
+        </div>
+    </div>
+
+    <!-- Button Showcase -->
+    <div class="demo-section">
+        <h2 class="demo-title"><i class="fas fa-mouse-pointer"></i> Button Design System</h2>
+        
+        <div class="d-flex gap-3 flex-wrap align-items-center">
+            <button class="btn btn-primary">
+                <i class="fas fa-save"></i> Primary Button
+            </button>
+            <button class="btn btn-success">
+                <i class="fas fa-check"></i> Success Button
+            </button>
+            <button class="btn btn-danger">
+                <i class="fas fa-times"></i> Danger Button
+            </button>
+            <button class="btn btn-outline-primary">
+                <i class="fas fa-edit"></i> Outline Button
+            </button>
+            <button class="btn btn-primary btn-loading">
+                Loading Button
+            </button>
+        </div>
+    </div>
+
+    <!-- Basic Modal -->
+    <div class="modal fade" id="basicModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle"></i> Employee Information
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-user text-white fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1">John Doe</h5>
+                            <p class="text-muted mb-0">Senior Software Engineer</p>
+                        </div>
+                    </div>
+                    <p>This is a basic modal demonstrating the new design system. It features a gradient header, modern styling, and smooth animations.</p>
+                    <ul class="list-unstyled">
+                        <li><strong>Department:</strong> Engineering</li>
+                        <li><strong>Employee ID:</strong> EMP001</li>
+                        <li><strong>Start Date:</strong> January 15, 2023</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <button type="button" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Employee
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Modal -->
+    <div class="modal fade" id="formModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-plus"></i> Add New Employee
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="required"><i class="fas fa-user"></i> First Name</label>
+                                <input type="text" class="form-control" placeholder="Enter first name">
+                            </div>
+                            <div class="form-group">
+                                <label class="required"><i class="fas fa-user"></i> Last Name</label>
+                                <input type="text" class="form-control" placeholder="Enter last name">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="required"><i class="fas fa-envelope"></i> Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-at"></i></span>
+                                <input type="email" class="form-control" placeholder="employee@company.com">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="required"><i class="fas fa-building"></i> Department</label>
+                                <select class="form-select">
+                                    <option value="">Select Department...</option>
+                                    <option value="hr">Human Resources</option>
+                                    <option value="eng">Engineering</option>
+                                    <option value="finance">Finance</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fas fa-briefcase"></i> Position</label>
+                                <input type="text" class="form-control" placeholder="Job position">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label><i class="fas fa-comment"></i> Notes</label>
+                            <textarea class="form-control" rows="3" placeholder="Additional information..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-success">
+                        <i class="fas fa-save"></i> Save Employee
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Action
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-trash-alt text-danger" style="font-size: 3rem;"></i>
+                        </div>
+                        <h5>Are you sure?</h5>
+                        <p class="text-muted">This action cannot be undone. The employee record will be permanently deleted from the system.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- White Footer Modal -->
+    <div class="modal fade modal-white-footer" id="whiteFooterModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-palette"></i> White Footer Example
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <div>
+                            This modal demonstrates the white footer variant. Notice how the footer has a clean white background while maintaining the gradient header.
+                        </div>
+                    </div>
+                    <p>This modal variation is perfect when you need a cleaner, more minimal appearance for the footer area while keeping the branded gradient header.</p>
+                    <ul class="list-unstyled">
+                        <li><strong>✓</strong> Gradient header with brand colors</li>
+                        <li><strong>✓</strong> Clean white footer</li>
+                        <li><strong>✓</strong> Traditional button styling in footer</li>
+                        <li><strong>✓</strong> Perfect for forms and confirmations</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                    <button type="button" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Large Modal -->
+    <div class="modal fade" id="largeModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-bar"></i> Employee Dashboard
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body modal-body-white">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="text-primary mb-3">Performance Overview</h6>
+                            <div class="bg-light p-4 rounded">
+                                <p>This large modal demonstrates how complex content can be displayed with the new gradient header and footer design system. It maintains professional styling while providing ample space for detailed information.</p>
+                                <div class="row mt-4">
+                                    <div class="col-md-6">
+                                        <div class="border-start border-primary border-4 ps-3">
+                                            <h6 class="text-primary mb-1">Current Projects</h6>
+                                            <p class="mb-0">5 Active Projects</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="border-start border-success border-4 ps-3">
+                                            <h6 class="text-success mb-1">Completed Tasks</h6>
+                                            <p class="mb-0">127 Tasks This Month</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-primary mb-3">Quick Actions</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Edit Profile
+                                </button>
+                                <button class="btn btn-outline-success">
+                                    <i class="fas fa-calendar"></i> View Schedule
+                                </button>
+                                <button class="btn btn-outline-info">
+                                    <i class="fas fa-file-alt"></i> Generate Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // File upload demo
+        document.querySelectorAll('.file-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const fileUpload = this.closest('.file-upload');
+                if (this.files.length > 0) {
+                    fileUpload.classList.add('has-file');
+                    const label = fileUpload.querySelector('.main-text');
+                    label.textContent = `Selected: ${this.files[0].name}`;
+                } else {
+                    fileUpload.classList.remove('has-file');
+                    const label = fileUpload.querySelector('.main-text');
+                    label.textContent = 'Drop files here or click to browse';
+                }
+            });
+        });
+
+        // Loading button demo
+        document.querySelector('.btn-loading').addEventListener('click', function() {
+            this.classList.add('btn-loading');
+            setTimeout(() => {
+                this.classList.remove('btn-loading');
+            }, 3000);
+        });
+    </script>
+
+    <div style="margin-top: 4rem; text-align: center; color: #575757;">
+        <p><strong>Design System Features:</strong></p>
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary">Modal Features</h6>
+                <ul style="list-style: none; padding: 0;">
+                    <li>✅ Gradient headers with brand colors</li>
+                    <li>✅ Smooth animations and transitions</li>
+                    <li>✅ Backdrop blur effects</li>
+                    <li>✅ Multiple size options</li>
+                    <li>✅ Mobile responsive design</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary">Form Features</h6>
+                <ul style="list-style: none; padding: 0;">
+                    <li>✅ Modern input styling with focus states</li>
+                    <li>✅ Validation feedback with icons</li>
+                    <li>✅ File upload with drag & drop</li>
+                    <li>✅ Responsive form layouts</li>
+                    <li>✅ Accessibility enhancements</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
