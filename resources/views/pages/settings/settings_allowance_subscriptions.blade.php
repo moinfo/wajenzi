@@ -6,7 +6,7 @@
             <div class="content-heading">Settings
                 <div class="float-right">
                     @can('Add Allowance Subscription')
-                        <button type="button" onclick="loadFormModal('settings_allowance_subscriptions_form', {className: 'AllowanceSubscription'}, 'Create New AllowanceSubscription', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_allowance_subscriptions_form', {className: 'AllowanceSubscription'}, 'Create New AllowanceSubscription', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New AllowanceSubscription</button>@endcan
 
                 </div>

@@ -5,7 +5,7 @@
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
-                    <button type="button" onclick="loadFormModal('settings_position_form', {className: 'Position'}, 'Create New Position', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Position</button>
+                    <button type="button" onclick="loadFormModal('settings_position_form', {className: 'Position'}, 'Create New Position', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Position</button>
                 </div>
             </div>
             <div>

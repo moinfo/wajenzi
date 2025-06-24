@@ -6,7 +6,7 @@
             <div class="content-heading">Sales
                 <div class="float-right">
                     @can('Add Sales')
-                        <button type="button" onclick="loadFormModal('sale_form', {className: 'Sale'}, 'Create New Sales', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Sales</button>
+                        <button type="button" onclick="loadFormModal('sale_form', {className: 'Sale'}, 'Create New Sales', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Sales</button>
                     @endcan
                 </div>
             </div>

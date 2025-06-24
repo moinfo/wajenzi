@@ -7,7 +7,7 @@
             <div class="content-heading">Transaction Movement
                 <div class="float-right">
                     @can('Add Transaction Movement')
-                        <button type="button" onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement'}, 'Create New TransactionMovement', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Transaction Movement</button>
+                        <button type="button" onclick="loadFormModal('transaction_movement_form', {className: 'TransactionMovement'}, 'Create New TransactionMovement', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Transaction Movement</button>
                     @endcan
                 </div>
             </div>

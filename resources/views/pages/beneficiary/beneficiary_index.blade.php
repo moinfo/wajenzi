@@ -21,12 +21,12 @@
                     @can('Add Beneficiary')
                         <button type="button"
                                 onclick="loadFormModal('beneficiary_form', {className: 'Beneficiary'}, 'Create New Beneficiary', 'modal-md');"
-                                class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                                class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Beneficiary
                         </button>
                         <button type="button"
                                 onclick="loadFormModal('beneficiary_account_form', {className: 'BeneficiaryAccount'}, 'Create New Beneficiary Account', 'modal-md');"
-                                class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                                class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>Add Beneficiary Account
                         </button>
                     @endcan

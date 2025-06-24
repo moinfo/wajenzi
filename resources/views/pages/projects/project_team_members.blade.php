@@ -7,7 +7,7 @@
             <div class="content-heading">Project Team Members
                 <div class="float-right">
                     @can('Add Team Member')
-                        <button type="button" onclick="loadFormModal('project_team_member_form', {className: 'ProjectTeamMember'}, 'Add Team Member', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>Add Member</button>
+                        <button type="button" onclick="loadFormModal('project_team_member_form', {className: 'ProjectTeamMember'}, 'Add Team Member', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>Add Member</button>
                     @endcan
                 </div>
             </div>

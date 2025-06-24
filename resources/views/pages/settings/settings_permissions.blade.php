@@ -6,7 +6,7 @@
             <div class="content-heading">Permissions
                 <div class="float-right">
                     {{--                    @can('Add Permission')--}}
-                    <button type="button" onclick="loadFormModal('settings_permission_form', {className: 'Permission'}, 'Create New Permission', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Permission</button>
+                    <button type="button" onclick="loadFormModal('settings_permission_form', {className: 'Permission'}, 'Create New Permission', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Permission</button>
                     {{--                    @endcan--}}
                 </div>
             </div>

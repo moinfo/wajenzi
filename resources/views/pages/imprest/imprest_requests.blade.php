@@ -7,7 +7,7 @@
             <div class="content-heading">Imprest Request
                 <div class="float-right">
                     @can('Add Imprest Request')
-                        <button type="button" onclick="loadFormModal('imprest_request_form', {className: 'ImprestRequest'}, 'Create New Imprest Request', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Imprest Request</button>
+                        <button type="button" onclick="loadFormModal('imprest_request_form', {className: 'ImprestRequest'}, 'Create New Imprest Request', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Imprest Request</button>
                     @endcan
                 </div>
             </div>

@@ -6,7 +6,7 @@
             <div class="content-heading">EXPENSES CATEGORIES
                 <div class="float-right">
                     @can('Add Expenses Category')
-                        <button type="button" onclick="loadFormModal('settings_expenses_category_form', {className: 'ExpensesCategory'}, 'Create New Expense Category', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Expense Category</button>
+                        <button type="button" onclick="loadFormModal('settings_expenses_category_form', {className: 'ExpensesCategory'}, 'Create New Expense Category', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Expense Category</button>
                     @endcan
                 </div>
             </div>

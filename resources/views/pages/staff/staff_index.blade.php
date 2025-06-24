@@ -5,7 +5,7 @@
     <div class="content">
         <h2 class="content-heading">Staff List <small>All</small>
             <div class="float-right">
-                <button type="button" onclick="loadFormModal('staff_form', {metadata: {positions: 'Position', departments : 'Department', supervisors: 'Staff'}}, 'Create New Employee', 'modal-lg');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>Create New Staff</button>
+                <button type="button" onclick="loadFormModal('staff_form', {metadata: {positions: 'Position', departments : 'Department', supervisors: 'Staff'}}, 'Create New Employee', 'modal-lg');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>Create New Staff</button>
             </div>
         </h2>
         <div class="table-responsive">

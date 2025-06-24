@@ -26,7 +26,7 @@
             <div class="content-heading">Projects
                 <div class="float-right">
                     @can('Create Project')
-                        <button type="button" onclick="loadFormModal('project_form', {className: 'Project'}, 'Create New Project', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Project</button>
+                        <button type="button" onclick="loadFormModal('project_form', {className: 'Project'}, 'Create New Project', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Project</button>
                     @endcan
                 </div>
             </div>

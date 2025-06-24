@@ -7,7 +7,7 @@
             <div class="content-heading">Sub-Activities
                 <div class="float-right">
                     @can('Add Sub Activity')
-                        <button type="button" onclick="loadFormModal('settings_sub_activity_form', {className: 'SubActivity'}, 'Create New Sub-Activity', 'modal-lg');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_sub_activity_form', {className: 'SubActivity'}, 'Create New Sub-Activity', 'modal-lg');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New Sub-Activity</button>
                     @endcan
 

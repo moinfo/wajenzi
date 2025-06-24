@@ -7,7 +7,7 @@
             <div class="content-heading">BOQ Items for {{ $boq->project->project_name }}
                 <div class="float-right">
                     @can('Add BOQ Item')
-                        <button type="button" onclick="loadFormModal('project_boq_item_form', {className: 'ProjectBoqItem', boq_id: {{$boq->id}}}, 'Add BOQ Item', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>Add Item</button>
+                        <button type="button" onclick="loadFormModal('project_boq_item_form', {className: 'ProjectBoqItem', boq_id: {{$boq->id}}}, 'Add BOQ Item', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>Add Item</button>
                     @endcan
                 </div>
             </div>

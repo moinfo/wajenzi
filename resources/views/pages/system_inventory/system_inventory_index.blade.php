@@ -6,7 +6,7 @@
             <div class="content-heading">System Inventory
                 <div class="float-right">
                     @can('Add System Inventory')
-                        <button type="button" onclick="loadFormModal('system_inventory_form', {className: 'SystemInventory'}, 'Create New System Inventory', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Inventory</button>
+                        <button type="button" onclick="loadFormModal('system_inventory_form', {className: 'SystemInventory'}, 'Create New System Inventory', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New System Inventory</button>
                     @endcan
                 </div>
             </div>

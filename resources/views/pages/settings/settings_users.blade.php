@@ -6,7 +6,7 @@
             <div class="content-heading">Settings
                 <div class="float-right">
                     @can('Add User')
-                        <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User'}, 'Create New User', 'modal-lg');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New User</button>
+                        <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User'}, 'Create New User', 'modal-lg');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New User</button>
                     @endcan
                 </div>
             </div>

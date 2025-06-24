@@ -6,7 +6,7 @@
             <div class="content-heading">System Receiving
                 <div class="float-right">
                     @can('Add System Receiving')
-                        <button type="button" onclick="loadFormModal('system_capital_form', {className: 'SystemCapital'}, 'Create New System Receiving', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New System Receiving</button>
+                        <button type="button" onclick="loadFormModal('system_capital_form', {className: 'SystemCapital'}, 'Create New System Receiving', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New System Receiving</button>
                     @endcan
                 </div>
             </div>

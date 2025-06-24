@@ -7,7 +7,7 @@
             <div class="content-heading">Project Materials
                 <div class="float-right">
                     @can('Create Material')
-                        <button type="button" onclick="loadFormModal('project_material_form', {className: 'ProjectMaterial'}, 'Create New Material', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Material</button>
+                        <button type="button" onclick="loadFormModal('project_material_form', {className: 'ProjectMaterial'}, 'Create New Material', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Material</button>
                     @endcan
                 </div>
             </div>

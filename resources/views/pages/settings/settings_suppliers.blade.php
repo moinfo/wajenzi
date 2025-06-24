@@ -6,10 +6,10 @@
             <div class="content-heading">SUPPLIER
                 <div class="float-right">
                     @can('Add Supplier')
-                        <button type="button" onclick="loadFormModal('settings_supplier_form', {className: 'Supplier'}, 'Create New Supplier', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Supplier</button>
+                        <button type="button" onclick="loadFormModal('settings_supplier_form', {className: 'Supplier'}, 'Create New Supplier', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Supplier</button>
                     @endcan
                     @can('Add Supplier')
-                        <button type="button" onclick="loadFormModal('settings_supplier_contact_form', {className: 'SupplierContact'}, 'Add Supplier Contact', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>Add Supplier Contact</button>
+                        <button type="button" onclick="loadFormModal('settings_supplier_contact_form', {className: 'SupplierContact'}, 'Add Supplier Contact', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>Add Supplier Contact</button>
                     @endcan
                 </div>
             </div>

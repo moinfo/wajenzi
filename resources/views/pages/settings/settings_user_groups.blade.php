@@ -9,7 +9,7 @@
 
                 <div class="float-right">
                     @can('Add User Group')
-                        <button type="button" onclick="loadFormModal('settings_user_group_form', {className: 'UserGroup'}, 'Create New User Group', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10">
+                        <button type="button" onclick="loadFormModal('settings_user_group_form', {className: 'UserGroup'}, 'Create New User Group', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                             <i class="si si-plus">&nbsp;</i>New User Group</button> @endcan
 
                 </div>

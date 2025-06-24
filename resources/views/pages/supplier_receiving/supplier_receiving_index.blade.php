@@ -8,7 +8,7 @@
             <div class="content-heading">Supplier Receiving
                 <div class="float-right">
                     @can('Add Supplier Receiving')
-                        <button type="button" onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving'}, 'Create New Supplier Receiving', 'modal-md');" class="btn btn-rounded btn-outline-primary min-width-125 mb-10"><i class="si si-plus">&nbsp;</i>New Supplier Receiving</button>
+                        <button type="button" onclick="loadFormModal('supplier_receiving_form', {className: 'SupplierReceiving'}, 'Create New Supplier Receiving', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New Supplier Receiving</button>
                     @endcan
                 </div>
             </div>
