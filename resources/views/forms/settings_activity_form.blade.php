@@ -6,11 +6,13 @@
             <label for="construction_stage_id">Construction Stage <span class="text-danger">*</span></label>
             <select name="construction_stage_id" class="form-control" required>
                 <option value="">Select Construction Stage</option>
-                @foreach($construction_stages as $stage)
-                    <option value="{{ $stage->id }}" {{ ($stage->id == ($object->construction_stage_id ?? '')) ? 'selected' : '' }}>
-                        {{ $stage->name }}
-                    </option>
-                @endforeach
+                @if(isset($construction_stages))
+                    @foreach($construction_stages as $stage)
+                        <option value="{{ $stage->id }}" {{ ($stage->id == ($object->construction_stage_id ?? '')) ? 'selected' : '' }}>
+                            {{ $stage->name }}
+                        </option>
+                    @endforeach
+                @endif
             </select>
         </div>
         

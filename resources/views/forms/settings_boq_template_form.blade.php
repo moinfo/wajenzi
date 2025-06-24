@@ -15,11 +15,13 @@
                     <label for="building_type_id">Building Type</label>
                     <select name="building_type_id" class="form-control">
                         <option value="">Select Building Type</option>
-                        @foreach($building_types as $type)
+                        @if(isset($building_types))
+                            @foreach($building_types as $type)
                             <option value="{{ $type->id }}" {{ ($type->id == ($object->building_type_id ?? '')) ? 'selected' : '' }}>
                                 {{ $type->name }}
                             </option>
-                        @endforeach
+                            @endforeach
+                        @endif
                     </select>
                 </div>
             </div>

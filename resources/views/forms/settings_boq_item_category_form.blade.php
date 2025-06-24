@@ -11,11 +11,13 @@
             <label for="parent_id">Parent Category</label>
             <select name="parent_id" class="form-control">
                 <option value="">-- No Parent (Top Level) --</option>
-                @foreach($parent_categories as $parent)
-                    <option value="{{ $parent->id }}" {{ ($parent->id == ($object->parent_id ?? '')) ? 'selected' : '' }}>
-                        {{ $parent->name }}
-                    </option>
-                @endforeach
+                @if(isset($parent_categories))
+                    @foreach($parent_categories as $parent)
+                        <option value="{{ $parent->id }}" {{ ($parent->id == ($object->parent_id ?? '')) ? 'selected' : '' }}>
+                            {{ $parent->name }}
+                        </option>
+                    @endforeach
+                @endif
             </select>
         </div>
         

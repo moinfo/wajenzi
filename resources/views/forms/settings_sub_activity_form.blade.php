@@ -8,11 +8,13 @@
                     <label for="activity_id">Activity <span class="text-danger">*</span></label>
                     <select name="activity_id" class="form-control" required>
                         <option value="">Select Activity</option>
-                        @foreach($activities as $activity)
-                            <option value="{{ $activity->id }}" {{ ($activity->id == ($object->activity_id ?? '')) ? 'selected' : '' }}>
-                                {{ $activity->constructionStage->name }} - {{ $activity->name }}
-                            </option>
-                        @endforeach
+                        @if(isset($activities))
+                            @foreach($activities as $activity)
+                                <option value="{{ $activity->id }}" {{ ($activity->id == ($object->activity_id ?? '')) ? 'selected' : '' }}>
+                                    {{ optional($activity->constructionStage)->name }} - {{ $activity->name }}
+                                </option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
             </div>
@@ -42,11 +44,17 @@
                 <div class="form-group">
                     <label for="duration_unit">Unit</label>
                     <select name="duration_unit" class="form-control">
-                        @foreach($duration_units as $unit)
-                            <option value="{{ $unit['name'] }}" {{ ($unit['name'] == ($object->duration_unit ?? 'days')) ? 'selected' : '' }}>
-                                {{ ucfirst($unit['name']) }}
-                            </option>
-                        @endforeach
+                        @if(isset($duration_units))
+                            @foreach($duration_units as $unit)
+                                <option value="{{ $unit['name'] }}" {{ ($unit['name'] == ($object->duration_unit ?? 'days')) ? 'selected' : '' }}>
+                                    {{ ucfirst($unit['name']) }}
+                                </option>
+                            @endforeach
+                        @else
+                            <option value="hours">Hours</option>
+                            <option value="days" selected>Days</option>
+                            <option value="weeks">Weeks</option>
+                        @endif
                     </select>
                 </div>
             </div>
@@ -64,11 +72,18 @@
                 <div class="form-group">
                     <label for="skill_level">Skill Level</label>
                     <select name="skill_level" class="form-control">
-                        @foreach($skill_levels as $skill)
-                            <option value="{{ $skill['name'] }}" {{ ($skill['name'] == ($object->skill_level ?? 'semi_skilled')) ? 'selected' : '' }}>
-                                {{ ucfirst(str_replace('_', ' ', $skill['name'])) }}
-                            </option>
-                        @endforeach
+                        @if(isset($skill_levels))
+                            @foreach($skill_levels as $skill)
+                                <option value="{{ $skill['name'] }}" {{ ($skill['name'] == ($object->skill_level ?? 'semi_skilled')) ? 'selected' : '' }}>
+                                    {{ ucfirst(str_replace('_', ' ', $skill['name'])) }}
+                                </option>
+                            @endforeach
+                        @else
+                            <option value="unskilled">Unskilled</option>
+                            <option value="semi_skilled" selected>Semi Skilled</option>
+                            <option value="skilled">Skilled</option>
+                            <option value="specialist">Specialist</option>
+                        @endif
                     </select>
                 </div>
             </div>
