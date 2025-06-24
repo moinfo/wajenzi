@@ -604,9 +604,7 @@ MAIN CONTENT LAYOUT
                 <div class="block-header bg-wajenzi-gradient">
                     <h3 class="block-title" id="ajax-loader-modal-title">New</h3>
                     <div class="block-options">
-                        <button type="button" class="btn-block-option" data-dismiss="modal" aria-label="Close">
-                            <i class="si si-close"></i>
-                        </button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                 </div>
                 <div class="block-content" id="ajax-loader-modal-content">
@@ -820,6 +818,49 @@ MAIN CONTENT LAYOUT
                     });
                 }
             });
+        });
+
+        // Enhanced modal close button functionality
+        // Support both Bootstrap 4 and Bootstrap 5 syntax
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('[data-bs-dismiss="modal"], [data-dismiss="modal"], .btn-close, .btn-block-option');
+            if (target) {
+                const modal = target.closest('.modal');
+                if (modal) {
+                    // Try Bootstrap 5 method first
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        const modalInstance = bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal);
+                        modalInstance.hide();
+                    }
+                    // Fallback to jQuery/Bootstrap 4 method
+                    else if (typeof $ !== 'undefined' && $.fn.modal) {
+                        $(modal).modal('hide');
+                    }
+                    // Manual fallback
+                    else {
+                        modal.style.display = 'none';
+                        modal.classList.remove('show');
+                        document.body.classList.remove('modal-open');
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) backdrop.remove();
+                    }
+                }
+            }
+        });
+
+        // Ensure modal backdrop clicks also close modals
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                // Try Bootstrap 5 method first
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    const modalInstance = bootstrap.Modal.getInstance(e.target);
+                    if (modalInstance) modalInstance.hide();
+                }
+                // Fallback to jQuery/Bootstrap 4 method
+                else if (typeof $ !== 'undefined' && $.fn.modal) {
+                    $(e.target).modal('hide');
+                }
+            }
         });
     });
 </script>
