@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wajenzi Table Design Showcase</title>
+    <link href="public/css/codebase.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f2f5 0%, #f8f9fa 100%);
+            padding: 2rem;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+        }
+        .showcase-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .showcase-title {
+            color: #3f9ce8;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .showcase-subtitle {
+            color: #575757;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase-header">
+        <h1 class="showcase-title">Wajenzi Table Design System</h1>
+        <p class="showcase-subtitle">Modern, responsive, and professional table styling</p>
+    </div>
+
+    <!-- Standard Table with Controls -->
+    <div class="table-card">
+        <div class="table-controls">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search employees...">
+            </div>
+            <div class="table-filters">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">Active</button>
+                <button class="filter-btn">Inactive</button>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Employee Name</th>
+                        <th>Department</th>
+                        <th>Position</th>
+                        <th>Salary</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>John Doe</td>
+                        <td>Engineering</td>
+                        <td>Senior Developer</td>
+                        <td class="text-right">1,250,000</td>
+                        <td>
+                            <span class="badge badge-success">Active</span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Jane Smith</td>
+                        <td>Marketing</td>
+                        <td>Marketing Manager</td>
+                        <td class="text-right">950,000</td>
+                        <td>
+                            <span class="badge badge-warning">Pending</span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Mike Johnson</td>
+                        <td>Finance</td>
+                        <td>Accountant</td>
+                        <td class="text-right">750,000</td>
+                        <td>
+                            <span class="badge badge-danger">Inactive</span>
+                        </td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4">Total</th>
+                        <th class="text-right">2,950,000</th>
+                        <th colspan="2"></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Payroll Table Example -->
+    <div class="table-card complex-table">
+        <div class="table-header">
+            <h3><i class="fas fa-money-bill-wave"></i> Payroll Summary</h3>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Employee</th>
+                        <th>Basic Salary</th>
+                        <th>Allowance</th>
+                        <th>Gross Pay</th>
+                        <th>NSSF</th>
+                        <th>PAYE</th>
+                        <th>Deductions</th>
+                        <th>Net Pay</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>John Doe</td>
+                        <td class="text-right">1,250,000</td>
+                        <td class="text-right">250,000</td>
+                        <td class="text-right">1,500,000</td>
+                        <td class="text-right">150,000</td>
+                        <td class="text-right">200,000</td>
+                        <td class="text-right">50,000</td>
+                        <td class="text-right">1,100,000</td>
+                        <td>
+                            <span class="status-indicator status-active">
+                                Processed
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Jane Smith</td>
+                        <td class="text-right">950,000</td>
+                        <td class="text-right">190,000</td>
+                        <td class="text-right">1,140,000</td>
+                        <td class="text-right">114,000</td>
+                        <td class="text-right">150,000</td>
+                        <td class="text-right">30,000</td>
+                        <td class="text-right">846,000</td>
+                        <td>
+                            <span class="status-indicator status-pending">
+                                Pending
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="2">Total</th>
+                        <th class="text-right">2,200,000</th>
+                        <th class="text-right">440,000</th>
+                        <th class="text-right">2,640,000</th>
+                        <th class="text-right">264,000</th>
+                        <th class="text-right">350,000</th>
+                        <th class="text-right">80,000</th>
+                        <th class="text-right">1,946,000</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem; text-align: center; color: #575757;">
+        <p><strong>Features Demonstrated:</strong></p>
+        <ul style="display: inline-block; text-align: left; max-width: 600px;">
+            <li>✅ Horizontal scrolling on mobile/tablet</li>
+            <li>✅ Gradient headers with brand colors</li>
+            <li>✅ Hover effects and smooth animations</li>
+            <li>✅ Status indicators with pulsing animations</li>
+            <li>✅ Professional action buttons</li>
+            <li>✅ Custom styled scrollbars</li>
+            <li>✅ Responsive design for all screen sizes</li>
+            <li>✅ Print-optimized layouts</li>
+        </ul>
+    </div>
+</body>
+</html>
