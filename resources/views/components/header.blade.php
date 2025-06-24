@@ -185,11 +185,12 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         border-bottom: 1px solid var(--wajenzi-gray-200);
         position: fixed;
         top: 0;
-        left: 0;
+        left: 280px; /* Start after sidebar */
         right: 0;
         z-index: 1030;
         box-shadow: var(--shadow-sm);
         backdrop-filter: blur(8px);
+        width: calc(100% - 280px); /* Take remaining width */
     }
 
     .content-header {
@@ -696,6 +697,11 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
 
     /* Responsive Design */
     @media (max-width: 1024px) {
+        .wajenzi-header {
+            left: 0; /* Full width on smaller screens */
+            width: 100%;
+        }
+        
         .content-header {
             padding: 0.875rem 1.5rem;
         }
@@ -715,6 +721,11 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     }
 
     @media (max-width: 768px) {
+        .wajenzi-header {
+            left: 0;
+            width: 100%;
+        }
+        
         .content-header {
             padding: 0.75rem 1rem;
             gap: 1rem;
@@ -768,6 +779,11 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     }
 
     @media (max-width: 576px) {
+        .wajenzi-header {
+            left: 0;
+            width: 100%;
+        }
+        
         .content-header {
             padding: 0.625rem 0.75rem;
         }

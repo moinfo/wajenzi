@@ -137,9 +137,9 @@
 
         /* Main Layout Structure */
         .wajenzi-main {
-            margin-top: 20px; /* Space for fixed header */
-            /*margin-left: 20px; !* Space for sidebar *!*/
-            min-height: calc(100vh);
+            margin-top: 80px; /* Space for fixed header */
+            margin-left: 0;
+            min-height: calc(100vh - 80px);
             background: var(--wajenzi-gray-50);
             transition: margin-left 0.3s ease;
             width: 100%;
@@ -153,11 +153,7 @@
             position: relative;
         }
 
-        /* When sidebar is closed */
-        .sidebar-o-xs .wajenzi-main {
-            margin-left: 0;
-            width: 100vw;
-        }
+        /* Clean layout without sidebar margins */
 
         .main-content {
             width: 100%;
@@ -173,23 +169,31 @@
             align-items: flex-start !important;
             padding: 0 !important;
             box-sizing: border-box !important;
-            margin-top: 20px !important; /* Space for fixed header */
-            /*margin-left: 20px !important; !* Space for sidebar *!*/
+            margin-top: 80px !important; /* Space for fixed header */
+            margin-left: 0 !important;
             overflow-y: auto !important; /* Enable scrolling */
-            height: calc(100vh) !important;
-            width: calc(100vw) !important;
+            height: calc(100vh - 80px) !important;
+            width: 100% !important;
             transition: margin-left 0.3s ease !important;
         }
 
-        /* When sidebar is closed */
-        .sidebar-o-xs #main-container {
-            margin-left: 0 !important;
-            width: 100vw !important;
-        }
+        /* Simplified layout */
 
         /* Page Container Adjustments */
         #page-container {
             background: var(--wajenzi-gray-50);
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        /* Force header to be fixed */
+        #page-header {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            z-index: 1030 !important;
+            width: 100% !important;
         }
 
         /* Notifications positioning */
@@ -388,16 +392,16 @@
         @media (max-width: 991.98px) {
             .wajenzi-main,
             #main-container {
-                margin-left: 0;
+                margin-left: 0 !important;
                 margin-top: 80px !important;
-                width: 100vw;
+                width: 100% !important;
                 padding: 0;
                 padding-bottom: 80px;
                 display: flex;
                 justify-content: center;
                 align-items: flex-start;
                 overflow-y: auto !important;
-                height: calc(100vh - 80px - 60px);
+                height: calc(100vh - 80px);
             }
 
             .main-content {
