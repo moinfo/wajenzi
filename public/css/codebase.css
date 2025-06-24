@@ -23473,7 +23473,8 @@ div.tagsinput span.tag a:hover {
 .form-group .form-control, .form-group .form-select {
   border: 2px solid rgba(63, 156, 232, 0.15);
   border-radius: 12px;
-  padding: 0.875rem 1.25rem;
+  /* padding: 0.875rem 1.25rem; */
+  /* Commented out - causes text visibility issues in select dropdowns */
   font-size: 0.95rem;
   transition: all 0.3s ease;
   background: white;
@@ -23888,6 +23889,52 @@ div.tagsinput span.tag a:hover {
     padding: 1rem;
   }
 }
+.form-group .form-control,
+.form-group .form-select {
+  border: 2px solid rgba(63, 156, 232, 0.15) !important;
+  border-radius: 12px !important;
+  /* padding: 0.875rem 1.25rem; */
+  /* Commented out globally - causes text visibility issues in select dropdowns */
+  font-size: 0.95rem !important;
+  transition: all 0.3s ease !important;
+  background: white !important;
+  color: #575757 !important;
+}
+.form-group .form-control:focus,
+.form-group .form-select:focus {
+  border-color: #3f9ce8 !important;
+  box-shadow: 0 0 0 4px rgba(63, 156, 232, 0.1) !important;
+  background: rgba(63, 156, 232, 0.02) !important;
+}
+.form-group input[type=text].form-control, .form-group input[type=text].form-select,
+.form-group input[type=email].form-control,
+.form-group input[type=email].form-select,
+.form-group input[type=password].form-control,
+.form-group input[type=password].form-select,
+.form-group input[type=number].form-control,
+.form-group input[type=number].form-select,
+.form-group input[type=tel].form-control,
+.form-group input[type=tel].form-select,
+.form-group input[type=date].form-control,
+.form-group input[type=date].form-select,
+.form-group input[type=time].form-control,
+.form-group input[type=time].form-select,
+.form-group input[type=datetime-local].form-control,
+.form-group input[type=datetime-local].form-select,
+.form-group textarea.form-control,
+.form-group textarea.form-select {
+  padding: 0.875rem 1.25rem !important;
+}
+.form-group select.form-control,
+.form-group select.form-select {
+  /* Use browser default padding for select elements to ensure option text is visible */
+  padding-top: 0.375rem !important;
+  padding-bottom: 0.375rem !important;
+  padding-left: 0.75rem !important;
+  padding-right: 2.25rem !important;
+  /* Space for dropdown arrow */
+}
+
 .datepicker-index-form {
   z-index: 1 !important;
 }
