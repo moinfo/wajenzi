@@ -1059,13 +1059,182 @@ class SettingsController extends Controller
      */
     public function boq_template_builder(Request $request)
     {
-        $templateId = $request->input('templateId');
+        $templateId = $request->input('templateId') ?? $request->input('template_id');
         $template = null;
         $selectedStages = [];
         $templateStats = ['stages' => 0, 'activities' => 0, 'subActivities' => 0];
         
+        // Handle POST requests for actions
+        if ($request->isMethod('post')) {
+            $action = $request->input('action');
+            $templateId = $request->input('template_id');
+            
+            \Log::info('BOQ Template Builder Action', [
+                'action' => $action,
+                'template_id' => $templateId,
+                'all_inputs' => $request->all()
+            ]);
+            
+            if ($templateId && $action) {
+                $template = BoqTemplate::find($templateId);
+                
+                if ($template) {
+                    switch ($action) {
+                        case 'add_stage':
+                            $stageId = $request->input('stage_id');
+                            if ($stageId) {
+                                // Check if stage already exists for this template
+                                $exists = \App\Models\BoqTemplateStage::where('boq_template_id', $templateId)
+                                    ->where('construction_stage_id', $stageId)
+                                    ->exists();
+                                    
+                                if (!$exists) {
+                                    $templateStage = new \App\Models\BoqTemplateStage();
+                                    $templateStage->boq_template_id = $templateId;
+                                    $templateStage->construction_stage_id = $stageId;
+                                    $templateStage->sort_order = \App\Models\BoqTemplateStage::where('boq_template_id', $templateId)->max('sort_order') + 1 ?? 1;
+                                    $templateStage->save();
+                                    
+                                    session()->flash('success', 'Construction stage added successfully.');
+                                } else {
+                                    session()->flash('warning', 'This stage is already added to the template.');
+                                }
+                            }
+                            break;
+                            
+                        case 'add_activity':
+                            $stageId = $request->input('parent_stage_id');
+                            $activityName = $request->input('activity_name');
+                            
+                            if ($stageId && $activityName) {
+                                // Get the template stage to find the construction stage
+                                $templateStage = \App\Models\BoqTemplateStage::find($stageId);
+                                
+                                if ($templateStage) {
+                                    // Find or create an Activity for this construction stage
+                                    $activity = \App\Models\Activity::firstOrCreate([
+                                        'construction_stage_id' => $templateStage->construction_stage_id,
+                                        'name' => $activityName
+                                    ], [
+                                        'description' => "Activity for {$activityName}",
+                                        'sort_order' => \App\Models\Activity::where('construction_stage_id', $templateStage->construction_stage_id)->max('sort_order') + 1 ?? 1
+                                    ]);
+                                    
+                                    // Check if this activity is already added to the template stage
+                                    $exists = \App\Models\BoqTemplateActivity::where('boq_template_stage_id', $stageId)
+                                        ->where('activity_id', $activity->id)
+                                        ->exists();
+                                        
+                                    if (!$exists) {
+                                        // Create the template activity reference
+                                        $templateActivity = new \App\Models\BoqTemplateActivity();
+                                        $templateActivity->boq_template_stage_id = $stageId;
+                                        $templateActivity->activity_id = $activity->id;
+                                        $templateActivity->sort_order = \App\Models\BoqTemplateActivity::where('boq_template_stage_id', $stageId)->max('sort_order') + 1 ?? 1;
+                                        $templateActivity->save();
+                                        
+                                        session()->flash('success', 'Activity added successfully.');
+                                    } else {
+                                        session()->flash('warning', 'This activity is already added to the stage.');
+                                    }
+                                } else {
+                                    session()->flash('error', 'Template stage not found.');
+                                }
+                            }
+                            break;
+                            
+                        case 'add_sub_activity':
+                            $templateActivityId = $request->input('parent_activity_id');
+                            $subActivityName = $request->input('sub_activity_name');
+                            
+                            if ($templateActivityId && $subActivityName) {
+                                // Get the template activity to find the actual activity
+                                $templateActivity = \App\Models\BoqTemplateActivity::with('activity')->find($templateActivityId);
+                                
+                                if ($templateActivity && $templateActivity->activity) {
+                                    // Find or create a SubActivity for this activity
+                                    $subActivity = \App\Models\SubActivity::firstOrCreate([
+                                        'activity_id' => $templateActivity->activity->id,
+                                        'name' => $subActivityName
+                                    ], [
+                                        'description' => "Sub-activity for {$subActivityName}",
+                                        'estimated_duration_hours' => 8,
+                                        'duration_unit' => 'hours',
+                                        'labor_requirement' => 1,
+                                        'skill_level' => 'Basic',
+                                        'can_run_parallel' => false,
+                                        'weather_dependent' => false,
+                                        'sort_order' => \App\Models\SubActivity::where('activity_id', $templateActivity->activity->id)->max('sort_order') + 1 ?? 1
+                                    ]);
+                                    
+                                    // Check if this sub-activity is already added to the template activity
+                                    $exists = \App\Models\BoqTemplateSubActivity::where('boq_template_activity_id', $templateActivityId)
+                                        ->where('sub_activity_id', $subActivity->id)
+                                        ->exists();
+                                        
+                                    if (!$exists) {
+                                        // Create the template sub-activity reference
+                                        $templateSubActivity = new \App\Models\BoqTemplateSubActivity();
+                                        $templateSubActivity->boq_template_activity_id = $templateActivityId;
+                                        $templateSubActivity->sub_activity_id = $subActivity->id;
+                                        $templateSubActivity->sort_order = \App\Models\BoqTemplateSubActivity::where('boq_template_activity_id', $templateActivityId)->max('sort_order') + 1 ?? 1;
+                                        $templateSubActivity->save();
+                                        
+                                        session()->flash('success', 'Sub-activity added successfully.');
+                                    } else {
+                                        session()->flash('warning', 'This sub-activity is already added to the activity.');
+                                    }
+                                } else {
+                                    session()->flash('error', 'Template activity not found.');
+                                }
+                            }
+                            break;
+                            
+                        case 'assign_materials':
+                            $subActivityId = $request->input('sub_activity_id');
+                            $boqItemId = $request->input('boq_item_id');
+                            $quantity = $request->input('quantity');
+                            
+                            if ($subActivityId && $boqItemId && $quantity) {
+                                // Check if this material assignment already exists
+                                $exists = \App\Models\SubActivityMaterial::where('sub_activity_id', $subActivityId)
+                                    ->where('boq_item_id', $boqItemId)
+                                    ->exists();
+                                    
+                                if (!$exists) {
+                                    // Create the material assignment
+                                    $materialAssignment = new \App\Models\SubActivityMaterial();
+                                    $materialAssignment->sub_activity_id = $subActivityId;
+                                    $materialAssignment->boq_item_id = $boqItemId;
+                                    $materialAssignment->quantity = $quantity;
+                                    $materialAssignment->save();
+                                    
+                                    session()->flash('success', 'Material assigned to sub-activity successfully.');
+                                } else {
+                                    session()->flash('warning', 'This material is already assigned to the sub-activity.');
+                                }
+                            } else {
+                                session()->flash('error', 'Please fill in all required fields.');
+                            }
+                            break;
+                            
+                        case 'remove_stage':
+                            $stageId = $request->input('stage_id_to_remove');
+                            if ($stageId) {
+                                \App\Models\BoqTemplateStage::destroy($stageId);
+                                session()->flash('success', 'Stage removed successfully.');
+                            }
+                            break;
+                    }
+                    
+                    // Redirect to refresh the page with updated data
+                    return redirect()->route('hr_settings_boq_template_builder', ['templateId' => $templateId]);
+                }
+            }
+        }
+        
         if ($templateId) {
-            $template = BoqTemplate::with(['templateStages.constructionStage', 'buildingType'])->find($templateId);
+            $template = BoqTemplate::with(['templateStages.constructionStage', 'templateStages.templateActivities.activity', 'templateStages.templateActivities.templateSubActivities.subActivity.materials.boqItem', 'buildingType'])->find($templateId);
             
             if ($template) {
                 // Get selected stages for this template
@@ -1091,10 +1260,32 @@ class SettingsController extends Controller
             'template' => $template,
             'constructionStages' => ConstructionStage::orderBy('sort_order')->get(),
             'selectedStages' => $selectedStages,
-            'templateStats' => $templateStats
+            'templateStats' => $templateStats,
+            'boqItems' => BoqTemplateItem::with('category')->orderBy('name')->get()
         ];
         
-        return view('forms.boq_template_builder')->with($data);
+        return view('pages.settings.boq_template_builder')->with($data);
+    }
+
+    public function boq_template_report($templateId)
+    {
+        // Load template with all necessary relationships
+        $template = BoqTemplate::with([
+            'templateStages.constructionStage',
+            'templateStages.templateActivities.activity',
+            'templateStages.templateActivities.templateSubActivities.subActivity.materials.boqItem',
+            'buildingType'
+        ])->find($templateId);
+
+        if (!$template) {
+            abort(404, 'Template not found');
+        }
+
+        $data = [
+            'template' => $template
+        ];
+
+        return view('pages.settings.boq_template_report')->with($data);
     }
 
 }

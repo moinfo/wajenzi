@@ -54,7 +54,7 @@
                 <i class="fa fa-wrench"></i> 
                 Use the <strong>Template Builder</strong> to configure stages, activities, and sub-activities for this template.
                 <br>
-                <a href="#" onclick="openTemplateBuilder({{$object->id}});" class="btn btn-sm btn-primary mt-2">
+                <a href="{{ route('hr_settings_boq_template_builder', ['templateId' => $object->id]) }}" class="btn btn-sm btn-primary mt-2">
                     <i class="fa fa-cogs"></i> Open Template Builder
                 </a>
             </div>
@@ -74,14 +74,3 @@
     </form>
 </div>
 
-<script>
-    function openTemplateBuilder(templateId) {
-        // Close current modal first
-        $('#ajax-loader-modal').modal('hide');
-        
-        // Open template builder (to be implemented)
-        setTimeout(() => {
-            loadFormModal('boq_template_builder', {templateId: templateId}, 'BOQ Template Builder', 'modal-xl');
-        }, 500);
-    }
-</script>
