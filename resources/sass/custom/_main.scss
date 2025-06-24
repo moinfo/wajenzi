@@ -608,38 +608,71 @@
                 }
             }
             
+            // Bootstrap 5 close button styling
             .btn-close {
-                background: rgba(255, 255, 255, 0.15);
-                border: 2px solid rgba(255, 255, 255, 0.25);
-                border-radius: 50%;
-                width: 42px;
-                height: 42px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.3s ease;
-                opacity: 1;
+                background: rgba(255, 255, 255, 0.15) !important;
+                border: 2px solid rgba(255, 255, 255, 0.25) !important;
+                border-radius: 50% !important;
+                width: 42px !important;
+                height: 42px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: all 0.3s ease !important;
+                opacity: 1 !important;
                 backdrop-filter: blur(10px);
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+                filter: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
                 
                 &:hover {
-                    background: rgba(255, 255, 255, 0.25);
-                    border-color: rgba(255, 255, 255, 0.4);
-                    transform: rotate(90deg) scale(1.05);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    background: rgba(255, 255, 255, 0.25) !important;
+                    border-color: rgba(255, 255, 255, 0.4) !important;
+                    transform: rotate(90deg) scale(1.05) !important;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+                    opacity: 1 !important;
                 }
                 
                 &:focus {
-                    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+                    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3) !important;
+                    opacity: 1 !important;
                 }
                 
                 &::before {
-                    content: '×';
-                    color: white;
-                    font-size: 1.6rem;
-                    font-weight: 300;
-                    line-height: 1;
-                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+                    content: '×' !important;
+                    color: white !important;
+                    font-size: 1.6rem !important;
+                    font-weight: 300 !important;
+                    line-height: 1 !important;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+                    background: none !important;
+                }
+            }
+            
+            // Legacy support for old close buttons
+            .btn-block-option {
+                background: rgba(255, 255, 255, 0.15) !important;
+                border: 2px solid rgba(255, 255, 255, 0.25) !important;
+                border-radius: 50% !important;
+                width: 42px !important;
+                height: 42px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: all 0.3s ease !important;
+                color: white !important;
+                
+                &:hover {
+                    background: rgba(255, 255, 255, 0.25) !important;
+                    border-color: rgba(255, 255, 255, 0.4) !important;
+                    transform: rotate(90deg) scale(1.05) !important;
+                    color: white !important;
+                }
+                
+                i {
+                    color: white !important;
+                    font-size: 1.2rem !important;
                 }
             }
         }
