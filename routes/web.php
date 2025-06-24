@@ -200,6 +200,15 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/roles_permissions', [App\Http\Controllers\SettingsController::class, 'updateRolePermissions'])->name('hr_settings_role_permissions');
     Route::match(['get', 'post'], '/settings/roles_users', [App\Http\Controllers\SettingsController::class, 'assignUsersToRole'])->name('hr_settings_role_users');
 
+    // BOQ Template System Routes
+    Route::match(['get', 'post'], '/settings/building_types', [App\Http\Controllers\SettingsController::class, 'building_types'])->name('hr_settings_building_types');
+    Route::match(['get', 'post'], '/settings/boq_item_categories', [App\Http\Controllers\SettingsController::class, 'boq_item_categories'])->name('hr_settings_boq_item_categories');
+    Route::match(['get', 'post'], '/settings/construction_stages', [App\Http\Controllers\SettingsController::class, 'construction_stages'])->name('hr_settings_construction_stages');
+    Route::match(['get', 'post'], '/settings/activities', [App\Http\Controllers\SettingsController::class, 'activities'])->name('hr_settings_activities');
+    Route::match(['get', 'post'], '/settings/sub_activities', [App\Http\Controllers\SettingsController::class, 'sub_activities'])->name('hr_settings_sub_activities');
+    Route::match(['get', 'post'], '/settings/boq_items', [App\Http\Controllers\SettingsController::class, 'boq_items'])->name('hr_settings_boq_items');
+    Route::match(['get', 'post'], '/settings/boq_templates', [App\Http\Controllers\SettingsController::class, 'boq_templates'])->name('hr_settings_boq_templates');
+
     Route::match(['get', 'post'], '/finance', [App\Http\Controllers\SettingsController::class, 'finance'])->name('finance');
     Route::match(['get', 'post'], '/finance/financial_settings/account_types', [App\Http\Controllers\SettingsController::class, 'account_types'])->name('account_types');
     Route::match(['get', 'post'], '/finance/financial_settings/charts_of_accounts', [App\Http\Controllers\SettingsController::class, 'charts_of_accounts'])->name('charts_of_accounts');

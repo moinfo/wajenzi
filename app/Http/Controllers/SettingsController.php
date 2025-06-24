@@ -54,6 +54,19 @@ use App\Models\UserGroup;
 use App\Models\UsersPermission;
 use App\Models\Wakala;
 use App\Services\ApprovalService;
+
+// BOQ Template Models
+use App\Models\BuildingType;
+use App\Models\BoqItemCategory;
+use App\Models\ConstructionStage;
+use App\Models\Activity;
+use App\Models\SubActivity;
+use App\Models\BoqTemplateItem;
+use App\Models\SubActivityMaterial;
+use App\Models\BoqTemplate;
+use App\Models\BoqTemplateStage;
+use App\Models\BoqTemplateActivity;
+use App\Models\BoqTemplateSubActivity;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -108,6 +121,15 @@ class SettingsController extends Controller
             ['name'=>'Statutory Payment Sub Category', 'route'=>'hr_settings_sub_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'System Settings', 'route'=>'system_settings', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Client Sources', 'route'=>'client_sources', 'icon' => 'si si-settings', 'badge' => 0],
+            
+            // BOQ Template System
+            ['name'=>'Building Types', 'route'=>'hr_settings_building_types', 'icon' => 'si si-home', 'badge' => 0],
+            ['name'=>'BOQ Item Categories', 'route'=>'hr_settings_boq_item_categories', 'icon' => 'si si-list', 'badge' => 0],
+            ['name'=>'Construction Stages', 'route'=>'hr_settings_construction_stages', 'icon' => 'si si-layers', 'badge' => 0],
+            ['name'=>'Activities', 'route'=>'hr_settings_activities', 'icon' => 'si si-wrench', 'badge' => 0],
+            ['name'=>'Sub-Activities', 'route'=>'hr_settings_sub_activities', 'icon' => 'si si-puzzle', 'badge' => 0],
+            ['name'=>'BOQ Items', 'route'=>'hr_settings_boq_items', 'icon' => 'si si-bag', 'badge' => 0],
+            ['name'=>'BOQ Templates', 'route'=>'hr_settings_boq_templates', 'icon' => 'si si-docs', 'badge' => 0],
 //            ['name'=>'Beneficiaries', 'route'=>'beneficiaries', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Mawakala', 'route'=>'wakalas', 'icon' => 'si si-settings', 'badge' => 0],
         ];
@@ -920,6 +942,159 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', "Error updating users for role: " . $e->getMessage());
         }
+    }
+
+    // BOQ Template System Methods
+
+    public function building_types(Request $request)
+    {
+        if($this->handleCrud($request, 'BuildingType')) {
+            return back();
+        }
+        
+        $data = [
+            'building_types' => BuildingType::orderBy('name')->get()
+        ];
+        
+        return view('pages.settings.settings_building_types')->with($data);
+    }
+
+    public function boq_item_categories(Request $request)
+    {
+        if($this->handleCrud($request, 'BoqItemCategory')) {
+            return back();
+        }
+        
+        $data = [
+            'categories' => BoqItemCategory::with('parent')->orderBy('sort_order')->get(),
+            'parent_categories' => BoqItemCategory::whereNull('parent_id')->orderBy('name')->get()
+        ];
+        
+        return view('pages.settings.settings_boq_item_categories')->with($data);
+    }
+
+    public function construction_stages(Request $request)
+    {
+        if($this->handleCrud($request, 'ConstructionStage')) {
+            return back();
+        }
+        
+        $data = [
+            'construction_stages' => ConstructionStage::orderBy('sort_order')->get()
+        ];
+        
+        return view('pages.settings.settings_construction_stages')->with($data);
+    }
+
+    public function activities(Request $request)
+    {
+        if($this->handleCrud($request, 'Activity')) {
+            return back();
+        }
+        
+        $data = [
+            'activities' => Activity::with('constructionStage')->orderBy('sort_order')->get(),
+            'construction_stages' => ConstructionStage::orderBy('sort_order')->get()
+        ];
+        
+        return view('pages.settings.settings_activities')->with($data);
+    }
+
+    public function sub_activities(Request $request)
+    {
+        if($this->handleCrud($request, 'SubActivity')) {
+            return back();
+        }
+        
+        $data = [
+            'sub_activities' => SubActivity::with('activity.constructionStage')->orderBy('sort_order')->get(),
+            'activities' => Activity::with('constructionStage')->orderBy('sort_order')->get(),
+            'skill_levels' => [
+                ['name' => 'unskilled'], 
+                ['name' => 'semi_skilled'], 
+                ['name' => 'skilled'], 
+                ['name' => 'specialist']
+            ],
+            'duration_units' => [
+                ['name' => 'hours'], 
+                ['name' => 'days'], 
+                ['name' => 'weeks']
+            ]
+        ];
+        
+        return view('pages.settings.settings_sub_activities')->with($data);
+    }
+
+    public function boq_items(Request $request)
+    {
+        if($this->handleCrud($request, 'BoqTemplateItem')) {
+            return back();
+        }
+        
+        $data = [
+            'boq_items' => BoqTemplateItem::with('category')->get(),
+            'categories' => BoqItemCategory::orderBy('name')->get()
+        ];
+        
+        return view('pages.settings.settings_boq_items')->with($data);
+    }
+
+    public function boq_templates(Request $request)
+    {
+        if($this->handleCrud($request, 'BoqTemplate')) {
+            return back();
+        }
+        
+        $data = [
+            'boq_templates' => BoqTemplate::with(['buildingType', 'creator'])->get(),
+            'building_types' => BuildingType::where('is_active', true)->orderBy('name')->get(),
+            'construction_stages' => ConstructionStage::orderBy('sort_order')->get()
+        ];
+        
+        return view('pages.settings.settings_boq_templates')->with($data);
+    }
+
+    /**
+     * Load BOQ Template Builder
+     */
+    public function boq_template_builder(Request $request)
+    {
+        $templateId = $request->input('templateId');
+        $template = null;
+        $selectedStages = [];
+        $templateStats = ['stages' => 0, 'activities' => 0, 'subActivities' => 0];
+        
+        if ($templateId) {
+            $template = BoqTemplate::with(['templateStages.constructionStage', 'buildingType'])->find($templateId);
+            
+            if ($template) {
+                // Get selected stages for this template
+                $selectedStages = $template->templateStages->pluck('construction_stage_id')->toArray();
+                
+                // Calculate stats
+                $templateStats = [
+                    'stages' => $template->templateStages->count(),
+                    'activities' => $template->templateStages->sum(function($stage) {
+                        return $stage->templateActivities->count();
+                    }),
+                    'subActivities' => $template->templateStages->sum(function($stage) {
+                        return $stage->templateActivities->sum(function($activity) {
+                            return $activity->templateSubActivities->count();
+                        });
+                    })
+                ];
+            }
+        }
+        
+        $data = [
+            'templateId' => $templateId,
+            'template' => $template,
+            'constructionStages' => ConstructionStage::orderBy('sort_order')->get(),
+            'selectedStages' => $selectedStages,
+            'templateStats' => $templateStats
+        ];
+        
+        return view('forms.boq_template_builder')->with($data);
     }
 
 }
