@@ -208,6 +208,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/sub_activities', [App\Http\Controllers\SettingsController::class, 'sub_activities'])->name('hr_settings_sub_activities');
     Route::match(['get', 'post'], '/settings/boq_items', [App\Http\Controllers\SettingsController::class, 'boq_items'])->name('hr_settings_boq_items');
     Route::match(['get', 'post'], '/settings/boq_templates', [App\Http\Controllers\SettingsController::class, 'boq_templates'])->name('hr_settings_boq_templates');
+    Route::match(['get', 'post'], '/settings/boq_template_builder', [App\Http\Controllers\SettingsController::class, 'boq_template_builder'])->name('hr_settings_boq_template_builder');
 
     Route::match(['get', 'post'], '/finance', [App\Http\Controllers\SettingsController::class, 'finance'])->name('finance');
     Route::match(['get', 'post'], '/finance/financial_settings/account_types', [App\Http\Controllers\SettingsController::class, 'account_types'])->name('account_types');

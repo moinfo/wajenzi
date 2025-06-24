@@ -308,6 +308,92 @@
                 </div>
             </div>
 
+            <!-- BOQ Analytics -->
+            <div class="dashboard-section charts boq-analytics">
+                <div class="section-header">
+                    <h2>BOQ Analytics</h2>
+                    <div class="chart-filters">
+                        <button class="filter-btn active">Projects</button>
+                        <button class="filter-btn">Materials</button>
+                        <button class="filter-btn">Labor</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas class="js-chartjs-boq-chart" height="300"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-color boq-budget"></span>
+                        <span>Budgeted Amount</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color boq-actual"></span>
+                        <span>Actual Spending</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color boq-variance"></span>
+                        <span>Variance</span>
+                    </div>
+                </div>
+                <div class="chart-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Total BOQ Value</span>
+                        <span class="stat-value">TZS 15.2M</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Completed Items</span>
+                        <span class="stat-value">342</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Pending Items</span>
+                        <span class="stat-value">89</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statutory Analytics -->
+            <div class="dashboard-section charts statutory-analytics">
+                <div class="section-header">
+                    <h2>Statutory & Compliance</h2>
+                    <div class="chart-filters">
+                        <button class="filter-btn active">VAT</button>
+                        <button class="filter-btn">PAYE</button>
+                        <button class="filter-btn">NSSF</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas class="js-chartjs-statutory-chart" height="300"></canvas>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-color statutory-collected"></span>
+                        <span>Tax Collected</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color statutory-paid"></span>
+                        <span>Tax Paid</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color statutory-pending"></span>
+                        <span>Pending Payment</span>
+                    </div>
+                </div>
+                <div class="chart-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Monthly VAT</span>
+                        <span class="stat-value">TZS {{ number_format($this_month_tax_payable ?? 0, 2) }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Compliance Rate</span>
+                        <span class="stat-value">98.5%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Next Due</span>
+                        <span class="stat-value">{{ date('M d', strtotime('+5 days')) }}</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Team Performance -->
             <div class="dashboard-section team-performance">
                 <div class="section-header">
@@ -920,6 +1006,65 @@
 
         .legend-color.sales { background: var(--wajenzi-blue-primary); }
         .legend-color.expenses { background: var(--wajenzi-green); }
+        
+        /* BOQ Analytics Legend Colors */
+        .legend-color.boq-budget { background: var(--wajenzi-blue-primary); }
+        .legend-color.boq-actual { background: var(--wajenzi-green); }
+        .legend-color.boq-variance { background: var(--wajenzi-orange); }
+        
+        /* Statutory Analytics Legend Colors */
+        .legend-color.statutory-collected { background: var(--wajenzi-blue-primary); }
+        .legend-color.statutory-paid { background: var(--wajenzi-green); }
+        .legend-color.statutory-pending { background: var(--wajenzi-red); }
+
+        /* Chart Statistics Section */
+        .chart-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--wajenzi-gray-200);
+            gap: 1rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--wajenzi-gray-600);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--wajenzi-gray-900);
+        }
+
+        /* Responsive chart stats */
+        @media (max-width: 768px) {
+            .chart-stats {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .stat-item {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
+            
+            .stat-label {
+                margin-bottom: 0;
+            }
+        }
 
         /* Department Grid */
         .department-grid {
@@ -1201,6 +1346,115 @@ if (!empty($expenses_per_week)) {
                     callbacks: {
                         label: function (e, r) {
                             return " " + e.yLabel + " Sales";
+                        }
+                    }
+                }
+            }
+        });
+
+        // BOQ Analytics Chart
+        var boqChart = new Chart($('.js-chartjs-boq-chart'), {
+            type: "bar",
+            data: {
+                labels: ["Mwanza Complex", "Dodoma Office", "Dar Bridge", "Arusha Hospital", "Kilimanjaro Resort"],
+                datasets: [{
+                    label: "Budgeted",
+                    backgroundColor: "rgba(37,99,235,.7)",
+                    borderColor: "rgba(37,99,235,1)",
+                    borderWidth: 1,
+                    data: [8500000, 4200000, 6800000, 3500000, 5200000],
+                }, {
+                    label: "Actual",
+                    backgroundColor: "rgba(34,197,94,.7)",
+                    borderColor: "rgba(34,197,94,1)",
+                    borderWidth: 1,
+                    data: [7800000, 4500000, 6200000, 3200000, 4800000],
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true,
+                            callback: function(value) {
+                                return 'TZS ' + (value / 1000000).toFixed(1) + 'M';
+                            }
+                        },
+                        gridLines: {
+                            drawBorder: false
+                        }
+                    }],
+                    xAxes: [{
+                        gridLines: {
+                            drawBorder: false,
+                            display: false
+                        }
+                    }]
+                },
+                legend: {
+                    display: false
+                },
+                tooltips: {
+                    backgroundColor: '#fff',
+                    titleFontColor: '#333',
+                    bodyFontColor: '#666',
+                    borderColor: '#e9ecef',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            return data.datasets[tooltipItem.datasetIndex].label + ': TZS ' + 
+                                   (tooltipItem.yLabel / 1000000).toFixed(1) + 'M';
+                        }
+                    }
+                }
+            }
+        });
+
+        // Statutory Analytics Chart
+        var statutoryChart = new Chart($('.js-chartjs-statutory-chart'), {
+            type: "doughnut",
+            data: {
+                labels: ["VAT Collected", "PAYE Deducted", "NSSF Contributions", "Other Taxes"],
+                datasets: [{
+                    data: [<?=$this_month_tax_payable ?? 450000?>, 280000, 180000, 95000],
+                    backgroundColor: [
+                        "rgba(37,99,235,.8)",
+                        "rgba(34,197,94,.8)", 
+                        "rgba(249,115,22,.8)",
+                        "rgba(239,68,68,.8)"
+                    ],
+                    borderColor: [
+                        "rgba(37,99,235,1)",
+                        "rgba(34,197,94,1)",
+                        "rgba(249,115,22,1)",
+                        "rgba(239,68,68,1)"
+                    ],
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                tooltips: {
+                    backgroundColor: '#fff',
+                    titleFontColor: '#333',
+                    bodyFontColor: '#666',
+                    borderColor: '#e9ecef',
+                    borderWidth: 1,
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            const label = data.labels[tooltipItem.index];
+                            const value = data.datasets[0].data[tooltipItem.index];
+                            return label + ': TZS ' + value.toLocaleString();
                         }
                     }
                 }

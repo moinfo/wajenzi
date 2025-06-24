@@ -34,6 +34,8 @@ use App\Models\Activity;
 use App\Models\SubActivity;
 use App\Models\BoqTemplate;
 use App\Models\ConstructionStage;
+use App\Models\BuildingType;
+use App\Models\BoqItemCategory;
 use App\Models\ProjectClient;
 use App\Models\ProjectType;
 use App\Models\Role;
@@ -78,6 +80,24 @@ class AjaxController
                     $deduction_subscriptions = Deduction::all();
                     $staffs = Staff::onlyStaffs();;
                     $systems= System::all();
+                    
+                    // BOQ Template System Data
+                    $construction_stages = ConstructionStage::orderBy('sort_order')->get();
+                    $activities = Activity::with('constructionStage')->orderBy('sort_order')->get();
+                    $building_types = BuildingType::where('is_active', true)->orderBy('name')->get();
+                    $categories = BoqItemCategory::orderBy('name')->get();
+                    $parent_categories = BoqItemCategory::whereNull('parent_id')->orderBy('name')->get();
+                    $skill_levels = [
+                        ['name' => 'unskilled'], 
+                        ['name' => 'semi_skilled'], 
+                        ['name' => 'skilled'], 
+                        ['name' => 'specialist']
+                    ];
+                    $duration_units = [
+                        ['name' => 'hours'], 
+                        ['name' => 'days'], 
+                        ['name' => 'weeks']
+                    ];
                     $employees = [
                         ['id'=>'1','name'=>'Supervisor'],
                         ['id'=>'2','name'=>'Driver']
