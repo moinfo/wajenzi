@@ -979,6 +979,23 @@
     }
 }
 
+// Wajenzi Gradient Header Class
+// Replace bg-gd-dusk with our brand gradient
+.bg-wajenzi-gradient {
+    background: linear-gradient(135deg, #3f9ce8 0%, #2facb2 100%) !important;
+    color: white !important;
+    
+    h1, h2, h3, h4, h5, h6,
+    .block-title {
+        color: white !important;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    
+    .btn-close {
+        filter: brightness(0) invert(1);
+    }
+}
+
 // Modal animations
 @keyframes modalFadeInUp {
     from {

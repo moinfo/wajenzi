@@ -26,7 +26,7 @@
             </div>
             <div>
                 <div class="block block-themed">
-                    <div class="block-header bg-gd-dusk">
+                    <div class="block-header bg-wajenzi-gradient">
                         <h3 class="block-title">Detailed Expenditure Statement For the Year ended {{date('jS-M-Y', strtotime('last day of december last year'))}}</h3>
                     </div>
                     <div class="block-content">
