@@ -140,7 +140,7 @@
             margin-top: 80px; /* Space for fixed header */
             margin-left: 0;
             min-height: calc(100vh - 80px);
-            background: var(--wajenzi-gray-50);
+            background: linear-gradient(135deg, var(--wajenzi-gray-50) 0%, #f0f9ff 50%, #e0f2fe 100%);
             transition: margin-left 0.3s ease;
             width: 100%;
             display: flex;
@@ -151,6 +151,18 @@
             padding-bottom: 60px;
             overflow-y: auto; /* Enable scrolling */
             position: relative;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .wajenzi-main::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Smooth scrolling */
+        .wajenzi-main {
+            scroll-behavior: smooth;
         }
 
         /* Clean layout without sidebar margins */
@@ -158,7 +170,7 @@
         .main-content {
             width: 100%;
             margin: 0 auto;
-            padding: 2rem;
+            /*padding: 2rem;*/
             box-sizing: border-box;
         }
 
@@ -175,17 +187,30 @@
             height: calc(100vh - 80px) !important;
             width: 100% !important;
             transition: margin-left 0.3s ease !important;
+            background: linear-gradient(135deg, var(--wajenzi-gray-50) 0%, #f0f9ff 50%, #e0f2fe 100%);
+            scrollbar-width: none !important; /* Firefox */
+            -ms-overflow-style: none !important; /* IE and Edge */
+        }
+
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        #main-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Smooth scrolling */
+        #main-container {
+            scroll-behavior: smooth !important;
         }
 
         /* Simplified layout */
 
         /* Page Container Adjustments */
         #page-container {
-            background: var(--wajenzi-gray-50);
+            background: linear-gradient(180deg, #ffffff 0%, var(--wajenzi-gray-50) 100%);
             position: relative;
             min-height: 100vh;
         }
-        
+
         /* Header positioning is handled in header component */
 
         /* Notifications positioning */
