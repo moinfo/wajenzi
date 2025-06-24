@@ -80,22 +80,22 @@ class AjaxController
                     $deduction_subscriptions = Deduction::all();
                     $staffs = Staff::onlyStaffs();;
                     $systems= System::all();
-                    
+
                     // BOQ Template System Data
                     $construction_stages = ConstructionStage::orderBy('sort_order')->get();
                     $activities = Activity::with('constructionStage')->orderBy('sort_order')->get();
                     $building_types = BuildingType::where('is_active', true)->orderBy('name')->get();
-                    $categories = BoqItemCategory::orderBy('name')->get();
-                    $parent_categories = BoqItemCategory::whereNull('parent_id')->orderBy('name')->get();
+                    $boq_item_categories = BoqItemCategory::orderBy('name')->get();
+                    $parent_boq_item_categories = BoqItemCategory::whereNull('parent_id')->orderBy('name')->get();
                     $skill_levels = [
-                        ['name' => 'unskilled'], 
-                        ['name' => 'semi_skilled'], 
-                        ['name' => 'skilled'], 
+                        ['name' => 'unskilled'],
+                        ['name' => 'semi_skilled'],
+                        ['name' => 'skilled'],
                         ['name' => 'specialist']
                     ];
                     $duration_units = [
-                        ['name' => 'hours'], 
-                        ['name' => 'days'], 
+                        ['name' => 'hours'],
+                        ['name' => 'days'],
                         ['name' => 'weeks']
                     ];
                     $employees = [
@@ -233,6 +233,14 @@ class AjaxController
                     $process_approval_flow_steps = ProcessApprovalFlowStep::all();
 
                     $data = $request->input('data') ?? [
+                            'construction_stages' => $construction_stages,
+                            'activities' => $activities,
+                            'building_types' => $building_types,
+                            'boq_item_categories' => $boq_item_categories,
+                            'parent_boq_item_categories' => $parent_boq_item_categories,
+                            'skill_levels' => $skill_levels,
+                            'duration_units' => $duration_units,
+                            'in_date' => $in_date,
                             'roles' => $roles,
                             'process_approval_flows' => $process_approval_flows,
                             'process_approval_flow_steps' => $process_approval_flow_steps,
@@ -344,7 +352,7 @@ class AjaxController
                         return $fullObject::$method(...$params);
                     }
                     break;
-                    
+
                 // BOQ Template Builder AJAX Methods
                 case 'getActivitiesForStages':
                     $stageIds = $request->input('stage_ids', []);
@@ -354,7 +362,7 @@ class AjaxController
                         ->get();
                     return response()->json(['activities' => $activities]);
                     break;
-                    
+
                 case 'getSubActivitiesForActivities':
                     $activityIds = $request->input('activity_ids', []);
                     $subActivities = SubActivity::with('activity')
@@ -363,12 +371,12 @@ class AjaxController
                         ->get();
                     return response()->json(['subActivities' => $subActivities]);
                     break;
-                    
+
                 case 'previewBoqTemplate':
                     $selectedStages = $request->input('selected_stages', []);
                     $selectedActivities = $request->input('selected_activities', []);
                     $selectedSubActivities = $request->input('selected_sub_activities', []);
-                    
+
                     $stages = ConstructionStage::with([
                         'activities' => function($query) use ($selectedActivities) {
                             $query->whereIn('id', $selectedActivities);
@@ -377,48 +385,48 @@ class AjaxController
                             $query->whereIn('id', $selectedSubActivities);
                         }
                     ])->whereIn('id', $selectedStages)->orderBy('sort_order')->get();
-                    
+
                     $html = view('partials.boq_template_preview', compact('stages'))->render();
                     return response()->json(['html' => $html]);
                     break;
-                    
+
                 case 'saveBoqTemplateConfiguration':
                     $templateId = $request->input('template_id');
                     $selectedStages = $request->input('selected_stages', []);
                     $selectedActivities = $request->input('selected_activities', []);
                     $selectedSubActivities = $request->input('selected_sub_activities', []);
-                    
+
                     try {
                         $template = BoqTemplate::findOrFail($templateId);
-                        
+
                         // Clear existing template configuration
                         $template->templateStages()->delete();
-                        
+
                         // Add selected stages, activities, and sub-activities
                         foreach ($selectedStages as $index => $stageId) {
                             $templateStage = $template->templateStages()->create([
                                 'construction_stage_id' => $stageId,
                                 'sort_order' => $index + 1
                             ]);
-                            
+
                             // Add activities for this stage
                             $stageActivities = array_filter($selectedActivities, function($activityId) use ($stageId) {
                                 $activity = Activity::find($activityId);
                                 return $activity && $activity->construction_stage_id == $stageId;
                             });
-                            
+
                             foreach ($stageActivities as $actIndex => $activityId) {
                                 $templateActivity = $templateStage->templateActivities()->create([
                                     'activity_id' => $activityId,
                                     'sort_order' => $actIndex + 1
                                 ]);
-                                
+
                                 // Add sub-activities for this activity
                                 $activitySubActivities = array_filter($selectedSubActivities, function($subActivityId) use ($activityId) {
                                     $subActivity = SubActivity::find($subActivityId);
                                     return $subActivity && $subActivity->activity_id == $activityId;
                                 });
-                                
+
                                 foreach ($activitySubActivities as $subIndex => $subActivityId) {
                                     $templateActivity->templateSubActivities()->create([
                                         'sub_activity_id' => $subActivityId,
@@ -427,13 +435,13 @@ class AjaxController
                                 }
                             }
                         }
-                        
+
                         return response()->json(['success' => true, 'message' => 'Template configuration saved successfully']);
                     } catch (\Exception $e) {
                         return response()->json(['success' => false, 'message' => $e->getMessage()]);
                     }
                     break;
-                    
+
                 default:
                     return ('YES');
                     break;

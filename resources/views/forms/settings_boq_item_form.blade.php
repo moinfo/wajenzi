@@ -11,11 +11,13 @@
             <label for="category_id">Category</label>
             <select name="category_id" class="form-control">
                 <option value="">Select Category</option>
-                @foreach($categories as $category)
-                    <option value="{{ $category->id }}" {{ ($category->id == ($object->category_id ?? '')) ? 'selected' : '' }}>
-                        @if($category->parent){{ $category->parent->name }} > @endif{{ $category->name }}
-                    </option>
-                @endforeach
+                @if(isset($boq_item_categories))
+                    @foreach($boq_item_categories as $category)
+                        <option value="{{ $category->id }}" {{ ($category->id == ($object->category_id ?? '')) ? 'selected' : '' }}>
+                            @if($category->parent){{ $category->parent->name }} > @endif{{ $category->name }}
+                        </option>
+                    @endforeach
+                @endif
             </select>
         </div>
         
