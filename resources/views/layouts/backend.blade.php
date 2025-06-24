@@ -601,7 +601,7 @@ MAIN CONTENT LAYOUT
     <div class="modal-dialog modal-dialog-popin" role="document">
         <div class="modal-content">
             <div class="block block-themed mb-0">
-                <div class="block-header bg-gd-dusk">
+                <div class="block-header bg-wajenzi-gradient">
                     <h3 class="block-title" id="ajax-loader-modal-title">New</h3>
                     <div class="block-options">
                         <button type="button" class="btn-block-option" data-dismiss="modal" aria-label="Close">

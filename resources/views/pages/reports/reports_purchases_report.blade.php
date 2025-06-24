@@ -21,7 +21,7 @@
             </div>
             <div>
                 <div class="block block-themed">
-                    <div class="block-header bg-gd-dusk">
+                    <div class="block-header bg-wajenzi-gradient">
                         <h3 class="block-title">Purchases Report</h3>
                     </div>
                     <div class="block-content">
