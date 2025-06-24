@@ -618,6 +618,11 @@
             margin-bottom: 2rem;
         }
 
+        /* Team Performance section spans remaining columns */
+        .dashboard-section.team-performance {
+            grid-column: 1 / -1; /* Span from first to last column */
+        }
+
         .dashboard-section {
             background: white;
             border-radius: 16px;
@@ -919,8 +924,8 @@
         /* Department Grid */
         .department-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.8rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
         }
 
         .department-card {
@@ -1073,7 +1078,7 @@
             }
 
             .department-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             }
         }
 
@@ -1094,6 +1099,10 @@
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 1rem;
+            }
+
+            .department-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
