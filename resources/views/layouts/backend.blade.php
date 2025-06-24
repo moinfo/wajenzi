@@ -186,15 +186,7 @@
             min-height: 100vh;
         }
         
-        /* Force header to be fixed */
-        #page-header {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            z-index: 1030 !important;
-            width: 100% !important;
-        }
+        /* Header positioning is handled in header component */
 
         /* Notifications positioning */
         .notifications {

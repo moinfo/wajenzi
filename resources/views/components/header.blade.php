@@ -10,7 +10,7 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         <!-- Left Section -->
         <div class="header-left">
             <!-- Toggle Sidebar -->
-            <button type="button" class="header-btn sidebar-toggle" data-toggle="layout" data-action="sidebar_toggle" 
+            <button type="button" class="header-btn sidebar-toggle" data-toggle="layout" data-action="sidebar_toggle"
                     aria-label="Toggle navigation menu" title="Open/close navigation">
                 <span class="hamburger-icon">
                     <span class="hamburger-line"></span>
@@ -18,7 +18,7 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
                     <span class="hamburger-line"></span>
                 </span>
             </button>
-            
+
             <!-- Page Title -->
             <div class="page-title-section">
                 <h1 class="page-title">{{ $page_title ?? 'Dashboard' }}</h1>
@@ -183,14 +183,20 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         background: linear-gradient(135deg, var(--wajenzi-gray-50) 0%, white 100%);
         height: 80px;
         border-bottom: 1px solid var(--wajenzi-gray-200);
-        position: fixed;
-        top: 0;
-        left: 280px; /* Start after sidebar */
-        right: 0;
-        z-index: 1030;
+        position: fixed !important;
+        top: 0 !important;
+        left: 280px !important; /* Start after sidebar */
+        right: 0 !important;
+        z-index: 1030 !important;
         box-shadow: var(--shadow-sm);
         backdrop-filter: blur(8px);
-        width: calc(100% - 280px); /* Take remaining width */
+        width: calc(100% - 280px) !important; /* Take remaining width after sidebar */
+    }
+
+    /* Specific override for page-header ID */
+    #page-header {
+        left: 190px !important;
+        width: calc(100% - 180px) !important;
     }
 
     .content-header {
@@ -697,15 +703,16 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
 
     /* Responsive Design */
     @media (max-width: 1024px) {
-        .wajenzi-header {
-            left: 0; /* Full width on smaller screens */
-            width: 100%;
+        .wajenzi-header,
+        #page-header {
+            left: 0 !important; /* Full width on smaller screens */
+            width: 100% !important;
         }
-        
+
         .content-header {
             padding: 0.875rem 1.5rem;
         }
-        
+
         .header-search {
             min-width: 250px;
             max-width: 300px;
@@ -721,11 +728,12 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     }
 
     @media (max-width: 768px) {
-        .wajenzi-header {
-            left: 0;
-            width: 100%;
+        .wajenzi-header,
+        #page-header {
+            left: 0 !important;
+            width: 100% !important;
         }
-        
+
         .content-header {
             padding: 0.75rem 1rem;
             gap: 1rem;
@@ -735,8 +743,21 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
             gap: 1rem;
         }
 
+        /* Keep page title visible but make it more compact */
         .page-title-section {
-            display: none;
+            flex: 1;
+            min-width: 0; /* Allow text to shrink */
+        }
+
+        .page-title {
+            font-size: 1.125rem; /* Slightly smaller */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .page-subtitle {
+            display: none; /* Hide subtitle on mobile to save space */
         }
 
         .header-search {
@@ -747,7 +768,7 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         .search-form {
             height: 40px;
         }
-        
+
         .search-input-wrapper {
             height: 40px;
         }
@@ -768,39 +789,46 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
 
         .dropdown-menu {
             position: fixed;
-            top: var(--header-height);
+            top: 80px;
             left: 0;
             right: 0;
             margin: 0;
             border-radius: 0;
-            max-height: calc(100vh - var(--header-height));
+            max-height: calc(100vh - 80px);
             overflow-y: auto;
         }
     }
 
     @media (max-width: 576px) {
-        .wajenzi-header {
-            left: 0;
-            width: 100%;
+        .wajenzi-header,
+        #page-header {
+            left: 0 !important;
+            width: 100% !important;
         }
-        
+
         .content-header {
             padding: 0.625rem 0.75rem;
         }
-        
+
         .header-actions {
             display: none;
+        }
+
+        /* Further optimize page title for very small screens */
+        .page-title {
+            font-size: 1rem;
+            max-width: 120px; /* Limit width to prevent overlap */
         }
 
         .header-search {
             min-width: 150px;
             max-width: 200px;
         }
-        
+
         .search-form {
             height: 36px;
         }
-        
+
         .search-input-wrapper {
             height: 36px;
         }
@@ -879,5 +907,16 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
 
     .notifications-list::-webkit-scrollbar-thumb:hover {
         background: var(--wajenzi-gray-400);
+    }
+
+    /* Extra optimization for very small screens */
+    @media (max-width: 480px) {
+        .page-title {
+            /* Use CSS to truncate long titles */
+            max-width: 100px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     }
 </style>
