@@ -57,9 +57,14 @@
                                     <td class="text-center">{{ $template->created_at->format('M d, Y') }}</td>
                                     <td class="text-center">
                                         <div class="btn-group">
-                                            @can('View BOQ Template')
+{{--                                            @can('View BOQ Template')--}}
                                                 <button type="button" onclick="viewTemplate({{$template->id}});" class="btn btn-sm btn-info js-tooltip-enabled" data-toggle="tooltip" title="View Details">
                                                     <i class="fa fa-eye"></i>
+                                                </button>
+{{--                                            @endcan--}}
+                                            @can('View BOQ Template')
+                                                <button type="button" onclick="viewTemplateReport({{$template->id}});" class="btn btn-sm btn-success js-tooltip-enabled" data-toggle="tooltip" title="Template Report">
+                                                    <i class="fa fa-table"></i>
                                                 </button>
                                             @endcan
                                             @can('Edit BOQ Template')
@@ -87,7 +92,12 @@
     <script>
         function viewTemplate(templateId) {
             // Load template details modal
-            loadFormModal('boq_template_details', {id: templateId}, 'Template Details', 'modal-xl');
+            loadFormModal('boq_template_details', {className: 'BoqTemplate', id: templateId}, 'Template Details', 'modal-xl');
+        }
+
+        function viewTemplateReport(templateId) {
+            // Open template report in a new window/tab
+            window.open('{{ route("hr_settings_boq_template_report", ["templateId" => ":templateId"]) }}'.replace(':templateId', templateId), '_blank');
         }
     </script>
 @endsection

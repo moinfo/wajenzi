@@ -337,6 +337,37 @@ class AjaxController
                         }
                     }
                     $form_name = $request->input('formName');
+                    
+                    // Special handling for BOQ template details
+                    if ($form_name === 'boq_template_details' && isset($data['object']) && $data['object'] instanceof \App\Models\BoqTemplate) {
+                        $template = $data['object'];
+                        
+                        // Load template with relationships for statistics calculation
+                        $template->load([
+                            'templateStages.templateActivities.templateSubActivities.subActivity.materials'
+                        ]);
+                        
+                        // Calculate template statistics
+                        $data['templateStats'] = [
+                            'stages' => $template->templateStages->count(),
+                            'activities' => $template->templateStages->sum(function($stage) {
+                                return $stage->templateActivities->count();
+                            }),
+                            'subActivities' => $template->templateStages->sum(function($stage) {
+                                return $stage->templateActivities->sum(function($activity) {
+                                    return $activity->templateSubActivities->count();
+                                });
+                            }),
+                            'materials' => $template->templateStages->sum(function($stage) {
+                                return $stage->templateActivities->sum(function($activity) {
+                                    return $activity->templateSubActivities->sum(function($subActivity) {
+                                        return $subActivity->subActivity->materials->count();
+                                    });
+                                });
+                            })
+                        ];
+                    }
+                    
                     return $form_name ? view('forms.' . strtolower($form_name))->with($data) : "<span class='alert'>Invalid Form Name</span>";
                     break;
                 case 'class':
