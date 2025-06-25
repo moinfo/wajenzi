@@ -5,14 +5,14 @@
     use Illuminate\Support\Facades\DB;
     $start_date = $_POST['start_date'] ?? date('Y-m-01');
     $end_date = $_POST['end_date'] ?? date('Y-m-t');
-
     ?>
-    <?php
-    ?>
+    
     <div class="main-container">
         <div class="content">
-            <div class="content-heading">Salary Slip
-                @php
+            @if($payroll)
+                @include('components.headed_paper_print', ['title' => 'PAYSLIP', 'subtitle' => date('F Y', strtotime($payroll->year.'-'.$payroll->month.'-01')), 'showPrintButton' => true])
+                <div class="print-content">
+                    @php
 
 
                     $gross_salary_check = 0;
@@ -56,201 +56,172 @@
                     }
                 }
 
-                @endphp
+                    @endphp
 
-                <div class="float-right">
-
-                </div>
-            </div>
-            <div>
-                <div class="block block-themed">
-                    <div class="block-content">
-                        <div class="row">
-                            <div class="col-sm-12">
-                                <div class="text-right">
-                                    <input name="b_print" type="button" class="ipt" onClick="printdiv('div_print');" value=" Print ">
-                                </div>
-                            </div>
+                    <!-- Employee Information Card -->
+                    <div class="card card-custom shadow-sm mb-4">
+                        <div class="card-header" style="background: linear-gradient(90deg, #1BC5BD 0%, #1DC9C0 100%); color: white;">
+                            <h5 class="mb-0 font-weight-bold">Employee Information</h5>
                         </div>
-                        <div class="row no-print m-t-10">
-                            <div class="class col-md-12">
-                                <div class="class card-box">
-                                    <div class="row" style="border-bottom: 3px solid gray">
-                                        <div class="col-md-3 text-right">
-                                            <img class="" src="{{ asset('media/avatars/logo.png') }}" alt="" height="100">
-                                        </div>
-                                        <div class="col-md-6 text-center">
-                                            <span class="text-center font-size-h3">LERUMA ENTERPRISES</span><br/>
-                                            <span class="text-center font-size-h5">BOX 30133, KIBAHA - COAST, Mobile 0657 798 062</span><br/>
-                                            <span class="text-center font-size-h5">TIN 113 - 882 - 384</span>
-                                        </div>
-                                        <div class="col-md-3 text-right">
-{{--                                            <a href="{{route('reports')}}"   type="button" class="btn btn-sm btn-danger"><i class="fa fa arrow-left"></i>Back</a>--}}
-                                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-group mb-3">
+                                        <label class="font-weight-bold text-dark-75">Payroll Number:</label>
+                                        <span class="ml-2">{{$payroll['payroll_number']}}</span>
+                                    </div>
+                                    <div class="info-group mb-3">
+                                        <label class="font-weight-bold text-dark-75">Employee Number:</label>
+                                        <span class="ml-2">HRM/LE/PO-{{$employee->employee_number ?? 'N/A'}}</span>
+                                    </div>
+                                    <div class="info-group mb-3">
+                                        <label class="font-weight-bold text-dark-75">Department:</label>
+                                        <span class="ml-2">Human Resources & Administration (HRA)</span>
+                                    </div>
+                                    <div class="info-group mb-3">
+                                        <label class="font-weight-bold text-dark-75">Bank Name:</label>
+                                        <span class="ml-2">{{$employee_bank_details->bank->name ?? 'N/A'}}</span>
                                     </div>
                                 </div>
-                                <br/>
+                                <div class="col-md-6">
+                                    <div class="info-group mb-3">
+                                        <label class="font-weight-bold text-dark-75">Payroll Month:</label>
+                                        <span class="ml-2">{{date('F',strtotime($payroll->year.'-'.$payroll->month.'-01')).' - '.$payroll->year}}</span>
+                                    </div>
+                                    <div class="info-group mb-3">
+                                        <label class="font-weight-bold text-dark-75">Employee Name:</label>
+                                        <span class="ml-2">{{$employee->name ?? 'N/A'}}</span>
+                                    </div>
+                                    <div class="info-group mb-3">
+                                        <label class="font-weight-bold text-dark-75">Designation:</label>
+                                        <span class="ml-2">{{$employee->designation ?? 'N/A'}}</span>
+                                    </div>
+                                    <div class="info-group mb-3">
+                                        <label class="font-weight-bold text-dark-75">Account Number:</label>
+                                        <span class="ml-2">{{$employee_bank_details->account_number ?? 'N/A'}}</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-
-
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full" id="payroll">
-
-
-                            </table>
                         </div>
                     </div>
-                </div>
-            </div>
-            @if($payroll)
-            <div>
-                <div class="block block-themed">
-                    <div class="block-content">
-                        <div id="div_print">
-                            <div class="row m-t-10">
 
-                                    <div class="class col-md-12">
-                                        <div class="class card-box">
-                                            <div class="table-responsive">
-
-                                                <style>
-                                                    .strong-border {
-                                                        /*border-top: unset; border-top-color: unset; border-bottom-color: unset;*/
-                                                        border: 1px solid #555 !important;
-                                                    }
-                                                    .payslip-table {
-                                                        border-color: #555555;
-                                                    }
-                                                    p {
-                                                        padding: 0px;
-                                                        margin: 0 0 5px 0;
-                                                    }
-                                                </style>
-                                                <table class="table table-bordered payslip-table ">
-                                                    <thead>
-                                                    <tr>
-                                                        <th width="30%" colspan="3" style="border-right: none;">
-                                                            <div class="row">
-                                                                <div class="col-xs-4 col-md-3 col-lg-2">
-                                                                    <img class="img img-responsive" src="{{ asset('media/avatars/logo.png') }}" height="100" width="100">
-                                                                </div>
-                                                                <div class="col-xs-8 col-md-9 col-lg-10" >
-                                                                    <p>LERUMA ENTERPRISES</p>
-                                                                    <p>Morogoro Road, House #49 Pwani Tanzania.</p>
-                                                                    <p>P. O. Box 16520, KIBAHA - COAST</p>
-                                                                    <p>Tel: +255 657 798 062</p>
-                                                                    <!--                        <p>Mob:--><!--</p>-->
-                                                                </div>
-                                                            </div>
-                                                        </th>
-                                                        <td colspan="1">
-                                                            <div class="row">
-                                                                <div class="col-sm-12"><h2 class="text-right" style="color:#777777;">PAYSLIP</h2></div>
-                                                                <div class="col-sm-12">
-
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                    <tr>
-                                                        <td width="30%">Payroll Number:</td><td>{{$payroll['payroll_number']}}</td>
-                                                        <td width="30%">Payroll Month:</td><td>{{date('F',strtotime($payroll->year.'-'.$payroll->month.'-'.'01')).' - '.$payroll->year}}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td width="30%">Employee Number:</td><td>HRM/LE/PO-{{$employee->employee_number ?? null}}</td>
-                                                        <td width="30%">Employee Name:</td><td>{{$employee->name  ?? null}}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Department:</td><td>Human Resources &amp; Administration (HRA)</td>
-                                                        <td>Designation:</td><td>{{$employee->designation ?? null}}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>Bank Name:</td><td>{{$employee_bank_details->bank->name ?? null}}</td>
-                                                        <td>Account Number:</td><td>{{$employee_bank_details->account_number ?? null}}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <th>DETAILS</th><th>AMOUNT</th>
-                                                        <th>DETAILS</th><th>AMOUNT</th>
-                                                    </tr>
-                                                    <tr>
-                                                        <th>Employee Income</th><th></th>
-                                                        <th>Deductions</th><th></th>
-                                                    </tr>
-                                                    @php
-                                                    $max = count($left_side) > count($right_side) ? count($left_side) : count($right_side);
-                                                    foreach (range(0, $max -1 ) as $index) {
-                                                        echo "<tr>
-                                                                <td>". (isset($left_side[$index]) ? $left_side[$index]['name'] : '') . "</td>
-                                                                <td class='money text-right'>". (isset($left_side[$index]) ? \App\Classes\Utility::money_format($left_side[$index]['value']): ''). "</td>
-                                                                <td>". (isset($right_side[$index]) ? $right_side[$index]['name'] : '') ."</td>
-                                                                <td class='money text-right'>". (isset($right_side[$index]) ? \App\Classes\Utility::money_format($right_side[$index]['value']) : '')."</td>
-                                                            </tr>
-                                                        ";
-                                                    }
-                                                    @endphp
-                                                    <tr>
-                                                        <th>&nbsp;</th><th></th>
-                                                        <th></th><th></th>
-                                                    </tr>
-                                                    <tr>
-                                                        <th>Gross Salary</th><td class="money text-right">{{number_format($gross_salary)}}</td>
-                                                        <th>Total Deductions</th><td class="money text-right">{{number_format($total_deduction+$advance_salary+$loan_deduction+$employee_deducted_amount_payee)}}</td>
-                                                    </tr>
-                                                    </tbody>
-                                                    <tfoot>
-                                                    <tr>
-                                                        <td class="strong-border" colspan="3">NET SALARY
-                                                            <!--            <div class="pull-right" style="font-weight: unset; font-size: small;"><i>(--><!--)</i></div>-->
-                                                        </td>
-                                                        <th class="money sum strong-border text-right" colspan="1">
-                                                            {{number_format($net_salary)}}
-                                                        </th>
-                                                    </tr>
-                                                    </tfoot>
-                                                </table>
-
-                                            </div>
-                                        </div>
-                                    </div>
-
+                    <!-- Salary Breakdown -->
+                    <div class="card card-custom shadow-sm">
+                        <div class="card-header" style="background: linear-gradient(90deg, #1BC5BD 0%, #1DC9C0 100%); color: white;">
+                            <h5 class="mb-0 font-weight-bold">Salary Breakdown</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <style>
+                                    .payslip-table {
+                                        margin-bottom: 0;
+                                    }
+                                    .payslip-table th {
+                                        background: #f8f9fa;
+                                        color: #495057;
+                                        font-weight: 600;
+                                        border-top: none;
+                                    }
+                                    .payslip-table .section-header {
+                                        background: linear-gradient(90deg, #e9ecef 0%, #f8f9fa 100%);
+                                        font-weight: 700;
+                                        color: #495057;
+                                    }
+                                    .payslip-table .total-row {
+                                        background: #f1f3f4;
+                                        font-weight: 600;
+                                    }
+                                    .payslip-table .net-salary-row {
+                                        background: linear-gradient(90deg, #1BC5BD 0%, #1DC9C0 100%);
+                                        color: white;
+                                        font-weight: 700;
+                                        font-size: 1.1rem;
+                                    }
+                                    .money {
+                                        font-family: 'Courier New', monospace;
+                                        font-weight: 600;
+                                    }
+                                    
+                                    @media print {
+                                        .payslip-table .section-header,
+                                        .payslip-table .total-row,
+                                        .payslip-table .net-salary-row {
+                                            -webkit-print-color-adjust: exact;
+                                            print-color-adjust: exact;
+                                        }
+                                    }
+                                </style>
+                                <table class="table table-bordered payslip-table">
+                                    <thead>
+                                        <tr>
+                                            <th width="25%">EARNINGS</th>
+                                            <th width="25%" class="text-right">AMOUNT</th>
+                                            <th width="25%">DEDUCTIONS</th>
+                                            <th width="25%" class="text-right">AMOUNT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="section-header">
+                                            <td class="font-weight-bold">Employee Income</td>
+                                            <td></td>
+                                            <td class="font-weight-bold">Employee Deductions</td>
+                                            <td></td>
+                                        </tr>
+                                        @php
+                                        $max = count($left_side) > count($right_side) ? count($left_side) : count($right_side);
+                                        foreach (range(0, $max - 1) as $index) {
+                                            $earnings_name = isset($left_side[$index]) ? $left_side[$index]['name'] : '';
+                                            $earnings_value = isset($left_side[$index]) ? \App\Classes\Utility::money_format($left_side[$index]['value']) : '';
+                                            $deduction_name = isset($right_side[$index]) ? $right_side[$index]['name'] : '';
+                                            $deduction_value = isset($right_side[$index]) ? \App\Classes\Utility::money_format($right_side[$index]['value']) : '';
+                                            
+                                            echo "<tr>
+                                                <td class='text-dark-75'>$earnings_name</td>
+                                                <td class='money text-right text-dark-75'>$earnings_value</td>
+                                                <td class='text-dark-75'>$deduction_name</td>
+                                                <td class='money text-right text-dark-75'>$deduction_value</td>
+                                            </tr>";
+                                        }
+                                        @endphp
+                                        
+                                        <tr class="total-row">
+                                            <td class="font-weight-bold">GROSS SALARY</td>
+                                            <td class="money text-right font-weight-bold">{{number_format($gross_salary)}}</td>
+                                            <td class="font-weight-bold">TOTAL DEDUCTIONS</td>
+                                            <td class="money text-right font-weight-bold">{{number_format($total_deduction+$advance_salary+$loan_deduction+$employee_deducted_amount_payee)}}</td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="net-salary-row">
+                                            <td colspan="3" class="font-weight-bold" style="font-size: 1.1rem;">NET SALARY</td>
+                                            <td class="money text-right font-weight-bold" style="font-size: 1.2rem;">
+                                                {{number_format($net_salary)}}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> <!-- Close print-document -->
             @else
-                <div>
-                    <div class="block block-themed bg-gray min-height-200 text-center" >
-                        <div class="block-content">
-                            <div class="row no-print m-t-10">
-                                <div class="class col-md-12">
-                                    <div class="class card-box ">
-                                        <div class='jumbotron '>Failed to get salary slip for this month!</div>
-                                    </div>
-                                </div>
+                <div class="container-fluid">
+                    <div class="card card-custom shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <div class="my-5">
+                                <i class="fas fa-exclamation-triangle fa-4x text-warning mb-4"></i>
+                                <h3 class="text-dark mb-3">Salary Slip Not Available</h3>
+                                <p class="text-muted mb-4">Failed to get salary slip for this month. Please contact HR department.</p>
+                                <a href="javascript:history.back()" class="btn font-weight-bold px-6 py-3" style="background: linear-gradient(90deg, #1BC5BD 0%, #1DC9C0 100%); color: white; border: none; border-radius: 8px;">
+                                    <i class="fas fa-arrow-left mr-2"></i>Go Back
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
-                @endif
+            @endif
         </div>
     </div>
 
 @endsection
-
-
-<script language="javascript">
-    function printdiv(printpage) {
-        var headstr = "<html><head><title></title></head><body>";
-        var footstr = "</body>";
-        var newstr = document.all.item(printpage).innerHTML;
-        var oldstr = document.body.innerHTML;
-        document.body.innerHTML = headstr + newstr + footstr;
-        window.print();
-        document.body.innerHTML = oldstr;
-        return false;
-    }
-</script>
