@@ -21,20 +21,6 @@
 
             <!-- Results Card -->
             <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white py-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="font-weight-bold mb-0 text-white">Approval Flow Steps List</h5>
-                        <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-light" data-toggle="tooltip" title="Export to Excel">
-                                <i class="fa fa-file-excel-o"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-light" data-toggle="tooltip" title="Print">
-                                <i class="fa fa-print"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0 js-dataTable-full">
