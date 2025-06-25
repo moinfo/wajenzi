@@ -11,6 +11,26 @@
 // For example you can create _component1.scss and include it as follows:
 // @import 'component1';
 
+// Global table width fix - ensure all tables use 100% width
+.table {
+    width: 100% !important;
+    table-layout: auto !important;
+}
+
+// DataTables specific width fix
+table.dataTable {
+    width: 100% !important;
+}
+
+.dataTables_wrapper {
+    width: 100% !important;
+}
+
+// Ensure js-dataTable-full uses full width
+.js-dataTable-full {
+    width: 100% !important;
+}
+
 .img-status {
     position: relative;
     display: inline-block;
@@ -81,10 +101,9 @@
     
     // Force proper table layout
     .table {
-        min-width: 600px !important;
+        min-width: 100% !important;
         margin-bottom: 0 !important;
-        width: auto !important;
-        white-space: nowrap;
+        width: 100% !important;
         border-collapse: separate;
         border-spacing: 0;
         
