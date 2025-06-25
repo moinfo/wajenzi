@@ -78,15 +78,20 @@
         .table-container {
             background-color: white;
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: visible;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 30px;
+            max-width: 100%;
         }
         
         table {
             width: 100%;
-            border-collapse: collapse;
+            min-width: 1200px;
+            border-collapse: separate;
+            border-spacing: 0;
             background-color: white;
+            table-layout: fixed;
         }
         
         th {
@@ -98,14 +103,28 @@
             text-transform: uppercase;
             font-size: 13px;
             letter-spacing: 0.8px;
-            border: none;
+            border: 1px solid #34495e;
+            border-bottom: 2px solid #34495e;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        th:first-child {
+            border-left: none;
+        }
+        
+        th:last-child {
+            border-right: none;
         }
         
         td {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
+            padding: 12px 15px;
+            border: 1px solid #eee;
             vertical-align: top;
-            line-height: 1.5;
+            line-height: 1.6;
+            word-wrap: break-word;
+            overflow: hidden;
         }
         
         tr:nth-child(even) {
@@ -115,34 +134,54 @@
         .stage-cell {
             font-weight: bold;
             background-color: #e8f4fd !important;
-            border-left: 5px solid #4A90E2;
+            border-left: 5px solid #4A90E2 !important;
             color: #2c3e50;
-            font-size: 15px;
+            font-size: 14px;
+            width: 18%;
+            max-width: 18%;
+            text-align: left;
+            vertical-align: middle;
         }
         
         .activity-cell {
             background-color: #fce4ec !important;
             font-weight: 600;
             color: #2c3e50;
-            border-left: 3px solid #e91e63;
+            border-left: 3px solid #e91e63 !important;
+            width: 22%;
+            max-width: 22%;
+            text-align: left;
+            vertical-align: middle;
         }
         
         .sub-activity-cell {
             background-color: #fff8e1 !important;
-            padding-left: 25px;
             color: #2c3e50;
-            border-left: 3px solid #ff9800;
+            border-left: 3px solid #ff9800 !important;
+            width: 22%;
+            max-width: 22%;
+            text-align: left;
+            vertical-align: middle;
         }
         
         .materials-cell {
             background-color: #e8f5e9 !important;
-            border-left: 3px solid #4caf50;
+            border-left: 3px solid #4caf50 !important;
+            width: 35%;
+            max-width: 35%;
+            text-align: left;
+            vertical-align: top;
+            padding: 10px 15px;
+            min-width: 300px;
         }
         
         .duration-cell {
             text-align: center;
             font-weight: 500;
             background-color: #f3f4f6 !important;
+            width: 12%;
+            max-width: 12%;
+            vertical-align: middle;
         }
         
         .duration-badge {
@@ -157,26 +196,73 @@
             letter-spacing: 0.5px;
         }
         
-        .material-item {
-            display: inline-block;
-            margin: 3px 2px;
-            padding: 6px 12px;
-            background-color: #4CAF50;
-            color: white;
-            border-radius: 15px;
+        .materials-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
             font-size: 12px;
-            font-weight: 500;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            overflow: hidden;
         }
         
-        .quantity-badge {
-            display: inline-block;
-            margin: 3px 2px;
-            padding: 6px 12px;
-            background-color: #FF9800;
-            color: white;
-            border-radius: 15px;
+        .materials-table th {
+            background-color: #f1f3f4;
+            color: #202124;
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 700;
+            border-bottom: 2px solid #dadce0;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .materials-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #f1f3f4;
+            vertical-align: middle;
+            line-height: 1.4;
+        }
+        
+        .materials-table tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .material-name {
+            font-weight: 600;
+            color: #202124;
             font-size: 12px;
+        }
+        
+        .material-quantity {
+            font-weight: 700;
+            color: #000000;
+            text-align: center;
+            font-size: 14px;
+            white-space: nowrap;
+            background-color: #f0f8ff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #1BC5BD;
+        }
+        
+        .material-unit {
+            color: #333333;
+            font-size: 12px;
+            margin-left: 4px;
+            font-weight: 600;
+        }
+        
+        .materials-summary {
+            margin-top: 8px;
+            padding: 6px 8px;
+            background-color: #e8f4fd;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #1a73e8;
             font-weight: 500;
+            text-align: center;
         }
         
         .description-section {
@@ -197,9 +283,109 @@
         
         .description-section p {
             color: #666;
-            line-height: 1.6;
-            margin: 0;
-            font-size: 15px;
+        }
+        
+        /* Responsive Design */
+        @media screen and (max-width: 1200px) {
+            .table-container {
+                overflow-x: scroll;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            table {
+                min-width: 1000px;
+            }
+        }
+        
+        @media screen and (max-width: 768px) {
+            body {
+                margin: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .header h2 {
+                font-size: 18px;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+            }
+            
+            .stat-item {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+            }
+            
+            .stat-item:last-child {
+                border-bottom: none;
+            }
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                margin: 0;
+                background-color: white;
+            }
+            
+            .header {
+                background-color: #4A90E2 !important;
+                color: white !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .table-container {
+                overflow: visible;
+                box-shadow: none;
+            }
+            
+            table {
+                min-width: auto;
+                width: 100%;
+            }
+            
+            .stage-cell,
+            .activity-cell,
+            .sub-activity-cell,
+            .materials-cell,
+            .duration-cell {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .materials-table {
+                border: 1px solid #ccc !important;
+            }
+            
+            .materials-table th,
+            .materials-table td {
+                border: 1px solid #ddd !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .materials-table th {
+                background-color: #f1f3f4 !important;
+            }
+            
+            .materials-summary {
+                background-color: #e8f4fd !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .duration-badge {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
         }
         
         .print-btn {
@@ -213,45 +399,27 @@
             padding: 12px 20px;
             border-radius: 25px;
             font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             cursor: pointer;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
             transition: all 0.3s ease;
         }
         
         .print-btn:hover {
             background-color: #357abd;
             transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4);
+        }
+        
+        @media print {
+            .print-btn {
+                display: none;
+            }
         }
         
         .empty-cell {
             color: #999;
             font-style: italic;
             text-align: center;
-        }
-        
-        @media print {
-            body {
-                margin: 0;
-                background-color: white;
-            }
-            
-            .print-btn {
-                display: none;
-            }
-            
-            .header {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            
-            .stats-bar {
-                page-break-inside: avoid;
-            }
-            
-            .table-container {
-                page-break-inside: avoid;
-            }
         }
     </style>
 </head>
@@ -313,22 +481,22 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 20%;">Construction Stages</th>
-                    <th style="width: 25%;">Activities</th>
-                    <th style="width: 25%;">Sub-Activities</th>
-                    <th style="width: 20%;">Materials</th>
-                    <th style="width: 10%;">Time Duration</th>
+                    <th style="width: 16%;">Construction Stages</th>
+                    <th style="width: 20%;">Activities</th>
+                    <th style="width: 20%;">Sub-Activities</th>
+                    <th style="width: 35%;">Materials & Quantities</th>
+                    <th style="width: 9%;">Time Duration</th>
                 </tr>
             </thead>
                     <tbody>
                         @forelse($template->templateStages->sortBy('sort_order') as $stageIndex => $stage)
                             @php
+                                // Calculate how many rows this stage will span
+                                // Now each sub-activity gets exactly one row (not one per material)
                                 $stageActivities = $stage->templateActivities->sortBy('sort_order');
                                 $stageRowspan = $stageActivities->sum(function($activity) {
                                     $subActivities = $activity->templateSubActivities->sortBy('sort_order');
-                                    return $subActivities->sum(function($subActivity) {
-                                        return max(1, $subActivity->subActivity->materials->count());
-                                    });
+                                    return max(1, $subActivities->count()); // One row per sub-activity
                                 });
                                 $stageRowspan = max(1, $stageRowspan);
                             @endphp
@@ -336,97 +504,74 @@
                             @if($stageActivities->count() > 0)
                                 @foreach($stageActivities as $activityIndex => $activity)
                                     @php
+                                        // Calculate how many rows this activity will span
+                                        // Now each activity spans across its sub-activities (one row per sub-activity)
                                         $subActivities = $activity->templateSubActivities->sortBy('sort_order');
-                                        $activityRowspan = $subActivities->sum(function($subActivity) {
-                                            return max(1, $subActivity->subActivity->materials->count());
-                                        });
-                                        $activityRowspan = max(1, $activityRowspan);
+                                        $activityRowspan = max(1, $subActivities->count()); // One row per sub-activity
                                     @endphp
                                     
                                     @if($subActivities->count() > 0)
                                         @foreach($subActivities as $subActivityIndex => $subActivity)
                                             @php
                                                 $materials = $subActivity->subActivity->materials;
-                                                $materialCount = max(1, $materials->count());
                                             @endphp
                                             
-                                            @if($materials->count() > 0)
-                                                @foreach($materials as $materialIndex => $material)
-                                                    <tr>
-                                                        @if($stageIndex == 0 && $activityIndex == 0 && $subActivityIndex == 0 && $materialIndex == 0)
-                                                            <td rowspan="{{ $stageRowspan }}" class="stage-cell">
-                                                                {{ $stage->constructionStage->name ?? 'Unknown Stage' }}
-                                                            </td>
-                                                        @endif
-                                                        
-                                                        @if($activityIndex == 0 && $subActivityIndex == 0 && $materialIndex == 0)
-                                                            <td rowspan="{{ $activityRowspan }}" class="activity-cell">
-                                                                {{ $activity->activity->name ?? 'Unknown Activity' }}
-                                                            </td>
-                                                        @endif
-                                                        
-                                                        @if($subActivityIndex == 0 && $materialIndex == 0)
-                                                            <td rowspan="{{ $materialCount }}" class="sub-activity-cell">
-                                                                {{ $subActivity->subActivity->name ?? 'Unknown Sub-Activity' }}
-                                                            </td>
-                                                        @endif
-                                                        
-                                                        <td class="materials-cell">
-                                                            <span class="material-item">{{ $material->boqItem->name ?? 'Unknown Material' }}</span>
-                                                            <br>
-                                                            <span class="quantity-badge">{{ $material->quantity }} {{ $material->boqItem->unit ?? 'pcs' }}</span>
-                                                        </td>
-                                                        
-                                                        @if($subActivityIndex == 0 && $materialIndex == 0)
-                                                            <td rowspan="{{ $materialCount }}" class="duration-cell">
-                                                                @if($subActivity->subActivity->estimated_duration_hours)
-                                                                    <span class="duration-badge">
-                                                                        {{ $subActivity->subActivity->estimated_duration_hours }} {{ $subActivity->subActivity->duration_unit ?? 'hours' }}
-                                                                    </span>
-                                                                @else
-                                                                    <span class="empty-cell">Not specified</span>
-                                                                @endif
-                                                            </td>
-                                                        @endif
-                                                    </tr>
-                                                @endforeach
-                                            @else
-                                                <tr>
-                                                    @if($stageIndex == 0 && $activityIndex == 0 && $subActivityIndex == 0)
-                                                        <td rowspan="{{ $stageRowspan }}" class="stage-cell">
-                                                            {{ $stage->constructionStage->name ?? 'Unknown Stage' }}
-                                                        </td>
-                                                    @endif
-                                                    
-                                                    @if($activityIndex == 0 && $subActivityIndex == 0)
-                                                        <td rowspan="{{ $activityRowspan }}" class="activity-cell">
-                                                            {{ $activity->activity->name ?? 'Unknown Activity' }}
-                                                        </td>
-                                                    @endif
-                                                    
-                                                    <td class="sub-activity-cell">
-                                                        {{ $subActivity->subActivity->name ?? 'Unknown Sub-Activity' }}
+                                            <tr>
+                                                @if($activityIndex == 0 && $subActivityIndex == 0)
+                                                    <td rowspan="{{ $stageRowspan }}" class="stage-cell">
+                                                        {{ $stage->constructionStage->name ?? 'Unknown Stage' }}
                                                     </td>
-                                                    
-                                                    <td class="materials-cell">
+                                                @endif
+                                                
+                                                @if($subActivityIndex == 0)
+                                                    <td rowspan="{{ $activityRowspan }}" class="activity-cell">
+                                                        {{ $activity->activity->name ?? 'Unknown Activity' }}
+                                                    </td>
+                                                @endif
+                                                
+                                                <td class="sub-activity-cell">
+                                                    {{ $subActivity->subActivity->name ?? 'Unknown Sub-Activity' }}
+                                                </td>
+                                                
+                                                <td class="materials-cell">
+                                                    @if($materials->count() > 0)
+                                                        <div style="background: white; border: 2px solid #1BC5BD; border-radius: 6px; padding: 10px;">
+                                                            <div style="background: #1BC5BD; color: white; padding: 5px 10px; margin: -10px -10px 10px -10px; font-weight: bold; font-size: 12px;">
+                                                                📦 MATERIALS LIST
+                                                            </div>
+                                                            @foreach($materials as $material)
+                                                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee;">
+                                                                    <div style="flex: 1; font-weight: 600; color: #333; font-size: 13px;">
+                                                                        {{ $material->boqItem->name ?? 'Unknown Material' }}
+                                                                    </div>
+                                                                    <div style="background: #FF9800; color: white; padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 14px; min-width: 80px; text-align: center;">
+                                                                        {{ $material->quantity }} {{ $material->boqItem->unit ?? 'pcs' }}
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                            <div style="margin-top: 8px; text-align: center; background: #e8f4fd; padding: 4px; border-radius: 4px; font-size: 11px; color: #1a73e8; font-weight: 600;">
+                                                                TOTAL: {{ $materials->count() }} material{{ $materials->count() > 1 ? 's' : '' }}
+                                                            </div>
+                                                        </div>
+                                                    @else
                                                         <span class="empty-cell">No materials assigned</span>
-                                                    </td>
-                                                    
-                                                    <td class="duration-cell">
-                                                        @if($subActivity->subActivity->estimated_duration_hours)
-                                                            <span class="duration-badge">
-                                                                {{ $subActivity->subActivity->estimated_duration_hours }} {{ $subActivity->subActivity->duration_unit ?? 'hours' }}
-                                                            </span>
-                                                        @else
-                                                            <span class="empty-cell">Not specified</span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endif
+                                                    @endif
+                                                </td>
+                                                
+                                                <td class="duration-cell">
+                                                    @if($subActivity->subActivity->estimated_duration_hours)
+                                                        <span class="duration-badge">
+                                                            {{ $subActivity->subActivity->estimated_duration_hours }} {{ $subActivity->subActivity->duration_unit ?? 'hours' }}
+                                                        </span>
+                                                    @else
+                                                        <span class="empty-cell">Not specified</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
                                         @endforeach
                                     @else
                                         <tr>
-                                            @if($stageIndex == 0 && $activityIndex == 0)
+                                            @if($activityIndex == 0)
                                                 <td rowspan="{{ $stageRowspan }}" class="stage-cell">
                                                     {{ $stage->constructionStage->name ?? 'Unknown Stage' }}
                                                 </td>
