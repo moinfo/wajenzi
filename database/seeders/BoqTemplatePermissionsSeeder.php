@@ -99,13 +99,13 @@ class BoqTemplatePermissionsSeeder extends Seeder
         $boqManagerRole = Role::firstOrCreate(['name' => 'BOQ Manager']);
         $boqManagerPermissions = [
             'BOQ Templates', // Menu access
-            'Building Type', 'Add Building Type', 'Edit Building Type', 'Delete Building Type',
-            'BOQ Item Category', 'Add BOQ Item Category', 'Edit BOQ Item Category', 'Delete BOQ Item Category',
-            'Construction Stage', 'Add Construction Stage', 'Edit Construction Stage', 'Delete Construction Stage',
-            'Activity', 'Add Activity', 'Edit Activity', 'Delete Activity',
-            'Sub Activity', 'Add Sub Activity', 'Edit Sub Activity', 'Delete Sub Activity',
-            'BOQ Item', 'Add BOQ Item', 'Edit BOQ Item', 'Delete BOQ Item',
-            'BOQ Template', 'Add BOQ Template', 'Edit BOQ Template', 'Delete BOQ Template',
+            'Building Types', 'Add Building Type', 'Edit Building Type', 'Delete Building Type',
+            'BOQ Item Categories', 'Add BOQ Item Category', 'Edit BOQ Item Category', 'Delete BOQ Item Category',
+            'Construction Stages', 'Add Construction Stage', 'Edit Construction Stage', 'Delete Construction Stage',
+            'Activities', 'Add Activity', 'Edit Activity', 'Delete Activity',
+            'Sub-Activities', 'Add Sub Activity', 'Edit Sub Activity', 'Delete Sub Activity',
+            'BOQ Items', 'Add BOQ Item', 'Edit BOQ Item', 'Delete BOQ Item',
+            'BOQ Template Design', 'Add BOQ Template', 'Edit BOQ Template', 'Delete BOQ Template',
             'Build BOQ Template', 'Export BOQ Template', 'Import BOQ Template',
             'Use BOQ Template', 'Generate BOQ from Template', 'Customize BOQ Template',
         ];
@@ -115,8 +115,8 @@ class BoqTemplatePermissionsSeeder extends Seeder
         $projectManagerRole = Role::firstOrCreate(['name' => 'Project Manager']);
         $projectManagerPermissions = [
             'BOQ Templates', // Menu access
-            'Building Type', 'BOQ Item Category', 'Construction Stage',
-            'Activity', 'Sub Activity', 'BOQ Item', 'BOQ Template',
+            'Building Types', 'BOQ Item Categories', 'Construction Stages',
+            'Activities', 'Sub-Activities', 'BOQ Items', 'BOQ Template Design',
             'Use BOQ Template', 'Generate BOQ from Template', 'Customize BOQ Template',
         ];
         $projectManagerRole->givePermissionTo($projectManagerPermissions);
