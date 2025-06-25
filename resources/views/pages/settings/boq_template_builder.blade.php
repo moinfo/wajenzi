@@ -120,6 +120,16 @@
                             </div>
                             <div class="card-body" style="max-height: 600px; overflow-y: auto;">
                                 <div id="templateStructure">
+                                    @if(config('app.debug'))
+                                        <div class="alert alert-info">
+                                            <strong>Debug - Template Variable Check:</strong><br>
+                                            Template variable exists: {{ isset($template) ? 'YES' : 'NO' }}<br>
+                                            Template is null: {{ $template === null ? 'YES' : 'NO' }}<br>
+                                            Template falsy: {{ !$template ? 'YES' : 'NO' }}<br>
+                                            Template ID: {{ $template->id ?? 'null' }}<br>
+                                            Template Name: {{ $template->name ?? 'null' }}
+                                        </div>
+                                    @endif
                                     @if($template ?? null)
                                         @if($template->templateStages->count() > 0)
                                             <div class="accordion" id="stagesAccordion">
@@ -220,6 +230,17 @@
                                     @else
                                         <div class="alert alert-danger">
                                             <i class="fa fa-exclamation-circle"></i> Template not found. Please go back and select a valid template.
+                                            
+                                            @if(config('app.debug'))
+                                                <hr>
+                                                <small class="text-muted">
+                                                    <strong>Debug Info:</strong><br>
+                                                    Template ID: {{ $templateId ?? 'null' }}<br>
+                                                    Template variable: {{ $template === null ? 'null' : (empty($template) ? 'empty' : 'exists') }}<br>
+                                                    URL: {{ request()->fullUrl() }}<br>
+                                                    Parameters: {{ json_encode(request()->all()) }}
+                                                </small>
+                                            @endif
                                         </div>
                                     @endif
                                 </div>

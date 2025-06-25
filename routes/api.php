@@ -20,7 +20,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/post', 'PostController@store');
+Route::post('/post', [App\Http\Controllers\PostController::class, 'store']);
 Route::middleware('apiAuth')->group(function() {
     Route::match(['get', 'post'], '/attendance', [App\Http\Controllers\ApiController::class, 'store'])->name('attendance');
 });

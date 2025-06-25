@@ -860,23 +860,8 @@ class SettingsController extends Controller
 
             // If updating permissions
             if ($request->has('update_permissions')) {
-                // Clear existing permissions for this role
-                DB::table('role_has_permissions')->where('role_id', $request->role_id)->delete();
-
-                // Add new permissions
-                if ($request->has('permission_id') && is_array($request->permission_id)) {
-                    $permissionsToAdd = [];
-                    foreach ($request->permission_id as $permissionId) {
-                        $permissionsToAdd[] = [
-                            'permission_id' => $permissionId,
-                            'role_id' => $request->role_id
-                        ];
-                    }
-
-                    if (!empty($permissionsToAdd)) {
-                        DB::table('role_has_permissions')->insert($permissionsToAdd);
-                    }
-                }
+                // Use Eloquent to properly handle cache invalidation
+                $role->permissions()->sync($request->permission_id ?? []);
 
                 return redirect()->back()->with('success', "Permissions for role '{$role->name}' updated successfully!");
             }
@@ -1059,10 +1044,36 @@ class SettingsController extends Controller
      */
     public function boq_template_builder(Request $request)
     {
+        // Debug logging to diagnose template not found issue
+        \Log::info('BOQ Template Builder Access Debug', [
+            'method' => $request->method(),
+            'url' => $request->fullUrl(),
+            'templateId_param' => $request->input('templateId'),
+            'template_id_param' => $request->input('template_id'),
+            'all_params' => $request->all(),
+            'user_id' => auth()->id()
+        ]);
+        
         $templateId = $request->input('templateId') ?? $request->input('template_id');
+        
+        // Handle malformed URL parameters
+        if (!$templateId) {
+            foreach ($request->all() as $key => $value) {
+                if (strpos($key, 'templateId') !== false) {
+                    $templateId = $value;
+                    break;
+                }
+            }
+        }
         $template = null;
         $selectedStages = [];
         $templateStats = ['stages' => 0, 'activities' => 0, 'subActivities' => 0];
+        
+        // Additional debug logging for template lookup
+        \Log::info('BOQ Template Builder Template Lookup', [
+            'final_template_id' => $templateId,
+            'template_id_type' => gettype($templateId)
+        ]);
         
         // Handle POST requests for actions
         if ($request->isMethod('post')) {
@@ -1234,7 +1245,18 @@ class SettingsController extends Controller
         }
         
         if ($templateId) {
+            \Log::info('BOQ Template Builder - Attempting to load template', [
+                'template_id' => $templateId
+            ]);
+            
             $template = BoqTemplate::with(['templateStages.constructionStage', 'templateStages.templateActivities.activity', 'templateStages.templateActivities.templateSubActivities.subActivity.materials.boqItem', 'buildingType'])->find($templateId);
+            
+            \Log::info('BOQ Template Builder - Template lookup result', [
+                'template_found' => $template ? true : false,
+                'template_id_searched' => $templateId,
+                'template_name' => $template ? $template->name : null,
+                'template_class' => $template ? get_class($template) : null
+            ]);
             
             if ($template) {
                 // Get selected stages for this template
@@ -1263,6 +1285,15 @@ class SettingsController extends Controller
             'templateStats' => $templateStats,
             'boqItems' => BoqTemplateItem::with('category')->orderBy('name')->get()
         ];
+        
+        \Log::info('BOQ Template Builder - Final data for view', [
+            'templateId' => $data['templateId'],
+            'template_is_null' => $data['template'] === null,
+            'template_exists' => $data['template'] ? true : false,
+            'template_name' => $data['template'] ? $data['template']->name : null,
+            'construction_stages_count' => $data['constructionStages']->count(),
+            'boq_items_count' => $data['boqItems']->count()
+        ]);
         
         return view('pages.settings.boq_template_builder')->with($data);
     }

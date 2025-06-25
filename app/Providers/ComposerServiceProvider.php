@@ -26,12 +26,13 @@ class ComposerServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
-        View::composer(
-            ['*'], AdminComposer::class
-        );
-
-
-
+        // Register view composers only after the view service is available
+        $this->app->booted(function () {
+            if ($this->app->bound('view')) {
+                View::composer(
+                    ['*'], AdminComposer::class
+                );
+            }
+        });
     }
 }
