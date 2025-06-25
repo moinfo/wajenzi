@@ -210,6 +210,29 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/boq_templates', [App\Http\Controllers\SettingsController::class, 'boq_templates'])->name('hr_settings_boq_templates');
     Route::match(['get', 'post'], '/settings/boq_template_builder', [App\Http\Controllers\SettingsController::class, 'boq_template_builder'])->name('hr_settings_boq_template_builder');
     Route::get('/settings/boq_template_report/{templateId}', [App\Http\Controllers\SettingsController::class, 'boq_template_report'])->name('hr_settings_boq_template_report');
+    
+    // Debug route for BOQ template builder issues
+    Route::get('/debug/boq_template/{templateId}', function($templateId) {
+        $template = \App\Models\BoqTemplate::with(['templateStages.constructionStage', 'templateStages.templateActivities.activity', 'templateStages.templateActivities.templateSubActivities.subActivity.materials.boqItem', 'buildingType'])->find($templateId);
+        
+        return response()->json([
+            'template_id_provided' => $templateId,
+            'template_found' => $template ? true : false,
+            'template_data' => $template ? [
+                'id' => $template->id,
+                'name' => $template->name,
+                'building_type' => $template->buildingType ? $template->buildingType->name : null,
+                'is_active' => $template->is_active,
+                'stages_count' => $template->templateStages->count(),
+                'template_exists_check' => $template ? 'YES' : 'NO',
+                'template_is_null' => $template === null ? 'YES' : 'NO',
+                'template_is_empty' => empty($template) ? 'YES' : 'NO'
+            ] : null,
+            'construction_stages_count' => \App\Models\ConstructionStage::count(),
+            'boq_items_count' => \App\Models\BoqTemplateItem::count(),
+            'auth_user' => auth()->check() ? auth()->user()->name : 'Not authenticated'
+        ]);
+    })->middleware('auth');
 
     Route::match(['get', 'post'], '/finance', [App\Http\Controllers\SettingsController::class, 'finance'])->name('finance');
     Route::match(['get', 'post'], '/finance/financial_settings/account_types', [App\Http\Controllers\SettingsController::class, 'account_types'])->name('account_types');
