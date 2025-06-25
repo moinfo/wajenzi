@@ -91,8 +91,8 @@
                             </tr>
                             <tr>
                                 <td colspan="3">
-                                    <p>Name of Employer &nbsp;&nbsp;&nbsp; <span class="text-strong">LERUMA ENTERPRISES</span></p>
-                                    <p>Employer’s Registration Number &nbsp;&nbsp;&nbsp; <span class="text-strong">113 - 882 - 384</span></p>
+                                    <p>Name of Employer &nbsp;&nbsp;&nbsp; <span class="text-strong">{{settings('ORGANIZATION_NAME')}}</span></p>
+                                    <p>Employer’s Registration Number &nbsp;&nbsp;&nbsp; <span class="text-strong">{{settings('TAX_IDENTIFICATION_NUMBER')}}</span></p>
                                 </td>
 
                             </tr>
