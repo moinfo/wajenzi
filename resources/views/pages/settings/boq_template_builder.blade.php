@@ -267,7 +267,7 @@
                                         <label>Select Construction Stage:</label>
                                         <select name="stage_id" class="form-control" required>
                                             <option value="">Choose Stage...</option>
-                                            @foreach($constructionStages ?? [] as $stage)
+                                            @foreach(($parentStages ?? []) as $stage)
                                                 <option value="{{ $stage->id }}">{{ $stage->name }}</option>
                                             @endforeach
                                         </select>
