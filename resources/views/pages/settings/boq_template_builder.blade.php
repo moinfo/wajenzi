@@ -198,6 +198,21 @@
                                             @endphp
 
                                             <div class="template-structure-hierarchy">
+                                                <div class="alert alert-info alert-sm mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="fa fa-info-circle mr-2"></i>
+                                                        <div>
+                                                            <strong>Deletion Policy:</strong>
+                                                            <small class="d-block">
+                                                                • Child stages with activities cannot be deleted directly - activities must be removed first
+                                                                • Parent stages cannot be deleted while children exist - delete all children first
+                                                                • Only empty stages (without activities/children) can be deleted
+                                                                • Use "Remove Stage" action from the Builder Action dropdown to clear stage content
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
                                                 <div class="accordion" id="stagesAccordion">
 
                                                     @foreach($groupedStages as $groupIndex => $stageGroup)
@@ -215,15 +230,21 @@
                                                                                     {{ $stageGroup->children->count() }} children
                                                                                 </span>
                                                                                 </div>
-                                                                                <form method="post" style="display: inline;" onsubmit="return confirm('Remove parent stage and all its children?');">
-                                                                                    @csrf
-                                                                                    <input type="hidden" name="template_id" value="{{ $templateId }}">
-                                                                                    <input type="hidden" name="action" value="remove_stage">
-                                                                                    <input type="hidden" name="stage_id_to_remove" value="{{ $stageGroup->parent->id }}">
-                                                                                    <button type="submit" class="btn btn-sm btn-outline-light">
-                                                                                        <i class="fa fa-trash"></i>
+                                                                                @if($stageGroup->children->count() > 0)
+                                                                                    <button type="button" class="btn btn-sm btn-outline-light" disabled title="Cannot delete parent stage while children exist. Delete all child stages first.">
+                                                                                        <i class="fa fa-lock"></i>
                                                                                     </button>
-                                                                                </form>
+                                                                                @else
+                                                                                    <form method="post" style="display: inline;" onsubmit="return confirm('Remove this parent stage? This action cannot be undone.');">
+                                                                                        @csrf
+                                                                                        <input type="hidden" name="template_id" value="{{ $templateId }}">
+                                                                                        <input type="hidden" name="action" value="remove_stage">
+                                                                                        <input type="hidden" name="stage_id_to_remove" value="{{ $stageGroup->parent->id }}">
+                                                                                        <button type="submit" class="btn btn-sm btn-outline-light">
+                                                                                            <i class="fa fa-trash"></i>
+                                                                                        </button>
+                                                                                    </form>
+                                                                                @endif
                                                                             </div>
                                                                             @if($stageGroup->parent->constructionStage->description)
                                                                                 <small class="d-block mt-1 opacity-75">
@@ -248,15 +269,21 @@
                                                                                             <strong class="text-success">{{ $childStage->constructionStage->name ?? 'Child Stage' }}</strong>
                                                                                             <span class="badge badge-success ml-2">{{ $childStage->templateActivities->count() }} activities</span>
                                                                                         </button>
-                                                                                        <form method="post" style="display: inline;" onsubmit="return confirm('Remove this child stage?');">
-                                                                                            @csrf
-                                                                                            <input type="hidden" name="template_id" value="{{ $templateId }}">
-                                                                                            <input type="hidden" name="action" value="remove_stage">
-                                                                                            <input type="hidden" name="stage_id_to_remove" value="{{ $childStage->id }}">
-                                                                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                                                                <i class="fa fa-trash"></i>
+                                                                                        @if($childStage->templateActivities->count() > 0)
+                                                                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Cannot delete child stage with activities. Remove all activities first through the 'Remove Stage' action.">
+                                                                                                <i class="fa fa-lock"></i>
                                                                                             </button>
-                                                                                        </form>
+                                                                                        @else
+                                                                                            <form method="post" style="display: inline;" onsubmit="return confirm('Remove empty child stage \'{{ $childStage->constructionStage->name ?? 'Unknown' }}\'?\n\nThis action cannot be undone.');">
+                                                                                                @csrf
+                                                                                                <input type="hidden" name="template_id" value="{{ $templateId }}">
+                                                                                                <input type="hidden" name="action" value="remove_stage">
+                                                                                                <input type="hidden" name="stage_id_to_remove" value="{{ $childStage->id }}">
+                                                                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete empty child stage">
+                                                                                                    <i class="fa fa-trash"></i>
+                                                                                                </button>
+                                                                                            </form>
+                                                                                        @endif
                                                                                     </h6>
                                                                                     @if($childStage->constructionStage->description)
                                                                                         <small class="text-muted">
@@ -278,6 +305,23 @@
                                                                                                                 <strong>{{ $activity->activity->name ?? 'Unknown Activity' }}</strong>
                                                                                                                 @if($activity->templateSubActivities->count() > 0)
                                                                                                                     <span class="badge badge-secondary ml-2">{{ $activity->templateSubActivities->count() }} sub-activities</span>
+                                                                                                                @endif
+                                                                                                            </div>
+                                                                                                            <div>
+                                                                                                                @if($activity->templateSubActivities->count() > 0)
+                                                                                                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Cannot delete activity with sub-activities. Remove all sub-activities first.">
+                                                                                                                        <i class="fa fa-lock"></i>
+                                                                                                                    </button>
+                                                                                                                @else
+                                                                                                                    <form method="post" style="display: inline;" onsubmit="return confirm('Remove empty activity \'{{ $activity->activity->name ?? 'Unknown Activity' }}\'?\n\nThis action cannot be undone.');">
+                                                                                                                        @csrf
+                                                                                                                        <input type="hidden" name="template_id" value="{{ $templateId }}">
+                                                                                                                        <input type="hidden" name="action" value="remove_activity">
+                                                                                                                        <input type="hidden" name="activity_id" value="{{ $activity->id }}">
+                                                                                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove this empty activity">
+                                                                                                                            <i class="fa fa-times"></i>
+                                                                                                                        </button>
+                                                                                                                    </form>
                                                                                                                 @endif
                                                                                                             </div>
                                                                                                         </div>
@@ -305,11 +349,22 @@
                                                                                                                                             </small>
                                                                                                                                             <div class="ml-3 mt-1">
                                                                                                                                                 @foreach($subActivity->subActivity->materials as $materialIndex => $material)
-                                                                                                                                                    <small class="d-block text-muted">
-                                                                                                                                                        <span class="material-number badge badge-light badge-sm mr-1">{{ ($activityIndex + 1) }}.{{ ($subActivityIndex + 1) }}.{{ ($materialIndex + 1) }}</span>
-                                                                                                                                                        {{ $material->boqItem->name ?? 'Unknown Material' }}
-                                                                                                                                                        ({{ $material->quantity }} {{ $material->boqItem->unit ?? 'pcs' }})
-                                                                                                                                                    </small>
+                                                                                                                                                    <div class="d-flex justify-content-between align-items-center">
+                                                                                                                                                        <small class="text-muted">
+                                                                                                                                                            <span class="material-number badge badge-light badge-sm mr-1">{{ ($activityIndex + 1) }}.{{ ($subActivityIndex + 1) }}.{{ ($materialIndex + 1) }}</span>
+                                                                                                                                                            {{ $material->boqItem->name ?? 'Unknown Material' }}
+                                                                                                                                                            ({{ $material->quantity }} {{ $material->boqItem->unit ?? 'pcs' }})
+                                                                                                                                                        </small>
+                                                                                                                                                        <form method="post" style="display: inline;" onsubmit="return confirm('Remove material \'{{ $material->boqItem->name ?? 'Unknown Material' }}\' from sub-activity?\n\nThis action cannot be undone.');">
+                                                                                                                                                            @csrf
+                                                                                                                                                            <input type="hidden" name="template_id" value="{{ $templateId }}">
+                                                                                                                                                            <input type="hidden" name="action" value="remove_material">
+                                                                                                                                                            <input type="hidden" name="material_id" value="{{ $material->id }}">
+                                                                                                                                                            <button type="submit" class="btn btn-xs btn-outline-danger ml-1" title="Remove this material">
+                                                                                                                                                                <i class="fa fa-times"></i>
+                                                                                                                                                            </button>
+                                                                                                                                                        </form>
+                                                                                                                                                    </div>
                                                                                                                                                 @endforeach
                                                                                                                                             </div>
                                                                                                                                         </div>
@@ -319,6 +374,23 @@
                                                                                                                                                 <i class="fa fa-exclamation-triangle"></i> No materials assigned
                                                                                                                                             </small>
                                                                                                                                         </div>
+                                                                                                                                    @endif
+                                                                                                                                </div>
+                                                                                                                                <div>
+                                                                                                                                    @if($subActivity->subActivity->materials->count() > 0)
+                                                                                                                                        <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Cannot delete sub-activity with materials. Remove all materials first.">
+                                                                                                                                            <i class="fa fa-lock"></i>
+                                                                                                                                        </button>
+                                                                                                                                    @else
+                                                                                                                                        <form method="post" style="display: inline;" onsubmit="return confirm('Remove empty sub-activity \'{{ $subActivity->subActivity->name ?? 'Unknown Sub-Activity' }}\'?\n\nThis action cannot be undone.');">
+                                                                                                                                            @csrf
+                                                                                                                                            <input type="hidden" name="template_id" value="{{ $templateId }}">
+                                                                                                                                            <input type="hidden" name="action" value="remove_sub_activity">
+                                                                                                                                            <input type="hidden" name="sub_activity_id" value="{{ $subActivity->id }}">
+                                                                                                                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove this empty sub-activity">
+                                                                                                                                                <i class="fa fa-times"></i>
+                                                                                                                                            </button>
+                                                                                                                                        </form>
                                                                                                                                     @endif
                                                                                                                                 </div>
                                                                                                                             </div>
@@ -1029,6 +1101,77 @@
     border-color: #007bff;
 }
 
+/* Deletion policy alert styling */
+.alert-sm {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.alert-sm small {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin-top: 0.25rem;
+}
+
+/* Stage deletion controls */
+.btn-outline-light[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-light[disabled]:hover {
+    background-color: transparent;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+/* Parent stage protection styling */
+.parent-stage-card .btn[disabled] {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Child stage protection styling */
+.btn-outline-secondary[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-color: #6c757d;
+    color: #6c757d;
+    background-color: transparent;
+}
+
+.btn-outline-secondary[disabled]:hover {
+    background-color: transparent;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+/* Enhanced activity/sub-activity styling to show they're managed through stages */
+.list-group-item {
+    position: relative;
+    border-left: 3px solid transparent;
+}
+
+.list-group-item::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #007bff, #28a745);
+    opacity: 0.3;
+}
+
+.list-group-item .activity-number,
+.list-group-item .sub-activity-number,
+.list-group-item .material-number {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Responsive improvements */
 @media (max-width: 768px) {
     .children-stages-container {
         margin-left: 1rem !important;
@@ -1036,6 +1179,10 @@
 
     .children-stages-container::before {
         left: -8px;
+    }
+
+    .btn[disabled] {
+        min-width: 32px;
     }
 }
 </style>
