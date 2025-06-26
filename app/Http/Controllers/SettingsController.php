@@ -1033,8 +1033,8 @@ class SettingsController extends Controller
         }
         
         $data = [
-            'boq_templates' => BoqTemplate::with(['buildingType', 'creator'])->get(),
-            'building_types' => BuildingType::where('is_active', true)->orderBy('name')->get(),
+            'boq_templates' => BoqTemplate::with(['buildingType.parent', 'creator'])->get(),
+            'building_types' => BuildingType::with('parent')->where('is_active', true)->orderBy('name')->get(),
             'construction_stages' => ConstructionStage::orderBy('sort_order')->get()
         ];
         
