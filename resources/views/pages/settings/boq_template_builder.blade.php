@@ -132,101 +132,194 @@
 {{--                                    @endif--}}
                                     @if($template ?? null)
                                         @if($template->templateStages->count() > 0)
-                                            <div class="accordion" id="stagesAccordion">
-                                                @foreach($template->templateStages as $index => $stage)
-                                                    <div class="card mb-2">
-                                                        <div class="card-header" id="heading{{$index}}">
-                                                            <h5 class="mb-0 d-flex justify-content-between align-items-center">
-                                                                <button class="btn btn-link text-left" type="button" data-toggle="collapse" data-target="#collapse{{$index}}">
-                                                                    <i class="fa fa-layer-group"></i> {{ $stage->constructionStage->name ?? 'Stage' }}
-                                                                    <span class="badge badge-primary ml-2">{{ $stage->templateActivities->count() }} activities</span>
-                                                                </button>
-                                                                <form method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to remove this stage?');">
-                                                                    @csrf
-                                                                    <input type="hidden" name="template_id" value="{{ $templateId }}">
-                                                                    <input type="hidden" name="action" value="remove_stage">
-                                                                    <input type="hidden" name="stage_id_to_remove" value="{{ $stage->id }}">
-                                                                    <button type="submit" class="btn btn-sm btn-danger">
-                                                                        <i class="fa fa-trash"></i>
-                                                                    </button>
-                                                                </form>
-                                                            </h5>
-                                                        </div>
-                                                        <div id="collapse{{$index}}" class="collapse" data-parent="#stagesAccordion">
-                                                            <div class="card-body">
-                                                                @if($stage->templateActivities->count() > 0)
-                                                                    <ul class="list-group">
-                                                                        @foreach($stage->templateActivities as $activity)
-                                                                            <li class="list-group-item">
-                                                                                <div class="d-flex justify-content-between align-items-center">
-                                                                                    <div>
-                                                                                        <i class="fa fa-tasks text-primary"></i>
-                                                                                        <strong>{{ $activity->activity->name ?? 'Unknown Activity' }}</strong>
-                                                                                        @if($activity->templateSubActivities->count() > 0)
-                                                                                            <span class="badge badge-secondary ml-2">{{ $activity->templateSubActivities->count() }} sub-activities</span>
-                                                                                        @endif
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                @if($activity->templateSubActivities->count() > 0)
-                                                                                    <div class="mt-2 ml-3">
-                                                                                        <ul class="list-group list-group-flush">
-                                                                                            @foreach($activity->templateSubActivities as $subActivity)
-                                                                                                <li class="list-group-item border-0 py-1 pl-3" style="background-color: #f8f9fa;">
-                                                                                                    <div class="d-flex justify-content-between align-items-start">
-                                                                                                        <div>
-                                                                                                            <i class="fa fa-puzzle-piece text-warning"></i>
-                                                                                                            <strong>{{ $subActivity->subActivity->name ?? 'Unknown Sub-Activity' }}</strong>
-                                                                                                            @if($subActivity->subActivity->estimated_duration_hours ?? null)
-                                                                                                                <small class="text-muted ml-2">
-                                                                                                                    ({{ $subActivity->subActivity->estimated_duration_hours }} {{ $subActivity->subActivity->duration_unit ?? 'hours' }})
-                                                                                                                </small>
-                                                                                                            @endif
-
-                                                                                                            @if($subActivity->subActivity->materials->count() > 0)
-                                                                                                                <div class="mt-1">
-                                                                                                                    <small class="text-info">
-                                                                                                                        <i class="fa fa-cubes"></i> {{ $subActivity->subActivity->materials->count() }} material(s) assigned
-                                                                                                                    </small>
-                                                                                                                    <div class="ml-3 mt-1">
-                                                                                                                        @foreach($subActivity->subActivity->materials as $material)
-                                                                                                                            <small class="d-block text-muted">
-                                                                                                                                • {{ $material->boqItem->name ?? 'Unknown Material' }}
-                                                                                                                                ({{ $material->quantity }} {{ $material->boqItem->unit ?? 'pcs' }})
-                                                                                                                            </small>
-                                                                                                                        @endforeach
-                                                                                                                    </div>
-                                                                                                                </div>
-                                                                                                            @else
-                                                                                                                <div class="mt-1">
-                                                                                                                    <small class="text-muted">
-                                                                                                                        <i class="fa fa-exclamation-triangle"></i> No materials assigned
-                                                                                                                    </small>
-                                                                                                                </div>
-                                                                                                            @endif
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                </li>
-                                                                                            @endforeach
-                                                                                        </ul>
-                                                                                    </div>
+                                            @php
+                                                // Group template stages by parent-child hierarchy
+                                                $templateStagesByConstructionStage = $template->templateStages->keyBy('construction_stage_id');
+                                                $groupedStages = collect();
+                                                
+                                                // Get parent stages (stages without parent_id)
+                                                foreach($template->templateStages as $templateStage) {
+                                                    $constructionStage = $templateStage->constructionStage;
+                                                    if ($constructionStage && !$constructionStage->parent_id) {
+                                                        // This is a parent stage
+                                                        $parentGroup = (object)[
+                                                            'parent' => $templateStage,
+                                                            'children' => collect()
+                                                        ];
+                                                        
+                                                        // Find children of this parent
+                                                        foreach($template->templateStages as $childTemplateStage) {
+                                                            $childConstructionStage = $childTemplateStage->constructionStage;
+                                                            if ($childConstructionStage && $childConstructionStage->parent_id == $constructionStage->id) {
+                                                                $parentGroup->children->push($childTemplateStage);
+                                                            }
+                                                        }
+                                                        
+                                                        $groupedStages->push($parentGroup);
+                                                    }
+                                                }
+                                                
+                                                // Add orphaned children (children without parents in template)
+                                                foreach($template->templateStages as $templateStage) {
+                                                    $constructionStage = $templateStage->constructionStage;
+                                                    if ($constructionStage && $constructionStage->parent_id) {
+                                                        // Check if parent is in template
+                                                        $parentInTemplate = $templateStagesByConstructionStage->has($constructionStage->parent_id);
+                                                        if (!$parentInTemplate) {
+                                                            // This child has no parent in template, show as orphan
+                                                            $orphanGroup = (object)[
+                                                                'parent' => null,
+                                                                'children' => collect([$templateStage])
+                                                            ];
+                                                            $groupedStages->push($orphanGroup);
+                                                        }
+                                                    }
+                                                }
+                                            @endphp
+                                            
+                                            <div class="template-structure-hierarchy">
+                                                @foreach($groupedStages as $groupIndex => $stageGroup)
+                                                    <div class="stage-hierarchy-group mb-3">
+                                                        @if($stageGroup->parent)
+                                                            {{-- Parent Stage Header --}}
+                                                            <div class="parent-stage-card">
+                                                                <div class="card border-primary">
+                                                                    <div class="card-header bg-primary text-white">
+                                                                        <div class="d-flex justify-content-between align-items-center">
+                                                                            <div>
+                                                                                <i class="fas fa-layer-group"></i>
+                                                                                <strong>{{ $stageGroup->parent->constructionStage->name ?? 'Parent Stage' }}</strong>
+                                                                                <span class="badge badge-light ml-2">
+                                                                                    {{ $stageGroup->children->count() }} children
+                                                                                </span>
+                                                                            </div>
+                                                                            <form method="post" style="display: inline;" onsubmit="return confirm('Remove parent stage and all its children?');">
+                                                                                @csrf
+                                                                                <input type="hidden" name="template_id" value="{{ $templateId }}">
+                                                                                <input type="hidden" name="action" value="remove_stage">
+                                                                                <input type="hidden" name="stage_id_to_remove" value="{{ $stageGroup->parent->id }}">
+                                                                                <button type="submit" class="btn btn-sm btn-outline-light">
+                                                                                    <i class="fa fa-trash"></i>
+                                                                                </button>
+                                                                            </form>
+                                                                        </div>
+                                                                        @if($stageGroup->parent->constructionStage->description)
+                                                                            <small class="d-block mt-1 opacity-75">
+                                                                                {{ $stageGroup->parent->constructionStage->description }}
+                                                                            </small>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        @endif
+                                                        
+                                                        {{-- Children Stages --}}
+                                                        @if($stageGroup->children->count() > 0)
+                                                            <div class="children-stages-container {{ $stageGroup->parent ? 'ml-4 mt-2' : '' }}">
+                                                                @foreach($stageGroup->children as $childIndex => $childStage)
+                                                                    <div class="child-stage-card mb-2">
+                                                                        <div class="card border-success">
+                                                                            <div class="card-header" id="heading{{$groupIndex}}_{{$childIndex}}">
+                                                                                <h6 class="mb-0 d-flex justify-content-between align-items-center">
+                                                                                    <button class="btn btn-link text-left p-0" type="button" data-toggle="collapse" data-target="#collapse{{$groupIndex}}_{{$childIndex}}">
+                                                                                        <i class="fas fa-level-up-alt fa-rotate-90 text-success"></i>
+                                                                                        <strong class="text-success">{{ $childStage->constructionStage->name ?? 'Child Stage' }}</strong>
+                                                                                        <span class="badge badge-success ml-2">{{ $childStage->templateActivities->count() }} activities</span>
+                                                                                    </button>
+                                                                                    <form method="post" style="display: inline;" onsubmit="return confirm('Remove this child stage?');">
+                                                                                        @csrf
+                                                                                        <input type="hidden" name="template_id" value="{{ $templateId }}">
+                                                                                        <input type="hidden" name="action" value="remove_stage">
+                                                                                        <input type="hidden" name="stage_id_to_remove" value="{{ $childStage->id }}">
+                                                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                                                            <i class="fa fa-trash"></i>
+                                                                                        </button>
+                                                                                    </form>
+                                                                                </h6>
+                                                                                @if($childStage->constructionStage->description)
+                                                                                    <small class="text-muted">
+                                                                                        {{ $childStage->constructionStage->description }}
+                                                                                    </small>
                                                                                 @endif
-                                                                            </li>
-                                                                        @endforeach
-                                                                    </ul>
-                                                                @else
-                                                                    <p class="text-muted">No activities added yet. Use the action panel to add activities to this stage.</p>
-                                                                @endif
+                                                                            </div>
+                                                            <div id="collapse{{$groupIndex}}_{{$childIndex}}" class="collapse" data-parent="#stagesAccordion">
+                                                                <div class="card-body">
+                                                                    @if($childStage->templateActivities->count() > 0)
+                                                                        <ul class="list-group">
+                                                                            @foreach($childStage->templateActivities as $activity)
+                                                                                <li class="list-group-item">
+                                                                                    <div class="d-flex justify-content-between align-items-center">
+                                                                                        <div>
+                                                                                            <i class="fa fa-tasks text-primary"></i>
+                                                                                            <strong>{{ $activity->activity->name ?? 'Unknown Activity' }}</strong>
+                                                                                            @if($activity->templateSubActivities->count() > 0)
+                                                                                                <span class="badge badge-secondary ml-2">{{ $activity->templateSubActivities->count() }} sub-activities</span>
+                                                                                            @endif
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    @if($activity->templateSubActivities->count() > 0)
+                                                                                        <div class="mt-2 ml-3">
+                                                                                            <ul class="list-group list-group-flush">
+                                                                                                @foreach($activity->templateSubActivities as $subActivity)
+                                                                                                    <li class="list-group-item border-0 py-1 pl-3" style="background-color: #f8f9fa;">
+                                                                                                        <div class="d-flex justify-content-between align-items-start">
+                                                                                                            <div>
+                                                                                                                <i class="fa fa-puzzle-piece text-warning"></i>
+                                                                                                                <strong>{{ $subActivity->subActivity->name ?? 'Unknown Sub-Activity' }}</strong>
+                                                                                                                @if($subActivity->subActivity->estimated_duration_hours ?? null)
+                                                                                                                    <small class="text-muted ml-2">
+                                                                                                                        ({{ $subActivity->subActivity->estimated_duration_hours }} {{ $subActivity->subActivity->duration_unit ?? 'hours' }})
+                                                                                                                    </small>
+                                                                                                                @endif
+
+                                                                                                                @if($subActivity->subActivity->materials->count() > 0)
+                                                                                                                    <div class="mt-1">
+                                                                                                                        <small class="text-info">
+                                                                                                                            <i class="fa fa-cubes"></i> {{ $subActivity->subActivity->materials->count() }} material(s) assigned
+                                                                                                                        </small>
+                                                                                                                        <div class="ml-3 mt-1">
+                                                                                                                            @foreach($subActivity->subActivity->materials as $material)
+                                                                                                                                <small class="d-block text-muted">
+                                                                                                                                    • {{ $material->boqItem->name ?? 'Unknown Material' }}
+                                                                                                                                    ({{ $material->quantity }} {{ $material->boqItem->unit ?? 'pcs' }})
+                                                                                                                                </small>
+                                                                                                                            @endforeach
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                @else
+                                                                                                                    <div class="mt-1">
+                                                                                                                        <small class="text-muted">
+                                                                                                                            <i class="fa fa-exclamation-triangle"></i> No materials assigned
+                                                                                                                        </small>
+                                                                                                                    </div>
+                                                                                                                @endif
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    </li>
+                                                                                                @endforeach
+                                                                                            </ul>
+                                                                                        </div>
+                                                                                    @endif
+                                                                                </li>
+                                                                            @endforeach
+                                                                        </ul>
+                                                                    @else
+                                                                        <p class="text-muted">No activities added yet. Use the action panel to add activities to this child stage.</p>
+                                                                    @endif
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 @endforeach
                                             </div>
-                                        @else
-                                            <div class="alert alert-warning">
-                                                <i class="fa fa-exclamation-triangle"></i> No stages configured yet. Use the action panel to add construction stages.
-                                            </div>
                                         @endif
+                                    @endforeach
+                                @else
+                                    <div class="alert alert-warning">
+                                        <i class="fa fa-exclamation-triangle"></i> No stages configured yet. Use the action panel to add construction stages.
+                                    </div>
+                                @endif
                                     @else
                                         <div class="alert alert-danger">
                                             <i class="fa fa-exclamation-circle"></i> Template not found. Please go back and select a valid template.
@@ -265,14 +358,31 @@
                                 <div class="card-body">
                                     <div class="form-group">
                                         <label>Select Construction Stage:</label>
-                                        <select name="stage_id" class="form-control" required>
+                                        <select name="stage_id" class="form-control" required onchange="showStageChildren(this.value)">
                                             <option value="">Choose Stage...</option>
                                             @foreach(($parentStages ?? []) as $stage)
                                                 <option value="{{ $stage->id }}">{{ $stage->name }}</option>
                                             @endforeach
                                         </select>
+                                        
+                                        <!-- Children Selection Section -->
+                                        <div id="stageChildrenPreview" class="mt-3" style="display: none;">
+                                            <div class="alert alert-success">
+                                                <h6><i class="fa fa-check-circle"></i> Select Specific Children</h6>
+                                                <p class="mb-2">This parent stage has children. Select which ones to include:</p>
+                                                <div id="childrenList" class="mt-2"></div>
+                                                <div class="mt-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleAllChildrenSelection()">
+                                                        <i class="fa fa-check-double"></i> Select All
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAllChildrenSelection(false)">
+                                                        <i class="fa fa-times"></i> Unselect All
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <button type="submit" class="btn btn-primary">Add Stage</button>
+                                    <button type="submit" class="btn btn-primary" onclick="return submitStageForm()">Add Stage & Children</button>
                                     <button type="button" class="btn btn-secondary" onclick="cancelAction()">Cancel</button>
                                 </div>
                             </div>
@@ -292,15 +402,36 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="form-group">
-                                        <label>Select Stage:</label>
+                                        <label>Select Child Stage:</label>
                                         <select name="parent_stage_id" class="form-control" required>
-                                            <option value="">Choose Stage...</option>
+                                            <option value="">Choose Child Stage...</option>
                                             @if($template ?? null)
-                                                @foreach($template->templateStages as $stage)
-                                                    <option value="{{ $stage->id }}">{{ $stage->constructionStage->name ?? 'Stage' }}</option>
+                                                @php
+                                                    // Get only child stages (stages with parent_id)
+                                                    $childStages = $template->templateStages->filter(function($templateStage) {
+                                                        return $templateStage->constructionStage && $templateStage->constructionStage->parent_id;
+                                                    });
+                                                @endphp
+                                                @foreach($childStages as $stage)
+                                                    @php
+                                                        $constructionStage = $stage->constructionStage;
+                                                        $parentStage = $constructionStage->parent;
+                                                    @endphp
+                                                    <option value="{{ $stage->id }}">
+                                                        {{ $constructionStage->name ?? 'Child Stage' }}
+                                                        @if($parentStage)
+                                                            <span class="text-muted">(under {{ $parentStage->name }})</span>
+                                                        @endif
+                                                    </option>
                                                 @endforeach
+                                                @if($childStages->count() == 0)
+                                                    <option value="" disabled>No child stages available. Add children stages first.</option>
+                                                @endif
                                             @endif
                                         </select>
+                                        <small class="form-text text-muted">
+                                            <i class="fa fa-info-circle"></i> Activities can only be added to child stages, not parent stages.
+                                        </small>
                                     </div>
                                     <div class="form-group">
                                         <label>Activity Name:</label>
@@ -466,8 +597,100 @@
         // In a real implementation, this would save the overall template configuration
     }
 
+    // Show children of selected stage
+    function showStageChildren(stageId) {
+        console.log('🔍 Selected stage ID:', stageId);
+        
+        const allStages = @json($constructionStages ?? []);
+        console.log('📊 All stages available:', allStages);
+        
+        const preview = document.getElementById('stageChildrenPreview');
+        const childrenList = document.getElementById('childrenList');
+        
+        if (!stageId) {
+            preview.style.display = 'none';
+            return;
+        }
+        
+        // Find children of this parent
+        const children = allStages.filter(stage => stage.parent_id == stageId);
+        console.log('👶 Children found:', children);
+        
+        if (children.length > 0) {
+            let childrenHtml = '<div class="children-checkboxes">';
+            children.forEach((child, index) => {
+                childrenHtml += `
+                    <div class="custom-control custom-checkbox mb-2">
+                        <input type="checkbox" class="custom-control-input child-stage-checkbox" 
+                               id="child_stage_${child.id}" 
+                               name="selected_children[]" 
+                               value="${child.id}"
+                               data-child-name="${child.name}">
+                        <label class="custom-control-label" for="child_stage_${child.id}">
+                            <span class="badge badge-secondary mr-2">${index + 1}</span>
+                            <strong>${child.name}</strong>
+                            ${child.description ? `<br><small class="text-muted ml-4">${child.description}</small>` : ''}
+                        </label>
+                    </div>
+                `;
+            });
+            childrenHtml += '</div>';
+            
+            childrenList.innerHTML = childrenHtml;
+            preview.style.display = 'block';
+        } else {
+            childrenList.innerHTML = '<em class="text-muted">This stage has no child stages.</em>';
+            preview.style.display = 'block';
+        }
+    }
+
+    // Toggle all children selection
+    function toggleAllChildrenSelection(selectAll = true) {
+        const checkboxes = document.querySelectorAll('.child-stage-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAll;
+        });
+        
+        console.log(`${selectAll ? '✅ Selected' : '❌ Unselected'} all children`);
+    }
+
+    // Handle form submission with children
+    function submitStageForm() {
+        const selectedChildren = document.querySelectorAll('.child-stage-checkbox:checked');
+        const parentStageId = document.querySelector('select[name="stage_id"]').value;
+        
+        if (!parentStageId) {
+            alert('Please select a parent stage first.');
+            return false;
+        }
+        
+        console.log('📋 Submitting parent stage:', parentStageId);
+        console.log('👶 Selected children:', Array.from(selectedChildren).map(cb => cb.value));
+        
+        // Add hidden inputs for selected children
+        const form = document.querySelector('#addStageForm form');
+        
+        // Remove existing children inputs
+        form.querySelectorAll('input[name="selected_children[]"]').forEach(input => input.remove());
+        
+        // Add new children inputs
+        selectedChildren.forEach(checkbox => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'selected_children[]';
+            hiddenInput.value = checkbox.value;
+            form.appendChild(hiddenInput);
+        });
+        
+        return true; // Allow form submission
+    }
+
     // Handle sub-activity selection for materials assignment
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Page loaded - checking construction stages data');
+        const allStages = @json($constructionStages ?? []);
+        console.log('📋 Available stages:', allStages.length);
+        
         const subActivitySelect = document.getElementById('subActivitySelect');
         const materialsSection = document.getElementById('materialsSection');
 
@@ -482,4 +705,74 @@
         }
     });
 </script>
+
+<style>
+/* Template Structure Hierarchy Styling */
+.template-structure-hierarchy {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stage-hierarchy-group {
+    margin-bottom: 1.5rem;
+}
+
+.parent-stage-card .card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.children-stages-container {
+    position: relative;
+}
+
+.children-stages-container::before {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #007bff, #28a745);
+    border-radius: 2px;
+}
+
+.child-stage-card .card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+.child-stage-card .card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.parent-stage-card .badge {
+    font-size: 0.75em;
+}
+
+.children-checkboxes .custom-control {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.children-checkboxes .custom-control:hover {
+    background-color: #e9ecef;
+    border-color: #007bff;
+}
+
+@media (max-width: 768px) {
+    .children-stages-container {
+        margin-left: 1rem !important;
+    }
+    
+    .children-stages-container::before {
+        left: -8px;
+    }
+}
+</style>
+
 @endsection

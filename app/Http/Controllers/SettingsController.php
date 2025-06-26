@@ -1095,22 +1095,56 @@ class SettingsController extends Controller
                     switch ($action) {
                         case 'add_stage':
                             $stageId = $request->input('stage_id');
+                            $selectedChildren = $request->input('selected_children', []);
+                            
                             if ($stageId) {
-                                // Check if stage already exists for this template
-                                $exists = \App\Models\BoqTemplateStage::where('boq_template_id', $templateId)
+                                $addedStages = [];
+                                $existingStages = [];
+                                $maxSortOrder = \App\Models\BoqTemplateStage::where('boq_template_id', $templateId)->max('sort_order') ?? 0;
+                                
+                                // Add parent stage
+                                $parentExists = \App\Models\BoqTemplateStage::where('boq_template_id', $templateId)
                                     ->where('construction_stage_id', $stageId)
                                     ->exists();
                                     
-                                if (!$exists) {
+                                if (!$parentExists) {
                                     $templateStage = new \App\Models\BoqTemplateStage();
                                     $templateStage->boq_template_id = $templateId;
                                     $templateStage->construction_stage_id = $stageId;
-                                    $templateStage->sort_order = \App\Models\BoqTemplateStage::where('boq_template_id', $templateId)->max('sort_order') + 1 ?? 1;
+                                    $templateStage->sort_order = ++$maxSortOrder;
                                     $templateStage->save();
-                                    
-                                    session()->flash('success', 'Construction stage added successfully.');
+                                    $addedStages[] = ConstructionStage::find($stageId)->name ?? "Stage ID: $stageId";
                                 } else {
-                                    session()->flash('warning', 'This stage is already added to the template.');
+                                    $existingStages[] = ConstructionStage::find($stageId)->name ?? "Stage ID: $stageId";
+                                }
+                                
+                                // Add selected children stages
+                                foreach ($selectedChildren as $childStageId) {
+                                    $childExists = \App\Models\BoqTemplateStage::where('boq_template_id', $templateId)
+                                        ->where('construction_stage_id', $childStageId)
+                                        ->exists();
+                                        
+                                    if (!$childExists) {
+                                        $childTemplateStage = new \App\Models\BoqTemplateStage();
+                                        $childTemplateStage->boq_template_id = $templateId;
+                                        $childTemplateStage->construction_stage_id = $childStageId;
+                                        $childTemplateStage->sort_order = ++$maxSortOrder;
+                                        $childTemplateStage->save();
+                                        $addedStages[] = ConstructionStage::find($childStageId)->name ?? "Child Stage ID: $childStageId";
+                                    } else {
+                                        $existingStages[] = ConstructionStage::find($childStageId)->name ?? "Child Stage ID: $childStageId";
+                                    }
+                                }
+                                
+                                // Provide feedback
+                                if (!empty($addedStages)) {
+                                    session()->flash('success', 'Added stages: ' . implode(', ', $addedStages));
+                                }
+                                if (!empty($existingStages)) {
+                                    session()->flash('warning', 'These stages were already in the template: ' . implode(', ', $existingStages));
+                                }
+                                if (empty($addedStages) && empty($existingStages)) {
+                                    session()->flash('warning', 'No stages were added. Please select a parent stage and optionally children.');
                                 }
                             }
                             break;
