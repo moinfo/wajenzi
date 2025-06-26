@@ -1282,7 +1282,8 @@ class SettingsController extends Controller
         $data = [
             'templateId' => $templateId,
             'template' => $template,
-            'constructionStages' => ConstructionStage::orderBy('sort_order')->get(),
+            'constructionStages' => ConstructionStage::orderBy('sort_order')->get(), // All stages for children lookup
+            'parentStages' => ConstructionStage::whereNull('parent_id')->orderBy('sort_order')->get(), // Only parents for Add Stage section
             'selectedStages' => $selectedStages,
             'templateStats' => $templateStats,
             'boqItems' => BoqTemplateItem::with('category')->orderBy('name')->get()

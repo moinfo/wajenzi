@@ -22,7 +22,55 @@
                     <div class="card-body">
                         @if($template ?? null)
                             <p><strong>Name:</strong> {{ $template->name }}</p>
-                            <p><strong>Building Type:</strong> {{ $template->buildingType->name ?? 'Not Set' }}</p>
+                            <p><strong>Building Type:</strong> 
+                                @if($template->buildingType)
+                                    @if($template->buildingType->parent_id)
+                                        {{-- Child building type --}}
+                                        <span class="text-muted">{{ $template->buildingType->parent->name ?? 'Unknown Parent' }}</span>
+                                        <br>
+                                        <span class="badge badge-secondary">
+                                            <i class="fas fa-level-up-alt fa-rotate-90"></i>
+                                            {{ $template->buildingType->name }}
+                                        </span>
+                                    @else
+                                        {{-- Parent building type --}}
+                                        <span class="badge badge-primary">
+                                            <i class="fas fa-building"></i>
+                                            {{ $template->buildingType->name }}
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="text-muted">Not Set</span>
+                                @endif
+                            </p>
+                            
+                            {{-- Specifications --}}
+                            @if($template->roof_type || $template->no_of_rooms)
+                                <p><strong>Specifications:</strong><br>
+                                    @if($template->roof_type)
+                                        <span class="badge badge-light">{{ ucwords(str_replace('_', ' ', $template->roof_type)) }}</span>
+                                    @endif
+                                    @if($template->no_of_rooms)
+                                        <span class="badge badge-light">{{ $template->no_of_rooms }} Room{{ $template->no_of_rooms == '1' ? '' : 's' }}</span>
+                                    @endif
+                                </p>
+                            @endif
+                            
+                            {{-- Measurements --}}
+                            @if($template->square_metre || $template->run_metre)
+                                <p><strong>Measurements:</strong><br>
+                                    @if($template->square_metre)
+                                        <span class="text-info">{{ number_format($template->square_metre, 2) }} SQM</span>
+                                    @endif
+                                    @if($template->square_metre && $template->run_metre)
+                                        <br>
+                                    @endif
+                                    @if($template->run_metre)
+                                        <span class="text-success">{{ number_format($template->run_metre, 2) }} RM</span>
+                                    @endif
+                                </p>
+                            @endif
+                            
                             <p><strong>Created:</strong> {{ $template->created_at->format('M d, Y') }}</p>
                             <p><strong>Status:</strong> 
                                 <span class="badge badge-{{ $template->is_active ? 'success' : 'secondary' }}">
@@ -77,25 +125,47 @@
                     </div>
                     <div class="card-body">
                         
-                        <!-- Construction Stages Selection -->
-                        <div id="stageSelection" class="builder-section">
-                            <h6 class="text-primary"><i class="fa fa-layer-group"></i> Available Construction Stages</h6>
+                        <!-- Add Construction Stage -->
+                        <div id="addStageSection" class="builder-section">
+                            <h6 class="text-primary"><i class="fa fa-plus-circle"></i> Add Construction Stage</h6>
+                            <p class="text-muted mb-3">Select parent stages to add to your template. You can then choose specific children for each parent.</p>
+                            
                             <div class="row">
-                                @foreach($constructionStages ?? [] as $stage)
+                                @foreach(($parentStages ?? []) as $index => $stage)
                                     <div class="col-md-6 mb-2">
                                         <div class="custom-control custom-checkbox">
-                                            <input type="checkbox" class="custom-control-input stage-checkbox" 
-                                                   id="stage_{{ $stage->id }}" 
-                                                   name="selected_stages[]" 
+                                            <input type="checkbox" class="custom-control-input add-stage-checkbox" 
+                                                   id="add_stage_{{ $stage->id }}" 
+                                                   name="add_stages[]" 
                                                    value="{{ $stage->id }}"
-                                                   {{ in_array($stage->id, $selectedStages ?? []) ? 'checked' : '' }}>
-                                            <label class="custom-control-label" for="stage_{{ $stage->id }}">
-                                                <strong>{{ $stage->name }}</strong>
-                                                <br><small class="text-muted">{{ $stage->description }}</small>
+                                                   data-stage-name="{{ $stage->name }}"
+                                                   data-stage-description="{{ $stage->description }}">
+                                            <label class="custom-control-label" for="add_stage_{{ $stage->id }}">
+                                                <span class="stage-number badge badge-primary">{{ $index + 1 }}</span>
+                                                <i class="fas fa-layer-group text-primary ml-2"></i>
+                                                <strong class="text-primary">{{ $stage->name }}</strong>
+                                                @if($stage->description)
+                                                    <br><small class="text-muted ml-4">{{ $stage->description }}</small>
+                                                @endif
                                             </label>
                                         </div>
                                     </div>
                                 @endforeach
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Template Structure (Dynamic) -->
+                        <div id="templateStructureSection" class="builder-section">
+                            <h6 class="text-success"><i class="fa fa-sitemap"></i> Template Structure</h6>
+                            <p class="text-muted mb-3">Your selected stages with their children. Check specific children you want to include.</p>
+                            
+                            <div id="selectedStagesContainer">
+                                <div class="alert alert-info">
+                                    <i class="fa fa-info-circle"></i> 
+                                    Select parent stages above to configure your template structure here.
+                                </div>
                             </div>
                         </div>
 
@@ -121,21 +191,21 @@
 
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="row mt-3">
-            <div class="col-12 text-right">
-                <button type="button" class="btn btn-secondary" onclick="$('#ajax-loader-modal').modal('hide');">
-                    <i class="fa fa-times"></i> Cancel
-                </button>
-                <button type="button" id="previewTemplate" class="btn btn-info">
-                    <i class="fa fa-eye"></i> Preview Template
-                </button>
-                <button type="submit" class="btn btn-success" name="buildTemplate">
-                    <i class="fa fa-save"></i> Save Template Configuration
-                </button>
+                
+                <!-- Action Buttons -->
+                <div class="row mt-3">
+                    <div class="col-12 text-right">
+                        <button type="button" class="btn btn-secondary" onclick="$('#ajax-loader-modal').modal('hide');">
+                            <i class="fa fa-times"></i> Cancel
+                        </button>
+                        <button type="button" id="previewTemplate" class="btn btn-info">
+                            <i class="fa fa-eye"></i> Preview Template
+                        </button>
+                        <button type="submit" class="btn btn-success" name="buildTemplate">
+                            <i class="fa fa-save"></i> Save Template Configuration
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </form>
@@ -158,15 +228,177 @@
 
 <script>
 $(document).ready(function() {
-    // Handle stage selection changes
-    $('.stage-checkbox').change(function() {
+    // Handle adding/removing parent stages
+    $('.add-stage-checkbox').change(function() {
+        updateTemplateStructure();
+        updateActivitiesSection();
+    });
+    
+    // Handle child stage selection changes in template structure
+    $(document).on('change', '.template-child-checkbox', function() {
         updateActivitiesSection();
     });
 
+    function updateTemplateStructure() {
+        const selectedParentStages = $('.add-stage-checkbox:checked');
+        const container = $('#selectedStagesContainer');
+        
+        if (selectedParentStages.length === 0) {
+            container.html(`
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i> 
+                    Select parent stages above to configure your template structure here.
+                </div>
+            `);
+            return;
+        }
+        
+        let structureHtml = '';
+        
+        selectedParentStages.each(function(index) {
+            const stageId = $(this).val();
+            const stageName = $(this).data('stage-name');
+            const stageDescription = $(this).data('stage-description');
+            
+            structureHtml += `
+                <div class="stage-structure-group mb-4" data-parent-stage-id="${stageId}">
+                    <div class="parent-stage-structure">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="stage-number badge badge-success">${index + 1}</span>
+                            <i class="fas fa-layer-group text-success ml-2 mr-2"></i>
+                            <div>
+                                <strong class="text-success">${stageName}</strong>
+                                <input type="hidden" name="selected_stages[]" value="${stageId}">
+                                ${stageDescription ? `<br><small class="text-muted">${stageDescription}</small>` : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="children-selection ml-4" id="children-${stageId}">
+                            <div class="loading-children">
+                                <i class="fa fa-spinner fa-spin"></i> Loading children stages...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.html(structureHtml);
+        
+        // Load children for each selected parent
+        selectedParentStages.each(function() {
+            const stageId = $(this).val();
+            loadChildrenForParent(stageId);
+        });
+    }
+    
+    function loadChildrenForParent(parentStageId) {
+        // Get children from the existing constructionStages data
+        const allStages = @json($constructionStages ?? []);
+        console.log('All stages data:', allStages);
+        console.log('Looking for children of parent ID:', parentStageId);
+        
+        // Convert parentStageId to number for proper comparison
+        const parentId = parseInt(parentStageId);
+        const children = allStages.filter(stage => {
+            const stageParentId = stage.parent_id ? parseInt(stage.parent_id) : null;
+            const matches = stageParentId === parentId;
+            if (matches) {
+                console.log('Found child:', stage.name, 'with parent_id:', stage.parent_id);
+            }
+            return matches;
+        });
+        
+        console.log('Children found:', children);
+        
+        let childrenHtml = '';
+        
+        if (children.length > 0) {
+            childrenHtml += `
+                <div class="children-header mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-arrow-right"></i> 
+                            <strong>Select specific children to include (${children.length} available):</strong>
+                        </small>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAllChildren(${parentStageId})">
+                            <i class="fas fa-check-double"></i> Select All
+                        </button>
+                    </div>
+                </div>
+                <div class="children-list" id="children-list-${parentStageId}">
+            `;
+            
+            children.forEach((child, index) => {
+                childrenHtml += `
+                    <div class="child-stage-structure mb-2">
+                        <div class="custom-control custom-checkbox child-stage-checkbox">
+                            <input type="checkbox" class="custom-control-input template-child-checkbox" 
+                                   id="template_child_${child.id}" 
+                                   name="selected_stages[]" 
+                                   value="${child.id}"
+                                   data-parent-id="${parentStageId}">
+                            <label class="custom-control-label" for="template_child_${child.id}">
+                                <span class="stage-number badge badge-secondary">${index + 1}</span>
+                                <i class="fas fa-level-up-alt fa-rotate-90 text-secondary ml-2"></i>
+                                <strong class="text-dark">${child.name}</strong>
+                                ${child.description ? `<br><small class="text-muted ml-4">${child.description}</small>` : ''}
+                            </label>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            childrenHtml += `</div>`;
+        } else {
+            childrenHtml = `
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i> 
+                    <strong>This parent stage has no child stages.</strong>
+                    <br><small>You can proceed with just the parent stage selected.</small>
+                </div>
+            `;
+        }
+        
+        $(`#children-${parentStageId}`).html(childrenHtml);
+    }
+    
+    // Function to toggle all children for a parent
+    function toggleAllChildren(parentStageId) {
+        const childCheckboxes = $(`#children-list-${parentStageId} .template-child-checkbox`);
+        const allChecked = childCheckboxes.filter(':checked').length === childCheckboxes.length;
+        
+        if (allChecked) {
+            // Uncheck all
+            childCheckboxes.prop('checked', false);
+        } else {
+            // Check all
+            childCheckboxes.prop('checked', true);
+        }
+        
+        // Update the button text
+        const button = $(`button[onclick="toggleAllChildren(${parentStageId})"]`);
+        if (allChecked) {
+            button.html('<i class="fas fa-check-double"></i> Select All');
+        } else {
+            button.html('<i class="fas fa-times"></i> Unselect All');
+        }
+        
+        // Update activities section
+        updateActivitiesSection();
+    }
+
     function updateActivitiesSection() {
-        const selectedStages = $('.stage-checkbox:checked').map(function() {
+        // Get all selected stages (both parent stages and children)
+        const selectedParentStages = $('.add-stage-checkbox:checked').map(function() {
             return $(this).val();
         }).get();
+        
+        const selectedChildStages = $('.template-child-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+        
+        const selectedStages = [...selectedParentStages, ...selectedChildStages];
 
         if (selectedStages.length === 0) {
             $('#activitiesContainer').html('<p class="text-muted">Select construction stages above to configure activities.</p>');
@@ -359,5 +591,167 @@ $(document).ready(function() {
 #templatePreviewModal .modal-body {
     max-height: 70vh;
     overflow-y: auto;
+}
+
+/* Construction Stages Hierarchical Styling */
+.stages-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.stage-group {
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.stage-group:last-child {
+    margin-bottom: 0;
+}
+
+.parent-stage-header {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.parent-stage-checkbox .custom-control-label {
+    font-size: 1.05em;
+    padding-left: 0.5rem;
+}
+
+.child-stage-checkbox {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.child-stage-checkbox:hover {
+    background-color: #e9ecef;
+    border-color: #007bff;
+}
+
+.child-stage-checkbox .custom-control-label {
+    padding-left: 0.5rem;
+    width: 100%;
+}
+
+.children-stages {
+    border-left: 3px solid #007bff;
+    padding-left: 1rem;
+    margin-left: 1rem;
+}
+
+.stage-number {
+    font-size: 0.75em;
+    font-weight: bold;
+    min-width: 2.5rem;
+    text-align: center;
+    display: inline-block;
+}
+
+.parent-stage-label strong {
+    color: #007bff !important;
+}
+
+.child-stage-label strong {
+    color: #495057 !important;
+}
+
+/* Visual states for parent-child selection */
+.children-stages.parent-selected {
+    border-left-color: #28a745;
+    background-color: #f8fff9;
+}
+
+.children-stages.has-selected-children {
+    border-left-color: #ffc107;
+    background-color: #fffef8;
+}
+
+.children-stages.parent-selected.has-selected-children {
+    border-left-color: #17a2b8;
+    background-color: #f8fdff;
+}
+
+.children-header {
+    font-style: italic;
+    color: #6c757d;
+}
+
+/* Template Structure Styling */
+.stage-structure-group {
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.parent-stage-structure {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.5rem;
+}
+
+.children-selection {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 1rem;
+    border-left: 3px solid #28a745;
+    border: 1px solid #e9ecef;
+    margin-top: 0.5rem;
+}
+
+.children-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0.5rem;
+    background-color: white;
+}
+
+.children-header {
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.child-stage-structure {
+    background-color: white;
+    border-radius: 4px;
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.child-stage-structure:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+.loading-children {
+    text-align: center;
+    color: #6c757d;
+    padding: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .children-stages {
+        margin-left: 0.5rem;
+        padding-left: 0.5rem;
+    }
+    
+    .stage-number {
+        min-width: 2rem;
+    }
 }
 </style>
