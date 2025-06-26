@@ -12,6 +12,8 @@ class BuildingType extends Model
     public $fillable = [
         'name',
         'description',
+        'parent_id',
+        'sort_order',
         'is_active'
     ];
 
@@ -22,5 +24,15 @@ class BuildingType extends Model
     public function boqTemplates()
     {
         return $this->hasMany(BoqTemplate::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(BuildingType::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(BuildingType::class, 'parent_id');
     }
 }
