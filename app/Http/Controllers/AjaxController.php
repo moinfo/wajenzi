@@ -85,6 +85,7 @@ class AjaxController
                     $construction_stages = ConstructionStage::orderBy('sort_order')->get();
                     $activities = Activity::with('constructionStage')->orderBy('sort_order')->get();
                     $building_types = BuildingType::where('is_active', true)->orderBy('name')->get();
+                    $parent_building_types = BuildingType::whereNull('parent_id')->where('is_active', true)->orderBy('name')->get();
                     $boq_item_categories = BoqItemCategory::orderBy('name')->get();
                     $parent_boq_item_categories = BoqItemCategory::whereNull('parent_id')->orderBy('name')->get();
                     $skill_levels = [
@@ -236,6 +237,7 @@ class AjaxController
                             'construction_stages' => $construction_stages,
                             'activities' => $activities,
                             'building_types' => $building_types,
+                            'parent_building_types' => $parent_building_types,
                             'boq_item_categories' => $boq_item_categories,
                             'parent_boq_item_categories' => $parent_boq_item_categories,
                             'skill_levels' => $skill_levels,

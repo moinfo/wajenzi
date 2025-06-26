@@ -938,7 +938,8 @@ class SettingsController extends Controller
         }
         
         $data = [
-            'building_types' => BuildingType::orderBy('name')->get()
+            'building_types' => BuildingType::with('parent')->orderBy('sort_order')->get(),
+            'parent_building_types' => BuildingType::whereNull('parent_id')->orderBy('name')->get()
         ];
         
         return view('pages.settings.settings_building_types')->with($data);
