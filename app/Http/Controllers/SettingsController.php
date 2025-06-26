@@ -1272,6 +1272,63 @@ class SettingsController extends Controller
                                 session()->flash('success', 'Stage removed successfully.');
                             }
                             break;
+                            
+                        case 'remove_activity':
+                            $activityId = $request->input('activity_id');
+                            if ($activityId) {
+                                // First remove all sub-activities and their materials
+                                $activity = \App\Models\BoqTemplateActivity::with('templateSubActivities.subActivity.materials')->find($activityId);
+                                if ($activity) {
+                                    foreach ($activity->templateSubActivities as $subActivity) {
+                                        // Remove materials first
+                                        \App\Models\SubActivityMaterial::where('sub_activity_id', $subActivity->sub_activity_id)->delete();
+                                        // Remove sub-activity
+                                        $subActivity->delete();
+                                    }
+                                    // Remove the activity
+                                    $activity->delete();
+                                    session()->flash('success', 'Activity and all sub-activities removed successfully.');
+                                } else {
+                                    session()->flash('error', 'Activity not found.');
+                                }
+                            } else {
+                                session()->flash('error', 'Activity ID not provided.');
+                            }
+                            break;
+                            
+                        case 'remove_sub_activity':
+                            $subActivityId = $request->input('sub_activity_id');
+                            if ($subActivityId) {
+                                $subActivity = \App\Models\BoqTemplateSubActivity::find($subActivityId);
+                                if ($subActivity) {
+                                    // Remove all materials for this sub-activity first
+                                    \App\Models\SubActivityMaterial::where('sub_activity_id', $subActivity->sub_activity_id)->delete();
+                                    // Remove the sub-activity
+                                    $subActivity->delete();
+                                    session()->flash('success', 'Sub-activity and all materials removed successfully.');
+                                } else {
+                                    session()->flash('error', 'Sub-activity not found.');
+                                }
+                            } else {
+                                session()->flash('error', 'Sub-activity ID not provided.');
+                            }
+                            break;
+                            
+                        case 'remove_material':
+                            $materialId = $request->input('material_id');
+                            if ($materialId) {
+                                $material = \App\Models\SubActivityMaterial::find($materialId);
+                                if ($material) {
+                                    $materialName = $material->boqItem->name ?? 'Unknown Material';
+                                    $material->delete();
+                                    session()->flash('success', "Material '{$materialName}' removed successfully.");
+                                } else {
+                                    session()->flash('error', 'Material not found.');
+                                }
+                            } else {
+                                session()->flash('error', 'Material ID not provided.');
+                            }
+                            break;
                     }
                     
                     // Redirect to refresh the page with updated data
