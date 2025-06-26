@@ -167,6 +167,14 @@
                                     Select parent stages above to configure your template structure here.
                                 </div>
                             </div>
+                            
+                            <!-- Debug Panel -->
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-sm btn-warning" onclick="testChildrenData()">
+                                    🔍 Test Children Data
+                                </button>
+                                <div id="debugOutput" class="mt-2"></div>
+                            </div>
                         </div>
 
                         <hr>
@@ -228,8 +236,19 @@
 
 <script>
 $(document).ready(function() {
+    // Debug: Check available construction stages data on page load
+    const debugAllStages = @json($constructionStages ?? []);
+    console.log('🚀 Page loaded - Available construction stages:', debugAllStages);
+    
+    const parentStages = debugAllStages.filter(stage => !stage.parent_id);
+    const childStages = debugAllStages.filter(stage => stage.parent_id);
+    
+    console.log('👨‍👩‍👧‍👦 Parent stages:', parentStages.length, parentStages);
+    console.log('👶 Child stages:', childStages.length, childStages);
+    
     // Handle adding/removing parent stages
     $('.add-stage-checkbox').change(function() {
+        console.log('✅ Checkbox changed - calling updateTemplateStructure');
         updateTemplateStructure();
         updateActivitiesSection();
     });
@@ -240,7 +259,9 @@ $(document).ready(function() {
     });
 
     function updateTemplateStructure() {
+        console.log('🏗️ updateTemplateStructure called');
         const selectedParentStages = $('.add-stage-checkbox:checked');
+        console.log('✅ Selected parent stages:', selectedParentStages.length);
         const container = $('#selectedStagesContainer');
         
         if (selectedParentStages.length === 0) {
@@ -275,7 +296,7 @@ $(document).ready(function() {
                         
                         <div class="children-selection ml-4" id="children-${stageId}">
                             <div class="loading-children">
-                                <i class="fa fa-spinner fa-spin"></i> Loading children stages...
+                                <i class="fa fa-spinner fa-spin"></i> Loading children stages for parent ID: ${stageId}...
                             </div>
                         </div>
                     </div>
@@ -288,15 +309,21 @@ $(document).ready(function() {
         // Load children for each selected parent
         selectedParentStages.each(function() {
             const stageId = $(this).val();
+            console.log(`🔄 Loading children for stage ID: ${stageId}`);
             loadChildrenForParent(stageId);
         });
     }
     
     function loadChildrenForParent(parentStageId) {
+        console.log('🔥 loadChildrenForParent called with ID:', parentStageId);
+        
         // Get children from the existing constructionStages data
         const allStages = @json($constructionStages ?? []);
-        console.log('All stages data:', allStages);
-        console.log('Looking for children of parent ID:', parentStageId);
+        console.log('📊 All stages data:', allStages);
+        console.log('🔍 Looking for children of parent ID:', parentStageId);
+        
+        // Add visual indicator that function is running
+        $(`#children-${parentStageId}`).prepend('<div class="alert alert-warning">🔥 Loading children function called...</div>');
         
         // Convert parentStageId to number for proper comparison
         const parentId = parseInt(parentStageId);
@@ -360,9 +387,69 @@ $(document).ready(function() {
             `;
         }
         
-        $(`#children-${parentStageId}`).html(childrenHtml);
+        console.log('🎨 Generated HTML for children:', childrenHtml);
+        console.log(`🎯 Setting HTML for container: #children-${parentStageId}`);
+        
+        // Check if container exists
+        const container = $(`#children-${parentStageId}`);
+        console.log('📦 Container found:', container.length > 0);
+        
+        if (container.length > 0) {
+            container.html(childrenHtml);
+            console.log('✅ HTML successfully set');
+        } else {
+            console.error('❌ Container not found!');
+        }
     }
     
+    // Test function to check children data
+    function testChildrenData() {
+        const allStages = @json($constructionStages ?? []);
+        const parentStages = @json($parentStages ?? []);
+        
+        let output = `
+            <div class="alert alert-warning">
+                <h6>🔍 Debug Information</h6>
+                <p><strong>Total construction stages:</strong> ${allStages.length}</p>
+                <p><strong>Parent stages only:</strong> ${parentStages.length}</p>
+                
+                <h6 class="mt-3">📋 All Stages Data:</h6>
+                <div style="max-height: 200px; overflow-y: auto; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+        `;
+        
+        allStages.forEach(stage => {
+            const isParent = !stage.parent_id;
+            output += `
+                <div class="mb-1">
+                    <span class="badge badge-${isParent ? 'primary' : 'secondary'}">${stage.id}</span>
+                    <strong>${stage.name}</strong>
+                    ${stage.parent_id ? ` (Child of ${stage.parent_id})` : ' (Parent)'}
+                </div>
+            `;
+        });
+        
+        output += `
+                </div>
+                <h6 class="mt-3">🧪 Test Children Lookup:</h6>
+        `;
+        
+        // Test children lookup for each parent
+        parentStages.forEach(parent => {
+            const children = allStages.filter(stage => stage.parent_id == parent.id);
+            output += `
+                <div class="mb-2">
+                    <strong>${parent.name} (ID: ${parent.id})</strong> → 
+                    <span class="badge badge-info">${children.length} children</span>
+                    ${children.map(child => `<span class="badge badge-light ml-1">${child.name}</span>`).join('')}
+                </div>
+            `;
+        });
+        
+        output += `</div>`;
+        
+        document.getElementById('debugOutput').innerHTML = output;
+    }
+
     // Function to toggle all children for a parent
     function toggleAllChildren(parentStageId) {
         const childCheckboxes = $(`#children-list-${parentStageId} .template-child-checkbox`);
