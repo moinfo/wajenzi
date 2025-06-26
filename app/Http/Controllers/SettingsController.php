@@ -1020,7 +1020,7 @@ class SettingsController extends Controller
         
         $data = [
             'boq_items' => BoqTemplateItem::with('category')->get(),
-            'categories' => BoqItemCategory::orderBy('name')->get()
+            'categories' => BoqItemCategory::with('boqItems')->orderBy('sort_order')->get()
         ];
         
         return view('pages.settings.settings_boq_items')->with($data);
