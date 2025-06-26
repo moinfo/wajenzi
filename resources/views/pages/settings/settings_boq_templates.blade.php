@@ -26,10 +26,10 @@
                                 <th class="text-center" style="width: 50px;">#</th>
                                 <th>Name</th>
                                 <th>Building Type</th>
-                                <th>Description</th>
+                                <th>Specifications</th>
+                                <th>Measurements</th>
                                 <th>Created By</th>
                                 <th class="text-center">Status</th>
-                                <th class="text-center">Created</th>
                                 <th class="text-center" style="width: 120px;">Actions</th>
                             </tr>
                             </thead>
@@ -40,12 +40,57 @@
                                     <td class="font-w600">{{ $template->name }}</td>
                                     <td>
                                         @if($template->buildingType)
-                                            <span class="badge badge-primary">{{ $template->buildingType->name }}</span>
+                                            @if($template->buildingType->parent_id)
+                                                {{-- This is a child building type --}}
+                                                <div>
+                                                    <small class="text-muted">{{ $template->buildingType->parent->name ?? 'Unknown Parent' }}</small>
+                                                    <br>
+                                                    <span class="badge badge-secondary">
+                                                        <i class="fas fa-level-up-alt fa-rotate-90 mr-1"></i>
+                                                        {{ $template->buildingType->name }}
+                                                    </span>
+                                                </div>
+                                            @else
+                                                {{-- This is a parent building type --}}
+                                                <span class="badge badge-primary">
+                                                    <i class="fas fa-building mr-1"></i>
+                                                    {{ $template->buildingType->name }}
+                                                </span>
+                                            @endif
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
                                     </td>
-                                    <td>{{ Str::limit($template->description ?? '-', 40) }}</td>
+                                    <td>
+                                        <small>
+                                            @if($template->roof_type)
+                                                <span class="badge badge-light">{{ ucwords(str_replace('_', ' ', $template->roof_type)) }}</span>
+                                            @endif
+                                            @if($template->no_of_rooms)
+                                                <span class="badge badge-light">{{ $template->no_of_rooms }} Room{{ $template->no_of_rooms == '1' ? '' : 's' }}</span>
+                                            @endif
+                                            @if(!$template->roof_type && !$template->no_of_rooms)
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            @if($template->square_metre || $template->run_metre)
+                                                @if($template->square_metre)
+                                                    <span class="text-info">{{ number_format($template->square_metre, 2) }} SQM</span>
+                                                @endif
+                                                @if($template->square_metre && $template->run_metre)
+                                                    <br>
+                                                @endif
+                                                @if($template->run_metre)
+                                                    <span class="text-success">{{ number_format($template->run_metre, 2) }} RM</span>
+                                                @endif
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </small>
+                                    </td>
                                     <td>{{ $template->creator->name ?? '-' }}</td>
                                     <td class="text-center">
                                         @if($template->is_active)
@@ -54,7 +99,6 @@
                                             <span class="badge badge-secondary">Inactive</span>
                                         @endif
                                     </td>
-                                    <td class="text-center">{{ $template->created_at->format('M d, Y') }}</td>
                                     <td class="text-center">
                                         <div class="btn-group">
 {{--                                            @can('View BOQ Template')--}}

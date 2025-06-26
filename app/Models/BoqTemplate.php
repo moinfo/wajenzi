@@ -13,12 +13,18 @@ class BoqTemplate extends Model
         'name',
         'description',
         'building_type_id',
+        'roof_type',
+        'no_of_rooms',
+        'square_metre',
+        'run_metre',
         'is_active',
         'created_by'
     ];
 
     protected $casts = [
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'square_metre' => 'decimal:2',
+        'run_metre' => 'decimal:2'
     ];
 
     public function buildingType()

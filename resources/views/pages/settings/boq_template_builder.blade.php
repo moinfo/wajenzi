@@ -25,7 +25,7 @@
                         <h5><i class="fa fa-info-circle"></i> BOQ Template Builder</h5>
                         <p class="mb-0">Configure your BOQ template by selecting construction stages, activities, and sub-activities. This will define the structure and default items for projects using this template.</p>
                     </div>
-                    
+
                     @if(session('success'))
                         <div class="alert alert-success alert-dismissible fade show" role="alert">
                             <i class="fa fa-check-circle"></i> {{ session('success') }}
@@ -34,7 +34,7 @@
                             </button>
                         </div>
                     @endif
-                    
+
                     @if(session('warning'))
                         <div class="alert alert-warning alert-dismissible fade show" role="alert">
                             <i class="fa fa-exclamation-triangle"></i> {{ session('warning') }}
@@ -47,7 +47,7 @@
             </div>
 
             <div id="templateBuilderContainer">
-                
+
                 <div class="row">
                     <!-- Template Info Panel -->
                     <div class="col-md-4">
@@ -60,15 +60,15 @@
                                     <p><strong>Name:</strong> {{ $template->name }}</p>
                                     <p><strong>Building Type:</strong> {{ $template->buildingType->name ?? 'Not Set' }}</p>
                                     <p><strong>Created:</strong> {{ $template->created_at->format('M d, Y') }}</p>
-                                    <p><strong>Status:</strong> 
+                                    <p><strong>Status:</strong>
                                         <span class="badge badge-{{ $template->is_active ? 'success' : 'secondary' }}">
                                             {{ $template->is_active ? 'Active' : 'Inactive' }}
                                         </span>
                                     </p>
                                 @endif
-                                
+
                                 <hr>
-                                
+
                                 <div class="form-group">
                                     <label for="action">Builder Action:</label>
                                     <select name="action" id="builderAction" class="form-control" required>
@@ -81,7 +81,7 @@
                                         <option value="save_template">Save Template Configuration</option>
                                     </select>
                                 </div>
-                                
+
                                 <button type="button" class="btn btn-primary btn-block" onclick="executeAction()">
                                     <i class="fa fa-play"></i> Execute Action
                                 </button>
@@ -120,16 +120,16 @@
                             </div>
                             <div class="card-body" style="max-height: 600px; overflow-y: auto;">
                                 <div id="templateStructure">
-                                    @if(config('app.debug'))
-                                        <div class="alert alert-info">
-                                            <strong>Debug - Template Variable Check:</strong><br>
-                                            Template variable exists: {{ isset($template) ? 'YES' : 'NO' }}<br>
-                                            Template is null: {{ $template === null ? 'YES' : 'NO' }}<br>
-                                            Template falsy: {{ !$template ? 'YES' : 'NO' }}<br>
-                                            Template ID: {{ $template->id ?? 'null' }}<br>
-                                            Template Name: {{ $template->name ?? 'null' }}
-                                        </div>
-                                    @endif
+{{--                                    @if(config('app.debug'))--}}
+{{--                                        <div class="alert alert-info">--}}
+{{--                                            <strong>Debug - Template Variable Check:</strong><br>--}}
+{{--                                            Template variable exists: {{ isset($template) ? 'YES' : 'NO' }}<br>--}}
+{{--                                            Template is null: {{ $template === null ? 'YES' : 'NO' }}<br>--}}
+{{--                                            Template falsy: {{ !$template ? 'YES' : 'NO' }}<br>--}}
+{{--                                            Template ID: {{ $template->id ?? 'null' }}<br>--}}
+{{--                                            Template Name: {{ $template->name ?? 'null' }}--}}
+{{--                                        </div>--}}
+{{--                                    @endif--}}
                                     @if($template ?? null)
                                         @if($template->templateStages->count() > 0)
                                             <div class="accordion" id="stagesAccordion">
@@ -160,14 +160,14 @@
                                                                             <li class="list-group-item">
                                                                                 <div class="d-flex justify-content-between align-items-center">
                                                                                     <div>
-                                                                                        <i class="fa fa-tasks text-primary"></i> 
+                                                                                        <i class="fa fa-tasks text-primary"></i>
                                                                                         <strong>{{ $activity->activity->name ?? 'Unknown Activity' }}</strong>
                                                                                         @if($activity->templateSubActivities->count() > 0)
                                                                                             <span class="badge badge-secondary ml-2">{{ $activity->templateSubActivities->count() }} sub-activities</span>
                                                                                         @endif
                                                                                     </div>
                                                                                 </div>
-                                                                                
+
                                                                                 @if($activity->templateSubActivities->count() > 0)
                                                                                     <div class="mt-2 ml-3">
                                                                                         <ul class="list-group list-group-flush">
@@ -175,14 +175,14 @@
                                                                                                 <li class="list-group-item border-0 py-1 pl-3" style="background-color: #f8f9fa;">
                                                                                                     <div class="d-flex justify-content-between align-items-start">
                                                                                                         <div>
-                                                                                                            <i class="fa fa-puzzle-piece text-warning"></i> 
+                                                                                                            <i class="fa fa-puzzle-piece text-warning"></i>
                                                                                                             <strong>{{ $subActivity->subActivity->name ?? 'Unknown Sub-Activity' }}</strong>
                                                                                                             @if($subActivity->subActivity->estimated_duration_hours ?? null)
                                                                                                                 <small class="text-muted ml-2">
                                                                                                                     ({{ $subActivity->subActivity->estimated_duration_hours }} {{ $subActivity->subActivity->duration_unit ?? 'hours' }})
                                                                                                                 </small>
                                                                                                             @endif
-                                                                                                            
+
                                                                                                             @if($subActivity->subActivity->materials->count() > 0)
                                                                                                                 <div class="mt-1">
                                                                                                                     <small class="text-info">
@@ -191,7 +191,7 @@
                                                                                                                     <div class="ml-3 mt-1">
                                                                                                                         @foreach($subActivity->subActivity->materials as $material)
                                                                                                                             <small class="d-block text-muted">
-                                                                                                                                • {{ $material->boqItem->name ?? 'Unknown Material' }} 
+                                                                                                                                • {{ $material->boqItem->name ?? 'Unknown Material' }}
                                                                                                                                 ({{ $material->quantity }} {{ $material->boqItem->unit ?? 'pcs' }})
                                                                                                                             </small>
                                                                                                                         @endforeach
@@ -230,7 +230,7 @@
                                     @else
                                         <div class="alert alert-danger">
                                             <i class="fa fa-exclamation-circle"></i> Template not found. Please go back and select a valid template.
-                                            
+
                                             @if(config('app.debug'))
                                                 <hr>
                                                 <small class="text-muted">
@@ -257,7 +257,7 @@
                             @csrf
                             <input type="hidden" name="template_id" value="{{ $templateId }}">
                             <input type="hidden" name="action" value="add_stage">
-                            
+
                             <div class="card border-primary">
                                 <div class="card-header bg-primary text-white">
                                     <h6 class="mb-0">Add Construction Stage</h6>
@@ -285,7 +285,7 @@
                             @csrf
                             <input type="hidden" name="template_id" value="{{ $templateId }}">
                             <input type="hidden" name="action" value="add_activity">
-                            
+
                             <div class="card border-success">
                                 <div class="card-header bg-success text-white">
                                     <h6 class="mb-0">Add Activity</h6>
@@ -319,7 +319,7 @@
                             @csrf
                             <input type="hidden" name="template_id" value="{{ $templateId }}">
                             <input type="hidden" name="action" value="add_sub_activity">
-                            
+
                             <div class="card border-warning">
                                 <div class="card-header bg-warning text-dark">
                                     <h6 class="mb-0">Add Sub-Activity</h6>
@@ -359,7 +359,7 @@
                             @csrf
                             <input type="hidden" name="template_id" value="{{ $templateId }}">
                             <input type="hidden" name="action" value="assign_materials">
-                            
+
                             <div class="card border-info">
                                 <div class="card-header bg-info text-white">
                                     <h6 class="mb-0">Assign Materials to Sub-Activity</h6>
@@ -384,7 +384,7 @@
                                             @endif
                                         </select>
                                     </div>
-                                    
+
                                     <div id="materialsSection" style="display: none;">
                                         <div class="form-group">
                                             <label>Select BOQ Item/Material:</label>
@@ -397,13 +397,13 @@
                                                 @endif
                                             </select>
                                         </div>
-                                        
+
                                         <div class="form-group">
                                             <label>Quantity:</label>
                                             <input type="number" name="quantity" class="form-control" step="0.01" min="0" placeholder="0.00" required>
                                         </div>
                                     </div>
-                                    
+
                                     <button type="submit" class="btn btn-info">Assign Material</button>
                                     <button type="button" class="btn btn-secondary" onclick="cancelAction()">Cancel</button>
                                 </div>
@@ -419,15 +419,15 @@
 <script>
     function executeAction() {
         const action = document.getElementById('builderAction').value;
-        
+
         // Hide all action forms first
         document.querySelectorAll('.action-form').forEach(form => {
             form.style.display = 'none';
         });
-        
+
         // Show action forms container
         document.getElementById('actionForms').style.display = 'block';
-        
+
         // Show specific form based on action
         switch(action) {
             case 'add_stage':
@@ -449,12 +449,12 @@
                 alert('Please select an action first');
         }
     }
-    
+
     function cancelAction() {
         document.getElementById('actionForms').style.display = 'none';
         document.getElementById('builderAction').value = '';
     }
-    
+
     function saveTemplate() {
         Swal.fire({
             title: 'Success!',
@@ -465,12 +465,12 @@
         });
         // In a real implementation, this would save the overall template configuration
     }
-    
+
     // Handle sub-activity selection for materials assignment
     document.addEventListener('DOMContentLoaded', function() {
         const subActivitySelect = document.getElementById('subActivitySelect');
         const materialsSection = document.getElementById('materialsSection');
-        
+
         if (subActivitySelect && materialsSection) {
             subActivitySelect.addEventListener('change', function() {
                 if (this.value) {
