@@ -83,6 +83,7 @@ class AjaxController
 
                     // BOQ Template System Data
                     $construction_stages = ConstructionStage::orderBy('sort_order')->get();
+                    $parent_construction_stages = ConstructionStage::whereNull('parent_id')->orderBy('name')->get();
                     $activities = Activity::with('constructionStage')->orderBy('sort_order')->get();
                     $building_types = BuildingType::where('is_active', true)->orderBy('name')->get();
                     $parent_building_types = BuildingType::whereNull('parent_id')->where('is_active', true)->orderBy('name')->get();
@@ -235,6 +236,7 @@ class AjaxController
 
                     $data = $request->input('data') ?? [
                             'construction_stages' => $construction_stages,
+                            'parent_construction_stages' => $parent_construction_stages,
                             'activities' => $activities,
                             'building_types' => $building_types,
                             'parent_building_types' => $parent_building_types,
