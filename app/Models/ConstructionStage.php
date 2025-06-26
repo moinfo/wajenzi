@@ -12,6 +12,7 @@ class ConstructionStage extends Model
     public $fillable = [
         'name',
         'description',
+        'parent_id',
         'sort_order'
     ];
 
@@ -23,5 +24,15 @@ class ConstructionStage extends Model
     public function templateStages()
     {
         return $this->hasMany(BoqTemplateStage::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(ConstructionStage::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(ConstructionStage::class, 'parent_id');
     }
 }

@@ -966,7 +966,8 @@ class SettingsController extends Controller
         }
         
         $data = [
-            'construction_stages' => ConstructionStage::orderBy('sort_order')->get()
+            'construction_stages' => ConstructionStage::with('parent')->orderBy('sort_order')->get(),
+            'parent_construction_stages' => ConstructionStage::whereNull('parent_id')->orderBy('name')->get()
         ];
         
         return view('pages.settings.settings_construction_stages')->with($data);
@@ -994,7 +995,7 @@ class SettingsController extends Controller
         
         $data = [
             'sub_activities' => SubActivity::with('activity.constructionStage')->orderBy('sort_order')->get(),
-            'activities' => Activity::with('constructionStage')->orderBy('sort_order')->get(),
+            'activities' => Activity::with(['constructionStage', 'subActivities'])->orderBy('sort_order')->get(),
             'skill_levels' => [
                 ['name' => 'unskilled'], 
                 ['name' => 'semi_skilled'], 

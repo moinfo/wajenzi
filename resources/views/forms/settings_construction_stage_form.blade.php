@@ -6,6 +6,28 @@
             <label for="name">Stage Name <span class="text-danger">*</span></label>
             <input type="text" class="form-control" name="name" value="{{ $object->name ?? '' }}" placeholder="Construction Stage Name" required>
         </div>
+
+        <div class="form-group">
+            <label for="parent_id">Parent Construction Stage</label>
+            <select name="parent_id" class="form-control">
+                <option value="">-- No Parent (Top Level) --</option>
+                @if(isset($parent_construction_stages))
+                    @if(count($parent_construction_stages) > 0)
+                        @foreach($parent_construction_stages as $parent)
+                            @if(!isset($object->id) || $parent->id != $object->id)
+                                <option value="{{ $parent->id }}" {{ ($parent->id == ($object->parent_id ?? '')) ? 'selected' : '' }}>
+                                    {{ $parent->name }}
+                                </option>
+                            @endif
+                        @endforeach
+                    @else
+                        <option value="" disabled>No parent construction stages available</option>
+                    @endif
+                @else
+                    <option value="" disabled>Parent construction stages not loaded</option>
+                @endif
+            </select>
+        </div>
         
         <div class="form-group">
             <label for="description">Description</label>
