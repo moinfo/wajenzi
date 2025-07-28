@@ -1,4 +1,18 @@
 <div class="block-content">
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <form method="post" autocomplete="off" action="{{ route('hr_settings_role_permissions') }}">
         @csrf
         @php
@@ -39,7 +53,7 @@
             <div class="row mb-4">
                 <div class="col-sm-12">
                     <label class="form-label" for="role-select">Select Role to Manage Permissions</label>
-                    <select class="form-control" id="role-select" name="role_id" onchange="this.form.submit()">
+                    <select class="form-control" id="role-select" name="role_id" onchange="loadRolePermissions()">
                         <option value="">-- Select a role --</option>
                         @foreach($allRoles as $role)
                             <option value="{{ $role->id }}" {{ $role_id == $role->id ? 'selected' : '' }}>
@@ -53,70 +67,83 @@
             @if($selectedRole)
                 <h4 class="mb-3">Manage Permissions for Role: {{ $selectedRole->name }}</h4>
 
-                <div class="row">
-                    <div class="col-sm-12">
-                        <!-- Permission type tabs -->
-                        <ul class="nav nav-tabs mb-3" id="permissionTypeTabs" role="tablist">
-                            @foreach($permissionsByType as $type => $typePermissions)
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link {{ $loop->first ? 'active' : '' }}"
-                                            id="{{ $type }}-tab"
-                                            data-bs-toggle="tab"
-                                            data-bs-target="#{{ $type }}"
-                                            type="button"
-                                            role="tab"
-                                            aria-controls="{{ $type }}"
-                                            aria-selected="{{ $loop->first ? 'true' : 'false' }}">
-                                        {{ $type }} ({{ $typePermissions->count() }})
-                                    </button>
-                                </li>
-                            @endforeach
-                        </ul>
-
-                        <!-- Permission type content -->
-                        <div class="tab-content" id="permissionTypeContent">
-                            @foreach($permissionsByType as $type => $typePermissions)
-                                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}"
-                                     id="{{ $type }}"
-                                     role="tabpanel"
-                                     aria-labelledby="{{ $type }}-tab">
-
-                                    <div class="card mb-3">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <h5 class="mb-0">{{ $type }} Permissions</h5>
-                                            <div>
-                                                <button type="button" class="btn btn-sm btn-primary select-all" data-type="{{ $type }}">
-                                                    Select All
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-secondary deselect-all" data-type="{{ $type }}">
-                                                    Deselect All
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="card-body">
-                                            <ul class="list-unstyled">
-                                                @foreach($typePermissions as $permission)
-                                                    <li class="mb-2">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input permission-{{ $type }}"
-                                                                   type="checkbox"
-                                                                   name="permission_id[]"
-                                                                   id="permission-{{ $permission->id }}"
-                                                                   value="{{ $permission->id }}"
-                                                                {{ in_array($permission->id, $rolePermissionIds) ? 'checked' : '' }}>
-                                                            <label class="form-check-label" for="permission-{{ $permission->id }}">
-                                                                {{ $permission->name }}
-                                                            </label>
-                                                        </div>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                <!-- Search Box -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Search Permissions</label>
+                            <input type="text" class="form-control" id="permission-search" placeholder="Search permissions...">
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Filter by Type</label>
+                            <select class="form-control" id="type-filter">
+                                <option value="">All Types</option>
+                                @foreach($permissionsByType as $type => $typePermissions)
+                                    <option value="{{ $type }}">{{ $type }} ({{ $typePermissions->count() }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two Column Layout -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0 text-success">
+                                    <i class="fas fa-check-circle"></i> Assigned Permissions
+                                    <span class="badge bg-success ms-2" id="assigned-count">0</span>
+                                </h5>
+                                <small class="text-muted">Permissions currently assigned to this role</small>
+                            </div>
+                            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                                <div id="assigned-permissions" class="permission-list">
+                                    <!-- Assigned permissions will be populated here -->
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="remove-all">
+                                    <i class="fas fa-times"></i> Remove All
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0 text-primary">
+                                    <i class="fas fa-plus-circle"></i> Available Permissions
+                                    <span class="badge bg-primary ms-2" id="available-count">0</span>
+                                </h5>
+                                <small class="text-muted">Permissions not yet assigned to this role</small>
+                            </div>
+                            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                                <div id="available-permissions" class="permission-list">
+                                    <!-- Available permissions will be populated here -->
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button type="button" class="btn btn-sm btn-outline-success" id="add-all-filtered">
+                                    <i class="fas fa-plus"></i> Add All Visible
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hidden checkboxes for form submission -->
+                <div id="hidden-permissions" style="display: none;">
+                    @foreach($permissions as $permission)
+                        <input type="checkbox" 
+                               name="permission_id[]" 
+                               value="{{ $permission->id }}" 
+                               id="hidden-permission-{{ $permission->id }}"
+                               {{ in_array($permission->id, $rolePermissionIds) ? 'checked' : '' }}>
+                    @endforeach
                 </div>
 
                 <div class="form-group mt-4">
@@ -136,97 +163,67 @@
 </div>
 
 <script>
-    // Datepicker initialization
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
-    });
+    // Global variables for permissions
+    let allPermissions = [];
+    let assignedPermissions = [];
+    let availablePermissions = [];
 
-    // Select/Deselect all permissions by type
     $(document).ready(function() {
-        $('.select-all').click(function() {
-            var type = $(this).data('type');
-            $('.permission-' + type).prop('checked', true);
-        });
+        // Initialize permissions data
+        @if($selectedRole)
+            allPermissions = [
+                @foreach($permissions as $permission)
+                {
+                    id: {{ $permission->id }},
+                    name: '{{ $permission->name }}',
+                    type: '{{ $permission->permission_type }}',
+                    assigned: {{ in_array($permission->id, $rolePermissionIds) ? 'true' : 'false' }}
+                },
+                @endforeach
+            ];
 
-        $('.deselect-all').click(function() {
-            var type = $(this).data('type');
-            $('.permission-' + type).prop('checked', false);
-        });
+            // Initialize the permission lists
+            initializePermissions();
+            renderPermissions();
 
-        // Add specific CSS to make tabs more clearly interactive
-        $('<style>')
-            .text(`
-            .nav-tabs .nav-link {
-                cursor: pointer;
-                transition: background-color 0.2s;
-            }
-            .nav-tabs .nav-link:hover {
-                background-color: #f8f9fa;
-            }
-            /* Ensure tab content is visible */
-            .tab-pane.active.show {
-                display: block !important;
-            }
-        `)
-            .appendTo('head');
+            // Search functionality
+            $('#permission-search').on('input', function() {
+                renderPermissions();
+            });
 
-        // Remove any existing click handlers to avoid conflicts
-        $('.nav-tabs .nav-link').off('click');
+            // Type filter functionality
+            $('#type-filter').on('change', function() {
+                renderPermissions();
+            });
 
-        // Add new click handlers for tabs
-        $('.nav-tabs .nav-link').on('click', function(e) {
-            e.preventDefault();
+            // Remove all permissions
+            $('#remove-all').click(function() {
+                assignedPermissions.forEach(function(permission) {
+                    permission.assigned = false;
+                    $('#hidden-permission-' + permission.id).prop('checked', false);
+                });
+                initializePermissions();
+                renderPermissions();
+            });
 
-            console.log('Tab clicked:', $(this).text().trim());
-
-            // Get the target tab content
-            var targetId = $(this).attr('data-bs-target') || $(this).attr('data-target');
-
-            if (!targetId) {
-                console.error('No target specified for tab');
-                return;
-            }
-
-            console.log('Activating tab pane:', targetId);
-
-            // Deactivate all tabs
-            $('.nav-tabs .nav-link').removeClass('active').attr('aria-selected', 'false');
-
-            // Activate clicked tab
-            $(this).addClass('active').attr('aria-selected', 'true');
-
-            // Hide all tab panes
-            $('.tab-content .tab-pane').removeClass('active show');
-
-            // Show the target tab pane (with small delay for transitions)
-            $(targetId).addClass('active');
-            setTimeout(function() {
-                $(targetId).addClass('show');
-            }, 50);
-        });
-
-        // Make sure the initial tab is active
-        var $activeTab = $('.nav-tabs .nav-link.active');
-        if ($activeTab.length) {
-            var activeTargetId = $activeTab.attr('data-bs-target') || $activeTab.attr('data-target');
-            if (activeTargetId) {
-                $(activeTargetId).addClass('active show');
-            }
-        } else {
-            // If no tab is active, activate the first one
-            $('.nav-tabs .nav-link:first').click();
-        }
-
-        // Select/Deselect all permissions by type
-        $('.select-all').click(function() {
-            var type = $(this).data('type');
-            $('.permission-' + type).prop('checked', true);
-        });
-
-        $('.deselect-all').click(function() {
-            var type = $(this).data('type');
-            $('.permission-' + type).prop('checked', false);
-        });
+            // Add all filtered permissions
+            $('#add-all-filtered').click(function() {
+                var searchTerm = $('#permission-search').val().toLowerCase();
+                var typeFilter = $('#type-filter').val();
+                
+                availablePermissions.forEach(function(permission) {
+                    var matchesSearch = permission.name.toLowerCase().includes(searchTerm);
+                    var matchesType = !typeFilter || permission.type === typeFilter;
+                    
+                    if (matchesSearch && matchesType) {
+                        permission.assigned = true;
+                        $('#hidden-permission-' + permission.id).prop('checked', true);
+                    }
+                });
+                initializePermissions();
+                renderPermissions();
+            });
+        @endif
 
         // Initialize datepicker if needed
         if (typeof $.fn.datepicker !== 'undefined') {
@@ -235,9 +232,164 @@
             });
         }
 
-        console.log('jQuery tab initialization complete');
+        // Add custom styles
+        $('<style>')
+            .text(`
+            .permission-item {
+                padding: 8px 12px;
+                margin: 2px 0;
+                border: 1px solid #e9ecef;
+                border-radius: 4px;
+                background: #f8f9fa;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .permission-item:hover {
+                background: #e9ecef;
+                border-color: #dee2e6;
+            }
+            .permission-item .permission-name {
+                font-size: 14px;
+                font-weight: 500;
+            }
+            .permission-item .permission-type {
+                font-size: 12px;
+                color: #6c757d;
+                background: #fff;
+                padding: 2px 6px;
+                border-radius: 3px;
+                border: 1px solid #dee2e6;
+            }
+            .permission-item .btn {
+                padding: 2px 8px;
+                font-size: 12px;
+            }
+            .permission-list {
+                min-height: 200px;
+            }
+            .empty-state {
+                text-align: center;
+                color: #6c757d;
+                font-style: italic;
+                padding: 40px 20px;
+            }
+        `)
+            .appendTo('head');
     });
 
+    function initializePermissions() {
+        assignedPermissions = allPermissions.filter(p => p.assigned);
+        availablePermissions = allPermissions.filter(p => !p.assigned);
+    }
 
+    function renderPermissions() {
+        var searchTerm = $('#permission-search').val().toLowerCase();
+        var typeFilter = $('#type-filter').val();
+
+        // Filter assigned permissions
+        var filteredAssigned = assignedPermissions.filter(function(permission) {
+            var matchesSearch = permission.name.toLowerCase().includes(searchTerm);
+            var matchesType = !typeFilter || permission.type === typeFilter;
+            return matchesSearch && matchesType;
+        });
+
+        // Filter available permissions
+        var filteredAvailable = availablePermissions.filter(function(permission) {
+            var matchesSearch = permission.name.toLowerCase().includes(searchTerm);
+            var matchesType = !typeFilter || permission.type === typeFilter;
+            return matchesSearch && matchesType;
+        });
+
+        // Render assigned permissions
+        var assignedHtml = '';
+        if (filteredAssigned.length === 0) {
+            assignedHtml = '<div class="empty-state">No assigned permissions match your criteria</div>';
+        } else {
+            filteredAssigned.forEach(function(permission) {
+                assignedHtml += `
+                    <div class="permission-item" data-id="${permission.id}">
+                        <div>
+                            <div class="permission-name">${permission.name}</div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="permission-type me-2">${permission.type}</span>
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-permission" data-id="${permission.id}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        $('#assigned-permissions').html(assignedHtml);
+
+        // Render available permissions
+        var availableHtml = '';
+        if (filteredAvailable.length === 0) {
+            availableHtml = '<div class="empty-state">No available permissions match your criteria</div>';
+        } else {
+            filteredAvailable.forEach(function(permission) {
+                availableHtml += `
+                    <div class="permission-item" data-id="${permission.id}">
+                        <div>
+                            <div class="permission-name">${permission.name}</div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="permission-type me-2">${permission.type}</span>
+                            <button type="button" class="btn btn-outline-success btn-sm add-permission" data-id="${permission.id}">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        $('#available-permissions').html(availableHtml);
+
+        // Update counts
+        $('#assigned-count').text(assignedPermissions.length);
+        $('#available-count').text(availablePermissions.length);
+
+        // Bind click events
+        $('.add-permission').click(function() {
+            var permissionId = $(this).data('id');
+            addPermission(permissionId);
+        });
+
+        $('.remove-permission').click(function() {
+            var permissionId = $(this).data('id');
+            removePermission(permissionId);
+        });
+    }
+
+    function addPermission(permissionId) {
+        var permission = allPermissions.find(p => p.id == permissionId);
+        if (permission) {
+            permission.assigned = true;
+            $('#hidden-permission-' + permissionId).prop('checked', true);
+            initializePermissions();
+            renderPermissions();
+        }
+    }
+
+    function removePermission(permissionId) {
+        var permission = allPermissions.find(p => p.id == permissionId);
+        if (permission) {
+            permission.assigned = false;
+            $('#hidden-permission-' + permissionId).prop('checked', false);
+            initializePermissions();
+            renderPermissions();
+        }
+    }
+
+    function loadRolePermissions() {
+        var roleId = document.getElementById('role-select').value;
+        if (roleId) {
+            window.location.href = '{{ route("hr_settings_role_permissions") }}?role_id=' + roleId;
+        }
+    }
 </script>
 

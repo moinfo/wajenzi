@@ -851,8 +851,16 @@ class SettingsController extends Controller
         ]);
 
         try {
-            // Find the role using direct DB query to avoid model errors
-            $role = DB::table('roles')->where('id', $request->role_id)->first();
+            // Debug logging
+            \Log::info('Role permissions update request', [
+                'role_id' => $request->role_id,
+                'permission_id' => $request->permission_id,
+                'update_permissions' => $request->has('update_permissions'),
+                'all_input' => $request->all()
+            ]);
+
+            // Find the role using Eloquent model
+            $role = Role::find($request->role_id);
 
             if (!$role) {
                 return redirect()->back()->with('error', "Role not found!");
@@ -861,9 +869,16 @@ class SettingsController extends Controller
             // If updating permissions
             if ($request->has('update_permissions')) {
                 // Use Eloquent to properly handle cache invalidation
-                $role->permissions()->sync($request->permission_id ?? []);
+                $permissionIds = $request->permission_id ?? [];
+                
+                // Simple debug - dump data and die to see what's being sent
+                if (empty($permissionIds)) {
+                    return redirect()->back()->with('error', "No permissions selected. Please select at least one permission.");
+                }
+                
+                $role->permissions()->sync($permissionIds);
 
-                return redirect()->back()->with('success', "Permissions for role '{$role->name}' updated successfully!");
+                return redirect()->back()->with('success', "Permissions for role '{$role->name}' updated successfully! Updated " . count($permissionIds) . " permissions.");
             }
 
             // If just selecting a role, redirect back to show the permissions

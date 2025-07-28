@@ -19,7 +19,7 @@ class Role extends Model
 
     public function permissions(): BelongsToMany
     {
-        return $this->belongsToMany(Permission::class, 'roles_permissions');
+        return $this->belongsToMany(Permission::class, 'role_has_permissions');
     }
 
     public function users(): BelongsToMany
@@ -30,7 +30,7 @@ class Role extends Model
     // New method for project-specific permissions
     public function projectPermissions(): BelongsToMany
     {
-        return $this->belongsToMany(Permission::class, 'roles_permissions')
+        return $this->belongsToMany(Permission::class, 'role_has_permissions')
             ->where('permission_type', 'project');
     }
 }
