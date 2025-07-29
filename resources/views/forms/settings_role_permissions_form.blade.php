@@ -175,8 +175,8 @@
                 @foreach($permissions as $permission)
                 {
                     id: {{ $permission->id }},
-                    name: '{{ $permission->name }}',
-                    type: '{{ $permission->permission_type }}',
+                    name: {!! json_encode($permission->name) !!},
+                    type: {!! json_encode($permission->permission_type) !!},
                     assigned: {{ in_array($permission->id, $rolePermissionIds) ? 'true' : 'false' }}
                 },
                 @endforeach
@@ -276,7 +276,7 @@
                 font-style: italic;
                 padding: 40px 20px;
             }
-        `)
+            `)
             .appendTo('head');
     });
 
