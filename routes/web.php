@@ -439,6 +439,23 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_daily_report/update/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'update'])->name('project_daily_report.update');
     Route::post('/project_daily_report/delete/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'destroy'])->name('project_daily_report.delete');
 
+// Sales Daily Report Routes
+    Route::match(['get', 'post'], '/sales_daily_reports', [App\Http\Controllers\SalesDailyReportController::class, 'index'])->name('sales_daily_reports');
+    Route::match(['get', 'post'], '/sales_daily_report/create', [App\Http\Controllers\SalesDailyReportController::class, 'create'])->name('sales_daily_report.create');
+    Route::match(['get', 'post'], '/sales_daily_report/edit/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'edit'])->name('sales_daily_report.edit');
+    Route::match(['get', 'post'], '/sales_daily_report/show/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report.show');
+    Route::match(['get', 'post'], '/sales_daily_report/{id}/{document_type_id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report');
+    Route::post('/sales_daily_report/store', [App\Http\Controllers\SalesDailyReportController::class, 'store'])->name('sales_daily_report.store');
+    Route::post('/sales_daily_report/update/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'update'])->name('sales_daily_report.update');
+    Route::post('/sales_daily_report/delete/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'destroy'])->name('sales_daily_report.delete');
+    Route::post('/sales_daily_report/submit/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'submit'])->name('sales_daily_report.submit');
+    Route::post('/sales_daily_report/approve/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'approve'])->name('sales_daily_report.approve');
+    Route::post('/sales_daily_report/reject/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'reject'])->name('sales_daily_report.reject');
+    Route::get('/sales_daily_report/export/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'exportPDF'])->name('sales_daily_report.export');
+
+    // Lead Management Routes
+    Route::resource('leads', App\Http\Controllers\LeadController::class);
+
 // Project Invoice Routes
     Route::match(['get', 'post'], '/project_invoices', [App\Http\Controllers\ProjectInvoiceController::class, 'index'])->name('project_invoices');
     Route::match(['get', 'post'], '/project_invoice/create', [App\Http\Controllers\ProjectInvoiceController::class, 'create'])->name('project_invoice.create');
