@@ -45,15 +45,38 @@ class ApiController extends Controller
      */
     public function store(Request $request)
     {
+        try {
+            $validation = $request->validate([
+                "data" => ['required', 'array'],
+                "data.*.deviceUserId" => ['required'],
+                "data.*.recordTime" => ['required'],
+                "data.*.ip" => ['required'],
+            ]);
+            
+            $data = $request->input('data');
+            $newData = Attendance::recordFromDevice($data);
 
-        $validation = $request->validate([  // TODO  Implement validation logic
-            "data" => ['array'],
-        ]);
-        $data = $request->post('data');
-        $newData = Attendance::recordFromDevice($data);
-
-
-        return response()->json($newData);
+            return response()->json([
+                'success' => true,
+                'message' => 'Attendance records processed successfully',
+                'data' => $newData,
+                'count' => count($newData)
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while processing attendance data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
