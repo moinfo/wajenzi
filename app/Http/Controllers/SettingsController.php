@@ -54,6 +54,8 @@ use App\Models\UserGroup;
 use App\Models\UsersPermission;
 use App\Models\Wakala;
 use App\Services\ApprovalService;
+use App\Traits\ClearsPermissionCache;
+use Spatie\Permission\PermissionRegistrar;
 
 // BOQ Template Models
 use App\Models\BuildingType;
@@ -77,6 +79,8 @@ use Illuminate\Support\Facades\Redirect;
 
 class SettingsController extends Controller
 {
+    use ClearsPermissionCache;
+    
     protected $approvalService;
 
     public function __construct(ApprovalService $approvalService)
@@ -573,6 +577,8 @@ class SettingsController extends Controller
                     'permission_id' => $permissions,
                 ]);
             }
+            // Clear permission cache after assigning permissions
+            $this->clearPermissionCache();
         }
 
         if($this->handleCrud($request, 'User')) {
@@ -878,6 +884,9 @@ class SettingsController extends Controller
                 
                 $role->permissions()->sync($permissionIds);
 
+                // Clear permission cache after updating role permissions
+                $this->clearPermissionCache();
+
                 return redirect()->back()->with('success', "Permissions for role '{$role->name}' updated successfully! Updated " . count($permissionIds) . " permissions.");
             }
 
@@ -937,6 +946,9 @@ class SettingsController extends Controller
                     DB::table('model_has_roles')->insert($toAdd);
                 }
             }
+
+            // Clear permission cache after assigning users to roles
+            $this->clearPermissionCache();
 
             return redirect()->back()->with('success', "Users for role '{$role->name}' updated successfully!");
         } catch (\Exception $e) {

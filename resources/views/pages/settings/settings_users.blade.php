@@ -26,9 +26,12 @@
                                     <th></th>
                                     <th>Name</th>
                                     <th class="d-none d-sm-table-cell" style="width: 30%;">Email</th>
+                                    <th>Device ID</th>
                                     <th>Address</th>
                                     <th>Designation</th>
                                     <th>Department</th>
+                                    <th>Attendance Type</th>
+                                    <th>Attendance Status</th>
                                     <th>Type</th>
                                     <th>Gender</th>
                                     <th>Employee No.</th>
@@ -61,9 +64,22 @@
                                         <td class="font-w600">{{ $user->name }}</td>
                                         <td class="d-none d-sm-table-cell">{{ $user->email }}
                                         </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-info">{{ $user->user_device_id ?? 'N/A' }}</span>
+                                        </td>
                                         <td>{{ $user->address }}</td>
                                         <td>{{ $user->designation }}</td>
                                         <td>{{ $user->department->name  ?? ''}}</td>
+                                        <td>{{ $user->attendanceType->name ?? 'N/A' }}</td>
+                                        <td class="text-center">
+                                            @if($user->attendance_status == 'ENABLED')
+                                                <span class="badge badge-success">ENABLED</span>
+                                            @elseif($user->attendance_status == 'DISABLED')
+                                                <span class="badge badge-danger">DISABLED</span>
+                                            @else
+                                                <span class="badge badge-secondary">N/A</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $user->type }}</td>
                                         <td>{{ $user->gender }}</td>
                                         <td>{{ $user->employee_number }}</td>
