@@ -25,14 +25,6 @@ class Attendance extends Model
             ->whereBetween('record_time', [$start_date, $end_date])
             ->get();
 
-        // Retrieve work permit records that intersect with the specified date range for the user
-        $workPermitRecords = WorkPermit::where('user_id', $user_id)
-            ->where(function ($query) use ($start_date, $end_date) {
-                $query->whereBetween('start_date', [$start_date, $end_date])
-                    ->orWhereBetween('end_date', [$start_date, $end_date]);
-            })
-            ->get();
-
         // Calculate the time threshold for "come early" and "come late"
         $earlyThreshold = Carbon::parse('06:30:00');
         $lateThreshold = Carbon::parse('06:31:00');
@@ -47,13 +39,12 @@ class Attendance extends Model
             }
         }
 
-        // Check for absent records where there is no attendance or intersecting work permit record
-//        $absentCount = ($end_date->diffInDays($start_date) + 1) * count($workPermitRecords) - count($attendanceRecords);
+        // Calculate absent days
         $formatted_dt1 = Carbon::parse($start_date);
         $formatted_dt2 = Carbon::parse($end_date);
         $date_diff = $formatted_dt1->diffInDays($formatted_dt2);
 
-        $absentCount =$date_diff - ($comeEarlyCount+$comeLateCount);
+        $absentCount = $date_diff - ($comeEarlyCount + $comeLateCount);
         return [
             'come_early' => $comeEarlyCount,
             'come_late' => $comeLateCount,
@@ -62,7 +53,7 @@ class Attendance extends Model
     }
     public static function isAttendEarly($staff_id, $date)
     {
-        $late_in = \App\Models\Shift::getLateInTime();
+        $late_in = '09:00:00'; // Default late-in time, can be made configurable
         $date_time_limit_start = "$date".' '.'05:00:00';
         $date_time_limit_end = "$date".' '.$late_in;
 //        return $date_time_limit;

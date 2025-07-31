@@ -3,10 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Allowance;
+use App\Models\Attendance;
+use App\Models\AttendanceType;
 use App\Models\BankReconciliation;
 use App\Models\Category;
 use App\Models\Collection;
 use App\Models\Deduction;
+use App\Models\Department;
+use App\Models\User;
 use App\Models\Efd;
 use App\Models\Expense;
 use App\Models\ExpensesCategory;
@@ -39,6 +43,8 @@ class ReportsController extends Controller
             ['name'=>'Exempt Analysis', 'route'=>'reports_exempt_analysis', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Sales Report', 'route'=>'reports_sales_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Purchases Report', 'route'=>'reports_purchases_report', 'icon' => 'si si-book-open', 'badge' => 0],
+            ['name'=>'Attendances Report', 'route'=>'reports_attendances_report', 'icon' => 'si si-clock', 'badge' => 0],
+            ['name'=>'Daily Attendances Report', 'route'=>'reports_daily_attendances_report', 'icon' => 'si si-clock', 'badge' => 0],
             ['name'=>'Purchases By Supplier Report', 'route'=>'reports_purchases_by_supplier_report', 'icon' => 'si si-book-open', 'badge' => 0],
             ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-book-open', 'badge' => 0],
 //            ['name' => 'General Report', 'route' => 'reports_general_report', 'icon' => 'si si-book-open', 'badge' => 0],
@@ -922,6 +928,386 @@ class ReportsController extends Controller
             'allowances' => $allowances,
         ];
         return view('pages.reports.reports_allowance_subscriptions_report')->with($data);
+    }
+
+    public function attendances_report(Request $request)
+    {
+        // Get filter parameters
+        $start_date = $request->input('start_date', date('Y-m-01'));
+        $end_date = $request->input('end_date', date('Y-m-t'));
+        $department_id = $request->input('department_id');
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 25);
+        $export = $request->input('export');
+
+        // Get departments for filter dropdown
+        $departments = Department::select('id', 'name')->orderBy('name')->get();
+
+        // Generate date range
+        $dates = collect();
+        $current = \Carbon\Carbon::parse($start_date);
+        $endDate = \Carbon\Carbon::parse($end_date);
+        
+        while ($current->lte($endDate)) {
+            $dates->push($current->copy());
+            $current->addDay();
+        }
+
+        // Get users query with filters
+        $usersQuery = User::select([
+                'users.id',
+                'users.name',
+                'users.email',
+                'users.phone_number',
+                'users.user_device_id',
+                'users.department_id',
+                'departments.name as department_name'
+            ])
+            ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
+            ->where('users.status', 'ACTIVE')
+            ->where('users.attendance_status', 'ENABLED');
+        
+        // Apply filters
+        if ($department_id) {
+            $usersQuery->where('users.department_id', $department_id);
+        }
+        
+        if ($search) {
+            $usersQuery->where(function($q) use ($search) {
+                $q->where('users.name', 'like', "%{$search}%")
+                  ->orWhere('users.email', 'like', "%{$search}%")
+                  ->orWhere('users.phone_number', 'like', "%{$search}%")
+                  ->orWhere('users.user_device_id', 'like', "%{$search}%");
+            });
+        }
+        
+        // Paginate users
+        $users = $usersQuery->orderBy('users.name')->paginate($perPage);
+        
+        // Get user IDs for attendance query
+        $userIds = $users->pluck('id')->toArray();
+        
+        // Fetch attendance data in bulk with aggregation
+        $attendanceData = DB::table('attendances')
+            ->select([
+                'user_id',
+                DB::raw('DATE(record_time) as attendance_date'),
+                DB::raw('MIN(TIME(record_time)) as first_check_in'),
+                DB::raw('COUNT(*) as check_count')
+            ])
+            ->whereIn('user_id', $userIds)
+            ->whereBetween('record_time', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])
+            ->groupBy('user_id', DB::raw('DATE(record_time)'))
+            ->get()
+            ->groupBy('user_id');
+        
+        // Default late-in time (can be made configurable)
+        $lateInTime = '09:00:00';
+        
+        // Process attendance data for each user
+        $staffs = $users->map(function($user, $index) use ($attendanceData, $dates, $lateInTime, $users) {
+            $userAttendance = $attendanceData->get($user->id, collect());
+            $attendanceByDate = $userAttendance->keyBy('attendance_date');
+            
+            $summary = [
+                'early_days' => 0,
+                'late_days' => 0,
+                'absent_days' => 0,
+                'attendance_details' => []
+            ];
+            
+            // Process each date
+            foreach ($dates as $date) {
+                $dateStr = $date->format('Y-m-d');
+                $attendance = $attendanceByDate->get($dateStr);
+                
+                if (!$attendance) {
+                    $summary['absent_days']++;
+                    $summary['attendance_details'][$dateStr] = [
+                        'status' => 'absent', 
+                        'time' => null,
+                        'icon_class' => 'fa fa-minus text-muted',
+                        'title' => 'Absent',
+                        'display_time' => ''
+                    ];
+                } else {
+                    $checkInTime = $attendance->first_check_in;
+                    $displayTime = substr($checkInTime, 0, 5); // HH:MM format
+                    
+                    if ($checkInTime <= $lateInTime) {
+                        $summary['early_days']++;
+                        $summary['attendance_details'][$dateStr] = [
+                            'status' => 'early', 
+                            'time' => $checkInTime,
+                            'icon_class' => 'fa fa-check text-success',
+                            'title' => 'Early/On-time',
+                            'display_time' => $displayTime
+                        ];
+                    } else {
+                        $summary['late_days']++;
+                        $summary['attendance_details'][$dateStr] = [
+                            'status' => 'late', 
+                            'time' => $checkInTime,
+                            'icon_class' => 'fa fa-times text-danger',
+                            'title' => 'Late',
+                            'display_time' => $displayTime
+                        ];
+                    }
+                }
+            }
+            
+            // Calculate attendance metrics
+            $presentDays = $summary['early_days'] + $summary['late_days'];
+            $totalDays = count($dates);
+            $attendanceRate = $totalDays > 0 ? ($presentDays / $totalDays) * 100 : 0;
+            
+            $attendanceRateBadgeClass = $attendanceRate >= 90 ? 'badge-success' : 
+                                       ($attendanceRate >= 75 ? 'badge-warning' : 'badge-danger');
+            
+            // Enhanced user object with all pre-calculated display data
+            $user->attendance_summary = $summary;
+            $user->late_in_time = $lateInTime;
+            $user->row_number = ($users->currentPage() - 1) * $users->perPage() + $index + 1;
+            $user->present_days = $presentDays;
+            $user->attendance_rate = round($attendanceRate, 1);
+            $user->attendance_rate_badge_class = $attendanceRateBadgeClass;
+            $user->department_display = $user->department_name ?? 'N/A';
+            
+            return $user;
+        });
+        
+        // Calculate overall statistics
+        $overallStats = [
+            'total_users' => $users->total(),
+            'total_days' => count($dates),
+            'avg_attendance_rate' => $staffs->avg(function($staff) use ($dates) {
+                $present = $staff->attendance_summary['early_days'] + $staff->attendance_summary['late_days'];
+                return count($dates) > 0 ? ($present / count($dates)) * 100 : 0;
+            }),
+            'avg_punctuality_rate' => $staffs->avg(function($staff) use ($dates) {
+                $present = $staff->attendance_summary['early_days'] + $staff->attendance_summary['late_days'];
+                return $present > 0 ? ($staff->attendance_summary['early_days'] / $present) * 100 : 0;
+            })
+        ];
+        
+        // Handle Excel export
+        if ($export === 'excel') {
+            return $this->exportAttendanceToExcel($staffs, $dates, $overallStats, $start_date, $end_date);
+        }
+        
+        return view('pages.reports.reports_attendances_report', compact(
+            'staffs', 
+            'dates', 
+            'departments',
+            'overallStats',
+            'start_date',
+            'end_date', 
+            'department_id',
+            'search',
+            'users'
+        ));
+    }
+
+    public function daily_attendances_report(Request $request)
+    {
+        // Get filter parameters
+        $start_date = $request->input('start_date', date('Y-m-d'));
+        $attendance_type_id = $request->input('attendance_type_id');
+        $search = $request->input('search');
+        $perPage = $request->input('per_page', 25);
+        $export = $request->input('export');
+        
+        // Get attendance types for filter dropdown
+        $attendanceTypes = AttendanceType::select('id', 'name')->orderBy('name')->get();
+        
+        // Default late-in time
+        $lateInTime = '09:00:00';
+        
+        // Get users query with filters
+        $usersQuery = User::select([
+                'users.id',
+                'users.name',
+                'users.email',
+                'users.phone_number',
+                'users.user_device_id',
+                'users.department_id',
+                'users.attendance_type_id',
+                'departments.name as department_name',
+                'attendance_types.name as attendance_type_name'
+            ])
+            ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
+            ->leftJoin('attendance_types', 'users.attendance_type_id', '=', 'attendance_types.id')
+            ->where('users.status', 'ACTIVE')
+            ->where('users.attendance_status', 'ENABLED');
+        
+        // Apply filters
+        if ($attendance_type_id) {
+            $usersQuery->where('users.attendance_type_id', $attendance_type_id);
+        }
+        
+        if ($search) {
+            $usersQuery->where(function($q) use ($search) {
+                $q->where('users.name', 'like', "%{$search}%")
+                  ->orWhere('users.email', 'like', "%{$search}%")
+                  ->orWhere('users.phone_number', 'like', "%{$search}%")
+                  ->orWhere('users.user_device_id', 'like', "%{$search}%");
+            });
+        }
+        
+        // Paginate users
+        $users = $usersQuery->orderBy('attendance_types.name')->orderBy('users.name')->paginate($perPage);
+        
+        // Get user IDs for attendance query
+        $userIds = $users->pluck('id')->toArray();
+        
+        // Fetch attendance data for the specific date
+        $attendanceData = DB::table('attendances')
+            ->select([
+                'user_id',
+                DB::raw('MIN(record_time) as record_time'),
+                DB::raw('MAX(comment) as comment'),
+                DB::raw('MAX(file) as attachment')
+            ])
+            ->whereIn('user_id', $userIds)
+            ->whereDate('record_time', $start_date)
+            ->groupBy('user_id')
+            ->get()
+            ->keyBy('user_id');
+        
+        // Process users data
+        $staffs = $users->map(function($user, $index) use ($attendanceData, $lateInTime, $users, $start_date) {
+            $attendance = $attendanceData->get($user->id);
+            
+            $late_date_time = $start_date . ' ' . $lateInTime;
+            $in_time = $attendance ? $attendance->record_time : null;
+            
+            // Pre-calculate status and display properties
+            $status_icon_class = 'fa fa-minus text-muted';
+            $status_title = 'Absent';
+            $status_badge_class = 'badge-secondary';
+            
+            if ($in_time) {
+                if ($in_time <= $late_date_time) {
+                    $status_icon_class = 'fa fa-check text-success';
+                    $status_title = 'Early/On-time';
+                    $status_badge_class = 'badge-success';
+                } else {
+                    $status_icon_class = 'fa fa-times text-danger';
+                    $status_title = 'Late';
+                    $status_badge_class = 'badge-danger';
+                }
+            }
+            
+            $user->row_number = ($users->currentPage() - 1) * $users->perPage() + $index + 1;
+            $user->in_time = $in_time ? \Carbon\Carbon::parse($in_time)->format('H:i') : '';
+            $user->late_in_time = $lateInTime;
+            $user->status_icon_class = $status_icon_class;
+            $user->status_title = $status_title;
+            $user->status_badge_class = $status_badge_class;
+            $user->comment = '';
+            $user->attachment = $attendance ? $attendance->attachment : null;
+            $user->department_display = $user->department_name ?? 'N/A';
+            $user->attendance_type_display = $user->attendance_type_name ?? 'N/A';
+            
+            return $user;
+        })->groupBy('attendance_type_display');
+        
+        // Calculate overall statistics
+        $allStaffs = $staffs->flatten();
+        $overallStats = [
+            'total_users' => $users->total(),
+            'attendance_types_count' => $staffs->count(),
+            'present_today' => $allStaffs->where('in_time', '!=', '')->count(),
+            'on_time_today' => $allStaffs->where('status_badge_class', 'badge-success')->count(),
+            'late_today' => $allStaffs->where('status_badge_class', 'badge-danger')->count(),
+            'absent_today' => $allStaffs->where('status_badge_class', 'badge-secondary')->count(),
+        ];
+        
+        return view('pages.reports.reports_daily_attendances_report', compact(
+            'staffs',
+            'attendanceTypes', 
+            'overallStats',
+            'start_date',
+            'attendance_type_id',
+            'search',
+            'users'
+        ));
+    }
+
+    /**
+     * Export attendance report to Excel
+     */
+    private function exportAttendanceToExcel($staffs, $dates, $overallStats, $start_date, $end_date)
+    {
+        $filename = 'attendance_report_' . $start_date . '_to_' . $end_date . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+        
+        $callback = function() use ($staffs, $dates, $overallStats) {
+            $file = fopen('php://output', 'w');
+            
+            // Add report title and statistics
+            fputcsv($file, ['Attendance Report']);
+            fputcsv($file, ['Generated on', date('Y-m-d H:i:s')]);
+            fputcsv($file, []);
+            fputcsv($file, ['Overall Statistics']);
+            fputcsv($file, ['Total Employees', $overallStats['total_users']]);
+            fputcsv($file, ['Report Period (Days)', $overallStats['total_days']]);
+            fputcsv($file, ['Average Attendance Rate', number_format($overallStats['avg_attendance_rate'], 1) . '%']);
+            fputcsv($file, ['Average Punctuality Rate', number_format($overallStats['avg_punctuality_rate'], 1) . '%']);
+            fputcsv($file, []);
+            
+            // Build header row
+            $header = ['#', 'Name', 'Email', 'Department'];
+            foreach ($dates as $date) {
+                $header[] = $date->format('Y-m-d');
+            }
+            $header = array_merge($header, ['Absent Days', 'Early Days', 'Late Days', 'Present Days', 'Attendance Rate %']);
+            fputcsv($file, $header);
+            
+            // Add data rows
+            foreach ($staffs as $staff) {
+                $row = [
+                    $staff->row_number,
+                    $staff->name,
+                    $staff->email,
+                    $staff->department_name ?? 'N/A'
+                ];
+                
+                // Add attendance details for each date
+                foreach ($dates as $date) {
+                    $dateStr = $date->format('Y-m-d');
+                    $detail = $staff->attendance_summary['attendance_details'][$dateStr] ?? ['status' => 'absent', 'time' => null];
+                    
+                    if ($detail['status'] == 'absent') {
+                        $row[] = 'Absent';
+                    } elseif ($detail['status'] == 'early') {
+                        $row[] = 'Early (' . substr($detail['time'], 0, 5) . ')';
+                    } else {
+                        $row[] = 'Late (' . substr($detail['time'], 0, 5) . ')';
+                    }
+                }
+                
+                // Add summary statistics
+                $present = $staff->attendance_summary['early_days'] + $staff->attendance_summary['late_days'];
+                $attendanceRate = count($dates) > 0 ? ($present / count($dates)) * 100 : 0;
+                
+                $row[] = $staff->attendance_summary['absent_days'];
+                $row[] = $staff->attendance_summary['early_days'];
+                $row[] = $staff->attendance_summary['late_days'];
+                $row[] = $present;
+                $row[] = number_format($attendanceRate, 1) . '%';
+                
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
     }
 
 }
