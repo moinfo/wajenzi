@@ -958,7 +958,6 @@ class ReportsController extends Controller
                 'users.id',
                 'users.name',
                 'users.email',
-                'users.phone_number',
                 'users.user_device_id',
                 'users.department_id',
                 'departments.name as department_name'
@@ -976,7 +975,6 @@ class ReportsController extends Controller
             $usersQuery->where(function($q) use ($search) {
                 $q->where('users.name', 'like', "%{$search}%")
                   ->orWhere('users.email', 'like', "%{$search}%")
-                  ->orWhere('users.phone_number', 'like', "%{$search}%")
                   ->orWhere('users.user_device_id', 'like', "%{$search}%");
             });
         }
@@ -1001,8 +999,8 @@ class ReportsController extends Controller
             ->get()
             ->groupBy('user_id');
         
-        // Default late-in time (can be made configurable)
-        $lateInTime = '09:00:00';
+        // Get configurable late-in time from settings
+        $lateInTime = settings('ATTENDANCE_LATE_THRESHOLD', '09:00:00');
         
         // Process attendance data for each user
         $staffs = $users->map(function($user, $index) use ($attendanceData, $dates, $lateInTime, $users) {
@@ -1120,15 +1118,14 @@ class ReportsController extends Controller
         // Get attendance types for filter dropdown
         $attendanceTypes = AttendanceType::select('id', 'name')->orderBy('name')->get();
         
-        // Default late-in time
-        $lateInTime = '09:00:00';
+        // Get configurable late-in time from settings
+        $lateInTime = settings('ATTENDANCE_LATE_THRESHOLD', '09:00:00');
         
         // Get users query with filters
         $usersQuery = User::select([
                 'users.id',
                 'users.name',
                 'users.email',
-                'users.phone_number',
                 'users.user_device_id',
                 'users.department_id',
                 'users.attendance_type_id',
@@ -1149,7 +1146,6 @@ class ReportsController extends Controller
             $usersQuery->where(function($q) use ($search) {
                 $q->where('users.name', 'like', "%{$search}%")
                   ->orWhere('users.email', 'like', "%{$search}%")
-                  ->orWhere('users.phone_number', 'like', "%{$search}%")
                   ->orWhere('users.user_device_id', 'like', "%{$search}%");
             });
         }

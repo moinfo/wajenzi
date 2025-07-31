@@ -34,6 +34,9 @@ class User extends Authenticatable
         'profile',
         'file',
         'department_id',
+        'user_device_id',
+        'attendance_type_id',
+        'attendance_status',
     ];
 
     protected $hidden = [
@@ -64,6 +67,11 @@ class User extends Authenticatable
     public function position(): BelongsTo
     {
         return $this->belongsTo(Position::class);
+    }
+
+    public function attendanceType(): BelongsTo
+    {
+        return $this->belongsTo(AttendanceType::class);
     }
 
     // Project Management relationships

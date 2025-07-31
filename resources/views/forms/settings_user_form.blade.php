@@ -49,6 +49,13 @@
             </div>
             <div class="col-sm-6">
                 <div class="form-group">
+                    <label for="example-nf-user_device_id">Device ID</label>
+                    <input type="number" class="form-control" id="input-user-user_device_id" name="user_device_id" value="{{ $object->user_device_id ?? '' }}" placeholder="Biometric Device ID">
+                    <small class="form-text text-muted">ID used by biometric attendance device</small>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
                     <label for="example-nf-type" class="control-label required">Employee Type</label>
                     <select name="type" id="input-type" class="form-control"  required="required">
 {{--                        <option value="">Select Type</option>--}}
@@ -127,6 +134,30 @@
                             <option value="{{ $department['id'] }}" {{ ( $department['id'] == $object->department_id) ? 'selected' : '' }}> {{ $department['name'] }} </option>
                         @endforeach
                     </select>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-attendance_type">Attendance Type</label>
+                    <select name="attendance_type_id" id="input-attendance_type" class="form-control">
+                        <option value="">Select Attendance Type</option>
+                        @if(isset($attendance_types))
+                            @foreach ($attendance_types as $attendance_type)
+                                <option value="{{ $attendance_type['id'] }}" {{ ( $attendance_type['id'] == $object->attendance_type_id) ? 'selected' : '' }}> {{ $attendance_type['name'] }} </option>
+                            @endforeach
+                        @endif
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="example-nf-attendance_status">Attendance Status</label>
+                    <select name="attendance_status" id="input-attendance_status" class="form-control">
+                        <option value="">Select Attendance Status</option>
+                        <option value="ENABLED" {{ ($object->attendance_status ?? 'ENABLED') == 'ENABLED' ? 'selected' : '' }}>ENABLED</option>
+                        <option value="DISABLED" {{ ($object->attendance_status ?? '') == 'DISABLED' ? 'selected' : '' }}>DISABLED</option>
+                    </select>
+                    <small class="form-text text-muted">Enable/disable attendance tracking for this user</small>
                 </div>
             </div>
             <div class="col-sm-6">
