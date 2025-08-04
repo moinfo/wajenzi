@@ -156,6 +156,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/beneficiaries', [App\Http\Controllers\SettingsController::class, 'beneficiaries'])->name('beneficiaries');
     Route::match(['get', 'post'], '/settings/wakalas', [App\Http\Controllers\SettingsController::class, 'wakalas'])->name('wakalas');
     Route::match(['get', 'post'], '/settings/departments', [App\Http\Controllers\SettingsController::class, 'departments'])->name('hr_settings_departments');
+    Route::match(['get', 'post'], '/settings/attendance_types', [App\Http\Controllers\AttendanceTypeController::class, 'index'])->name('hr_settings_attendance_types');
     Route::match(['get', 'post'], '/settings/allowances', [App\Http\Controllers\SettingsController::class, 'allowances'])->name('hr_settings_allowances');
     Route::match(['get', 'post'], '/settings/staff_salaries', [App\Http\Controllers\SettingsController::class, 'staff_salaries'])->name('hr_settings_staff_salary');
     Route::match(['get', 'post'], '/settings/staff_loans', [App\Http\Controllers\SettingsController::class, 'staff_loans'])->name('hr_settings_staff_loan');
@@ -273,6 +274,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/reports/business_position_details_report', [App\Http\Controllers\ReportsController::class, 'business_position_details_report'])->name('reports_business_position_details_report');
     Route::match(['get', 'post'], '/reports/sales_report', [App\Http\Controllers\ReportsController::class, 'sales_report'])->name('reports_sales_report');
     Route::match(['get', 'post'], '/reports/purchases_report', [App\Http\Controllers\ReportsController::class, 'purchases_report'])->name('reports_purchases_report');
+    Route::match(['get', 'post'], '/reports/attendances_report', [App\Http\Controllers\ReportsController::class, 'attendances_report'])->name('reports_attendances_report');
+    Route::match(['get', 'post'], '/reports/daily_attendances_report', [App\Http\Controllers\ReportsController::class, 'daily_attendances_report'])->name('reports_daily_attendances_report');
     Route::match(['get', 'post'], '/reports/purchases_by_supplier_report', [App\Http\Controllers\ReportsController::class, 'purchases_by_supplier_report'])->name('reports_purchases_by_supplier_report');
     Route::match(['get', 'post'], '/reports/efd_report', [App\Http\Controllers\ReportsController::class, 'efd_report'])->name('reports_efd_report');
     Route::match(['get', 'post'], '/reports/commission_vs_deposit_report', [App\Http\Controllers\ReportsController::class, 'commission_vs_deposit_report'])->name('reports_commission_vs_deposit_report');

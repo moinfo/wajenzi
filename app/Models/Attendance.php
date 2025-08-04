@@ -11,7 +11,7 @@ class Attendance extends Model
 {
     use HasFactory;
 
-    public $fillable = ['user_id', 'device_user_id', 'record_time', 'ip', 'comment', 'file'];
+    public $fillable = ['user_id', 'device_user_id', 'record_time', 'type', 'ip', 'comment', 'file'];
 
 
     public static function getUserAttendanceStatus($start_date, $end_date, $user_id)
@@ -23,14 +23,6 @@ class Attendance extends Model
         // Retrieve attendance records within the specified date range for the user
         $attendanceRecords = Attendance::where('user_id', $user_id)
             ->whereBetween('record_time', [$start_date, $end_date])
-            ->get();
-
-        // Retrieve work permit records that intersect with the specified date range for the user
-        $workPermitRecords = WorkPermit::where('user_id', $user_id)
-            ->where(function ($query) use ($start_date, $end_date) {
-                $query->whereBetween('start_date', [$start_date, $end_date])
-                    ->orWhereBetween('end_date', [$start_date, $end_date]);
-            })
             ->get();
 
         // Calculate the time threshold for "come early" and "come late"
@@ -47,13 +39,12 @@ class Attendance extends Model
             }
         }
 
-        // Check for absent records where there is no attendance or intersecting work permit record
-//        $absentCount = ($end_date->diffInDays($start_date) + 1) * count($workPermitRecords) - count($attendanceRecords);
+        // Calculate absent days
         $formatted_dt1 = Carbon::parse($start_date);
         $formatted_dt2 = Carbon::parse($end_date);
         $date_diff = $formatted_dt1->diffInDays($formatted_dt2);
 
-        $absentCount =$date_diff - ($comeEarlyCount+$comeLateCount);
+        $absentCount = $date_diff - ($comeEarlyCount + $comeLateCount);
         return [
             'come_early' => $comeEarlyCount,
             'come_late' => $comeLateCount,
@@ -62,8 +53,8 @@ class Attendance extends Model
     }
     public static function isAttendEarly($staff_id, $date)
     {
-        $late_in = \App\Models\Shift::getLateInTime();
-        $date_time_limit_start = "$date".' '.'05:00:00';
+        $late_in = settings('ATTENDANCE_LATE_THRESHOLD', '09:00:00'); // Configurable late-in time
+        $date_time_limit_start = "$date".' '.settings('ATTENDANCE_EARLY_THRESHOLD', '06:00:00');
         $date_time_limit_end = "$date".' '.$late_in;
 //        return $date_time_limit;
         $attendance = Attendance::where('device_user_id',$staff_id)
@@ -91,7 +82,7 @@ class Attendance extends Model
     }
     public static function countAttended( $date,$staff_id = null)
     {
-        $date_time_limit_start = "$date".' '.'05:00:00';
+        $date_time_limit_start = "$date".' '.settings('ATTENDANCE_EARLY_THRESHOLD', '06:00:00');
         $date_time_limit_end = "$date".' '.'08:00:00';
 //        return $date_time_limit;
         $attendance = Attendance::where('record_time','>=',"$date_time_limit_start")->where('record_time','<=',"$date_time_limit_end");
@@ -204,6 +195,7 @@ class Attendance extends Model
                 'user_id' => self::mapUserId($item['deviceUserId']),
                 'device_user_id' => $item['deviceUserId'],
                 'record_time' => date('Y-m-d H:i:s', strtotime($item['recordTime']) + (60*60*3)),
+                'type' => $item['type'] ?? 'in', // Default to 'in' if not specified
                 'ip' => $item['ip'],
             ];
             if(self::create($entry)){
@@ -220,6 +212,93 @@ class Attendance extends Model
         // implement logic for ID mapping here
 
         return User::where('user_device_id',$userSn)->get()->first()->id ?? 0;
+    }
+
+    /**
+     * Get time in for a user on a specific date using settings-based threshold
+     */
+    public static function getTimeIn($user_id, $date)
+    {
+        return self::where('user_id', $user_id)
+            ->whereDate('record_time', $date)
+            ->where('type', 'in')
+            ->orderBy('record_time')
+            ->first();
+    }
+
+    /**
+     * Get time out for a user on a specific date  
+     */
+    public static function getTimeOut($user_id, $date)
+    {
+        return self::where('user_id', $user_id)
+            ->whereDate('record_time', $date)
+            ->where('type', 'out')
+            ->orderBy('record_time', 'desc')
+            ->first();
+    }
+
+    /**
+     * Check if user is late based on configurable threshold
+     */
+    public static function isLate($user_id, $date)
+    {
+        $timeIn = self::getTimeIn($user_id, $date);
+        if (!$timeIn) {
+            return true; // No check-in = absent/late
+        }
+
+        $lateThreshold = settings('ATTENDANCE_LATE_THRESHOLD', '09:00:00');
+        $checkInTime = Carbon::parse($timeIn->record_time)->format('H:i:s');
+        
+        return $checkInTime > $lateThreshold;
+    }
+
+    /**
+     * Get attendance status for a user on a specific date
+     */
+    public static function getAttendanceStatus($user_id, $date)
+    {
+        $timeIn = self::getTimeIn($user_id, $date);
+        $timeOut = self::getTimeOut($user_id, $date);
+        
+        if (!$timeIn) {
+            return [
+                'status' => 'absent',
+                'time_in' => null,
+                'time_out' => null,
+                'is_late' => true,
+                'working_hours' => 0
+            ];
+        }
+
+        $isLate = self::isLate($user_id, $date);
+        $workingHours = 0;
+        
+        if ($timeIn && $timeOut) {
+            $start = Carbon::parse($timeIn->record_time);
+            $end = Carbon::parse($timeOut->record_time);
+            
+            // Calculate working hours (ensure positive difference)
+            if ($end->gt($start)) {
+                $workingMinutes = $start->diffInMinutes($end);
+                $workingHours = $workingMinutes / 60;
+                
+                // Subtract break duration
+                $breakDuration = settings('ATTENDANCE_BREAK_DURATION', '01:00:00');
+                $breakTime = Carbon::parse($breakDuration);
+                $breakHours = $breakTime->hour + ($breakTime->minute / 60);
+                $workingHours = max(0, $workingHours - $breakHours);
+            }
+        }
+
+        return [
+            'status' => $timeIn ? ($isLate ? 'late' : 'on_time') : 'absent',
+            'time_in' => $timeIn ? Carbon::parse($timeIn->record_time)->format('H:i') : null,
+            'time_out' => $timeOut ? Carbon::parse($timeOut->record_time)->format('H:i') : null,
+            'is_late' => $isLate,
+            'working_hours' => round($workingHours, 2)
+        ];
     }
 
 }
