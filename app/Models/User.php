@@ -107,6 +107,11 @@ class User extends Authenticatable
         return $this->hasMany(ProjectExpense::class, 'created_by');
     }
 
+    public function siteSupervisorAssignments(): HasMany
+    {
+        return $this->hasMany(SiteSupervisorAssignment::class, 'user_id');
+    }
+
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ProjectActivityLog::class);

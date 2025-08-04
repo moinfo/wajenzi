@@ -337,6 +337,32 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project/store', [App\Http\Controllers\ProjectController::class, 'store'])->name('project.store');
     Route::post('/project/update/{id}', [App\Http\Controllers\ProjectController::class, 'update'])->name('project.update');
     Route::post('/project/delete/{id}', [App\Http\Controllers\ProjectController::class, 'destroy'])->name('project.delete');
+
+// Site Management Routes (must be before generic projects route)
+    Route::prefix('projects/sites')->group(function () {
+        Route::resource('sites', App\Http\Controllers\SiteController::class);
+        Route::resource('site-supervisor-assignments', App\Http\Controllers\SiteSupervisorAssignmentController::class);
+        Route::get('site-supervisor-assignments/history/{site}', [App\Http\Controllers\SiteSupervisorAssignmentController::class, 'history'])
+            ->name('site-supervisor-assignments.history');
+    });
+
+// Site Daily Reports Routes (must be before generic projects route)
+    Route::prefix('projects/site-reports')->group(function () {
+        Route::resource('site-daily-reports', App\Http\Controllers\SiteDailyReportController::class);
+        Route::get('my-reports', [App\Http\Controllers\SiteDailyReportController::class, 'myReports'])
+            ->name('site-daily-reports.my-reports');
+        Route::get('export/{report}', [App\Http\Controllers\SiteDailyReportController::class, 'export'])
+            ->name('site-daily-reports.export');
+        Route::get('share/{report}', [App\Http\Controllers\SiteDailyReportController::class, 'share'])
+            ->name('site-daily-reports.share');
+        Route::post('submit/{report}', [App\Http\Controllers\SiteDailyReportController::class, 'submit'])
+            ->name('site-daily-reports.submit');
+        Route::post('approve/{report}', [App\Http\Controllers\SiteDailyReportController::class, 'approve'])
+            ->name('site-daily-reports.approve');
+        Route::post('reject/{report}', [App\Http\Controllers\SiteDailyReportController::class, 'reject'])
+            ->name('site-daily-reports.reject');
+    });
+
     Route::match(['get', 'post'], '/projects/{id}/{document_type_id}', [App\Http\Controllers\ProjectController::class, 'projects'])->name('individual_projects');
 
     // Project Client Routes
@@ -448,6 +474,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/sales_daily_report/edit/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'edit'])->name('sales_daily_report.edit');
     Route::match(['get', 'post'], '/sales_daily_report/show/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report.show');
     Route::match(['get', 'post'], '/sales_daily_report/{id}/{document_type_id}', [App\Http\Controllers\SalesDailyReportController::class, 'show'])->name('sales_daily_report');
+    Route::match(['get', 'post'], '/site_daily_report/{id}/{document_type_id}', [App\Http\Controllers\SiteDailyReportController::class, 'show'])->name('site_daily_report');
     Route::post('/sales_daily_report/store', [App\Http\Controllers\SalesDailyReportController::class, 'store'])->name('sales_daily_report.store');
     Route::post('/sales_daily_report/update/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'update'])->name('sales_daily_report.update');
     Route::post('/sales_daily_report/delete/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'destroy'])->name('sales_daily_report.delete');
