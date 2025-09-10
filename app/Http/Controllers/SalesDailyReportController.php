@@ -145,7 +145,8 @@ class SalesDailyReportController extends Controller
                             'invoice_no' => $activity['invoice_no'] ?? null,
                             'invoice_sum' => $activity['invoice_sum'] ?? 0,
                             'activity' => $activity['activity'],
-                            'status' => $activity['status'] ?? 'not_paid'
+                            'status' => $activity['status'] ?? 'not_paid',
+                            'payment_amount' => $activity['payment_amount'] ?? null
                         ]);
                     }
                 }
@@ -310,7 +311,8 @@ class SalesDailyReportController extends Controller
                             'invoice_no' => $activity['invoice_no'] ?? null,
                             'invoice_sum' => $activity['invoice_sum'] ?? 0,
                             'activity' => $activity['activity'] ?? '',
-                            'status' => $activity['status'] ?? 'not_paid'
+                            'status' => $activity['status'] ?? 'not_paid',
+                            'payment_amount' => $activity['payment_amount'] ?? null
                         ]);
                     }
                 }

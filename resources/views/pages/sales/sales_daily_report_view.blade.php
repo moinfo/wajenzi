@@ -153,7 +153,8 @@
                                 <th>Invoice No</th>
                                 <th>Invoice sum/Price</th>
                                 <th>Activity</th>
-                                <th>Status/Not Paid</th>
+                                <th>Status/Payment</th>
+                                <th>Payment Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -172,6 +173,13 @@
                                             <span class="badge badge-danger">Not Paid</span>
                                         @endif
                                     </td>
+                                    <td>
+                                        @if($activity->payment_amount)
+                                            <strong>{{ number_format($activity->payment_amount, 2) }}</strong>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -185,6 +193,7 @@
                                         Unpaid: {{ number_format($report->getUnpaidSalesAmount(), 2) }}
                                     </small>
                                 </td>
+                                <td><strong>{{ number_format($report->salesActivities->sum('payment_amount'), 2) }}</strong></td>
                             </tr>
                         </tfoot>
                     </table>
