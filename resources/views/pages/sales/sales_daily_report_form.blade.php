@@ -189,6 +189,7 @@
                                 <th>Invoice Sum/Price</th>
                                 <th>Activity</th>
                                 <th>Status/Payment</th>
+                                <th>Payment Amount</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -200,11 +201,16 @@
                                         <td><input type="number" class="form-control" name="sales_activities[{{ $index }}][invoice_sum]" step="0.01" value="{{ $activity->invoice_sum }}"></td>
                                         <td><input type="text" class="form-control" name="sales_activities[{{ $index }}][activity]" value="{{ $activity->activity }}"></td>
                                         <td>
-                                            <select class="form-control" name="sales_activities[{{ $index }}][status]">
-                                                <option value="paid" {{ $activity->status == 'paid' ? 'selected' : '' }}>Paid</option>
+                                            <select class="form-control sales-status-select" name="sales_activities[{{ $index }}][status]" onchange="togglePaymentAmount(this)">
                                                 <option value="not_paid" {{ $activity->status == 'not_paid' ? 'selected' : '' }}>Not Paid</option>
+                                                <option value="paid" {{ $activity->status == 'paid' ? 'selected' : '' }}>Paid</option>
                                                 <option value="partial" {{ $activity->status == 'partial' ? 'selected' : '' }}>Partial</option>
                                             </select>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control payment-amount-input" name="sales_activities[{{ $index }}][payment_amount]" 
+                                                   step="0.01" value="{{ $activity->payment_amount }}" placeholder="0.00"
+                                                   style="display: {{ in_array($activity->status, ['paid', 'partial']) ? 'block' : 'none' }}">
                                         </td>
                                         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
                                     </tr>
@@ -215,11 +221,15 @@
                                     <td><input type="number" class="form-control" name="sales_activities[0][invoice_sum]" step="0.01" placeholder="0.00"></td>
                                     <td><input type="text" class="form-control" name="sales_activities[0][activity]" placeholder="Activity Description"></td>
                                     <td>
-                                        <select class="form-control" name="sales_activities[0][status]">
+                                        <select class="form-control sales-status-select" name="sales_activities[0][status]" onchange="togglePaymentAmount(this)">
                                             <option value="not_paid">Not Paid</option>
                                             <option value="paid">Paid</option>
                                             <option value="partial">Partial</option>
                                         </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control payment-amount-input" name="sales_activities[0][payment_amount]" 
+                                               step="0.01" placeholder="0.00" style="display: none;">
                                     </td>
                                     <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
                                 </tr>
@@ -433,11 +443,15 @@ function addSalesActivity() {
         <td><input type="number" class="form-control" name="sales_activities[${salesActivityIndex}][invoice_sum]" step="0.01" placeholder="0.00"></td>
         <td><input type="text" class="form-control" name="sales_activities[${salesActivityIndex}][activity]" placeholder="Activity Description"></td>
         <td>
-            <select class="form-control" name="sales_activities[${salesActivityIndex}][status]">
+            <select class="form-control sales-status-select" name="sales_activities[${salesActivityIndex}][status]" onchange="togglePaymentAmount(this)">
                 <option value="not_paid">Not Paid</option>
                 <option value="paid">Paid</option>
                 <option value="partial">Partial</option>
             </select>
+        </td>
+        <td>
+            <input type="number" class="form-control payment-amount-input" name="sales_activities[${salesActivityIndex}][payment_amount]" 
+                   step="0.01" placeholder="0.00" style="display: none;">
         </td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
     `;
@@ -490,10 +504,36 @@ function initializeDatepickers() {
     });
 }
 
+// Toggle payment amount field visibility
+function togglePaymentAmount(selectElement) {
+    const row = selectElement.closest('tr');
+    const paymentAmountInput = row.querySelector('.payment-amount-input');
+    const status = selectElement.value;
+    
+    if (status === 'paid' || status === 'partial') {
+        paymentAmountInput.style.display = 'block';
+        if (status === 'paid') {
+            // Auto-fill with invoice sum if paid in full
+            const invoiceSumInput = row.querySelector('input[name*="[invoice_sum]"]');
+            if (invoiceSumInput && invoiceSumInput.value && !paymentAmountInput.value) {
+                paymentAmountInput.value = invoiceSumInput.value;
+            }
+        }
+    } else {
+        paymentAmountInput.style.display = 'none';
+        paymentAmountInput.value = ''; // Clear value when not paid
+    }
+}
+
 // Calculate CAC on page load
 document.addEventListener('DOMContentLoaded', function() {
     calculateCAC();
     initializeDatepickers();
+    
+    // Initialize payment amount visibility for existing rows
+    document.querySelectorAll('.sales-status-select').forEach(function(select) {
+        togglePaymentAmount(select);
+    });
 });
 </script>
 

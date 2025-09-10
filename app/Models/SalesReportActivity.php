@@ -14,11 +14,13 @@ class SalesReportActivity extends Model
         'invoice_no',
         'invoice_sum',
         'activity',
-        'status'
+        'status',
+        'payment_amount'
     ];
 
     protected $casts = [
         'invoice_sum' => 'decimal:2',
+        'payment_amount' => 'decimal:2',
     ];
 
     /**
