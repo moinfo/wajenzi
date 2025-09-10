@@ -586,6 +586,69 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/profile', [App\Http\Controllers\UserController::class, 'update_profile'])->name('profile.update');
     Route::match(['get', 'post'], '/profile/password', [App\Http\Controllers\UserController::class, 'update_password'])->name('profile.password.update');
 
+    // Billing System Routes
+    Route::prefix('billing')->name('billing.')->group(function () {
+        
+        // Dashboard
+        Route::get('/', [App\Http\Controllers\Billing\DashboardController::class, 'index'])->name('dashboard');
+        
+        // Invoices
+        Route::resource('invoices', App\Http\Controllers\Billing\InvoiceController::class);
+        Route::post('invoices/{invoice}/payment', [App\Http\Controllers\Billing\InvoiceController::class, 'recordPayment'])->name('invoices.payment');
+        Route::get('invoices/{invoice}/pdf', [App\Http\Controllers\Billing\InvoiceController::class, 'generatePDF'])->name('invoices.pdf');
+        Route::post('invoices/{invoice}/send-email', [App\Http\Controllers\Billing\InvoiceController::class, 'sendEmail'])->name('invoices.send-email');
+        Route::get('invoices/{invoice}/duplicate', [App\Http\Controllers\Billing\InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
+        Route::post('invoices/{invoice}/void', [App\Http\Controllers\Billing\InvoiceController::class, 'void'])->name('invoices.void');
+        
+        // Quotations
+        Route::resource('quotations', App\Http\Controllers\Billing\QuotationController::class);
+        Route::post('quotations/{quotation}/convert', [App\Http\Controllers\Billing\QuotationController::class, 'convertToInvoice'])->name('quotations.convert');
+        Route::get('quotations/{quotation}/pdf', [App\Http\Controllers\Billing\QuotationController::class, 'generatePDF'])->name('quotations.pdf');
+        Route::post('quotations/{quotation}/send-email', [App\Http\Controllers\Billing\QuotationController::class, 'sendEmail'])->name('quotations.send-email');
+        Route::get('quotations/{quotation}/duplicate', [App\Http\Controllers\Billing\QuotationController::class, 'duplicate'])->name('quotations.duplicate');
+        
+        // Proforma Invoices
+        Route::resource('proformas', App\Http\Controllers\Billing\ProformaController::class);
+        Route::post('proformas/{proforma}/convert', [App\Http\Controllers\Billing\ProformaController::class, 'convertToInvoice'])->name('proformas.convert');
+        Route::get('proformas/{proforma}/pdf', [App\Http\Controllers\Billing\ProformaController::class, 'generatePDF'])->name('proformas.pdf');
+        Route::post('proformas/{proforma}/send-email', [App\Http\Controllers\Billing\ProformaController::class, 'sendEmail'])->name('proformas.send-email');
+        Route::get('proformas/{proforma}/duplicate', [App\Http\Controllers\Billing\ProformaController::class, 'duplicate'])->name('proformas.duplicate');
+        
+        // Clients
+        Route::resource('clients', App\Http\Controllers\Billing\ClientController::class);
+        Route::get('clients/{client}/statement', [App\Http\Controllers\Billing\ClientController::class, 'statement'])->name('clients.statement');
+        Route::post('clients/{client}/update-balance', [App\Http\Controllers\Billing\ClientController::class, 'updateBalance'])->name('clients.update-balance');
+        
+        // Payments
+        Route::resource('payments', App\Http\Controllers\Billing\PaymentController::class);
+        Route::get('payments/{payment}/receipt', [App\Http\Controllers\Billing\PaymentController::class, 'receipt'])->name('payments.receipt');
+        Route::get('payments/{payment}/receipt/pdf', [App\Http\Controllers\Billing\PaymentController::class, 'receiptPDF'])->name('payments.receipt.pdf');
+        Route::patch('payments/{payment}/void', [App\Http\Controllers\Billing\PaymentController::class, 'void'])->name('payments.void');
+        
+        // Products & Services
+        Route::resource('products', App\Http\Controllers\Billing\ProductController::class);
+        
+        // Tax Rates
+        Route::resource('tax-rates', App\Http\Controllers\Billing\TaxRateController::class);
+        
+        // Reports
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::get('/sales', [App\Http\Controllers\Billing\ReportController::class, 'sales'])->name('sales');
+            Route::get('/tax', [App\Http\Controllers\Billing\ReportController::class, 'tax'])->name('tax');
+            Route::get('/aging', [App\Http\Controllers\Billing\ReportController::class, 'aging'])->name('aging');
+            Route::get('/payments', [App\Http\Controllers\Billing\ReportController::class, 'payments'])->name('payments');
+            Route::get('/outstanding', [App\Http\Controllers\Billing\ReportController::class, 'outstanding'])->name('outstanding');
+        });
+        
+        // Settings
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Billing\SettingsController::class, 'index'])->name('index');
+            Route::post('/update', [App\Http\Controllers\Billing\SettingsController::class, 'update'])->name('update');
+            Route::get('/numbering', [App\Http\Controllers\Billing\SettingsController::class, 'numbering'])->name('numbering');
+            Route::post('/numbering/update', [App\Http\Controllers\Billing\SettingsController::class, 'updateNumbering'])->name('numbering.update');
+        });
+    });
+
 });
 
 Auth::routes(['register' => false]);
