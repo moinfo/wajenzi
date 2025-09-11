@@ -339,9 +339,55 @@
         No payment is due until this is converted to a formal invoice after your acceptance.
     </div>
 
+    <!-- Signatures -->
+    <div style="margin-top: 50px;">
+        <table style="width: 100%;">
+            <tr>
+                @if($proforma->is_signed)
+                    <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                        @if($proforma->creator_signature && file_exists(public_path($proforma->creator_signature)))
+                            <img src="{{ public_path($proforma->creator_signature) }}" 
+                                 style="max-height: 60px; max-width: 150px; margin-bottom: 10px;"
+                                 alt="Signature">
+                        @endif
+                        <div style="border-top: 1px solid #333; width: 200px; margin: 10px auto; padding-top: 5px;">
+                            <strong>{{ $proforma->creator->name ?? 'System' }}</strong><br>
+                            <small>{{ $proforma->creator->designation ?? 'Sales Representative' }}</small><br>
+                            <small>{{ $proforma->signed_at ? $proforma->signed_at->format('d/m/Y') : '' }}</small>
+                        </div>
+                    </td>
+                @endif
+                
+                @if($proforma->is_approved_signed)
+                    <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                        @if($proforma->approver_signature && file_exists(public_path($proforma->approver_signature)))
+                            <img src="{{ public_path($proforma->approver_signature) }}" 
+                                 style="max-height: 60px; max-width: 150px; margin-bottom: 10px;"
+                                 alt="Approver Signature">
+                        @endif
+                        <div style="border-top: 1px solid #333; width: 200px; margin: 10px auto; padding-top: 5px;">
+                            <strong>{{ $proforma->approver->name ?? 'Manager' }}</strong><br>
+                            <small>{{ $proforma->approver->designation ?? 'Sales Manager' }}</small><br>
+                            <small>{{ $proforma->approved_signed_at ? $proforma->approved_signed_at->format('d/m/Y') : '' }}</small>
+                        </div>
+                    </td>
+                @endif
+                
+                @if(!$proforma->is_signed && !$proforma->is_approved_signed)
+                    <td style="text-align: center; color: #999; font-style: italic;">
+                        Document signatures will appear here once signed
+                    </td>
+                @endif
+            </tr>
+        </table>
+    </div>
+
     <!-- Generated Info -->
     <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #999;">
         Generated on {{ now()->format('d/m/Y H:i') }} | Page 1 of 1
+        @if($proforma->is_signed)
+            <br>Digitally signed on {{ $proforma->signed_at->format('d/m/Y H:i') }}
+        @endif
     </div>
 </body>
 </html>
