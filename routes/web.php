@@ -605,6 +605,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('invoices/{invoice}/send-email', [App\Http\Controllers\Billing\InvoiceController::class, 'sendEmail'])->name('invoices.send-email');
         Route::get('invoices/{invoice}/duplicate', [App\Http\Controllers\Billing\InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
         Route::post('invoices/{invoice}/void', [App\Http\Controllers\Billing\InvoiceController::class, 'void'])->name('invoices.void');
+        Route::post('invoices/{invoice}/send-reminder', [App\Http\Controllers\Billing\InvoiceController::class, 'sendReminder'])->name('invoices.send-reminder');
+        Route::post('invoices/{invoice}/apply-late-fee', [App\Http\Controllers\Billing\InvoiceController::class, 'applyLateFee'])->name('invoices.apply-late-fee');
         
         // Quotations
         Route::resource('quotations', App\Http\Controllers\Billing\QuotationController::class);

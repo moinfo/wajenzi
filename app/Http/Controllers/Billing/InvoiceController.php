@@ -584,4 +584,128 @@ class InvoiceController extends Controller
         
         return view('billing.invoices.status', compact('invoices', 'clients', 'statusTitle', 'currentStatus'));
     }
+
+    /**
+     * Send payment reminder email
+     */
+    public function sendReminder(Request $request, BillingDocument $invoice)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'cc' => 'nullable|string',
+            'subject' => 'required|string',
+            'message' => 'required|string',
+            'reminder_type' => 'required|in:before_due,overdue,late_fee,manual',
+        ]);
+        
+        DB::beginTransaction();
+        
+        try {
+            $mail = Mail::to($request->email);
+            
+            // Add CC emails if provided
+            if ($request->cc) {
+                $ccEmails = array_map('trim', explode(',', $request->cc));
+                $mail->cc($ccEmails);
+            }
+            
+            // Calculate days before due or overdue
+            $daysBeforeDue = null;
+            $daysOverdue = null;
+            
+            if ($invoice->due_date) {
+                $today = now()->startOfDay();
+                $dueDate = $invoice->due_date->startOfDay();
+                
+                if ($dueDate->isFuture()) {
+                    $daysBeforeDue = $today->diffInDays($dueDate);
+                } else {
+                    $daysOverdue = $dueDate->diffInDays($today);
+                }
+            }
+            
+            // Send the reminder email
+            $mail->send(new \App\Mail\InvoiceReminderEmail(
+                $invoice, 
+                $request->reminder_type, 
+                $request->subject, 
+                $request->message,
+                $daysBeforeDue,
+                $daysOverdue
+            ));
+            
+            // Update last reminder sent timestamp
+            $invoice->update(['last_reminder_sent_at' => now()]);
+            
+            // Log the reminder
+            $invoice->reminderLogs()->create([
+                'reminder_type' => $request->reminder_type,
+                'days_before_due' => $daysBeforeDue,
+                'days_overdue' => $daysOverdue,
+                'recipient_email' => $request->email,
+                'cc_emails' => $request->cc,
+                'subject' => $request->subject,
+                'message' => $request->message,
+                'status' => 'sent',
+                'sent_by' => auth()->id(),
+                'sent_at' => now()
+            ]);
+            
+            DB::commit();
+            
+            return back()->with('success', 'Payment reminder sent successfully to ' . $request->email);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            // Log the failed reminder attempt
+            try {
+                $invoice->reminderLogs()->create([
+                    'reminder_type' => $request->reminder_type,
+                    'days_before_due' => $daysBeforeDue ?? null,
+                    'days_overdue' => $daysOverdue ?? null,
+                    'recipient_email' => $request->email,
+                    'cc_emails' => $request->cc,
+                    'subject' => $request->subject,
+                    'message' => $request->message,
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'sent_by' => auth()->id(),
+                    'sent_at' => now()
+                ]);
+            } catch (\Exception $trackingException) {
+                // Log but don't fail on tracking error
+            }
+            
+            return back()->with('error', 'Failed to send reminder: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Apply late fee to invoice
+     */
+    public function applyLateFee(Request $request, BillingDocument $invoice)
+    {
+        $request->validate([
+            'late_fee_percentage' => 'required|numeric|min:0|max:100',
+        ]);
+        
+        if ($invoice->late_fee_applied_at) {
+            return back()->with('error', 'Late fee has already been applied to this invoice.');
+        }
+        
+        $settings = \App\Models\BillingReminderSetting::getSettings();
+        $originalAmount = $invoice->total_amount - $invoice->late_fee_amount;
+        $lateFeeAmount = ($originalAmount * $request->late_fee_percentage) / 100;
+        
+        $invoice->update([
+            'late_fee_amount' => $lateFeeAmount,
+            'late_fee_percentage' => $request->late_fee_percentage,
+            'late_fee_applied_at' => now(),
+            'total_amount' => $originalAmount + $lateFeeAmount,
+            'balance_amount' => ($originalAmount + $lateFeeAmount) - $invoice->paid_amount,
+        ]);
+        
+        return back()->with('success', 'Late fee of ' . $invoice->currency_code . ' ' . number_format($lateFeeAmount, 2) . ' applied successfully.');
+    }
 }

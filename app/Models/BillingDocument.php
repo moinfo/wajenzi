@@ -33,6 +33,10 @@ class BillingDocument extends Model
         'tax_amount',
         'shipping_amount',
         'total_amount',
+        'late_fee_amount',
+        'late_fee_percentage',
+        'late_fee_applied_at',
+        'last_reminder_sent_at',
         'paid_amount',
         'balance_amount',
         'notes',
@@ -69,6 +73,10 @@ class BillingDocument extends Model
         'tax_amount' => 'decimal:2',
         'shipping_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'late_fee_amount' => 'decimal:2',
+        'late_fee_percentage' => 'decimal:2',
+        'late_fee_applied_at' => 'datetime',
+        'last_reminder_sent_at' => 'datetime',
         'paid_amount' => 'decimal:2',
         'balance_amount' => 'decimal:2'
     ];
@@ -111,6 +119,11 @@ class BillingDocument extends Model
     public function emails()
     {
         return $this->hasMany(BillingDocumentEmail::class, 'document_id')->orderBy('sent_at', 'desc');
+    }
+
+    public function reminderLogs()
+    {
+        return $this->hasMany(BillingReminderLog::class, 'document_id')->orderBy('sent_at', 'desc');
     }
 
     public function approver()
