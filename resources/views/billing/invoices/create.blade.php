@@ -201,8 +201,8 @@
                                             @foreach($clients as $client)
                                                 <option value="{{ $client->id }}"
                                                         {{ (old('client_id') == $client->id || ($parentDocument && $parentDocument->client_id == $client->id)) ? 'selected' : '' }}>
-                                                    {{ $client->company_name }}
-                                                    @if($client->contact_person) - {{ $client->contact_person }} @endif
+                                                    {{ $client->first_name }} {{ $client->last_name }}
+                                                    @if($client->email) - {{ $client->email }} @endif
                                                 </option>
                                             @endforeach
                                         </select>
@@ -521,11 +521,14 @@ function selectProduct(selectElement, index) {
     if (option.value) {
         const row = selectElement.closest('tr');
 
+        // Fill in the product details
         row.querySelector(`input[name="items[${index}][item_name]"]`).value = option.dataset.name || '';
-        row.querySelector(`input[name="items[${index}][unit_price]"]`).value = parseFloat(option.dataset.price || 0).toFixed(2);
+        row.querySelector(`textarea[name="items[${index}][description]"]`).value = option.dataset.description || '';
+        row.querySelector(`input[name="items[${index}][unit_price]"]`).value = parseFloat(option.dataset.unitPrice || 0).toFixed(2);
         row.querySelector(`input[name="items[${index}][unit_of_measure]"]`).value = option.dataset.unit || '';
-        row.querySelector(`input[name="items[${index}][tax_percentage]"]`).value = parseFloat(option.dataset.tax || 0).toFixed(2);
+        row.querySelector(`input[name="items[${index}][tax_percentage]"]`).value = parseFloat(option.dataset.taxRate || 0).toFixed(2);
 
+        // Recalculate the line total
         calculateLineTotal(row.querySelector('.quantity'));
     }
 }

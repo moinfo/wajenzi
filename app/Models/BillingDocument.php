@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use App\Models\BillingDocumentEmail;
+use App\Models\ProjectClient;
 
 class BillingDocument extends Model
 {
@@ -88,7 +89,7 @@ class BillingDocument extends Model
 
     public function client()
     {
-        return $this->belongsTo(BillingClient::class, 'client_id');
+        return $this->belongsTo(ProjectClient::class, 'client_id');
     }
 
     public function project()

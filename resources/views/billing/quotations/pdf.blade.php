@@ -252,32 +252,18 @@
             <td>
                 <div class="client-info">
                     <div class="client-label">Quote For:</div>
-                    <strong>{{ $quotation->client->company_name }}</strong><br>
-                    @if($quotation->client->contact_person)
-                        {{ $quotation->client->contact_person }}<br>
+                    <strong>{{ $quotation->client->first_name }} {{ $quotation->client->last_name }}</strong><br>
+                    @if($quotation->client->address)
+                        {{ $quotation->client->address }}<br>
                     @endif
-                    @if($quotation->client->billing_address_line1)
-                        {{ $quotation->client->billing_address_line1 }}<br>
-                        @if($quotation->client->billing_address_line2)
-                            {{ $quotation->client->billing_address_line2 }}<br>
-                        @endif
-                    @endif
-                    @if($quotation->client->billing_city)
-                        {{ $quotation->client->billing_city }}
-                        @if($quotation->client->billing_state), {{ $quotation->client->billing_state }}@endif
-                        @if($quotation->client->billing_postal_code) {{ $quotation->client->billing_postal_code }}@endif<br>
-                    @endif
-                    @if($quotation->client->billing_country)
-                        {{ $quotation->client->billing_country }}<br>
-                    @endif
-                    @if($quotation->client->phone)
-                        Phone: {{ $quotation->client->phone }}<br>
+                    @if($quotation->client->phone_number)
+                        Phone: {{ $quotation->client->phone_number }}<br>
                     @endif
                     @if($quotation->client->email)
                         Email: {{ $quotation->client->email }}<br>
                     @endif
-                    @if($quotation->client->tax_identification_number)
-                        TIN: {{ $quotation->client->tax_identification_number }}
+                    @if($quotation->client->identification_number)
+                        ID: {{ $quotation->client->identification_number }}
                     @endif
                 </div>
             </td>

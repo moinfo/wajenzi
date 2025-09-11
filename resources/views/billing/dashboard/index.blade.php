@@ -97,7 +97,7 @@
                                                     {{ $invoice->document_number }}
                                                 </a>
                                             </td>
-                                            <td>{{ $invoice->client->company_name }}</td>
+                                            <td>{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</td>
                                             <td>{{ $invoice->currency_code }} {{ number_format($invoice->total_amount, 2) }}</td>
                                             <td>
                                                 <span class="badge badge-{{ $invoice->status_color }} badge-sm">
@@ -147,7 +147,7 @@
                                                     {{ $invoice->document_number }}
                                                 </a>
                                             </td>
-                                            <td>{{ $invoice->client->company_name }}</td>
+                                            <td>{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</td>
                                             <td>
                                                 {{ $invoice->due_date->format('d/m/Y') }}
                                                 <small class="text-danger">

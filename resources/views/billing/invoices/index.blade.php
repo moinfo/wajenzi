@@ -80,7 +80,7 @@
                                             <option value="">All Clients</option>
                                             @foreach($clients as $client)
                                                 <option value="{{ $client->id }}" {{ request('client_id') == $client->id ? 'selected' : '' }}>
-                                                    {{ $client->company_name }}
+                                                    {{ $client->first_name }} {{ $client->last_name }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -140,9 +140,9 @@
                                         @endif
                                     </td>
                                     <td>
-                                        {{ $invoice->client->company_name }}
-                                        @if($invoice->client->contact_person)
-                                            <br><small class="text-muted">{{ $invoice->client->contact_person }}</small>
+                                        {{ $invoice->client->first_name }} {{ $invoice->client->last_name }}
+                                        @if($invoice->client->email)
+                                            <br><small class="text-muted">{{ $invoice->client->email }}</small>
                                         @endif
                                     </td>
                                     <td>{{ $invoice->issue_date->format('d/m/Y') }}</td>

@@ -191,19 +191,19 @@
                     <div class="block-content">
                         <table class="table table-vcenter">
                             <tr>
-                                <td width="35%"><strong>Company:</strong></td>
-                                <td>{{ $payment->document->client->company_name }}</td>
+                                <td width="35%"><strong>Client:</strong></td>
+                                <td>{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</td>
                             </tr>
-                            @if($payment->document->client->contact_person)
+                            @if($payment->document->client->email)
                                 <tr>
-                                    <td><strong>Contact Person:</strong></td>
-                                    <td>{{ $payment->document->client->contact_person }}</td>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ $payment->document->client->email }}</td>
                                 </tr>
                             @endif
-                            @if($payment->document->client->phone)
+                            @if($payment->document->client->phone_number)
                                 <tr>
                                     <td><strong>Phone:</strong></td>
-                                    <td>{{ $payment->document->client->phone }}</td>
+                                    <td>{{ $payment->document->client->phone_number }}</td>
                                 </tr>
                             @endif
                             @if($payment->document->client->email)

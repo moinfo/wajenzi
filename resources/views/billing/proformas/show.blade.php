@@ -115,19 +115,16 @@
                                         <h5>Proforma For:</h5>
                                     </div>
                                     <div class="card-body">
-                                        <strong>{{ $proforma->client->company_name }}</strong><br>
-                                        @if($proforma->client->contact_person)
-                                            {{ $proforma->client->contact_person }}<br>
-                                        @endif
-                                        {{ $proforma->client->full_billing_address }}<br>
-                                        @if($proforma->client->phone)
-                                            Phone: {{ $proforma->client->phone }}<br>
+                                        <strong>{{ $proforma->client->first_name }} {{ $proforma->client->last_name }}</strong><br>
+                                        {{ $proforma->client->address }}<br>
+                                        @if($proforma->client->phone_number)
+                                            Phone: {{ $proforma->client->phone_number }}<br>
                                         @endif
                                         @if($proforma->client->email)
                                             Email: {{ $proforma->client->email }}<br>
                                         @endif
-                                        @if($proforma->client->tax_identification_number)
-                                            TIN: {{ $proforma->client->tax_identification_number }}
+                                        @if($proforma->client->identification_number)
+                                            ID: {{ $proforma->client->identification_number }}
                                         @endif
                                     </div>
                                 </div>
@@ -403,7 +400,7 @@
                     </div>
                     <div class="form-group">
                         <label>Message</label>
-                        <textarea name="message" class="form-control" rows="6" required>Dear {{ $proforma->client->contact_person ?? $proforma->client->company_name }},
+                        <textarea name="message" class="form-control" rows="6" required>Dear {{ $proforma->client->first_name }} {{ $proforma->client->last_name }},
 
 Please find attached proforma invoice {{ $proforma->document_number }} for {{ $proforma->currency_code }} {{ number_format($proforma->total_amount, 2) }}.
 

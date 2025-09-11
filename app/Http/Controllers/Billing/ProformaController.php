@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BillingDocument;
 use App\Models\BillingDocumentEmail;
 use App\Models\BillingClient;
+use App\Models\ProjectClient;
 use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use App\Models\BillingDocumentSetting;
@@ -36,14 +37,14 @@ class ProformaController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         
         return view('billing.proformas.index', compact('proformas', 'clients'));
     }
 
     public function create(Request $request)
     {
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
@@ -53,8 +54,15 @@ class ProformaController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'client_id' => 'required|exists:billing_clients,id',
+        \Log::info('=== PROFORMA STORE START ===');
+        \Log::info('Request method: ' . $request->method());
+        \Log::info('Request URL: ' . $request->url());
+        \Log::info('All request data:', $request->all());
+        
+        try {
+            \Log::info('Starting validation...');
+            $request->validate([
+            'client_id' => 'required|exists:project_clients,id',
             'issue_date' => 'required|date',
             'valid_until_date' => 'nullable|date|after_or_equal:issue_date',
             'items' => 'required|array|min:1',
@@ -62,8 +70,11 @@ class ProformaController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
         ]);
+        
+        \Log::info('Validation passed successfully');
 
         DB::beginTransaction();
+        \Log::info('Database transaction started');
         
         try {
             $proforma = new BillingDocument();
@@ -106,19 +117,32 @@ class ProformaController extends Controller
                 ]);
             }
             
+            \Log::info('Calculating totals...');
             $proforma->calculateTotals();
             
+            \Log::info('Committing transaction...');
             DB::commit();
+            \Log::info('Proforma created successfully with ID: ' . $proforma->id);
             
             return redirect()
                 ->route('billing.proformas.show', $proforma)
                 ->with('success', 'Proforma invoice created successfully.');
                 
         } catch (\Exception $e) {
+            \Log::error('Exception in proforma creation: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
             DB::rollBack();
             return back()
                 ->withInput()
                 ->with('error', 'Error creating proforma invoice: ' . $e->getMessage());
+        }
+        
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation failed:', $e->errors());
+            throw $e;
+        } catch (\Exception $e) {
+            \Log::error('Unexpected error in store method: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -142,7 +166,7 @@ class ProformaController extends Controller
         }
         
         $proforma->load('items');
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
@@ -159,7 +183,7 @@ class ProformaController extends Controller
         }
         
         $request->validate([
-            'client_id' => 'required|exists:billing_clients,id',
+            'client_id' => 'required|exists:project_clients,id',
             'issue_date' => 'required|date',
             'valid_until_date' => 'nullable|date|after_or_equal:issue_date',
             'items' => 'required|array|min:1',

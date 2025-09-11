@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Billing;
 use App\Http\Controllers\Controller;
 use App\Models\BillingDocument;
 use App\Models\BillingPayment;
-use App\Models\BillingClient;
+use App\Models\ProjectClient;
 use App\Models\BillingProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +16,12 @@ class ReportController extends Controller
     public function index()
     {
         return view('billing.reports.index');
+    }
+
+    public function sales(Request $request)
+    {
+        // Redirect to salesSummary method or you can implement a different sales report here
+        return $this->salesSummary($request);
     }
 
     public function salesSummary(Request $request)
@@ -46,14 +52,14 @@ class ReportController extends Controller
             ->get();
 
         $topClients = BillingDocument::select(
-                'billing_clients.company_name',
+                DB::raw("CONCAT(project_clients.first_name, ' ', project_clients.last_name) as client_name"),
                 DB::raw('COUNT(*) as invoice_count'),
                 DB::raw('SUM(total_amount) as total_sales')
             )
-            ->join('billing_clients', 'billing_documents.client_id', '=', 'billing_clients.id')
+            ->join('project_clients', 'billing_documents.client_id', '=', 'project_clients.id')
             ->where('document_type', 'invoice')
             ->whereBetween('issue_date', [$from_date, $to_date])
-            ->groupBy('billing_clients.id', 'billing_clients.company_name')
+            ->groupBy('project_clients.id', 'project_clients.first_name', 'project_clients.last_name')
             ->orderByDesc('total_sales')
             ->limit(10)
             ->get();

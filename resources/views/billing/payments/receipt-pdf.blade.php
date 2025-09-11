@@ -182,30 +182,18 @@
             <td width="50%">
                 <div class="client-details">
                     <div class="section-title">RECEIVED FROM:</div>
-                    <strong>{{ $payment->client->company_name }}</strong><br>
-                    @if($payment->client->contact_person)
-                        {{ $payment->client->contact_person }}<br>
+                    <strong>{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</strong><br>
+                    @if($payment->document->client->address)
+                        {{ $payment->document->client->address }}<br>
                     @endif
-                    @if($payment->client->billing_address_line1)
-                        {{ $payment->client->billing_address_line1 }}<br>
+                    @if($payment->document->client->phone_number)
+                        <strong>Phone:</strong> {{ $payment->document->client->phone_number }}<br>
                     @endif
-                    @if($payment->client->billing_address_line2)
-                        {{ $payment->client->billing_address_line2 }}<br>
+                    @if($payment->document->client->email)
+                        <strong>Email:</strong> {{ $payment->document->client->email }}<br>
                     @endif
-                    @if($payment->client->billing_city || $payment->client->billing_postal_code)
-                        {{ $payment->client->billing_city }} {{ $payment->client->billing_postal_code }}<br>
-                    @endif
-                    @if($payment->client->billing_country)
-                        {{ $payment->client->billing_country }}<br>
-                    @endif
-                    @if($payment->client->phone)
-                        <strong>Phone:</strong> {{ $payment->client->phone }}<br>
-                    @endif
-                    @if($payment->client->email)
-                        <strong>Email:</strong> {{ $payment->client->email }}<br>
-                    @endif
-                    @if($payment->client->tax_identification_number)
-                        <strong>TIN:</strong> {{ $payment->client->tax_identification_number }}
+                    @if($payment->document->client->identification_number)
+                        <strong>ID:</strong> {{ $payment->document->client->identification_number }}
                     @endif
                 </div>
             </td>
@@ -304,7 +292,7 @@
                 </div>
                 <div class="signature-line">
                     <div class="signature-title">Customer Signature</div>
-                    <div class="signature-name">{{ $payment->document->client->contact_person ?? $payment->document->client->company_name }}</div>
+                    <div class="signature-name">{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</div>
                 </div>
             </td>
             <td width="50%" style="text-align: center; vertical-align: bottom;">
