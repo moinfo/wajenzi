@@ -340,9 +340,55 @@
         </div>
     @endif
 
+    <!-- Signatures -->
+    <div style="margin-top: 50px;">
+        <table style="width: 100%;">
+            <tr>
+                @if($invoice->is_signed)
+                    <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                        @if($invoice->creator_signature && file_exists(public_path($invoice->creator_signature)))
+                            <img src="{{ public_path($invoice->creator_signature) }}" 
+                                 style="max-height: 60px; max-width: 150px; margin-bottom: 10px;"
+                                 alt="Signature">
+                        @endif
+                        <div style="border-top: 1px solid #333; width: 200px; margin: 10px auto; padding-top: 5px;">
+                            <strong>{{ $invoice->creator->name ?? 'System' }}</strong><br>
+                            <small>{{ $invoice->creator->designation ?? 'Authorized Signatory' }}</small><br>
+                            <small>{{ $invoice->signed_at ? $invoice->signed_at->format('d/m/Y') : '' }}</small>
+                        </div>
+                    </td>
+                @endif
+                
+                @if($invoice->is_approved_signed)
+                    <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                        @if($invoice->approver_signature && file_exists(public_path($invoice->approver_signature)))
+                            <img src="{{ public_path($invoice->approver_signature) }}" 
+                                 style="max-height: 60px; max-width: 150px; margin-bottom: 10px;"
+                                 alt="Approver Signature">
+                        @endif
+                        <div style="border-top: 1px solid #333; width: 200px; margin: 10px auto; padding-top: 5px;">
+                            <strong>{{ $invoice->approver->name ?? 'Approver' }}</strong><br>
+                            <small>{{ $invoice->approver->designation ?? 'Manager' }}</small><br>
+                            <small>{{ $invoice->approved_signed_at ? $invoice->approved_signed_at->format('d/m/Y') : '' }}</small>
+                        </div>
+                    </td>
+                @endif
+                
+                @if(!$invoice->is_signed && !$invoice->is_approved_signed)
+                    <td style="text-align: center; color: #999; font-style: italic;">
+                        Document signatures will appear here once signed
+                    </td>
+                @endif
+            </tr>
+        </table>
+    </div>
+
     <!-- Generated Info -->
     <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #999;">
         Generated on {{ now()->format('d/m/Y H:i') }} | Page 1 of 1
+        @if($invoice->is_signed)
+            <br>Digitally signed on {{ $invoice->signed_at->format('d/m/Y H:i') }}
+        @endif
     </div>
 </body>
 </html>

@@ -379,8 +379,51 @@
         </div>
     @endif
     
+    <!-- Signatures -->
+    <div style="margin-top: 50px;">
+        <table style="width: 100%;">
+            <tr>
+                @if($quotation->is_signed)
+                    <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                        @if($quotation->creator_signature && file_exists(public_path($quotation->creator_signature)))
+                            <img src="{{ public_path($quotation->creator_signature) }}" 
+                                 style="max-height: 60px; max-width: 150px; margin-bottom: 10px;"
+                                 alt="Signature">
+                        @endif
+                        <div style="border-top: 1px solid #333; width: 200px; margin: 10px auto; padding-top: 5px;">
+                            <strong>{{ $quotation->creator->name ?? 'System' }}</strong><br>
+                            <small>{{ $quotation->creator->designation ?? 'Sales Representative' }}</small><br>
+                            <small>{{ $quotation->signed_at ? $quotation->signed_at->format('d/m/Y') : '' }}</small>
+                        </div>
+                    </td>
+                @endif
+                
+                @if($quotation->is_approved_signed)
+                    <td style="width: 50%; text-align: center; vertical-align: bottom;">
+                        @if($quotation->approver_signature && file_exists(public_path($quotation->approver_signature)))
+                            <img src="{{ public_path($quotation->approver_signature) }}" 
+                                 style="max-height: 60px; max-width: 150px; margin-bottom: 10px;"
+                                 alt="Approver Signature">
+                        @endif
+                        <div style="border-top: 1px solid #333; width: 200px; margin: 10px auto; padding-top: 5px;">
+                            <strong>{{ $quotation->approver->name ?? 'Manager' }}</strong><br>
+                            <small>{{ $quotation->approver->designation ?? 'Sales Manager' }}</small><br>
+                            <small>{{ $quotation->approved_signed_at ? $quotation->approved_signed_at->format('d/m/Y') : '' }}</small>
+                        </div>
+                    </td>
+                @endif
+                
+                @if(!$quotation->is_signed && !$quotation->is_approved_signed)
+                    <td style="text-align: center; color: #999; font-style: italic;">
+                        Document signatures will appear here once signed
+                    </td>
+                @endif
+            </tr>
+        </table>
+    </div>
+
     <!-- Document Info Footer -->
-    <div style="margin-top: 50px; font-size: 10px; color: #666;">
+    <div style="margin-top: 30px; font-size: 10px; color: #666;">
         <div style="border-top: 1px solid #ddd; padding-top: 10px;">
             <strong>Document Information:</strong><br>
             Created: {{ $quotation->created_at->format('d/m/Y H:i') }}
@@ -393,6 +436,9 @@
             @endif
             @if($quotation->viewed_at)
                 Viewed: {{ $quotation->viewed_at->format('d/m/Y H:i') }}<br>
+            @endif
+            @if($quotation->is_signed)
+                <br>Digitally signed on {{ $quotation->signed_at->format('d/m/Y H:i') }}
             @endif
         </div>
     </div>

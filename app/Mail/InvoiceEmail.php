@@ -72,9 +72,17 @@ class InvoiceEmail extends Mailable
             'quote' => 'quotation'
         ];
         
-        $variableName = $variableMapping[$this->document->document_type] ?? 'document';
+        // Map document types to their view folder names
+        $viewFolderMapping = [
+            'invoice' => 'invoices',
+            'proforma' => 'proformas',
+            'quote' => 'quotations'
+        ];
         
-        $pdf = PDF::loadView('billing.' . $this->document->document_type . 's.pdf', [
+        $variableName = $variableMapping[$this->document->document_type] ?? 'document';
+        $viewFolder = $viewFolderMapping[$this->document->document_type] ?? $this->document->document_type . 's';
+        
+        $pdf = PDF::loadView('billing.' . $viewFolder . '.pdf', [
             $variableName => $this->document
         ]);
         

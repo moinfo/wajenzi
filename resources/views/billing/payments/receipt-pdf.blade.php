@@ -298,16 +298,34 @@
     <!-- Signatures -->
     <table class="signatures" style="width: 100%;">
         <tr>
-            <td width="50%" style="text-align: center;">
+            <td width="50%" style="text-align: center; vertical-align: bottom;">
+                <div style="height: 80px; margin-bottom: 10px;">
+                    <!-- Space for customer signature -->
+                </div>
                 <div class="signature-line">
                     <div class="signature-title">Customer Signature</div>
-                    <div class="signature-name">{{ $payment->client->contact_person ?? $payment->client->company_name }}</div>
+                    <div class="signature-name">{{ $payment->document->client->contact_person ?? $payment->document->client->company_name }}</div>
                 </div>
             </td>
-            <td width="50%" style="text-align: center;">
+            <td width="50%" style="text-align: center; vertical-align: bottom;">
+                @if($payment->is_receipt_signed && $payment->receiver_signature && file_exists(public_path($payment->receiver_signature)))
+                    <img src="{{ public_path($payment->receiver_signature) }}" 
+                         style="max-height: 60px; max-width: 150px; margin-bottom: 10px;"
+                         alt="Receiver Signature">
+                @else
+                    <div style="height: 60px; margin-bottom: 10px;">
+                        <!-- Signature placeholder -->
+                    </div>
+                @endif
                 <div class="signature-line">
                     <div class="signature-title">Received By</div>
-                    <div class="signature-name">{{ $payment->receiver->name ?? 'System' }}</div>
+                    <div class="signature-name">
+                        <strong>{{ $payment->receiver->name ?? 'System' }}</strong><br>
+                        <small>{{ $payment->receiver->designation ?? 'Cashier' }}</small>
+                        @if($payment->receipt_signed_at)
+                            <br><small>{{ $payment->receipt_signed_at->format('d/m/Y H:i') }}</small>
+                        @endif
+                    </div>
                 </div>
             </td>
         </tr>
@@ -317,7 +335,11 @@
     <div class="footer">
         <strong>Thank you for your payment!</strong><br>
         Receipt generated on {{ now()->format('d/m/Y H:i:s') }} | Original Receipt<br>
-        This is a computer-generated receipt and does not require a signature.
+        @if($payment->is_receipt_signed)
+            Digitally signed receipt verified on {{ $payment->receipt_signed_at->format('d/m/Y H:i:s') }}
+        @else
+            This is a computer-generated receipt.
+        @endif
     </div>
 </body>
 </html>

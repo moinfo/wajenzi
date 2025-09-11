@@ -41,7 +41,11 @@ class BillingDocument extends Model
         'po_number',
         'sales_person',
         'created_by',
+        'created_by_signature',
+        'signed_at',
         'approved_by',
+        'approved_by_signature',
+        'approved_signed_at',
         'approved_at',
         'sent_at',
         'viewed_at',
@@ -52,6 +56,8 @@ class BillingDocument extends Model
         'issue_date' => 'date',
         'valid_until_date' => 'date',
         'due_date' => 'date',
+        'signed_at' => 'datetime',
+        'approved_signed_at' => 'datetime',
         'approved_at' => 'datetime',
         'sent_at' => 'datetime',
         'viewed_at' => 'datetime',
@@ -333,5 +339,82 @@ class BillingDocument extends Model
     {
         return $this->status === 'overdue' || 
                ($this->due_date && $this->due_date->isPast() && !$this->is_paid);
+    }
+
+    /**
+     * Boot method to automatically sign documents
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($document) {
+            $document->signDocument();
+        });
+
+        static::updating(function ($document) {
+            // Re-sign if status changes to sent, viewed, or accepted
+            if ($document->isDirty('status') && in_array($document->status, ['sent', 'viewed', 'accepted'])) {
+                $document->signDocument();
+            }
+        });
+    }
+
+    /**
+     * Sign the document with creator's signature
+     */
+    public function signDocument()
+    {
+        if (auth()->check() && auth()->user()->file && !$this->signed_at) {
+            $this->created_by_signature = auth()->user()->file;
+            $this->signed_at = now();
+        }
+    }
+
+    /**
+     * Sign the document with approver's signature
+     */
+    public function signAsApprover($userId = null)
+    {
+        $user = $userId ? \App\Models\User::find($userId) : auth()->user();
+        
+        if ($user && $user->file) {
+            $this->approved_by_signature = $user->file;
+            $this->approved_signed_at = now();
+            $this->approved_by = $user->id;
+            $this->save();
+        }
+    }
+
+    /**
+     * Get the creator's signature
+     */
+    public function getCreatorSignatureAttribute()
+    {
+        return $this->created_by_signature;
+    }
+
+    /**
+     * Get the approver's signature
+     */
+    public function getApproverSignatureAttribute()
+    {
+        return $this->approved_by_signature;
+    }
+
+    /**
+     * Check if document is signed by creator
+     */
+    public function getIsSignedAttribute()
+    {
+        return !empty($this->created_by_signature) && !empty($this->signed_at);
+    }
+
+    /**
+     * Check if document is signed by approver
+     */
+    public function getIsApprovedSignedAttribute()
+    {
+        return !empty($this->approved_by_signature) && !empty($this->approved_signed_at);
     }
 }

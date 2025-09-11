@@ -22,12 +22,15 @@ class BillingPayment extends Model
         'transaction_id',
         'notes',
         'status',
-        'received_by'
+        'received_by',
+        'received_by_signature',
+        'receipt_signed_at'
     ];
 
     protected $casts = [
         'payment_date' => 'date',
-        'amount' => 'decimal:2'
+        'amount' => 'decimal:2',
+        'receipt_signed_at' => 'datetime'
     ];
 
     public function document()
@@ -77,6 +80,14 @@ class BillingPayment extends Model
             if (!$payment->payment_date) {
                 $payment->payment_date = now();
             }
+            
+            // Set received_by to current user if not set
+            if (!$payment->received_by && auth()->check()) {
+                $payment->received_by = auth()->id();
+            }
+            
+            // Auto-sign the receipt
+            $payment->signReceipt();
         });
         
         static::created(function ($payment) {
@@ -150,5 +161,32 @@ class BillingPayment extends Model
     public function scopeDateRange($query, $startDate, $endDate)
     {
         return $query->whereBetween('payment_date', [$startDate, $endDate]);
+    }
+
+    /**
+     * Sign the payment receipt
+     */
+    public function signReceipt()
+    {
+        if (auth()->check() && auth()->user()->file && !$this->receipt_signed_at) {
+            $this->received_by_signature = auth()->user()->file;
+            $this->receipt_signed_at = now();
+        }
+    }
+
+    /**
+     * Check if receipt is signed
+     */
+    public function getIsReceiptSignedAttribute()
+    {
+        return !empty($this->received_by_signature) && !empty($this->receipt_signed_at);
+    }
+
+    /**
+     * Get receiver signature
+     */
+    public function getReceiverSignatureAttribute()
+    {
+        return $this->received_by_signature;
     }
 }
