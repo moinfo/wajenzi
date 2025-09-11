@@ -6,19 +6,22 @@
         <div class="content-heading">
             <div class="row">
                 <div class="col-md-6">
-                    <h1>Create Proforma Invoice</h1>
+                    <h1>Edit Proforma {{ $proforma->document_number }}</h1>
                 </div>
                 <div class="col-md-6 text-right">
+                    <a href="{{ route('billing.proformas.show', $proforma) }}" class="btn btn-info">
+                        <i class="fa fa-eye"></i> View
+                    </a>
                     <a href="{{ route('billing.proformas.index') }}" class="btn btn-secondary">
-                        <i class="fa fa-arrow-left"></i> Back to Proformas
+                        <i class="fa fa-arrow-left"></i> Back to List
                     </a>
                 </div>
             </div>
         </div>
 
-        <form method="POST" action="{{ route('billing.proformas.store') }}">
+        <form method="POST" action="{{ route('billing.proformas.update', $proforma) }}">
             @csrf
-            <input type="hidden" name="document_type" value="proforma">
+            @method('PUT')
             
             <div class="row">
                 <div class="col-md-8">
@@ -35,7 +38,7 @@
                                         <select name="client_id" id="client_id" class="form-control @error('client_id') is-invalid @enderror" required>
                                             <option value="">Select a client...</option>
                                             @foreach($clients as $client)
-                                                <option value="{{ $client->id }}" {{ old('client_id') == $client->id ? 'selected' : '' }}>
+                                                <option value="{{ $client->id }}" {{ old('client_id', $proforma->client_id) == $client->id ? 'selected' : '' }}>
                                                     {{ $client->company_name }}
                                                 </option>
                                             @endforeach
@@ -43,9 +46,6 @@
                                         @error('client_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
-                                        @if($clients->count() === 0)
-                                            <small class="text-warning">No clients available. <a href="{{ route('billing.clients.create') }}">Create a client first</a>.</small>
-                                        @endif
                                     </div>
                                 </div>
 
@@ -54,7 +54,7 @@
                                         <label for="issue_date">Issue Date <span class="text-danger">*</span></label>
                                         <input type="text" name="issue_date" id="issue_date" 
                                                class="form-control datepicker @error('issue_date') is-invalid @enderror" 
-                                               value="{{ old('issue_date', date('Y-m-d')) }}" required>
+                                               value="{{ old('issue_date', $proforma->issue_date->format('Y-m-d')) }}" required>
                                         @error('issue_date')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -68,7 +68,7 @@
                                         <label for="valid_until_date">Valid Until</label>
                                         <input type="text" name="valid_until_date" id="valid_until_date" 
                                                class="form-control datepicker @error('valid_until_date') is-invalid @enderror" 
-                                               value="{{ old('valid_until_date', date('Y-m-d', strtotime('+30 days'))) }}">
+                                               value="{{ old('valid_until_date', $proforma->valid_until_date ? $proforma->valid_until_date->format('Y-m-d') : '') }}">
                                         @error('valid_until_date')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -80,7 +80,7 @@
                                         <label for="reference_number">Reference Number</label>
                                         <input type="text" name="reference_number" id="reference_number" 
                                                class="form-control @error('reference_number') is-invalid @enderror" 
-                                               value="{{ old('reference_number') }}" placeholder="Your reference">
+                                               value="{{ old('reference_number', $proforma->reference_number) }}" placeholder="Your reference">
                                         @error('reference_number')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -93,9 +93,9 @@
                                     <div class="form-group">
                                         <label for="currency_code">Currency</label>
                                         <select name="currency_code" id="currency_code" class="form-control @error('currency_code') is-invalid @enderror">
-                                            <option value="TZS" {{ old('currency_code', 'TZS') == 'TZS' ? 'selected' : '' }}>TZS - Tanzanian Shilling</option>
-                                            <option value="USD" {{ old('currency_code') == 'USD' ? 'selected' : '' }}>USD - US Dollar</option>
-                                            <option value="EUR" {{ old('currency_code') == 'EUR' ? 'selected' : '' }}>EUR - Euro</option>
+                                            <option value="TZS" {{ old('currency_code', $proforma->currency_code) == 'TZS' ? 'selected' : '' }}>TZS - Tanzanian Shilling</option>
+                                            <option value="USD" {{ old('currency_code', $proforma->currency_code) == 'USD' ? 'selected' : '' }}>USD - US Dollar</option>
+                                            <option value="EUR" {{ old('currency_code', $proforma->currency_code) == 'EUR' ? 'selected' : '' }}>EUR - Euro</option>
                                         </select>
                                         @error('currency_code')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -108,7 +108,7 @@
                                         <label for="sales_person">Sales Person</label>
                                         <input type="text" name="sales_person" id="sales_person" 
                                                class="form-control @error('sales_person') is-invalid @enderror" 
-                                               value="{{ old('sales_person') }}" placeholder="Sales person name">
+                                               value="{{ old('sales_person', $proforma->sales_person) }}" placeholder="Sales person name">
                                         @error('sales_person')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -142,7 +142,37 @@
                                         </tr>
                                     </thead>
                                     <tbody id="items-tbody">
-                                        <!-- Items will be added here -->
+                                        @foreach($proforma->items as $index => $item)
+                                            <tr id="item-{{ $loop->index + 1 }}">
+                                                <td>
+                                                    <input type="text" name="items[{{ $loop->index + 1 }}][item_name]" class="form-control form-control-sm" 
+                                                           value="{{ $item->item_name }}" placeholder="Item name" required>
+                                                    <input type="text" name="items[{{ $loop->index + 1 }}][description]" class="form-control form-control-sm mt-1" 
+                                                           value="{{ $item->description }}" placeholder="Description (optional)">
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="items[{{ $loop->index + 1 }}][quantity]" class="form-control form-control-sm" 
+                                                           value="{{ $item->quantity }}" min="0.01" step="0.01" onchange="calculateRow({{ $loop->index + 1 }})" required>
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="items[{{ $loop->index + 1 }}][unit_price]" class="form-control form-control-sm" 
+                                                           value="{{ $item->unit_price }}" min="0" step="0.01" onchange="calculateRow({{ $loop->index + 1 }})" required>
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="items[{{ $loop->index + 1 }}][tax_percentage]" class="form-control form-control-sm" 
+                                                           value="{{ $item->tax_percentage }}" min="0" max="100" step="0.01" onchange="calculateRow({{ $loop->index + 1 }})">
+                                                </td>
+                                                <td>
+                                                    <input type="number" name="items[{{ $loop->index + 1 }}][line_total]" class="form-control form-control-sm" 
+                                                           value="{{ $item->line_total }}" readonly>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-danger" onclick="removeItem({{ $loop->index + 1 }})">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -161,7 +191,7 @@
                                         <label for="notes">Notes</label>
                                         <textarea name="notes" id="notes" rows="3" 
                                                   class="form-control @error('notes') is-invalid @enderror" 
-                                                  placeholder="Additional notes or comments...">{{ old('notes') }}</textarea>
+                                                  placeholder="Additional notes or comments...">{{ old('notes', $proforma->notes) }}</textarea>
                                         @error('notes')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -175,7 +205,7 @@
                                         <label for="terms_conditions">Terms & Conditions</label>
                                         <textarea name="terms_conditions" id="terms_conditions" rows="3" 
                                                   class="form-control @error('terms_conditions') is-invalid @enderror" 
-                                                  placeholder="Terms and conditions...">{{ old('terms_conditions', $settings['default_terms'] ?? '') }}</textarea>
+                                                  placeholder="Terms and conditions...">{{ old('terms_conditions', $proforma->terms_conditions) }}</textarea>
                                         @error('terms_conditions')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -196,15 +226,15 @@
                             <table class="table table-sm">
                                 <tr>
                                     <td>Subtotal:</td>
-                                    <td class="text-right" id="subtotal">TZS 0.00</td>
+                                    <td class="text-right" id="subtotal">{{ $proforma->currency_code }} {{ number_format($proforma->subtotal_amount, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td>Tax:</td>
-                                    <td class="text-right" id="tax-amount">TZS 0.00</td>
+                                    <td class="text-right" id="tax-amount">{{ $proforma->currency_code }} {{ number_format($proforma->tax_amount, 2) }}</td>
                                 </tr>
                                 <tr class="table-active">
                                     <td><strong>Total:</strong></td>
-                                    <td class="text-right"><strong id="total">TZS 0.00</strong></td>
+                                    <td class="text-right"><strong id="total">{{ $proforma->currency_code }} {{ number_format($proforma->total_amount, 2) }}</strong></td>
                                 </tr>
                             </table>
 
@@ -219,16 +249,49 @@
                             @endif
 
                             <div class="form-group mt-4">
-                                <button type="submit" class="btn btn-success btn-block">
-                                    <i class="fa fa-check"></i> Create Proforma
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fa fa-save"></i> Update Proforma
                                 </button>
                             </div>
                             
                             <div class="form-group">
-                                <a href="{{ route('billing.proformas.index') }}" class="btn btn-secondary btn-block">
+                                <a href="{{ route('billing.proformas.show', $proforma) }}" class="btn btn-secondary btn-block">
                                     Cancel
                                 </a>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Proforma Info -->
+                    <div class="block block-themed">
+                        <div class="block-header">
+                            <h3 class="block-title">Proforma Info</h3>
+                        </div>
+                        <div class="block-content">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td><strong>Number:</strong></td>
+                                    <td>{{ $proforma->document_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        <span class="badge badge-{{ $proforma->status_color }}">
+                                            {{ ucfirst(str_replace('_', ' ', $proforma->status)) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created:</strong></td>
+                                    <td>{{ $proforma->created_at->format('d/m/Y H:i') }}</td>
+                                </tr>
+                                @if($proforma->updated_at != $proforma->created_at)
+                                    <tr>
+                                        <td><strong>Modified:</strong></td>
+                                        <td>{{ $proforma->updated_at->format('d/m/Y H:i') }}</td>
+                                    </tr>
+                                @endif
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -238,7 +301,7 @@
 </div>
 
 <script>
-let itemCount = 0;
+let itemCount = {{ $proforma->items->count() }};
 
 function addItem() {
     itemCount++;
@@ -318,9 +381,9 @@ function calculateTotals() {
 
 document.getElementById('currency_code').addEventListener('change', calculateTotals);
 
-// Add first item on load
+// Calculate totals on page load
 document.addEventListener('DOMContentLoaded', function() {
-    addItem();
+    calculateTotals();
 });
 </script>
 @endsection
