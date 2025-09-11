@@ -9,6 +9,35 @@
                     <h1>Invoices</h1>
                 </div>
                 <div class="col-md-6 text-right">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                            <i class="fa fa-filter"></i> Filter by Status
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item active" href="{{ route('billing.invoices.index') }}">
+                                <i class="fa fa-list"></i> All Invoices
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ route('billing.invoices.paid') }}">
+                                <i class="fa fa-check-circle text-success"></i> Paid
+                            </a>
+                            <a class="dropdown-item" href="{{ route('billing.invoices.unpaid') }}">
+                                <i class="fa fa-clock text-info"></i> Unpaid
+                            </a>
+                            <a class="dropdown-item" href="{{ route('billing.invoices.overdue') }}">
+                                <i class="fa fa-exclamation-triangle text-danger"></i> Overdue
+                            </a>
+                            <a class="dropdown-item" href="{{ route('billing.invoices.draft') }}">
+                                <i class="fa fa-edit text-secondary"></i> Draft
+                            </a>
+                            <a class="dropdown-item" href="{{ route('billing.invoices.cancelled') }}">
+                                <i class="fa fa-times text-warning"></i> Cancelled
+                            </a>
+                            <a class="dropdown-item" href="{{ route('billing.invoices.refunded') }}">
+                                <i class="fa fa-undo text-primary"></i> Refunded
+                            </a>
+                        </div>
+                    </div>
                     <a href="{{ route('billing.invoices.create') }}" class="btn btn-success">
                         <i class="fa fa-plus"></i> New Invoice
                     </a>

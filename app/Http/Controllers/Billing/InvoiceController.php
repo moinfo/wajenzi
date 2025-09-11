@@ -421,4 +421,167 @@ class InvoiceController extends Controller
         
         return back()->with('success', 'Invoice voided successfully.');
     }
+
+    /**
+     * Display paid invoices
+     */
+    public function paid(Request $request)
+    {
+        $invoices = BillingDocument::with(['client', 'creator'])
+            ->where('document_type', 'invoice')
+            ->where('status', 'paid')
+            ->when($request->client_id, function ($query, $clientId) {
+                return $query->where('client_id', $clientId);
+            })
+            ->when($request->from_date, function ($query, $fromDate) {
+                return $query->where('issue_date', '>=', $fromDate);
+            })
+            ->when($request->to_date, function ($query, $toDate) {
+                return $query->where('issue_date', '<=', $toDate);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        $clients = BillingClient::active()->customers()->get();
+        $statusTitle = 'Paid Invoices';
+        $currentStatus = 'paid';
+        
+        return view('billing.invoices.status', compact('invoices', 'clients', 'statusTitle', 'currentStatus'));
+    }
+
+    /**
+     * Display unpaid invoices
+     */
+    public function unpaid(Request $request)
+    {
+        $invoices = BillingDocument::with(['client', 'creator'])
+            ->where('document_type', 'invoice')
+            ->whereIn('status', ['pending', 'sent', 'viewed'])
+            ->where('balance_amount', '>', 0)
+            ->when($request->client_id, function ($query, $clientId) {
+                return $query->where('client_id', $clientId);
+            })
+            ->when($request->from_date, function ($query, $fromDate) {
+                return $query->where('issue_date', '>=', $fromDate);
+            })
+            ->when($request->to_date, function ($query, $toDate) {
+                return $query->where('issue_date', '<=', $toDate);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        $clients = BillingClient::active()->customers()->get();
+        $statusTitle = 'Unpaid Invoices';
+        $currentStatus = 'unpaid';
+        
+        return view('billing.invoices.status', compact('invoices', 'clients', 'statusTitle', 'currentStatus'));
+    }
+
+    /**
+     * Display overdue invoices
+     */
+    public function overdue(Request $request)
+    {
+        $invoices = BillingDocument::with(['client', 'creator'])
+            ->where('document_type', 'invoice')
+            ->where('status', 'overdue')
+            ->when($request->client_id, function ($query, $clientId) {
+                return $query->where('client_id', $clientId);
+            })
+            ->when($request->from_date, function ($query, $fromDate) {
+                return $query->where('issue_date', '>=', $fromDate);
+            })
+            ->when($request->to_date, function ($query, $toDate) {
+                return $query->where('issue_date', '<=', $toDate);
+            })
+            ->orderBy('due_date', 'asc')
+            ->paginate(20);
+
+        $clients = BillingClient::active()->customers()->get();
+        $statusTitle = 'Overdue Invoices';
+        $currentStatus = 'overdue';
+        
+        return view('billing.invoices.status', compact('invoices', 'clients', 'statusTitle', 'currentStatus'));
+    }
+
+    /**
+     * Display draft invoices
+     */
+    public function draft(Request $request)
+    {
+        $invoices = BillingDocument::with(['client', 'creator'])
+            ->where('document_type', 'invoice')
+            ->where('status', 'draft')
+            ->when($request->client_id, function ($query, $clientId) {
+                return $query->where('client_id', $clientId);
+            })
+            ->when($request->from_date, function ($query, $fromDate) {
+                return $query->where('issue_date', '>=', $fromDate);
+            })
+            ->when($request->to_date, function ($query, $toDate) {
+                return $query->where('issue_date', '<=', $toDate);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        $clients = BillingClient::active()->customers()->get();
+        $statusTitle = 'Draft Invoices';
+        $currentStatus = 'draft';
+        
+        return view('billing.invoices.status', compact('invoices', 'clients', 'statusTitle', 'currentStatus'));
+    }
+
+    /**
+     * Display cancelled invoices
+     */
+    public function cancelled(Request $request)
+    {
+        $invoices = BillingDocument::with(['client', 'creator'])
+            ->where('document_type', 'invoice')
+            ->whereIn('status', ['cancelled', 'void'])
+            ->when($request->client_id, function ($query, $clientId) {
+                return $query->where('client_id', $clientId);
+            })
+            ->when($request->from_date, function ($query, $fromDate) {
+                return $query->where('issue_date', '>=', $fromDate);
+            })
+            ->when($request->to_date, function ($query, $toDate) {
+                return $query->where('issue_date', '<=', $toDate);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        $clients = BillingClient::active()->customers()->get();
+        $statusTitle = 'Cancelled Invoices';
+        $currentStatus = 'cancelled';
+        
+        return view('billing.invoices.status', compact('invoices', 'clients', 'statusTitle', 'currentStatus'));
+    }
+
+    /**
+     * Display refunded invoices
+     */
+    public function refunded(Request $request)
+    {
+        $invoices = BillingDocument::with(['client', 'creator'])
+            ->where('document_type', 'invoice')
+            ->where('status', 'refunded')
+            ->when($request->client_id, function ($query, $clientId) {
+                return $query->where('client_id', $clientId);
+            })
+            ->when($request->from_date, function ($query, $fromDate) {
+                return $query->where('issue_date', '>=', $fromDate);
+            })
+            ->when($request->to_date, function ($query, $toDate) {
+                return $query->where('issue_date', '<=', $toDate);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        $clients = BillingClient::active()->customers()->get();
+        $statusTitle = 'Refunded Invoices';
+        $currentStatus = 'refunded';
+        
+        return view('billing.invoices.status', compact('invoices', 'clients', 'statusTitle', 'currentStatus'));
+    }
 }
