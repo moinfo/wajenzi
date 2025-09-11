@@ -143,11 +143,13 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="company-name">WAJENZI CONSTRUCTION COMPANY</div>
+        <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="{{ config('app.name') }}" style="max-height: 60px; margin-bottom: 10px;">
+        <div class="company-name">{{ config('app.name') }}</div>
         <div class="company-details">
-            P.O. Box 123, Dar es Salaam, Tanzania<br>
-            Phone: +255 123 456 789 | Email: info@wajenzi.com<br>
-            TIN: 123-456-789 | VRN: 40-123456-Q
+            PSSSF COMMERCIAL COMPLEX, SAM NUJOMA ROAD, DSM-TANZANIA<br>
+            P. O. Box 14492, Dar es Salaam Tanzania<br>
+            Phone: +255 793 444 400 | Email: billing@wajenziprofessional.co.tz<br>
+            TIN: 154-867-805
         </div>
     </div>
 

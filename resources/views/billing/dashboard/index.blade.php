@@ -56,10 +56,10 @@
                     <div class="block-content block-content-full">
                         <div class="py-20 text-center">
                             <div class="mb-10">
-                                <i class="fa fa-exclamation-triangle fa-3x text-warning"></i>
+                                <i class="fa fa-envelope fa-3x text-warning"></i>
                             </div>
-                            <div class="font-size-h3 font-weight-bold text-dark">TZS {{ number_format($outstandingAmount, 2) }}</div>
-                            <div class="font-size-sm font-weight-medium text-muted text-uppercase">Outstanding</div>
+                            <div class="font-size-h3 font-weight-bold text-dark">{{ number_format($totalEmailsSent ?? 0) }}</div>
+                            <div class="font-size-sm font-weight-medium text-muted text-uppercase">Emails Sent</div>
                         </div>
                     </div>
                 </div>
@@ -312,6 +312,12 @@
                                 <a href="{{ route('billing.clients.create') }}" class="btn btn-primary btn-lg btn-block">
                                     <i class="fa fa-user-plus fa-2x mb-2"></i><br>
                                     Add Client
+                                </a>
+                            </div>
+                            <div class="col-md-3 text-center mb-3">
+                                <a href="{{ route('billing.emails.index') }}" class="btn btn-warning btn-lg btn-block">
+                                    <i class="fa fa-envelope fa-2x mb-2"></i><br>
+                                    Email Management
                                 </a>
                             </div>
                             <div class="col-md-3 text-center mb-3">

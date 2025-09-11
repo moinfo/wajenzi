@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
 use App\Models\BillingDocument;
+use App\Models\BillingDocumentEmail;
 use App\Models\BillingClient;
 use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use App\Models\BillingDocumentSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\InvoiceEmail;
 use PDF;
 
 class InvoiceController extends Controller
@@ -290,14 +293,68 @@ class InvoiceController extends Controller
             'message' => 'required|string'
         ]);
         
-        // TODO: Implement email sending logic
+        DB::beginTransaction();
         
-        $invoice->update([
-            'status' => 'sent',
-            'sent_at' => now()
-        ]);
-        
-        return back()->with('success', 'Invoice sent successfully.');
+        try {
+            $mail = Mail::to($request->email);
+            
+            // Add CC emails if provided
+            if ($request->cc) {
+                $ccEmails = array_map('trim', explode(',', $request->cc));
+                $mail->cc($ccEmails);
+            }
+            
+            // Send the email
+            $mail->send(new InvoiceEmail($invoice, $request->subject, $request->message));
+            
+            // Update document status
+            $invoice->update([
+                'status' => 'sent',
+                'sent_at' => now()
+            ]);
+            
+            // Track the email
+            $invoice->emails()->create([
+                'document_type' => $invoice->document_type,
+                'recipient_email' => $request->email,
+                'cc_emails' => $request->cc,
+                'subject' => $request->subject,
+                'message' => $request->message,
+                'has_attachment' => true,
+                'attachment_filename' => $invoice->document_type . '-' . $invoice->document_number . '.pdf',
+                'status' => 'sent',
+                'sent_by' => auth()->id(),
+                'sent_at' => now()
+            ]);
+            
+            DB::commit();
+            
+            return back()->with('success', 'Invoice sent successfully to ' . $request->email);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            // Track the failed email attempt
+            try {
+                $invoice->emails()->create([
+                    'document_type' => $invoice->document_type,
+                    'recipient_email' => $request->email,
+                    'cc_emails' => $request->cc,
+                    'subject' => $request->subject,
+                    'message' => $request->message,
+                    'has_attachment' => true,
+                    'attachment_filename' => $invoice->document_type . '-' . $invoice->document_number . '.pdf',
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'sent_by' => auth()->id(),
+                    'sent_at' => now()
+                ]);
+            } catch (\Exception $trackingException) {
+                // Log but don't fail on tracking error
+            }
+            
+            return back()->with('error', 'Failed to send email: ' . $e->getMessage());
+        }
     }
 
     /**

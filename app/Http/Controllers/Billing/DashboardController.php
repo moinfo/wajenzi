@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
 use App\Models\BillingDocument;
+use App\Models\BillingDocumentEmail;
 use App\Models\BillingClient;
 use App\Models\BillingPayment;
 use Illuminate\Http\Request;
@@ -19,9 +20,7 @@ class DashboardController extends Controller
         $totalRevenue = BillingDocument::where('document_type', 'invoice')
             ->whereNotIn('status', ['cancelled', 'void'])
             ->sum('total_amount');
-        $outstandingAmount = BillingDocument::where('document_type', 'invoice')
-            ->whereNotIn('status', ['paid', 'cancelled', 'void'])
-            ->sum('balance_amount');
+        $totalEmailsSent = BillingDocumentEmail::where('status', 'sent')->count();
 
         // Recent invoices
         $recentInvoices = BillingDocument::with(['client'])
@@ -71,7 +70,7 @@ class DashboardController extends Controller
             'totalInvoices',
             'totalClients', 
             'totalRevenue',
-            'outstandingAmount',
+            'totalEmailsSent',
             'recentInvoices',
             'overdueInvoices',
             'recentPayments',
