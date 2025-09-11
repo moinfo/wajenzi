@@ -25,7 +25,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->command('db-archive:archive')->dailyAt('01:00'); // Run daily at 1:00 AM
-
+        $schedule->command('billing:send-reminders')->dailyAt('00:00'); // Run daily at midnight
     }
 
 

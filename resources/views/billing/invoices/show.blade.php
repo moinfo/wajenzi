@@ -27,6 +27,12 @@
                     </button>
 
                     @if(!$invoice->is_paid && $invoice->balance_amount > 0)
+                        <button type="button" class="btn btn-warning" onclick="sendReminderModal()">
+                            <i class="fa fa-bell"></i> Send Reminder
+                        </button>
+                    @endif
+
+                    @if(!$invoice->is_paid && $invoice->balance_amount > 0)
                         <button type="button" class="btn btn-success" onclick="recordPaymentModal()">
                             <i class="fa fa-money"></i> Record Payment
                         </button>
@@ -40,6 +46,11 @@
                             <a class="dropdown-item" href="{{ route('billing.invoices.duplicate', $invoice) }}">
                                 <i class="fa fa-copy"></i> Duplicate
                             </a>
+                            @if(!$invoice->is_paid && $invoice->balance_amount > 0 && !$invoice->late_fee_applied_at)
+                                <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="applyLateFeeModal()">
+                                    <i class="fa fa-plus"></i> Apply Late Fee
+                                </a>
+                            @endif
                             @if($invoice->status !== 'void')
                                 <a class="dropdown-item text-warning" href="{{ route('billing.invoices.void', $invoice) }}"
                                    onclick="return confirm('Are you sure you want to void this invoice?')">
@@ -444,6 +455,119 @@ Best regards</textarea>
     </div>
 </div>
 
+<!-- Reminder Modal -->
+<div class="modal fade" id="reminderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ route('billing.invoices.send-reminder', $invoice) }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Send Payment Reminder</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>To Email</label>
+                        <input type="email" name="email" class="form-control" 
+                               value="{{ $invoice->client->email }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>CC Email (separate multiple emails with commas)</label>
+                        <input type="text" name="cc" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Reminder Type</label>
+                        <select name="reminder_type" class="form-control" id="reminderType" onchange="updateReminderSubject()" required>
+                            <option value="manual">Manual Reminder</option>
+                            <option value="before_due">Before Due Date</option>
+                            <option value="overdue">Overdue Payment</option>
+                            <option value="late_fee">Late Fee Applied</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject</label>
+                        <input type="text" name="subject" class="form-control" id="reminderSubject"
+                               value="Payment Reminder - Invoice {{ $invoice->document_number }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
+                        <textarea name="message" class="form-control" rows="6" id="reminderMessage" required>Dear {{ $invoice->client->contact_person ?? $invoice->client->company_name }},
+
+This is a friendly reminder regarding your outstanding invoice payment.
+
+Invoice Number: {{ $invoice->document_number }}
+Due Date: {{ $invoice->due_date ? $invoice->due_date->format('d/m/Y') : 'N/A' }}
+Outstanding Amount: {{ $invoice->currency_code ?? 'TZS' }} {{ number_format($invoice->balance_amount, 2) }}
+
+Please arrange payment at your earliest convenience. If you have already made this payment, please disregard this reminder.
+
+Thank you for your business!
+
+Best regards,
+{{ config('app.name') }} Team</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fa fa-bell"></i> Send Reminder
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Late Fee Modal -->
+<div class="modal fade" id="lateFeeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('billing.invoices.apply-late-fee', $invoice) }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Apply Late Fee</h5>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        This will add a late fee to the invoice. This action cannot be undone.
+                    </div>
+                    <div class="form-group">
+                        <label>Late Fee Percentage</label>
+                        <div class="input-group">
+                            <input type="number" name="late_fee_percentage" class="form-control" 
+                                   value="10" min="0" max="100" step="0.01" id="lateFeePercentage" 
+                                   onchange="calculateLateFee()" required>
+                            <div class="input-group-append">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Late Fee Amount</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">{{ $invoice->currency_code ?? 'TZS' }}</span>
+                            </div>
+                            <input type="text" class="form-control" id="lateFeeAmount" readonly>
+                        </div>
+                        <small class="text-muted">
+                            Calculated on original amount: {{ $invoice->currency_code ?? 'TZS' }} {{ number_format($invoice->total_amount - $invoice->late_fee_amount, 2) }}
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-plus"></i> Apply Late Fee
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {{--@push('scripts')--}}
 <script>
 function sendEmailModal() {
@@ -452,6 +576,44 @@ function sendEmailModal() {
 
 function recordPaymentModal() {
     $('#paymentModal').modal('show');
+}
+
+function sendReminderModal() {
+    $('#reminderModal').modal('show');
+}
+
+function applyLateFeeModal() {
+    $('#lateFeeModal').modal('show');
+    calculateLateFee();
+}
+
+function updateReminderSubject() {
+    const reminderType = document.getElementById('reminderType').value;
+    const subjectField = document.getElementById('reminderSubject');
+    const messageField = document.getElementById('reminderMessage');
+    const invoiceNumber = '{{ $invoice->document_number }}';
+    
+    switch(reminderType) {
+        case 'before_due':
+            subjectField.value = `Payment Reminder - Invoice ${invoiceNumber} (Due Soon)`;
+            break;
+        case 'overdue':
+            subjectField.value = `Overdue Payment Notice - Invoice ${invoiceNumber}`;
+            break;
+        case 'late_fee':
+            subjectField.value = `Late Fee Applied - Invoice ${invoiceNumber}`;
+            break;
+        default:
+            subjectField.value = `Payment Reminder - Invoice ${invoiceNumber}`;
+    }
+}
+
+function calculateLateFee() {
+    const percentage = parseFloat(document.getElementById('lateFeePercentage').value) || 0;
+    const originalAmount = {{ $invoice->total_amount - $invoice->late_fee_amount }};
+    const lateFeeAmount = (originalAmount * percentage) / 100;
+    
+    document.getElementById('lateFeeAmount').value = lateFeeAmount.toFixed(2);
 }
 </script>
 {{--@endpush--}}
