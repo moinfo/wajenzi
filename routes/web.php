@@ -594,6 +594,12 @@ Route::middleware(['auth'])->group(function () {
         
         // Invoices
         Route::resource('invoices', App\Http\Controllers\Billing\InvoiceController::class);
+        Route::get('invoices/status/paid', [App\Http\Controllers\Billing\InvoiceController::class, 'paid'])->name('invoices.paid');
+        Route::get('invoices/status/unpaid', [App\Http\Controllers\Billing\InvoiceController::class, 'unpaid'])->name('invoices.unpaid');
+        Route::get('invoices/status/overdue', [App\Http\Controllers\Billing\InvoiceController::class, 'overdue'])->name('invoices.overdue');
+        Route::get('invoices/status/draft', [App\Http\Controllers\Billing\InvoiceController::class, 'draft'])->name('invoices.draft');
+        Route::get('invoices/status/cancelled', [App\Http\Controllers\Billing\InvoiceController::class, 'cancelled'])->name('invoices.cancelled');
+        Route::get('invoices/status/refunded', [App\Http\Controllers\Billing\InvoiceController::class, 'refunded'])->name('invoices.refunded');
         Route::post('invoices/{invoice}/payment', [App\Http\Controllers\Billing\InvoiceController::class, 'recordPayment'])->name('invoices.payment');
         Route::get('invoices/{invoice}/pdf', [App\Http\Controllers\Billing\InvoiceController::class, 'generatePDF'])->name('invoices.pdf');
         Route::post('invoices/{invoice}/send-email', [App\Http\Controllers\Billing\InvoiceController::class, 'sendEmail'])->name('invoices.send-email');
