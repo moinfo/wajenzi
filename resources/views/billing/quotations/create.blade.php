@@ -64,7 +64,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Issue Date <span class="text-danger">*</span></label>
-                                        <input type="date" name="issue_date" class="form-control"
+                                        <input type="text" name="issue_date" class="form-control datepicker"
                                                value="{{ old('issue_date', date('Y-m-d')) }}" required>
                                         @error('issue_date')
                                             <small class="text-danger">{{ $message }}</small>
@@ -91,7 +91,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Valid Until</label>
-                                        <input type="date" name="valid_until_date" class="form-control"
+                                        <input type="text" name="valid_until_date" class="form-control datepicker"
                                                value="{{ old('valid_until_date') }}">
                                     </div>
                                 </div>

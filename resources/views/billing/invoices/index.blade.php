@@ -63,7 +63,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">From</span>
                                         </div>
-                                        <input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}">
+                                        <input type="text" name="from_date" class="form-control datepicker" value="{{ request('from_date') }}">
                                     </div>
                                 </div>
                                 
@@ -72,7 +72,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text">To</span>
                                         </div>
-                                        <input type="date" name="to_date" class="form-control" value="{{ request('to_date') }}">
+                                        <input type="text" name="to_date" class="form-control datepicker" value="{{ request('to_date') }}">
                                     </div>
                                 </div>
                                 
@@ -232,7 +232,7 @@
                     </div>
                     <div class="form-group">
                         <label>Payment Date</label>
-                        <input type="date" name="payment_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                        <input type="text" name="payment_date" class="form-control datepicker" value="{{ date('Y-m-d') }}" required>
                     </div>
                     <div class="form-group">
                         <label>Payment Method</label>

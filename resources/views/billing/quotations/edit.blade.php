@@ -48,7 +48,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="issue_date">Issue Date <span class="text-danger">*</span></label>
-                                    <input type="date" name="issue_date" id="issue_date" class="form-control" 
+                                    <input type="text" name="issue_date" id="issue_date" class="form-control datepicker" 
                                            value="{{ old('issue_date', $quotation->issue_date->format('Y-m-d')) }}" required>
                                 </div>
                             </div>
@@ -56,7 +56,7 @@
                             <div class="col-md-3">
                                 <div class="form-group">
                                     <label for="valid_until_date">Valid Until</label>
-                                    <input type="date" name="valid_until_date" id="valid_until_date" class="form-control" 
+                                    <input type="text" name="valid_until_date" id="valid_until_date" class="form-control datepicker" 
                                            value="{{ old('valid_until_date', $quotation->valid_until_date ? $quotation->valid_until_date->format('Y-m-d') : '') }}">
                                 </div>
                             </div>

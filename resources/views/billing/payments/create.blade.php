@@ -53,8 +53,8 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="payment_date">Payment Date <span class="text-danger">*</span></label>
-                                        <input type="date" name="payment_date" id="payment_date"
-                                               class="form-control @error('payment_date') is-invalid @enderror"
+                                        <input type="text" name="payment_date" id="payment_date"
+                                               class="form-control datepicker @error('payment_date') is-invalid @enderror"
                                                value="{{ old('payment_date', date('Y-m-d')) }}" required>
                                         @error('payment_date')
                                             <div class="invalid-feedback">{{ $message }}</div>

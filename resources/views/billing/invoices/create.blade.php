@@ -67,7 +67,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Issue Date <span class="text-danger">*</span></label>
-                                        <input type="date" name="issue_date" class="form-control"
+                                        <input type="text" name="issue_date" class="form-control datepicker"
                                                value="{{ old('issue_date', date('Y-m-d')) }}" required>
                                         @error('issue_date')
                                             <small class="text-danger">{{ $message }}</small>
@@ -94,7 +94,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Due Date</label>
-                                        <input type="date" name="due_date" class="form-control"
+                                        <input type="text" name="due_date" class="form-control datepicker"
                                                value="{{ old('due_date') }}">
                                     </div>
                                 </div>

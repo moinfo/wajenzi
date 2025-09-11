@@ -411,7 +411,7 @@ Best regards</textarea>
                     </div>
                     <div class="form-group">
                         <label>Payment Date</label>
-                        <input type="date" name="payment_date" class="form-control"
+                        <input type="text" name="payment_date" class="form-control datepicker"
                                value="{{ date('Y-m-d') }}" required>
                     </div>
                     <div class="form-group">
