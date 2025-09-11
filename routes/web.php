@@ -636,6 +636,11 @@ Route::middleware(['auth'])->group(function () {
         
         // Products & Services
         Route::resource('products', App\Http\Controllers\Billing\ProductController::class);
+        Route::post('products/{product}/activate', [App\Http\Controllers\Billing\ProductController::class, 'activate'])->name('products.activate');
+        Route::post('products/{product}/deactivate', [App\Http\Controllers\Billing\ProductController::class, 'deactivate'])->name('products.deactivate');
+        Route::post('products/{product}/adjust-stock', [App\Http\Controllers\Billing\ProductController::class, 'adjustStock'])->name('products.adjust-stock');
+        Route::get('products/low-stock', [App\Http\Controllers\Billing\ProductController::class, 'lowStock'])->name('products.low-stock');
+        Route::get('products/search', [App\Http\Controllers\Billing\ProductController::class, 'search'])->name('products.search');
         
         // Tax Rates
         Route::resource('tax-rates', App\Http\Controllers\Billing\TaxRateController::class);

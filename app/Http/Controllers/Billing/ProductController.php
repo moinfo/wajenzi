@@ -68,16 +68,16 @@ class ProductController extends Controller
             'reorder_level' => 'nullable|numeric|min:0',
         ]);
 
+        $data = $request->all();
+        
         if ($request->type === 'service') {
-            $request->merge([
-                'track_inventory' => false,
-                'current_stock' => null,
-                'minimum_stock' => null,
-                'reorder_level' => null
-            ]);
+            $data['track_inventory'] = false;
+            $data['current_stock'] = null;
+            $data['minimum_stock'] = null;
+            $data['reorder_level'] = null;
         }
 
-        $product = BillingProduct::create($request->all());
+        $product = BillingProduct::create($data);
 
         return redirect()
             ->route('billing.products.show', $product)
@@ -132,16 +132,16 @@ class ProductController extends Controller
             'reorder_level' => 'nullable|numeric|min:0',
         ]);
 
+        $data = $request->all();
+        
         if ($request->type === 'service') {
-            $request->merge([
-                'track_inventory' => false,
-                'current_stock' => null,
-                'minimum_stock' => null,
-                'reorder_level' => null
-            ]);
+            $data['track_inventory'] = false;
+            $data['current_stock'] = null;
+            $data['minimum_stock'] = null;
+            $data['reorder_level'] = null;
         }
 
-        $product->update($request->all());
+        $product->update($data);
 
         return redirect()
             ->route('billing.products.show', $product)
