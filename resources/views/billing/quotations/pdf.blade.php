@@ -184,12 +184,16 @@
 <body>
     <!-- Header -->
     <div class="header">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="{{ config('app.name') }}" style="max-height: 60px; margin-bottom: 10px;">
+        </div>
         <div class="company-info">
-            <div class="company-name">Your Company Name</div>
-            <div>123 Business Street</div>
-            <div>City, State 12345</div>
-            <div>Phone: (123) 456-7890</div>
-            <div>Email: info@company.com</div>
+            <div class="company-name">{{ config('app.name') }}</div>
+            <div>PSSSF COMMERCIAL COMPLEX, SAM NUJOMA ROAD, DSM-TANZANIA</div>
+            <div>P. O. Box 14492, Dar es Salaam Tanzania</div>
+            <div>Phone: +255 793 444 400</div>
+            <div>Email: billing@wajenziprofessional.co.tz</div>
+            <div>TIN: 154-867-805</div>
         </div>
         
         <div class="document-title">QUOTATION</div>

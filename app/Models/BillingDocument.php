@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use App\Models\BillingDocumentEmail;
 
 class BillingDocument extends Model
 {
@@ -99,6 +100,11 @@ class BillingDocument extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function emails()
+    {
+        return $this->hasMany(BillingDocumentEmail::class, 'document_id')->orderBy('sent_at', 'desc');
     }
 
     public function approver()

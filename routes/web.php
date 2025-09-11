@@ -640,6 +640,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/outstanding', [App\Http\Controllers\Billing\ReportController::class, 'outstanding'])->name('outstanding');
         });
         
+        // Email Management
+        Route::prefix('emails')->name('emails.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Billing\EmailController::class, 'index'])->name('index');
+            Route::get('/{email}', [App\Http\Controllers\Billing\EmailController::class, 'show'])->name('show');
+            Route::get('/{email}/resend', [App\Http\Controllers\Billing\EmailController::class, 'showResendForm'])->name('resend.form');
+            Route::post('/{email}/resend', [App\Http\Controllers\Billing\EmailController::class, 'resend'])->name('resend');
+        });
+        
         // Settings
         Route::prefix('settings')->name('settings.')->group(function () {
             Route::get('/', [App\Http\Controllers\Billing\SettingsController::class, 'index'])->name('index');

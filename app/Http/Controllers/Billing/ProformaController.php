@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
 use App\Models\BillingDocument;
+use App\Models\BillingDocumentEmail;
 use App\Models\BillingClient;
 use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use App\Models\BillingDocumentSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\InvoiceEmail;
 use PDF;
 
 class ProformaController extends Controller
@@ -121,7 +124,7 @@ class ProformaController extends Controller
 
     public function show(BillingDocument $proforma)
     {
-        $proforma->load(['client', 'items', 'creator']);
+        $proforma->load(['client', 'items', 'creator', 'emails.sender']);
         
         if ($proforma->status === 'sent' && !$proforma->viewed_at) {
             $proforma->update(['viewed_at' => now(), 'status' => 'viewed']);
@@ -230,18 +233,73 @@ class ProformaController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
+            'cc' => 'nullable|string',
             'subject' => 'required|string',
             'message' => 'required|string'
         ]);
         
-        // TODO: Implement email sending logic
+        DB::beginTransaction();
         
-        $proforma->update([
-            'status' => 'sent',
-            'sent_at' => now()
-        ]);
-        
-        return back()->with('success', 'Proforma invoice sent successfully.');
+        try {
+            $mail = Mail::to($request->email);
+            
+            // Add CC emails if provided
+            if ($request->cc) {
+                $ccEmails = array_map('trim', explode(',', $request->cc));
+                $mail->cc($ccEmails);
+            }
+            
+            // Send the email
+            $mail->send(new InvoiceEmail($proforma, $request->subject, $request->message));
+            
+            // Update document status
+            $proforma->update([
+                'status' => 'sent',
+                'sent_at' => now()
+            ]);
+            
+            // Track the email
+            $proforma->emails()->create([
+                'document_type' => $proforma->document_type,
+                'recipient_email' => $request->email,
+                'cc_emails' => $request->cc,
+                'subject' => $request->subject,
+                'message' => $request->message,
+                'has_attachment' => true,
+                'attachment_filename' => $proforma->document_type . '-' . $proforma->document_number . '.pdf',
+                'status' => 'sent',
+                'sent_by' => auth()->id(),
+                'sent_at' => now()
+            ]);
+            
+            DB::commit();
+            
+            return back()->with('success', 'Proforma invoice sent successfully to ' . $request->email);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            // Track the failed email attempt
+            try {
+                $proforma->emails()->create([
+                    'document_type' => $proforma->document_type,
+                    'recipient_email' => $request->email,
+                    'cc_emails' => $request->cc,
+                    'subject' => $request->subject,
+                    'message' => $request->message,
+                    'has_attachment' => true,
+                    'attachment_filename' => $proforma->document_type . '-' . $proforma->document_number . '.pdf',
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'sent_by' => auth()->id(),
+                    'sent_at' => now()
+                ]);
+            } catch (\Exception $trackingException) {
+                // Log but don't fail on tracking error
+            }
+            
+            return back()->with('error', 'Failed to send email: ' . $e->getMessage());
+        }
     }
 
     public function duplicate(BillingDocument $proforma)

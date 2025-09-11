@@ -266,6 +266,57 @@
                     </div>
                 </div>
 
+                <!-- Email History -->
+                @if($proforma->emails->count() > 0)
+                <div class="block block-themed">
+                    <div class="block-header">
+                        <h3 class="block-title">Email History</h3>
+                        <div class="block-options">
+                            <a href="{{ route('billing.emails.index', ['document_type' => 'proforma', 'document_id' => $proforma->id]) }}" 
+                               class="btn btn-sm btn-secondary">
+                                <i class="fa fa-list"></i> View All
+                            </a>
+                        </div>
+                    </div>
+                    <div class="block-content">
+                        @foreach($proforma->emails->take(3) as $email)
+                            <div class="mb-3 pb-3 @if(!$loop->last) border-bottom @endif">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <strong>{{ $email->recipient_email }}</strong>
+                                        <span class="badge badge-{{ $email->status_color }} ml-2">
+                                            {{ ucfirst($email->status) }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">{{ Str::limit($email->subject, 50) }}</small>
+                                        <br>
+                                        <small class="text-muted">{{ $email->sent_at->format('d/m/Y H:i') }}</small>
+                                    </div>
+                                    <div class="col-md-4 text-right">
+                                        @if($email->has_attachment)
+                                            <small class="text-success"><i class="fa fa-paperclip"></i> PDF</small><br>
+                                        @endif
+                                        <a href="{{ route('billing.emails.resend.form', $email) }}" 
+                                           class="btn btn-xs btn-warning">
+                                            <i class="fa fa-repeat"></i> Resend
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                        
+                        @if($proforma->emails->count() > 3)
+                            <div class="text-center">
+                                <a href="{{ route('billing.emails.index', ['document_type' => 'proforma', 'document_id' => $proforma->id]) }}" 
+                                   class="btn btn-sm btn-link">
+                                    View all {{ $proforma->emails->count() }} emails
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
                 <!-- Related Documents -->
                 @if($proforma->parentDocument || $proforma->childDocuments->count() > 0)
                     <div class="block block-themed">
