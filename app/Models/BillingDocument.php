@@ -193,6 +193,37 @@ class BillingDocument extends Model
         return $prefix . $year . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
     }
 
+    public function convertToProforma()
+    {
+        if ($this->document_type !== 'quote') {
+            throw new \Exception('Only quotes can be converted to proforma invoices.');
+        }
+        
+        $proforma = $this->replicate();
+        $proforma->document_type = 'proforma';
+        $proforma->document_number = $this->generateDocumentNumber('proforma');
+        $proforma->parent_document_id = $this->id;
+        $proforma->status = 'draft';
+        $proforma->issue_date = now();
+        $proforma->valid_until_date = now()->addDays(30);
+        $proforma->save();
+        
+        // Copy items
+        foreach ($this->items as $item) {
+            $newItem = $item->replicate();
+            $newItem->document_id = $proforma->id;
+            $newItem->save();
+        }
+        
+        // Calculate totals for new proforma
+        $proforma->calculateTotals();
+        
+        // Update original quote status
+        $this->update(['status' => 'accepted']);
+        
+        return $proforma;
+    }
+
     public function convertToInvoice()
     {
         if (!in_array($this->document_type, ['quote', 'proforma'])) {

@@ -26,12 +26,12 @@
                         <i class="fa fa-envelope"></i> Send Email
                     </button>
 
-                    @if($proforma->status == 'accepted')
+                    @if(in_array($proforma->status, ['sent', 'viewed', 'accepted']))
                         <form action="{{ route('billing.proformas.convert', $proforma) }}" method="POST" class="d-inline"
                               onsubmit="return confirm('Convert this proforma to invoice?')">
                             @csrf
                             <button type="submit" class="btn btn-success">
-                                <i class="fa fa-exchange-alt"></i> Convert to Invoice
+                                <i class="fa fa-file-invoice-dollar"></i> Convert to Invoice
                             </button>
                         </form>
                     @endif

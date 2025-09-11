@@ -314,6 +314,20 @@ class QuotationController extends Controller
             ->with('success', 'Quotation duplicated successfully.');
     }
 
+    public function convertToProforma(BillingDocument $quotation)
+    {
+        try {
+            $proforma = $quotation->convertToProforma();
+            
+            return redirect()
+                ->route('billing.proformas.show', $proforma)
+                ->with('success', 'Quotation converted to proforma successfully.');
+                
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error converting quotation: ' . $e->getMessage());
+        }
+    }
+
     public function convertToInvoice(BillingDocument $quotation)
     {
         try {

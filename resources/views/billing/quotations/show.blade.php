@@ -26,14 +26,26 @@
                         <i class="fa fa-envelope"></i> Send Email
                     </button>
 
-                    @if($quotation->status == 'accepted')
-                        <form action="{{ route('billing.quotations.convert', $quotation) }}" method="POST" class="d-inline"
-                              onsubmit="return confirm('Convert this quotation to invoice?')">
-                            @csrf
-                            <button type="submit" class="btn btn-success">
-                                <i class="fa fa-exchange-alt"></i> Convert to Invoice
+                    @if(in_array($quotation->status, ['sent', 'viewed', 'accepted']))
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-exchange-alt"></i> Convert
                             </button>
-                        </form>
+                            <div class="dropdown-menu">
+                                <form action="{{ route('billing.quotations.convert-to-proforma', $quotation) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item" onclick="return confirm('Convert this quotation to proforma?')">
+                                        <i class="fa fa-file-invoice"></i> Convert to Proforma
+                                    </button>
+                                </form>
+                                <form action="{{ route('billing.quotations.convert', $quotation) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item" onclick="return confirm('Convert this quotation to invoice?')">
+                                        <i class="fa fa-file-invoice-dollar"></i> Convert to Invoice
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     @endif
 
                     <div class="btn-group">

@@ -602,6 +602,7 @@ Route::middleware(['auth'])->group(function () {
         
         // Quotations
         Route::resource('quotations', App\Http\Controllers\Billing\QuotationController::class);
+        Route::post('quotations/{quotation}/convert-to-proforma', [App\Http\Controllers\Billing\QuotationController::class, 'convertToProforma'])->name('quotations.convert-to-proforma');
         Route::post('quotations/{quotation}/convert', [App\Http\Controllers\Billing\QuotationController::class, 'convertToInvoice'])->name('quotations.convert');
         Route::get('quotations/{quotation}/pdf', [App\Http\Controllers\Billing\QuotationController::class, 'generatePDF'])->name('quotations.pdf');
         Route::post('quotations/{quotation}/send-email', [App\Http\Controllers\Billing\QuotationController::class, 'sendEmail'])->name('quotations.send-email');
