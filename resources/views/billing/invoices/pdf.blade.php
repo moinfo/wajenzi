@@ -200,30 +200,18 @@
     <!-- Client Details -->
     <div class="client-details">
         <div class="client-title">BILL TO:</div>
-        <strong>{{ $invoice->client->company_name }}</strong><br>
-        @if($invoice->client->contact_person)
-            {{ $invoice->client->contact_person }}<br>
+        <strong>{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</strong><br>
+        @if($invoice->client->address)
+            {{ $invoice->client->address }}<br>
         @endif
-        @if($invoice->client->billing_address_line1)
-            {{ $invoice->client->billing_address_line1 }}<br>
-        @endif
-        @if($invoice->client->billing_address_line2)
-            {{ $invoice->client->billing_address_line2 }}<br>
-        @endif
-        @if($invoice->client->billing_city || $invoice->client->billing_postal_code)
-            {{ $invoice->client->billing_city }} {{ $invoice->client->billing_postal_code }}<br>
-        @endif
-        @if($invoice->client->billing_country)
-            {{ $invoice->client->billing_country }}<br>
-        @endif
-        @if($invoice->client->phone)
-            <strong>Phone:</strong> {{ $invoice->client->phone }}<br>
+        @if($invoice->client->phone_number)
+            <strong>Phone:</strong> {{ $invoice->client->phone_number }}<br>
         @endif
         @if($invoice->client->email)
             <strong>Email:</strong> {{ $invoice->client->email }}<br>
         @endif
-        @if($invoice->client->tax_identification_number)
-            <strong>TIN:</strong> {{ $invoice->client->tax_identification_number }}
+        @if($invoice->client->identification_number)
+            <strong>ID:</strong> {{ $invoice->client->identification_number }}
         @endif
     </div>
 

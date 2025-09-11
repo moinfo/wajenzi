@@ -16,7 +16,7 @@
             </div>
         </div>
 
-        <form method="POST" action="{{ route('billing.proformas.store') }}">
+        <form id="proforma-form" method="POST" action="{{ route('billing.proformas.store') }}">
             @csrf
             <input type="hidden" name="document_type" value="proforma">
             <!-- Line Items - Full Width -->
@@ -108,7 +108,8 @@
                                             <option value="">Select a client...</option>
                                             @foreach($clients as $client)
                                                 <option value="{{ $client->id }}" {{ old('client_id') == $client->id ? 'selected' : '' }}>
-                                                    {{ $client->company_name }}
+                                                    {{ $client->first_name }} {{ $client->last_name }}
+                                                    @if($client->email) - {{ $client->email }} @endif
                                                 </option>
                                             @endforeach
                                         </select>
@@ -161,6 +162,24 @@
                             </div>
 
                             <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="payment_terms">Payment Terms</label>
+                                        <select name="payment_terms" id="payment_terms" class="form-control @error('payment_terms') is-invalid @enderror">
+                                            <option value="immediate" {{ old('payment_terms', 'net_30') == 'immediate' ? 'selected' : '' }}>Due Immediately</option>
+                                            <option value="net_7" {{ old('payment_terms', 'net_30') == 'net_7' ? 'selected' : '' }}>Net 7 days</option>
+                                            <option value="net_15" {{ old('payment_terms', 'net_30') == 'net_15' ? 'selected' : '' }}>Net 15 days</option>
+                                            <option value="net_30" {{ old('payment_terms', 'net_30') == 'net_30' ? 'selected' : '' }}>Net 30 days</option>
+                                            <option value="net_45" {{ old('payment_terms', 'net_30') == 'net_45' ? 'selected' : '' }}>Net 45 days</option>
+                                            <option value="net_60" {{ old('payment_terms', 'net_30') == 'net_60' ? 'selected' : '' }}>Net 60 days</option>
+                                            <option value="net_90" {{ old('payment_terms', 'net_30') == 'net_90' ? 'selected' : '' }}>Net 90 days</option>
+                                        </select>
+                                        @error('payment_terms')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="currency_code">Currency</label>
@@ -225,9 +244,10 @@
                             @endif
 
                             <div class="form-group mt-4">
-                                <button type="submit" class="btn btn-success btn-block">
+                                <button type="submit" class="btn btn-success btn-block" onclick="console.log('Submit clicked'); return true;">
                                     <i class="fa fa-check"></i> Create Proforma
                                 </button>
+                                
                             </div>
 
                             <div class="form-group">
@@ -249,7 +269,6 @@
 let itemCount = 0;
 
 function addItem() {
-    itemCount++;
     const tbody = document.getElementById('items-tbody');
     const row = document.createElement('tr');
     row.id = 'item-' + itemCount;
@@ -299,6 +318,7 @@ function addItem() {
     `;
 
     tbody.appendChild(row);
+    itemCount++;
 }
 
 function removeItem(itemId) {
@@ -348,7 +368,65 @@ document.getElementById('currency_code').addEventListener('change', calculateTot
 
 // Add first item on load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== PAGE LOADED ===');
+    console.log('Timestamp:', new Date().toISOString());
+    console.log('URL:', window.location.href);
+    
+    // Check if we had a previous submission
+    if (window.proformaSubmissionStarted) {
+        console.log('Previous submission detected - page refreshed after submission');
+    }
+    
     addItem();
+    
+    // Get the correct proforma form
+    const form = document.getElementById('proforma-form');
+    if (form) {
+        console.log('Proforma form found:', form);
+        console.log('Form action:', form.action);
+        console.log('Form method:', form.method);
+        
+        // Add back the submit listener for the correct form
+        form.addEventListener('submit', function(e) {
+            console.log('Proforma form submitted');
+            
+            // Check if form has required fields
+            const clientId = form.querySelector('[name="client_id"]');
+            const issueDate = form.querySelector('[name="issue_date"]');
+            const items = form.querySelectorAll('[name*="[item_name]"]');
+            
+            console.log('Client ID:', clientId ? clientId.value : 'NOT FOUND');
+            console.log('Issue Date:', issueDate ? issueDate.value : 'NOT FOUND');
+            console.log('Items count:', items.length);
+            
+            // Log all form data
+            const formData = new FormData(form);
+            console.log('All form data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key + ':', value);
+            }
+            
+            // Check if we have items properly structured
+            let hasValidItem = false;
+            items.forEach((item, index) => {
+                console.log(`Item ${index}: ${item.name} = ${item.value}`);
+                if (item.value.trim()) hasValidItem = true;
+            });
+            
+            console.log('Has valid item:', hasValidItem);
+            
+            // Track the submission
+            console.log('=== SUBMITTING FORM ===');
+            console.log('Timestamp:', new Date().toISOString());
+            console.log('Form action:', form.action);
+            
+            // Add a flag to track if we get a response
+            window.proformaSubmissionStarted = true;
+            console.log('Form submission flag set');
+        });
+    } else {
+        console.error('Proforma form not found');
+    }
 });
 
 // Product selection function

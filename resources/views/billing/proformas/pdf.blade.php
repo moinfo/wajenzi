@@ -202,30 +202,18 @@
     <!-- Client Details -->
     <div class="client-details">
         <div class="client-title">PROFORMA FOR:</div>
-        <strong>{{ $proforma->client->company_name }}</strong><br>
-        @if($proforma->client->contact_person)
-            {{ $proforma->client->contact_person }}<br>
+        <strong>{{ $proforma->client->first_name }} {{ $proforma->client->last_name }}</strong><br>
+        @if($proforma->client->address)
+            {{ $proforma->client->address }}<br>
         @endif
-        @if($proforma->client->billing_address_line1)
-            {{ $proforma->client->billing_address_line1 }}<br>
-        @endif
-        @if($proforma->client->billing_address_line2)
-            {{ $proforma->client->billing_address_line2 }}<br>
-        @endif
-        @if($proforma->client->billing_city || $proforma->client->billing_postal_code)
-            {{ $proforma->client->billing_city }} {{ $proforma->client->billing_postal_code }}<br>
-        @endif
-        @if($proforma->client->billing_country)
-            {{ $proforma->client->billing_country }}<br>
-        @endif
-        @if($proforma->client->phone)
-            <strong>Phone:</strong> {{ $proforma->client->phone }}<br>
+        @if($proforma->client->phone_number)
+            <strong>Phone:</strong> {{ $proforma->client->phone_number }}<br>
         @endif
         @if($proforma->client->email)
             <strong>Email:</strong> {{ $proforma->client->email }}<br>
         @endif
-        @if($proforma->client->tax_identification_number)
-            <strong>TIN:</strong> {{ $proforma->client->tax_identification_number }}
+        @if($proforma->client->identification_number)
+            <strong>ID:</strong> {{ $proforma->client->identification_number }}
         @endif
     </div>
 

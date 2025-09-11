@@ -118,19 +118,16 @@
                                         <h5>Bill To:</h5>
                                     </div>
                                     <div class="card-body">
-                                        <strong>{{ $invoice->client->company_name }}</strong><br>
-                                        @if($invoice->client->contact_person)
-                                            {{ $invoice->client->contact_person }}<br>
-                                        @endif
-                                        {{ $invoice->client->full_billing_address }}<br>
-                                        @if($invoice->client->phone)
-                                            Phone: {{ $invoice->client->phone }}<br>
+                                        <strong>{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</strong><br>
+                                        {{ $invoice->client->address }}<br>
+                                        @if($invoice->client->phone_number)
+                                            Phone: {{ $invoice->client->phone_number }}<br>
                                         @endif
                                         @if($invoice->client->email)
                                             Email: {{ $invoice->client->email }}<br>
                                         @endif
-                                        @if($invoice->client->tax_identification_number)
-                                            TIN: {{ $invoice->client->tax_identification_number }}
+                                        @if($invoice->client->identification_number)
+                                            ID: {{ $invoice->client->identification_number }}
                                         @endif
                                     </div>
                                 </div>
@@ -382,7 +379,7 @@
                     </div>
                     <div class="form-group">
                         <label>Message</label>
-                        <textarea name="message" class="form-control" rows="6" required>Dear {{ $invoice->client->contact_person ?? $invoice->client->company_name }},
+                        <textarea name="message" class="form-control" rows="6" required>Dear {{ $invoice->client->first_name }} {{ $invoice->client->last_name }},
 
 Please find attached invoice {{ $invoice->document_number }} for {{ $invoice->currency_code }} {{ number_format($invoice->total_amount, 2) }}.
 
@@ -491,7 +488,7 @@ Best regards</textarea>
                     </div>
                     <div class="form-group">
                         <label>Message</label>
-                        <textarea name="message" class="form-control" rows="6" id="reminderMessage" required>Dear {{ $invoice->client->contact_person ?? $invoice->client->company_name }},
+                        <textarea name="message" class="form-control" rows="6" id="reminderMessage" required>Dear {{ $invoice->client->first_name }} {{ $invoice->client->last_name }},
 
 This is a friendly reminder regarding your outstanding invoice payment.
 

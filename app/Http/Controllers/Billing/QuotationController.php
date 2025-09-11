@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BillingDocument;
 use App\Models\BillingDocumentEmail;
 use App\Models\BillingClient;
+use App\Models\ProjectClient;
 use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use App\Models\BillingDocumentSetting;
@@ -36,14 +37,14 @@ class QuotationController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         
         return view('billing.quotations.index', compact('quotations', 'clients'));
     }
 
     public function create(Request $request)
     {
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
@@ -54,7 +55,7 @@ class QuotationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'client_id' => 'required|exists:billing_clients,id',
+            'client_id' => 'required|exists:project_clients,id',
             'issue_date' => 'required|date',
             'valid_until_date' => 'nullable|date|after_or_equal:issue_date',
             'items' => 'required|array|min:1',
@@ -142,7 +143,7 @@ class QuotationController extends Controller
         }
         
         $quotation->load('items');
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
@@ -159,7 +160,7 @@ class QuotationController extends Controller
         }
         
         $request->validate([
-            'client_id' => 'required|exists:billing_clients,id',
+            'client_id' => 'required|exists:project_clients,id',
             'issue_date' => 'required|date',
             'valid_until_date' => 'nullable|date|after_or_equal:issue_date',
             'items' => 'required|array|min:1',

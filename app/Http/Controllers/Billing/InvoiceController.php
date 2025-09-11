@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BillingDocument;
 use App\Models\BillingDocumentEmail;
 use App\Models\BillingClient;
+use App\Models\ProjectClient;
 use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use App\Models\BillingDocumentSetting;
@@ -49,7 +50,8 @@ class InvoiceController extends Controller
      */
     public function create(Request $request)
     {
-        $clients = BillingClient::active()->customers()->get();
+        // Use ProjectClient instead of BillingClient
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
@@ -69,7 +71,7 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'client_id' => 'required|exists:billing_clients,id',
+            'client_id' => 'required|exists:project_clients,id',
             'issue_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:issue_date',
             'payment_terms' => 'required|in:immediate,net_7,net_15,net_30,net_45,net_60,net_90,custom',
@@ -176,7 +178,7 @@ class InvoiceController extends Controller
         }
         
         $invoice->load('items');
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
@@ -196,7 +198,7 @@ class InvoiceController extends Controller
         }
         
         $request->validate([
-            'client_id' => 'required|exists:billing_clients,id',
+            'client_id' => 'required|exists:project_clients,id',
             'issue_date' => 'required|date',
             'due_date' => 'nullable|date|after_or_equal:issue_date',
             'items' => 'required|array|min:1',

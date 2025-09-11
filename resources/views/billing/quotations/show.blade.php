@@ -127,19 +127,16 @@
                                         <h5>Quote For:</h5>
                                     </div>
                                     <div class="card-body">
-                                        <strong>{{ $quotation->client->company_name }}</strong><br>
-                                        @if($quotation->client->contact_person)
-                                            {{ $quotation->client->contact_person }}<br>
-                                        @endif
-                                        {{ $quotation->client->full_billing_address }}<br>
-                                        @if($quotation->client->phone)
-                                            Phone: {{ $quotation->client->phone }}<br>
+                                        <strong>{{ $quotation->client->first_name }} {{ $quotation->client->last_name }}</strong><br>
+                                        {{ $quotation->client->address }}<br>
+                                        @if($quotation->client->phone_number)
+                                            Phone: {{ $quotation->client->phone_number }}<br>
                                         @endif
                                         @if($quotation->client->email)
                                             Email: {{ $quotation->client->email }}<br>
                                         @endif
-                                        @if($quotation->client->tax_identification_number)
-                                            TIN: {{ $quotation->client->tax_identification_number }}
+                                        @if($quotation->client->identification_number)
+                                            ID: {{ $quotation->client->identification_number }}
                                         @endif
                                     </div>
                                 </div>
@@ -378,7 +375,7 @@
                     </div>
                     <div class="form-group">
                         <label>Message</label>
-                        <textarea name="message" class="form-control" rows="6" required>Dear {{ $quotation->client->contact_person ?? $quotation->client->company_name }},
+                        <textarea name="message" class="form-control" rows="6" required>Dear {{ $quotation->client->first_name }} {{ $quotation->client->last_name }},
 
 Please find attached quotation {{ $quotation->document_number }} for {{ $quotation->currency_code }} {{ number_format($quotation->total_amount, 2) }}.
 

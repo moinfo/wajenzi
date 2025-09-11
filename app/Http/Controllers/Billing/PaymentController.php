@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Billing;
 use App\Http\Controllers\Controller;
 use App\Models\BillingPayment;
 use App\Models\BillingDocument;
-use App\Models\BillingClient;
+use App\Models\ProjectClient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PDF;
@@ -14,7 +14,7 @@ class PaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $payments = BillingPayment::with(['document', 'client', 'receiver'])
+        $payments = BillingPayment::with(['document.client', 'receiver'])
             ->when($request->client_id, function ($query, $clientId) {
                 return $query->where('client_id', $clientId);
             })
@@ -33,7 +33,7 @@ class PaymentController extends Controller
             ->orderBy('payment_date', 'desc')
             ->paginate(20);
 
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         
         return view('billing.payments.index', compact('payments', 'clients'));
     }
@@ -45,7 +45,7 @@ class PaymentController extends Controller
             $document = BillingDocument::with('client')->findOrFail($request->document_id);
         }
         
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         $outstandingDocuments = BillingDocument::where('document_type', 'invoice')
             ->where('balance_amount', '>', 0)
             ->with('client')
@@ -132,7 +132,7 @@ class PaymentController extends Controller
         }
         
         $payment->load(['document', 'client']);
-        $clients = BillingClient::active()->customers()->get();
+        $clients = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
         
         return view('billing.payments.edit', compact('payment', 'clients'));
     }

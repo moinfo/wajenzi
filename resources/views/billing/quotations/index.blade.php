@@ -51,7 +51,7 @@
                                             <option value="">All Clients</option>
                                             @foreach($clients as $client)
                                                 <option value="{{ $client->id }}" {{ request('client_id') == $client->id ? 'selected' : '' }}>
-                                                    {{ $client->company_name }}
+                                                    {{ $client->first_name }} {{ $client->last_name }}
                                                 </option>
                                             @endforeach
                                         </select>
@@ -108,7 +108,7 @@
                                             </a>
                                         </td>
                                         <td>
-                                            <strong>{{ $quotation->client->company_name }}</strong>
+                                            <strong>{{ $quotation->client->first_name }} {{ $quotation->client->last_name }}</strong>
                                             @if($quotation->client->contact_person)
                                                 <br><small class="text-muted">{{ $quotation->client->contact_person }}</small>
                                             @endif
