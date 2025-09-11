@@ -114,17 +114,36 @@
                                     <table class="table table-bordered" id="itemsTable">
                                         <thead>
                                             <tr>
-                                                <th width="30%">Item</th>
-                                                <th width="15%">Quantity</th>
-                                                <th width="15%">Unit Price</th>
-                                                <th width="10%">Tax %</th>
-                                                <th width="15%">Amount</th>
+                                                <th width="25%">Product/Service</th>
+                                                <th width="25%">Item</th>
+                                                <th width="12%">Quantity</th>
+                                                <th width="12%">Unit Price</th>
+                                                <th width="8%">Tax %</th>
+                                                <th width="12%">Amount</th>
                                                 <th width="5%">Action</th>
                                             </tr>
                                         </thead>
                                         <tbody id="itemsTableBody">
                                             @foreach($quotation->items as $index => $item)
                                                 <tr class="item-row">
+                                                    <td>
+                                                        <select name="items[{{ $index }}][product_service_id]" class="form-control form-control-sm" 
+                                                                onchange="selectProduct(this, {{ $index }})">
+                                                            <option value="">Select Product/Service</option>
+                                                            @foreach($products as $product)
+                                                                <option value="{{ $product->id }}" 
+                                                                        {{ old('items.' . $index . '.product_service_id', $item->product_service_id) == $product->id ? 'selected' : '' }}
+                                                                        data-name="{{ $product->name }}"
+                                                                        data-description="{{ $product->description }}"
+                                                                        data-unit-price="{{ $product->unit_price }}"
+                                                                        data-unit="{{ $product->unit_of_measure }}"
+                                                                        data-tax-rate="{{ $product->taxRate ? $product->taxRate->rate : 0 }}">
+                                                                    [{{ $product->code }}] {{ $product->name }} - {{ ucfirst($product->type) }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                        <small class="text-muted">Or leave empty to enter custom item</small>
+                                                    </td>
                                                     <td>
                                                         <input type="text" name="items[{{ $index }}][item_name]" class="form-control item-name" 
                                                                value="{{ old('items.' . $index . '.item_name', $item->item_name) }}" required>
@@ -237,6 +256,23 @@ document.addEventListener('DOMContentLoaded', function() {
         row.className = 'item-row';
         row.innerHTML = `
             <td>
+                <select name="items[${itemIndex}][product_service_id]" class="form-control form-control-sm" 
+                        onchange="selectProduct(this, ${itemIndex})">
+                    <option value="">Select Product/Service</option>
+                    @foreach($products as $product)
+                        <option value="{{ $product->id }}" 
+                                data-name="{{ $product->name }}"
+                                data-description="{{ $product->description }}"
+                                data-unit-price="{{ $product->unit_price }}"
+                                data-unit="{{ $product->unit_of_measure }}"
+                                data-tax-rate="{{ $product->taxRate ? $product->taxRate->rate : 0 }}">
+                            [{{ $product->code }}] {{ $product->name }} - {{ ucfirst($product->type) }}
+                        </option>
+                    @endforeach
+                </select>
+                <small class="text-muted">Or leave empty to enter custom item</small>
+            </td>
+            <td>
                 <input type="text" name="items[${itemIndex}][item_name]" class="form-control item-name" placeholder="Item name" required>
                 <textarea name="items[${itemIndex}][description]" class="form-control mt-1 item-description" rows="2" placeholder="Description (optional)"></textarea>
             </td>
@@ -337,5 +373,24 @@ document.addEventListener('DOMContentLoaded', function() {
     calculateTotals();
     updateRemoveButtons();
 });
+
+// Product selection function
+function selectProduct(selectElement, index) {
+    const option = selectElement.selectedOptions[0];
+    
+    if (option.value) {
+        // Get the row
+        const row = selectElement.closest('tr');
+        
+        // Populate the fields
+        row.querySelector(`input[name="items[${index}][item_name]"]`).value = option.dataset.name || '';
+        row.querySelector(`textarea[name="items[${index}][description]"]`).value = option.dataset.description || '';
+        row.querySelector(`input[name="items[${index}][unit_price]"]`).value = parseFloat(option.dataset.unitPrice || 0).toFixed(2);
+        row.querySelector(`input[name="items[${index}][tax_percentage]"]`).value = parseFloat(option.dataset.taxRate || 0).toFixed(2);
+        
+        // Calculate totals
+        calculateRowTotal({ target: row.querySelector('.item-quantity') });
+    }
+}
 </script>
 @endsection

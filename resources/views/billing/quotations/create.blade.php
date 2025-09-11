@@ -19,6 +19,98 @@
         <form id="quotationForm" method="POST" action="{{ route('billing.quotations.store') }}">
             @csrf
 
+            <!-- Line Items - Full Width -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <!-- Line Items -->
+                    <div class="block block-themed">
+                        <div class="block-header">
+                            <h3 class="block-title">Line Items</h3>
+                            <button type="button" class="btn btn-sm btn-success" onclick="addLineItem()">
+                                <i class="fa fa-plus"></i> Add Item
+                            </button>
+                        </div>
+                        <div class="block-content">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped" id="itemsTable" style="min-width: 1000px;">
+                                    <thead>
+                                    <tr>
+                                        <th width="20%" style="vertical-align: top;">Product/Service</th>
+                                        <th width="20%" style="vertical-align: top;">Item/Description</th>
+                                        <th width="8%" style="vertical-align: top;">Qty</th>
+                                        <th width="8%" style="vertical-align: top;">Unit</th>
+                                        <th width="12%" style="vertical-align: top;">Unit Price</th>
+                                        <th width="8%" style="vertical-align: top;">Tax %</th>
+                                        <th width="12%" style="vertical-align: top;">Amount</th>
+                                        <th width="5%" style="vertical-align: top;">Action</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="itemsTableBody">
+                                    <tr data-index="0">
+                                        <td style="vertical-align: top;">
+                                            <select name="items[0][product_service_id]" class="form-control form-control-sm"
+                                                    onchange="selectProduct(this, 0)">
+                                                <option value="">Select Product/Service</option>
+                                                @foreach($products as $product)
+                                                    <option value="{{ $product->id }}"
+                                                            data-name="{{ $product->name }}"
+                                                            data-description="{{ $product->description }}"
+                                                            data-unit-price="{{ $product->unit_price }}"
+                                                            data-unit="{{ $product->unit_of_measure }}"
+                                                            data-tax-rate="{{ $product->taxRate ? $product->taxRate->rate : 0 }}">
+                                                        [{{ $product->code }}] {{ $product->name }} - {{ ucfirst($product->type) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <small class="text-muted">Or leave empty to enter custom item</small>
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            <input type="text" name="items[0][item_name]"
+                                                   class="form-control form-control-sm"
+                                                   placeholder="Item name" required>
+                                            <textarea name="items[0][description]"
+                                                      class="form-control form-control-sm mt-1"
+                                                      rows="2" placeholder="Description"></textarea>
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            <input type="number" name="items[0][quantity]"
+                                                   class="form-control form-control-sm quantity"
+                                                   value="1" step="0.01" min="0.01" required
+                                                   onchange="calculateLineTotal(this)">
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            <input type="text" name="items[0][unit_of_measure]"
+                                                   class="form-control form-control-sm" placeholder="Unit">
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            <input type="number" name="items[0][unit_price]"
+                                                   class="form-control form-control-sm unit-price"
+                                                   value="0" step="0.01" min="0" required
+                                                   onchange="calculateLineTotal(this)">
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            <input type="number" name="items[0][tax_percentage]"
+                                                   class="form-control form-control-sm tax-percentage"
+                                                   value="{{ $settings['default_tax_rate'] ?? 18 }}" step="0.01" min="0" max="100"
+                                                   onchange="calculateLineTotal(this)">
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            <input type="number" class="form-control form-control-sm line-total"
+                                                   value="0" readonly>
+                                        </td>
+                                        <td style="vertical-align: top;">
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <!-- Left Column -->
                 <div class="col-md-8">
@@ -118,76 +210,8 @@
                         </div>
                     </div>
 
-                    <!-- Line Items -->
-                    <div class="block block-themed">
-                        <div class="block-header">
-                            <h3 class="block-title">Line Items</h3>
-                            <button type="button" class="btn btn-sm btn-success" onclick="addLineItem()">
-                                <i class="fa fa-plus"></i> Add Item
-                            </button>
-                        </div>
-                        <div class="block-content">
-                            <div class="table-responsive">
-                                <table class="table table-sm" id="itemsTable">
-                                    <thead>
-                                        <tr>
-                                            <th width="25%">Item/Description</th>
-                                            <th width="10%">Qty</th>
-                                            <th width="10%">Unit</th>
-                                            <th width="15%">Unit Price</th>
-                                            <th width="10%">Tax %</th>
-                                            <th width="15%">Amount</th>
-                                            <th width="5%">Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="itemsTableBody">
-                                        <tr data-index="0">
-                                            <td>
-                                                <input type="text" name="items[0][item_name]"
-                                                       class="form-control form-control-sm"
-                                                       placeholder="Item name" required>
-                                                <textarea name="items[0][description]"
-                                                          class="form-control form-control-sm mt-1"
-                                                          rows="2" placeholder="Description"></textarea>
-                                            </td>
-                                            <td>
-                                                <input type="number" name="items[0][quantity]"
-                                                       class="form-control form-control-sm quantity"
-                                                       value="1" step="0.01" min="0.01" required
-                                                       onchange="calculateLineTotal(this)">
-                                            </td>
-                                            <td>
-                                                <input type="text" name="items[0][unit_of_measure]"
-                                                       class="form-control form-control-sm" placeholder="Unit">
-                                            </td>
-                                            <td>
-                                                <input type="number" name="items[0][unit_price]"
-                                                       class="form-control form-control-sm unit-price"
-                                                       value="0" step="0.01" min="0" required
-                                                       onchange="calculateLineTotal(this)">
-                                            </td>
-                                            <td>
-                                                <input type="number" name="items[0][tax_percentage]"
-                                                       class="form-control form-control-sm tax-percentage"
-                                                       value="{{ $settings['default_tax_rate'] ?? 18 }}" step="0.01" min="0" max="100"
-                                                       onchange="calculateLineTotal(this)">
-                                            </td>
-                                            <td>
-                                                <input type="number" class="form-control form-control-sm line-total"
-                                                       value="0" readonly>
-                                            </td>
-                                            <td>
-                                                <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
-                                                    <i class="fa fa-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
                 </div>
+
 
                 <!-- Right Column - Summary -->
                 <div class="col-md-4">
@@ -277,6 +301,9 @@
                 </div>
             </div>
 
+
+
+
             <!-- Action Buttons -->
             <div class="row">
                 <div class="col-12">
@@ -305,35 +332,52 @@ function addLineItem() {
     const tbody = document.getElementById('itemsTableBody');
     const newRow = `
         <tr data-index="${itemIndex}">
-            <td>
+            <td style="vertical-align: top;">
+                <select name="items[${itemIndex}][product_service_id]" class="form-control form-control-sm"
+                        onchange="selectProduct(this, ${itemIndex})">
+                    <option value="">Select Product/Service</option>
+                    @foreach($products as $product)
+                        <option value="{{ $product->id }}"
+                                data-name="{{ $product->name }}"
+                                data-description="{{ $product->description }}"
+                                data-unit-price="{{ $product->unit_price }}"
+                                data-unit="{{ $product->unit_of_measure }}"
+                                data-tax-rate="{{ $product->taxRate ? $product->taxRate->rate : 0 }}">
+                            [{{ $product->code }}] {{ $product->name }} - {{ ucfirst($product->type) }}
+                        </option>
+                    @endforeach
+                </select>
+                <small class="text-muted">Or leave empty to enter custom item</small>
+            </td>
+            <td style="vertical-align: top;">
                 <input type="text" name="items[${itemIndex}][item_name]"
                        class="form-control form-control-sm" placeholder="Item name" required>
                 <textarea name="items[${itemIndex}][description]"
                           class="form-control form-control-sm mt-1" rows="2" placeholder="Description"></textarea>
             </td>
-            <td>
+            <td style="vertical-align: top;">
                 <input type="number" name="items[${itemIndex}][quantity]"
                        class="form-control form-control-sm quantity"
                        value="1" step="0.01" min="0.01" required onchange="calculateLineTotal(this)">
             </td>
-            <td>
+            <td style="vertical-align: top;">
                 <input type="text" name="items[${itemIndex}][unit_of_measure]"
                        class="form-control form-control-sm" placeholder="Unit">
             </td>
-            <td>
+            <td style="vertical-align: top;">
                 <input type="number" name="items[${itemIndex}][unit_price]"
                        class="form-control form-control-sm unit-price"
                        value="0" step="0.01" min="0" required onchange="calculateLineTotal(this)">
             </td>
-            <td>
+            <td style="vertical-align: top;">
                 <input type="number" name="items[${itemIndex}][tax_percentage]"
                        class="form-control form-control-sm tax-percentage"
                        value="{{ $settings['default_tax_rate'] ?? 18 }}" step="0.01" min="0" max="100" onchange="calculateLineTotal(this)">
             </td>
-            <td>
+            <td style="vertical-align: top;">
                 <input type="number" class="form-control form-control-sm line-total" value="0" readonly>
             </td>
-            <td>
+            <td style="vertical-align: top;">
                 <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
                     <i class="fa fa-trash"></i>
                 </button>
@@ -428,6 +472,26 @@ document.querySelector('[name="currency_code"]').addEventListener('change', func
 document.addEventListener('DOMContentLoaded', function() {
     calculateTotals();
 });
+
+// Product selection function
+function selectProduct(selectElement, index) {
+    const option = selectElement.selectedOptions[0];
+
+    if (option.value) {
+        // Get the row
+        const row = selectElement.closest('tr');
+
+        // Populate the fields
+        row.querySelector(`input[name="items[${index}][item_name]"]`).value = option.dataset.name || '';
+        row.querySelector(`textarea[name="items[${index}][description]"]`).value = option.dataset.description || '';
+        row.querySelector(`input[name="items[${index}][unit_price]"]`).value = parseFloat(option.dataset.unitPrice || 0).toFixed(2);
+        row.querySelector(`input[name="items[${index}][unit_of_measure]"]`).value = option.dataset.unit || '';
+        row.querySelector(`input[name="items[${index}][tax_percentage]"]`).value = parseFloat(option.dataset.taxRate || 0).toFixed(2);
+
+        // Calculate totals
+        calculateLineTotal(row.querySelector('.quantity'));
+    }
+}
 </script>
 {{--@endpush--}}
 

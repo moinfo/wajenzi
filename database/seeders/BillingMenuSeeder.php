@@ -74,6 +74,22 @@ class BillingMenuSeeder extends Seeder
                 'icon' => 'fa fa-envelope',
                 'parent_id' => 89,
                 'list_order' => 6
+            ],
+            [
+                'id' => 96,
+                'name' => 'Products & Services',
+                'route' => 'billing.products.index',
+                'icon' => 'fa fa-box',
+                'parent_id' => 89,
+                'list_order' => 7
+            ],
+            [
+                'id' => 97,
+                'name' => 'Clients',
+                'route' => 'billing.clients.index',
+                'icon' => 'fa fa-users',
+                'parent_id' => 89,
+                'list_order' => 8
             ]
         ];
 
@@ -99,7 +115,9 @@ class BillingMenuSeeder extends Seeder
             ['id' => 586, 'name' => 'Proformas'],
             ['id' => 587, 'name' => 'Invoices'],
             ['id' => 588, 'name' => 'Payments'],
-            ['id' => 589, 'name' => 'Email Management']
+            ['id' => 589, 'name' => 'Email Management'],
+            ['id' => 590, 'name' => 'Products & Services'],
+            ['id' => 591, 'name' => 'Clients']
         ];
 
         foreach ($permissions as $permission) {

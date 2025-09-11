@@ -133,17 +133,36 @@
                                 <table class="table table-borderless" id="items-table">
                                     <thead>
                                         <tr>
-                                            <th width="35%">Item/Description</th>
-                                            <th width="10%">Qty</th>
-                                            <th width="15%">Unit Price</th>
-                                            <th width="10%">Tax %</th>
-                                            <th width="15%">Amount</th>
+                                            <th width="25%">Product/Service</th>
+                                            <th width="25%">Item/Description</th>
+                                            <th width="8%">Qty</th>
+                                            <th width="12%">Unit Price</th>
+                                            <th width="8%">Tax %</th>
+                                            <th width="12%">Amount</th>
                                             <th width="5%"></th>
                                         </tr>
                                     </thead>
                                     <tbody id="items-tbody">
                                         @foreach($proforma->items as $index => $item)
                                             <tr id="item-{{ $loop->index + 1 }}">
+                                                <td>
+                                                    <select name="items[{{ $loop->index + 1 }}][product_service_id]" class="form-control form-control-sm" 
+                                                            onchange="selectProduct(this, {{ $loop->index + 1 }})">
+                                                        <option value="">Select Product/Service</option>
+                                                        @foreach($products as $product)
+                                                            <option value="{{ $product->id }}" 
+                                                                    {{ old('items.' . ($loop->parent->index + 1) . '.product_service_id', $item->product_service_id) == $product->id ? 'selected' : '' }}
+                                                                    data-name="{{ $product->name }}"
+                                                                    data-description="{{ $product->description }}"
+                                                                    data-unit-price="{{ $product->unit_price }}"
+                                                                    data-unit="{{ $product->unit_of_measure }}"
+                                                                    data-tax-rate="{{ $product->taxRate ? $product->taxRate->rate : 0 }}">
+                                                                [{{ $product->code }}] {{ $product->name }} - {{ ucfirst($product->type) }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+                                                    <small class="text-muted">Or leave empty for custom item</small>
+                                                </td>
                                                 <td>
                                                     <input type="text" name="items[{{ $loop->index + 1 }}][item_name]" class="form-control form-control-sm" 
                                                            value="{{ $item->item_name }}" placeholder="Item name" required>
@@ -311,6 +330,23 @@ function addItem() {
     
     row.innerHTML = `
         <td>
+            <select name="items[${itemCount}][product_service_id]" class="form-control form-control-sm" 
+                    onchange="selectProduct(this, ${itemCount})">
+                <option value="">Select Product/Service</option>
+                @foreach($products as $product)
+                    <option value="{{ $product->id }}" 
+                            data-name="{{ $product->name }}"
+                            data-description="{{ $product->description }}"
+                            data-unit-price="{{ $product->unit_price }}"
+                            data-unit="{{ $product->unit_of_measure }}"
+                            data-tax-rate="{{ $product->taxRate ? $product->taxRate->rate : 0 }}">
+                        [{{ $product->code }}] {{ $product->name }} - {{ ucfirst($product->type) }}
+                    </option>
+                @endforeach
+            </select>
+            <small class="text-muted">Or leave empty for custom item</small>
+        </td>
+        <td>
             <input type="text" name="items[${itemCount}][item_name]" class="form-control form-control-sm" placeholder="Item name" required>
             <input type="text" name="items[${itemCount}][description]" class="form-control form-control-sm mt-1" placeholder="Description (optional)">
         </td>
@@ -385,5 +421,24 @@ document.getElementById('currency_code').addEventListener('change', calculateTot
 document.addEventListener('DOMContentLoaded', function() {
     calculateTotals();
 });
+
+// Product selection function
+function selectProduct(selectElement, itemId) {
+    const option = selectElement.selectedOptions[0];
+    
+    if (option.value) {
+        // Get the row
+        const row = selectElement.closest('tr');
+        
+        // Populate the fields
+        row.querySelector(`input[name="items[${itemId}][item_name]"]`).value = option.dataset.name || '';
+        row.querySelector(`input[name="items[${itemId}][description]"]`).value = option.dataset.description || '';
+        row.querySelector(`input[name="items[${itemId}][unit_price]"]`).value = parseFloat(option.dataset.unitPrice || 0).toFixed(2);
+        row.querySelector(`input[name="items[${itemId}][tax_percentage]"]`).value = parseFloat(option.dataset.taxRate || 0).toFixed(2);
+        
+        // Calculate totals
+        calculateRow(itemId);
+    }
+}
 </script>
 @endsection

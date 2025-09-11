@@ -50,7 +50,7 @@ class InvoiceController extends Controller
     public function create(Request $request)
     {
         $clients = BillingClient::active()->customers()->get();
-        $products = BillingProduct::where('is_active', true)->get();
+        $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
         
@@ -177,7 +177,7 @@ class InvoiceController extends Controller
         
         $invoice->load('items');
         $clients = BillingClient::active()->customers()->get();
-        $products = BillingProduct::where('is_active', true)->get();
+        $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
         
