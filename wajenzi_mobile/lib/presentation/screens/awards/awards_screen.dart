@@ -441,63 +441,93 @@ class _AwardsScreenState extends State<AwardsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image with year badge
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                child: SizedBox(
-                  height: 140,
-                  width: double.infinity,
-                  child: Image.asset(
-                    award.image,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [award.color.withValues(alpha: 0.7), award.color],
+          // Image with year badge - Clickable to view fullscreen
+          GestureDetector(
+            onTap: () => _showFullscreenImage(award.image, award.subtitle),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: SizedBox(
+                    height: 140,
+                    width: double.infinity,
+                    child: Image.asset(
+                      award.image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [award.color.withValues(alpha: 0.7), award.color],
+                          ),
                         ),
+                        child: Icon(award.icon, size: 60, color: Colors.white38),
                       ),
-                      child: Icon(award.icon, size: 60, color: Colors.white38),
                     ),
                   ),
                 ),
-              ),
-              // Year badge
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: award.color,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    award.year,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                // Year badge
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: award.color,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      award.year,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // Trophy icon
-              Positioned(
-                top: 12,
-                right: 12,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
+                // Trophy icon
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(award.icon, color: award.color, size: 22),
                   ),
-                  child: Icon(award.icon, color: award.color, size: 22),
                 ),
-              ),
-            ],
+                // View fullscreen indicator
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.zoom_in_rounded, color: Colors.white, size: 14),
+                        SizedBox(width: 4),
+                        Text(
+                          'View',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           // Content
@@ -570,6 +600,95 @@ class _AwardsScreenState extends State<AwardsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showFullscreenImage(String imagePath, String title) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.95),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Image with pinch to zoom
+            InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Center(
+                child: Image.asset(
+                  imagePath,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.broken_image_rounded,
+                    color: Colors.white54,
+                    size: 80,
+                  ),
+                ),
+              ),
+            ),
+            // Close button
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              right: 16,
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+            // Title at bottom
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 24,
+              left: 20,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _isSwahili ? 'Bana ili kukuza • Gusa kutoka' : 'Pinch to zoom • Tap to close',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
