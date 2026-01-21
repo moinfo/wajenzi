@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../presentation/providers/auth_provider.dart';
+import '../../presentation/screens/landing/landing_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/dashboard/dashboard_screen.dart';
 import '../../presentation/screens/attendance/attendance_screen.dart';
@@ -14,22 +15,31 @@ final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
 
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/',
     redirect: (context, state) {
       final isLoggedIn = authState.valueOrNull?.isAuthenticated ?? false;
-      final isLoggingIn = state.matchedLocation == '/login';
+      final isOnLanding = state.matchedLocation == '/';
+      final isOnLogin = state.matchedLocation == '/login';
+      final isOnAuthFlow = isOnLanding || isOnLogin;
 
-      if (!isLoggedIn && !isLoggingIn) {
-        return '/login';
+      // Allow access to landing and login pages without auth
+      if (!isLoggedIn && !isOnAuthFlow) {
+        return '/';
       }
 
-      if (isLoggedIn && isLoggingIn) {
+      // Redirect to dashboard if already logged in
+      if (isLoggedIn && isOnAuthFlow) {
         return '/dashboard';
       }
 
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/',
+        name: 'landing',
+        builder: (context, state) => const LandingScreen(),
+      ),
       GoRoute(
         path: '/login',
         name: 'login',
