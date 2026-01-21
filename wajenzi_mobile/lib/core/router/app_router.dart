@@ -10,6 +10,10 @@ import '../../presentation/screens/reports/site_daily_report_list_screen.dart';
 import '../../presentation/screens/expenses/expense_list_screen.dart';
 import '../../presentation/screens/approvals/approvals_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
+import '../../presentation/screens/about/about_screen.dart';
+import '../../presentation/screens/services/services_screen.dart';
+import '../../presentation/screens/projects/projects_screen.dart';
+import '../../presentation/screens/awards/awards_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -20,15 +24,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoggedIn = authState.valueOrNull?.isAuthenticated ?? false;
       final isOnLanding = state.matchedLocation == '/';
       final isOnLogin = state.matchedLocation == '/login';
-      final isOnAuthFlow = isOnLanding || isOnLogin;
+      final isOnAbout = state.matchedLocation == '/about';
+      final isOnServices = state.matchedLocation == '/services';
+      final isOnProjects = state.matchedLocation == '/projects';
+      final isOnAwards = state.matchedLocation == '/awards';
+      final isOnPublicPage = isOnLanding || isOnLogin || isOnAbout || isOnServices || isOnProjects || isOnAwards;
 
-      // Allow access to landing and login pages without auth
-      if (!isLoggedIn && !isOnAuthFlow) {
+      // Allow access to public pages without auth
+      if (!isLoggedIn && !isOnPublicPage) {
         return '/';
       }
 
-      // Redirect to dashboard if already logged in
-      if (isLoggedIn && isOnAuthFlow) {
+      // Redirect to dashboard if already logged in (except for about page)
+      if (isLoggedIn && (isOnLanding || isOnLogin)) {
         return '/dashboard';
       }
 
@@ -44,6 +52,26 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/login',
         name: 'login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/about',
+        name: 'about',
+        builder: (context, state) => const AboutScreen(),
+      ),
+      GoRoute(
+        path: '/services',
+        name: 'services',
+        builder: (context, state) => const ServicesScreen(),
+      ),
+      GoRoute(
+        path: '/projects',
+        name: 'projects',
+        builder: (context, state) => const ProjectsScreen(),
+      ),
+      GoRoute(
+        path: '/awards',
+        name: 'awards',
+        builder: (context, state) => const AwardsScreen(),
       ),
       ShellRoute(
         builder: (context, state, child) {

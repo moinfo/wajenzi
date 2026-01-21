@@ -85,6 +85,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/post/
+    - assets/images/awards/
 
   # Custom fonts - uncomment and add font files when ready
   # fonts:

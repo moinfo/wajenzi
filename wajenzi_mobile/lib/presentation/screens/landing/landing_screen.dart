@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../widgets/curved_bottom_nav.dart';
+import '../../widgets/landing_top_bar.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -11,15 +13,8 @@ class LandingScreen extends StatefulWidget {
 
 class _LandingScreenState extends State<LandingScreen> {
   int _selectedMenuIndex = 0;
-
-  final List<String> _menuLabels = ['Home', 'Projects', 'Services', 'About', 'Awards'];
-  final List<IconData> _menuIcons = [
-    Icons.home_rounded,
-    Icons.business_rounded,
-    Icons.design_services_rounded,
-    Icons.info_outline_rounded,
-    Icons.emoji_events_rounded,
-  ];
+  bool _isDarkMode = false;
+  bool _isSwahili = false;
 
   final List<ProjectShowcase> _projects = [
     ProjectShowcase(
@@ -90,10 +85,44 @@ class _LandingScreenState extends State<LandingScreen> {
     ),
   ];
 
+  // Dark mode colors
+  Color get _bgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+  Color get _cardBgColor => _isDarkMode ? const Color(0xFF16213E) : Colors.white;
+  Color get _textPrimaryColor => _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
+  Color get _textSecondaryColor => _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+  Color get _appBarBgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+
+  // Consistent top bar button builder
+  Widget _buildTopBarButton({
+    required VoidCallback onTap,
+    required Widget child,
+    bool isWide = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: isWide ? null : 40,
+        height: 40,
+        padding: isWide ? const EdgeInsets.symmetric(horizontal: 8) : null,
+        decoration: BoxDecoration(
+          color: _isDarkMode ? const Color(0xFF16213E) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _isDarkMode
+                ? Colors.white.withValues(alpha: 0.15)
+                : Colors.grey.withValues(alpha: 0.25),
+            width: 1,
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8),
+      backgroundColor: _bgColor,
       extendBody: true,
       body: CustomScrollView(
         slivers: [
@@ -101,20 +130,24 @@ class _LandingScreenState extends State<LandingScreen> {
           SliverAppBar(
             floating: true,
             snap: true,
-            backgroundColor: const Color(0xFFF0F4F8),
+            backgroundColor: _appBarBgColor,
             elevation: 0,
-            toolbarHeight: 60,
+            toolbarHeight: 70,
             title: Row(
               children: [
+                // Logo
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
                     color: const Color(0xFF1ABC9C).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+                    ),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     child: Padding(
                       padding: const EdgeInsets.all(4),
                       child: Image.asset(
@@ -130,95 +163,137 @@ class _LandingScreenState extends State<LandingScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'WAJENZI',
-                      style: TextStyle(
-                        color: Color(0xFF1ABC9C),
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
+                // Name and Motto
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'WAJENZI',
+                        style: TextStyle(
+                          color: Color(0xFF1ABC9C),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Professional Co. Ltd',
-                      style: TextStyle(
-                        color: Color(0xFF7F8C8D),
-                        fontSize: 10,
+                      Text(
+                        _isSwahili
+                            ? 'Mabingwa wa Uthabiti na Ubora'
+                            : 'Masters of Consistency and Quality',
+                        style: TextStyle(
+                          color: _textSecondaryColor,
+                          fontSize: 8,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
             actions: [
-              TextButton(
-                onPressed: () => context.go('/login'),
-                style: TextButton.styleFrom(
-                  backgroundColor: const Color(0xFF1ABC9C),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: const Text(
-                  'Login',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-            ],
-          ),
-
-          // Projects Count Header
-          SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.construction, color: Colors.white, size: 20),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Featured Projects',
+              // Language Toggle with National Flags
+              _buildTopBarButton(
+                onTap: () => setState(() => _isSwahili = !_isSwahili),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: SizedBox(
+                        width: 20,
+                        height: 13,
+                        child: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      _isSwahili ? 'SW' : 'EN',
                       style: TextStyle(
-                        color: Colors.white,
+                        fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        color: _isDarkMode ? Colors.white : const Color(0xFF2C3E50),
                       ),
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${_projects.length} Projects',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
+                isWide: true,
               ),
-            ),
+              const SizedBox(width: 8),
+              // Dark Mode Toggle
+              _buildTopBarButton(
+                onTap: () => setState(() => _isDarkMode = !_isDarkMode),
+                child: Icon(
+                  _isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                  size: 20,
+                  color: _isDarkMode
+                      ? const Color(0xFF1ABC9C)
+                      : const Color(0xFFF39C12),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Cart Icon Button
+              _buildTopBarButton(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(_isSwahili ? 'Kikapu kitupu' : 'Cart is empty'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 20,
+                        color: _isDarkMode ? Colors.white : const Color(0xFF2C3E50),
+                      ),
+                    ),
+                    // Cart badge
+                    Positioned(
+                      right: 2,
+                      top: 2,
+                      child: Container(
+                        width: 14,
+                        height: 14,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFE74C3C),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '0',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Login Icon Button
+              _buildTopBarButton(
+                onTap: () => context.go('/login'),
+                child: Icon(
+                  Icons.login_rounded,
+                  size: 20,
+                  color: _isDarkMode ? Colors.white : const Color(0xFF2C3E50),
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
           ),
 
           // Project Posts
@@ -235,28 +310,38 @@ class _LandingScreenState extends State<LandingScreen> {
               padding: const EdgeInsets.all(20),
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF3498DB), Color(0xFF1ABC9C)],
+                gradient: LinearGradient(
+                  colors: _isDarkMode
+                      ? [const Color(0xFF0F3460), const Color(0xFF16213E)]
+                      : [const Color(0xFF3498DB), const Color(0xFF1ABC9C)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
+                border: _isDarkMode
+                    ? Border.all(color: const Color(0xFF1ABC9C).withValues(alpha: 0.3))
+                    : null,
               ),
               child: Column(
                 children: [
-                  const Text(
-                    'Ready to Build Your Dream?',
-                    style: TextStyle(
+                  Text(
+                    _isSwahili
+                        ? 'Uko Tayari Kujenga Ndoto Yako?'
+                        : 'Ready to Build Your Dream?',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Join Wajenzi and get access to professional construction services',
+                  Text(
+                    _isSwahili
+                        ? 'Jiunge na Wajenzi upate huduma za ujenzi za kitaalamu'
+                        : 'Join Wajenzi and get access to professional construction services',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 13,
                     ),
@@ -265,11 +350,11 @@ class _LandingScreenState extends State<LandingScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildStatBadge('120+', 'Projects'),
+                      _buildStatBadge('120+', _isSwahili ? 'Miradi' : 'Projects'),
                       const SizedBox(width: 16),
-                      _buildStatBadge('50+', 'Experts'),
+                      _buildStatBadge('50+', _isSwahili ? 'Wataalamu' : 'Experts'),
                       const SizedBox(width: 16),
-                      _buildStatBadge('200+', 'Completed'),
+                      _buildStatBadge('200+', _isSwahili ? 'Imekamilika' : 'Completed'),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -278,25 +363,29 @@ class _LandingScreenState extends State<LandingScreen> {
                     child: ElevatedButton(
                       onPressed: () => context.go('/login'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF1ABC9C),
+                        backgroundColor: _isDarkMode
+                            ? const Color(0xFF1ABC9C)
+                            : Colors.white,
+                        foregroundColor: _isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF1ABC9C),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Get Started',
-                            style: TextStyle(
+                            _isSwahili ? 'Anza Sasa' : 'Get Started',
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_rounded),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward_rounded),
                         ],
                       ),
                     ),
@@ -315,7 +404,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   Text(
                     'Powered by Moinfotech',
                     style: TextStyle(
-                      color: Colors.grey[500],
+                      color: _isDarkMode ? Colors.white38 : Colors.grey[500],
                       fontSize: 12,
                     ),
                   ),
@@ -323,7 +412,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   Text(
                     'v1.0.0',
                     style: TextStyle(
-                      color: Colors.grey[400],
+                      color: _isDarkMode ? Colors.white24 : Colors.grey[400],
                       fontSize: 10,
                     ),
                   ),
@@ -334,167 +423,11 @@ class _LandingScreenState extends State<LandingScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildCurvedBottomNav(),
-    );
-  }
-
-  Widget _buildCurvedBottomNav() {
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    // Reorder items so active is always in center (index 2)
-    List<int> getReorderedIndices() {
-      final itemCount = _menuLabels.length;
-      final centerIndex = itemCount ~/ 2; // Center position (2 for 5 items)
-      final offset = _selectedMenuIndex - centerIndex;
-
-      List<int> indices = [];
-      for (int i = 0; i < itemCount; i++) {
-        int newIndex = (i + offset) % itemCount;
-        if (newIndex < 0) newIndex += itemCount;
-        indices.add(newIndex);
-      }
-      return indices;
-    }
-
-    final reorderedIndices = getReorderedIndices();
-
-    return SizedBox(
-      height: 90 + bottomPadding,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Dark Glassmorphism background with curved notch
-          Positioned(
-            top: 25,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: ClipPath(
-              clipper: CurvedNavClipper(
-                activeIndex: 2,
-                itemCount: _menuLabels.length,
-              ),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.black.withValues(alpha: 0.75),
-                        Colors.black.withValues(alpha: 0.9),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Border overlay for glass effect
-          Positioned(
-            top: 25,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: CustomPaint(
-              painter: CurvedNavBorderPainter(
-                activeIndex: 2,
-                itemCount: _menuLabels.length,
-                isDark: true,
-              ),
-            ),
-          ),
-          // Menu items - reordered so active is in center
-          Positioned(
-            top: 18,
-            left: 0,
-            right: 0,
-            bottom: bottomPadding,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: List.generate(
-                _menuLabels.length,
-                (position) => _buildNavItem(reorderedIndices[position], position == 2),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(int index, bool isCenter) {
-    return GestureDetector(
-      onTap: () => setState(() => _selectedMenuIndex = index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: 60,
-        height: 75,
-        child: Stack(
-          clipBehavior: Clip.none,
-          alignment: Alignment.center,
-          children: [
-            // Icon with glassmorphism for active
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutBack,
-              top: isCenter ? -12 : 12,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: isCenter ? 58 : 38,
-                height: isCenter ? 58 : 38,
-                decoration: BoxDecoration(
-                  gradient: isCenter
-                      ? const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
-                        )
-                      : null,
-                  color: isCenter ? null : Colors.transparent,
-                  shape: BoxShape.circle,
-                  boxShadow: isCenter
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFF1ABC9C).withValues(alpha: 0.6),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ]
-                      : null,
-                  border: isCenter
-                      ? Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          width: 2,
-                        )
-                      : null,
-                ),
-                child: Icon(
-                  _menuIcons[index],
-                  size: isCenter ? 26 : 20,
-                  color: isCenter ? Colors.white : Colors.white.withValues(alpha: 0.7),
-                ),
-              ),
-            ),
-            // Label
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              bottom: isCenter ? 2 : 6,
-              child: AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 300),
-                style: TextStyle(
-                  fontSize: isCenter ? 11 : 10,
-                  fontWeight: isCenter ? FontWeight.w700 : FontWeight.w500,
-                  color: isCenter
-                      ? const Color(0xFF1ABC9C)
-                      : Colors.white.withValues(alpha: 0.7),
-                ),
-                child: Text(_menuLabels[index]),
-              ),
-            ),
-          ],
-        ),
+      bottomNavigationBar: CurvedBottomNav(
+        selectedIndex: _selectedMenuIndex,
+        isDarkMode: _isDarkMode,
+        isSwahili: _isSwahili,
+        onItemTapped: (index) => setState(() => _selectedMenuIndex = index),
       ),
     );
   }
@@ -504,9 +437,14 @@ class _LandingScreenState extends State<LandingScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
+        border: _isDarkMode
+            ? Border.all(color: const Color(0xFF1ABC9C).withValues(alpha: 0.2))
+            : null,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: _isDarkMode
+                ? const Color(0xFF1ABC9C).withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -851,160 +789,7 @@ class _LandingScreenState extends State<LandingScreen> {
         return Icons.business;
     }
   }
-}
 
-// Clipper for curved bottom navigation with notch
-class CurvedNavClipper extends CustomClipper<Path> {
-  final int activeIndex;
-  final int itemCount;
-
-  CurvedNavClipper({required this.activeIndex, required this.itemCount});
-
-  @override
-  Path getClip(Size size) {
-    final itemWidth = size.width / itemCount;
-    final centerX = (activeIndex * itemWidth) + (itemWidth / 2);
-
-    // Notch dimensions
-    const notchRadius = 40.0;
-    const notchDepth = 8.0;
-    const cornerRadius = 25.0;
-
-    final path = Path();
-
-    // Start from top left corner
-    path.moveTo(0, cornerRadius);
-    path.quadraticBezierTo(0, 0, cornerRadius, 0);
-
-    // Draw to start of notch curve
-    path.lineTo(centerX - notchRadius - 10, 0);
-
-    // Smooth curve into notch
-    path.cubicTo(
-      centerX - notchRadius, 0,
-      centerX - notchRadius + 5, notchDepth,
-      centerX - notchRadius + 15, notchDepth + 25,
-    );
-
-    // Arc for the notch (semi-circle going down)
-    path.arcToPoint(
-      Offset(centerX + notchRadius - 15, notchDepth + 25),
-      radius: const Radius.circular(notchRadius - 8),
-      clockwise: false,
-    );
-
-    // Smooth curve out of notch
-    path.cubicTo(
-      centerX + notchRadius - 5, notchDepth,
-      centerX + notchRadius, 0,
-      centerX + notchRadius + 10, 0,
-    );
-
-    // Continue to top right corner
-    path.lineTo(size.width - cornerRadius, 0);
-    path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
-
-    // Complete the rectangle
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CurvedNavClipper oldClipper) {
-    return oldClipper.activeIndex != activeIndex;
-  }
-}
-
-// Border painter for the curved navigation
-class CurvedNavBorderPainter extends CustomPainter {
-  final int activeIndex;
-  final int itemCount;
-  final bool isDark;
-
-  CurvedNavBorderPainter({
-    required this.activeIndex,
-    required this.itemCount,
-    this.isDark = false,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final itemWidth = size.width / itemCount;
-    final centerX = (activeIndex * itemWidth) + (itemWidth / 2);
-
-    // Notch dimensions - must match clipper
-    const notchRadius = 40.0;
-    const notchDepth = 8.0;
-    const cornerRadius = 25.0;
-
-    final path = Path();
-
-    // Start from top left corner
-    path.moveTo(0, cornerRadius);
-    path.quadraticBezierTo(0, 0, cornerRadius, 0);
-
-    // Draw to start of notch curve
-    path.lineTo(centerX - notchRadius - 10, 0);
-
-    // Smooth curve into notch
-    path.cubicTo(
-      centerX - notchRadius, 0,
-      centerX - notchRadius + 5, notchDepth,
-      centerX - notchRadius + 15, notchDepth + 25,
-    );
-
-    // Arc for the notch
-    path.arcToPoint(
-      Offset(centerX + notchRadius - 15, notchDepth + 25),
-      radius: const Radius.circular(notchRadius - 8),
-      clockwise: false,
-    );
-
-    // Smooth curve out of notch
-    path.cubicTo(
-      centerX + notchRadius - 5, notchDepth,
-      centerX + notchRadius, 0,
-      centerX + notchRadius + 10, 0,
-    );
-
-    // Continue to top right corner
-    path.lineTo(size.width - cornerRadius, 0);
-    path.quadraticBezierTo(size.width, 0, size.width, cornerRadius);
-
-    // Draw the border - lighter for dark mode
-    final borderPaint = Paint()
-      ..color = isDark
-          ? Colors.white.withValues(alpha: 0.2)
-          : Colors.white.withValues(alpha: 0.6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    canvas.drawPath(path, borderPaint);
-
-    // Draw teal glow inside notch
-    final glowPaint = Paint()
-      ..color = const Color(0xFF1ABC9C).withValues(alpha: isDark ? 0.3 : 0.15)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-
-    final notchPath = Path();
-    notchPath.moveTo(centerX - notchRadius + 15, notchDepth + 25);
-    notchPath.arcToPoint(
-      Offset(centerX + notchRadius - 15, notchDepth + 25),
-      radius: const Radius.circular(notchRadius - 8),
-      clockwise: false,
-    );
-    canvas.drawPath(notchPath, glowPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CurvedNavBorderPainter oldDelegate) {
-    return oldDelegate.activeIndex != activeIndex || oldDelegate.isDark != isDark;
-  }
 }
 
 class ProjectShowcase {
