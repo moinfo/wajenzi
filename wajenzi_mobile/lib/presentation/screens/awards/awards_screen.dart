@@ -189,7 +189,7 @@ class _AwardsScreenState extends State<AwardsScreen> {
           height: 220,
           width: double.infinity,
           child: Image.asset(
-            'assets/images/awards/BQ6A3834.jpeg',
+            'assets/images/awards/Wins_Contractor.jpeg',
             fit: BoxFit.cover,
             errorBuilder: (_, __, ___) => Container(
               decoration: const BoxDecoration(
