@@ -21,10 +21,9 @@ class AdminComposer {
     /**
      * Create a new profile composer.
      *
-     * @param  Auth  $auth
      * @return void
      */
-    public function __construct(Auth $auth) {
+    public function __construct() {
         $this->user = Auth::user();
         $this->user_notifications = $this->getNotifications();
         $this->user_menu = $this->getUserMenu($this->user);
