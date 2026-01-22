@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../presentation/providers/auth_provider.dart';
+import '../../presentation/providers/settings_provider.dart';
 import '../../presentation/screens/landing/landing_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/dashboard/dashboard_screen.dart';
@@ -14,6 +15,8 @@ import '../../presentation/screens/about/about_screen.dart';
 import '../../presentation/screens/services/services_screen.dart';
 import '../../presentation/screens/projects/projects_screen.dart';
 import '../../presentation/screens/awards/awards_screen.dart';
+import '../../presentation/screens/cart/cart_screen.dart';
+import '../../presentation/widgets/curved_internal_nav.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -28,7 +31,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnServices = state.matchedLocation == '/services';
       final isOnProjects = state.matchedLocation == '/projects';
       final isOnAwards = state.matchedLocation == '/awards';
-      final isOnPublicPage = isOnLanding || isOnLogin || isOnAbout || isOnServices || isOnProjects || isOnAwards;
+      final isOnCart = state.matchedLocation == '/cart';
+      final isOnPublicPage = isOnLanding || isOnLogin || isOnAbout || isOnServices || isOnProjects || isOnAwards || isOnCart;
 
       // Allow access to public pages without auth
       if (!isLoggedIn && !isOnPublicPage) {
@@ -73,6 +77,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'awards',
         builder: (context, state) => const AwardsScreen(),
       ),
+      GoRoute(
+        path: '/cart',
+        name: 'cart',
+        builder: (context, state) => const CartScreen(),
+      ),
       ShellRoute(
         builder: (context, state, child) {
           return MainScaffold(child: child);
@@ -114,22 +123,10 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class MainScaffold extends StatelessWidget {
+class MainScaffold extends ConsumerWidget {
   final Widget child;
 
   const MainScaffold({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: const MainBottomNavBar(),
-    );
-  }
-}
-
-class MainBottomNavBar extends ConsumerWidget {
-  const MainBottomNavBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -140,56 +137,236 @@ class MainBottomNavBar extends ConsumerWidget {
     if (location.startsWith('/attendance')) currentIndex = 1;
     if (location.startsWith('/reports')) currentIndex = 2;
     if (location.startsWith('/approvals')) currentIndex = 3;
-    if (location.startsWith('/settings')) currentIndex = 4;
 
-    return NavigationBar(
-      selectedIndex: currentIndex,
-      onDestinationSelected: (index) {
-        switch (index) {
-          case 0:
-            context.go('/dashboard');
-            break;
-          case 1:
-            context.go('/attendance');
-            break;
-          case 2:
-            context.go('/reports');
-            break;
-          case 3:
-            context.go('/approvals');
-            break;
-          case 4:
-            context.go('/settings');
-            break;
-        }
-      },
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.dashboard_outlined),
-          selectedIcon: Icon(Icons.dashboard),
-          label: 'Home',
+    return Scaffold(
+      extendBody: true,
+      drawer: const MainDrawer(),
+      body: child,
+      bottomNavigationBar: CurvedInternalNav(selectedIndex: currentIndex),
+    );
+  }
+}
+
+class MainDrawer extends ConsumerWidget {
+  const MainDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authStateProvider);
+    final user = authState.valueOrNull?.user;
+    final isDarkMode = ref.watch(isDarkModeProvider);
+    final isSwahili = ref.watch(isSwahiliProvider);
+
+    return Drawer(
+      backgroundColor: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+      child: SafeArea(
+        child: Column(
+          children: [
+            // Header with user info
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(24),
+                  bottomRight: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 35,
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    child: Text(
+                      user?.name.substring(0, 1).toUpperCase() ?? 'U',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    user?.name ?? 'User',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (user?.email != null)
+                    Text(
+                      user!.email!,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  if (user?.designation != null)
+                    Container(
+                      margin: const EdgeInsets.only(top: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        user!.designation!,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Menu Items
+            _DrawerItem(
+              icon: Icons.settings_rounded,
+              label: isSwahili ? 'Mipangilio' : 'Settings',
+              isDarkMode: isDarkMode,
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/settings');
+              },
+            ),
+            _DrawerItem(
+              icon: Icons.receipt_long_rounded,
+              label: isSwahili ? 'Matumizi' : 'Expenses',
+              isDarkMode: isDarkMode,
+              onTap: () {
+                Navigator.pop(context);
+                context.go('/expenses');
+              },
+            ),
+            _DrawerItem(
+              icon: Icons.help_outline_rounded,
+              label: isSwahili ? 'Msaada' : 'Help & Support',
+              isDarkMode: isDarkMode,
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(isSwahili ? 'Inakuja hivi karibuni!' : 'Coming soon!'),
+                  ),
+                );
+              },
+            ),
+
+            const Spacer(),
+
+            // Logout button
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        backgroundColor: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+                        title: Text(
+                          isSwahili ? 'Ondoka' : 'Logout',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white : const Color(0xFF2C3E50),
+                          ),
+                        ),
+                        content: Text(
+                          isSwahili
+                              ? 'Una uhakika unataka kuondoka?'
+                              : 'Are you sure you want to logout?',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D),
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text(
+                              isSwahili ? 'Ondoka' : 'Logout',
+                              style: const TextStyle(color: Color(0xFFE74C3C)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true && context.mounted) {
+                      await ref.read(authStateProvider.notifier).logout();
+                      if (context.mounted) {
+                        context.go('/');
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.logout_rounded, size: 20),
+                  label: Text(isSwahili ? 'Ondoka' : 'Logout'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFE74C3C),
+                    side: const BorderSide(color: Color(0xFFE74C3C)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
-        NavigationDestination(
-          icon: Icon(Icons.access_time_outlined),
-          selectedIcon: Icon(Icons.access_time),
-          label: 'Attendance',
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDarkMode;
+  final VoidCallback onTap;
+
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.isDarkMode,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: isDarkMode ? Colors.white70 : const Color(0xFF2C3E50),
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : const Color(0xFF2C3E50),
+          fontWeight: FontWeight.w500,
         ),
-        NavigationDestination(
-          icon: Icon(Icons.description_outlined),
-          selectedIcon: Icon(Icons.description),
-          label: 'Reports',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.check_circle_outline),
-          selectedIcon: Icon(Icons.check_circle),
-          label: 'Approvals',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.settings_outlined),
-          selectedIcon: Icon(Icons.settings),
-          label: 'Settings',
-        ),
-      ],
+      ),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
     );
   }
 }

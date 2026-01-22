@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/theme_config.dart';
+import '../../providers/settings_provider.dart';
 
 class ExpenseListScreen extends ConsumerWidget {
   const ExpenseListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expenses'),
+        title: Text(isSwahili ? 'Matumizi' : 'Expenses'),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -23,16 +26,17 @@ class ExpenseListScreen extends ConsumerWidget {
         itemBuilder: (context, index) {
           return _ExpenseCard(
             description: index == 0
-                ? 'Building Materials - Cement'
+                ? (isSwahili ? 'Vifaa vya Ujenzi - Saruji' : 'Building Materials - Cement')
                 : (index == 1
-                    ? 'Transportation'
-                    : 'Equipment Rental'),
+                    ? (isSwahili ? 'Usafiri' : 'Transportation')
+                    : (isSwahili ? 'Kukodisha Vifaa' : 'Equipment Rental')),
             amount: 150000 + (index * 50000),
             date: DateTime.now().subtract(Duration(days: index)),
             category: index == 0
-                ? 'Materials'
-                : (index == 1 ? 'Transport' : 'Equipment'),
+                ? (isSwahili ? 'Vifaa' : 'Materials')
+                : (index == 1 ? (isSwahili ? 'Usafiri' : 'Transport') : (isSwahili ? 'Vifaa' : 'Equipment')),
             status: index == 0 ? 'draft' : (index == 1 ? 'pending' : 'approved'),
+            isSwahili: isSwahili,
           );
         },
       ),
@@ -41,7 +45,7 @@ class ExpenseListScreen extends ConsumerWidget {
           // Navigate to create expense
         },
         icon: const Icon(Icons.add),
-        label: const Text('New Expense'),
+        label: Text(isSwahili ? 'Matumizi Mapya' : 'New Expense'),
       ),
     );
   }
@@ -53,6 +57,7 @@ class _ExpenseCard extends StatelessWidget {
   final DateTime date;
   final String category;
   final String status;
+  final bool isSwahili;
 
   const _ExpenseCard({
     required this.description,
@@ -60,7 +65,23 @@ class _ExpenseCard extends StatelessWidget {
     required this.date,
     required this.category,
     required this.status,
+    required this.isSwahili,
   });
+
+  String get statusText {
+    switch (status) {
+      case 'draft':
+        return isSwahili ? 'RASIMU' : 'DRAFT';
+      case 'pending':
+        return isSwahili ? 'INASUBIRI' : 'PENDING';
+      case 'approved':
+        return isSwahili ? 'IMEIDHINISHWA' : 'APPROVED';
+      case 'rejected':
+        return isSwahili ? 'IMEKATALIWA' : 'REJECTED';
+      default:
+        return status.toUpperCase();
+    }
+  }
 
   Color get statusColor {
     switch (status) {
@@ -150,7 +171,7 @@ class _ExpenseCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      status.toUpperCase(),
+                      statusText,
                       style: TextStyle(
                         color: statusColor,
                         fontWeight: FontWeight.w600,

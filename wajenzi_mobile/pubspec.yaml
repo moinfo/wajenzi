@@ -42,7 +42,7 @@ dependencies:
   permission_handler: ^11.3.1
 
   # Background Tasks
-  workmanager: ^0.5.2
+  workmanager: ^0.9.0
 
   # Firebase (for push notifications)
   firebase_core: ^3.13.0
@@ -66,6 +66,12 @@ dependencies:
   uuid: ^4.5.1
   collection: ^1.19.1
 
+  # URL Launcher (for WhatsApp, phone, email)
+  url_launcher: ^6.3.1
+
+  # Settings Persistence
+  shared_preferences: ^2.3.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -78,6 +84,25 @@ dev_dependencies:
   json_serializable: ^6.9.4
   riverpod_generator: ^2.6.5
   drift_dev: ^2.26.0
+
+  # App Icon Generator
+  flutter_launcher_icons: ^0.14.3
+
+# App Icon Configuration
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/logo.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/logo.png"
+  remove_alpha_ios: true
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false
 
 flutter:
   uses-material-design: true

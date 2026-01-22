@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -11,10 +12,11 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull?.user;
+    final isSwahili = ref.watch(isSwahiliProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(isSwahili ? 'Mipangilio' : 'Settings'),
       ),
       body: ListView(
         children: [
@@ -77,27 +79,27 @@ class SettingsScreen extends ConsumerWidget {
 
           // Settings Sections
           _SettingsSection(
-            title: 'Account',
+            title: isSwahili ? 'Akaunti' : 'Account',
             children: [
               _SettingsTile(
                 icon: Icons.person_outline,
-                title: 'Profile',
+                title: isSwahili ? 'Wasifu' : 'Profile',
                 onTap: () {},
               ),
               _SettingsTile(
                 icon: Icons.lock_outline,
-                title: 'Change Password',
+                title: isSwahili ? 'Badilisha Nenosiri' : 'Change Password',
                 onTap: () {},
               ),
             ],
           ),
 
           _SettingsSection(
-            title: 'App Settings',
+            title: isSwahili ? 'Mipangilio ya Programu' : 'App Settings',
             children: [
               _SettingsTile(
                 icon: Icons.notifications_outlined,
-                title: 'Notifications',
+                title: isSwahili ? 'Arifa' : 'Notifications',
                 trailing: Switch(
                   value: true,
                   onChanged: (value) {},
@@ -105,35 +107,35 @@ class SettingsScreen extends ConsumerWidget {
               ),
               _SettingsTile(
                 icon: Icons.sync_outlined,
-                title: 'Sync Status',
-                subtitle: 'Last synced: 5 minutes ago',
+                title: isSwahili ? 'Hali ya Usawazishaji' : 'Sync Status',
+                subtitle: isSwahili ? 'Ulisawazishwa: dakika 5 zilizopita' : 'Last synced: 5 minutes ago',
                 onTap: () {},
               ),
               _SettingsTile(
                 icon: Icons.language,
-                title: 'Language',
-                subtitle: 'English',
+                title: isSwahili ? 'Lugha' : 'Language',
+                subtitle: isSwahili ? 'Kiswahili' : 'English',
                 onTap: () {},
               ),
             ],
           ),
 
           _SettingsSection(
-            title: 'About',
+            title: isSwahili ? 'Kuhusu' : 'About',
             children: [
               _SettingsTile(
                 icon: Icons.info_outline,
-                title: 'About Wajenzi',
+                title: isSwahili ? 'Kuhusu Wajenzi' : 'About Wajenzi',
                 onTap: () {},
               ),
               _SettingsTile(
                 icon: Icons.privacy_tip_outlined,
-                title: 'Privacy Policy',
+                title: isSwahili ? 'Sera ya Faragha' : 'Privacy Policy',
                 onTap: () {},
               ),
               _SettingsTile(
                 icon: Icons.description_outlined,
-                title: 'Terms of Service',
+                title: isSwahili ? 'Masharti ya Huduma' : 'Terms of Service',
                 onTap: () {},
               ),
             ],
@@ -149,16 +151,18 @@ class SettingsScreen extends ConsumerWidget {
                 final confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Logout'),
-                    content: const Text('Are you sure you want to logout?'),
+                    title: Text(isSwahili ? 'Ondoka' : 'Logout'),
+                    content: Text(isSwahili
+                        ? 'Una uhakika unataka kuondoka?'
+                        : 'Are you sure you want to logout?'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+                        child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Logout'),
+                        child: Text(isSwahili ? 'Ondoka' : 'Logout'),
                       ),
                     ],
                   ),
@@ -172,7 +176,7 @@ class SettingsScreen extends ConsumerWidget {
                 }
               },
               icon: const Icon(Icons.logout),
-              label: const Text('Logout'),
+              label: Text(isSwahili ? 'Ondoka' : 'Logout'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.error,
                 side: BorderSide(color: AppColors.error),
@@ -186,7 +190,7 @@ class SettingsScreen extends ConsumerWidget {
           // Version Info
           Center(
             child: Text(
-              'Version 1.0.0',
+              isSwahili ? 'Toleo 1.0.0' : 'Version 1.0.0',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textHint,
                   ),

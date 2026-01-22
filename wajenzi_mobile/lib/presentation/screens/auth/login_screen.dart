@@ -159,25 +159,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Column(
                     children: [
                       const SizedBox(height: 8),
-                      // Top bar with dark mode and language toggle
+                      // Top bar with back, dark mode and language toggle
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          // Dark mode toggle
-                          GestureDetector(
-                            onTap: () => setState(() => _isDarkMode = !_isDarkMode),
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
+                          // Back button and dark mode toggle
+                          Row(
+                            children: [
+                              // Back to landing button
+                              GestureDetector(
+                                onTap: () => context.go('/'),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.arrow_back_rounded,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
+                                ),
                               ),
-                              child: Icon(
-                                _isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                                color: Colors.white,
-                                size: 22,
+                              const SizedBox(width: 12),
+                              // Dark mode toggle
+                              GestureDetector(
+                                onTap: () => setState(() => _isDarkMode = !_isDarkMode),
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    _isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                                    color: Colors.white,
+                                    size: 22,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                           // Language toggle
                           GestureDetector(

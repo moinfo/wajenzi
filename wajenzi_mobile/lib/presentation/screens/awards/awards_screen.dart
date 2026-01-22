@@ -1,18 +1,21 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
 
-class AwardsScreen extends StatefulWidget {
+class AwardsScreen extends ConsumerStatefulWidget {
   const AwardsScreen({super.key});
 
   @override
-  State<AwardsScreen> createState() => _AwardsScreenState();
+  ConsumerState<AwardsScreen> createState() => _AwardsScreenState();
 }
 
-class _AwardsScreenState extends State<AwardsScreen> {
-  bool _isDarkMode = false;
-  bool _isSwahili = false;
+class _AwardsScreenState extends ConsumerState<AwardsScreen> {
+  // Use global settings from provider
+  bool get _isDarkMode => ref.watch(isDarkModeProvider);
+  bool get _isSwahili => ref.watch(isSwahiliProvider);
 
   // Featured award carousel
   final PageController _featuredController = PageController();
@@ -126,8 +129,8 @@ class _AwardsScreenState extends State<AwardsScreen> {
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
-        onDarkModeToggle: () => setState(() => _isDarkMode = !_isDarkMode),
-        onLanguageToggle: () => setState(() => _isSwahili = !_isSwahili),
+        onDarkModeToggle: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
+        onLanguageToggle: () => ref.read(settingsProvider.notifier).toggleLanguage(),
         flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
       ),
       body: CustomScrollView(

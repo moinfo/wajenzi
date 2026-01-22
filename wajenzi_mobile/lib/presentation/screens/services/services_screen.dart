@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
 
-class ServicesScreen extends StatefulWidget {
+class ServicesScreen extends ConsumerStatefulWidget {
   const ServicesScreen({super.key});
 
   @override
-  State<ServicesScreen> createState() => _ServicesScreenState();
+  ConsumerState<ServicesScreen> createState() => _ServicesScreenState();
 }
 
-class _ServicesScreenState extends State<ServicesScreen> {
-  bool _isDarkMode = false;
-  bool _isSwahili = false;
+class _ServicesScreenState extends ConsumerState<ServicesScreen> {
+  // Use global settings from provider
+  bool get _isDarkMode => ref.watch(isDarkModeProvider);
+  bool get _isSwahili => ref.watch(isSwahiliProvider);
 
   // Dark mode colors
   Color get _bgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
@@ -126,8 +129,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
-        onDarkModeToggle: () => setState(() => _isDarkMode = !_isDarkMode),
-        onLanguageToggle: () => setState(() => _isSwahili = !_isSwahili),
+        onDarkModeToggle: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
+        onLanguageToggle: () => ref.read(settingsProvider.notifier).toggleLanguage(),
         flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
       ),
       body: CustomScrollView(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/theme_config.dart';
+import '../../providers/settings_provider.dart';
 
 class AttendanceScreen extends ConsumerStatefulWidget {
   const AttendanceScreen({super.key});
@@ -13,6 +14,8 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   bool _hasCheckedIn = false;
   bool _hasCheckedOut = false;
   bool _isLoading = false;
+
+  bool get _isSwahili => ref.watch(isSwahiliProvider);
 
   Future<void> _handleCheckIn() async {
     setState(() => _isLoading = true);
@@ -27,7 +30,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Check-in recorded successfully')),
+        SnackBar(content: Text(_isSwahili ? 'Kuingia kumerekodiwa kikamilifu' : 'Check-in recorded successfully')),
       );
     }
   }
@@ -45,7 +48,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Check-out recorded successfully')),
+        SnackBar(content: Text(_isSwahili ? 'Kutoka kumerekodiwa kikamilifu' : 'Check-out recorded successfully')),
       );
     }
   }
@@ -54,7 +57,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Attendance'),
+        title: Text(_isSwahili ? 'Mahudhurio' : 'Attendance'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -68,7 +71,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                 child: Column(
                   children: [
                     Text(
-                      'Today',
+                      _isSwahili ? 'Leo' : 'Today',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
@@ -85,7 +88,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _StatusIndicator(
-                          label: 'Check In',
+                          label: _isSwahili ? 'Kuingia' : 'Check In',
                           time: _hasCheckedIn ? '08:30 AM' : '--:--',
                           isComplete: _hasCheckedIn,
                         ),
@@ -95,7 +98,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                           color: Colors.grey.shade300,
                         ),
                         _StatusIndicator(
-                          label: 'Check Out',
+                          label: _isSwahili ? 'Kutoka' : 'Check Out',
                           time: _hasCheckedOut ? '05:30 PM' : '--:--',
                           isComplete: _hasCheckedOut,
                         ),
@@ -128,8 +131,10 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                               ),
                         label: Text(
                           !_hasCheckedIn
-                              ? 'Check In'
-                              : (!_hasCheckedOut ? 'Check Out' : 'Completed'),
+                              ? (_isSwahili ? 'Kuingia' : 'Check In')
+                              : (!_hasCheckedOut
+                                  ? (_isSwahili ? 'Kutoka' : 'Check Out')
+                                  : (_isSwahili ? 'Imekamilika' : 'Completed')),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: !_hasCheckedIn
@@ -149,7 +154,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
 
             // Recent History
             Text(
-              'Recent History',
+              _isSwahili ? 'Historia ya Hivi Karibuni' : 'Recent History',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -161,19 +166,22 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
               date: DateTime.now().subtract(const Duration(days: 1)),
               checkIn: '08:45 AM',
               checkOut: '05:30 PM',
-              status: 'Present',
+              status: _isSwahili ? 'Alikuwepo' : 'Present',
+              isLate: false,
             ),
             _HistoryItem(
               date: DateTime.now().subtract(const Duration(days: 2)),
               checkIn: '09:15 AM',
               checkOut: '06:00 PM',
-              status: 'Late',
+              status: _isSwahili ? 'Amechelewa' : 'Late',
+              isLate: true,
             ),
             _HistoryItem(
               date: DateTime.now().subtract(const Duration(days: 3)),
               checkIn: '08:30 AM',
               checkOut: '05:45 PM',
-              status: 'Present',
+              status: _isSwahili ? 'Alikuwepo' : 'Present',
+              isLate: false,
             ),
           ],
         ),
@@ -182,11 +190,12 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final months = _isSwahili
+        ? ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des']
+        : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final days = _isSwahili
+        ? ['Jmt', 'Jmt', 'Jmt', 'Alk', 'Ijm', 'Jma', 'Jpi']
+        : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
   }
 }
@@ -235,17 +244,18 @@ class _HistoryItem extends StatelessWidget {
   final String checkIn;
   final String checkOut;
   final String status;
+  final bool isLate;
 
   const _HistoryItem({
     required this.date,
     required this.checkIn,
     required this.checkOut,
     required this.status,
+    required this.isLate,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isLate = status == 'Late';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
