@@ -1,30 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/theme_config.dart';
+import '../../providers/settings_provider.dart';
 
 class ApprovalsScreen extends ConsumerWidget {
   const ApprovalsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Approvals'),
-          bottom: const TabBar(
+          title: Text(isSwahili ? 'Idhini' : 'Approvals'),
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Pending'),
-              Tab(text: 'Approved'),
-              Tab(text: 'Rejected'),
+              Tab(text: isSwahili ? 'Zinasubiri' : 'Pending'),
+              Tab(text: isSwahili ? 'Zimeidhinishwa' : 'Approved'),
+              Tab(text: isSwahili ? 'Zimekataliwa' : 'Rejected'),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            _ApprovalList(status: 'pending'),
-            _ApprovalList(status: 'approved'),
-            _ApprovalList(status: 'rejected'),
+            _ApprovalList(status: 'pending', isSwahili: isSwahili),
+            _ApprovalList(status: 'approved', isSwahili: isSwahili),
+            _ApprovalList(status: 'rejected', isSwahili: isSwahili),
           ],
         ),
       ),
@@ -34,8 +37,22 @@ class ApprovalsScreen extends ConsumerWidget {
 
 class _ApprovalList extends StatelessWidget {
   final String status;
+  final bool isSwahili;
 
-  const _ApprovalList({required this.status});
+  const _ApprovalList({required this.status, required this.isSwahili});
+
+  String get _emptyStatusText {
+    switch (status) {
+      case 'pending':
+        return isSwahili ? 'Hakuna idhini zinazosubiri' : 'No pending approvals';
+      case 'approved':
+        return isSwahili ? 'Hakuna idhini zilizoidhinishwa' : 'No approved approvals';
+      case 'rejected':
+        return isSwahili ? 'Hakuna idhini zilizokataliwa' : 'No rejected approvals';
+      default:
+        return isSwahili ? 'Hakuna idhini' : 'No approvals';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +70,7 @@ class _ApprovalList extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'No ${status} approvals',
+              _emptyStatusText,
               style: TextStyle(color: AppColors.textSecondary),
             ),
           ],
@@ -75,6 +92,7 @@ class _ApprovalList extends StatelessWidget {
           submittedBy: 'John Doe',
           date: DateTime.now().subtract(Duration(days: index)),
           status: status,
+          isSwahili: isSwahili,
           onApprove: status == 'pending' ? () {} : null,
           onReject: status == 'pending' ? () {} : null,
         );
@@ -85,24 +103,24 @@ class _ApprovalList extends StatelessWidget {
   String _getTitle(String type, int index) {
     switch (type) {
       case 'site_daily_report':
-        return 'Site Report - Site ${index + 1}';
+        return isSwahili ? 'Ripoti ya Eneo - Eneo ${index + 1}' : 'Site Report - Site ${index + 1}';
       case 'expense':
-        return 'Expense - TZS ${150000 + (index * 25000)}';
+        return isSwahili ? 'Matumizi - TZS ${150000 + (index * 25000)}' : 'Expense - TZS ${150000 + (index * 25000)}';
       case 'material_request':
-        return 'Material Request #${1001 + index}';
+        return isSwahili ? 'Ombi la Vifaa #${1001 + index}' : 'Material Request #${1001 + index}';
       default:
-        return 'Unknown';
+        return isSwahili ? 'Haijulikani' : 'Unknown';
     }
   }
 
   String _getSubtitle(String type) {
     switch (type) {
       case 'site_daily_report':
-        return 'Daily progress report';
+        return isSwahili ? 'Ripoti ya maendeleo ya kila siku' : 'Daily progress report';
       case 'expense':
-        return 'Project expense claim';
+        return isSwahili ? 'Madai ya matumizi ya mradi' : 'Project expense claim';
       case 'material_request':
-        return 'Cement, Steel bars, etc.';
+        return isSwahili ? 'Saruji, Nondo, n.k.' : 'Cement, Steel bars, etc.';
       default:
         return '';
     }
@@ -116,6 +134,7 @@ class _ApprovalCard extends StatelessWidget {
   final String submittedBy;
   final DateTime date;
   final String status;
+  final bool isSwahili;
   final VoidCallback? onApprove;
   final VoidCallback? onReject;
 
@@ -126,6 +145,7 @@ class _ApprovalCard extends StatelessWidget {
     required this.submittedBy,
     required this.date,
     required this.status,
+    required this.isSwahili,
     this.onApprove,
     this.onReject,
   });
@@ -230,7 +250,7 @@ class _ApprovalCard extends StatelessWidget {
                         foregroundColor: AppColors.error,
                         side: BorderSide(color: AppColors.error),
                       ),
-                      child: const Text('Reject'),
+                      child: Text(isSwahili ? 'Kataa' : 'Reject'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -241,7 +261,7 @@ class _ApprovalCard extends StatelessWidget {
                         backgroundColor: AppColors.success,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text('Approve'),
+                      child: Text(isSwahili ? 'Idhinisha' : 'Approve'),
                     ),
                   ),
                 ],

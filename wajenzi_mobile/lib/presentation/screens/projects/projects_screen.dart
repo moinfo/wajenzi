@@ -1,18 +1,37 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
 
-class ProjectsScreen extends StatefulWidget {
+// WhatsApp contact number (Tanzania format)
+const String _wajenziWhatsApp = '+255123456789'; // Replace with actual number
+
+// Format large numbers to abbreviated form (e.g., 6.9B, 2.8M)
+String _formatNumber(double number) {
+  if (number >= 1000000000) {
+    return '${(number / 1000000000).toStringAsFixed(1)}B';
+  } else if (number >= 1000000) {
+    return '${(number / 1000000).toStringAsFixed(1)}M';
+  } else if (number >= 1000) {
+    return '${(number / 1000).toStringAsFixed(1)}K';
+  }
+  return number.toStringAsFixed(0);
+}
+
+class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key});
 
   @override
-  State<ProjectsScreen> createState() => _ProjectsScreenState();
+  ConsumerState<ProjectsScreen> createState() => _ProjectsScreenState();
 }
 
-class _ProjectsScreenState extends State<ProjectsScreen> {
-  bool _isDarkMode = false;
-  bool _isSwahili = false;
+class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
+  // Use global settings from provider
+  bool get _isDarkMode => ref.watch(isDarkModeProvider);
+  bool get _isSwahili => ref.watch(isSwahiliProvider);
 
   // Featured project carousel
   final PageController _featuredController = PageController();
@@ -45,6 +64,31 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     });
   }
 
+  // Launch WhatsApp with pre-filled message about a project
+  Future<void> _launchWhatsApp(String projectName) async {
+    final message = _isSwahili
+        ? 'Habari! Napenda kupata taarifa zaidi kuhusu mradi: $projectName'
+        : 'Hello! I am interested in learning more about the project: $projectName';
+
+    final encodedMessage = Uri.encodeComponent(message);
+    final whatsappUrl = Uri.parse('https://wa.me/$_wajenziWhatsApp?text=$encodedMessage');
+
+    if (await canLaunchUrl(whatsappUrl)) {
+      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isSwahili ? 'Imeshindwa kufungua WhatsApp' : 'Could not open WhatsApp',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   // Dark mode colors
   Color get _bgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
   Color get _cardBgColor => _isDarkMode ? const Color(0xFF16213E) : Colors.white;
@@ -64,6 +108,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.10.png',
       isCompleted: false,
+      priceTZS: 850000000, // 850M TZS
+      priceUSD: 340000,    // 340K USD
+      likes: 89,
     ),
     _Project(
       name: 'Palm Gardens Residences',
@@ -77,6 +124,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.20.png',
       isCompleted: false,
+      priceTZS: 1200000000, // 1.2B TZS
+      priceUSD: 480000,     // 480K USD
+      likes: 124,
     ),
     _Project(
       name: _isSwahili ? 'Makazi' : 'Residentials',
@@ -90,6 +140,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.28.png',
       isCompleted: true,
+      priceTZS: 650000000, // 650M TZS
+      priceUSD: 260000,    // 260K USD
+      likes: 78,
     ),
     _Project(
       name: 'Skyline Business Center',
@@ -103,6 +156,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.31.png',
       isCompleted: false,
+      priceTZS: 6900000000, // 6.9B TZS
+      priceUSD: 2764000,    // 2.8M USD
+      likes: 156,
     ),
     _Project(
       name: 'Savannah Shopping Mall',
@@ -116,6 +172,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.40.png',
       isCompleted: true,
+      priceTZS: 2500000000, // 2.5B TZS
+      priceUSD: 1000000,    // 1M USD
+      likes: 203,
     ),
     _Project(
       name: 'Horizon Hotel & Suites',
@@ -129,6 +188,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       year: '2024',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.51.07.png',
       isCompleted: true,
+      priceTZS: 3200000000, // 3.2B TZS
+      priceUSD: 1280000,    // 1.3M USD
+      likes: 167,
     ),
     _Project(
       name: 'Unity International School',
@@ -142,6 +204,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       year: '2024',
       image: 'assets/images/construction_01.png',
       isCompleted: true,
+      priceTZS: 1800000000, // 1.8B TZS
+      priceUSD: 720000,     // 720K USD
+      likes: 95,
     ),
     _Project(
       name: _isSwahili ? 'Ukarabati wa Jengo la Urithi' : 'Heritage Building Restoration',
@@ -155,6 +220,9 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       year: '2020',
       image: 'assets/images/structure_01.jpg',
       isCompleted: true,
+      priceTZS: 450000000, // 450M TZS
+      priceUSD: 180000,    // 180K USD
+      likes: 142,
     ),
   ];
 
@@ -215,8 +283,8 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
-        onDarkModeToggle: () => setState(() => _isDarkMode = !_isDarkMode),
-        onLanguageToggle: () => setState(() => _isSwahili = !_isSwahili),
+        onDarkModeToggle: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
+        onLanguageToggle: () => ref.read(settingsProvider.notifier).toggleLanguage(),
         flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
       ),
       body: CustomScrollView(
@@ -571,34 +639,78 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     ),
                   ),
 
-                  // Features
+                  // Features & WhatsApp Button
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: project.features.map((f) => Column(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
+                    children: [
+                      // Features (take remaining space)
+                      Expanded(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: project.features.take(3).map((f) => Column(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1ABC9C).withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  f['icon'] as IconData,
+                                  color: const Color(0xFF1ABC9C),
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                f['label'] as String,
+                                style: TextStyle(
+                                  color: _textSecondaryColor,
+                                  fontSize: 8,
+                                ),
+                              ),
+                            ],
+                          )).toList(),
+                        ),
+                      ),
+                      // WhatsApp Button
+                      GestureDetector(
+                        onTap: () => _launchWhatsApp(project.name),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1ABC9C).withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
+                            color: const Color(0xFF25D366),
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF25D366).withValues(alpha: 0.4),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: Icon(
-                            f['icon'] as IconData,
-                            color: const Color(0xFF1ABC9C),
-                            size: 18,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.chat_rounded,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                _isSwahili ? 'Uliza' : 'Inquire',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          f['label'] as String,
-                          style: TextStyle(
-                            color: _textSecondaryColor,
-                            fontSize: 9,
-                          ),
-                        ),
-                      ],
-                    )).toList(),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -680,10 +792,21 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     );
   }
 
+  // Get formatted price based on language selection
+  String _getFormattedPrice(_Project project) {
+    if (_isSwahili && project.priceTZS != null) {
+      return 'TZS ${_formatNumber(project.priceTZS!)}';
+    } else if (!_isSwahili && project.priceUSD != null) {
+      return 'USD ${_formatNumber(project.priceUSD!)}';
+    }
+    return '';
+  }
+
   Widget _buildProjectCard(_Project project) {
     final statusColor = project.isCompleted
         ? const Color(0xFF27AE60)
         : const Color(0xFFF39C12);
+    final priceText = _getFormattedPrice(project);
 
     return GestureDetector(
       onTap: () => _showProjectDetails(project),
@@ -709,7 +832,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
               borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
               child: SizedBox(
                 width: 120,
-                height: 140,
+                height: 160,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -749,6 +872,63 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         ),
                       ),
                     ),
+                    // Price badge at bottom
+                    if (priceText.isNotEmpty)
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.8),
+                              ],
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1ABC9C),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  priceText,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              if (project.likes > 0) ...[
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.favorite,
+                                  color: Color(0xFFE74C3C),
+                                  size: 12,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${project.likes}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -805,21 +985,24 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                           size: 12,
                           color: _textSecondaryColor,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          project.location,
-                          style: TextStyle(
-                            color: _textSecondaryColor,
-                            fontSize: 10,
+                        const SizedBox(width: 2),
+                        Flexible(
+                          child: Text(
+                            project.location,
+                            style: TextStyle(
+                              color: _textSecondaryColor,
+                              fontSize: 10,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         Icon(
                           Icons.calendar_today_rounded,
                           size: 12,
                           color: _textSecondaryColor,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 2),
                         Text(
                           project.year,
                           style: TextStyle(
@@ -828,6 +1011,45 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 8),
+                    // WhatsApp Inquiry Button
+                    GestureDetector(
+                      onTap: () => _launchWhatsApp(project.name),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF25D366),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF25D366).withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.chat_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _isSwahili ? 'Uliza WhatsApp' : 'Inquire WhatsApp',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -961,7 +1183,83 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                         _buildInfoItem(Icons.calendar_today_rounded, project.year),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
+
+                    // Price Card
+                    if (_getFormattedPrice(project).isNotEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _isSwahili ? 'Bei ya Mradi' : 'Project Value',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _getFormattedPrice(project),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            if (project.likes > 0)
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.favorite,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${project.likes}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _isSwahili ? 'wanapenda' : 'interested',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.9),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 16),
 
                     // Description
                     Text(
@@ -983,34 +1281,29 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Contact Button
-                    ElevatedButton(
+                    // WhatsApp Inquiry Button
+                    ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              _isSwahili
-                                  ? 'Wasiliana nasi kuhusu ${project.name}'
-                                  : 'Contact us about ${project.name}',
-                            ),
-                          ),
-                        );
+                        _launchWhatsApp(project.name);
                       },
+                      icon: const Icon(Icons.chat_rounded, size: 20),
+                      label: Text(
+                        _isSwahili ? 'Uliza kupitia WhatsApp' : 'Inquire via WhatsApp',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1ABC9C),
+                        backgroundColor: const Color(0xFF25D366),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
-                      child: Text(
-                        _isSwahili ? 'Wasiliana Nasi' : 'Contact Us',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        elevation: 4,
+                        shadowColor: const Color(0xFF25D366).withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -1246,6 +1539,9 @@ class _Project {
   final String year;
   final String image;
   final bool isCompleted;
+  final double? priceTZS; // Price in Tanzanian Shillings
+  final double? priceUSD; // Price in US Dollars
+  final int likes; // Number of likes/interest
 
   _Project({
     required this.name,
@@ -1257,6 +1553,9 @@ class _Project {
     required this.year,
     required this.image,
     required this.isCompleted,
+    this.priceTZS,
+    this.priceUSD,
+    this.likes = 0,
   });
 }
 

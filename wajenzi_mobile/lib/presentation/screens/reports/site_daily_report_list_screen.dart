@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/theme_config.dart';
+import '../../providers/settings_provider.dart';
 
 class SiteDailyReportListScreen extends ConsumerWidget {
   const SiteDailyReportListScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Site Daily Reports'),
+        title: Text(isSwahili ? 'Ripoti za Kila Siku za Eneo' : 'Site Daily Reports'),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -24,10 +27,13 @@ class SiteDailyReportListScreen extends ConsumerWidget {
         itemCount: 5,
         itemBuilder: (context, index) {
           return _ReportCard(
-            siteName: 'Site ${index + 1} - Main Building',
+            siteName: isSwahili
+                ? 'Eneo ${index + 1} - Jengo Kuu'
+                : 'Site ${index + 1} - Main Building',
             date: DateTime.now().subtract(Duration(days: index)),
             status: index == 0 ? 'draft' : (index == 1 ? 'pending' : 'approved'),
             progress: 45 + (index * 10),
+            isSwahili: isSwahili,
           );
         },
       ),
@@ -36,7 +42,7 @@ class SiteDailyReportListScreen extends ConsumerWidget {
           // Navigate to create report
         },
         icon: const Icon(Icons.add),
-        label: const Text('New Report'),
+        label: Text(isSwahili ? 'Ripoti Mpya' : 'New Report'),
       ),
     );
   }
@@ -47,12 +53,14 @@ class _ReportCard extends StatelessWidget {
   final DateTime date;
   final String status;
   final int progress;
+  final bool isSwahili;
 
   const _ReportCard({
     required this.siteName,
     required this.date,
     required this.status,
     required this.progress,
+    required this.isSwahili,
   });
 
   Color get statusColor {
@@ -67,6 +75,21 @@ class _ReportCard extends StatelessWidget {
         return AppColors.rejected;
       default:
         return AppColors.draft;
+    }
+  }
+
+  String get statusText {
+    switch (status) {
+      case 'draft':
+        return isSwahili ? 'RASIMU' : 'DRAFT';
+      case 'pending':
+        return isSwahili ? 'INASUBIRI' : 'PENDING';
+      case 'approved':
+        return isSwahili ? 'IMEIDHINISHWA' : 'APPROVED';
+      case 'rejected':
+        return isSwahili ? 'IMEKATALIWA' : 'REJECTED';
+      default:
+        return status.toUpperCase();
     }
   }
 
@@ -101,7 +124,7 @@ class _ReportCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      status.toUpperCase(),
+                      statusText,
                       style: TextStyle(
                         color: statusColor,
                         fontWeight: FontWeight.w600,
@@ -126,7 +149,7 @@ class _ReportCard extends StatelessWidget {
                   Icon(Icons.trending_up, size: 16, color: AppColors.textSecondary),
                   const SizedBox(width: 8),
                   Text(
-                    '$progress% Progress',
+                    isSwahili ? '$progress% Maendeleo' : '$progress% Progress',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.textSecondary,
                         ),

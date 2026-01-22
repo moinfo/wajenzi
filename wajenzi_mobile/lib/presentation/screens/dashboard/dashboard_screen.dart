@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/theme_config.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -10,10 +11,19 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull?.user;
+    final isSwahili = ref.watch(isSwahiliProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: const Icon(Icons.menu_rounded),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
+        ),
+        title: Text(isSwahili ? 'Dashibodi' : 'Dashboard'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -57,7 +67,7 @@ class DashboardScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Welcome back,',
+                              isSwahili ? 'Karibu tena,' : 'Welcome back,',
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: AppColors.textSecondary,
                                   ),
@@ -86,7 +96,7 @@ class DashboardScreen extends ConsumerWidget {
 
               // Quick Stats
               Text(
-                'Quick Stats',
+                isSwahili ? 'Takwimu za Haraka' : 'Quick Stats',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -101,25 +111,25 @@ class DashboardScreen extends ConsumerWidget {
                 childAspectRatio: 1.5,
                 children: [
                   _StatCard(
-                    title: 'Pending Approvals',
+                    title: isSwahili ? 'Idhini Zinazosubiri' : 'Pending Approvals',
                     value: '5',
                     icon: Icons.pending_actions,
                     color: AppColors.warning,
                   ),
                   _StatCard(
-                    title: 'Reports Today',
+                    title: isSwahili ? 'Ripoti za Leo' : 'Reports Today',
                     value: '2',
                     icon: Icons.description,
                     color: AppColors.info,
                   ),
                   _StatCard(
-                    title: 'Active Projects',
+                    title: isSwahili ? 'Miradi Inayoendelea' : 'Active Projects',
                     value: '3',
                     icon: Icons.folder_open,
                     color: AppColors.success,
                   ),
                   _StatCard(
-                    title: 'Expenses (MTD)',
+                    title: isSwahili ? 'Matumizi (Mwezi)' : 'Expenses (MTD)',
                     value: 'TZS 1.2M',
                     icon: Icons.payments,
                     color: AppColors.secondary,
@@ -130,7 +140,7 @@ class DashboardScreen extends ConsumerWidget {
 
               // Quick Actions
               Text(
-                'Quick Actions',
+                isSwahili ? 'Vitendo vya Haraka' : 'Quick Actions',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -141,17 +151,17 @@ class DashboardScreen extends ConsumerWidget {
                 runSpacing: 12,
                 children: [
                   _QuickActionChip(
-                    label: 'New Report',
+                    label: isSwahili ? 'Ripoti Mpya' : 'New Report',
                     icon: Icons.add,
                     onPressed: () {},
                   ),
                   _QuickActionChip(
-                    label: 'Record Expense',
+                    label: isSwahili ? 'Rekodi Matumizi' : 'Record Expense',
                     icon: Icons.receipt_long,
                     onPressed: () {},
                   ),
                   _QuickActionChip(
-                    label: 'Check In',
+                    label: isSwahili ? 'Kuingia' : 'Check In',
                     icon: Icons.login,
                     onPressed: () {},
                   ),
