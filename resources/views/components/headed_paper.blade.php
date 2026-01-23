@@ -1,3 +1,5 @@
+@props(['backUrl' => null, 'backText' => null])
+
 <div class="card card-custom shadow-lg border-0" style="overflow: hidden;">
     <div class="card-header" style="background: linear-gradient(135deg, #ffffff 0%, #f3f6f9 100%); border: none; padding: 0;">
         <div style="background: linear-gradient(90deg, #1BC5BD 0%, #1DC9C0 100%); height: 5px;"></div>
@@ -46,9 +48,15 @@
                     </div>
                 </div>
                 <div class="col-lg-3 text-center text-lg-right">
-                    <a href="{{route('reports')}}" class="btn font-weight-bold px-6 py-3" style="background: linear-gradient(90deg, #1BC5BD 0%, #1DC9C0 100%); color: white; border: none; border-radius: 8px; box-shadow: 0 4px 15px rgba(27, 197, 189, 0.35); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(27, 197, 189, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(27, 197, 189, 0.35)';">
-                        <i class="fas fa-arrow-left mr-2"></i>Back to Reports
-                    </a>
+                    @if($backUrl || $backText)
+                        <a href="{{ $backUrl ?? route('reports') }}" class="btn font-weight-bold px-6 py-3" style="background: linear-gradient(90deg, #1BC5BD 0%, #1DC9C0 100%); color: white; border: none; border-radius: 8px; box-shadow: 0 4px 15px rgba(27, 197, 189, 0.35); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(27, 197, 189, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(27, 197, 189, 0.35)';">
+                            <i class="fas fa-arrow-left mr-2"></i>{{ $backText ?? 'Back' }}
+                        </a>
+                    @else
+                        <a href="{{ route('reports') }}" class="btn font-weight-bold px-6 py-3" style="background: linear-gradient(90deg, #1BC5BD 0%, #1DC9C0 100%); color: white; border: none; border-radius: 8px; box-shadow: 0 4px 15px rgba(27, 197, 189, 0.35); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(27, 197, 189, 0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(27, 197, 189, 0.35)';">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Reports
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

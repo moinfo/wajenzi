@@ -18,12 +18,40 @@ class SalesLeadFollowup extends Model
         'details_discussion',
         'outcome',
         'next_step',
-        'followup_date'
+        'followup_date',
+        'status',
+        'attended_at',
+        'attended_by',
     ];
 
     protected $casts = [
         'followup_date' => 'date',
+        'attended_at' => 'datetime',
     ];
+
+    /**
+     * Status constants
+     */
+    const STATUS_PENDING = 'pending';
+    const STATUS_COMPLETED = 'completed';
+    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_RESCHEDULED = 'rescheduled';
+
+    /**
+     * Check if follow-up is pending
+     */
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Check if follow-up is completed
+     */
+    public function isCompleted(): bool
+    {
+        return $this->status === self::STATUS_COMPLETED;
+    }
 
     /**
      * Relationships
@@ -46,5 +74,10 @@ class SalesLeadFollowup extends Model
     public function lead()
     {
         return $this->belongsTo(Lead::class);
+    }
+
+    public function attendedByUser()
+    {
+        return $this->belongsTo(User::class, 'attended_by');
     }
 }

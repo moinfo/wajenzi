@@ -10,6 +10,7 @@ use App\Models\ProjectClient;
 use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use App\Models\BillingDocumentSetting;
+use App\Models\Lead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -48,8 +49,14 @@ class ProformaController extends Controller
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
-        
-        return view('billing.proformas.create', compact('clients', 'products', 'taxRates', 'settings'));
+
+        // If creating from a lead
+        $lead = null;
+        if ($request->lead_id) {
+            $lead = Lead::with('client')->find($request->lead_id);
+        }
+
+        return view('billing.proformas.create', compact('clients', 'products', 'taxRates', 'settings', 'lead'));
     }
 
     public function store(Request $request)
@@ -82,6 +89,7 @@ class ProformaController extends Controller
             $proforma->document_number = $proforma->generateDocumentNumber('proforma');
             $proforma->client_id = $request->client_id;
             $proforma->project_id = $request->project_id;
+            $proforma->lead_id = $request->lead_id;
             $proforma->status = $request->save_as_draft ? 'draft' : 'pending';
             $proforma->issue_date = $request->issue_date;
             $proforma->valid_until_date = $request->valid_until_date;
@@ -148,12 +156,12 @@ class ProformaController extends Controller
 
     public function show(BillingDocument $proforma)
     {
-        $proforma->load(['client', 'items', 'creator', 'emails.sender']);
-        
+        $proforma->load(['client', 'items', 'creator', 'emails.sender', 'lead']);
+
         if ($proforma->status === 'sent' && !$proforma->viewed_at) {
             $proforma->update(['viewed_at' => now(), 'status' => 'viewed']);
         }
-        
+
         return view('billing.proformas.show', compact('proforma'));
     }
 

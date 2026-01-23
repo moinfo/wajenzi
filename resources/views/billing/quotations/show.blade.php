@@ -26,7 +26,7 @@
                         <i class="fa fa-envelope"></i> Send Email
                     </button>
 
-                    @if(in_array($quotation->status, ['sent', 'viewed', 'accepted']))
+                    @if(!in_array($quotation->status, ['cancelled', 'void']))
                         <div class="btn-group">
                             <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
                                 <i class="fa fa-exchange-alt"></i> Convert
@@ -80,7 +80,10 @@
             <div class="col-md-8">
                 <div class="block block-themed">
                     <div class="block-content">
-                        @include('components.headed_paper')
+                        @include('components.headed_paper', [
+                            'backUrl' => $quotation->lead_id ? route('leads.show', $quotation->lead_id) : route('billing.quotations.index'),
+                            'backText' => $quotation->lead_id ? 'Back to Lead' : 'Back to Quotations'
+                        ])
 
                         <!-- Quotation Header -->
                         <div class="row mt-4">
@@ -285,6 +288,30 @@
                     </div>
                 </div>
 
+                <!-- Linked Lead -->
+                @if($quotation->lead_id && $quotation->lead)
+                    <div class="block block-themed">
+                        <div class="block-header bg-info">
+                            <h3 class="block-title">Linked Lead</h3>
+                        </div>
+                        <div class="block-content">
+                            <p class="mb-2">
+                                <i class="fa fa-user mr-1"></i>
+                                <a href="{{ route('leads.show', $quotation->lead->id) }}">
+                                    <strong>{{ $quotation->lead->lead_number ?? $quotation->lead->name }}</strong>
+                                </a>
+                            </p>
+                            <p class="mb-3 text-muted small">
+                                {{ $quotation->lead->name }}<br>
+                                {{ $quotation->lead->phone }}
+                            </p>
+                            <a href="{{ route('leads.show', $quotation->lead->id) }}" class="btn btn-info btn-block">
+                                <i class="fa fa-arrow-left mr-1"></i> Back to Lead
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Related Documents -->
                 @if($quotation->parentDocument || $quotation->childDocuments->count() > 0)
                     <div class="block block-themed">
@@ -325,20 +352,27 @@
                 @endif
 
                 <!-- Conversion Actions -->
-                @if($quotation->status == 'accepted' || $quotation->status == 'viewed')
+                @if(!in_array($quotation->status, ['cancelled', 'void', 'accepted']))
                     <div class="block block-themed">
                         <div class="block-header">
                             <h3 class="block-title">Next Steps</h3>
                         </div>
                         <div class="block-content">
+                            <form action="{{ route('billing.quotations.convert-to-proforma', $quotation) }}" method="POST"
+                                  onsubmit="return confirm('Convert this quotation to proforma invoice?')" class="mb-2">
+                                @csrf
+                                <button type="submit" class="btn btn-info btn-block">
+                                    <i class="fa fa-file-invoice"></i> Convert to Proforma
+                                </button>
+                            </form>
                             <form action="{{ route('billing.quotations.convert', $quotation) }}" method="POST"
                                   onsubmit="return confirm('Convert this quotation to invoice?')">
                                 @csrf
                                 <button type="submit" class="btn btn-success btn-block">
-                                    <i class="fa fa-exchange-alt"></i> Convert to Invoice
+                                    <i class="fa fa-file-invoice-dollar"></i> Convert to Invoice
                                 </button>
                             </form>
-                            <small class="text-muted">Convert this accepted quotation to a billable invoice</small>
+                            <small class="text-muted mt-2 d-block">Convert this quotation to a proforma or invoice</small>
                         </div>
                     </div>
                 @endif

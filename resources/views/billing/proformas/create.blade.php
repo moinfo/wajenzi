@@ -19,6 +19,19 @@
         <form id="proforma-form" method="POST" action="{{ route('billing.proformas.store') }}">
             @csrf
             <input type="hidden" name="document_type" value="proforma">
+
+            @if(isset($lead) && $lead)
+                <input type="hidden" name="lead_id" value="{{ $lead->id }}">
+                <div class="alert alert-info">
+                    <i class="fa fa-link mr-2"></i>
+                    Creating proforma invoice for lead: <strong>{{ $lead->lead_number ?? $lead->name }}</strong>
+                    @if($lead->client)
+                        (Client: {{ $lead->client->first_name }} {{ $lead->client->last_name }})
+                    @endif
+                    <a href="{{ route('leads.show', $lead->id) }}" class="ml-2"><i class="fa fa-external-link-alt"></i> View Lead</a>
+                </div>
+            @endif
+
             <!-- Line Items - Full Width -->
             <div class="row mt-3">
                 <div class="col-12">
@@ -107,7 +120,7 @@
                                         <select name="client_id" id="client_id" class="form-control @error('client_id') is-invalid @enderror" required>
                                             <option value="">Select a client...</option>
                                             @foreach($clients as $client)
-                                                <option value="{{ $client->id }}" {{ old('client_id') == $client->id ? 'selected' : '' }}>
+                                                <option value="{{ $client->id }}" {{ old('client_id', (isset($lead) && $lead && $lead->client_id) ? $lead->client_id : null) == $client->id ? 'selected' : '' }}>
                                                     {{ $client->first_name }} {{ $client->last_name }}
                                                     @if($client->email) - {{ $client->email }} @endif
                                                 </option>

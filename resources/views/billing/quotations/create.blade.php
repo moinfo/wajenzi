@@ -19,6 +19,18 @@
         <form id="quotationForm" method="POST" action="{{ route('billing.quotations.store') }}">
             @csrf
 
+            @if(isset($lead) && $lead)
+                <input type="hidden" name="lead_id" value="{{ $lead->id }}">
+                <div class="alert alert-info">
+                    <i class="fa fa-link mr-2"></i>
+                    Creating quotation for lead: <strong>{{ $lead->lead_number ?? $lead->name }}</strong>
+                    @if($lead->client)
+                        (Client: {{ $lead->client->first_name }} {{ $lead->client->last_name }})
+                    @endif
+                    <a href="{{ route('leads.show', $lead->id) }}" class="ml-2"><i class="fa fa-external-link-alt"></i> View Lead</a>
+                </div>
+            @endif
+
             <!-- Line Items - Full Width -->
             <div class="row mt-3">
                 <div class="col-12">
@@ -129,7 +141,7 @@
                                             <option value="">Select Client</option>
                                             @foreach($clients as $client)
                                                 <option value="{{ $client->id }}"
-                                                        {{ old('client_id') == $client->id ? 'selected' : '' }}>
+                                                        {{ old('client_id', (isset($lead) && $lead && $lead->client_id) ? $lead->client_id : null) == $client->id ? 'selected' : '' }}>
                                                     {{ $client->first_name }} {{ $client->last_name }}
                                                     @if($client->email) - {{ $client->email }} @endif
                                                 </option>

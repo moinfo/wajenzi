@@ -10,6 +10,8 @@ use App\Models\ProjectClient;
 use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use App\Models\BillingDocumentSetting;
+use App\Models\Lead;
+use App\Services\ClientApprovalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -55,14 +57,20 @@ class InvoiceController extends Controller
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
-        
+
         // If converting from quote or proforma
         $parentDocument = null;
         if ($request->from_document) {
             $parentDocument = BillingDocument::with('items')->find($request->from_document);
         }
-        
-        return view('billing.invoices.create', compact('clients', 'products', 'taxRates', 'settings', 'parentDocument'));
+
+        // If creating from a lead
+        $lead = null;
+        if ($request->lead_id) {
+            $lead = Lead::with('client')->find($request->lead_id);
+        }
+
+        return view('billing.invoices.create', compact('clients', 'products', 'taxRates', 'settings', 'parentDocument', 'lead'));
     }
 
     /**
@@ -90,6 +98,7 @@ class InvoiceController extends Controller
             $invoice->document_number = $invoice->generateDocumentNumber('invoice');
             $invoice->client_id = $request->client_id;
             $invoice->project_id = $request->project_id;
+            $invoice->lead_id = $request->lead_id;
             $invoice->parent_document_id = $request->parent_document_id;
             $invoice->status = $request->save_as_draft ? 'draft' : 'pending';
             $invoice->issue_date = $request->issue_date;
@@ -156,13 +165,13 @@ class InvoiceController extends Controller
      */
     public function show(BillingDocument $invoice)
     {
-        $invoice->load(['client', 'items', 'payments', 'creator', 'approver']);
-        
+        $invoice->load(['client', 'items', 'payments', 'creator', 'approver', 'lead']);
+
         // Mark as viewed if sent
         if ($invoice->status === 'sent' && !$invoice->viewed_at) {
             $invoice->update(['viewed_at' => now(), 'status' => 'viewed']);
         }
-        
+
         return view('billing.invoices.show', compact('invoice'));
     }
 
@@ -370,9 +379,9 @@ class InvoiceController extends Controller
             'payment_method' => 'required|in:cash,bank_transfer,cheque,credit_card,mobile_money,online,other',
             'reference_number' => 'nullable|string'
         ]);
-        
+
         DB::beginTransaction();
-        
+
         try {
             $payment = $invoice->payments()->create([
                 'client_id' => $invoice->client_id,
@@ -387,11 +396,14 @@ class InvoiceController extends Controller
                 'status' => 'completed',
                 'received_by' => auth()->id()
             ]);
-            
+
+            // Auto-approve client workflow on first payment
+            ClientApprovalService::autoApproveOnFirstPayment($invoice->client_id, $payment);
+
             DB::commit();
-            
+
             return back()->with('success', 'Payment recorded successfully.');
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error recording payment: ' . $e->getMessage());

@@ -49,11 +49,11 @@
     $counts = User::getUserCounts();
     $departmentCounts = User::getDepartmentMemberCounts();
 
-    // Pending Follow-ups for current user (salesperson) or all if admin
+    // Follow-ups for current user (salesperson) or all if admin
+    // Show ALL follow-ups (pending first, then completed)
     $followupsQuery = SalesLeadFollowup::with(['lead.salesperson', 'lead.leadStatus'])
-        ->whereDate('followup_date', '>=', now()->toDateString())
-        ->whereDate('followup_date', '<=', now()->addDays(7)->toDateString())
         ->whereHas('lead')
+        ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END") // Pending first
         ->orderBy('followup_date', 'asc');
 
     // If user is a salesperson, show only their follow-ups
@@ -63,13 +63,21 @@
         });
     }
 
-    $pendingFollowups = $followupsQuery->limit(10)->get();
-    $todayFollowupsCount = SalesLeadFollowup::whereDate('followup_date', now()->toDateString())->count();
-    $overdueFollowupsCount = SalesLeadFollowup::whereDate('followup_date', '<', now()->toDateString())->count();
+    $allFollowups = $followupsQuery->limit(20)->get();
 
-    // Calendar data - get all followups for current month
-    $calendarMonth = now()->month;
-    $calendarYear = now()->year;
+    // Counts for PENDING follow-ups only
+    $todayFollowupsCount = SalesLeadFollowup::where('status', 'pending')
+        ->whereDate('followup_date', now()->toDateString())->count();
+    $overdueFollowupsCount = SalesLeadFollowup::where('status', 'pending')
+        ->whereDate('followup_date', '<', now()->toDateString())->count();
+    $upcomingFollowupsCount = SalesLeadFollowup::where('status', 'pending')
+        ->whereDate('followup_date', '>', now()->toDateString())->count();
+    $completedFollowupsCount = SalesLeadFollowup::where('status', 'completed')
+        ->whereMonth('followup_date', now()->month)->count();
+
+    // Calendar data - get ALL followups for selected month (from request or current)
+    $calendarMonth = request('cal_month', now()->month);
+    $calendarYear = request('cal_year', now()->year);
     $calendarFollowups = SalesLeadFollowup::with(['lead'])
         ->whereYear('followup_date', $calendarYear)
         ->whereMonth('followup_date', $calendarMonth)
@@ -213,28 +221,52 @@
             <div class="dashboard-section followups-todo">
                 <div class="section-header">
                     <h2><i class="fa fa-phone-alt mr-2"></i>Follow-up To-Do</h2>
-                    <div class="followup-badges">
-                        @if($todayFollowupsCount > 0)
-                            <span class="badge-today">{{ $todayFollowupsCount }} Today</span>
-                        @endif
-                        @if($overdueFollowupsCount > 0)
-                            <span class="badge-overdue">{{ $overdueFollowupsCount }} Overdue</span>
-                        @endif
+                </div>
+                <div class="followup-stats-row">
+                    <div class="followup-stat-card overdue">
+                        <div class="stat-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $overdueFollowupsCount }}</span>
+                            <span class="stat-label">Overdue</span>
+                        </div>
+                    </div>
+                    <div class="followup-stat-card today">
+                        <div class="stat-icon"><i class="fa fa-clock"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $todayFollowupsCount }}</span>
+                            <span class="stat-label">Today</span>
+                        </div>
+                    </div>
+                    <div class="followup-stat-card upcoming">
+                        <div class="stat-icon"><i class="fa fa-calendar-alt"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $upcomingFollowupsCount }}</span>
+                            <span class="stat-label">Upcoming</span>
+                        </div>
+                    </div>
+                    <div class="followup-stat-card completed">
+                        <div class="stat-icon"><i class="fa fa-check-circle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $completedFollowupsCount }}</span>
+                            <span class="stat-label">Completed</span>
+                        </div>
                     </div>
                 </div>
                 <div class="followup-list">
-                    @forelse($pendingFollowups as $followup)
+                    @forelse($allFollowups as $followup)
                         @php
-                            $isToday = $followup->followup_date->isToday();
-                            $isOverdue = $followup->followup_date->isPast() && !$isToday;
-                            $isTomorrow = $followup->followup_date->isTomorrow();
+                            $isCompleted = $followup->status === 'completed';
+                            $isCancelled = $followup->status === 'cancelled';
+                            $isToday = $followup->followup_date && $followup->followup_date->isToday();
+                            $isOverdue = !$isCompleted && !$isCancelled && $followup->followup_date && $followup->followup_date->isPast() && !$isToday;
+                            $isTomorrow = $followup->followup_date && $followup->followup_date->isTomorrow();
                         @endphp
-                        <a href="{{ route('leads.show', $followup->lead->id) }}" class="followup-item {{ $isOverdue ? 'overdue' : ($isToday ? 'today' : ($isTomorrow ? 'tomorrow' : '')) }}">
-                            <div class="followup-date-badge">
+                        <a href="{{ route('leads.show', $followup->lead->id) }}" class="followup-item {{ $isCompleted ? 'completed' : ($isCancelled ? 'cancelled' : ($isOverdue ? 'overdue' : ($isToday ? 'today' : ($isTomorrow ? 'tomorrow' : '')))) }}">
+                            <div class="followup-date-badge {{ $isCompleted ? 'completed' : '' }}">
                                 <span class="day">{{ $followup->followup_date->format('d') }}</span>
                                 <span class="month">{{ $followup->followup_date->format('M') }}</span>
                             </div>
-                            <div class="followup-content">
+                            <div class="followup-content {{ $isCompleted ? 'completed' : '' }}">
                                 <span class="followup-lead-name">{{ $followup->lead->name }}</span>
                                 <span class="followup-details">{{ Str::limit($followup->next_step ?: $followup->details_discussion, 40) }}</span>
                                 @if($followup->lead->salesperson)
@@ -244,7 +276,11 @@
                                 @endif
                             </div>
                             <div class="followup-status">
-                                @if($isOverdue)
+                                @if($isCompleted)
+                                    <span class="status-label completed"><i class="fa fa-check-circle"></i> Done</span>
+                                @elseif($isCancelled)
+                                    <span class="status-label cancelled"><i class="fa fa-times-circle"></i> Cancelled</span>
+                                @elseif($isOverdue)
                                     <span class="status-label overdue"><i class="fa fa-exclamation-circle"></i> Overdue</span>
                                 @elseif($isToday)
                                     <span class="status-label today"><i class="fa fa-clock"></i> Today</span>
@@ -258,11 +294,11 @@
                     @empty
                         <div class="no-followups">
                             <i class="fa fa-check-circle"></i>
-                            <p>No upcoming follow-ups in the next 7 days</p>
+                            <p>No follow-ups scheduled</p>
                         </div>
                     @endforelse
                 </div>
-                @if($pendingFollowups->count() > 0)
+                @if($allFollowups->count() > 0)
                     <div class="followup-footer">
                         <a href="{{ route('leads.index') }}" class="view-all-btn">
                             <i class="fa fa-list"></i> View All Leads
@@ -272,10 +308,30 @@
             </div>
 
             <!-- Follow-up Calendar -->
+            @php
+                // Get month/year from request or use current
+                $calMonth = request('cal_month', now()->month);
+                $calYear = request('cal_year', now()->year);
+                $calendarDate = \Carbon\Carbon::createFromDate($calYear, $calMonth, 1);
+                $prevMonth = $calendarDate->copy()->subMonth();
+                $nextMonth = $calendarDate->copy()->addMonth();
+                $isCurrentMonth = $calendarDate->month == now()->month && $calendarDate->year == now()->year;
+            @endphp
             <div class="dashboard-section followup-calendar">
                 <div class="section-header">
                     <h2><i class="fa fa-calendar-alt mr-2"></i>Follow-up Calendar</h2>
-                    <span class="calendar-month">{{ now()->format('F Y') }}</span>
+                    <div class="calendar-nav">
+                        <a href="?cal_month={{ $prevMonth->month }}&cal_year={{ $prevMonth->year }}" class="cal-nav-btn" title="Previous Month">
+                            <i class="fa fa-chevron-left"></i>
+                        </a>
+                        <span class="calendar-month">{{ $calendarDate->format('F Y') }}</span>
+                        <a href="?cal_month={{ $nextMonth->month }}&cal_year={{ $nextMonth->year }}" class="cal-nav-btn" title="Next Month">
+                            <i class="fa fa-chevron-right"></i>
+                        </a>
+                        @if(!$isCurrentMonth)
+                            <a href="{{ route('dashboard') }}" class="cal-today-btn" title="Go to Today">Today</a>
+                        @endif
+                    </div>
                 </div>
                 <div class="calendar-container">
                     <div class="calendar-header">
@@ -289,11 +345,12 @@
                     </div>
                     <div class="calendar-grid">
                         @php
-                            $firstDay = now()->startOfMonth();
-                            $lastDay = now()->endOfMonth();
+                            $firstDay = $calendarDate->copy()->startOfMonth();
+                            $lastDay = $calendarDate->copy()->endOfMonth();
                             $startDayOfWeek = $firstDay->dayOfWeek;
                             $daysInMonth = $lastDay->day;
                             $today = now()->day;
+                            $isViewingCurrentMonth = $isCurrentMonth;
                         @endphp
 
                         {{-- Empty cells for days before the first of the month --}}
@@ -304,11 +361,14 @@
                         {{-- Days of the month --}}
                         @for($day = 1; $day <= $daysInMonth; $day++)
                             @php
-                                $dateKey = now()->format('Y-m') . '-' . str_pad($day, 2, '0', STR_PAD_LEFT);
+                                $dateKey = $calendarDate->format('Y-m') . '-' . str_pad($day, 2, '0', STR_PAD_LEFT);
                                 $dayFollowups = $calendarFollowups[$dateKey] ?? collect();
-                                $isToday = $day == $today;
-                                $isPast = $day < $today;
+                                $isToday = $isViewingCurrentMonth && $day == $today;
+                                $currentDate = $calendarDate->copy()->setDay($day);
+                                $isPast = $currentDate->isPast() && !$currentDate->isToday();
                                 $hasFollowups = $dayFollowups->count() > 0;
+                                $pendingCount = $dayFollowups->where('status', 'pending')->count();
+                                $completedCount = $dayFollowups->where('status', 'completed')->count();
                             @endphp
                             <div class="calendar-day {{ $isToday ? 'today' : '' }} {{ $isPast ? 'past' : '' }} {{ $hasFollowups ? 'has-events' : '' }}"
                                  @if($hasFollowups) data-date="{{ $dateKey }}" data-followups="{{ $dayFollowups->pluck('lead.name')->implode(', ') }}" @endif>
@@ -316,7 +376,10 @@
                                 @if($hasFollowups)
                                     <div class="event-dots">
                                         @foreach($dayFollowups->take(3) as $fu)
-                                            <span class="event-dot {{ $isPast && !$isToday ? 'overdue' : '' }}"></span>
+                                            @php
+                                                $dotClass = $fu->status === 'completed' ? 'completed' : ($isPast && !$isToday ? 'overdue' : 'pending');
+                                            @endphp
+                                            <span class="event-dot {{ $dotClass }}"></span>
                                         @endforeach
                                         @if($dayFollowups->count() > 3)
                                             <span class="more-events">+{{ $dayFollowups->count() - 3 }}</span>
@@ -333,8 +396,12 @@
                         <span>Today</span>
                     </div>
                     <div class="legend-item">
-                        <span class="legend-dot has-event"></span>
-                        <span>Has Follow-ups</span>
+                        <span class="legend-dot pending"></span>
+                        <span>Pending</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot completed"></span>
+                        <span>Completed</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-dot overdue"></span>
@@ -352,9 +419,12 @@
                         <h4><i class="fa fa-clock"></i> Today's Follow-ups ({{ $todayFollowupsList->count() }})</h4>
                         <div class="today-list">
                             @foreach($todayFollowupsList as $tfu)
-                                <a href="{{ route('leads.show', $tfu->lead->id) }}" class="today-item">
+                                <a href="{{ route('leads.show', $tfu->lead->id) }}" class="today-item {{ $tfu->status === 'completed' ? 'completed' : '' }}">
                                     <span class="lead-name">{{ $tfu->lead->name }}</span>
                                     <span class="lead-action">{{ Str::limit($tfu->next_step ?: 'Follow up', 30) }}</span>
+                                    @if($tfu->status === 'completed')
+                                        <span class="completed-badge"><i class="fa fa-check"></i> Done</span>
+                                    @endif
                                 </a>
                             @endforeach
                         </div>
@@ -1336,6 +1406,136 @@
             font-weight: 600;
         }
 
+        .followups-todo .badge-upcoming {
+            background: #17a2b8;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .followups-todo .badge-completed {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .followup-stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .followup-stat-card {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            border: 1px solid var(--wajenzi-gray-200);
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        .followup-stat-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .followup-stat-card .stat-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .followup-stat-card .stat-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .followup-stat-card .stat-number {
+            font-size: 1.1rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .followup-stat-card .stat-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            opacity: 0.8;
+        }
+
+        .followup-stat-card.overdue {
+            background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+            border-color: #fc8181;
+        }
+        .followup-stat-card.overdue .stat-icon {
+            background: #e53e3e;
+            color: white;
+        }
+        .followup-stat-card.overdue .stat-number {
+            color: #c53030;
+        }
+        .followup-stat-card.overdue .stat-label {
+            color: #9b2c2c;
+        }
+
+        .followup-stat-card.today {
+            background: linear-gradient(135deg, #fffaf0 0%, #feebc8 100%);
+            border-color: #f6ad55;
+        }
+        .followup-stat-card.today .stat-icon {
+            background: #ed8936;
+            color: white;
+        }
+        .followup-stat-card.today .stat-number {
+            color: #c05621;
+        }
+        .followup-stat-card.today .stat-label {
+            color: #9c4221;
+        }
+
+        .followup-stat-card.upcoming {
+            background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+            border-color: #63b3ed;
+        }
+        .followup-stat-card.upcoming .stat-icon {
+            background: #3182ce;
+            color: white;
+        }
+        .followup-stat-card.upcoming .stat-number {
+            color: #2b6cb0;
+        }
+        .followup-stat-card.upcoming .stat-label {
+            color: #2c5282;
+        }
+
+        .followup-stat-card.completed {
+            background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+            border-color: #68d391;
+        }
+        .followup-stat-card.completed .stat-icon {
+            background: #38a169;
+            color: white;
+        }
+        .followup-stat-card.completed .stat-number {
+            color: #276749;
+        }
+        .followup-stat-card.completed .stat-label {
+            color: #22543d;
+        }
+
         .followup-list {
             display: flex;
             flex-direction: column;
@@ -1375,6 +1575,33 @@
         .followup-item.tomorrow {
             border-left: 4px solid var(--wajenzi-blue-primary);
             background: rgba(37, 99, 235, 0.05);
+        }
+
+        .followup-item.completed {
+            border-left: 4px solid #28a745;
+            background: rgba(40, 167, 69, 0.08);
+            opacity: 0.7;
+        }
+
+        .followup-item.completed .followup-content {
+            text-decoration: line-through;
+            color: #6c757d;
+        }
+
+        .followup-item.completed .followup-date-badge {
+            background: #28a745;
+            color: white;
+        }
+
+        .followup-item.cancelled {
+            border-left: 4px solid #6c757d;
+            background: rgba(108, 117, 125, 0.08);
+            opacity: 0.6;
+        }
+
+        .followup-item.cancelled .followup-content {
+            text-decoration: line-through;
+            color: #999;
         }
 
         .followup-date-badge {
@@ -1477,6 +1704,16 @@
             color: var(--wajenzi-gray-600);
         }
 
+        .followup-status .status-label.completed {
+            background: rgba(40, 167, 69, 0.15);
+            color: #28a745;
+        }
+
+        .followup-status .status-label.cancelled {
+            background: rgba(108, 117, 125, 0.15);
+            color: #6c757d;
+        }
+
         .no-followups {
             text-align: center;
             padding: 2rem;
@@ -1507,13 +1744,55 @@
         }
 
         /* Follow-up Calendar Styles */
+        .followup-calendar .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .followup-calendar .cal-nav-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: var(--wajenzi-gray-100);
+            color: var(--wajenzi-gray-600);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .followup-calendar .cal-nav-btn:hover {
+            background: var(--wajenzi-blue-primary);
+            color: white;
+        }
+
+        .followup-calendar .cal-today-btn {
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            background: var(--wajenzi-orange);
+            color: white;
+            text-decoration: none;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .followup-calendar .cal-today-btn:hover {
+            background: #e67e22;
+        }
+
         .followup-calendar .calendar-month {
             background: var(--wajenzi-blue-primary);
             color: white;
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             font-weight: 600;
+            min-width: 120px;
+            text-align: center;
         }
 
         .calendar-container {
@@ -1619,6 +1898,14 @@
             background: var(--wajenzi-red);
         }
 
+        .event-dot.completed {
+            background: #28a745;
+        }
+
+        .event-dot.pending {
+            background: var(--wajenzi-green);
+        }
+
         .more-events {
             font-size: 0.6rem;
             color: var(--wajenzi-gray-600);
@@ -1657,8 +1944,13 @@
             background: var(--wajenzi-blue-primary);
         }
 
-        .calendar-legend .legend-dot.has-event {
+        .calendar-legend .legend-dot.has-event,
+        .calendar-legend .legend-dot.pending {
             background: var(--wajenzi-green);
+        }
+
+        .calendar-legend .legend-dot.completed {
+            background: #28a745;
         }
 
         .calendar-legend .legend-dot.overdue {
@@ -1719,6 +2011,26 @@
 
         .today-item:hover .lead-action {
             color: rgba(255,255,255,0.8);
+        }
+
+        .today-item.completed {
+            background: rgba(40, 167, 69, 0.1);
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .today-item.completed .lead-name,
+        .today-item.completed .lead-action {
+            color: #6c757d;
+        }
+
+        .today-item .completed-badge {
+            font-size: 0.65rem;
+            background: #28a745;
+            color: white;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            margin-left: auto;
         }
 
         /* Quick Actions */

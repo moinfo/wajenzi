@@ -83,9 +83,12 @@
             <div class="block block-rounded text-center">
                 <div class="block-content block-content-full">
                     <div class="py-3">
+                        @php
+                            $pendingFollowup = $lead->leadFollowups->where('status', 'pending')->sortBy('followup_date')->first();
+                        @endphp
                         <p class="h3 mb-0">
-                            @if($lead->latestFollowup && $lead->latestFollowup->followup_date)
-                                {{ $lead->latestFollowup->followup_date->format('d M Y') }}
+                            @if($pendingFollowup && $pendingFollowup->followup_date)
+                                {{ $pendingFollowup->followup_date->format('d M Y') }}
                             @else
                                 <span class="text-muted">Not Set</span>
                             @endif
@@ -250,6 +253,186 @@
         </div>
     </div>
 
+    <!-- Billing Documents Section -->
+    <div class="block block-rounded">
+        <div class="block-header block-header-default">
+            <h3 class="block-title"><i class="fa fa-file-invoice text-primary mr-2"></i>Billing Documents</h3>
+            <div class="block-options">
+                <a href="{{ route('billing.quotations.create', ['lead_id' => $lead->id]) }}" class="btn btn-sm btn-primary mr-1">
+                    <i class="fa fa-plus"></i> Quotation
+                </a>
+                <a href="{{ route('billing.proformas.create', ['lead_id' => $lead->id]) }}" class="btn btn-sm btn-info mr-1">
+                    <i class="fa fa-plus"></i> Proforma
+                </a>
+                <a href="{{ route('billing.invoices.create', ['lead_id' => $lead->id]) }}" class="btn btn-sm btn-success">
+                    <i class="fa fa-plus"></i> Invoice
+                </a>
+            </div>
+        </div>
+        <div class="block-content">
+            @php
+                $quotations = $lead->quotations;
+                $proformas = $lead->proformas;
+                $invoices = $lead->invoices;
+                $hasDocs = $quotations->count() > 0 || $proformas->count() > 0 || $invoices->count() > 0;
+
+                // Calculate invoice totals
+                $totalInvoiced = $invoices->sum('total_amount');
+                $totalPaid = $invoices->sum('paid_amount');
+                $totalBalance = $invoices->sum('balance_amount');
+                $currency = $invoices->first()?->currency_code ?? 'TZS';
+            @endphp
+
+            @if($hasDocs)
+                {{-- Invoice Payment Summary --}}
+                @if($invoices->count() > 0)
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="bg-light rounded p-3">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="border-right">
+                                        <small class="text-muted d-block">Total Invoiced</small>
+                                        <h4 class="mb-0 text-dark">{{ $currency }} {{ number_format($totalInvoiced, 2) }}</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border-right">
+                                        <small class="text-muted d-block">Total Paid</small>
+                                        <h4 class="mb-0 text-success">{{ $currency }} {{ number_format($totalPaid, 2) }}</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div>
+                                        <small class="text-muted d-block">Outstanding Balance</small>
+                                        <h4 class="mb-0 {{ $totalBalance > 0 ? 'text-danger' : 'text-success' }}">
+                                            {{ $currency }} {{ number_format($totalBalance, 2) }}
+                                            @if($totalBalance <= 0 && $totalInvoiced > 0)
+                                                <i class="fa fa-check-circle ml-1"></i>
+                                            @endif
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                <div class="row">
+                    <!-- Quotations -->
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-3"><i class="fa fa-file-alt mr-1"></i> Quotations ({{ $quotations->count() }})</h6>
+                        @forelse($quotations as $doc)
+                            <div class="card mb-2">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <a href="{{ route('billing.quotations.show', $doc) }}" class="font-weight-bold">
+                                                {{ $doc->document_number }}
+                                            </a>
+                                            <br>
+                                            <small class="text-muted">{{ $doc->issue_date?->format('d M Y') }}</small>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="badge badge-{{ $doc->status_color }}">{{ ucfirst($doc->status) }}</span>
+                                            <br>
+                                            <strong>{{ $doc->currency_code }} {{ number_format($doc->total_amount, 2) }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-muted"><small>No quotations yet</small></p>
+                        @endforelse
+                    </div>
+
+                    <!-- Proformas -->
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-3"><i class="fa fa-file-invoice mr-1"></i> Proforma Invoices ({{ $proformas->count() }})</h6>
+                        @forelse($proformas as $doc)
+                            <div class="card mb-2">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <a href="{{ route('billing.proformas.show', $doc) }}" class="font-weight-bold">
+                                                {{ $doc->document_number }}
+                                            </a>
+                                            <br>
+                                            <small class="text-muted">{{ $doc->issue_date?->format('d M Y') }}</small>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="badge badge-{{ $doc->status_color }}">{{ ucfirst($doc->status) }}</span>
+                                            <br>
+                                            <strong>{{ $doc->currency_code }} {{ number_format($doc->total_amount, 2) }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-muted"><small>No proformas yet</small></p>
+                        @endforelse
+                    </div>
+
+                    <!-- Invoices -->
+                    <div class="col-md-4">
+                        <h6 class="text-muted mb-3"><i class="fa fa-file-invoice-dollar mr-1"></i> Invoices ({{ $invoices->count() }})</h6>
+                        @forelse($invoices as $doc)
+                            @php
+                                $isPaid = $doc->balance_amount <= 0 && $doc->total_amount > 0;
+                                $isPartial = $doc->paid_amount > 0 && $doc->balance_amount > 0;
+                                $paymentBadge = $isPaid ? 'success' : ($isPartial ? 'warning' : 'danger');
+                                $paymentText = $isPaid ? 'PAID' : ($isPartial ? 'PARTIAL' : 'UNPAID');
+                            @endphp
+                            <div class="card mb-2 {{ $isPaid ? 'border-left border-success' : ($isPartial ? 'border-left border-warning' : 'border-left border-danger') }}" style="border-left-width: 4px !important;">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <a href="{{ route('billing.invoices.show', $doc) }}" class="font-weight-bold">
+                                                {{ $doc->document_number }}
+                                            </a>
+                                            <br>
+                                            <small class="text-muted">{{ $doc->issue_date?->format('d M Y') }}</small>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="badge badge-{{ $paymentBadge }}">{{ $paymentText }}</span>
+                                        </div>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="small">
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total:</span>
+                                            <strong>{{ $doc->currency_code }} {{ number_format($doc->total_amount, 2) }}</strong>
+                                        </div>
+                                        @if($doc->paid_amount > 0)
+                                        <div class="d-flex justify-content-between text-success">
+                                            <span>Paid:</span>
+                                            <span>{{ $doc->currency_code }} {{ number_format($doc->paid_amount, 2) }}</span>
+                                        </div>
+                                        @endif
+                                        @if($doc->balance_amount > 0)
+                                        <div class="d-flex justify-content-between text-danger font-weight-bold">
+                                            <span>Balance:</span>
+                                            <span>{{ $doc->currency_code }} {{ number_format($doc->balance_amount, 2) }}</span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-muted"><small>No invoices yet</small></p>
+                        @endforelse
+                    </div>
+                </div>
+            @else
+                <div class="alert alert-info mb-0">
+                    <i class="fa fa-info-circle mr-2"></i>
+                    No billing documents linked to this lead yet. Use the buttons above to create a quotation, proforma invoice, or invoice.
+                </div>
+            @endif
+        </div>
+    </div>
+
     <!-- Add New Follow-up -->
     <div class="block block-rounded">
         <div class="block-header block-header-default">
@@ -328,7 +511,13 @@
         <div class="block-header block-header-default">
             <h3 class="block-title">Follow-up History</h3>
             <div class="block-options">
-                <span class="badge badge-primary">{{ $lead->leadFollowups->count() }} Follow-ups</span>
+                @php
+                    $pendingCount = $lead->leadFollowups->where('status', 'pending')->count();
+                    $completedCount = $lead->leadFollowups->where('status', 'completed')->count();
+                @endphp
+                <span class="badge badge-warning mr-1">{{ $pendingCount }} Pending</span>
+                <span class="badge badge-success mr-1">{{ $completedCount }} Completed</span>
+                <span class="badge badge-primary">{{ $lead->leadFollowups->count() }} Total</span>
             </div>
         </div>
         <div class="block-content">
@@ -342,15 +531,26 @@
                                 <th>Followup Remarks</th>
                                 <th>Followup Result</th>
                                 <th>Next Action</th>
+                                <th style="width: 100px;">Status</th>
+                                <th style="width: 140px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($lead->leadFollowups->sortByDesc('followup_date')->sortByDesc('created_at') as $index => $followup)
-                                <tr>
+                                @php
+                                    $isOverdue = $followup->status === 'pending' && $followup->followup_date && $followup->followup_date->isPast() && !$followup->followup_date->isToday();
+                                    $isToday = $followup->followup_date && $followup->followup_date->isToday();
+                                @endphp
+                                <tr class="{{ $isOverdue ? 'table-danger' : ($isToday && $followup->status === 'pending' ? 'table-warning' : '') }}">
                                     <td>{{ $index + 1 }}</td>
                                     <td>
                                         @if($followup->followup_date)
                                             {{ $followup->followup_date->format('d M Y') }}
+                                            @if($isOverdue)
+                                                <br><small class="text-danger"><i class="fa fa-exclamation-circle"></i> Overdue</small>
+                                            @elseif($isToday && $followup->status === 'pending')
+                                                <br><small class="text-warning"><i class="fa fa-clock"></i> Today</small>
+                                            @endif
                                         @else
                                             {{ $followup->created_at->format('d M Y') }}
                                         @endif
@@ -358,6 +558,33 @@
                                     <td>{{ $followup->details_discussion ?: '-' }}</td>
                                     <td>{{ $followup->outcome ?: '-' }}</td>
                                     <td>{{ $followup->next_step ?: '-' }}</td>
+                                    <td>
+                                        @switch($followup->status ?? 'pending')
+                                            @case('completed')
+                                                <span class="badge badge-success"><i class="fa fa-check"></i> Completed</span>
+                                                @if($followup->attended_at)
+                                                    <br><small class="text-muted">{{ $followup->attended_at->format('d M Y') }}</small>
+                                                @endif
+                                                @break
+                                            @case('cancelled')
+                                                <span class="badge badge-danger"><i class="fa fa-times"></i> Cancelled</span>
+                                                @break
+                                            @case('rescheduled')
+                                                <span class="badge badge-info"><i class="fa fa-calendar"></i> Rescheduled</span>
+                                                @break
+                                            @default
+                                                <span class="badge badge-warning"><i class="fa fa-clock"></i> Pending</span>
+                                        @endswitch
+                                    </td>
+                                    <td>
+                                        @if(($followup->status ?? 'pending') === 'pending')
+                                            <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#attendModal{{ $followup->id }}">
+                                                <i class="fa fa-check-circle"></i> Attend
+                                            </button>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -397,4 +624,150 @@
     </div>
 </div>
 
+<!-- Attend Follow-up Modals -->
+@foreach($lead->leadFollowups->where('status', 'pending') as $followup)
+<div class="modal fade" id="attendModal{{ $followup->id }}" tabindex="-1" role="dialog" aria-labelledby="attendModalLabel{{ $followup->id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('leads.followup.attend', ['leadId' => $lead->id, 'followupId' => $followup->id]) }}">
+                @csrf
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="attendModalLabel{{ $followup->id }}">
+                        <i class="fa fa-check-circle mr-2"></i>Mark Follow-up as Attended
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Follow-up Info -->
+                    <div class="alert alert-light mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>Client:</strong> {{ $lead->name }}<br>
+                                <strong>Scheduled Date:</strong> {{ $followup->followup_date ? $followup->followup_date->format('d M Y') : '-' }}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Planned Action:</strong> {{ $followup->next_step ?: 'N/A' }}<br>
+                                <strong>Remarks:</strong> {{ $followup->details_discussion ?: 'N/A' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="required">Follow-up Status</label>
+                                <select name="status" class="form-control" required>
+                                    <option value="completed" selected>✓ COMPLETED - I contacted the client</option>
+                                    <option value="rescheduled">↻ RESCHEDULED - Postponed to another date</option>
+                                    <option value="cancelled">✗ CANCELLED - No longer needed</option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    <strong>Completed:</strong> You made the call/contact (select this if you spoke to client)<br>
+                                    <strong>Rescheduled:</strong> You didn't contact yet, moving to another date
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="required">Outcome / Result</label>
+                                <select name="outcome" class="form-control" required>
+                                    <option value="">-- Select Outcome --</option>
+                                    <optgroup label="Positive Outcomes">
+                                        <option value="Interested - Hot Lead">🔥 Interested - Hot Lead</option>
+                                        <option value="Interested - Warm Lead">👍 Interested - Warm Lead</option>
+                                        <option value="Requested Proposal">📄 Requested Proposal</option>
+                                        <option value="Meeting Scheduled">📅 Meeting Scheduled</option>
+                                        <option value="Site Visit Scheduled">🏗️ Site Visit Scheduled</option>
+                                        <option value="Converted to Project">🎉 Converted to Project</option>
+                                    </optgroup>
+                                    <optgroup label="Neutral Outcomes">
+                                        <option value="Call Back Later">📞 Call Back Later</option>
+                                        <option value="No Answer">📵 No Answer</option>
+                                        <option value="Left Message">💬 Left Message</option>
+                                    </optgroup>
+                                    <optgroup label="Negative Outcomes">
+                                        <option value="Not Interested">👎 Not Interested</option>
+                                        <option value="Budget Constraints">💰 Budget Constraints</option>
+                                        <option value="Wrong Contact">❌ Wrong Contact</option>
+                                    </optgroup>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Additional Remarks</label>
+                        <textarea name="remarks" class="form-control" rows="2" placeholder="Any additional notes about this follow-up..."></textarea>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-group">
+                        <label>Update Lead Status</label>
+                        <select name="update_lead_status" class="form-control">
+                            <option value="">-- Keep Current Status ({{ $lead->leadStatus->name ?? 'N/A' }}) --</option>
+                            @foreach($leadStatuses as $status)
+                                <option value="{{ $status->id }}">{{ $status->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Optionally update the lead status based on follow-up outcome</small>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-group">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="scheduleNext{{ $followup->id }}" name="schedule_next_followup" value="1" onchange="toggleNextFollowup({{ $followup->id }})">
+                            <label class="custom-control-label" for="scheduleNext{{ $followup->id }}">
+                                <strong>Schedule Next Follow-up</strong>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="nextFollowupFields{{ $followup->id }}" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Next Follow-up Date</label>
+                                    <input type="date" name="next_followup_date" class="form-control" min="{{ now()->addDay()->format('Y-m-d') }}">
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label>Next Action</label>
+                                    <input type="text" name="next_followup_action" class="form-control" placeholder="What should be done in the next follow-up?">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fa fa-check mr-1"></i> Mark as Attended
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
+@endsection
+
+@section('js_after')
+<script>
+function toggleNextFollowup(followupId) {
+    var checkbox = document.getElementById('scheduleNext' + followupId);
+    var fields = document.getElementById('nextFollowupFields' + followupId);
+    if (checkbox.checked) {
+        fields.style.display = 'block';
+    } else {
+        fields.style.display = 'none';
+    }
+}
+</script>
 @endsection

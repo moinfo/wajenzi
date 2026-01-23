@@ -10,6 +10,7 @@ use App\Models\ProjectClient;
 use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use App\Models\BillingDocumentSetting;
+use App\Models\Lead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -48,8 +49,14 @@ class QuotationController extends Controller
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
-        
-        return view('billing.quotations.create', compact('clients', 'products', 'taxRates', 'settings'));
+
+        // If creating from a lead
+        $lead = null;
+        if ($request->lead_id) {
+            $lead = Lead::with('client')->find($request->lead_id);
+        }
+
+        return view('billing.quotations.create', compact('clients', 'products', 'taxRates', 'settings', 'lead'));
     }
 
     public function store(Request $request)
@@ -72,6 +79,7 @@ class QuotationController extends Controller
             $quotation->document_number = $quotation->generateDocumentNumber('quote');
             $quotation->client_id = $request->client_id;
             $quotation->project_id = $request->project_id;
+            $quotation->lead_id = $request->lead_id;
             $quotation->status = $request->save_as_draft ? 'draft' : 'pending';
             $quotation->issue_date = $request->issue_date;
             $quotation->valid_until_date = $request->valid_until_date;
@@ -125,12 +133,12 @@ class QuotationController extends Controller
 
     public function show(BillingDocument $quotation)
     {
-        $quotation->load(['client', 'items', 'creator']);
-        
+        $quotation->load(['client', 'items', 'creator', 'lead']);
+
         if ($quotation->status === 'sent' && !$quotation->viewed_at) {
             $quotation->update(['viewed_at' => now(), 'status' => 'viewed']);
         }
-        
+
         return view('billing.quotations.show', compact('quotation'));
     }
 

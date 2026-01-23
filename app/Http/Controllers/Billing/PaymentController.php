@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BillingPayment;
 use App\Models\BillingDocument;
 use App\Models\ProjectClient;
+use App\Services\ClientApprovalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use PDF;
@@ -92,15 +93,18 @@ class PaymentController extends Controller
 
             $document->paid_amount += $request->amount;
             $document->balance_amount = $document->total_amount - $document->paid_amount;
-            
+
             if ($document->balance_amount <= 0) {
                 $document->status = 'paid';
                 $document->paid_at = now();
             } elseif ($document->paid_amount > 0) {
                 $document->status = 'partial_paid';
             }
-            
+
             $document->save();
+
+            // Check if this is the first payment for this client and auto-approve workflow
+            $this->autoApproveClientOnFirstPayment($document->client_id, $payment);
 
             DB::commit();
 
@@ -257,14 +261,26 @@ class PaymentController extends Controller
     public function getOutstandingDocuments(Request $request)
     {
         $clientId = $request->client_id;
-        
+
         $documents = BillingDocument::where('client_id', $clientId)
             ->where('document_type', 'invoice')
             ->where('balance_amount', '>', 0)
             ->select('id', 'document_number', 'total_amount', 'balance_amount', 'issue_date')
             ->orderBy('issue_date', 'desc')
             ->get();
-        
+
         return response()->json($documents);
+    }
+
+    /**
+     * Auto-approve all workflow steps for a client on their first payment
+     *
+     * @param int $clientId
+     * @param BillingPayment $payment
+     * @return void
+     */
+    protected function autoApproveClientOnFirstPayment($clientId, BillingPayment $payment)
+    {
+        ClientApprovalService::autoApproveOnFirstPayment($clientId, $payment);
     }
 }

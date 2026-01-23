@@ -21,6 +21,19 @@
             @if($parentDocument)
                 <input type="hidden" name="parent_document_id" value="{{ $parentDocument->id }}">
             @endif
+
+            @if(isset($lead) && $lead)
+                <input type="hidden" name="lead_id" value="{{ $lead->id }}">
+                <div class="alert alert-info">
+                    <i class="fa fa-link mr-2"></i>
+                    Creating invoice for lead: <strong>{{ $lead->lead_number ?? $lead->name }}</strong>
+                    @if($lead->client)
+                        (Client: {{ $lead->client->first_name }} {{ $lead->client->last_name }})
+                    @endif
+                    <a href="{{ route('leads.show', $lead->id) }}" class="ml-2"><i class="fa fa-external-link-alt"></i> View Lead</a>
+                </div>
+            @endif
+
             <!-- Line Items - Full Width -->
             <div class="row mt-3">
                 <div class="col-12">
@@ -173,6 +186,65 @@
                                                 </button>
                                             </td>
                                         </tr>
+                                    @else
+                                        {{-- Default empty row when creating new invoice --}}
+                                        <tr data-index="0">
+                                            <td style="vertical-align: top;">
+                                                <select name="items[0][product_service_id]" class="form-control form-control-sm product-selector"
+                                                        onchange="selectProduct(this, 0)">
+                                                    <option value="">Select Product/Service</option>
+                                                    @foreach($products as $product)
+                                                        <option value="{{ $product->id }}"
+                                                                data-name="{{ $product->name }}"
+                                                                data-price="{{ $product->unit_price }}"
+                                                                data-unit="{{ $product->unit_of_measure }}"
+                                                                data-tax="{{ $product->taxRate ? $product->taxRate->rate : 0 }}">
+                                                            [{{ $product->code }}] {{ $product->name }} - TZS {{ number_format($product->unit_price, 2) }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                <small class="text-muted">Or leave empty for custom item</small>
+                                            </td>
+                                            <td style="vertical-align: top;">
+                                                <input type="text" name="items[0][item_name]"
+                                                       class="form-control form-control-sm"
+                                                       placeholder="Or enter custom item name" required>
+                                                <textarea name="items[0][description]"
+                                                          class="form-control form-control-sm mt-1"
+                                                          rows="2" placeholder="Description"></textarea>
+                                            </td>
+                                            <td style="vertical-align: top;">
+                                                <input type="number" name="items[0][quantity]"
+                                                       class="form-control form-control-sm quantity"
+                                                       value="1" step="0.01" min="0.01" required
+                                                       onchange="calculateLineTotal(this)">
+                                            </td>
+                                            <td style="vertical-align: top;">
+                                                <input type="text" name="items[0][unit_of_measure]"
+                                                       class="form-control form-control-sm" placeholder="Unit">
+                                            </td>
+                                            <td style="vertical-align: top;">
+                                                <input type="number" name="items[0][unit_price]"
+                                                       class="form-control form-control-sm unit-price"
+                                                       value="0" step="0.01" min="0" required
+                                                       onchange="calculateLineTotal(this)">
+                                            </td>
+                                            <td style="vertical-align: top;">
+                                                <input type="number" name="items[0][tax_percentage]"
+                                                       class="form-control form-control-sm tax-percentage"
+                                                       value="18" step="0.01" min="0" max="100"
+                                                       onchange="calculateLineTotal(this)">
+                                            </td>
+                                            <td style="vertical-align: top;">
+                                                <input type="number" class="form-control form-control-sm line-total"
+                                                       value="0" readonly>
+                                            </td>
+                                            <td style="vertical-align: top;">
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
                                     @endif
                                     </tbody>
                                 </table>
@@ -200,7 +272,7 @@
                                             <option value="">Select Client</option>
                                             @foreach($clients as $client)
                                                 <option value="{{ $client->id }}"
-                                                        {{ (old('client_id') == $client->id || ($parentDocument && $parentDocument->client_id == $client->id)) ? 'selected' : '' }}>
+                                                        {{ (old('client_id') == $client->id || ($parentDocument && $parentDocument->client_id == $client->id) || (isset($lead) && $lead && $lead->client_id == $client->id)) ? 'selected' : '' }}>
                                                     {{ $client->first_name }} {{ $client->last_name }}
                                                     @if($client->email) - {{ $client->email }} @endif
                                                 </option>
