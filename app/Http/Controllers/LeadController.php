@@ -154,7 +154,17 @@ class LeadController extends Controller
 
     public function show($id)
     {
-        $lead = Lead::with(['leadSource', 'serviceInterested', 'leadStatus', 'salesperson', 'createdBy', 'leadFollowups'])->findOrFail($id);
+        $lead = Lead::with([
+            'leadSource',
+            'serviceInterested',
+            'leadStatus',
+            'salesperson',
+            'createdBy',
+            'leadFollowups',
+            'quotations',
+            'proformas',
+            'invoices'
+        ])->findOrFail($id);
 
         $data = [
             'lead' => $lead,
@@ -268,6 +278,65 @@ class LeadController extends Controller
             return back()->with('success', 'Follow-up added successfully!');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to add follow-up: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Mark a follow-up as attended/completed
+     */
+    public function attendFollowup(Request $request, $leadId, $followupId)
+    {
+        $lead = Lead::findOrFail($leadId);
+        $followup = SalesLeadFollowup::where('lead_id', $leadId)->findOrFail($followupId);
+
+        $request->validate([
+            'status' => 'required|in:completed,cancelled,rescheduled',
+            'outcome' => 'required|string',
+            'remarks' => 'nullable|string',
+            'update_lead_status' => 'nullable|exists:lead_statuses,id',
+            'schedule_next_followup' => 'nullable|boolean',
+            'next_followup_date' => 'required_if:schedule_next_followup,1|nullable|date|after:today',
+            'next_followup_action' => 'nullable|string',
+        ]);
+
+        try {
+            // Update the follow-up
+            $followup->update([
+                'status' => $request->status,
+                'outcome' => $request->outcome,
+                'details_discussion' => $request->remarks ? $followup->details_discussion . "\n\n--- Attended ---\n" . $request->remarks : $followup->details_discussion,
+                'attended_at' => now(),
+                'attended_by' => Auth::id(),
+            ]);
+
+            // Update lead status if requested
+            if ($request->update_lead_status) {
+                $lead->update(['lead_status_id' => $request->update_lead_status]);
+            }
+
+            // Schedule next follow-up if requested
+            if ($request->schedule_next_followup && $request->next_followup_date) {
+                SalesLeadFollowup::create([
+                    'lead_id' => $lead->id,
+                    'lead_name' => $lead->name,
+                    'client_id' => $lead->client_id,
+                    'details_discussion' => $request->next_followup_action ?? 'Follow-up scheduled after previous attendance',
+                    'next_step' => $request->next_followup_action,
+                    'followup_date' => $request->next_followup_date,
+                    'status' => 'pending',
+                ]);
+            }
+
+            $statusMessage = match($request->status) {
+                'completed' => 'Follow-up marked as completed!',
+                'cancelled' => 'Follow-up cancelled.',
+                'rescheduled' => 'Follow-up rescheduled.',
+                default => 'Follow-up updated!'
+            };
+
+            return back()->with('success', $statusMessage);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to update follow-up: ' . $e->getMessage());
         }
     }
 }

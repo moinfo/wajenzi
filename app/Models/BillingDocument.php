@@ -18,6 +18,7 @@ class BillingDocument extends Model
         'reference_number',
         'client_id',
         'project_id',
+        'lead_id',
         'parent_document_id',
         'status',
         'issue_date',
@@ -95,6 +96,11 @@ class BillingDocument extends Model
     public function project()
     {
         return $this->belongsTo(Project::class, 'project_id');
+    }
+
+    public function lead()
+    {
+        return $this->belongsTo(Lead::class, 'lead_id');
     }
 
     public function payments()

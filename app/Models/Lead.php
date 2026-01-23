@@ -125,6 +125,29 @@ class Lead extends Model
     }
 
     /**
+     * Billing Documents Relationships
+     */
+    public function billingDocuments()
+    {
+        return $this->hasMany(BillingDocument::class, 'lead_id');
+    }
+
+    public function quotations()
+    {
+        return $this->hasMany(BillingDocument::class, 'lead_id')->where('document_type', 'quote');
+    }
+
+    public function proformas()
+    {
+        return $this->hasMany(BillingDocument::class, 'lead_id')->where('document_type', 'proforma');
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(BillingDocument::class, 'lead_id')->where('document_type', 'invoice');
+    }
+
+    /**
      * Scopes
      */
     public function scopeActive($query)

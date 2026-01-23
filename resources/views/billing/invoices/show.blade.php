@@ -71,7 +71,10 @@
             <div class="col-md-8">
                 <div class="block block-themed">
                     <div class="block-content">
-                        @include('components.headed_paper')
+                        @include('components.headed_paper', [
+                            'backUrl' => $invoice->lead_id ? route('leads.show', $invoice->lead_id) : route('billing.invoices.index'),
+                            'backText' => $invoice->lead_id ? 'Back to Lead' : 'Back to Invoices'
+                        ])
 
                         <!-- Invoice Header -->
                         <div class="row mt-4">
@@ -314,6 +317,30 @@
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Linked Lead -->
+                @if($invoice->lead_id && $invoice->lead)
+                    <div class="block block-themed">
+                        <div class="block-header bg-info">
+                            <h3 class="block-title">Linked Lead</h3>
+                        </div>
+                        <div class="block-content">
+                            <p class="mb-2">
+                                <i class="fa fa-user mr-1"></i>
+                                <a href="{{ route('leads.show', $invoice->lead->id) }}">
+                                    <strong>{{ $invoice->lead->lead_number ?? $invoice->lead->name }}</strong>
+                                </a>
+                            </p>
+                            <p class="mb-3 text-muted small">
+                                {{ $invoice->lead->name }}<br>
+                                {{ $invoice->lead->phone }}
+                            </p>
+                            <a href="{{ route('leads.show', $invoice->lead->id) }}" class="btn btn-info btn-block">
+                                <i class="fa fa-arrow-left mr-1"></i> Back to Lead
+                            </a>
                         </div>
                     </div>
                 @endif

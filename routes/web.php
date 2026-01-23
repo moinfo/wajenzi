@@ -493,6 +493,7 @@ Route::middleware(['auth'])->group(function () {
     // Lead Management Routes
     Route::resource('leads', App\Http\Controllers\LeadController::class);
     Route::post('leads/{id}/followup', [App\Http\Controllers\LeadController::class, 'storeFollowup'])->name('leads.followup.store');
+    Route::post('leads/{leadId}/followup/{followupId}/attend', [App\Http\Controllers\LeadController::class, 'attendFollowup'])->name('leads.followup.attend');
 
 // Project Invoice Routes
     Route::match(['get', 'post'], '/project_invoices', [App\Http\Controllers\ProjectInvoiceController::class, 'index'])->name('project_invoices');
