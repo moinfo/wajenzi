@@ -55,7 +55,15 @@ class BillingDocument extends Model
         'approved_at',
         'sent_at',
         'viewed_at',
-        'paid_at'
+        'paid_at',
+        'reminder_count',
+        'original_due_date',
+        'rescheduled_at',
+        'rescheduled_by',
+        'reschedule_reason',
+        'attended_at',
+        'attended_by',
+        'attendance_notes'
     ];
 
     protected $casts = [
@@ -80,7 +88,10 @@ class BillingDocument extends Model
         'late_fee_applied_at' => 'datetime',
         'last_reminder_sent_at' => 'datetime',
         'paid_amount' => 'decimal:2',
-        'balance_amount' => 'decimal:2'
+        'balance_amount' => 'decimal:2',
+        'original_due_date' => 'date',
+        'rescheduled_at' => 'datetime',
+        'attended_at' => 'datetime'
     ];
 
     public function items()
@@ -436,5 +447,127 @@ class BillingDocument extends Model
     public function getIsApprovedSignedAttribute()
     {
         return !empty($this->approved_by_signature) && !empty($this->approved_signed_at);
+    }
+
+    /**
+     * Generate Google Calendar URL for invoice due date
+     */
+    public function getGoogleCalendarUrl(): string
+    {
+        $title = 'Invoice Due: ' . $this->document_number;
+
+        // Use due_date, default to 9 AM - 10 AM
+        $startDate = $this->due_date->copy()->setTime(9, 0);
+        $endDate = $this->due_date->copy()->setTime(10, 0);
+
+        // Format dates for Google Calendar (YYYYMMDDTHHmmSSZ)
+        $dateFormat = 'Ymd\THis\Z';
+        $dates = $startDate->utc()->format($dateFormat) . '/' . $endDate->utc()->format($dateFormat);
+
+        // Build description
+        $details = [];
+        $details[] = "Invoice: {$this->document_number}";
+        $details[] = "Amount: TZS " . number_format($this->total_amount, 2);
+        $details[] = "Balance: TZS " . number_format($this->balance_amount, 2);
+        if ($this->client) {
+            $details[] = "Client: {$this->client->name}";
+            if ($this->client->phone) {
+                $details[] = "Phone: {$this->client->phone}";
+            }
+            if ($this->client->email) {
+                $details[] = "Email: {$this->client->email}";
+            }
+        }
+        if ($this->project) {
+            $details[] = "Project: {$this->project->name}";
+        }
+        $description = implode("\n", $details);
+
+        // Build URL
+        $params = [
+            'action' => 'TEMPLATE',
+            'text' => $title,
+            'dates' => $dates,
+            'details' => $description,
+        ];
+
+        return 'https://calendar.google.com/calendar/render?' . http_build_query($params);
+    }
+
+    /**
+     * Get Google Calendar URL attribute
+     */
+    public function getGoogleCalendarLinkAttribute(): string
+    {
+        return $this->getGoogleCalendarUrl();
+    }
+
+    /**
+     * Scope for unpaid invoices with due date
+     */
+    public function scopeUnpaidWithDueDate($query)
+    {
+        return $query->where('document_type', 'invoice')
+            ->whereNotIn('status', ['paid', 'cancelled', 'void'])
+            ->whereNotNull('due_date');
+    }
+
+    /**
+     * Scope for invoices due today
+     */
+    public function scopeDueToday($query)
+    {
+        return $query->unpaidWithDueDate()
+            ->whereDate('due_date', now()->toDateString());
+    }
+
+    /**
+     * Scope for overdue invoices
+     */
+    public function scopeOverdueInvoices($query)
+    {
+        return $query->unpaidWithDueDate()
+            ->whereDate('due_date', '<', now()->toDateString());
+    }
+
+    /**
+     * Scope for upcoming invoices (due in future)
+     */
+    public function scopeUpcomingDue($query)
+    {
+        return $query->unpaidWithDueDate()
+            ->whereDate('due_date', '>', now()->toDateString());
+    }
+
+    /**
+     * Check if invoice is due today
+     */
+    public function isDueToday(): bool
+    {
+        return $this->due_date && $this->due_date->isToday();
+    }
+
+    /**
+     * Check if invoice was rescheduled
+     */
+    public function wasRescheduled(): bool
+    {
+        return !empty($this->rescheduled_at);
+    }
+
+    /**
+     * Get the user who rescheduled this invoice
+     */
+    public function rescheduledByUser()
+    {
+        return $this->belongsTo(User::class, 'rescheduled_by');
+    }
+
+    /**
+     * Get the user who attended to this invoice
+     */
+    public function attendedByUser()
+    {
+        return $this->belongsTo(User::class, 'attended_by');
     }
 }

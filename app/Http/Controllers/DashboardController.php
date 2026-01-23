@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BillingDocument;
 use App\Models\Collection;
 use App\Models\Expense;
 use App\Models\Gross;
 use App\Models\ProjectSchedule;
 use App\Models\ProjectScheduleActivity;
 use App\Models\TransactionMovement;
+use App\Models\User;
+use App\Notifications\InvoiceDueReminderNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class DashboardController extends Controller
 {
@@ -92,6 +96,46 @@ class DashboardController extends Controller
             );
         }
 
+        // Get invoice due dates for accountants
+        $invoiceDueDates = collect();
+        $overdueInvoicesCount = 0;
+        $todayInvoicesCount = 0;
+        $upcomingInvoicesCount = 0;
+        $calendarInvoices = collect();
+
+        // Check if user is Accountant or has permission to view invoices
+        $canViewInvoices = $user->hasRole('Accountant')
+            || $user->hasRole('Admin')
+            || $user->hasRole('Super Admin')
+            || $user->hasRole('System Administrator')
+            || $user->can('Invoice List')
+            || $user->can('view invoices');
+
+        if ($canViewInvoices) {
+            // Get all unpaid invoices with due dates
+            $invoiceDueDates = BillingDocument::with(['client', 'project', 'lead'])
+                ->unpaidWithDueDate()
+                ->orderByRaw("CASE WHEN due_date < CURDATE() THEN 0 WHEN due_date = CURDATE() THEN 1 ELSE 2 END")
+                ->orderBy('due_date', 'asc')
+                ->limit(20)
+                ->get();
+
+            // Count invoices by status
+            $overdueInvoicesCount = BillingDocument::overdueInvoices()->count();
+            $todayInvoicesCount = BillingDocument::dueToday()->count();
+            $upcomingInvoicesCount = BillingDocument::upcomingDue()->count();
+
+            // Calendar invoices for selected month
+            $calendarInvoices = BillingDocument::with(['client', 'project'])
+                ->unpaidWithDueDate()
+                ->whereYear('due_date', $calYear)
+                ->whereMonth('due_date', $calMonth)
+                ->get()
+                ->groupBy(function($invoice) {
+                    return $invoice->due_date->format('Y-m-d');
+                });
+        }
+
         $data = [
             'collections' => $collections,
             'collection_in_month' => $collection_in_month,
@@ -109,6 +153,11 @@ class DashboardController extends Controller
             'inProgressActivitiesCount' => $inProgressActivitiesCount,
             'activeSchedules' => $activeSchedules,
             'overallProgress' => $overallProgress,
+            'invoiceDueDates' => $invoiceDueDates,
+            'overdueInvoicesCount' => $overdueInvoicesCount,
+            'todayInvoicesCount' => $todayInvoicesCount,
+            'upcomingInvoicesCount' => $upcomingInvoicesCount,
+            'calendarInvoices' => $calendarInvoices,
         ];
 
         $this->notify('Welcome to a Financial Analysis System', 'Hello'.' '.$user->name, 'success');
@@ -223,6 +272,275 @@ class DashboardController extends Controller
     {
         $text = str_replace(['\\', ';', ',', "\n", "\r"], ['\\\\', '\\;', '\\,', '\\n', ''], $text);
         return $text;
+    }
+
+    /**
+     * Export invoice due dates to ICS (iCalendar) format for Google Calendar import
+     */
+    public function exportInvoicesToCalendar(Request $request)
+    {
+        $user = Auth::user();
+
+        // Check permission
+        if (!$user->hasRole('Accountant') && !$user->hasRole('Admin') && !$user->can('Invoice List')) {
+            abort(403, 'Unauthorized');
+        }
+
+        // Get unpaid invoices with due dates
+        $invoices = BillingDocument::with(['client', 'project'])
+            ->unpaidWithDueDate()
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        // Generate ICS content
+        $icsContent = $this->generateInvoiceICS($invoices);
+
+        // Return as downloadable file
+        $filename = 'invoice_due_dates_' . date('Y-m-d') . '.ics';
+
+        return response($icsContent)
+            ->header('Content-Type', 'text/calendar; charset=utf-8')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    /**
+     * Generate ICS content from invoices
+     */
+    private function generateInvoiceICS($invoices)
+    {
+        $ics = "BEGIN:VCALENDAR\r\n";
+        $ics .= "VERSION:2.0\r\n";
+        $ics .= "PRODID:-//Wajenzi Professional//Invoice Due Dates//EN\r\n";
+        $ics .= "CALSCALE:GREGORIAN\r\n";
+        $ics .= "METHOD:PUBLISH\r\n";
+        $ics .= "X-WR-CALNAME:Wajenzi Invoice Due Dates\r\n";
+
+        foreach ($invoices as $invoice) {
+            $uid = 'invoice-' . $invoice->id . '@wajenzi.com';
+            $title = 'Invoice Due: ' . $invoice->document_number;
+
+            // Set time to 9 AM - 10 AM
+            $startDate = $invoice->due_date->copy()->setTime(9, 0, 0);
+            $endDate = $invoice->due_date->copy()->setTime(10, 0, 0);
+
+            // Format dates for ICS (UTC)
+            $dtStart = $startDate->utc()->format('Ymd\THis\Z');
+            $dtEnd = $endDate->utc()->format('Ymd\THis\Z');
+            $dtStamp = now()->utc()->format('Ymd\THis\Z');
+
+            // Build description
+            $description = [];
+            $description[] = "Invoice: " . $invoice->document_number;
+            $description[] = "Amount: TZS " . number_format($invoice->total_amount, 2);
+            $description[] = "Balance: TZS " . number_format($invoice->balance_amount, 2);
+            if ($invoice->client) {
+                $description[] = "Client: " . $invoice->client->name;
+                if ($invoice->client->phone) {
+                    $description[] = "Phone: " . $invoice->client->phone;
+                }
+            }
+            if ($invoice->project) {
+                $description[] = "Project: " . $invoice->project->name;
+            }
+            $descText = $this->escapeICS(implode("\\n", $description));
+            $titleText = $this->escapeICS($title);
+
+            $ics .= "BEGIN:VEVENT\r\n";
+            $ics .= "UID:{$uid}\r\n";
+            $ics .= "DTSTAMP:{$dtStamp}\r\n";
+            $ics .= "DTSTART:{$dtStart}\r\n";
+            $ics .= "DTEND:{$dtEnd}\r\n";
+            $ics .= "SUMMARY:{$titleText}\r\n";
+            $ics .= "DESCRIPTION:{$descText}\r\n";
+            $ics .= "STATUS:CONFIRMED\r\n";
+            $ics .= "BEGIN:VALARM\r\n";
+            $ics .= "TRIGGER:-P1D\r\n"; // Remind 1 day before
+            $ics .= "ACTION:DISPLAY\r\n";
+            $ics .= "DESCRIPTION:Reminder: {$titleText}\r\n";
+            $ics .= "END:VALARM\r\n";
+            $ics .= "END:VEVENT\r\n";
+        }
+
+        $ics .= "END:VCALENDAR\r\n";
+
+        return $ics;
+    }
+
+    /**
+     * Attend to an invoice (mark action taken)
+     */
+    public function attendInvoice(Request $request, $id)
+    {
+        $user = Auth::user();
+
+        // Check permission - same as view permission
+        $canAttend = $user->hasRole('Accountant')
+            || $user->hasRole('Admin')
+            || $user->hasRole('Super Admin')
+            || $user->hasRole('System Administrator')
+            || $user->can('Invoice Edit')
+            || $user->can('Invoice List');
+
+        if (!$canAttend) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'action' => 'required|in:paid,partial,reschedule',
+            'notes' => 'nullable|string|max:1000',
+            'new_due_date' => 'required_if:action,reschedule|date|after:today',
+            'paid_amount' => 'required_if:action,partial|numeric|min:0',
+        ]);
+
+        $invoice = BillingDocument::findOrFail($id);
+        $action = $request->input('action');
+
+        if ($action === 'paid') {
+            // Mark as fully paid
+            $invoice->status = 'paid';
+            $invoice->paid_amount = $invoice->total_amount;
+            $invoice->balance_amount = 0;
+            $invoice->paid_at = now();
+            $invoice->attended_at = now();
+            $invoice->attended_by = $user->id;
+            $invoice->attendance_notes = $request->input('notes');
+            $invoice->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice marked as paid successfully.'
+            ]);
+
+        } elseif ($action === 'partial') {
+            // Record partial payment
+            $paidAmount = $request->input('paid_amount');
+            $invoice->paid_amount = ($invoice->paid_amount ?? 0) + $paidAmount;
+            $invoice->balance_amount = $invoice->total_amount - $invoice->paid_amount;
+
+            if ($invoice->balance_amount <= 0) {
+                $invoice->status = 'paid';
+                $invoice->paid_at = now();
+            } else {
+                $invoice->status = 'partial_paid';
+            }
+
+            $invoice->attended_at = now();
+            $invoice->attended_by = $user->id;
+            $invoice->attendance_notes = $request->input('notes');
+            $invoice->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Partial payment recorded successfully.',
+                'balance' => $invoice->balance_amount
+            ]);
+
+        } elseif ($action === 'reschedule') {
+            // Reschedule due date
+            if (!$invoice->original_due_date) {
+                $invoice->original_due_date = $invoice->due_date;
+            }
+            $invoice->due_date = $request->input('new_due_date');
+            $invoice->rescheduled_at = now();
+            $invoice->rescheduled_by = $user->id;
+            $invoice->reschedule_reason = $request->input('notes');
+            $invoice->attended_at = now();
+            $invoice->attended_by = $user->id;
+            $invoice->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Invoice due date rescheduled successfully.',
+                'new_due_date' => $invoice->due_date->format('d M Y')
+            ]);
+        }
+
+        return response()->json(['error' => 'Invalid action'], 400);
+    }
+
+    /**
+     * Get invoice details for attend modal
+     */
+    public function getInvoiceForAttend($id)
+    {
+        $user = Auth::user();
+
+        // Check permission - same as view permission
+        $canView = $user->hasRole('Accountant')
+            || $user->hasRole('Admin')
+            || $user->hasRole('Super Admin')
+            || $user->hasRole('System Administrator')
+            || $user->can('Invoice Edit')
+            || $user->can('Invoice List');
+
+        if (!$canView) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $invoice = BillingDocument::with(['client', 'project'])->findOrFail($id);
+
+        return response()->json([
+            'id' => $invoice->id,
+            'document_number' => $invoice->document_number ?? 'N/A',
+            'client_name' => $invoice->client->name ?? 'No Client',
+            'project_name' => $invoice->project->name ?? 'N/A',
+            'total_amount' => floatval($invoice->total_amount ?? 0),
+            'paid_amount' => floatval($invoice->paid_amount ?? 0),
+            'balance_amount' => floatval($invoice->balance_amount ?? 0),
+            'due_date' => $invoice->due_date->format('Y-m-d'),
+            'due_date_formatted' => $invoice->due_date->format('d M Y'),
+            'status' => $invoice->status,
+            'is_overdue' => $invoice->is_overdue,
+            'original_due_date' => $invoice->original_due_date ? $invoice->original_due_date->format('d M Y') : null,
+        ]);
+    }
+
+    /**
+     * Send invoice due reminders to accountants (can be called via scheduler)
+     */
+    public function sendInvoiceReminders()
+    {
+        // Get invoices due today or overdue that haven't been reminded today
+        $invoices = BillingDocument::with(['client', 'project'])
+            ->unpaidWithDueDate()
+            ->where(function($query) {
+                $query->whereDate('due_date', '<=', now()->toDateString());
+            })
+            ->where(function($query) {
+                $query->whereNull('last_reminder_sent_at')
+                      ->orWhereDate('last_reminder_sent_at', '<', now()->toDateString());
+            })
+            ->get();
+
+        if ($invoices->isEmpty()) {
+            return response()->json(['message' => 'No reminders to send']);
+        }
+
+        // Get all accountants
+        $accountants = User::role('Accountant')->get();
+
+        if ($accountants->isEmpty()) {
+            return response()->json(['message' => 'No accountants found']);
+        }
+
+        // Send notification
+        foreach ($invoices as $invoice) {
+            try {
+                Notification::send($accountants, new InvoiceDueReminderNotification($invoice));
+
+                // Update reminder tracking
+                $invoice->last_reminder_sent_at = now();
+                $invoice->reminder_count = ($invoice->reminder_count ?? 0) + 1;
+                $invoice->save();
+            } catch (\Exception $e) {
+                \Log::error('Failed to send invoice reminder: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json([
+            'message' => 'Reminders sent successfully',
+            'count' => $invoices->count()
+        ]);
     }
 
 }

@@ -20,6 +20,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\DashboardController::class, 'index'])->name('home');
     Route::match(['get', 'post'], '/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/export-followups-calendar', [App\Http\Controllers\DashboardController::class, 'exportFollowupsToCalendar'])->name('export.followups.calendar');
+
+    // Invoice due date calendar and attend routes
+    Route::get('/export-invoices-calendar', [App\Http\Controllers\DashboardController::class, 'exportInvoicesToCalendar'])->name('export.invoices.calendar');
+    Route::get('/invoice/{id}/attend-data', [App\Http\Controllers\DashboardController::class, 'getInvoiceForAttend'])->name('invoice.attend.data');
+    Route::post('/invoice/{id}/attend', [App\Http\Controllers\DashboardController::class, 'attendInvoice'])->name('invoice.attend');
+    Route::get('/send-invoice-reminders', [App\Http\Controllers\DashboardController::class, 'sendInvoiceReminders'])->name('invoice.reminders.send');
+
     Route::match(['get', 'post'], '/404', [App\Http\Controllers\ErrorController::class, 'index'])->name('404');
     Route::view('/lock', 'auth.lock');
 //    Route::get('notification', 'HomeController@notification');
