@@ -389,6 +389,131 @@
             </div>
             @endif
 
+            <!-- Invoice Due Dates To-Do List (for Accountants) -->
+            @php
+                // Check if user can view invoices
+                $canViewInvoices = Auth::user()->hasRole('Accountant')
+                    || Auth::user()->hasRole('Admin')
+                    || Auth::user()->hasRole('Super Admin')
+                    || Auth::user()->hasRole('System Administrator')
+                    || Auth::user()->can('Invoice List')
+                    || Auth::user()->can('view invoices');
+
+                $paidThisMonthCount = 0;
+                if ($canViewInvoices) {
+                    $paidThisMonthCount = \App\Models\BillingDocument::where('document_type', 'invoice')
+                        ->where('status', 'paid')
+                        ->whereMonth('paid_at', now()->month)
+                        ->whereYear('paid_at', now()->year)
+                        ->count();
+                }
+            @endphp
+            @if($canViewInvoices)
+            <div class="dashboard-section invoice-due-todo">
+                <div class="section-header">
+                    <h2><i class="fa fa-file-invoice-dollar mr-2"></i>Invoice Due Dates</h2>
+                    <a href="{{ route('export.invoices.calendar') }}" class="gcal-export-btn" title="Export invoice due dates to Google Calendar">
+                        <i class="fa-brands fa-google"></i> Export
+                    </a>
+                </div>
+                <div class="followup-stats-row">
+                    <div class="followup-stat-card overdue">
+                        <div class="stat-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $overdueInvoicesCount ?? 0 }}</span>
+                            <span class="stat-label">OVERDUE</span>
+                        </div>
+                    </div>
+                    <div class="followup-stat-card today">
+                        <div class="stat-icon"><i class="fa fa-clock"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $todayInvoicesCount ?? 0 }}</span>
+                            <span class="stat-label">DUE TODAY</span>
+                        </div>
+                    </div>
+                    <div class="followup-stat-card upcoming">
+                        <div class="stat-icon"><i class="fa fa-calendar-alt"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $upcomingInvoicesCount ?? 0 }}</span>
+                            <span class="stat-label">UPCOMING</span>
+                        </div>
+                    </div>
+                    <div class="followup-stat-card completed">
+                        <div class="stat-icon"><i class="fa fa-check-circle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $paidThisMonthCount }}</span>
+                            <span class="stat-label">PAID</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="followup-list invoice-list">
+                    @forelse($invoiceDueDates ?? collect() as $invoice)
+                        @php
+                            $isOverdue = $invoice->is_overdue;
+                            $isToday = $invoice->due_date && $invoice->due_date->isToday();
+                            $isTomorrow = $invoice->due_date && $invoice->due_date->isTomorrow();
+                            $isPartialPaid = $invoice->status === 'partial_paid';
+                            $daysUntilDue = now()->startOfDay()->diffInDays($invoice->due_date->startOfDay(), false);
+                        @endphp
+                        <div class="invoice-card-wrapper {{ $isOverdue ? 'overdue' : ($isToday ? 'today' : '') }}">
+                            <a href="{{ route('billing.invoices.show', $invoice->id) }}" class="invoice-card-main">
+                                <div class="invoice-date-badge {{ $isOverdue ? 'overdue' : ($isPartialPaid ? 'partial' : '') }}">
+                                    <span class="day">{{ $invoice->due_date->format('d') }}</span>
+                                    <span class="month">{{ strtoupper($invoice->due_date->format('M')) }}</span>
+                                </div>
+                                <div class="invoice-card-content">
+                                    <span class="invoice-number">{{ $invoice->document_number }}</span>
+                                    <span class="invoice-client">
+                                        {{ $invoice->client->name ?? ($invoice->lead->name ?? 'No Client') }}
+                                        @if($invoice->project)
+                                            - {{ Str::limit($invoice->project->name, 20) }}
+                                        @endif
+                                    </span>
+                                    <span class="invoice-amount">
+                                        <i class="fa fa-money-bill-wave"></i> TZS {{ number_format($invoice->balance_amount, 0) }}
+                                        @if($isPartialPaid)
+                                            <span class="partial-badge">Partial</span>
+                                        @endif
+                                    </span>
+                                </div>
+                                <div class="invoice-status-badge">
+                                    @if($isOverdue)
+                                        <span class="badge overdue"><i class="fa fa-exclamation-circle"></i> {{ abs($daysUntilDue) }}d overdue</span>
+                                    @elseif($isToday)
+                                        <span class="badge today"><i class="fa fa-clock"></i> Due Today</span>
+                                    @elseif($isTomorrow)
+                                        <span class="badge tomorrow"><i class="fa fa-calendar"></i> Tomorrow</span>
+                                    @elseif($daysUntilDue <= 7)
+                                        <span class="badge upcoming"><i class="fa fa-hourglass-half"></i> {{ $daysUntilDue }}d left</span>
+                                    @else
+                                        <span class="badge">{{ $invoice->due_date->format('d M') }}</span>
+                                    @endif
+                                </div>
+                            </a>
+                            <div class="invoice-card-actions">
+                                <button type="button" class="btn-attend-invoice" onclick="openAttendModal({{ $invoice->id }})" title="Mark as Paid / Reschedule">
+                                    <i class="fa fa-check-circle"></i> Attend
+                                </button>
+                                <a href="{{ $invoice->google_calendar_link }}" target="_blank" class="btn-calendar" title="Add to Google Calendar">
+                                    <i class="fa-solid fa-calendar-plus"></i>
+                                </a>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="no-invoices">
+                            <i class="fa fa-check-circle"></i>
+                            <p>All invoices are paid - Great job!</p>
+                        </div>
+                    @endforelse
+                </div>
+                <div class="followup-footer">
+                    <a href="{{ route('billing.invoices.index') }}" class="view-all-btn">
+                        <i class="fa fa-list"></i> View All Invoices
+                    </a>
+                </div>
+            </div>
+            @endif
+
             <!-- Project Progress Overview -->
             @if(isset($activeSchedules) && $activeSchedules->count() > 0)
             <div class="dashboard-section project-progress-section">
@@ -537,12 +662,14 @@
                                 $dateKey = $calendarDate->format('Y-m') . '-' . str_pad($day, 2, '0', STR_PAD_LEFT);
                                 $dayFollowups = $calendarFollowups[$dateKey] ?? collect();
                                 $dayActivities = isset($calendarActivities) ? ($calendarActivities[$dateKey] ?? collect()) : collect();
+                                $dayInvoices = isset($calendarInvoices) ? ($calendarInvoices[$dateKey] ?? collect()) : collect();
                                 $isToday = $isViewingCurrentMonth && $day == $today;
                                 $currentDate = $calendarDate->copy()->setDay($day);
                                 $isPast = $currentDate->isPast() && !$currentDate->isToday();
                                 $hasFollowups = $dayFollowups->count() > 0;
                                 $hasActivities = $dayActivities->count() > 0;
-                                $hasEvents = $hasFollowups || $hasActivities;
+                                $hasInvoices = $dayInvoices->count() > 0;
+                                $hasEvents = $hasFollowups || $hasActivities || $hasInvoices;
                                 $pendingCount = $dayFollowups->where('status', 'pending')->count();
                                 $completedCount = $dayFollowups->where('status', 'completed')->count();
                             @endphp
@@ -564,15 +691,22 @@
                                             @endphp
                                             <span class="event-dot {{ $actDotClass }}"></span>
                                         @endforeach
-                                        @if(($dayFollowups->count() + $dayActivities->count()) > 4)
-                                            <span class="more-events">+{{ ($dayFollowups->count() + $dayActivities->count()) - 4 }}</span>
+                                        {{-- Invoice dots (gold/orange) --}}
+                                        @foreach($dayInvoices->take(2) as $inv)
+                                            @php
+                                                $invDotClass = $inv->status === 'paid' ? 'completed' : ($isPast && !$isToday ? 'invoice-overdue' : 'invoice');
+                                            @endphp
+                                            <span class="event-dot {{ $invDotClass }}"></span>
+                                        @endforeach
+                                        @if(($dayFollowups->count() + $dayActivities->count() + $dayInvoices->count()) > 4)
+                                            <span class="more-events">+{{ ($dayFollowups->count() + $dayActivities->count() + $dayInvoices->count()) - 4 }}</span>
                                         @endif
                                     </div>
                                     {{-- Hover Tooltip --}}
                                     <div class="calendar-tooltip">
                                         <div class="tooltip-header">
                                             <strong>{{ $currentDate->format('d M Y') }}</strong>
-                                            <span class="tooltip-badge">{{ $dayFollowups->count() + $dayActivities->count() }} events</span>
+                                            <span class="tooltip-badge">{{ $dayFollowups->count() + $dayActivities->count() + $dayInvoices->count() }} events</span>
                                         </div>
                                         @if($hasFollowups)
                                             <div class="tooltip-section">
@@ -608,6 +742,26 @@
                                                 @endif
                                             </div>
                                         @endif
+                                        @if($hasInvoices)
+                                            <div class="tooltip-section">
+                                                <div class="tooltip-section-title"><i class="fa fa-file-invoice-dollar"></i> Invoices Due</div>
+                                                @foreach($dayInvoices->take(3) as $inv)
+                                                    <div class="tooltip-item invoice-item {{ $inv->status }}">
+                                                        <span class="item-status {{ $inv->status === 'paid' ? 'completed' : ($isPast ? 'overdue' : 'invoice') }}"></span>
+                                                        <span class="item-code">{{ $inv->document_number }}</span>
+                                                        <span class="item-text">TZS {{ number_format($inv->balance_amount, 0) }}</span>
+                                                        @if($inv->status !== 'paid')
+                                                        <a href="{{ $inv->google_calendar_link }}" target="_blank" class="tooltip-gcal" title="Add to Google Calendar" onclick="event.stopPropagation();">
+                                                            <i class="fa-solid fa-calendar-plus"></i>
+                                                        </a>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                                @if($dayInvoices->count() > 3)
+                                                    <div class="tooltip-more">+{{ $dayInvoices->count() - 3 }} more</div>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
                                 @endif
                             </div>
@@ -626,6 +780,10 @@
                     <div class="legend-item">
                         <span class="legend-dot activity"></span>
                         <span>Activity</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot invoice"></span>
+                        <span>Invoice</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-dot completed"></span>
@@ -2814,6 +2972,610 @@
             background: #3498db;
         }
 
+        /* Invoice Due Dates Section - Distinct Gold/Orange Theme */
+        .invoice-due-todo {
+            border-left: 4px solid #f39c12;
+        }
+
+        .invoice-due-todo .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .invoice-due-todo .section-header h2 {
+            color: #e67e22;
+        }
+
+        .invoice-due-todo .section-header h2 i {
+            color: #f39c12;
+        }
+
+        .invoice-due-todo .section-header .gcal-export-btn {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.75rem;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .invoice-due-todo .section-header .gcal-export-btn:hover {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+
+        /* Invoice stat cards with orange accent */
+        .invoice-due-todo .followup-stat-card.overdue {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .invoice-due-todo .followup-stat-card.today {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .invoice-due-todo .followup-stat-card.upcoming {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .invoice-due-todo .followup-stat-card.completed {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        /* Ensure white text on stat cards */
+        .invoice-due-todo .followup-stat-card .stat-icon,
+        .invoice-due-todo .followup-stat-card .stat-icon i,
+        .invoice-due-todo .followup-stat-card .stat-number,
+        .invoice-due-todo .followup-stat-card .stat-label {
+            color: white !important;
+        }
+
+        .invoice-due-todo .followup-stat-card .stat-icon {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Invoice list - card style */
+        .invoice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .invoice-card-wrapper {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid rgba(243, 156, 18, 0.2);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .invoice-card-wrapper:hover {
+            border-color: rgba(243, 156, 18, 0.4);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.15);
+        }
+
+        .invoice-card-wrapper.overdue {
+            border-color: rgba(231, 76, 60, 0.3);
+            background: rgba(231, 76, 60, 0.02);
+        }
+
+        .invoice-card-wrapper.overdue:hover {
+            border-color: rgba(231, 76, 60, 0.5);
+            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.15);
+        }
+
+        .invoice-card-wrapper.today {
+            border-color: rgba(243, 156, 18, 0.4);
+            background: rgba(243, 156, 18, 0.03);
+        }
+
+        .invoice-card-main {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .invoice-card-main:hover {
+            background: rgba(243, 156, 18, 0.05);
+        }
+
+        .invoice-card-wrapper.overdue .invoice-card-main:hover {
+            background: rgba(231, 76, 60, 0.05);
+        }
+
+        .invoice-date-badge {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            min-width: 58px;
+            height: 58px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 3px 8px rgba(243, 156, 18, 0.3);
+        }
+
+        .invoice-date-badge .day {
+            font-size: 1.4rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .invoice-date-badge .month {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        .invoice-date-badge.overdue {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            box-shadow: 0 3px 8px rgba(231, 76, 60, 0.3);
+        }
+
+        .invoice-date-badge.partial {
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+        }
+
+        .invoice-card-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .invoice-number {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .invoice-client {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .invoice-amount {
+            font-size: 0.9rem;
+            color: #27ae60;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .invoice-amount i {
+            color: #27ae60;
+            font-size: 0.8rem;
+        }
+
+        .invoice-amount .partial-badge {
+            font-size: 0.6rem;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            margin-left: 0.5rem;
+            font-weight: 500;
+        }
+
+        .invoice-status-badge {
+            flex-shrink: 0;
+        }
+
+        .invoice-status-badge .badge {
+            font-size: 0.7rem;
+            padding: 0.4rem 0.7rem;
+            border-radius: 20px;
+            font-weight: 600;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .invoice-status-badge .badge.overdue {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .invoice-status-badge .badge.today {
+            background: #f39c12;
+            color: white;
+        }
+
+        .invoice-status-badge .badge.tomorrow {
+            background: #3498db;
+            color: white;
+        }
+
+        .invoice-status-badge .badge.upcoming {
+            background: #95a5a6;
+            color: white;
+        }
+
+        /* Invoice action buttons */
+        .invoice-card-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            padding: 0 1rem 0.75rem;
+            border-top: 1px dashed rgba(0,0,0,0.06);
+            padding-top: 0.75rem;
+            margin-top: -0.25rem;
+        }
+
+        .btn-attend-invoice {
+            padding: 0.45rem 1rem;
+            border-radius: 6px;
+            border: none;
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-attend-invoice:hover {
+            background: linear-gradient(135deg, #229954, #1e8449);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn-attend-invoice i {
+            font-size: 0.85rem;
+        }
+
+        .btn-calendar {
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #4285f4, #3367d6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-calendar:hover {
+            background: linear-gradient(135deg, #3367d6, #2851a3);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(66, 133, 244, 0.3);
+            color: white;
+        }
+
+        .btn-calendar i {
+            font-size: 13px;
+        }
+
+        /* No invoices message */
+        .no-invoices {
+            text-align: center;
+            padding: 2rem;
+            color: #27ae60;
+        }
+
+        .no-invoices i {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+            opacity: 0.6;
+        }
+
+        .no-invoices p {
+            font-size: 0.9rem;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .invoice-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .btn-attend {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: #27ae60;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .btn-attend:hover {
+            background: #219a52;
+            transform: scale(1.1);
+        }
+
+        .btn-attend i {
+            font-size: 11px;
+        }
+
+        .gcal-btn-sm {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #4285f4;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .gcal-btn-sm:hover {
+            background: #3367d6;
+            transform: scale(1.1);
+            color: white;
+        }
+
+        .gcal-btn-sm i {
+            font-size: 11px;
+        }
+
+        /* Calendar Invoice Dot */
+        .event-dot.invoice {
+            background: #f39c12;
+        }
+
+        .event-dot.invoice-overdue {
+            background: #e74c3c;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .legend-dot.invoice {
+            background: #f39c12;
+        }
+
+        /* Tooltip Invoice Item */
+        .tooltip-item.invoice-item .item-status.invoice {
+            background: #f39c12;
+        }
+
+        .tooltip-item.invoice-item .item-code {
+            font-weight: 600;
+            color: #f39c12;
+        }
+
+        /* Attend Modal Styles */
+        .attend-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .attend-modal-overlay.active {
+            display: flex;
+        }
+
+        .attend-modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .attend-modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--wajenzi-gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .attend-modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--wajenzi-gray-900);
+        }
+
+        .attend-modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: var(--wajenzi-gray-100);
+            color: var(--wajenzi-gray-600);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .attend-modal-close:hover {
+            background: var(--wajenzi-gray-200);
+            color: var(--wajenzi-gray-900);
+        }
+
+        .attend-modal-body {
+            padding: 1.5rem;
+        }
+
+        .invoice-summary {
+            background: var(--wajenzi-gray-50);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .invoice-summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--wajenzi-gray-200);
+        }
+
+        .invoice-summary-row:last-child {
+            border-bottom: none;
+        }
+
+        .invoice-summary-row .label {
+            color: var(--wajenzi-gray-600);
+            font-size: 0.875rem;
+        }
+
+        .invoice-summary-row .value {
+            font-weight: 600;
+            color: var(--wajenzi-gray-900);
+        }
+
+        .invoice-summary-row .value.amount {
+            color: #27ae60;
+        }
+
+        .invoice-summary-row .value.overdue {
+            color: #e74c3c;
+        }
+
+        .action-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .action-tab {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid var(--wajenzi-gray-200);
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .action-tab:hover {
+            border-color: var(--wajenzi-blue-primary);
+        }
+
+        .action-tab.active {
+            border-color: var(--wajenzi-blue-primary);
+            background: rgba(74, 144, 226, 0.1);
+        }
+
+        .action-tab i {
+            display: block;
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .action-tab.paid i { color: #27ae60; }
+        .action-tab.partial i { color: #f39c12; }
+        .action-tab.reschedule i { color: #3498db; }
+
+        .action-tab span {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .action-form {
+            display: none;
+        }
+
+        .action-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--wajenzi-gray-700);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--wajenzi-gray-300);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--wajenzi-blue-primary);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .attend-modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--wajenzi-gray-200);
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+
+        .btn-cancel {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--wajenzi-gray-300);
+            border-radius: 8px;
+            background: white;
+            color: var(--wajenzi-gray-700);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cancel:hover {
+            background: var(--wajenzi-gray-100);
+        }
+
+        .btn-submit {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            background: var(--wajenzi-blue-primary);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-submit:hover {
+            background: var(--wajenzi-blue-dark);
+        }
+
+        .btn-submit:disabled {
+            background: var(--wajenzi-gray-400);
+            cursor: not-allowed;
+        }
+
         /* Quick Actions */
         .quick-actions {
             background: white;
@@ -2938,6 +3700,241 @@
             }
         }
     </style>
+
+    <!-- Attend Invoice Modal -->
+    <div class="attend-modal-overlay" id="attendModal">
+        <div class="attend-modal">
+            <div class="attend-modal-header">
+                <h3><i class="fa fa-file-invoice-dollar mr-2"></i>Attend to Invoice</h3>
+                <button type="button" class="attend-modal-close" onclick="closeAttendModal()">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+            <div class="attend-modal-body">
+                <div class="invoice-summary">
+                    <div class="invoice-summary-row">
+                        <span class="label">Invoice Number</span>
+                        <span class="value" id="modal-invoice-number">-</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span class="label">Client</span>
+                        <span class="value" id="modal-client-name">-</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span class="label">Total Amount</span>
+                        <span class="value amount" id="modal-total-amount">-</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span class="label">Balance Due</span>
+                        <span class="value" id="modal-balance-amount">-</span>
+                    </div>
+                    <div class="invoice-summary-row">
+                        <span class="label">Due Date</span>
+                        <span class="value" id="modal-due-date">-</span>
+                    </div>
+                </div>
+
+                <div class="action-tabs">
+                    <div class="action-tab paid active" data-action="paid" onclick="selectAction('paid')">
+                        <i class="fa fa-check-circle"></i>
+                        <span>Mark Paid</span>
+                    </div>
+                    <div class="action-tab partial" data-action="partial" onclick="selectAction('partial')">
+                        <i class="fa fa-coins"></i>
+                        <span>Partial</span>
+                    </div>
+                    <div class="action-tab reschedule" data-action="reschedule" onclick="selectAction('reschedule')">
+                        <i class="fa fa-calendar-alt"></i>
+                        <span>Reschedule</span>
+                    </div>
+                </div>
+
+                <form id="attendForm">
+                    <input type="hidden" id="attend-invoice-id" name="invoice_id">
+                    <input type="hidden" id="attend-action" name="action" value="paid">
+
+                    <!-- Paid Form -->
+                    <div class="action-form active" id="form-paid">
+                        <div class="form-group">
+                            <label for="paid-notes">Notes (Optional)</label>
+                            <textarea id="paid-notes" name="notes" rows="3" placeholder="Add any notes about this payment..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Partial Payment Form -->
+                    <div class="action-form" id="form-partial">
+                        <div class="form-group">
+                            <label for="partial-amount">Amount Paid (TZS)</label>
+                            <input type="number" id="partial-amount" name="paid_amount" placeholder="Enter amount paid" min="0" step="0.01">
+                        </div>
+                        <div class="form-group">
+                            <label for="partial-notes">Notes (Optional)</label>
+                            <textarea id="partial-notes" name="notes" rows="3" placeholder="Add any notes about this partial payment..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Reschedule Form -->
+                    <div class="action-form" id="form-reschedule">
+                        <div class="form-group">
+                            <label for="new-due-date">New Due Date</label>
+                            <input type="date" id="new-due-date" name="new_due_date" min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="reschedule-notes">Reason for Reschedule</label>
+                            <textarea id="reschedule-notes" name="notes" rows="3" placeholder="Explain why this invoice is being rescheduled..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="attend-modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeAttendModal()">Cancel</button>
+                <button type="button" class="btn-submit" id="submitAttend" onclick="submitAttend()">
+                    <i class="fa fa-check mr-1" id="submitIcon"></i>
+                    <span id="submitText">Confirm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentInvoiceId = null;
+
+        function openAttendModal(invoiceId) {
+            currentInvoiceId = invoiceId;
+            document.getElementById('attend-invoice-id').value = invoiceId;
+
+            // Fetch invoice data
+            fetch(`/invoice/${invoiceId}/attend-data`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('modal-invoice-number').textContent = data.document_number;
+                    document.getElementById('modal-client-name').textContent = data.client_name;
+                    document.getElementById('modal-total-amount').textContent = 'TZS ' + Number(data.total_amount).toLocaleString();
+                    document.getElementById('modal-balance-amount').textContent = 'TZS ' + Number(data.balance_amount).toLocaleString();
+                    document.getElementById('modal-balance-amount').className = 'value ' + (data.is_overdue ? 'overdue' : '');
+                    document.getElementById('modal-due-date').textContent = data.due_date_formatted;
+                    document.getElementById('modal-due-date').className = 'value ' + (data.is_overdue ? 'overdue' : '');
+
+                    // Show modal
+                    document.getElementById('attendModal').classList.add('active');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load invoice data');
+                });
+        }
+
+        function closeAttendModal() {
+            document.getElementById('attendModal').classList.remove('active');
+            currentInvoiceId = null;
+            // Reset form
+            document.getElementById('attendForm').reset();
+            selectAction('paid');
+        }
+
+        function selectAction(action) {
+            // Update hidden field
+            document.getElementById('attend-action').value = action;
+
+            // Update tabs
+            document.querySelectorAll('.action-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`.action-tab[data-action="${action}"]`).classList.add('active');
+
+            // Show/hide forms
+            document.querySelectorAll('.action-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById(`form-${action}`).classList.add('active');
+        }
+
+        function setSubmitButtonState(loading) {
+            const submitBtn = document.getElementById('submitAttend');
+            const submitIcon = document.getElementById('submitIcon');
+            const submitText = document.getElementById('submitText');
+
+            submitBtn.disabled = loading;
+            submitIcon.className = loading ? 'fa fa-spinner fa-spin mr-1' : 'fa fa-check mr-1';
+            submitText.textContent = loading ? 'Processing...' : 'Confirm';
+        }
+
+        function submitAttend() {
+            const action = document.getElementById('attend-action').value;
+            const invoiceId = document.getElementById('attend-invoice-id').value;
+
+            // Collect form data based on action
+            let formData = {
+                action: action,
+                notes: ''
+            };
+
+            if (action === 'paid') {
+                formData.notes = document.getElementById('paid-notes').value;
+            } else if (action === 'partial') {
+                formData.paid_amount = document.getElementById('partial-amount').value;
+                formData.notes = document.getElementById('partial-notes').value;
+
+                if (!formData.paid_amount || parseFloat(formData.paid_amount) <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+            } else if (action === 'reschedule') {
+                formData.new_due_date = document.getElementById('new-due-date').value;
+                formData.notes = document.getElementById('reschedule-notes').value;
+
+                if (!formData.new_due_date) {
+                    alert('Please select a new due date');
+                    return;
+                }
+            }
+
+            // Set loading state
+            setSubmitButtonState(true);
+
+            // Send request
+            fetch(`/invoice/${invoiceId}/attend`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    closeAttendModal();
+                    // Reload page to refresh data
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'An error occurred');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to process request');
+            })
+            .finally(() => {
+                setSubmitButtonState(false);
+            });
+        }
+
+        // Close modal on overlay click
+        document.getElementById('attendModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAttendModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('attendModal').classList.contains('active')) {
+                closeAttendModal();
+            }
+        });
+    </script>
 
 @endsection
 
