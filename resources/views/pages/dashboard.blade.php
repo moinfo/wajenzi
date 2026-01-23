@@ -307,6 +307,176 @@
                 @endif
             </div>
 
+            <!-- Project Activities To-Do List -->
+            @if(isset($projectActivities) && $projectActivities->count() > 0)
+            <div class="dashboard-section project-activities-todo">
+                <div class="section-header">
+                    <h2><i class="fa fa-tasks mr-2"></i>Project Activities</h2>
+                </div>
+                <div class="followup-stats-row">
+                    <div class="followup-stat-card overdue">
+                        <div class="stat-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $overdueActivitiesCount ?? 0 }}</span>
+                            <span class="stat-label">Overdue</span>
+                        </div>
+                    </div>
+                    <div class="followup-stat-card today">
+                        <div class="stat-icon"><i class="fa fa-clock"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $todayActivitiesCount ?? 0 }}</span>
+                            <span class="stat-label">Due Today</span>
+                        </div>
+                    </div>
+                    <div class="followup-stat-card upcoming">
+                        <div class="stat-icon"><i class="fa fa-calendar-alt"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $pendingActivitiesCount ?? 0 }}</span>
+                            <span class="stat-label">Pending</span>
+                        </div>
+                    </div>
+                    <div class="followup-stat-card completed">
+                        <div class="stat-icon"><i class="fa fa-spinner"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number">{{ $inProgressActivitiesCount ?? 0 }}</span>
+                            <span class="stat-label">In Progress</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="followup-list">
+                    @foreach($projectActivities->take(8) as $activity)
+                        @php
+                            $isOverdue = $activity->isOverdue();
+                            $isToday = $activity->start_date->isToday();
+                            $isInProgress = $activity->status === 'in_progress';
+                            $isTomorrow = $activity->start_date->isTomorrow();
+                        @endphp
+                        <a href="{{ route('project-schedules.show', $activity->project_schedule_id) }}" class="followup-item {{ $isOverdue ? 'overdue' : ($isInProgress ? 'today' : ($isToday ? 'today' : ($isTomorrow ? 'tomorrow' : ''))) }}">
+                            <div class="followup-date-badge">
+                                <span class="day">{{ $activity->start_date->format('d') }}</span>
+                                <span class="month">{{ $activity->start_date->format('M') }}</span>
+                            </div>
+                            <div class="followup-content">
+                                <span class="followup-lead-name">{{ $activity->activity_code }}: {{ Str::limit($activity->name, 30) }}</span>
+                                <span class="followup-details">{{ $activity->schedule->lead->lead_number ?? '' }} - {{ Str::limit($activity->schedule->lead->name ?? '', 25) }}</span>
+                                <span class="followup-assignee">
+                                    <i class="fa fa-layer-group"></i> {{ $activity->phase }}
+                                </span>
+                            </div>
+                            <div class="followup-status">
+                                @if($isInProgress)
+                                    <span class="status-label today"><i class="fa fa-spinner fa-spin"></i> In Progress</span>
+                                @elseif($isOverdue)
+                                    <span class="status-label overdue"><i class="fa fa-exclamation-circle"></i> Overdue</span>
+                                @elseif($isToday)
+                                    <span class="status-label today"><i class="fa fa-clock"></i> Due Today</span>
+                                @elseif($isTomorrow)
+                                    <span class="status-label tomorrow"><i class="fa fa-calendar"></i> Tomorrow</span>
+                                @else
+                                    <span class="status-label upcoming">{{ $activity->start_date->format('d M') }}</span>
+                                @endif
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+                @if($projectActivities->count() > 0)
+                    <div class="followup-footer">
+                        <a href="{{ route('project-schedules.index') }}" class="view-all-btn">
+                            <i class="fa fa-list"></i> View All Schedules
+                        </a>
+                    </div>
+                @endif
+            </div>
+            @endif
+
+            <!-- Project Progress Overview -->
+            @if(isset($activeSchedules) && $activeSchedules->count() > 0)
+            <div class="dashboard-section project-progress-section">
+                <div class="section-header">
+                    <h2><i class="fa fa-chart-pie mr-2"></i>Project Progress</h2>
+                    <span class="section-count">{{ $overallProgress['total_projects'] }} Active</span>
+                </div>
+
+                <!-- Overall Progress Summary -->
+                <div class="overall-progress-card">
+                    <div class="overall-progress-circle">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg"
+                                d="M18 2.0845
+                                   a 15.9155 15.9155 0 0 1 0 31.831
+                                   a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <path class="circle-progress"
+                                stroke-dasharray="{{ $overallProgress['overall_percentage'] }}, 100"
+                                d="M18 2.0845
+                                   a 15.9155 15.9155 0 0 1 0 31.831
+                                   a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <text x="18" y="20.35" class="progress-percentage">{{ $overallProgress['overall_percentage'] }}%</text>
+                        </svg>
+                    </div>
+                    <div class="overall-progress-stats">
+                        <div class="progress-stat-item">
+                            <span class="stat-value text-success">{{ $overallProgress['completed_activities'] }}</span>
+                            <span class="stat-label">Completed</span>
+                        </div>
+                        <div class="progress-stat-item">
+                            <span class="stat-value text-primary">{{ $overallProgress['in_progress_activities'] }}</span>
+                            <span class="stat-label">In Progress</span>
+                        </div>
+                        <div class="progress-stat-item">
+                            <span class="stat-value text-warning">{{ $overallProgress['total_activities'] - $overallProgress['completed_activities'] - $overallProgress['in_progress_activities'] }}</span>
+                            <span class="stat-label">Pending</span>
+                        </div>
+                        <div class="progress-stat-item">
+                            <span class="stat-value text-danger">{{ $overallProgress['overdue_activities'] }}</span>
+                            <span class="stat-label">Overdue</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Individual Project Progress -->
+                <div class="project-progress-list">
+                    @foreach($activeSchedules as $schedule)
+                        @php
+                            $progressDetails = $schedule->progress_details;
+                            $progressClass = $progressDetails['percentage'] >= 75 ? 'success' : ($progressDetails['percentage'] >= 50 ? 'info' : ($progressDetails['percentage'] >= 25 ? 'warning' : 'danger'));
+                        @endphp
+                        <a href="{{ route('project-schedules.show', $schedule) }}" class="project-progress-item">
+                            <div class="project-progress-header">
+                                <div class="project-info">
+                                    <span class="project-name">{{ $schedule->lead->lead_number ?? 'N/A' }}</span>
+                                    <span class="project-client">{{ \Illuminate\Support\Str::limit($schedule->lead->name ?? 'Unknown', 30) }}</span>
+                                </div>
+                                <div class="project-percentage {{ $progressClass }}">
+                                    {{ $progressDetails['percentage'] }}%
+                                </div>
+                            </div>
+                            <div class="project-progress-bar">
+                                <div class="progress-track">
+                                    <div class="progress-fill {{ $progressClass }}" style="width: {{ $progressDetails['percentage'] }}%"></div>
+                                </div>
+                            </div>
+                            <div class="project-progress-details">
+                                <span class="detail-item"><i class="fa fa-check-circle text-success"></i> {{ $progressDetails['completed'] }}</span>
+                                <span class="detail-item"><i class="fa fa-spinner text-primary"></i> {{ $progressDetails['in_progress'] }}</span>
+                                <span class="detail-item"><i class="fa fa-clock text-muted"></i> {{ $progressDetails['pending'] }}</span>
+                                @if($progressDetails['overdue'] > 0)
+                                    <span class="detail-item text-danger"><i class="fa fa-exclamation-triangle"></i> {{ $progressDetails['overdue'] }}</span>
+                                @endif
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+
+                <div class="followup-footer">
+                    <a href="{{ route('project-schedules.index') }}" class="view-all-btn">
+                        <i class="fa fa-list"></i> View All Projects
+                    </a>
+                </div>
+            </div>
+            @endif
+
             <!-- Follow-up Calendar -->
             @php
                 // Get month/year from request or use current
@@ -363,26 +533,72 @@
                             @php
                                 $dateKey = $calendarDate->format('Y-m') . '-' . str_pad($day, 2, '0', STR_PAD_LEFT);
                                 $dayFollowups = $calendarFollowups[$dateKey] ?? collect();
+                                $dayActivities = isset($calendarActivities) ? ($calendarActivities[$dateKey] ?? collect()) : collect();
                                 $isToday = $isViewingCurrentMonth && $day == $today;
                                 $currentDate = $calendarDate->copy()->setDay($day);
                                 $isPast = $currentDate->isPast() && !$currentDate->isToday();
                                 $hasFollowups = $dayFollowups->count() > 0;
+                                $hasActivities = $dayActivities->count() > 0;
+                                $hasEvents = $hasFollowups || $hasActivities;
                                 $pendingCount = $dayFollowups->where('status', 'pending')->count();
                                 $completedCount = $dayFollowups->where('status', 'completed')->count();
                             @endphp
-                            <div class="calendar-day {{ $isToday ? 'today' : '' }} {{ $isPast ? 'past' : '' }} {{ $hasFollowups ? 'has-events' : '' }}"
-                                 @if($hasFollowups) data-date="{{ $dateKey }}" data-followups="{{ $dayFollowups->pluck('lead.name')->implode(', ') }}" @endif>
+                            <div class="calendar-day {{ $isToday ? 'today' : '' }} {{ $isPast ? 'past' : '' }} {{ $hasEvents ? 'has-events' : '' }}">
                                 <span class="day-number">{{ $day }}</span>
-                                @if($hasFollowups)
+                                @if($hasEvents)
                                     <div class="event-dots">
-                                        @foreach($dayFollowups->take(3) as $fu)
+                                        {{-- Follow-up dots --}}
+                                        @foreach($dayFollowups->take(2) as $fu)
                                             @php
                                                 $dotClass = $fu->status === 'completed' ? 'completed' : ($isPast && !$isToday ? 'overdue' : 'pending');
                                             @endphp
                                             <span class="event-dot {{ $dotClass }}"></span>
                                         @endforeach
-                                        @if($dayFollowups->count() > 3)
-                                            <span class="more-events">+{{ $dayFollowups->count() - 3 }}</span>
+                                        {{-- Activity dots (blue) --}}
+                                        @foreach($dayActivities->take(2) as $act)
+                                            @php
+                                                $actDotClass = $act->status === 'completed' ? 'completed' : ($act->status === 'in_progress' ? 'activity-progress' : 'activity');
+                                            @endphp
+                                            <span class="event-dot {{ $actDotClass }}"></span>
+                                        @endforeach
+                                        @if(($dayFollowups->count() + $dayActivities->count()) > 4)
+                                            <span class="more-events">+{{ ($dayFollowups->count() + $dayActivities->count()) - 4 }}</span>
+                                        @endif
+                                    </div>
+                                    {{-- Hover Tooltip --}}
+                                    <div class="calendar-tooltip">
+                                        <div class="tooltip-header">
+                                            <strong>{{ $currentDate->format('d M Y') }}</strong>
+                                            <span class="tooltip-badge">{{ $dayFollowups->count() + $dayActivities->count() }} events</span>
+                                        </div>
+                                        @if($hasFollowups)
+                                            <div class="tooltip-section">
+                                                <div class="tooltip-section-title"><i class="fa fa-phone-alt"></i> Follow-ups</div>
+                                                @foreach($dayFollowups->take(3) as $fu)
+                                                    <div class="tooltip-item followup-item {{ $fu->status }}">
+                                                        <span class="item-status {{ $fu->status === 'completed' ? 'completed' : ($isPast ? 'overdue' : 'pending') }}"></span>
+                                                        <span class="item-text">{{ Str::limit($fu->lead->name, 20) }}</span>
+                                                    </div>
+                                                @endforeach
+                                                @if($dayFollowups->count() > 3)
+                                                    <div class="tooltip-more">+{{ $dayFollowups->count() - 3 }} more</div>
+                                                @endif
+                                            </div>
+                                        @endif
+                                        @if($hasActivities)
+                                            <div class="tooltip-section">
+                                                <div class="tooltip-section-title"><i class="fa fa-tasks"></i> Activities</div>
+                                                @foreach($dayActivities->take(3) as $act)
+                                                    <div class="tooltip-item activity-item {{ $act->status }}">
+                                                        <span class="item-status {{ $act->status === 'completed' ? 'completed' : ($act->status === 'in_progress' ? 'in-progress' : 'pending') }}"></span>
+                                                        <span class="item-code">{{ $act->activity_code }}</span>
+                                                        <span class="item-text">{{ Str::limit($act->name, 18) }}</span>
+                                                    </div>
+                                                @endforeach
+                                                @if($dayActivities->count() > 3)
+                                                    <div class="tooltip-more">+{{ $dayActivities->count() - 3 }} more</div>
+                                                @endif
+                                            </div>
                                         @endif
                                     </div>
                                 @endif
@@ -397,11 +613,15 @@
                     </div>
                     <div class="legend-item">
                         <span class="legend-dot pending"></span>
-                        <span>Pending</span>
+                        <span>Follow-up</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot activity"></span>
+                        <span>Activity</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-dot completed"></span>
-                        <span>Completed</span>
+                        <span>Done</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-dot overdue"></span>
@@ -424,6 +644,29 @@
                                     <span class="lead-action">{{ Str::limit($tfu->next_step ?: 'Follow up', 30) }}</span>
                                     @if($tfu->status === 'completed')
                                         <span class="completed-badge"><i class="fa fa-check"></i> Done</span>
+                                    @endif
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Today's Project Activities Detail --}}
+                @php
+                    $todayActivitiesList = isset($calendarActivities) ? ($calendarActivities[$todayKey] ?? collect()) : collect();
+                @endphp
+                @if($todayActivitiesList->count() > 0)
+                    <div class="today-followups-detail today-activities">
+                        <h4><i class="fa fa-tasks"></i> Today's Activities ({{ $todayActivitiesList->count() }})</h4>
+                        <div class="today-list">
+                            @foreach($todayActivitiesList as $tact)
+                                <a href="{{ route('project-schedules.show', $tact->project_schedule_id) }}" class="today-item activity-item {{ $tact->status === 'completed' ? 'completed' : ($tact->status === 'in_progress' ? 'in-progress' : '') }}">
+                                    <span class="lead-name">{{ $tact->activity_code }}: {{ Str::limit($tact->name, 25) }}</span>
+                                    <span class="lead-action">{{ $tact->schedule->lead->lead_number ?? '' }}</span>
+                                    @if($tact->status === 'completed')
+                                        <span class="completed-badge"><i class="fa fa-check"></i> Done</span>
+                                    @elseif($tact->status === 'in_progress')
+                                        <span class="progress-badge"><i class="fa fa-spinner"></i> In Progress</span>
                                     @endif
                                 </a>
                             @endforeach
@@ -1743,6 +1986,216 @@
             gap: 0.5rem;
         }
 
+        /* Project Progress Section Styles */
+        .project-progress-section {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .overall-progress-card {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, #f8f9fe 0%, #e8f4f8 100%);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .overall-progress-circle {
+            flex-shrink: 0;
+            width: 100px;
+            height: 100px;
+        }
+
+        .circular-chart {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: #e6e6e6;
+            stroke-width: 2.5;
+        }
+
+        .circle-progress {
+            fill: none;
+            stroke: var(--wajenzi-blue-primary, #007bff);
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            animation: progress-animation 1s ease-out forwards;
+        }
+
+        @keyframes progress-animation {
+            0% { stroke-dasharray: 0 100; }
+        }
+
+        .progress-percentage {
+            fill: var(--wajenzi-gray-800, #2d3748);
+            font-size: 0.5em;
+            font-weight: 700;
+            text-anchor: middle;
+        }
+
+        .overall-progress-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .progress-stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 70px;
+            padding: 0.5rem 0.75rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .progress-stat-item .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .progress-stat-item .stat-label {
+            font-size: 0.7rem;
+            color: var(--wajenzi-gray-500, #718096);
+            margin-top: 0.25rem;
+        }
+
+        .project-progress-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .project-progress-item {
+            display: block;
+            padding: 1rem;
+            background: var(--wajenzi-gray-50, #f7fafc);
+            border-radius: 10px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .project-progress-item:hover {
+            background: white;
+            border-color: var(--wajenzi-blue-light, #ebf5ff);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .project-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .project-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .project-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--wajenzi-blue-primary, #007bff);
+        }
+
+        .project-client {
+            font-size: 0.85rem;
+            color: var(--wajenzi-gray-700, #4a5568);
+            font-weight: 500;
+        }
+
+        .project-percentage {
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .project-percentage.success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .project-percentage.info {
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+        }
+
+        .project-percentage.warning {
+            background: rgba(255, 193, 7, 0.15);
+            color: #d39e00;
+        }
+
+        .project-percentage.danger {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .project-progress-bar {
+            margin-bottom: 0.5rem;
+        }
+
+        .project-progress-bar .progress-track {
+            height: 8px;
+            background: var(--wajenzi-gray-200, #e2e8f0);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .project-progress-bar .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .project-progress-bar .progress-fill.success {
+            background: linear-gradient(90deg, #28a745, #5cb85c);
+        }
+
+        .project-progress-bar .progress-fill.info {
+            background: linear-gradient(90deg, #007bff, #17a2b8);
+        }
+
+        .project-progress-bar .progress-fill.warning {
+            background: linear-gradient(90deg, #ffc107, #ffca2c);
+        }
+
+        .project-progress-bar .progress-fill.danger {
+            background: linear-gradient(90deg, #dc3545, #e4606d);
+        }
+
+        .project-progress-details {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .project-progress-details .detail-item {
+            font-size: 0.75rem;
+            color: var(--wajenzi-gray-600, #718096);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .project-progress-details .detail-item i {
+            font-size: 0.7rem;
+        }
+
         /* Follow-up Calendar Styles */
         .followup-calendar .calendar-nav {
             display: flex;
@@ -1866,6 +2319,188 @@
         .calendar-day.has-events:hover {
             background: rgba(34, 197, 94, 0.1);
             transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .calendar-day.has-events:hover .calendar-tooltip {
+            display: block;
+            animation: tooltipFadeIn 0.2s ease;
+        }
+
+        @keyframes tooltipFadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .calendar-tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            min-width: 220px;
+            max-width: 280px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15), 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .calendar-tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px 8px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+
+        .calendar-tooltip::after {
+            content: '';
+            position: absolute;
+            bottom: -9px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 9px 9px 0;
+            border-style: solid;
+            border-color: rgba(0,0,0,0.08) transparent transparent;
+            z-index: -1;
+        }
+
+        .tooltip-header {
+            background: linear-gradient(135deg, var(--wajenzi-blue-primary), #1e40af);
+            color: white;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tooltip-header strong {
+            font-size: 0.85rem;
+        }
+
+        .tooltip-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+
+        .tooltip-section {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .tooltip-section:last-child {
+            border-bottom: none;
+        }
+
+        .tooltip-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tooltip-section-title i {
+            font-size: 0.65rem;
+        }
+
+        .tooltip-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            font-size: 0.75rem;
+            color: #333;
+        }
+
+        .tooltip-item .item-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .tooltip-item .item-status.pending {
+            background: var(--wajenzi-green);
+        }
+
+        .tooltip-item .item-status.completed {
+            background: #28a745;
+        }
+
+        .tooltip-item .item-status.overdue {
+            background: var(--wajenzi-red);
+        }
+
+        .tooltip-item .item-status.in-progress {
+            background: #9b59b6;
+        }
+
+        .tooltip-item .item-code {
+            font-weight: 600;
+            color: var(--wajenzi-blue-primary);
+            font-size: 0.7rem;
+        }
+
+        .tooltip-item .item-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tooltip-item.completed .item-text {
+            text-decoration: line-through;
+            color: #888;
+        }
+
+        .tooltip-more {
+            font-size: 0.7rem;
+            color: #888;
+            font-style: italic;
+            padding-top: 4px;
+        }
+
+        /* Tooltip position adjustments for edge days */
+        .calendar-day:nth-child(7n+1) .calendar-tooltip,
+        .calendar-day:nth-child(7n+2) .calendar-tooltip {
+            left: 0;
+            transform: translateX(0);
+        }
+
+        .calendar-day:nth-child(7n+1) .calendar-tooltip::before,
+        .calendar-day:nth-child(7n+1) .calendar-tooltip::after,
+        .calendar-day:nth-child(7n+2) .calendar-tooltip::before,
+        .calendar-day:nth-child(7n+2) .calendar-tooltip::after {
+            left: 20px;
+            transform: none;
+        }
+
+        .calendar-day:nth-child(7n) .calendar-tooltip,
+        .calendar-day:nth-child(7n-1) .calendar-tooltip {
+            left: auto;
+            right: 0;
+            transform: translateX(0);
+        }
+
+        .calendar-day:nth-child(7n) .calendar-tooltip::before,
+        .calendar-day:nth-child(7n) .calendar-tooltip::after,
+        .calendar-day:nth-child(7n-1) .calendar-tooltip::before,
+        .calendar-day:nth-child(7n-1) .calendar-tooltip::after {
+            left: auto;
+            right: 20px;
+            transform: none;
         }
 
         .calendar-day.today.has-events {
@@ -1904,6 +2539,14 @@
 
         .event-dot.pending {
             background: var(--wajenzi-green);
+        }
+
+        .event-dot.activity {
+            background: #3498db;
+        }
+
+        .event-dot.activity-progress {
+            background: #9b59b6;
         }
 
         .more-events {
@@ -1955,6 +2598,10 @@
 
         .calendar-legend .legend-dot.overdue {
             background: var(--wajenzi-red);
+        }
+
+        .calendar-legend .legend-dot.activity {
+            background: #3498db;
         }
 
         .today-followups-detail {
@@ -2031,6 +2678,38 @@
             padding: 0.15rem 0.4rem;
             border-radius: 4px;
             margin-left: auto;
+        }
+
+        .today-item .progress-badge {
+            font-size: 0.65rem;
+            background: #9b59b6;
+            color: white;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+
+        .today-item.in-progress {
+            background: rgba(155, 89, 182, 0.1);
+            border-left: 3px solid #9b59b6;
+        }
+
+        .today-activities {
+            background: rgba(52, 152, 219, 0.05);
+            border: 1px solid rgba(52, 152, 219, 0.2);
+            margin-top: 1rem;
+        }
+
+        .today-activities h4 {
+            color: #3498db;
+        }
+
+        .today-activities .today-item.activity-item {
+            border-left: 3px solid #3498db;
+        }
+
+        .today-activities .today-item.activity-item:hover {
+            background: #3498db;
         }
 
         /* Quick Actions */
