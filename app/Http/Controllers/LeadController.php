@@ -6,9 +6,12 @@ use App\Models\Lead;
 use App\Models\ClientSource;
 use App\Models\LeadSource;
 use App\Models\LeadStatus;
+use App\Models\Project;
 use App\Models\ProjectClient;
+use App\Models\ProjectType;
 use App\Models\SalesLeadFollowup;
 use App\Models\ServiceInterested;
+use App\Models\ServiceType;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -337,6 +340,79 @@ class LeadController extends Controller
             return back()->with('success', $statusMessage);
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to update follow-up: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Link an existing project to the lead
+     */
+    public function linkProject(Request $request, $id)
+    {
+        $lead = Lead::findOrFail($id);
+
+        $request->validate([
+            'project_id' => 'required|exists:projects,id',
+        ]);
+
+        $lead->update(['project_id' => $request->project_id]);
+
+        return back()->with('success', 'Project linked successfully.');
+    }
+
+    /**
+     * Unlink project from the lead
+     */
+    public function unlinkProject($id)
+    {
+        $lead = Lead::findOrFail($id);
+        $lead->update(['project_id' => null]);
+
+        return back()->with('success', 'Project unlinked successfully.');
+    }
+
+    /**
+     * Create a new project from the lead
+     */
+    public function createProject(Request $request, $id)
+    {
+        $lead = Lead::findOrFail($id);
+
+        $request->validate([
+            'project_name' => 'required|string|max:100',
+            'project_type_id' => 'required|exists:project_types,id',
+            'service_type_id' => 'nullable|exists:service_types,id',
+            'start_date' => 'required|date',
+            'expected_end_date' => 'required|date|after_or_equal:start_date',
+            'contract_value' => 'nullable|numeric|min:0',
+        ]);
+
+        try {
+            // Generate document number
+            $lastProject = Project::orderBy('id', 'desc')->first();
+            $nextId = $lastProject ? $lastProject->id + 1 : 1;
+            $documentNumber = 'PCT/' . $nextId . '/' . date('Y');
+
+            // Create the project
+            $project = Project::create([
+                'document_number' => $documentNumber,
+                'project_name' => $request->project_name,
+                'client_id' => $lead->client_id,
+                'project_type_id' => $request->project_type_id,
+                'service_type_id' => $request->service_type_id,
+                'start_date' => $request->start_date,
+                'expected_end_date' => $request->expected_end_date,
+                'contract_value' => $request->contract_value ?? $lead->estimated_value,
+                'salesperson_id' => $lead->salesperson_id,
+                'status' => 'pending',
+                'create_by_id' => Auth::id(),
+            ]);
+
+            // Link project to lead
+            $lead->update(['project_id' => $project->id]);
+
+            return back()->with('success', 'Project created and linked successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to create project: ' . $e->getMessage());
         }
     }
 }

@@ -494,6 +494,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('leads', App\Http\Controllers\LeadController::class);
     Route::post('leads/{id}/followup', [App\Http\Controllers\LeadController::class, 'storeFollowup'])->name('leads.followup.store');
     Route::post('leads/{leadId}/followup/{followupId}/attend', [App\Http\Controllers\LeadController::class, 'attendFollowup'])->name('leads.followup.attend');
+    Route::post('leads/{id}/link-project', [App\Http\Controllers\LeadController::class, 'linkProject'])->name('leads.link-project');
+    Route::delete('leads/{id}/unlink-project', [App\Http\Controllers\LeadController::class, 'unlinkProject'])->name('leads.unlink-project');
+    Route::post('leads/{id}/create-project', [App\Http\Controllers\LeadController::class, 'createProject'])->name('leads.create-project');
 
     // Project Schedule Routes
     Route::resource('project-schedules', App\Http\Controllers\ProjectScheduleController::class)->except(['create', 'store', 'destroy']);

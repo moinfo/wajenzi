@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Approval;
 use App\Models\ProjectType;
+use App\Models\ServiceType;
+use App\Models\User;
 use App\Services\ApprovalService;
 use Illuminate\Http\Request;
 
@@ -23,12 +25,63 @@ class ProjectController extends Controller
             return back();
         }
 
-        $projects = Project::all();
+        $query = Project::with(['client', 'projectType', 'serviceType', 'salesperson', 'projectManager']);
+
+        // Apply filters
+        if ($request->filled('project_type_id')) {
+            $query->where('project_type_id', $request->project_type_id);
+        }
+
+        if ($request->filled('service_type_id')) {
+            $query->where('service_type_id', $request->service_type_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('start_date', [$request->start_date, $request->end_date]);
+        }
+
+        if ($request->filled('salesperson_id')) {
+            $query->where('salesperson_id', $request->salesperson_id);
+        }
+
+        if ($request->filled('project_manager_id')) {
+            $query->where('project_manager_id', $request->project_manager_id);
+        }
+
+        $projects = $query->orderBy('created_at', 'desc')->get();
         $projectTypes = ProjectType::all();
+        $serviceTypes = ServiceType::all();
+
+        // Get users for filters (salespersons and project managers)
+        $salespersons = User::whereHas('roles', function($q) {
+            $q->where('name', 'like', '%Sales%');
+        })->get();
+
+        $projectManagers = User::whereHas('roles', function($q) {
+            $q->where('name', 'like', '%Manager%')
+              ->orWhere('name', 'like', '%Architect%');
+        })->get();
+
+        // Summary statistics
+        $stats = [
+            'total' => $projects->count(),
+            'active' => $projects->whereIn('status', ['pending', 'in_progress', 'APPROVED'])->count(),
+            'completed' => $projects->where('status', 'COMPLETED')->count(),
+            'delayed' => $projects->filter(fn($p) => $p->isDelayed())->count(),
+            'total_value' => $projects->sum('contract_value'),
+        ];
 
         $data = [
             'projects' => $projects,
-            'projectTypes' => $projectTypes
+            'projectTypes' => $projectTypes,
+            'serviceTypes' => $serviceTypes,
+            'salespersons' => $salespersons,
+            'projectManagers' => $projectManagers,
+            'stats' => $stats,
         ];
         return view('pages.projects.projects')->with($data);
     }
