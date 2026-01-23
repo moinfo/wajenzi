@@ -253,6 +253,215 @@
         </div>
     </div>
 
+    <!-- Project Link Section -->
+    @php
+        $linkedProject = $lead->project;
+        $availableProjects = \App\Models\Project::whereDoesntHave('leads')
+            ->orWhere('id', $lead->project_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        $projectTypes = \App\Models\ProjectType::all();
+        $serviceTypes = \App\Models\ServiceType::all();
+    @endphp
+    <div class="block block-rounded">
+        <div class="block-header block-header-default">
+            <h3 class="block-title"><i class="fa fa-building text-primary mr-2"></i>Linked Project</h3>
+            <div class="block-options">
+                @if($linkedProject)
+                    <a href="{{ route('individual_projects', [$linkedProject->id, 10]) }}" class="btn btn-sm btn-success mr-1">
+                        <i class="fa fa-eye"></i> View Project
+                    </a>
+                    <form action="{{ route('leads.unlink-project', $lead->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Unlink this project?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="fa fa-unlink"></i> Unlink
+                        </button>
+                    </form>
+                @else
+                    <button type="button" class="btn btn-sm btn-primary mr-1" data-toggle="modal" data-target="#linkProjectModal">
+                        <i class="fa fa-link"></i> Link Existing
+                    </button>
+                    <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#createProjectModal">
+                        <i class="fa fa-plus"></i> Create New
+                    </button>
+                @endif
+            </div>
+        </div>
+        <div class="block-content">
+            @if($linkedProject)
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Project ID:</strong>
+                        <p class="mb-1"><span class="badge badge-light">{{ $linkedProject->document_number }}</span></p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Project Name:</strong>
+                        <p class="mb-1">{{ $linkedProject->project_name }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Type:</strong>
+                        <p class="mb-1">{{ $linkedProject->projectType->name ?? '-' }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Status:</strong>
+                        @php
+                            $projStatus = $linkedProject->approvalStatus?->status ?? $linkedProject->status ?? 'pending';
+                            $projStatusColors = [
+                                'pending' => 'warning', 'APPROVED' => 'success', 'in_progress' => 'primary',
+                                'COMPLETED' => 'success', 'Completed' => 'success', 'Rejected' => 'danger',
+                            ];
+                        @endphp
+                        <p class="mb-1">
+                            <span class="badge badge-{{ $projStatusColors[$projStatus] ?? 'secondary' }}">
+                                {{ ucwords(str_replace('_', ' ', $projStatus)) }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <strong>Start Date:</strong>
+                        <p class="mb-1">{{ $linkedProject->start_date ? $linkedProject->start_date->format('d/m/Y') : '-' }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Expected End:</strong>
+                        <p class="mb-1">{{ $linkedProject->expected_end_date ? $linkedProject->expected_end_date->format('d/m/Y') : '-' }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Contract Value:</strong>
+                        <p class="mb-1">{{ $linkedProject->contract_value ? 'TZS ' . number_format($linkedProject->contract_value) : '-' }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Duration:</strong>
+                        <p class="mb-1">{{ $linkedProject->planned_duration ? $linkedProject->planned_duration . ' days' : '-' }}</p>
+                    </div>
+                </div>
+            @else
+                <div class="text-center py-4">
+                    <i class="fa fa-building fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No project linked to this lead yet.</p>
+                    <p class="text-muted small">Link an existing project or create a new one to track project details.</p>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Link Project Modal -->
+    @if(!$linkedProject)
+    <div class="modal fade" id="linkProjectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('leads.link-project', $lead->id) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fa fa-link mr-2"></i>Link Existing Project</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="project_id"><strong>Select Project</strong></label>
+                            <select name="project_id" id="project_id" class="form-control" required>
+                                <option value="">-- Select a Project --</option>
+                                @foreach(\App\Models\Project::orderBy('created_at', 'desc')->limit(50)->get() as $project)
+                                    <option value="{{ $project->id }}">
+                                        {{ $project->document_number }} - {{ $project->project_name }}
+                                        ({{ $project->client->first_name ?? '' }} {{ $project->client->last_name ?? '' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Choose an existing project to link to this lead.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-link mr-1"></i>Link Project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div class="modal fade" id="createProjectModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form action="{{ route('leads.create-project', $lead->id) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fa fa-plus mr-2"></i>Create New Project</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="project_name"><strong>Project Name</strong> <span class="text-danger">*</span></label>
+                                    <input type="text" name="project_name" id="project_name" class="form-control"
+                                           value="{{ $lead->name }}" required placeholder="Enter project name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="project_type_id"><strong>Project Category</strong> <span class="text-danger">*</span></label>
+                                    <select name="project_type_id" id="project_type_id" class="form-control" required>
+                                        <option value="">-- Select Category --</option>
+                                        @foreach($projectTypes as $type)
+                                            <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="service_type_id"><strong>Service Type</strong></label>
+                                    <select name="service_type_id" id="service_type_id" class="form-control">
+                                        <option value="">-- Select Service --</option>
+                                        @foreach($serviceTypes as $type)
+                                            <option value="{{ $type->id }}" {{ $lead->service_interested_id == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="start_date"><strong>Start Date</strong> <span class="text-danger">*</span></label>
+                                    <input type="date" name="start_date" id="start_date" class="form-control"
+                                           value="{{ date('Y-m-d') }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="expected_end_date"><strong>Expected End Date</strong> <span class="text-danger">*</span></label>
+                                    <input type="date" name="expected_end_date" id="expected_end_date" class="form-control"
+                                           value="{{ date('Y-m-d', strtotime('+3 months')) }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="contract_value"><strong>Contract Value (TZS)</strong></label>
+                                    <input type="number" name="contract_value" id="contract_value" class="form-control"
+                                           value="{{ $lead->estimated_value }}" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mb-0">
+                            <i class="fa fa-info-circle mr-2"></i>
+                            <strong>Client:</strong> {{ $lead->client ? $lead->client->first_name . ' ' . $lead->client->last_name : $lead->name }}
+                            <br>
+                            <strong>Salesperson:</strong> {{ $lead->salesperson->name ?? 'N/A' }}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success"><i class="fa fa-plus mr-1"></i>Create Project</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Project Schedule Section -->
     @php
         $projectSchedule = \App\Models\ProjectSchedule::where('lead_id', $lead->id)->first();

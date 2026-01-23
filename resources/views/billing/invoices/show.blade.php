@@ -229,13 +229,69 @@
                             </div>
                         </div>
 
-                        <!-- Terms & Footer -->
+                        <!-- Custom Terms (if any) -->
                         @if($invoice->terms_conditions)
                             <div class="mt-4">
-                                <strong>Terms & Conditions:</strong><br>
+                                <strong>Additional Notes:</strong><br>
                                 {{ $invoice->terms_conditions }}
                             </div>
                         @endif
+
+                        <!-- Standard Terms & Conditions -->
+                        @php
+                            $terms = \App\Models\InvoiceSetting::getPaymentTerms();
+                        @endphp
+                        <div class="mt-4 p-3" style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; font-size: 12px; line-height: 1.6;">
+                            <h6 class="mb-3 pb-2" style="border-bottom: 1px solid #dee2e6; text-transform: uppercase; font-weight: bold;">
+                                Terms and Conditions of the Invoice
+                            </h6>
+
+                            <div class="mb-3">
+                                <strong>1. Payment Terms.</strong><br>
+                                <span class="ml-3">• Payment is due within {{ $terms['payment_due_days'] }} days from the invoice date. Design work will commence once the {{ $terms['deposit_percentage'] }}% deposit has been confirmed. A second payment of {{ $terms['second_payment_percentage'] }}% will be made after the second draft submission, with the remaining {{ $terms['final_payment_percentage'] }}% due upon finalization.</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>2. Project Deliverables Changes & Revisions.</strong><br>
+                                <span class="ml-3"><strong>I. The client will be issued 2D design.</strong></span><br>
+                                <span class="ml-4">• 2D 1st Draft - The client will review the 2D design and confirm their requirements. If changes are needed, should be submitted and rectified at this stage.</span><br>
+                                <span class="ml-4">• 2D Final Draft – All final changes must be identified and submitted. Any additional changes beyond this stage will incur extra charges.</span><br>
+                                <span class="ml-3"><strong>II. The client will be issued 3D design.</strong></span><br>
+                                <span class="ml-4">• 3D 1st Draft - The client will review the 3D design and confirm their requirements. If changes are needed, should be submitted and rectified at this stage.</span><br>
+                                <span class="ml-4">• 3D Final Draft – All final 3D changes must be identified and submitted. Any additional changes beyond this stage will incur extra charges.</span><br>
+                                <span class="ml-4">• The Completed Design will be submitted after all revisions have been incorporated and will be provided as stamped hard copies in {{ $terms['architectural_hard_copies'] }} files for Architectural drawings and {{ $terms['structural_hard_copies'] }} files for Structural design drawings.</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>3. Validity.</strong><br>
+                                <span class="ml-3">• This invoice is valid for {{ $terms['invoice_validity_days'] }} days from the date of issue. After expiration, prices and terms may be subject to review.</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>4. Taxes & Statutory Deductions.</strong><br>
+                                <span class="ml-3">• All prices are Tax inclusive.</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>5. Ownership of Work.</strong><br>
+                                <span class="ml-3">• All drawings, designs, BOQ documents and any other Document associated with this agreement remain the property of Wajenzi Professional Co. Ltd until payment is fully settled.</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>6. Cancellation Policy.</strong><br>
+                                <span class="ml-3">• After the work has started, if the client chooses to discontinue with the project there will be no refund.</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <strong>7. Dispute Resolution.</strong><br>
+                                <span class="ml-3">• Any disputes related to this invoice or the services rendered shall be resolved amicably between both parties. If unresolved, the matter may be escalated as per applicable laws of Tanzania.</span>
+                            </div>
+
+                            <div class="mb-0">
+                                <strong>8. Agreement Clause.</strong><br>
+                                <span class="ml-3">• By making this payment, the client acknowledges and agrees to all the terms and conditions stated above.</span>
+                            </div>
+                        </div>
 
                         @if($invoice->footer_text)
                             <div class="mt-3 text-center">

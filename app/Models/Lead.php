@@ -11,6 +11,7 @@ class Lead extends Model
 
     protected $fillable = [
         'client_id',
+        'project_id',
         'lead_number',
         'lead_date',
         'name',
@@ -79,6 +80,11 @@ class Lead extends Model
     public function client()
     {
         return $this->belongsTo(ProjectClient::class, 'client_id');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'project_id');
     }
 
     public function clientSource()

@@ -321,6 +321,62 @@
         </div>
     @endif
 
+    <!-- Standard Terms & Conditions -->
+    @php
+        $terms = \App\Models\InvoiceSetting::getPaymentTerms();
+    @endphp
+    <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; font-size: 10px; line-height: 1.5;">
+        <div style="font-weight: bold; font-size: 12px; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px solid #dee2e6; padding-bottom: 5px;">
+            Terms and Conditions of the Invoice
+        </div>
+
+        <div style="margin-bottom: 8px;">
+            <strong>1. Payment Terms.</strong><br>
+            <span style="margin-left: 15px;">• Payment is due within {{ $terms['payment_due_days'] }} days from the invoice date. Design work will commence once the {{ $terms['deposit_percentage'] }}% deposit has been confirmed. A second payment of {{ $terms['second_payment_percentage'] }}% will be made after the second draft submission, with the remaining {{ $terms['final_payment_percentage'] }}% due upon finalization.</span>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+            <strong>2. Project Deliverables Changes & Revisions.</strong><br>
+            <span style="margin-left: 15px;"><strong>I. The client will be issued 2D design.</strong></span><br>
+            <span style="margin-left: 25px;">• 2D 1st Draft - The client will review the 2D design and confirm their requirements. If changes are needed, should be submitted and rectified at this stage.</span><br>
+            <span style="margin-left: 25px;">• 2D Final Draft – All final changes must be identified and submitted. Any additional changes beyond this stage will incur extra charges.</span><br>
+            <span style="margin-left: 15px;"><strong>II. The client will be issued 3D design.</strong></span><br>
+            <span style="margin-left: 25px;">• 3D 1st Draft - The client will review the 3D design and confirm their requirements. If changes are needed, should be submitted and rectified at this stage.</span><br>
+            <span style="margin-left: 25px;">• 3D Final Draft – All final 3D changes must be identified and submitted. Any additional changes beyond this stage will incur extra charges.</span><br>
+            <span style="margin-left: 25px;">• The Completed Design will be submitted after all revisions have been incorporated and will be provided as stamped hard copies in {{ $terms['architectural_hard_copies'] }} files for Architectural drawings and {{ $terms['structural_hard_copies'] }} files for Structural design drawings.</span>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+            <strong>3. Validity.</strong><br>
+            <span style="margin-left: 15px;">• This invoice is valid for {{ $terms['invoice_validity_days'] }} days from the date of issue. After expiration, prices and terms may be subject to review.</span>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+            <strong>4. Taxes & Statutory Deductions.</strong><br>
+            <span style="margin-left: 15px;">• All prices are Tax inclusive.</span>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+            <strong>5. Ownership of Work.</strong><br>
+            <span style="margin-left: 15px;">• All drawings, designs, BOQ documents and any other Document associated with this agreement remain the property of Wajenzi Professional Co. Ltd until payment is fully settled.</span>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+            <strong>6. Cancellation Policy.</strong><br>
+            <span style="margin-left: 15px;">• After the work has started, if the client chooses to discontinue with the project there will be no refund.</span>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+            <strong>7. Dispute Resolution.</strong><br>
+            <span style="margin-left: 15px;">• Any disputes related to this invoice or the services rendered shall be resolved amicably between both parties. If unresolved, the matter may be escalated as per applicable laws of Tanzania.</span>
+        </div>
+
+        <div style="margin-bottom: 0;">
+            <strong>8. Agreement Clause.</strong><br>
+            <span style="margin-left: 15px;">• By making this payment, the client acknowledges and agrees to all the terms and conditions stated above.</span>
+        </div>
+    </div>
+
     <!-- Footer -->
     @if($invoice->footer_text)
         <div class="footer">
