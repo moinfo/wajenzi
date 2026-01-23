@@ -80,4 +80,57 @@ class SalesLeadFollowup extends Model
     {
         return $this->belongsTo(User::class, 'attended_by');
     }
+
+    /**
+     * Generate Google Calendar URL for this follow-up
+     */
+    public function getGoogleCalendarUrl(): string
+    {
+        $title = 'Follow-up: ' . ($this->lead->name ?? $this->lead_name ?? 'Lead');
+
+        // Use followup_date, default to 9 AM - 10 AM
+        $startDate = $this->followup_date->copy()->setTime(9, 0);
+        $endDate = $this->followup_date->copy()->setTime(10, 0);
+
+        // Format dates for Google Calendar (YYYYMMDDTHHmmSSZ)
+        $dateFormat = 'Ymd\THis\Z';
+        $dates = $startDate->utc()->format($dateFormat) . '/' . $endDate->utc()->format($dateFormat);
+
+        // Build description
+        $details = [];
+        if ($this->next_step) {
+            $details[] = "Action: {$this->next_step}";
+        }
+        if ($this->details_discussion) {
+            $details[] = "Notes: {$this->details_discussion}";
+        }
+        if ($this->lead) {
+            $details[] = "Lead: {$this->lead->name}";
+            if ($this->lead->phone) {
+                $details[] = "Phone: {$this->lead->phone}";
+            }
+            if ($this->lead->email) {
+                $details[] = "Email: {$this->lead->email}";
+            }
+        }
+        $description = implode("\n", $details);
+
+        // Build URL
+        $params = [
+            'action' => 'TEMPLATE',
+            'text' => $title,
+            'dates' => $dates,
+            'details' => $description,
+        ];
+
+        return 'https://calendar.google.com/calendar/render?' . http_build_query($params);
+    }
+
+    /**
+     * Get Google Calendar URL attribute
+     */
+    public function getGoogleCalendarLinkAttribute(): string
+    {
+        return $this->getGoogleCalendarUrl();
+    }
 }

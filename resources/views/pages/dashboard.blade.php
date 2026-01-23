@@ -491,6 +491,9 @@
                 <div class="section-header">
                     <h2><i class="fa fa-calendar-alt mr-2"></i>Follow-up Calendar</h2>
                     <div class="calendar-nav">
+                        <a href="{{ route('export.followups.calendar') }}" class="gcal-export-btn" title="Export all pending follow-ups to Google Calendar">
+                            <i class="fa-brands fa-google"></i> Export to Google Calendar
+                        </a>
                         <a href="?cal_month={{ $prevMonth->month }}&cal_year={{ $prevMonth->year }}" class="cal-nav-btn" title="Previous Month">
                             <i class="fa fa-chevron-left"></i>
                         </a>
@@ -578,6 +581,11 @@
                                                     <div class="tooltip-item followup-item {{ $fu->status }}">
                                                         <span class="item-status {{ $fu->status === 'completed' ? 'completed' : ($isPast ? 'overdue' : 'pending') }}"></span>
                                                         <span class="item-text">{{ Str::limit($fu->lead->name, 20) }}</span>
+                                                        @if($fu->status !== 'completed')
+                                                        <a href="{{ $fu->google_calendar_link }}" target="_blank" class="tooltip-gcal" title="Add to Google Calendar" onclick="event.stopPropagation();">
+                                                            <i class="fa-solid fa-calendar-plus"></i>
+                                                        </a>
+                                                        @endif
                                                     </div>
                                                 @endforeach
                                                 @if($dayFollowups->count() > 3)
@@ -639,13 +647,20 @@
                         <h4><i class="fa fa-clock"></i> Today's Follow-ups ({{ $todayFollowupsList->count() }})</h4>
                         <div class="today-list">
                             @foreach($todayFollowupsList as $tfu)
-                                <a href="{{ route('leads.show', $tfu->lead->id) }}" class="today-item {{ $tfu->status === 'completed' ? 'completed' : '' }}">
-                                    <span class="lead-name">{{ $tfu->lead->name }}</span>
-                                    <span class="lead-action">{{ Str::limit($tfu->next_step ?: 'Follow up', 30) }}</span>
-                                    @if($tfu->status === 'completed')
-                                        <span class="completed-badge"><i class="fa fa-check"></i> Done</span>
+                                <div class="today-item-wrapper {{ $tfu->status === 'completed' ? 'completed' : '' }}">
+                                    <a href="{{ route('leads.show', $tfu->lead->id) }}" class="today-item">
+                                        <span class="lead-name">{{ $tfu->lead->name }}</span>
+                                        <span class="lead-action">{{ Str::limit($tfu->next_step ?: 'Follow up', 30) }}</span>
+                                        @if($tfu->status === 'completed')
+                                            <span class="completed-badge"><i class="fa fa-check"></i> Done</span>
+                                        @endif
+                                    </a>
+                                    @if($tfu->status !== 'completed')
+                                    <a href="{{ $tfu->google_calendar_link }}" target="_blank" class="gcal-btn" title="Add to Google Calendar">
+                                        <i class="fa-solid fa-calendar-plus"></i>
+                                    </a>
                                     @endif
-                                </a>
+                                </div>
                             @endforeach
                         </div>
                     </div>
@@ -2221,6 +2236,33 @@
             color: white;
         }
 
+        .followup-calendar .gcal-export-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            background: #4285f4;
+            color: white;
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 1rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(66, 133, 244, 0.3);
+        }
+
+        .followup-calendar .gcal-export-btn:hover {
+            background: #1a73e8;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(66, 133, 244, 0.4);
+        }
+
+        .followup-calendar .gcal-export-btn i {
+            font-size: 0.85rem;
+        }
+
         .followup-calendar .cal-today-btn {
             padding: 0.25rem 0.6rem;
             border-radius: 6px;
@@ -2465,6 +2507,28 @@
             color: #888;
         }
 
+        .tooltip-gcal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: #4285f4;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 10px;
+            flex-shrink: 0;
+            opacity: 0.8;
+            transition: all 0.2s ease;
+        }
+
+        .tooltip-gcal:hover {
+            opacity: 1;
+            transform: scale(1.1);
+            color: white;
+        }
+
         .tooltip-more {
             font-size: 0.7rem;
             color: #888;
@@ -2626,12 +2690,26 @@
             gap: 0.5rem;
         }
 
+        .today-item-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: white;
+            border-radius: 8px;
+            padding-right: 0.5rem;
+        }
+
+        .today-item-wrapper.completed {
+            opacity: 0.7;
+        }
+
         .today-item {
             display: flex;
+            flex: 1;
             justify-content: space-between;
             align-items: center;
             padding: 0.5rem 0.75rem;
-            background: white;
+            background: transparent;
             border-radius: 8px;
             text-decoration: none;
             transition: all 0.2s ease;
@@ -2645,6 +2723,30 @@
         .today-item .lead-name {
             font-weight: 600;
             color: var(--wajenzi-gray-900);
+        }
+
+        .gcal-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: #4285f4;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .gcal-btn:hover {
+            background: #1a73e8;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .gcal-btn i {
+            font-size: 12px;
         }
 
         .today-item:hover .lead-name {

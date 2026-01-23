@@ -1137,9 +1137,14 @@
                                     </td>
                                     <td>
                                         @if(($followup->status ?? 'pending') === 'pending')
-                                            <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#attendModal{{ $followup->id }}">
-                                                <i class="fa fa-check-circle"></i> Attend
-                                            </button>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#attendModal{{ $followup->id }}">
+                                                    <i class="fa fa-check-circle"></i> Attend
+                                                </button>
+                                                <a href="{{ $followup->google_calendar_link }}" target="_blank" class="btn btn-sm btn-info" title="Add to Google Calendar">
+                                                    <i class="fa-solid fa-calendar-plus"></i>
+                                                </a>
+                                            </div>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif
