@@ -495,6 +495,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('leads/{id}/followup', [App\Http\Controllers\LeadController::class, 'storeFollowup'])->name('leads.followup.store');
     Route::post('leads/{leadId}/followup/{followupId}/attend', [App\Http\Controllers\LeadController::class, 'attendFollowup'])->name('leads.followup.attend');
 
+    // Project Schedule Routes
+    Route::resource('project-schedules', App\Http\Controllers\ProjectScheduleController::class)->except(['create', 'store', 'destroy']);
+    Route::post('project-schedules/{projectSchedule}/confirm', [App\Http\Controllers\ProjectScheduleController::class, 'confirm'])->name('project-schedules.confirm');
+    Route::post('project-schedules/activity/{activity}/start', [App\Http\Controllers\ProjectScheduleController::class, 'startActivity'])->name('project-schedules.activity.start');
+    Route::post('project-schedules/activity/{activity}/complete', [App\Http\Controllers\ProjectScheduleController::class, 'completeActivity'])->name('project-schedules.activity.complete');
+    Route::patch('project-schedules/activity/{activity}/days', [App\Http\Controllers\ProjectScheduleController::class, 'updateActivityDays'])->name('project-schedules.activity.update-days');
+    Route::delete('project-schedules/activity/{activity}', [App\Http\Controllers\ProjectScheduleController::class, 'removeActivity'])->name('project-schedules.activity.remove');
+    Route::get('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'showForLead'])->name('leads.schedule');
+    Route::post('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForLead'])->name('leads.schedule.create');
+
 // Project Invoice Routes
     Route::match(['get', 'post'], '/project_invoices', [App\Http\Controllers\ProjectInvoiceController::class, 'index'])->name('project_invoices');
     Route::match(['get', 'post'], '/project_invoice/create', [App\Http\Controllers\ProjectInvoiceController::class, 'create'])->name('project_invoice.create');

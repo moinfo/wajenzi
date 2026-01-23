@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\BillingDocument;
 use App\Models\BillingPayment;
+use App\Models\Lead;
 use App\Models\ProjectClient;
 use Illuminate\Support\Facades\Log;
 
@@ -60,6 +62,9 @@ class ClientApprovalService
             $client->status = 'PAID';
             $client->save();
 
+            // Create project schedule and assign architect
+            self::createProjectScheduleForClient($clientId, $currentPayment);
+
             Log::info("Auto-approved all workflow steps for client #{$clientId} on first payment");
 
             return true;
@@ -112,6 +117,50 @@ class ClientApprovalService
             }
 
             $iterations++;
+        }
+    }
+
+    /**
+     * Create project schedule for a client on first payment
+     *
+     * @param int $clientId
+     * @param BillingPayment|null $payment
+     * @return void
+     */
+    protected static function createProjectScheduleForClient($clientId, ?BillingPayment $payment = null): void
+    {
+        try {
+            // Find the lead associated with this payment/client
+            $leadId = null;
+
+            // First, try to get lead from the payment's document
+            if ($payment && $payment->document_id) {
+                $document = BillingDocument::find($payment->document_id);
+                if ($document && $document->lead_id) {
+                    $leadId = $document->lead_id;
+                }
+            }
+
+            // If no lead from document, try to find a lead for this client
+            if (!$leadId) {
+                $lead = Lead::where('client_id', $clientId)->first();
+                $leadId = $lead?->id;
+            }
+
+            if (!$leadId) {
+                Log::warning("No lead found for client #{$clientId}, cannot create project schedule");
+                return;
+            }
+
+            // Create schedule using ProjectScheduleService
+            $schedule = ProjectScheduleService::assignArchitectOnFirstPayment($leadId);
+
+            if ($schedule) {
+                Log::info("Project schedule #{$schedule->id} created for lead #{$leadId} on first payment");
+            }
+
+        } catch (\Exception $e) {
+            Log::error("Failed to create project schedule for client #{$clientId}: " . $e->getMessage());
         }
     }
 }

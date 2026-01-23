@@ -253,6 +253,113 @@
         </div>
     </div>
 
+    <!-- Project Schedule Section -->
+    @php
+        $projectSchedule = \App\Models\ProjectSchedule::where('lead_id', $lead->id)->first();
+    @endphp
+    <div class="block block-rounded">
+        <div class="block-header block-header-default">
+            <h3 class="block-title"><i class="fa fa-calendar-alt text-info mr-2"></i>Project Schedule</h3>
+            <div class="block-options">
+                @if($projectSchedule)
+                    <a href="{{ route('project-schedules.show', $projectSchedule) }}" class="btn btn-sm btn-info">
+                        <i class="fa fa-eye"></i> View Schedule
+                    </a>
+                @else
+                    <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#createScheduleModal">
+                        <i class="fa fa-plus"></i> Create Schedule
+                    </button>
+                @endif
+            </div>
+        </div>
+        <div class="block-content">
+            @if($projectSchedule)
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>Status:</strong>
+                        @php
+                            $scheduleStatusColors = [
+                                'draft' => 'secondary',
+                                'pending_confirmation' => 'warning',
+                                'confirmed' => 'info',
+                                'in_progress' => 'primary',
+                                'completed' => 'success',
+                                'cancelled' => 'danger',
+                            ];
+                        @endphp
+                        <span class="badge badge-{{ $scheduleStatusColors[$projectSchedule->status] ?? 'secondary' }}">
+                            {{ ucwords(str_replace('_', ' ', $projectSchedule->status)) }}
+                        </span>
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Architect:</strong>
+                        {{ $projectSchedule->assignedArchitect->name ?? 'Unassigned' }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Start:</strong>
+                        {{ $projectSchedule->start_date->format('d/m/Y') }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>End:</strong>
+                        {{ $projectSchedule->end_date ? $projectSchedule->end_date->format('d/m/Y') : 'N/A' }}
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <strong>Progress:</strong>
+                        <div class="progress mt-1" style="height: 25px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $projectSchedule->progress }}%">
+                                {{ $projectSchedule->progress }}% Complete
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @if($projectSchedule->status === 'draft' || $projectSchedule->status === 'pending_confirmation')
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <i class="fa fa-exclamation-triangle mr-2"></i>
+                        Schedule is not yet confirmed. <a href="{{ route('project-schedules.show', $projectSchedule) }}">Review and confirm</a> to activate activities.
+                    </div>
+                @endif
+            @else
+                <div class="text-center py-4">
+                    <i class="fa fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No project schedule created yet.</p>
+                    <p class="text-muted small">A schedule will be automatically created when the first payment is received, or you can create one manually.</p>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Create Schedule Modal -->
+    @if(!$projectSchedule)
+    <div class="modal fade" id="createScheduleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('leads.schedule.create', $lead) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">Create Project Schedule</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>This will create a project schedule with all activities based on the standard template.</p>
+                        <div class="form-group">
+                            <label for="schedule_start_date"><strong>Project Start Date</strong></label>
+                            <input type="date" name="start_date" id="schedule_start_date" class="form-control"
+                                   value="{{ date('Y-m-d', strtotime('+1 day')) }}" min="{{ date('Y-m-d') }}" required>
+                            <small class="text-muted">All activity dates will be calculated from this date (excluding weekends and holidays).</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Create Schedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Billing Documents Section -->
     <div class="block block-rounded">
         <div class="block-header block-header-default">
