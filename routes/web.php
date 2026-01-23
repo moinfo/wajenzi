@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\DashboardController::class, 'index'])->name('home');
     Route::match(['get', 'post'], '/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/export-followups-calendar', [App\Http\Controllers\DashboardController::class, 'exportFollowupsToCalendar'])->name('export.followups.calendar');
     Route::match(['get', 'post'], '/404', [App\Http\Controllers\ErrorController::class, 'index'])->name('404');
     Route::view('/lock', 'auth.lock');
 //    Route::get('notification', 'HomeController@notification');
