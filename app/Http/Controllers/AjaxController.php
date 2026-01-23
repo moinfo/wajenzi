@@ -14,6 +14,7 @@ use App\Models\BongeCustomer;
 use App\Models\Category;
 use App\Models\ChartAccount;
 use App\Models\ClientSource;
+use App\Models\CostCategory;
 use App\Models\Currency;
 use App\Models\Deduction;
 use App\Models\Department;
@@ -220,6 +221,7 @@ class AjaxController
                     $project_clients = ProjectClient::where('status','APPROVED')->get();
                     $projects = Project::where('status','APPROVED')->get();
                     $project_types = ProjectType::all();
+                    $cost_categories = CostCategory::orderBy('name')->get();
                     $departments = Department::all();
                     $payroll_types = PayrollType::all();
                     $client_sources = ClientSource::all();
@@ -261,6 +263,7 @@ class AjaxController
                             'client_sources' => $client_sources,
                             'departments' => $departments,
                             'projectTypes' => $project_types,
+                            'cost_categories' => $cost_categories,
                             'clients' => $project_clients,
                             'slip_presentations' => $slip_presentations,
                             'todayTargets' => $todayTargets,

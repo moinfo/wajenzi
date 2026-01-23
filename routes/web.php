@@ -498,6 +498,12 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('leads/{id}/unlink-project', [App\Http\Controllers\LeadController::class, 'unlinkProject'])->name('leads.unlink-project');
     Route::post('leads/{id}/create-project', [App\Http\Controllers\LeadController::class, 'createProject'])->name('leads.create-project');
 
+    // Project Cost routes from Lead page
+    Route::post('leads/{id}/project-cost', [App\Http\Controllers\LeadController::class, 'addProjectCost'])->name('leads.add-project-cost');
+    Route::get('leads/{id}/project-cost/{costId}', [App\Http\Controllers\LeadController::class, 'getProjectCost'])->name('leads.get-project-cost');
+    Route::put('leads/{id}/project-cost', [App\Http\Controllers\LeadController::class, 'updateProjectCost'])->name('leads.update-project-cost');
+    Route::delete('leads/{id}/project-cost/{costId}', [App\Http\Controllers\LeadController::class, 'deleteProjectCost'])->name('leads.delete-project-cost');
+
     // Project Schedule Routes
     Route::resource('project-schedules', App\Http\Controllers\ProjectScheduleController::class)->except(['create', 'store', 'destroy']);
     Route::post('project-schedules/{projectSchedule}/confirm', [App\Http\Controllers\ProjectScheduleController::class, 'confirm'])->name('project-schedules.confirm');

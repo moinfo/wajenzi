@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CostCategory;
 use App\Models\Project;
 use App\Models\ProjectExpense;
 use App\Models\ProjectPayment;
@@ -17,7 +18,7 @@ class ProjectExpenseController extends Controller
             return back();
         }
 
-        $expenses = ProjectExpense::with(['project', 'creator'])
+        $expenses = ProjectExpense::with(['project', 'costCategory', 'creator'])
             ->when($request->start_date, function($query) use ($request) {
                 return $query->whereDate('expense_date', '>=', $request->start_date);
             })
@@ -27,14 +28,20 @@ class ProjectExpenseController extends Controller
             ->when($request->project_id, function($query) use ($request) {
                 return $query->where('project_id', $request->project_id);
             })
+            ->when($request->cost_category_id, function($query) use ($request) {
+                return $query->where('cost_category_id', $request->cost_category_id);
+            })
+            ->orderBy('expense_date', 'desc')
             ->get();
 
         $projects = Project::all();
+        $costCategories = CostCategory::orderBy('name')->get();
         $total_amount = $expenses->sum('amount');
 
         $data = [
             'expenses' => $expenses,
             'projects' => $projects,
+            'costCategories' => $costCategories,
             'total_amount' => $total_amount
         ];
         return view('pages.projects.project_expenses')->with($data);

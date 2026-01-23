@@ -347,6 +347,249 @@
         </div>
     </div>
 
+    <!-- Project Costs Section (only shown when project is linked) -->
+    @if($linkedProject)
+    @php
+        $projectCosts = \App\Models\ProjectExpense::with('costCategory')
+            ->where('project_id', $linkedProject->id)
+            ->orderBy('expense_date', 'desc')
+            ->get();
+        $totalCosts = $projectCosts->sum('amount');
+        $costCategories = \App\Models\CostCategory::orderBy('name')->get();
+    @endphp
+    <div class="block block-rounded">
+        <div class="block-header block-header-default">
+            <h3 class="block-title"><i class="fa fa-money text-success mr-2"></i>Project Costs</h3>
+            <div class="block-options">
+                <span class="badge badge-success mr-2">Total: TZS {{ number_format($totalCosts, 2) }}</span>
+                @can('Add Project Cost')
+                <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#addCostModal">
+                    <i class="fa fa-plus"></i> Add Cost
+                </button>
+                @endcan
+            </div>
+        </div>
+        <div class="block-content">
+            @if($projectCosts->count() > 0)
+            <div class="table-responsive">
+                <table class="table table-sm table-striped table-vcenter">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 60px;">ID</th>
+                            <th>Cost Category</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th class="text-right">Amount (TZS)</th>
+                            <th>Remarks</th>
+                            <th class="text-center" style="width: 80px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($projectCosts as $cost)
+                        <tr id="cost-row-{{ $cost->id }}">
+                            <td class="text-center">{{ $cost->id }}</td>
+                            <td>
+                                @if($cost->costCategory)
+                                    <span class="badge badge-info">{{ $cost->costCategory->name }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>{{ Str::limit($cost->description, 40) }}</td>
+                            <td>{{ $cost->expense_date->format('d/m/Y') }}</td>
+                            <td class="text-right font-w600">{{ number_format($cost->amount, 2) }}</td>
+                            <td>{{ Str::limit($cost->remarks, 25) ?? '-' }}</td>
+                            <td class="text-center">
+                                @can('Edit Project Cost')
+                                <button type="button" class="btn btn-sm btn-primary" onclick="editCost({{ $cost->id }})" title="Edit">
+                                    <i class="fa fa-pencil"></i>
+                                </button>
+                                @endcan
+                                @can('Delete Project Cost')
+                                <button type="button" class="btn btn-sm btn-danger" onclick="deleteCost({{ $cost->id }})" title="Delete">
+                                    <i class="fa fa-times"></i>
+                                </button>
+                                @endcan
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-active">
+                            <td colspan="4" class="text-right"><strong>Total:</strong></td>
+                            <td class="text-right"><strong>TZS {{ number_format($totalCosts, 2) }}</strong></td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            @else
+            <div class="text-center py-4">
+                <i class="fa fa-money fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No costs recorded for this project yet.</p>
+                @can('Add Project Cost')
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addCostModal">
+                    <i class="fa fa-plus mr-1"></i> Add First Cost
+                </button>
+                @endcan
+            </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Add Cost Modal -->
+    <div class="modal fade" id="addCostModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('leads.add-project-cost', $lead->id) }}" method="POST">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fa fa-plus mr-2"></i>Add Project Cost</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label><strong>Cost Category</strong> <span class="text-danger">*</span></label>
+                            <select name="cost_category_id" class="form-control" required>
+                                <option value="">-- Select Category --</option>
+                                @foreach($costCategories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><strong>Cost Date</strong> <span class="text-danger">*</span></label>
+                                    <input type="date" name="expense_date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><strong>Amount (TZS)</strong> <span class="text-danger">*</span></label>
+                                    <input type="number" name="amount" class="form-control" step="0.01" min="0" placeholder="0.00" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><strong>Description</strong> <span class="text-danger">*</span></label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Enter cost description" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label><strong>Remarks</strong></label>
+                            <textarea name="remarks" class="form-control" rows="2" placeholder="Additional remarks (optional)"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save mr-1"></i>Save Cost</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Cost Modal -->
+    <div class="modal fade" id="editCostModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('leads.update-project-cost', $lead->id) }}" method="POST" id="editCostForm">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" name="cost_id" id="edit_cost_id">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fa fa-pencil mr-2"></i>Edit Project Cost</h5>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label><strong>Cost Category</strong> <span class="text-danger">*</span></label>
+                            <select name="cost_category_id" id="edit_cost_category_id" class="form-control" required>
+                                <option value="">-- Select Category --</option>
+                                @foreach($costCategories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><strong>Cost Date</strong> <span class="text-danger">*</span></label>
+                                    <input type="date" name="expense_date" id="edit_expense_date" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label><strong>Amount (TZS)</strong> <span class="text-danger">*</span></label>
+                                    <input type="number" name="amount" id="edit_amount" class="form-control" step="0.01" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label><strong>Description</strong> <span class="text-danger">*</span></label>
+                            <textarea name="description" id="edit_description" class="form-control" rows="2" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label><strong>Remarks</strong></label>
+                            <textarea name="remarks" id="edit_remarks" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save mr-1"></i>Update Cost</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function editCost(costId) {
+        // Fetch cost data via AJAX
+        fetch('{{ url("/leads") }}/{{ $lead->id }}/project-cost/' + costId)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('edit_cost_id').value = data.id;
+                document.getElementById('edit_cost_category_id').value = data.cost_category_id || '';
+                document.getElementById('edit_expense_date').value = data.expense_date;
+                document.getElementById('edit_amount').value = data.amount;
+                document.getElementById('edit_description').value = data.description || '';
+                document.getElementById('edit_remarks').value = data.remarks || '';
+                $('#editCostModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load cost data');
+            });
+    }
+
+    function deleteCost(costId) {
+        if (confirm('Are you sure you want to delete this cost?')) {
+            fetch('{{ url("/leads") }}/{{ $lead->id }}/project-cost/' + costId, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('cost-row-' + costId).remove();
+                    location.reload(); // Reload to update totals
+                } else {
+                    alert(data.message || 'Failed to delete cost');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete cost');
+            });
+        }
+    }
+    </script>
+    @endif
+
     <!-- Link Project Modal -->
     @if(!$linkedProject)
     <div class="modal fade" id="linkProjectModal" tabindex="-1">
