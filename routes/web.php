@@ -169,6 +169,13 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/deduction_subscriptions', [App\Http\Controllers\SettingsController::class, 'deduction_subscriptions'])->name('hr_settings_deduction_subscriptions');
     Route::match(['get', 'post'], '/settings/deduction_settings', [App\Http\Controllers\SettingsController::class, 'deduction_settings'])->name('hr_settings_deduction_settings');
     Route::match(['get', 'post'], '/settings/banks', [App\Http\Controllers\SettingsController::class, 'banks'])->name('hr_settings_banks');
+    Route::match(['get', 'post'], '/settings/service_interesteds', [App\Http\Controllers\SettingsController::class, 'service_interesteds'])->name('hr_settings_service_interesteds');
+    Route::match(['get', 'post'], '/settings/lead_statuses', [App\Http\Controllers\SettingsController::class, 'lead_statuses'])->name('hr_settings_lead_statuses');
+    Route::match(['get', 'post'], '/settings/lead_sources', [App\Http\Controllers\SettingsController::class, 'lead_sources'])->name('hr_settings_lead_sources');
+    Route::match(['get', 'post'], '/settings/project_types_settings', [App\Http\Controllers\SettingsController::class, 'project_types_settings'])->name('hr_settings_project_types_settings');
+    Route::match(['get', 'post'], '/settings/service_types', [App\Http\Controllers\SettingsController::class, 'service_types'])->name('hr_settings_service_types');
+    Route::match(['get', 'post'], '/settings/project_statuses', [App\Http\Controllers\SettingsController::class, 'project_statuses'])->name('hr_settings_project_statuses');
+    Route::match(['get', 'post'], '/settings/cost_categories', [App\Http\Controllers\SettingsController::class, 'cost_categories'])->name('hr_settings_cost_categories');
     Route::match(['get', 'post'], '/settings/assets', [App\Http\Controllers\SettingsController::class, 'assets'])->name('hr_settings_assets');
     Route::match(['get', 'post'], '/settings/asset_properties', [App\Http\Controllers\SettingsController::class, 'asset_properties'])->name('hr_settings_asset_properties');
     Route::match(['get', 'post'], '/settings/systems', [App\Http\Controllers\SettingsController::class, 'systems'])->name('hr_settings_systems');
@@ -485,6 +492,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Lead Management Routes
     Route::resource('leads', App\Http\Controllers\LeadController::class);
+    Route::post('leads/{id}/followup', [App\Http\Controllers\LeadController::class, 'storeFollowup'])->name('leads.followup.store');
 
 // Project Invoice Routes
     Route::match(['get', 'post'], '/project_invoices', [App\Http\Controllers\ProjectInvoiceController::class, 'index'])->name('project_invoices');

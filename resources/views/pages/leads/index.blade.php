@@ -17,54 +17,75 @@
 
 <div class="content">
     @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ session('success') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
     @endif
     @if (session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ session('error') }}
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+        </div>
     @endif
 
     <!-- Filters -->
     <div class="block block-rounded">
-        <div class="block-header">
+        <div class="block-header block-header-default">
             <h3 class="block-title">Filters</h3>
         </div>
         <div class="block-content">
             <form method="GET" class="row">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
                         <label>Search</label>
-                        <input type="text" name="search" class="form-control" 
-                               value="{{ request('search') }}" 
-                               placeholder="Search by name, email, or phone">
+                        <input type="text" name="search" class="form-control"
+                               value="{{ request('search') }}"
+                               placeholder="Name, ID, Phone, City">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
-                        <label>Status</label>
-                        <select name="status" class="form-control">
-                            <option value="">All Status</option>
-                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                            <option value="converted" {{ request('status') == 'converted' ? 'selected' : '' }}>Converted</option>
-                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        <label>Lead Status</label>
+                        <select name="lead_status_id" class="form-control">
+                            <option value="">All Statuses</option>
+                            @foreach($leadStatuses as $status)
+                                <option value="{{ $status->id }}" {{ request('lead_status_id') == $status->id ? 'selected' : '' }}>
+                                    {{ $status->name }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
-                        <label>Source</label>
-                        <select name="client_source_id" class="form-control">
+                        <label>Lead Source</label>
+                        <select name="lead_source_id" class="form-control">
                             <option value="">All Sources</option>
-                            @foreach($clientSources as $source)
-                                <option value="{{ $source->id }}" {{ request('client_source_id') == $source->id ? 'selected' : '' }}>
+                            @foreach($leadSources as $source)
+                                <option value="{{ $source->id }}" {{ request('lead_source_id') == $source->id ? 'selected' : '' }}>
                                     {{ $source->name }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="form-group">
-                        <label style="visibility: hidden;">Action</label>
+                        <label>Salesperson</label>
+                        <select name="salesperson_id" class="form-control">
+                            <option value="">All Salespeople</option>
+                            @foreach($salespeople as $person)
+                                <option value="{{ $person->id }}" {{ request('salesperson_id') == $person->id ? 'selected' : '' }}>
+                                    {{ $person->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-group">
+                        <label>&nbsp;</label>
                         <div>
                             <button type="submit" class="btn btn-primary">Filter</button>
                             <a href="{{ route('leads.index') }}" class="btn btn-secondary">Clear</a>
@@ -77,89 +98,109 @@
 
     <!-- Leads List -->
     <div class="block block-rounded">
-        <div class="block-header">
+        <div class="block-header block-header-default">
             <h3 class="block-title">Leads List</h3>
             <div class="block-options">
-                <a href="{{ route('leads.create') }}" class="btn btn-success">
+                <a href="{{ route('leads.create') }}" class="btn btn-success btn-sm">
                     <i class="fa fa-plus"></i> New Lead
                 </a>
             </div>
         </div>
-        <div class="block-content">
+        <div class="block-content block-content-full">
             <div class="table-responsive">
-                <table class="table table-bordered table-striped table-vcenter">
+                <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
+                            <th>Lead ID</th>
+                            <th>Lead Date</th>
+                            <th>Client Name</th>
                             <th>Phone</th>
-                            <th>Source</th>
-                            <th>Status</th>
-                            <th>Created By</th>
-                            <th>Created At</th>
+                            <th>Lead Source</th>
+                            <th>Service Interested</th>
+                            <th>Site Location</th>
+                            <th>Est. Value (TZS)</th>
+                            <th>Lead Status</th>
+                            <th>City</th>
+                            <th>Salesperson</th>
+                            <th>Followup Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($leads as $lead)
                             <tr>
-                                <td><strong>{{ $lead->name }}</strong></td>
-                                <td>{{ $lead->email }}</td>
+                                <td><strong>{{ $lead->lead_number }}</strong></td>
+                                <td>{{ $lead->lead_date ? $lead->lead_date->format('d-M-Y') : '-' }}</td>
+                                <td>{{ $lead->name }}</td>
                                 <td>{{ $lead->phone ?: '-' }}</td>
                                 <td>
-                                    @if($lead->clientSource)
-                                        <span class="badge badge-info">{{ $lead->clientSource->name }}</span>
+                                    @if($lead->leadSource)
+                                        <span class="badge badge-info">{{ $lead->leadSource->name }}</span>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
+                                <td>{{ $lead->serviceInterested->name ?? '-' }}</td>
+                                <td>{{ $lead->site_location ?: '-' }}</td>
+                                <td class="text-right">{{ $lead->estimated_value ? number_format($lead->estimated_value) : '-' }}</td>
                                 <td>
-                                    @if($lead->status == 'active')
-                                        <span class="badge badge-success">Active</span>
-                                    @elseif($lead->status == 'converted')
-                                        <span class="badge badge-primary">Converted</span>
+                                    @if($lead->leadStatus)
+                                        @php
+                                            $statusClass = match(strtolower($lead->leadStatus->name)) {
+                                                'won' => 'badge-success',
+                                                'lost' => 'badge-danger',
+                                                'proposal sent' => 'badge-warning',
+                                                'new' => 'badge-primary',
+                                                default => 'badge-secondary'
+                                            };
+                                        @endphp
+                                        <span class="badge {{ $statusClass }}">{{ $lead->leadStatus->name }}</span>
                                     @else
-                                        <span class="badge badge-secondary">Inactive</span>
+                                        <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td>{{ $lead->createdBy->name }}</td>
-                                <td>{{ $lead->created_at->format('M d, Y') }}</td>
+                                <td>{{ $lead->city ?: '-' }}</td>
+                                <td>{{ $lead->salesperson->name ?? '-' }}</td>
                                 <td>
+                                    @if($lead->latestFollowup && $lead->latestFollowup->followup_date)
+                                        {{ $lead->latestFollowup->followup_date->format('d-M-Y') }}
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td class="text-center">
                                     <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-toggle="dropdown">
-                                            Actions
-                                        </button>
-                                        <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="{{ route('leads.show', $lead->id) }}">
-                                                <i class="fa fa-eye"></i> View
-                                            </a>
-                                            <a class="dropdown-item" href="{{ route('leads.edit', $lead->id) }}">
-                                                <i class="fa fa-edit"></i> Edit
-                                            </a>
-                                            <form method="POST" action="{{ route('leads.destroy', $lead->id) }}" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="dropdown-item text-danger" onclick="return confirm('Delete this lead?')">
-                                                    <i class="fa fa-trash"></i> Delete
-                                                </button>
-                                            </form>
-                                        </div>
+                                        <a href="{{ route('leads.show', $lead->id) }}" class="btn btn-sm btn-alt-secondary" title="View">
+                                            <i class="fa fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('leads.edit', $lead->id) }}" class="btn btn-sm btn-alt-secondary" title="Edit">
+                                            <i class="fa fa-pencil-alt"></i>
+                                        </a>
+                                        <form method="POST" action="{{ route('leads.destroy', $lead->id) }}" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-alt-danger" title="Delete" onclick="return confirm('Delete this lead?')">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">No leads found</td>
+                                <td colspan="13" class="text-center">No leads found</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- Pagination -->
-            <div class="d-flex justify-content-center">
+            @if($leads->hasPages())
+            <div class="d-flex justify-content-center mt-3">
                 {{ $leads->appends(request()->query())->links() }}
             </div>
+            @endif
         </div>
     </div>
 </div>

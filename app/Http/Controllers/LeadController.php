@@ -4,11 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\Lead;
 use App\Models\ClientSource;
+use App\Models\LeadSource;
+use App\Models\LeadStatus;
+use App\Models\ProjectClient;
+use App\Models\SalesLeadFollowup;
+use App\Models\ServiceInterested;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LeadController extends Controller
 {
+    /**
+     * Get salespeople (users with Sales and Marketing role - role_id = 13)
+     */
+    private function getSalespeople()
+    {
+        return User::whereHas('roles', function($query) {
+            $query->where('roles.id', 13); // Sales and Marketing role
+        })->get();
+    }
+
     public function index(Request $request)
     {
         // Handle CRUD operations
@@ -16,31 +32,38 @@ class LeadController extends Controller
             return back();
         }
 
-        $query = Lead::with(['clientSource', 'createdBy']);
+        $query = Lead::with(['leadSource', 'serviceInterested', 'leadStatus', 'salesperson', 'createdBy', 'latestFollowup']);
 
         // Apply filters
-        if ($request->status) {
-            $query->where('status', $request->status);
+        if ($request->lead_status_id) {
+            $query->where('lead_status_id', $request->lead_status_id);
         }
 
-        if ($request->client_source_id) {
-            $query->where('client_source_id', $request->client_source_id);
+        if ($request->lead_source_id) {
+            $query->where('lead_source_id', $request->lead_source_id);
+        }
+
+        if ($request->salesperson_id) {
+            $query->where('salesperson_id', $request->salesperson_id);
         }
 
         if ($request->search) {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%')
-                  ->orWhere('phone', 'like', '%' . $request->search . '%');
+                  ->orWhere('lead_number', 'like', '%' . $request->search . '%')
+                  ->orWhere('phone', 'like', '%' . $request->search . '%')
+                  ->orWhere('city', 'like', '%' . $request->search . '%');
             });
         }
 
-        $leads = $query->orderBy('created_at', 'desc')->paginate(15);
-        $clientSources = ClientSource::all();
+        $leads = $query->orderBy('lead_date', 'desc')->orderBy('id', 'desc')->paginate(20);
 
         $data = [
             'leads' => $leads,
-            'clientSources' => $clientSources,
+            'leadSources' => LeadSource::all(),
+            'leadStatuses' => LeadStatus::all(),
+            'serviceInteresteds' => ServiceInterested::all(),
+            'salespeople' => $this->getSalespeople(),
             'object' => new Lead()
         ];
 
@@ -51,7 +74,11 @@ class LeadController extends Controller
     {
         $data = [
             'object' => new Lead(),
-            'clientSources' => ClientSource::all()
+            'clients' => ProjectClient::orderBy('first_name')->get(),
+            'leadSources' => LeadSource::all(),
+            'leadStatuses' => LeadStatus::all(),
+            'serviceInteresteds' => ServiceInterested::all(),
+            'salespeople' => $this->getSalespeople()
         ];
 
         return view('pages.leads.form')->with($data);
@@ -60,22 +87,62 @@ class LeadController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'client_id' => 'nullable|exists:project_clients,id',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:leads,email',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
+            'lead_source_id' => 'required|exists:lead_sources,id',
+            'service_interested_id' => 'required|exists:service_interesteds,id',
+            'lead_status_id' => 'required|exists:lead_statuses,id',
+            'salesperson_id' => 'required|exists:users,id',
+            'lead_date' => 'nullable|date',
+            'site_location' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'estimated_value' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+            'email' => 'nullable|email',
             'address' => 'nullable|string',
-            'client_source_id' => 'nullable|exists:client_sources,id',
-            'status' => 'required|in:active,converted,inactive'
         ]);
 
         try {
+            $clientId = $request->client_id;
+
+            // If no existing client selected, create a new one
+            if (!$clientId) {
+                // Split name into first and last name
+                $nameParts = explode(' ', trim($request->name), 2);
+                $firstName = $nameParts[0];
+                $lastName = $nameParts[1] ?? '';
+
+                $newClient = ProjectClient::create([
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'email' => $request->email,
+                    'phone_number' => $request->phone,
+                    'address' => $request->address,
+                    'client_source_id' => $request->lead_source_id,
+                    'status' => 'CREATED',
+                    'create_by_id' => Auth::id(),
+                ]);
+
+                $clientId = $newClient->id;
+            }
+
             Lead::create([
+                'client_id' => $clientId,
+                'lead_date' => $request->lead_date ?? now(),
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'address' => $request->address,
-                'client_source_id' => $request->client_source_id,
-                'status' => $request->status,
+                'lead_source_id' => $request->lead_source_id,
+                'service_interested_id' => $request->service_interested_id,
+                'site_location' => $request->site_location,
+                'city' => $request->city,
+                'estimated_value' => $request->estimated_value,
+                'lead_status_id' => $request->lead_status_id,
+                'salesperson_id' => $request->salesperson_id,
+                'notes' => $request->notes,
+                'status' => 'active',
                 'created_by' => Auth::id()
             ]);
 
@@ -87,18 +154,30 @@ class LeadController extends Controller
 
     public function show($id)
     {
-        $lead = Lead::with(['clientSource', 'createdBy', 'leadFollowups'])->findOrFail($id);
+        $lead = Lead::with(['leadSource', 'serviceInterested', 'leadStatus', 'salesperson', 'createdBy', 'leadFollowups'])->findOrFail($id);
 
-        return view('pages.leads.show', compact('lead'));
+        $data = [
+            'lead' => $lead,
+            'leadSources' => LeadSource::all(),
+            'leadStatuses' => LeadStatus::all(),
+            'serviceInteresteds' => ServiceInterested::all(),
+            'salespeople' => $this->getSalespeople()
+        ];
+
+        return view('pages.leads.show')->with($data);
     }
 
     public function edit($id)
     {
         $lead = Lead::findOrFail($id);
-        
+
         $data = [
             'object' => $lead,
-            'clientSources' => ClientSource::all()
+            'clients' => ProjectClient::orderBy('first_name')->get(),
+            'leadSources' => LeadSource::all(),
+            'leadStatuses' => LeadStatus::all(),
+            'serviceInteresteds' => ServiceInterested::all(),
+            'salespeople' => $this->getSalespeople()
         ];
 
         return view('pages.leads.form')->with($data);
@@ -109,22 +188,38 @@ class LeadController extends Controller
         $lead = Lead::findOrFail($id);
 
         $request->validate([
+            'client_id' => 'nullable|exists:project_clients,id',
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:leads,email,' . $id,
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:20',
+            'lead_source_id' => 'required|exists:lead_sources,id',
+            'service_interested_id' => 'required|exists:service_interesteds,id',
+            'lead_status_id' => 'required|exists:lead_statuses,id',
+            'salesperson_id' => 'required|exists:users,id',
+            'lead_date' => 'nullable|date',
+            'site_location' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'estimated_value' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+            'email' => 'nullable|email',
             'address' => 'nullable|string',
-            'client_source_id' => 'nullable|exists:client_sources,id',
-            'status' => 'required|in:active,converted,inactive'
         ]);
 
         try {
             $lead->update([
+                'client_id' => $request->client_id,
+                'lead_date' => $request->lead_date,
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
                 'address' => $request->address,
-                'client_source_id' => $request->client_source_id,
-                'status' => $request->status
+                'lead_source_id' => $request->lead_source_id,
+                'service_interested_id' => $request->service_interested_id,
+                'site_location' => $request->site_location,
+                'city' => $request->city,
+                'estimated_value' => $request->estimated_value,
+                'lead_status_id' => $request->lead_status_id,
+                'salesperson_id' => $request->salesperson_id,
+                'notes' => $request->notes
             ]);
 
             return redirect()->route('leads.index')->with('success', 'Lead updated successfully!');
@@ -142,6 +237,37 @@ class LeadController extends Controller
             return back()->with('success', 'Lead deleted successfully!');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to delete lead: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Store a new follow-up for a lead
+     */
+    public function storeFollowup(Request $request, $id)
+    {
+        $lead = Lead::findOrFail($id);
+
+        $request->validate([
+            'followup_date' => 'required|date',
+            'details_discussion' => 'required|string',
+            'outcome' => 'nullable|string',
+            'next_step' => 'nullable|string',
+        ]);
+
+        try {
+            SalesLeadFollowup::create([
+                'lead_id' => $lead->id,
+                'lead_name' => $lead->name,
+                'client_id' => $lead->client_id,
+                'details_discussion' => $request->details_discussion,
+                'outcome' => $request->outcome,
+                'next_step' => $request->next_step,
+                'followup_date' => $request->followup_date,
+            ]);
+
+            return back()->with('success', 'Follow-up added successfully!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to add follow-up: ' . $e->getMessage());
         }
     }
 }
