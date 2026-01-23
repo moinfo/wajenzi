@@ -15,6 +15,13 @@ use App\Models\Asset;
 use App\Models\AssetProperty;
 use App\Models\AssignUserGroup;
 use App\Models\Bank;
+use App\Models\ServiceInterested;
+use App\Models\LeadStatus;
+use App\Models\LeadSource;
+use App\Models\ProjectType;
+use App\Models\ServiceType;
+use App\Models\ProjectStatus;
+use App\Models\CostCategory;
 use App\Models\Beneficiary;
 use App\Models\Category;
 use App\Models\ChartAccount;
@@ -102,6 +109,13 @@ class SettingsController extends Controller
             ['name'=>'Departments', 'route'=>'hr_settings_departments', 'icon' => 'si si-settings', 'badge' => 0],
             //['name'=>'Supervisor', 'route'=>'hr_settings_supervisors', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Banks', 'route'=>'hr_settings_banks', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Service Interesteds', 'route'=>'hr_settings_service_interesteds', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Lead Statuses', 'route'=>'hr_settings_lead_statuses', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Lead Sources', 'route'=>'hr_settings_lead_sources', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Project Types', 'route'=>'hr_settings_project_types_settings', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Service Types', 'route'=>'hr_settings_service_types', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Project Statuses', 'route'=>'hr_settings_project_statuses', 'icon' => 'si si-settings', 'badge' => 0],
+            ['name'=>'Cost Categories', 'route'=>'hr_settings_cost_categories', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Assets', 'route'=>'hr_settings_assets', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Asset Properties', 'route'=>'hr_settings_asset_properties', 'icon' => 'si si-settings', 'badge' => 0],
             ['name'=>'Systems', 'route'=>'hr_settings_systems', 'icon' => 'si si-settings', 'badge' => 0],
@@ -318,6 +332,76 @@ class SettingsController extends Controller
             'banks' => Bank::all()
         ];
         return view('pages.settings.settings_banks')->with($data);
+    }
+
+    public function service_interesteds(Request $request){
+        if($this->handleCrud($request, 'ServiceInterested')) {
+            return back();
+        }
+        $data = [
+            'service_interesteds' => ServiceInterested::all()
+        ];
+        return view('pages.settings.settings_service_interesteds')->with($data);
+    }
+
+    public function lead_statuses(Request $request){
+        if($this->handleCrud($request, 'LeadStatus')) {
+            return back();
+        }
+        $data = [
+            'lead_statuses' => LeadStatus::all()
+        ];
+        return view('pages.settings.settings_lead_statuses')->with($data);
+    }
+
+    public function lead_sources(Request $request){
+        if($this->handleCrud($request, 'LeadSource')) {
+            return back();
+        }
+        $data = [
+            'objects' => LeadSource::all()
+        ];
+        return view('pages.settings.settings_lead_sources')->with($data);
+    }
+
+    public function project_types_settings(Request $request){
+        if($this->handleCrud($request, 'ProjectType')) {
+            return back();
+        }
+        $data = [
+            'objects' => ProjectType::all()
+        ];
+        return view('pages.settings.settings_project_types_settings')->with($data);
+    }
+
+    public function service_types(Request $request){
+        if($this->handleCrud($request, 'ServiceType')) {
+            return back();
+        }
+        $data = [
+            'objects' => ServiceType::all()
+        ];
+        return view('pages.settings.settings_service_types')->with($data);
+    }
+
+    public function project_statuses(Request $request){
+        if($this->handleCrud($request, 'ProjectStatus')) {
+            return back();
+        }
+        $data = [
+            'objects' => ProjectStatus::all()
+        ];
+        return view('pages.settings.settings_project_statuses')->with($data);
+    }
+
+    public function cost_categories(Request $request){
+        if($this->handleCrud($request, 'CostCategory')) {
+            return back();
+        }
+        $data = [
+            'objects' => CostCategory::all()
+        ];
+        return view('pages.settings.settings_cost_categories')->with($data);
     }
 
     public function account_types(Request $request){

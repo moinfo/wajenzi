@@ -26,6 +26,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('db-archive:archive')->dailyAt('01:00'); // Run daily at 1:00 AM
         $schedule->command('billing:send-reminders')->dailyAt('00:00'); // Run daily at midnight
+        $schedule->command('followup:send-reminders')->dailyAt('08:00'); // Send follow-up reminders at 8 AM
     }
 
 

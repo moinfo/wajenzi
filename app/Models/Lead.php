@@ -10,21 +10,100 @@ class Lead extends Model
     use HasFactory;
 
     protected $fillable = [
+        'client_id',
+        'lead_number',
+        'lead_date',
         'name',
-        'email', 
+        'email',
         'phone',
         'address',
+        'lead_source_id',
+        'service_interested_id',
+        'site_location',
+        'city',
+        'estimated_value',
+        'lead_status_id',
+        'salesperson_id',
+        'notes',
         'client_source_id',
         'status',
         'created_by'
     ];
 
+    protected $casts = [
+        'lead_date' => 'date',
+        'estimated_value' => 'decimal:2',
+    ];
+
+    /**
+     * Boot method to auto-generate lead_number
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($lead) {
+            if (empty($lead->lead_number)) {
+                $lead->lead_number = self::generateLeadNumber();
+            }
+            if (empty($lead->lead_date)) {
+                $lead->lead_date = now();
+            }
+        });
+    }
+
+    /**
+     * Generate lead number in format LEAD-YYYYMM-###
+     */
+    public static function generateLeadNumber()
+    {
+        $prefix = 'LEAD-' . now()->format('Ym') . '-';
+
+        $lastLead = self::where('lead_number', 'like', $prefix . '%')
+            ->orderBy('lead_number', 'desc')
+            ->first();
+
+        if ($lastLead) {
+            $lastNumber = (int) substr($lastLead->lead_number, -3);
+            $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '001';
+        }
+
+        return $prefix . $newNumber;
+    }
+
     /**
      * Relationships
      */
+    public function client()
+    {
+        return $this->belongsTo(ProjectClient::class, 'client_id');
+    }
+
     public function clientSource()
     {
         return $this->belongsTo(ClientSource::class);
+    }
+
+    public function leadSource()
+    {
+        return $this->belongsTo(LeadSource::class);
+    }
+
+    public function serviceInterested()
+    {
+        return $this->belongsTo(ServiceInterested::class);
+    }
+
+    public function leadStatus()
+    {
+        return $this->belongsTo(LeadStatus::class);
+    }
+
+    public function salesperson()
+    {
+        return $this->belongsTo(User::class, 'salesperson_id');
     }
 
     public function createdBy()
@@ -35,6 +114,14 @@ class Lead extends Model
     public function leadFollowups()
     {
         return $this->hasMany(SalesLeadFollowup::class, 'lead_id');
+    }
+
+    /**
+     * Get the latest followup
+     */
+    public function latestFollowup()
+    {
+        return $this->hasOne(SalesLeadFollowup::class, 'lead_id')->latestOfMany();
     }
 
     /**
