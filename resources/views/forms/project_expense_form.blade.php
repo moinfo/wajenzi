@@ -1,66 +1,72 @@
-{{-- Project Form --}}
+{{-- Project Cost Form --}}
 <div class="block-content">
     <form method="post" autocomplete="off">
         @csrf
         <div class="row">
-            <div class="col-sm-4">
+            <div class="col-sm-6">
                 <div class="form-group">
-                    <label for="project_name" class="control-label required">Project Name</label>
-                    <input type="text" class="form-control" id="input-project-name" required="required" name="project_name" value="{{ $object->project_name ?? '' }}" placeholder="Project Name">
-                </div>
-            </div>
-            <div class="col-sm-4">
-                <div class="form-group">
-                    <label for="project_type_id" class="control-label required">Project Type</label>
-                    <select name="project_type_id" id="input-project-type" class="form-control" required="required">
-                        <option value="">Select Project Type</option>
-                        @foreach ($projectTypes as $type)
-                            <option value="{{ $type->id }}" {{ ($type->id == $object->project_type_id) ? 'selected' : '' }}>{{ $type->name }}</option>
+                    <label for="project_id" class="control-label required">Project</label>
+                    <select name="project_id" id="input-project" class="form-control select2" required="required">
+                        <option value="">Select Project</option>
+                        @foreach ($projects as $project)
+                            <option value="{{ $project->id }}" {{ ($project->id == ($object->project_id ?? '')) ? 'selected' : '' }}>
+                                {{ $project->document_number }} - {{ $project->project_name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
             </div>
-            <div class="col-sm-4">
+            <div class="col-sm-6">
                 <div class="form-group">
-                    <label for="client_id" class="control-label required">Client</label>
-                    <select name="client_id" id="input-client" class="form-control" required="required">
-                        <option value="">Select Client</option>
-                        @foreach ($clients as $client)
-                            <option value="{{ $client->id }}" {{ ($client->id == $object->client_id) ? 'selected' : '' }}>{{ $client->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div class="col-sm-4">
-                <div class="form-group">
-                    <label for="start_date" class="control-label required">Start Date</label>
-                    <input type="text" class="form-control datepicker" id="input-start-date" name="start_date" value="{{ $object->start_date ?? '' }}" required="required">
-                </div>
-            </div>
-            <div class="col-sm-4">
-                <div class="form-group">
-                    <label for="expected_end_date" class="control-label required">Expected End Date</label>
-                    <input type="text" class="form-control datepicker" id="input-expected-end-date" name="expected_end_date" value="{{ $object->expected_end_date ?? '' }}" required="required">
-                </div>
-            </div>
-            <div class="col-sm-4">
-                <div class="form-group">
-                    <label for="status" class="control-label required">Status</label>
-                    <select name="status" id="input-status" class="form-control" required="required">
-                        <option value="">Select Status</option>
-                        @foreach ($statuses as $status)
-                            <option value="{{ $status }}" {{ ($status == $object->status) ? 'selected' : '' }}>{{ $status }}</option>
+                    <label for="cost_category_id" class="control-label required">Cost Category</label>
+                    <select name="cost_category_id" id="input-cost-category" class="form-control select2" required="required">
+                        <option value="">Select Cost Category</option>
+                        @foreach ($cost_categories as $category)
+                            <option value="{{ $category->id }}" {{ ($category->id == ($object->cost_category_id ?? '')) ? 'selected' : '' }}>
+                                {{ $category->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="expense_date" class="control-label required">Cost Date</label>
+                    <input type="text" class="form-control datepicker" id="input-expense-date" name="expense_date" value="{{ isset($object->expense_date) ? $object->expense_date->format('Y-m-d') : date('Y-m-d') }}" required="required">
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="amount" class="control-label required">Cost Amount (TZS)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" id="input-amount" name="amount" value="{{ $object->amount ?? '' }}" placeholder="0.00" required="required">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <label for="description" class="control-label required">Cost Description</label>
+                    <textarea class="form-control" id="input-description" name="description" rows="2" placeholder="Enter cost description" required="required">{{ $object->description ?? '' }}</textarea>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="form-group">
+                    <label for="remarks" class="control-label">Remarks</label>
+                    <textarea class="form-control" id="input-remarks" name="remarks" rows="2" placeholder="Additional remarks (optional)">{{ $object->remarks ?? '' }}</textarea>
+                </div>
+            </div>
+        </div>
         <div class="form-group">
+            <input type="hidden" name="created_by" value="{{ auth()->id() }}">
             @if($object->id ?? null)
-                <input type="hidden" name="id" value="{{$object->id }}">
-                <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
+                <input type="hidden" name="id" value="{{ $object->id }}">
+                <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update Cost</button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Project">Submit</button>
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="ProjectExpense">Submit Cost</button>
             @endif
         </div>
     </form>

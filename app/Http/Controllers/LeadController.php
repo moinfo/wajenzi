@@ -415,4 +415,128 @@ class LeadController extends Controller
             return back()->with('error', 'Failed to create project: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Add a project cost from the lead page
+     */
+    public function addProjectCost(Request $request, $id)
+    {
+        $lead = Lead::findOrFail($id);
+
+        if (!$lead->project_id) {
+            return back()->with('error', 'No project linked to this lead.');
+        }
+
+        $request->validate([
+            'cost_category_id' => 'required|exists:cost_categories,id',
+            'expense_date' => 'required|date',
+            'amount' => 'required|numeric|min:0',
+            'description' => 'required|string|max:500',
+            'remarks' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            \App\Models\ProjectExpense::create([
+                'project_id' => $lead->project_id,
+                'cost_category_id' => $request->cost_category_id,
+                'expense_date' => $request->expense_date,
+                'amount' => $request->amount,
+                'description' => $request->description,
+                'remarks' => $request->remarks,
+                'created_by' => Auth::id(),
+            ]);
+
+            return back()->with('success', 'Project cost added successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to add cost: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get a project cost for editing (AJAX)
+     */
+    public function getProjectCost($id, $costId)
+    {
+        $lead = Lead::findOrFail($id);
+
+        if (!$lead->project_id) {
+            return response()->json(['error' => 'No project linked'], 400);
+        }
+
+        $cost = \App\Models\ProjectExpense::where('id', $costId)
+            ->where('project_id', $lead->project_id)
+            ->firstOrFail();
+
+        return response()->json([
+            'id' => $cost->id,
+            'cost_category_id' => $cost->cost_category_id,
+            'expense_date' => $cost->expense_date->format('Y-m-d'),
+            'amount' => $cost->amount,
+            'description' => $cost->description,
+            'remarks' => $cost->remarks,
+        ]);
+    }
+
+    /**
+     * Update a project cost from the lead page
+     */
+    public function updateProjectCost(Request $request, $id)
+    {
+        $lead = Lead::findOrFail($id);
+
+        if (!$lead->project_id) {
+            return back()->with('error', 'No project linked to this lead.');
+        }
+
+        $request->validate([
+            'cost_id' => 'required|exists:project_expenses,id',
+            'cost_category_id' => 'required|exists:cost_categories,id',
+            'expense_date' => 'required|date',
+            'amount' => 'required|numeric|min:0',
+            'description' => 'required|string|max:500',
+            'remarks' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $cost = \App\Models\ProjectExpense::where('id', $request->cost_id)
+                ->where('project_id', $lead->project_id)
+                ->firstOrFail();
+
+            $cost->update([
+                'cost_category_id' => $request->cost_category_id,
+                'expense_date' => $request->expense_date,
+                'amount' => $request->amount,
+                'description' => $request->description,
+                'remarks' => $request->remarks,
+            ]);
+
+            return back()->with('success', 'Project cost updated successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Failed to update cost: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a project cost from the lead page (AJAX)
+     */
+    public function deleteProjectCost($id, $costId)
+    {
+        $lead = Lead::findOrFail($id);
+
+        if (!$lead->project_id) {
+            return response()->json(['success' => false, 'message' => 'No project linked'], 400);
+        }
+
+        try {
+            $cost = \App\Models\ProjectExpense::where('id', $costId)
+                ->where('project_id', $lead->project_id)
+                ->firstOrFail();
+
+            $cost->delete();
+
+            return response()->json(['success' => true, 'message' => 'Cost deleted successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

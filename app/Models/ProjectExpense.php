@@ -1,5 +1,5 @@
 <?php
-// ProjectExpense.php
+// ProjectExpense.php (Project Cost)
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,9 +14,10 @@ class ProjectExpense extends Model
 
     protected $fillable = [
         'project_id',
-        'category',
+        'cost_category_id',
         'amount',
         'description',
+        'remarks',
         'expense_date',
         'created_by'
     ];
@@ -31,8 +32,26 @@ class ProjectExpense extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function costCategory(): BelongsTo
+    {
+        return $this->belongsTo(CostCategory::class);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(CostCategory::class, 'cost_category_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get formatted cost amount
+     */
+    public function getFormattedAmountAttribute(): string
+    {
+        return 'TZS ' . number_format($this->amount, 2);
     }
 }
