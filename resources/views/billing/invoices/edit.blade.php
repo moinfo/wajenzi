@@ -6,33 +6,19 @@
         <div class="content-heading">
             <div class="row">
                 <div class="col-md-6">
-                    <h1>Create Invoice</h1>
+                    <h1>Edit Invoice - {{ $invoice->document_number }}</h1>
                 </div>
                 <div class="col-md-6 text-right">
-                    <a href="{{ route('billing.invoices.index') }}" class="btn btn-secondary">
-                        <i class="fa fa-arrow-left"></i> Back to Invoices
+                    <a href="{{ route('billing.invoices.show', $invoice) }}" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left"></i> Back to Invoice
                     </a>
                 </div>
             </div>
         </div>
 
-        <form id="invoiceForm" method="POST" action="{{ route('billing.invoices.store') }}">
+        <form id="invoiceForm" method="POST" action="{{ route('billing.invoices.update', $invoice) }}">
             @csrf
-            @if($parentDocument)
-                <input type="hidden" name="parent_document_id" value="{{ $parentDocument->id }}">
-            @endif
-
-            @if(isset($lead) && $lead)
-                <input type="hidden" name="lead_id" value="{{ $lead->id }}">
-                <div class="alert alert-info">
-                    <i class="fa fa-link mr-2"></i>
-                    Creating invoice for lead: <strong>{{ $lead->lead_number ?? $lead->name }}</strong>
-                    @if($lead->client)
-                        (Client: {{ $lead->client->first_name }} {{ $lead->client->last_name }})
-                    @endif
-                    <a href="{{ route('leads.show', $lead->id) }}" class="ml-2"><i class="fa fa-external-link-alt"></i> View Lead</a>
-                </div>
-            @endif
+            @method('PUT')
 
             <!-- Line Items - Full Width -->
             <div class="row mt-3">
@@ -61,8 +47,8 @@
                                     </tr>
                                     </thead>
                                     <tbody id="itemsTableBody">
-                                    @if($parentDocument && $parentDocument->items->count() > 0)
-                                        @foreach($parentDocument->items as $index => $item)
+                                    @if($invoice->items->count() > 0)
+                                        @foreach($invoice->items as $index => $item)
                                             <tr data-index="{{ $index }}">
                                                 <td>
                                                     <select name="items[{{ $index }}][product_service_id]"
@@ -213,7 +199,7 @@
                                             <option value="">Select Client</option>
                                             @foreach($clients as $client)
                                                 <option value="{{ $client->id }}"
-                                                        {{ (old('client_id') == $client->id || ($parentDocument && $parentDocument->client_id == $client->id) || (isset($lead) && $lead && $lead->client_id == $client->id)) ? 'selected' : '' }}>
+                                                        {{ old('client_id', $invoice->client_id) == $client->id ? 'selected' : '' }}>
                                                     {{ $client->first_name }} {{ $client->last_name }}
                                                     @if($client->email) - {{ $client->email }} @endif
                                                 </option>
@@ -229,7 +215,7 @@
                                     <div class="form-group">
                                         <label>Reference Number</label>
                                         <input type="text" name="reference_number" class="form-control"
-                                               value="{{ old('reference_number', $parentDocument->reference_number ?? '') }}"
+                                               value="{{ old('reference_number', $invoice->reference_number) }}"
                                                placeholder="External reference">
                                     </div>
                                 </div>
@@ -241,7 +227,7 @@
                                     <div class="form-group">
                                         <label>Issue Date <span class="text-danger">*</span></label>
                                         <input type="text" name="issue_date" class="form-control datepicker"
-                                               value="{{ old('issue_date', date('Y-m-d')) }}" required>
+                                               value="{{ old('issue_date', $invoice->issue_date ? $invoice->issue_date->format('Y-m-d') : '') }}" required>
                                         @error('issue_date')
                                             <small class="text-danger">{{ $message }}</small>
                                         @enderror
@@ -252,14 +238,14 @@
                                     <div class="form-group">
                                         <label>Payment Terms</label>
                                         <select name="payment_terms" class="form-control">
-                                            <option value="immediate">Due Immediately</option>
-                                            <option value="net_7">Net 7 days</option>
-                                            <option value="net_15">Net 15 days</option>
-                                            <option value="net_30" selected>Net 30 days</option>
-                                            <option value="net_45">Net 45 days</option>
-                                            <option value="net_60">Net 60 days</option>
-                                            <option value="net_90">Net 90 days</option>
-                                            <option value="custom">Custom</option>
+                                            <option value="immediate" {{ old('payment_terms', $invoice->payment_terms) == 'immediate' ? 'selected' : '' }}>Due Immediately</option>
+                                            <option value="net_7" {{ old('payment_terms', $invoice->payment_terms) == 'net_7' ? 'selected' : '' }}>Net 7 days</option>
+                                            <option value="net_15" {{ old('payment_terms', $invoice->payment_terms) == 'net_15' ? 'selected' : '' }}>Net 15 days</option>
+                                            <option value="net_30" {{ old('payment_terms', $invoice->payment_terms) == 'net_30' ? 'selected' : '' }}>Net 30 days</option>
+                                            <option value="net_45" {{ old('payment_terms', $invoice->payment_terms) == 'net_45' ? 'selected' : '' }}>Net 45 days</option>
+                                            <option value="net_60" {{ old('payment_terms', $invoice->payment_terms) == 'net_60' ? 'selected' : '' }}>Net 60 days</option>
+                                            <option value="net_90" {{ old('payment_terms', $invoice->payment_terms) == 'net_90' ? 'selected' : '' }}>Net 90 days</option>
+                                            <option value="custom" {{ old('payment_terms', $invoice->payment_terms) == 'custom' ? 'selected' : '' }}>Custom</option>
                                         </select>
                                     </div>
                                 </div>
@@ -268,7 +254,7 @@
                                     <div class="form-group">
                                         <label>Due Date</label>
                                         <input type="text" name="due_date" class="form-control datepicker"
-                                               value="{{ old('due_date') }}">
+                                               value="{{ old('due_date', $invoice->due_date ? $invoice->due_date->format('Y-m-d') : '') }}">
                                     </div>
                                 </div>
                             </div>
@@ -279,7 +265,7 @@
                                     <div class="form-group">
                                         <label>PO Number</label>
                                         <input type="text" name="po_number" class="form-control"
-                                               value="{{ old('po_number', $parentDocument->po_number ?? '') }}">
+                                               value="{{ old('po_number', $invoice->po_number) }}">
                                     </div>
                                 </div>
 
@@ -287,7 +273,7 @@
                                     <div class="form-group">
                                         <label>Sales Person</label>
                                         <input type="text" name="sales_person" class="form-control"
-                                               value="{{ old('sales_person', auth()->user()->name) }}">
+                                               value="{{ old('sales_person', $invoice->sales_person) }}">
                                     </div>
                                 </div>
                             </div>
@@ -306,15 +292,15 @@
                             <table class="table table-sm">
                                 <tr>
                                     <td>Subtotal:</td>
-                                    <td class="text-right" id="subtotal">{{ $settings['default_currency'] ?? 'TZS' }} 0.00</td>
+                                    <td class="text-right" id="subtotal">{{ $invoice->currency_code ?? 'TZS' }} {{ number_format($invoice->subtotal_amount, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td>Tax:</td>
-                                    <td class="text-right" id="tax-amount">{{ $settings['default_currency'] ?? 'TZS' }} 0.00</td>
+                                    <td class="text-right" id="tax-amount">{{ $invoice->currency_code ?? 'TZS' }} {{ number_format($invoice->tax_amount, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Total:</strong></td>
-                                    <td class="text-right"><strong id="total-amount">{{ $settings['default_currency'] ?? 'TZS' }} 0.00</strong></td>
+                                    <td class="text-right"><strong id="total-amount">{{ $invoice->currency_code ?? 'TZS' }} {{ number_format($invoice->total_amount, 2) }}</strong></td>
                                 </tr>
                             </table>
                         </div>
@@ -329,32 +315,32 @@
                             <div class="form-group">
                                 <label>Currency</label>
                                 <select name="currency_code" class="form-control">
-                                    <option value="TZS" {{ old('currency_code', $settings['default_currency'] ?? 'TZS') == 'TZS' ? 'selected' : '' }}>TZS - Tanzanian Shilling</option>
-                                    <option value="USD" {{ old('currency_code', $settings['default_currency'] ?? 'TZS') == 'USD' ? 'selected' : '' }}>USD - US Dollar</option>
-                                    <option value="EUR" {{ old('currency_code', $settings['default_currency'] ?? 'TZS') == 'EUR' ? 'selected' : '' }}>EUR - Euro</option>
-                                    <option value="GBP" {{ old('currency_code', $settings['default_currency'] ?? 'TZS') == 'GBP' ? 'selected' : '' }}>GBP - British Pound</option>
+                                    <option value="TZS" {{ old('currency_code', $invoice->currency_code) == 'TZS' ? 'selected' : '' }}>TZS - Tanzanian Shilling</option>
+                                    <option value="USD" {{ old('currency_code', $invoice->currency_code) == 'USD' ? 'selected' : '' }}>USD - US Dollar</option>
+                                    <option value="EUR" {{ old('currency_code', $invoice->currency_code) == 'EUR' ? 'selected' : '' }}>EUR - Euro</option>
+                                    <option value="GBP" {{ old('currency_code', $invoice->currency_code) == 'GBP' ? 'selected' : '' }}>GBP - British Pound</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
                                 <label>Shipping Amount</label>
                                 <input type="number" name="shipping_amount" class="form-control"
-                                       value="{{ old('shipping_amount', 0) }}" step="0.01" min="0" onchange="calculateTotals()">
+                                       value="{{ old('shipping_amount', $invoice->shipping_amount ?? 0) }}" step="0.01" min="0" onchange="calculateTotals()">
                             </div>
 
                             <div class="form-group">
                                 <label>Discount Type</label>
                                 <select name="discount_type" class="form-control" onchange="calculateTotals()">
                                     <option value="">No Discount</option>
-                                    <option value="percentage" {{ old('discount_type') == 'percentage' ? 'selected' : '' }}>Percentage</option>
-                                    <option value="fixed" {{ old('discount_type') == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
+                                    <option value="percentage" {{ old('discount_type', $invoice->discount_type) == 'percentage' ? 'selected' : '' }}>Percentage</option>
+                                    <option value="fixed" {{ old('discount_type', $invoice->discount_type) == 'fixed' ? 'selected' : '' }}>Fixed Amount</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
                                 <label>Discount Value</label>
                                 <input type="number" name="discount_value" class="form-control"
-                                       value="{{ old('discount_value', 0) }}" step="0.01" min="0" onchange="calculateTotals()">
+                                       value="{{ old('discount_value', $invoice->discount_value ?? 0) }}" step="0.01" min="0" onchange="calculateTotals()">
                             </div>
                         </div>
                     </div>
@@ -367,17 +353,17 @@
                         <div class="block-content">
                             <div class="form-group">
                                 <label>Internal Notes</label>
-                                <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
+                                <textarea name="notes" class="form-control" rows="3">{{ old('notes', $invoice->notes) }}</textarea>
                             </div>
 
                             <div class="form-group">
                                 <label>Terms & Conditions</label>
-                                <textarea name="terms_conditions" class="form-control" rows="3">{{ old('terms_conditions', $settings['invoice_terms'] ?? '') }}</textarea>
+                                <textarea name="terms_conditions" class="form-control" rows="3">{{ old('terms_conditions', $invoice->terms_conditions) }}</textarea>
                             </div>
 
                             <div class="form-group">
                                 <label>Footer Text</label>
-                                <textarea name="footer_text" class="form-control" rows="2">{{ old('footer_text', $settings['invoice_footer'] ?? '') }}</textarea>
+                                <textarea name="footer_text" class="form-control" rows="2">{{ old('footer_text', $invoice->footer_text) }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -393,9 +379,9 @@
                             <i class="fa fa-save"></i> Save as Draft
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-check"></i> Create Invoice
+                            <i class="fa fa-check"></i> Update Invoice
                         </button>
-                        <a href="{{ route('billing.invoices.index') }}" class="btn btn-light">
+                        <a href="{{ route('billing.invoices.show', $invoice) }}" class="btn btn-light">
                             <i class="fa fa-times"></i> Cancel
                         </a>
                     </div>
@@ -406,7 +392,7 @@
 </div>
 
 <script>
-let itemIndex = 1;
+let itemIndex = {{ $invoice->items->count() > 0 ? $invoice->items->count() : 1 }};
 
 function addLineItem() {
     const tbody = document.getElementById('itemsTableBody');
