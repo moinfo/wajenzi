@@ -11,6 +11,7 @@ use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use App\Models\BillingDocumentSetting;
 use App\Models\Lead;
+use App\Models\User;
 use App\Services\ClientApprovalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -401,6 +402,16 @@ class InvoiceController extends Controller
             ClientApprovalService::autoApproveOnFirstPayment($invoice->client_id, $payment);
 
             DB::commit();
+
+            // Notify users with invoice due dates permission
+            $notifyUsers = User::permission('View All Invoice Due Dates')->where('id', '!=', auth()->id())->get();
+            $this->sendNotification(
+                $notifyUsers,
+                'Payment Recorded',
+                "Payment of TZS " . number_format($request->amount, 2) . " recorded for Invoice {$invoice->document_number}.",
+                "/billing/invoices/{$invoice->id}",
+                $invoice->id
+            );
 
             return back()->with('success', 'Payment recorded successfully.');
 

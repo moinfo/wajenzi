@@ -8,6 +8,7 @@ use App\Models\AssignUserGroup;
 use App\Models\Notification;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Notifications\SystemActionNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
@@ -283,6 +284,38 @@ class Controller extends BaseController
             ]);
             $obj->fill($request->all());
             return $obj->save();
+        }
+    }
+
+    /**
+     * Send system notification (database + email) to one or many users.
+     */
+    protected function sendNotification($users, string $title, string $body, string $link, ?int $documentId = null): void
+    {
+        $actionBy = auth()->user()->name ?? 'System';
+
+        if ($users instanceof \Illuminate\Database\Eloquent\Model) {
+            $users = collect([$users]);
+        }
+
+        foreach ($users as $user) {
+            // Database notification first
+            try {
+                $user->notify(
+                    (new SystemActionNotification($title, $body, $link, $actionBy, $documentId))->onlyDatabase()
+                );
+            } catch (\Exception $e) {
+                \Log::warning("Failed to save notification for user {$user->id}: " . $e->getMessage());
+            }
+
+            // Email separately so it doesn't block database
+            try {
+                $user->notify(
+                    (new SystemActionNotification($title, $body, $link, $actionBy, $documentId))->onlyMail()
+                );
+            } catch (\Exception $e) {
+                \Log::warning("Failed to send notification email to {$user->email}: " . $e->getMessage());
+            }
         }
     }
 
