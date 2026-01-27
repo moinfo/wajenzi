@@ -241,14 +241,15 @@
                         <table class="table table-sm table-hover">
                             <thead>
                                 <tr>
-                                    <th width="8%">Code</th>
-                                    <th width="22%">Activity</th>
-                                    <th width="12%">Discipline</th>
-                                    <th width="10%">Start</th>
-                                    <th width="10%">End</th>
-                                    <th width="10%">Days</th>
+                                    <th width="7%">Code</th>
+                                    <th width="18%">Activity</th>
+                                    <th width="10%">Discipline</th>
+                                    <th width="12%">Assigned To</th>
+                                    <th width="9%">Start</th>
+                                    <th width="9%">End</th>
+                                    <th width="8%">Days</th>
                                     <th width="10%">Status</th>
-                                    <th width="18%">Actions</th>
+                                    <th width="17%">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -262,6 +263,29 @@
                                             @endif
                                         </td>
                                         <td><small>{{ $activity->discipline }}</small></td>
+                                        <td>
+                                            @if($activity->assignedUser)
+                                                @if($activity->assigned_to == $projectSchedule->assigned_architect_id)
+                                                    <span class="badge badge-secondary">
+                                                        <i class="fa fa-user-tie mr-1"></i>{{ $activity->assignedUser->name }}
+                                                    </span>
+                                                @else
+                                                    <span class="badge badge-info">
+                                                        <i class="fa fa-user mr-1"></i>{{ $activity->assignedUser->name }}
+                                                    </span>
+                                                @endif
+                                            @else
+                                                <span class="badge badge-secondary">
+                                                    <i class="fa fa-user-tie mr-1"></i>{{ $projectSchedule->assignedArchitect->name ?? 'N/A' }}
+                                                </span>
+                                            @endif
+                                            @can('Assign Project Activities')
+                                            <button type="button" class="btn btn-xs btn-outline-primary ml-1" title="Reassign"
+                                                    data-toggle="modal" data-target="#assignModal{{ $activity->id }}">
+                                                <i class="fa fa-exchange-alt"></i>
+                                            </button>
+                                            @endcan
+                                        </td>
                                         <td>{{ $activity->start_date->format('d/m/Y') }}</td>
                                         <td>{{ $activity->end_date->format('d/m/Y') }}</td>
                                         <td>
@@ -368,7 +392,11 @@
                                     <strong>{{ $activity->activity_code }}: {{ $activity->name }}</strong>
                                     <small class="text-muted">{{ $activity->start_date->format('d/m') }} - {{ $activity->end_date->format('d/m/Y') }}</small>
                                 </div>
-                                <small class="text-muted">{{ $activity->phase }} | {{ $activity->duration_days }} working days</small>
+                                <small class="text-muted">
+                                    {{ $activity->phase }} | {{ $activity->duration_days }} working days
+                                    | <i class="fa fa-user"></i>
+                                    {{ $activity->assignedUser ? $activity->assignedUser->name : ($projectSchedule->assignedArchitect->name ?? 'N/A') }}
+                                </small>
                             </div>
                         </div>
                     @endforeach
@@ -515,6 +543,73 @@
     </div>
 </div>
 @endforeach
+
+{{-- Reassign Activity Modals --}}
+@can('Assign Project Activities')
+@foreach($projectSchedule->activities as $activity)
+@php
+    $currentAssignee = $activity->assigned_to ?? $projectSchedule->assigned_architect_id;
+@endphp
+<div class="modal fade" id="assignModal{{ $activity->id }}" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form action="{{ route('project-schedules.activity.assign', $activity) }}" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fa fa-exchange-alt mr-2"></i>Reassign Activity
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-light border mb-3">
+                        <strong>{{ $activity->activity_code }}:</strong> {{ $activity->name }}
+                        <br><small class="text-muted">{{ $activity->phase }} | {{ $activity->discipline }}</small>
+                    </div>
+
+                    <div class="form-group mb-2">
+                        <label class="text-muted mb-1"><small>Currently assigned to:</small></label>
+                        <div>
+                            @if($activity->assignedUser)
+                                <span class="badge badge-info badge-lg"><i class="fa fa-user mr-1"></i>{{ $activity->assignedUser->name }}</span>
+                            @else
+                                <span class="badge badge-secondary badge-lg"><i class="fa fa-user-tie mr-1"></i>{{ $projectSchedule->assignedArchitect->name ?? 'N/A' }} (Architect)</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-group">
+                        <label for="assigned_to_{{ $activity->id }}">
+                            <i class="fa fa-user-plus text-primary mr-1"></i>Reassign to
+                        </label>
+                        <select name="assigned_to" id="assigned_to_{{ $activity->id }}" class="form-control">
+                            <option value="">-- Reset to Architect ({{ $projectSchedule->assignedArchitect->name ?? 'Default' }}) --</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}" {{ $currentAssignee == $user->id ? 'selected' : '' }}>
+                                    {{ $user->name }} - {{ $user->roles->pluck('name')->implode(', ') ?: 'No Role' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Choose a different person to handle this activity. Progress remains visible to everyone.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fa fa-check mr-1"></i>Reassign
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+@endcan
 
 <script>
 // Update file input label with selected filename

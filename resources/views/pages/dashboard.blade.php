@@ -49,15 +49,15 @@
     $counts = User::getUserCounts();
     $departmentCounts = User::getDepartmentMemberCounts();
 
-    // Follow-ups for current user (salesperson) or all if admin
-    // Show ALL follow-ups (pending first, then completed)
+    // Follow-ups: per-user by default, all with permission
+    $canViewAllFollowups = Auth::user()->can('View All Follow-ups');
+
     $followupsQuery = SalesLeadFollowup::with(['lead.salesperson', 'lead.leadStatus'])
         ->whereHas('lead')
-        ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END") // Pending first
+        ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
         ->orderBy('followup_date', 'asc');
 
-    // If user is a salesperson, show only their follow-ups
-    if (Auth::user()->hasRole('Sales and Marketing')) {
+    if (!$canViewAllFollowups) {
         $followupsQuery->whereHas('lead', function($q) {
             $q->where('salesperson_id', Auth::id());
         });
@@ -65,24 +65,45 @@
 
     $allFollowups = $followupsQuery->limit(20)->get();
 
-    // Counts for PENDING follow-ups only
-    $todayFollowupsCount = SalesLeadFollowup::where('status', 'pending')
-        ->whereDate('followup_date', now()->toDateString())->count();
-    $overdueFollowupsCount = SalesLeadFollowup::where('status', 'pending')
-        ->whereDate('followup_date', '<', now()->toDateString())->count();
-    $upcomingFollowupsCount = SalesLeadFollowup::where('status', 'pending')
-        ->whereDate('followup_date', '>', now()->toDateString())->count();
-    $completedFollowupsCount = SalesLeadFollowup::where('status', 'completed')
-        ->whereMonth('followup_date', now()->month)->count();
+    // Counts for PENDING follow-ups (filtered same way)
+    $followupCountQuery = function() use ($canViewAllFollowups) {
+        $q = SalesLeadFollowup::where('status', 'pending')->whereHas('lead');
+        if (!$canViewAllFollowups) {
+            $q->whereHas('lead', function($lq) {
+                $lq->where('salesperson_id', Auth::id());
+            });
+        }
+        return $q;
+    };
 
-    // Calendar data - get ALL followups for selected month (from request or current)
+    $todayFollowupsCount = $followupCountQuery()->whereDate('followup_date', now()->toDateString())->count();
+    $overdueFollowupsCount = $followupCountQuery()->whereDate('followup_date', '<', now()->toDateString())->count();
+    $upcomingFollowupsCount = $followupCountQuery()->whereDate('followup_date', '>', now()->toDateString())->count();
+
+    $completedCountQuery = SalesLeadFollowup::where('status', 'completed')
+        ->whereMonth('followup_date', now()->month)->whereHas('lead');
+    if (!$canViewAllFollowups) {
+        $completedCountQuery->whereHas('lead', function($lq) {
+            $lq->where('salesperson_id', Auth::id());
+        });
+    }
+    $completedFollowupsCount = $completedCountQuery->count();
+
+    // Calendar data - filtered same way
     $calendarMonth = request('cal_month', now()->month);
     $calendarYear = request('cal_year', now()->year);
-    $calendarFollowups = SalesLeadFollowup::with(['lead'])
+    $calendarFollowupsQuery = SalesLeadFollowup::with(['lead'])
         ->whereYear('followup_date', $calendarYear)
         ->whereMonth('followup_date', $calendarMonth)
-        ->whereHas('lead')
-        ->get()
+        ->whereHas('lead');
+
+    if (!$canViewAllFollowups) {
+        $calendarFollowupsQuery->whereHas('lead', function($lq) {
+            $lq->where('salesperson_id', Auth::id());
+        });
+    }
+
+    $calendarFollowups = $calendarFollowupsQuery->get()
         ->groupBy(function($item) {
             return $item->followup_date->format('Y-m-d');
         });
@@ -361,6 +382,9 @@
                                 <span class="followup-details">{{ $activity->schedule->lead->lead_number ?? '' }} - {{ Str::limit($activity->schedule->lead->name ?? '', 25) }}</span>
                                 <span class="followup-assignee">
                                     <i class="fa fa-layer-group"></i> {{ $activity->phase }}
+                                    @if($activity->assignedUser)
+                                        &middot; <i class="fa fa-user"></i> {{ $activity->assignedUser->name }}
+                                    @endif
                                 </span>
                             </div>
                             <div class="followup-status">
@@ -392,12 +416,7 @@
             <!-- Invoice Due Dates To-Do List (for Accountants) -->
             @php
                 // Check if user can view invoices
-                $canViewInvoices = Auth::user()->hasRole('Accountant')
-                    || Auth::user()->hasRole('Admin')
-                    || Auth::user()->hasRole('Super Admin')
-                    || Auth::user()->hasRole('System Administrator')
-                    || Auth::user()->can('Invoice List')
-                    || Auth::user()->can('view invoices');
+                $canViewInvoices = Auth::user()->can('View All Invoice Due Dates');
 
                 $paidThisMonthCount = 0;
                 if ($canViewInvoices) {
