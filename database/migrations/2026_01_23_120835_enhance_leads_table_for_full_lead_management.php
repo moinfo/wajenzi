@@ -11,6 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Lead number & date
+        if (!Schema::hasColumn('leads', 'lead_number')) {
+            Schema::table('leads', function (Blueprint $table) {
+                $table->string('lead_number')->nullable()->after('id');
+            });
+        }
+        if (!Schema::hasColumn('leads', 'lead_date')) {
+            Schema::table('leads', function (Blueprint $table) {
+                $table->date('lead_date')->nullable()->after('lead_number');
+            });
+        }
+
+        // Lead source
+        if (!Schema::hasColumn('leads', 'lead_source_id')) {
+            Schema::table('leads', function (Blueprint $table) {
+                $table->unsignedBigInteger('lead_source_id')->nullable()->after('lead_date');
+            });
+        }
+
         // Service Interested
         if (!Schema::hasColumn('leads', 'service_interested_id')) {
             Schema::table('leads', function (Blueprint $table) {
