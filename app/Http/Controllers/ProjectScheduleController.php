@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Lead;
 use App\Models\ProjectSchedule;
 use App\Models\ProjectScheduleActivity;
+use App\Models\User;
+use App\Notifications\ActivityReassignedNotification;
 use App\Services\ProjectScheduleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -30,12 +32,15 @@ class ProjectScheduleController extends Controller
      */
     public function show(ProjectSchedule $projectSchedule)
     {
-        $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities', 'assignments.user']);
+        $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'assignments.user']);
 
         // Group activities by phase
         $activitiesByPhase = $projectSchedule->activities->groupBy('phase');
 
-        return view('project-schedules.show', compact('projectSchedule', 'activitiesByPhase'));
+        // Users available for assignment (with roles)
+        $users = User::with('roles')->orderBy('name')->get();
+
+        return view('project-schedules.show', compact('projectSchedule', 'activitiesByPhase', 'users'));
     }
 
     /**
@@ -99,6 +104,22 @@ class ProjectScheduleController extends Controller
         $projectSchedule->confirm(auth()->id());
         $projectSchedule->update(['status' => 'confirmed']);
 
+        // Notify the assigned architect
+        $projectSchedule->load('lead');
+        if ($projectSchedule->assigned_architect_id && $projectSchedule->assigned_architect_id !== auth()->id()) {
+            $architect = User::find($projectSchedule->assigned_architect_id);
+            if ($architect) {
+                $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
+                $this->sendNotification(
+                    $architect,
+                    'Schedule Confirmed',
+                    "Project schedule for {$leadNumber} has been confirmed.",
+                    "/project-schedules/{$projectSchedule->id}",
+                    $projectSchedule->id
+                );
+            }
+        }
+
         return redirect()
             ->route('project-schedules.show', $projectSchedule)
             ->with('success', 'Schedule confirmed successfully. Activities are now visible on dashboard and calendar.');
@@ -122,6 +143,26 @@ class ProjectScheduleController extends Controller
         // Update schedule status to in_progress if not already
         if ($activity->schedule->status === 'confirmed') {
             $activity->schedule->update(['status' => 'in_progress']);
+        }
+
+        // Notify architect + assigned user (if different from starter)
+        $schedule = $activity->schedule;
+        $notifyUserIds = collect();
+        if ($schedule->assigned_architect_id && $schedule->assigned_architect_id !== auth()->id()) {
+            $notifyUserIds->push($schedule->assigned_architect_id);
+        }
+        if ($activity->assigned_to && $activity->assigned_to !== auth()->id() && !$notifyUserIds->contains($activity->assigned_to)) {
+            $notifyUserIds->push($activity->assigned_to);
+        }
+        if ($notifyUserIds->isNotEmpty()) {
+            $notifyUsers = User::whereIn('id', $notifyUserIds)->get();
+            $this->sendNotification(
+                $notifyUsers,
+                'Activity Started',
+                "Activity {$activity->activity_code}: {$activity->name} has been started by " . auth()->user()->name . ".",
+                "/project-schedules/{$schedule->id}",
+                $activity->id
+            );
         }
 
         return back()->with('success', 'Activity marked as started.');
@@ -168,7 +209,76 @@ class ProjectScheduleController extends Controller
             $schedule->update(['status' => 'completed']);
         }
 
+        // Notify architect + assigned user (if different from completer)
+        $notifyUserIds = collect();
+        if ($schedule->assigned_architect_id && $schedule->assigned_architect_id !== auth()->id()) {
+            $notifyUserIds->push($schedule->assigned_architect_id);
+        }
+        if ($activity->assigned_to && $activity->assigned_to !== auth()->id() && !$notifyUserIds->contains($activity->assigned_to)) {
+            $notifyUserIds->push($activity->assigned_to);
+        }
+        if ($notifyUserIds->isNotEmpty()) {
+            $notifyUsers = User::whereIn('id', $notifyUserIds)->get();
+            $this->sendNotification(
+                $notifyUsers,
+                'Activity Completed',
+                "Activity {$activity->activity_code}: {$activity->name} has been completed by " . auth()->user()->name . ".",
+                "/project-schedules/{$schedule->id}",
+                $activity->id
+            );
+        }
+
         return back()->with('success', 'Activity marked as completed.');
+    }
+
+    /**
+     * Assign a user to an activity
+     */
+    public function assignActivity(Request $request, ProjectScheduleActivity $activity)
+    {
+        if (!auth()->user()->can('Assign Project Activities')) {
+            return back()->with('error', 'You do not have permission to assign activities.');
+        }
+
+        $request->validate([
+            'assigned_to' => 'nullable|exists:users,id',
+        ]);
+
+        $activity->update([
+            'assigned_to' => $request->assigned_to,
+        ]);
+
+        // Send notification to newly assigned user
+        if ($request->assigned_to) {
+            $assignedUser = User::find($request->assigned_to);
+            $activity->load('schedule.lead');
+
+            $notification = new ActivityReassignedNotification($activity, auth()->user());
+
+            // Always save in-app notification (database channel)
+            try {
+                $assignedUser->notifyNow(
+                    (clone $notification)->onlyDatabase()
+                );
+            } catch (\Exception $e) {
+                \Log::warning("Failed to save activity assignment notification: " . $e->getMessage());
+            }
+
+            // Try sending email separately so it doesn't block database notification
+            try {
+                $assignedUser->notifyNow(
+                    (clone $notification)->onlyMail()
+                );
+            } catch (\Exception $e) {
+                \Log::warning("Failed to send activity assignment email to {$assignedUser->email}: " . $e->getMessage());
+                return back()->with('success', "Activity {$activity->activity_code} assigned to {$assignedUser->name}. Notification sent.")
+                             ->with('warning', 'Email could not be sent (invalid email address).');
+            }
+
+            return back()->with('success', "Activity {$activity->activity_code} assigned to {$assignedUser->name}. Email & notification sent.");
+        }
+
+        return back()->with('success', "Activity {$activity->activity_code} reset to default architect.");
     }
 
     /**

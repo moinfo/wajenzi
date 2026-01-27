@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Spatie\Permission\Models\Permission;
 
 class DashboardController extends Controller
 {
@@ -33,28 +34,56 @@ class DashboardController extends Controller
         $transactions = TransactionMovement::Where('date',DB::raw('CURDATE()'))->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
         $expenses = Expense::Where('date',DB::raw('CURDATE()'))->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
         $gross = Gross::Where('date',DB::raw('CURDATE()'))->select([DB::raw("SUM(amount) as total_amount")])->groupBy('date')->get()->first();
-        // Get project schedule activities for current user (if architect)
+        // Get project schedule activities for current user
         $user = Auth::user();
-        $projectActivities = ProjectScheduleActivity::with(['schedule.lead'])
-            ->whereHas('schedule', function($query) use ($user) {
-                $query->where('assigned_architect_id', $user->id)
-                      ->whereIn('status', ['confirmed', 'in_progress']);
-            })
-            ->whereIn('status', ['pending', 'in_progress'])
-            ->orderBy('start_date', 'asc')
-            ->get();
+        $canViewAllActivities = $user->can('View All Project Activities');
 
-        // Activities for calendar (all activities for architect's schedules)
+        // Build activity query: user sees own activities, or all if permitted
+        $activityQuery = ProjectScheduleActivity::with(['schedule.lead', 'assignedUser'])
+            ->whereHas('schedule', function($query) {
+                $query->whereIn('status', ['confirmed', 'in_progress']);
+            })
+            ->whereIn('status', ['pending', 'in_progress']);
+
+        if (!$canViewAllActivities) {
+            // Show activities assigned to user, or unassigned activities on user's schedules
+            $activityQuery->where(function($q) use ($user) {
+                $q->where('assigned_to', $user->id)
+                  ->orWhere(function($q2) use ($user) {
+                      $q2->whereNull('assigned_to')
+                         ->whereHas('schedule', function($sq) use ($user) {
+                             $sq->where('assigned_architect_id', $user->id);
+                         });
+                  });
+            });
+        }
+
+        $projectActivities = $activityQuery->orderBy('start_date', 'asc')->get();
+
+        // Activities for calendar
         $calMonth = $request->input('cal_month', now()->month);
         $calYear = $request->input('cal_year', now()->year);
-        $calendarActivities = ProjectScheduleActivity::with(['schedule.lead'])
-            ->whereHas('schedule', function($query) use ($user) {
-                $query->where('assigned_architect_id', $user->id)
-                      ->whereIn('status', ['confirmed', 'in_progress']);
+
+        $calendarQuery = ProjectScheduleActivity::with(['schedule.lead', 'assignedUser'])
+            ->whereHas('schedule', function($query) {
+                $query->whereIn('status', ['confirmed', 'in_progress']);
             })
             ->whereYear('start_date', $calYear)
-            ->whereMonth('start_date', $calMonth)
-            ->get()
+            ->whereMonth('start_date', $calMonth);
+
+        if (!$canViewAllActivities) {
+            $calendarQuery->where(function($q) use ($user) {
+                $q->where('assigned_to', $user->id)
+                  ->orWhere(function($q2) use ($user) {
+                      $q2->whereNull('assigned_to')
+                         ->whereHas('schedule', function($sq) use ($user) {
+                             $sq->where('assigned_architect_id', $user->id);
+                         });
+                  });
+            });
+        }
+
+        $calendarActivities = $calendarQuery->get()
             ->groupBy(function($activity) {
                 return $activity->start_date->format('Y-m-d');
             });
@@ -65,12 +94,21 @@ class DashboardController extends Controller
         $pendingActivitiesCount = $projectActivities->where('status', 'pending')->count();
         $inProgressActivitiesCount = $projectActivities->where('status', 'in_progress')->count();
 
-        // Get active project schedules with progress for current architect
-        $activeSchedules = ProjectSchedule::with(['lead', 'activities'])
-            ->where('assigned_architect_id', $user->id)
+        // Get active project schedules with progress
+        $scheduleQuery = ProjectSchedule::with(['lead', 'activities'])
             ->whereIn('status', ['confirmed', 'in_progress'])
-            ->orderBy('start_date', 'asc')
-            ->get();
+            ->orderBy('start_date', 'asc');
+
+        if (!$canViewAllActivities) {
+            $scheduleQuery->where(function($q) use ($user) {
+                $q->where('assigned_architect_id', $user->id)
+                  ->orWhereHas('activities', function($aq) use ($user) {
+                      $aq->where('assigned_to', $user->id);
+                  });
+            });
+        }
+
+        $activeSchedules = $scheduleQuery->get();
 
         // Calculate overall progress across all active projects
         $overallProgress = [
@@ -103,13 +141,8 @@ class DashboardController extends Controller
         $upcomingInvoicesCount = 0;
         $calendarInvoices = collect();
 
-        // Check if user is Accountant or has permission to view invoices
-        $canViewInvoices = $user->hasRole('Accountant')
-            || $user->hasRole('Admin')
-            || $user->hasRole('Super Admin')
-            || $user->hasRole('System Administrator')
-            || $user->can('Invoice List')
-            || $user->can('view invoices');
+        // Check if user has permission to view invoice due dates
+        $canViewInvoices = $user->can('View All Invoice Due Dates');
 
         if ($canViewInvoices) {
             // Get all unpaid invoices with due dates
@@ -282,7 +315,7 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         // Check permission
-        if (!$user->hasRole('Accountant') && !$user->hasRole('Admin') && !$user->can('Invoice List')) {
+        if (!$user->can('View All Invoice Due Dates')) {
             abort(403, 'Unauthorized');
         }
 
@@ -373,15 +406,8 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Check permission - same as view permission
-        $canAttend = $user->hasRole('Accountant')
-            || $user->hasRole('Admin')
-            || $user->hasRole('Super Admin')
-            || $user->hasRole('System Administrator')
-            || $user->can('Invoice Edit')
-            || $user->can('Invoice List');
-
-        if (!$canAttend) {
+        // Check permission
+        if (!$user->can('View All Invoice Due Dates')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -406,6 +432,16 @@ class DashboardController extends Controller
             $invoice->attendance_notes = $request->input('notes');
             $invoice->save();
 
+            // Notify users with invoice due dates permission
+            $notifyUsers = User::permission('View All Invoice Due Dates')->where('id', '!=', $user->id)->get();
+            $this->sendNotification(
+                $notifyUsers,
+                'Invoice Marked as Paid',
+                "Invoice {$invoice->document_number} has been marked as paid by {$user->name}.",
+                "/billing/invoices/{$invoice->id}",
+                $invoice->id
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Invoice marked as paid successfully.'
@@ -429,6 +465,16 @@ class DashboardController extends Controller
             $invoice->attendance_notes = $request->input('notes');
             $invoice->save();
 
+            // Notify users with invoice due dates permission
+            $notifyUsers = User::permission('View All Invoice Due Dates')->where('id', '!=', $user->id)->get();
+            $this->sendNotification(
+                $notifyUsers,
+                'Partial Payment Recorded',
+                "Partial payment of TZS " . number_format($paidAmount, 2) . " recorded for Invoice {$invoice->document_number} by {$user->name}.",
+                "/billing/invoices/{$invoice->id}",
+                $invoice->id
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Partial payment recorded successfully.',
@@ -448,6 +494,16 @@ class DashboardController extends Controller
             $invoice->attended_by = $user->id;
             $invoice->save();
 
+            // Notify users with invoice due dates permission
+            $notifyUsers = User::permission('View All Invoice Due Dates')->where('id', '!=', $user->id)->get();
+            $this->sendNotification(
+                $notifyUsers,
+                'Invoice Rescheduled',
+                "Invoice {$invoice->document_number} rescheduled to {$invoice->due_date->format('d M Y')} by {$user->name}.",
+                "/billing/invoices/{$invoice->id}",
+                $invoice->id
+            );
+
             return response()->json([
                 'success' => true,
                 'message' => 'Invoice due date rescheduled successfully.',
@@ -465,15 +521,8 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
 
-        // Check permission - same as view permission
-        $canView = $user->hasRole('Accountant')
-            || $user->hasRole('Admin')
-            || $user->hasRole('Super Admin')
-            || $user->hasRole('System Administrator')
-            || $user->can('Invoice Edit')
-            || $user->can('Invoice List');
-
-        if (!$canView) {
+        // Check permission
+        if (!$user->can('View All Invoice Due Dates')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
