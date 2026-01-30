@@ -1,7 +1,12 @@
 @extends('layouts.backend')
 
 @section('content')
-<div class="main-container">
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<style>
+    .note-editor.note-frame { border: 1px solid #ddd; border-radius: 4px; }
+    .note-toolbar { background: #f8f9fa; border-bottom: 1px solid #ddd; padding: 5px; }
+</style>
+<div class="container-fluid">
     <div class="content">
         <div class="content-heading">
             <div class="row">
@@ -367,7 +372,7 @@
                         <div class="block-content">
                             <div class="form-group">
                                 <label>Internal Notes</label>
-                                <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
+                                <textarea name="notes" id="notes-editor" class="form-control">{{ old('notes') }}</textarea>
                             </div>
 
                             <div class="form-group">
@@ -551,4 +556,26 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+@endsection
+
+@section('js_after')
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#notes-editor').summernote({
+        height: 200,
+        toolbar: [
+            ['style', ['style']],
+            ['font', ['bold', 'italic', 'underline', 'strikethrough', 'clear']],
+            ['fontsize', ['fontsize']],
+            ['color', ['color']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['table', ['table']],
+            ['insert', ['link']],
+            ['view', ['fullscreen', 'codeview', 'help']]
+        ],
+        placeholder: 'Enter internal notes here...'
+    });
+});
+</script>
 @endsection

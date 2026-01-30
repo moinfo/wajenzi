@@ -110,7 +110,7 @@ class ProjectScheduleController extends Controller
             $architect = User::find($projectSchedule->assigned_architect_id);
             if ($architect) {
                 $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
-                $this->sendNotification(
+                $this->sendScheduleNotification(
                     $architect,
                     'Schedule Confirmed',
                     "Project schedule for {$leadNumber} has been confirmed.",
@@ -156,7 +156,7 @@ class ProjectScheduleController extends Controller
         }
         if ($notifyUserIds->isNotEmpty()) {
             $notifyUsers = User::whereIn('id', $notifyUserIds)->get();
-            $this->sendNotification(
+            $this->sendScheduleNotification(
                 $notifyUsers,
                 'Activity Started',
                 "Activity {$activity->activity_code}: {$activity->name} has been started by " . auth()->user()->name . ".",
@@ -219,7 +219,7 @@ class ProjectScheduleController extends Controller
         }
         if ($notifyUserIds->isNotEmpty()) {
             $notifyUsers = User::whereIn('id', $notifyUserIds)->get();
-            $this->sendNotification(
+            $this->sendScheduleNotification(
                 $notifyUsers,
                 'Activity Completed',
                 "Activity {$activity->activity_code}: {$activity->name} has been completed by " . auth()->user()->name . ".",
@@ -382,5 +382,76 @@ class ProjectScheduleController extends Controller
         ProjectScheduleService::recalculateSchedule($schedule, $schedule->start_date);
 
         return back()->with('success', "Activity {$activityCode} removed and schedule recalculated.");
+    }
+
+    /**
+     * Change the assigned architect for a schedule
+     */
+    public function changeArchitect(Request $request, ProjectSchedule $projectSchedule)
+    {
+        $request->validate([
+            'assigned_architect_id' => 'required|exists:users,id',
+        ]);
+
+        $oldArchitect = $projectSchedule->assignedArchitect;
+        $newArchitectId = $request->assigned_architect_id;
+        $newArchitect = User::find($newArchitectId);
+
+        // Update the architect
+        $projectSchedule->update([
+            'assigned_architect_id' => $newArchitectId,
+        ]);
+
+        // Notify the new architect
+        if ($newArchitect && $newArchitectId !== auth()->id()) {
+            $projectSchedule->load('lead');
+            $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
+            $this->sendScheduleNotification(
+                $newArchitect,
+                'Schedule Assigned',
+                "You have been assigned as the architect for project schedule: {$leadNumber}.",
+                "/project-schedules/{$projectSchedule->id}",
+                $projectSchedule->id
+            );
+        }
+
+        // Notify the old architect (if different from new and current user)
+        if ($oldArchitect && $oldArchitect->id !== $newArchitectId && $oldArchitect->id !== auth()->id()) {
+            $projectSchedule->load('lead');
+            $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
+            $this->sendScheduleNotification(
+                $oldArchitect,
+                'Schedule Reassigned',
+                "Project schedule for {$leadNumber} has been reassigned to {$newArchitect->name}.",
+                "/project-schedules/{$projectSchedule->id}",
+                $projectSchedule->id
+            );
+        }
+
+        return back()->with('success', "Architect changed to {$newArchitect->name} successfully.");
+    }
+
+    /**
+     * Helper method to send notifications
+     */
+    private function sendScheduleNotification($users, string $title, string $body, string $link, int $referenceId)
+    {
+        $users = is_iterable($users) ? $users : [$users];
+
+        foreach ($users as $user) {
+            try {
+                \App\Models\Notification::create([
+                    'user_id' => $user->id,
+                    'title' => $title,
+                    'body' => $body,
+                    'link' => $link,
+                    'reference_id' => $referenceId,
+                    'type' => 'schedule',
+                    'read' => false,
+                ]);
+            } catch (\Exception $e) {
+                \Log::warning("Failed to create notification for user {$user->id}: " . $e->getMessage());
+            }
+        }
     }
 }
