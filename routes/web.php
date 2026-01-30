@@ -87,7 +87,6 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/transfer_balance', [App\Http\Controllers\BankReconciliationController::class, 'getTransferredBalance'])->name('transfer_balance');
     Route::match(['get', 'post'], '/sub_category_list', [App\Http\Controllers\SubCategoryController::class, 'getSubCategories'])->name('sub_category_list');
     Route::match(['get', 'post'], '/charge', [App\Http\Controllers\FinancialChargeController::class, 'getCharges'])->name('charge');
-    Route::match(['get', 'post'], '/getLastEfdNumber', [App\Http\Controllers\SaleController::class, 'getLastEfdNumber'])->name('getLastEfdNumber');
 
     Route::match(['get', 'post'], '/makeReadNotification', [App\Http\Controllers\SettingsController::class, 'makeReadNotification'])->name('makeReadNotification');
 
@@ -117,6 +116,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/payroll/{id}/{document_type_id}', [App\Http\Controllers\PayrollController::class, 'payroll_view'])->name('payroll_view');
     Route::match(['get', 'post'], '/payroll/create_payroll', [App\Http\Controllers\PayrollController::class, 'create_payroll'])->name('create_payroll');
     Route::match(['get', 'post'], '/payroll/payroll_administration', [App\Http\Controllers\PayrollController::class, 'payroll_administration'])->name('payroll_administration');
+    Route::match(['get', 'post'], '/payroll/preview', [App\Http\Controllers\PayrollController::class, 'payroll_preview'])->name('payroll_preview');
     Route::match(['get', 'post'], '/payroll/crdb_bank_file', [App\Http\Controllers\PayrollController::class, 'crdb_bank_file'])->name('crdb_bank_file');
     Route::post('/payroll/bank-file-data', 'App\Http\Controllers\PayrollController@getBankFileData')->name('payroll.bank-file-data');
     Route::match(['get', 'post'], '/system_inventory', [App\Http\Controllers\SystemInventoryController::class, 'index'])->name('system_inventory');
@@ -188,6 +188,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/asset_properties', [App\Http\Controllers\SettingsController::class, 'asset_properties'])->name('hr_settings_asset_properties');
     Route::match(['get', 'post'], '/settings/systems', [App\Http\Controllers\SettingsController::class, 'systems'])->name('hr_settings_systems');
     Route::match(['get', 'post'], '/settings/users', [App\Http\Controllers\SettingsController::class, 'users'])->name('hr_settings_users');
+    Route::post('/settings/users/{id}/toggle-status', [App\Http\Controllers\SettingsController::class, 'toggleUserStatus'])->name('hr_settings_users_toggle_status');
     Route::match(['get', 'post'], '/settings/approvals', [App\Http\Controllers\ApprovalController::class, 'approvals'])->name('hr_settings_approvals');
     Route::match(['get', 'post'], '/settings/positions', [App\Http\Controllers\SettingsController::class, 'positions'])->name('hr_settings_positions');
     Route::match(['get', 'post'], '/settings/roles', [App\Http\Controllers\SettingsController::class, 'roles'])->name('hr_settings_roles');
@@ -520,6 +521,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('project-schedules/activity/{activity}/days', [App\Http\Controllers\ProjectScheduleController::class, 'updateActivityDays'])->name('project-schedules.activity.update-days');
     Route::delete('project-schedules/activity/{activity}', [App\Http\Controllers\ProjectScheduleController::class, 'removeActivity'])->name('project-schedules.activity.remove');
     Route::patch('project-schedules/activity/{activity}/assign', [App\Http\Controllers\ProjectScheduleController::class, 'assignActivity'])->name('project-schedules.activity.assign');
+    Route::patch('project-schedules/{projectSchedule}/change-architect', [App\Http\Controllers\ProjectScheduleController::class, 'changeArchitect'])->name('project-schedules.change-architect');
     Route::get('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'showForLead'])->name('leads.schedule');
     Route::post('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForLead'])->name('leads.schedule.create');
 

@@ -74,15 +74,6 @@ class SaleController extends Controller
         return view('approvals._approve_page')->with($data);
     }
 
-    public function getLastEfdNumber(Request $request){
-        $efd_id = $request->input('efd_id');
-        $last_id = Sale::getLastEfdNumber($efd_id);
-
-        $last_z_report_number_arr[] = array("id" => $last_id, "name" => $last_id);
-        echo json_encode($last_z_report_number_arr);
-
-    }
-
     /**
      * Show the form for creating a new resource.
      *

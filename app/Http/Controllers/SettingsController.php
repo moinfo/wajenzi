@@ -668,10 +668,22 @@ class SettingsController extends Controller
         if($this->handleCrud($request, 'User')) {
             return back();
         }
+
+        $showInactive = $request->query('status') === 'INACTIVE';
         $data = [
-            'users' => User::all()
+            'users' => User::where('status', $showInactive ? 'INACTIVE' : 'ACTIVE')->get(),
+            'showInactive' => $showInactive
         ];
         return view('pages.settings.settings_users')->with($data);
+    }
+
+    public function toggleUserStatus($id)
+    {
+        $user = User::findOrFail($id);
+        $user->status = $user->status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        $user->save();
+
+        return back()->with('success', "User {$user->name} status updated to {$user->status}");
     }
 
 

@@ -25,7 +25,8 @@
                    @foreach($sub_permissions as $sub_permission)
                        <?php
                            $sub_permission_id = $sub_permission->id;
-                           $staff_permission_id = \App\Models\UsersPermission::select([DB::raw("permission_id as permission_id")])->Where('user_id',$user_id)->Where('permission_id',$sub_permission_id)->get()->first()['permission_id'];
+                           $userPermission = \App\Models\UsersPermission::select([DB::raw("permission_id as permission_id")])->Where('user_id',$user_id)->Where('permission_id',$sub_permission_id)->first();
+                           $staff_permission_id = $userPermission ? $userPermission->permission_id : null;
                            ?>
                        <li><input type="checkbox" name="permission_id[]" value="{{$sub_permission->id}}" {{ ( $sub_permission->id == $staff_permission_id) ? 'checked' : '' }}><span>&nbsp;{{$sub_permission->name}}</span></li>
                    @endforeach
