@@ -52,6 +52,7 @@
                                     <th>MARITAL STATUS</th>
                                     <th>Signature</th>
                                     <th>Profile</th>
+                                    <th>Contract</th>
                                     <th>STATUS</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
@@ -110,6 +111,13 @@
                                                 <a href="{{ url("$user->profile") }}">Profile</a>
                                             @else
                                                 No Profile
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            @if($user->contract != null)
+                                                <a href="{{ url("$user->contract") }}" target="_blank"><i class="fa fa-file-pdf text-danger"></i> Contract</a>
+                                            @else
+                                                No Contract
                                             @endif
                                         </td>
                                         <td>{{ $user->status }}</td>
