@@ -144,6 +144,12 @@ class Controller extends BaseController
             $name = time().'_'.$request->file->getClientOriginalName();
             $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
             $newObj->file = '/storage/'. $filePath;
+            // Handle contract file if present
+            if($request->hasFile('contract')) {
+                $contractName = time().'_contract_'.$request->contract->getClientOriginalName();
+                $contractPath = $request->file('contract')->storeAs('uploads/contracts', $contractName, 'public');
+                $newObj->contract = '/storage/'. $contractPath;
+            }
             // dd($newObj);
             if($newObj->save()) {
                 return $newObj;
@@ -176,6 +182,12 @@ class Controller extends BaseController
 //                'password' => bcrypt($request->input('password')),
             ]);
             $newObj->fill($request->all());
+            // Handle contract file if present
+            if($request->hasFile('contract')) {
+                $contractName = time().'_contract_'.$request->contract->getClientOriginalName();
+                $contractPath = $request->file('contract')->storeAs('uploads/contracts', $contractName, 'public');
+                $newObj->contract = '/storage/'. $contractPath;
+            }
             if($newObj->save()) {
                 return $newObj;
             } else {
@@ -219,8 +231,14 @@ class Controller extends BaseController
                 $name = time() . '_' . $request->profile->getClientOriginalName();
                 $filePath = $request->file('profile')->storeAs('uploads', $name, 'public');
                 $obj->profile = '/storage/'. $filePath;
+                // Handle contract file if present
+                if($request->hasFile('contract')) {
+                    $contractName = time().'_contract_'.$request->contract->getClientOriginalName();
+                    $contractPath = $request->file('contract')->storeAs('uploads/contracts', $contractName, 'public');
+                    $obj->contract = '/storage/'. $contractPath;
+                }
                 return $obj->save();
-            }else{
+            }else if($request->hasFile('file')){
                 $full_class_name = '\App\Models\\'. ($class_name ?? $request->updateItem);
                 $obj_id = $request->input('id') ?? $id; //TODO or the other way round
                 $obj = $full_class_name::find($request->input('id'));
@@ -254,6 +272,42 @@ class Controller extends BaseController
                 $name = time().'_'.$request->file->getClientOriginalName();
                 $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
                 $obj->file = '/storage/'. $filePath;
+                // Handle contract file if present
+                if($request->hasFile('contract')) {
+                    $contractName = time().'_contract_'.$request->contract->getClientOriginalName();
+                    $contractPath = $request->file('contract')->storeAs('uploads/contracts', $contractName, 'public');
+                    $obj->contract = '/storage/'. $contractPath;
+                }
+                return $obj->save();
+            }else if($request->hasFile('contract')){
+                // Contract-only upload (no signature file)
+                $full_class_name = '\App\Models\\'. ($class_name ?? $request->updateItem);
+                $obj = $full_class_name::find($request->input('id') ?? $id);
+
+                // Check for amount_formatted and convert to amount if exists
+                if ($request->has('amount_formatted') && !empty($request->input('amount_formatted'))) {
+                    $amount = Utility::strip_commas($request->input('amount_formatted'));
+                } else {
+                    $amount = Utility::strip_commas($request->input('amount'));
+                }
+
+                $request->request->add([
+                    'amount' => $amount,
+                    'credit' => Utility::strip_commas($request->input('credit')),
+                    'debit' => Utility::strip_commas($request->input('debit')),
+                    'net' => Utility::strip_commas($request->input('net')),
+                    'tax' => Utility::strip_commas($request->input('tax')),
+                    'turn_over' => Utility::strip_commas($request->input('turn_over')),
+                    'total_amount' => Utility::strip_commas($request->input('total_amount')),
+                    'amount_vat_exc' => Utility::strip_commas($request->input('amount_vat_exc')),
+                    'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
+                    'deduction' => Utility::strip_commas($request->input('deduction')),
+                    'price' => Utility::strip_commas($request->input('price')),
+                ]);
+                $obj->fill($request->all());
+                $contractName = time().'_contract_'.$request->contract->getClientOriginalName();
+                $contractPath = $request->file('contract')->storeAs('uploads/contracts', $contractName, 'public');
+                $obj->contract = '/storage/'. $contractPath;
                 return $obj->save();
             }
         } else {
@@ -283,6 +337,12 @@ class Controller extends BaseController
 //                'password' => bcrypt($request->input('password')),
             ]);
             $obj->fill($request->all());
+            // Handle contract file if present
+            if($request->hasFile('contract')) {
+                $contractName = time().'_contract_'.$request->contract->getClientOriginalName();
+                $contractPath = $request->file('contract')->storeAs('uploads/contracts', $contractName, 'public');
+                $obj->contract = '/storage/'. $contractPath;
+            }
             return $obj->save();
         }
     }
