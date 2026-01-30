@@ -1,10 +1,19 @@
 @extends('layouts.backend')
 
 @section('content')
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <div class="content-heading">Settings
                 <div class="float-right">
+                    @if($showInactive ?? false)
+                        <a href="{{ route('hr_settings_users') }}" class="btn btn-rounded min-width-125 mb-10 btn-success">
+                            <i class="fa fa-users">&nbsp;</i>Active Users
+                        </a>
+                    @else
+                        <a href="{{ route('hr_settings_users', ['status' => 'INACTIVE']) }}" class="btn btn-rounded min-width-125 mb-10 btn-secondary">
+                            <i class="fa fa-user-times">&nbsp;</i>Inactive Users
+                        </a>
+                    @endif
                     @can('Add User')
                         <button type="button" onclick="loadFormModal('settings_user_form', {className: 'User'}, 'Create New User', 'modal-lg');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New User</button>
                     @endcan
@@ -13,7 +22,7 @@
             <div>
                 <div class="block">
                     <div class="block-header block-header-default">
-                        <h3 class="block-title">Users</h3>
+                        <h3 class="block-title">{{ ($showInactive ?? false) ? 'Inactive Users' : 'Active Users' }}</h3>
                     </div>
                     @include('components.headed_paper_settings')
                     <br/>
@@ -124,6 +133,20 @@
                                                         <button type="button" onclick="deleteModelItem('User', {{$user->id}}, 'user-tr-{{$user->id}}');" class="btn btn-sm btn-danger js-tooltip-enabled" data-toggle="tooltip" title="Delete" data-original-title="Delete">
                                                             <i class="fa fa-times"></i>
                                                         </button>
+                                                    @endcan
+                                                    @can('Edit User')
+                                                        <form action="{{ route('hr_settings_users_toggle_status', $user->id) }}" method="POST" style="display:inline;">
+                                                            @csrf
+                                                            @if($user->status === 'ACTIVE')
+                                                                <button type="submit" class="btn btn-sm btn-warning js-tooltip-enabled" data-toggle="tooltip" title="Deactivate" data-original-title="Deactivate" onclick="return confirm('Are you sure you want to deactivate this user?');">
+                                                                    <i class="fa fa-ban"></i>
+                                                                </button>
+                                                            @else
+                                                                <button type="submit" class="btn btn-sm btn-info js-tooltip-enabled" data-toggle="tooltip" title="Activate" data-original-title="Activate" onclick="return confirm('Are you sure you want to activate this user?');">
+                                                                    <i class="fa fa-check"></i>
+                                                                </button>
+                                                            @endif
+                                                        </form>
                                                     @endcan
 
                                             </div>

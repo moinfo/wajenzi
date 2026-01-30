@@ -140,9 +140,10 @@ $document_id = \App\Classes\Utility::getLastId('Purchase')+1;
     $(".select2").select2({
         theme: "bootstrap",
         placeholder: "Choose",
-        width: 'auto',
+        width: '100%',
         dropdownAutoWidth: true,
         allowClear: true,
+        dropdownParent: $('#ajax-loader-modal')
     });
     $(function() {
         $('#amount_vat_exc').hide();
