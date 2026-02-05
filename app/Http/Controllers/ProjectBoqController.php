@@ -26,6 +26,17 @@ class ProjectBoqController extends Controller
         return view('pages.projects.project_boqs')->with($data);
     }
 
+    public function show($id){
+        $boq = ProjectBoq::with(['project', 'items'])->findOrFail($id);
+        $boqItems = ProjectBoqItem::where('boq_id', $id)->get();
+
+        $data = [
+            'boq' => $boq,
+            'boqItems' => $boqItems,
+        ];
+        return view('pages.projects.project_boq_items')->with($data);
+    }
+
     public function boq($id, $document_type_id){
         $boq = ProjectBoq::where('id', $id)->first();
         $approvalStages = Approval::getApprovalStages($id, $document_type_id);
