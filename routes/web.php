@@ -746,6 +746,71 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
+    // Labor Procurement Routes
+    Route::prefix('labor')->name('labor.')->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [App\Http\Controllers\LaborDashboardController::class, 'index'])->name('dashboard');
+
+        // Labor Requests
+        Route::match(['get', 'post'], '/requests', [App\Http\Controllers\LaborRequestController::class, 'index'])->name('requests.index');
+        Route::get('/requests/create', [App\Http\Controllers\LaborRequestController::class, 'create'])->name('requests.create');
+        Route::post('/requests/store', [App\Http\Controllers\LaborRequestController::class, 'store'])->name('requests.store');
+        Route::get('/requests/{id}', [App\Http\Controllers\LaborRequestController::class, 'show'])->name('requests.show');
+        Route::get('/requests/{id}/edit', [App\Http\Controllers\LaborRequestController::class, 'edit'])->name('requests.edit');
+        Route::post('/requests/{id}/update', [App\Http\Controllers\LaborRequestController::class, 'update'])->name('requests.update');
+        Route::post('/requests/{id}/submit', [App\Http\Controllers\LaborRequestController::class, 'submitForApproval'])->name('requests.submit');
+        Route::match(['get', 'post'], '/requests/{id}/{document_type_id}', [App\Http\Controllers\LaborRequestController::class, 'approval'])->name('requests.approval');
+        Route::post('/requests/{id}/negotiation', [App\Http\Controllers\LaborRequestController::class, 'updateNegotiation'])->name('requests.negotiation');
+        Route::post('/requests/{id}/assessment', [App\Http\Controllers\LaborRequestController::class, 'recordAssessment'])->name('requests.assessment');
+
+        // Labor Contracts
+        Route::match(['get', 'post'], '/contracts', [App\Http\Controllers\LaborContractController::class, 'index'])->name('contracts.index');
+        Route::get('/contracts/create/{request_id}', [App\Http\Controllers\LaborContractController::class, 'create'])->name('contracts.create');
+        Route::post('/contracts/store', [App\Http\Controllers\LaborContractController::class, 'store'])->name('contracts.store');
+        Route::get('/contracts/{id}', [App\Http\Controllers\LaborContractController::class, 'show'])->name('contracts.show');
+        Route::get('/contracts/{id}/edit', [App\Http\Controllers\LaborContractController::class, 'edit'])->name('contracts.edit');
+        Route::post('/contracts/{id}/update', [App\Http\Controllers\LaborContractController::class, 'update'])->name('contracts.update');
+        Route::post('/contracts/{id}/sign', [App\Http\Controllers\LaborContractController::class, 'sign'])->name('contracts.sign');
+        Route::get('/contracts/{id}/pdf', [App\Http\Controllers\LaborContractController::class, 'generatePDF'])->name('contracts.pdf');
+        Route::post('/contracts/{id}/terminate', [App\Http\Controllers\LaborContractController::class, 'terminate'])->name('contracts.terminate');
+        Route::post('/contracts/{id}/hold', [App\Http\Controllers\LaborContractController::class, 'putOnHold'])->name('contracts.hold');
+        Route::post('/contracts/{id}/resume', [App\Http\Controllers\LaborContractController::class, 'resume'])->name('contracts.resume');
+
+        // Work Logs
+        Route::match(['get', 'post'], '/logs', [App\Http\Controllers\LaborWorkLogController::class, 'index'])->name('logs.index');
+        Route::get('/logs/create/{contract_id}', [App\Http\Controllers\LaborWorkLogController::class, 'create'])->name('logs.create');
+        Route::post('/logs/store', [App\Http\Controllers\LaborWorkLogController::class, 'store'])->name('logs.store');
+        Route::get('/logs/{id}', [App\Http\Controllers\LaborWorkLogController::class, 'show'])->name('logs.show');
+        Route::get('/logs/{id}/edit', [App\Http\Controllers\LaborWorkLogController::class, 'edit'])->name('logs.edit');
+        Route::post('/logs/{id}/update', [App\Http\Controllers\LaborWorkLogController::class, 'update'])->name('logs.update');
+        Route::delete('/logs/{id}', [App\Http\Controllers\LaborWorkLogController::class, 'destroy'])->name('logs.destroy');
+        Route::get('/contracts/{contract_id}/logs', [App\Http\Controllers\LaborWorkLogController::class, 'contractLogs'])->name('logs.contract');
+
+        // Labor Inspections
+        Route::match(['get', 'post'], '/inspections', [App\Http\Controllers\LaborInspectionController::class, 'index'])->name('inspections.index');
+        Route::get('/inspections/create/{contract_id}', [App\Http\Controllers\LaborInspectionController::class, 'create'])->name('inspections.create');
+        Route::post('/inspections/store', [App\Http\Controllers\LaborInspectionController::class, 'store'])->name('inspections.store');
+        Route::get('/inspections/{id}', [App\Http\Controllers\LaborInspectionController::class, 'show'])->name('inspections.show');
+        Route::get('/inspections/{id}/edit', [App\Http\Controllers\LaborInspectionController::class, 'edit'])->name('inspections.edit');
+        Route::post('/inspections/{id}/update', [App\Http\Controllers\LaborInspectionController::class, 'update'])->name('inspections.update');
+        Route::post('/inspections/{id}/submit', [App\Http\Controllers\LaborInspectionController::class, 'submit'])->name('inspections.submit');
+        Route::match(['get', 'post'], '/inspections/{id}/{document_type_id}', [App\Http\Controllers\LaborInspectionController::class, 'approval'])->name('inspections.approval');
+        Route::post('/inspections/{inspection}/approve', [App\Http\Controllers\LaborInspectionController::class, 'approve'])->name('inspections.approve');
+        Route::post('/inspections/{inspection}/reject', [App\Http\Controllers\LaborInspectionController::class, 'reject'])->name('inspections.reject');
+
+        // Labor Payments
+        Route::get('/payments', [App\Http\Controllers\LaborPaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/{phase_id}', [App\Http\Controllers\LaborPaymentController::class, 'show'])->name('payments.show');
+        Route::get('/payments/contract/{contract_id}', [App\Http\Controllers\LaborPaymentController::class, 'contractPayments'])->name('payments.contract');
+        Route::post('/payments/{phase_id}/approve', [App\Http\Controllers\LaborPaymentController::class, 'approve'])->name('payments.approve');
+        Route::get('/payments/{phase_id}/process', [App\Http\Controllers\LaborPaymentController::class, 'processForm'])->name('payments.process.form');
+        Route::post('/payments/{phase_id}/process', [App\Http\Controllers\LaborPaymentController::class, 'process'])->name('payments.process');
+        Route::post('/payments/{phase_id}/hold', [App\Http\Controllers\LaborPaymentController::class, 'hold'])->name('payments.hold');
+        Route::post('/payments/{phase_id}/release', [App\Http\Controllers\LaborPaymentController::class, 'release'])->name('payments.release');
+        Route::post('/payments/bulk-approve', [App\Http\Controllers\LaborPaymentController::class, 'bulkApprove'])->name('payments.bulk-approve');
+        Route::get('/payments/report', [App\Http\Controllers\LaborPaymentController::class, 'report'])->name('payments.report');
+    });
+
 });
 
 Auth::routes(['register' => false]);

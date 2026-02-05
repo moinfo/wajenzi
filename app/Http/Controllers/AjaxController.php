@@ -515,6 +515,28 @@ class AjaxController
                     }
                     break;
 
+                // Labor Procurement AJAX Methods
+                case 'get_construction_phases':
+                    $projectId = $request->input('project_id');
+                    $phases = \App\Models\ProjectConstructionPhase::where('project_id', $projectId)
+                        ->orderBy('phase_name')
+                        ->get(['id', 'phase_name as name']);
+                    return response()->json($phases);
+                    break;
+
+                case 'get_artisans':
+                    $artisans = Supplier::artisans()
+                        ->orderBy('name')
+                        ->get(['id', 'name', 'trade_skill']);
+                    return response()->json($artisans);
+                    break;
+
+                case 'get_artisan_details':
+                    $artisanId = $request->input('artisan_id');
+                    $artisan = Supplier::artisans()->find($artisanId);
+                    return response()->json($artisan);
+                    break;
+
                 default:
                     return ('YES');
                     break;

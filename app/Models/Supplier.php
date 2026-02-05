@@ -9,7 +9,11 @@ use Illuminate\Support\Facades\DB;
 class Supplier extends Model
 {
     use HasFactory;
-    public $fillable = ['id', 'name', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id', 'account_name', 'nmb_account', 'nbc_account', 'crdb_account'];
+    public $fillable = [
+        'id', 'name', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id',
+        'account_name', 'nmb_account', 'nbc_account', 'crdb_account',
+        'supplier_type', 'is_artisan', 'trade_skill', 'daily_rate', 'id_number', 'previous_work_history', 'rating'
+    ];
 
     public static function getSupplierName($supplier_id)
     {
@@ -81,6 +85,24 @@ class Supplier extends Model
 
     public function supplierReceivings() {
         return $this->hasMany(SupplierReceiving::class);
+    }
+
+    public function laborRequests() {
+        return $this->hasMany(LaborRequest::class, 'artisan_id');
+    }
+
+    public function laborContracts() {
+        return $this->hasMany(LaborContract::class, 'artisan_id');
+    }
+
+    // Scope for artisans only
+    public function scopeArtisans($query) {
+        return $query->where('is_artisan', true);
+    }
+
+    // Check if supplier is an artisan
+    public function isArtisan(): bool {
+        return (bool) $this->is_artisan;
     }
 
     public static function getWhitestarSuppliers()
