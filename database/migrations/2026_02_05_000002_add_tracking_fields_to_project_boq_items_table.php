@@ -19,7 +19,7 @@ return new class extends Migration
 
             if (!Schema::hasColumn('project_boq_items', 'category_id')) {
                 $table->foreignId('category_id')->nullable()->after('item_code')
-                    ->constrained('item_categories')->nullOnDelete();
+                    ->constrained('boq_item_categories')->nullOnDelete();
             }
 
             if (!Schema::hasColumn('project_boq_items', 'specification')) {
