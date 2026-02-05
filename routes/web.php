@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Public routes (no authentication required)
+Route::get('/i/{token}', [App\Http\Controllers\Billing\InvoiceController::class, 'publicPDF'])->name('invoice.public');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [App\Http\Controllers\DashboardController::class, 'index'])->name('home');

@@ -287,9 +287,41 @@ class InvoiceController extends Controller
     public function generatePDF(BillingDocument $invoice)
     {
         $invoice->load(['client', 'items', 'payments']);
-        
+
         $pdf = PDF::loadView('billing.invoices.pdf', compact('invoice'));
-        
+
+        return $pdf->download('invoice-' . $invoice->document_number . '.pdf');
+    }
+
+    /**
+     * Generate a share token for the invoice.
+     */
+    public static function generateShareToken(BillingDocument $invoice): string
+    {
+        // Create a short hash token from invoice ID and a secret
+        $data = $invoice->id . '|' . config('app.key');
+        return substr(md5($data), 0, 12);
+    }
+
+    /**
+     * Download PDF via public share link.
+     */
+    public function publicPDF(string $token)
+    {
+        // Find invoice by token
+        $invoice = BillingDocument::where('document_type', 'invoice')->get()
+            ->first(function ($inv) use ($token) {
+                return self::generateShareToken($inv) === $token;
+            });
+
+        if (!$invoice) {
+            abort(404, 'Invoice not found or link has expired.');
+        }
+
+        $invoice->load(['client', 'items', 'payments']);
+
+        $pdf = PDF::loadView('billing.invoices.pdf', compact('invoice'));
+
         return $pdf->download('invoice-' . $invoice->document_number . '.pdf');
     }
 
