@@ -46,7 +46,7 @@ class MaterialInspectionController extends Controller
         }
 
         $inspections = $query->get();
-        $projects = Project::orderBy('name')->get();
+        $projects = Project::orderBy('project_name')->get();
 
         // Get receivings pending inspection
         $pendingReceivings = SupplierReceiving::with(['supplier', 'purchase.project'])

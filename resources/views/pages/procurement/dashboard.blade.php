@@ -7,14 +7,22 @@
         padding: 20px;
         margin-bottom: 20px;
         color: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .stat-card h3 {
         margin: 0;
-        font-size: 2rem;
+        font-size: 2.5rem;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     }
     .stat-card p {
-        margin: 5px 0 0;
+        margin: 10px 0 5px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    .stat-card small {
         opacity: 0.9;
+        font-size: 0.85rem;
     }
     .action-item {
         display: flex;
@@ -29,6 +37,9 @@
     .action-count {
         font-size: 1.25rem;
         font-weight: bold;
+    }
+    .block-title i {
+        margin-right: 8px;
     }
 </style>
 @endsection
@@ -87,8 +98,8 @@
             <!-- Pending Actions -->
             <div class="col-md-4">
                 <div class="block">
-                    <div class="block-header block-header-default bg-danger">
-                        <h3 class="block-title text-white">Actions Required</h3>
+                    <div class="block-header block-header-default">
+                        <h3 class="block-title"><i class="fa fa-exclamation-circle text-danger"></i> Actions Required</h3>
                     </div>
                     <div class="block-content">
                         <div class="action-item">
