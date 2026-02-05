@@ -14,9 +14,13 @@ class MaterialInspection extends Model implements ApprovableModel
 {
     use HasFactory, Approvable;
 
+    // Disable auto-incrementing (table has manual ID management)
+    public $incrementing = false;
+
     protected $table = 'material_inspections';
 
     protected $fillable = [
+        'id',
         'inspection_number',
         'supplier_receiving_id',
         'project_id',
@@ -55,6 +59,10 @@ class MaterialInspection extends Model implements ApprovableModel
         parent::boot();
 
         static::creating(function ($model) {
+            // Workaround for tables without auto_increment
+            if (empty($model->id)) {
+                $model->id = (self::max('id') ?? 0) + 1;
+            }
             if (empty($model->inspection_number)) {
                 $model->inspection_number = self::generateInspectionNumber();
             }

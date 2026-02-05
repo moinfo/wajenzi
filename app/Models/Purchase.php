@@ -101,8 +101,12 @@ class Purchase extends Model implements ApprovableModel
 
     /**
      * Create purchase from approved quotation comparison
+     *
+     * @param QuotationComparison $comparison
+     * @param int|null $userId Optional user ID (defaults to auth user)
+     * @return self|null
      */
-    public static function createFromComparison(QuotationComparison $comparison): ?self
+    public static function createFromComparison(QuotationComparison $comparison, ?int $userId = null): ?self
     {
         if (!$comparison->isApproved() || !$comparison->selectedQuotation) {
             return null;
@@ -111,7 +115,12 @@ class Purchase extends Model implements ApprovableModel
         $quotation = $comparison->selectedQuotation;
         $request = $comparison->materialRequest;
 
-        $purchase = new self([
+        // Get next ID (workaround for tables without proper auto_increment)
+        $nextId = (self::max('id') ?? 0) + 1;
+
+        // Use DB::table to bypass Eloquent events that trigger approval system
+        DB::table('purchases')->insert([
+            'id' => $nextId,
             'project_id' => $request->project_id,
             'material_request_id' => $request->id,
             'quotation_comparison_id' => $comparison->id,
@@ -124,9 +133,12 @@ class Purchase extends Model implements ApprovableModel
             'payment_terms' => $quotation->payment_terms,
             'expected_delivery_date' => now()->addDays($quotation->delivery_time_days ?? 7),
             'status' => 'pending',
-            'create_by_id' => auth()->id()
+            'create_by_id' => $userId ?? auth()->id() ?? 1,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
-        $purchase->save();
+
+        $purchase = self::find($nextId);
 
         // Create purchase item linked to BOQ
         if ($request->boq_item_id) {

@@ -14,6 +14,9 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
 {
     use HasFactory, Approvable;
 
+    // Disable auto-incrementing (table has manual ID management)
+    public $incrementing = false;
+
     protected $table = 'project_material_requests';
 
     protected $fillable = [
@@ -47,6 +50,10 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
         parent::boot();
 
         static::creating(function ($model) {
+            // Workaround for tables without auto_increment
+            if (empty($model->id)) {
+                $model->id = (self::max('id') ?? 0) + 1;
+            }
             if (empty($model->request_number)) {
                 $model->request_number = self::generateRequestNumber();
             }

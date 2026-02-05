@@ -12,6 +12,9 @@ class SupplierReceiving extends Model
 {
     use HasFactory;
 
+    // Disable auto-incrementing (table has manual ID management)
+    public $incrementing = false;
+
     protected $fillable = [
         'id',
         'receiving_number',
@@ -44,6 +47,10 @@ class SupplierReceiving extends Model
         parent::boot();
 
         static::creating(function ($model) {
+            // Workaround for tables without auto_increment
+            if (empty($model->id)) {
+                $model->id = (self::max('id') ?? 0) + 1;
+            }
             if (empty($model->receiving_number)) {
                 $model->receiving_number = self::generateReceivingNumber();
             }
