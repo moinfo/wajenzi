@@ -11,7 +11,7 @@
     @endif
 
     <!-- Main Container -->
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <!-- Header Section -->
             @include('approvals._header', ['page_name'=> $page_name,'approval_data_name'=> $approval_data_name ])

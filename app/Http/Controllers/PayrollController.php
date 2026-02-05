@@ -311,6 +311,22 @@ class PayrollController extends Controller
         return view('pages.payroll.payroll_administration')->with($data);
     }
 
+    public function payroll_preview(Request $request)
+    {
+        $month = $request->input('month') ?? date('m');
+        $year = $request->input('year') ?? date('Y');
+        $staffs = Staff::onlyStaffs();
+        $payroll_types = PayrollType::all();
+
+        $data = [
+            'staffs' => $staffs,
+            'payroll_types' => $payroll_types,
+            'possible_month' => $month,
+            'possible_year' => $year,
+        ];
+        return view('pages.payroll.payroll_preview')->with($data);
+    }
+
     public function payroll_record($id,$document_type_id){
         $payroll_record = \App\Models\PayrollRecord::where('id',$id)->get()->first();
         $approvalStages = Approval::getApprovalStages($id,$document_type_id);

@@ -14,7 +14,7 @@
             visibility: visible;  /* Shows it */
         }
     </style>
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <div class="content-heading">Beneficiaries
                 <div class="float-right">

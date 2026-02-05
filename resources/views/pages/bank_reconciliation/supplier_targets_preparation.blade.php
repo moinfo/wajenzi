@@ -154,7 +154,7 @@
 @extends('layouts.backend')
 
 @section('content')
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <!-- Header Section -->
             <div class="report-section">

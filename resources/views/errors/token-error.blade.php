@@ -63,7 +63,7 @@
     </style>
 </head>
 <body>
-<div class="container">
+<div class="container-fluid">
     <div class="error-icon">🔐</div>
     <h1 class="error-title">Session Expired</h1>
 

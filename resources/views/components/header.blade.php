@@ -28,53 +28,6 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
 
         <!-- Right Section -->
         <div class="header-right">
-            <!-- Search -->
-            <div class="header-search">
-                <form action="/dashboard" method="POST" class="search-form">
-                    @csrf
-                    <div class="search-input-wrapper">
-                        <i class="fa fa-search search-icon"></i>
-                        <input type="text" class="search-input" name="search" placeholder="Search everything..." autocomplete="off">
-                        <div class="search-scope" title="Choose what to search">
-                            <select name="scope" class="search-scope-select" aria-label="Search scope filter">
-                                <option value="all">Everything</option>
-                                <option value="projects">Projects</option>
-                                <option value="tasks">Tasks</option>
-                                <option value="team">Team Members</option>
-                                <option value="files">Documents</option>
-                            </select>
-                            <i class="fa fa-chevron-down search-scope-icon"></i>
-                        </div>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="header-actions">
-                <!-- Add New Button -->
-                <div class="header-dropdown">
-                    <button type="button" class="header-btn action-btn" data-toggle="dropdown">
-                        <i class="fa fa-plus"></i>
-                        <span class="btn-text">News</span>
-                    </button>
-                    <div class="dropdown-menu action-dropdown dropdown-menu-right">
-                        <h6 class="dropdown-header">Quick Actions</h6>
-                        <a class="dropdown-item" href="#">
-                            <i class="fa fa-project-diagram"></i> New Project
-                        </a>
-                        <a class="dropdown-item" href="#">
-                            <i class="fa fa-tasks"></i> New Task
-                        </a>
-                        <a class="dropdown-item" href="#">
-                            <i class="fa fa-users"></i> Add Team Member
-                        </a>
-                        <a class="dropdown-item" href="#">
-                            <i class="fa fa-file-invoice"></i> Create Invoice
-                        </a>
-                    </div>
-                </div>
-            </div>
-
             <!-- Notifications -->
             <div class="header-dropdown">
                 <button type="button" class="header-btn notification-btn" id="page-header-notifications" data-toggle="dropdown">
@@ -179,24 +132,19 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     }
 
     /* Header Container */
-    .wajenzi-header {
+    .wajenzi-header,
+    #page-header {
         background: linear-gradient(135deg, var(--wajenzi-gray-50) 0%, white 100%);
         height: 80px;
         border-bottom: 1px solid var(--wajenzi-gray-200);
         position: fixed !important;
         top: 0 !important;
-        left: 280px !important; /* Start after sidebar */
+        left: 0 !important;
         right: 0 !important;
         z-index: 1030 !important;
         box-shadow: var(--shadow-sm);
         backdrop-filter: blur(8px);
-        width: calc(100% - 280px) !important; /* Take remaining width after sidebar */
-    }
-
-    /* Specific override for page-header ID */
-    #page-header {
-        left: 190px !important;
-        width: calc(100% - 180px) !important;
+        width: 100% !important;
     }
 
     .content-header {
@@ -224,13 +172,6 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         align-items: center;
         gap: 1rem;
         flex-shrink: 0;
-        height: 100%;
-    }
-
-    .header-actions {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
         height: 100%;
     }
 
@@ -347,119 +288,6 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         color: var(--wajenzi-gray-600);
         font-weight: 500;
         line-height: 1.2;
-    }
-
-    /* Search Bar */
-    .header-search {
-        min-width: 320px;
-        max-width: 400px;
-        display: flex;
-        align-items: center;
-        height: 100%;
-    }
-
-    .search-form {
-        width: 100%;
-        height: 44px;
-        display: flex;
-        align-items: center;
-    }
-
-    .search-input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-        background: white;
-        border: 2px solid var(--wajenzi-gray-200);
-        border-radius: 12px;
-        transition: all 0.2s ease;
-        box-shadow: var(--shadow-sm);
-        height: 44px;
-        width: 100%;
-    }
-
-    .search-input-wrapper:focus-within {
-        border-color: var(--wajenzi-blue-primary);
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-    }
-
-    .search-icon {
-        color: var(--wajenzi-gray-600);
-        margin: 0 0.75rem;
-        font-size: 0.875rem;
-    }
-
-    .search-input {
-        border: none;
-        outline: none;
-        background: transparent;
-        flex: 1;
-        font-size: 0.875rem;
-        color: var(--wajenzi-gray-800);
-        padding: 0.75rem 0;
-        min-width: 0;
-    }
-
-    .search-input::placeholder {
-        color: var(--wajenzi-gray-600);
-    }
-
-    .search-scope {
-        border-left: 1px solid var(--wajenzi-gray-200);
-        padding-left: 0.75rem;
-        position: relative;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-
-    .search-scope-select {
-        border: none;
-        outline: none;
-        background: transparent;
-        color: var(--wajenzi-gray-600);
-        font-size: 0.75rem;
-        font-weight: 600;
-        padding: 0.5rem 0;
-        cursor: pointer;
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-    }
-
-    .search-scope-select:focus {
-        color: var(--wajenzi-blue-primary);
-    }
-
-    .search-scope-select:hover {
-        color: var(--wajenzi-blue-primary);
-    }
-
-    .search-scope-icon {
-        font-size: 0.625rem;
-        color: var(--wajenzi-gray-500);
-        pointer-events: none;
-        transition: color 0.2s ease;
-    }
-
-    .search-scope:hover .search-scope-icon {
-        color: var(--wajenzi-blue-primary);
-    }
-
-    /* Action Button */
-    .action-btn {
-        background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green) 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 0.75rem 1rem;
-        font-weight: 600;
-    }
-
-    .action-btn:hover {
-        background: linear-gradient(135deg, var(--wajenzi-blue-dark) 0%, var(--wajenzi-green-dark) 100%);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
     }
 
     /* Notification Button */
@@ -589,21 +417,6 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         margin: 0.5rem 0;
     }
 
-    /* Action Dropdown */
-    .action-dropdown {
-        min-width: 220px;
-    }
-
-    .action-dropdown .dropdown-item:hover {
-        background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green) 100%);
-        color: white;
-        transform: translateX(4px);
-    }
-
-    .action-dropdown .dropdown-item:hover i {
-        color: white;
-    }
-
     /* User Dropdown */
     .user-dropdown {
         min-width: 200px;
@@ -703,37 +516,16 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
 
     /* Responsive Design */
     @media (max-width: 1024px) {
-        .wajenzi-header,
-        #page-header {
-            left: 0 !important; /* Full width on smaller screens */
-            width: 100% !important;
-        }
-
         .content-header {
             padding: 0.875rem 1.5rem;
-        }
-
-        .header-search {
-            min-width: 250px;
-            max-width: 300px;
         }
 
         .page-title {
             font-size: 1.25rem;
         }
-
-        .search-scope {
-            display: none;
-        }
     }
 
     @media (max-width: 768px) {
-        .wajenzi-header,
-        #page-header {
-            left: 0 !important;
-            width: 100% !important;
-        }
-
         .content-header {
             padding: 0.75rem 1rem;
             gap: 1rem;
@@ -743,38 +535,20 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
             gap: 1rem;
         }
 
-        /* Keep page title visible but make it more compact */
         .page-title-section {
             flex: 1;
-            min-width: 0; /* Allow text to shrink */
+            min-width: 0;
         }
 
         .page-title {
-            font-size: 1.125rem; /* Slightly smaller */
+            font-size: 1.125rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .page-subtitle {
-            display: none; /* Hide subtitle on mobile to save space */
-        }
-
-        .header-search {
-            min-width: 200px;
-            max-width: 250px;
-        }
-
-        .search-form {
-            height: 40px;
-        }
-
-        .search-input-wrapper {
-            height: 40px;
-        }
-
-        .search-input::placeholder {
-            content: "Search...";
+            display: none;
         }
 
         .btn-text,
@@ -800,41 +574,13 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     }
 
     @media (max-width: 576px) {
-        .wajenzi-header,
-        #page-header {
-            left: 0 !important;
-            width: 100% !important;
-        }
-
         .content-header {
             padding: 0.625rem 0.75rem;
         }
 
-        .header-actions {
-            display: none;
-        }
-
-        /* Further optimize page title for very small screens */
         .page-title {
             font-size: 1rem;
-            max-width: 120px; /* Limit width to prevent overlap */
-        }
-
-        .header-search {
-            min-width: 150px;
-            max-width: 200px;
-        }
-
-        .search-form {
-            height: 36px;
-        }
-
-        .search-input-wrapper {
-            height: 36px;
-        }
-
-        .search-input::placeholder {
-            content: "Search";
+            max-width: 120px;
         }
 
         .header-right {

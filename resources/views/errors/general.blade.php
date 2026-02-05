@@ -65,7 +65,7 @@
     </style>
 </head>
 <body>
-<div class="container">
+<div class="container-fluid">
     <div class="error-icon">⚠️</div>
     <h1 class="error-title">{{ $title ?? 'Something went wrong' }}</h1>
 

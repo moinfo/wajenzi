@@ -76,7 +76,7 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container-fluid">
         <div class="header">
             <img src="{{ $message->embed(public_path('media/logo/wajenzilogo.png')) }}" alt="{{ config('app.name') }}" style="max-height: 80px; margin-bottom: 10px; display: block; margin-left: auto; margin-right: auto;">
             <div class="logo">{{ config('app.name') }}</div>

@@ -143,9 +143,7 @@
             background: linear-gradient(135deg, var(--wajenzi-gray-50) 0%, #f0f9ff 50%, #e0f2fe 100%);
             transition: margin-left 0.3s ease;
             width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            display: block;
             box-sizing: border-box;
             padding: 0;
             padding-bottom: 60px;
@@ -169,16 +167,23 @@
 
         .main-content {
             width: 100%;
-            margin: 0 auto;
-            /*padding: 2rem;*/
+            margin: 0;
+            padding: 1rem;
             box-sizing: border-box;
         }
 
-        /* Ensure centering works for ID selector */
+        /* Force full width for container-fluid */
+        .container-fluid {
+            width: 100% !important;
+            max-width: none !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            margin: 0 !important;
+        }
+
+        /* Ensure full width for main container */
         #main-container {
-            display: flex !important;
-            justify-content: center !important;
-            align-items: flex-start !important;
+            display: block !important;
             padding: 0 !important;
             box-sizing: border-box !important;
             margin-top: 80px !important; /* Space for fixed header */
@@ -226,7 +231,9 @@
             background: white;
             border-radius: 16px;
             box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-            margin-bottom: 2rem;
+            margin: 0 0 2rem 0 !important;
+            width: 100% !important;
+            max-width: none !important;
         }
 
         .block {
@@ -414,17 +421,15 @@
                 width: 100% !important;
                 padding: 0;
                 padding-bottom: 80px;
-                display: flex;
-                justify-content: center;
-                align-items: flex-start;
+                display: block;
                 overflow-y: auto !important;
                 height: calc(100vh - 80px);
             }
 
             .main-content {
                 width: 100%;
-                max-width: 800px;
-                margin: 0 auto;
+                max-width: none;
+                margin: 0;
                 padding: 1.5rem;
                 box-sizing: border-box;
             }
@@ -437,7 +442,7 @@
 
         @media (max-width: 768px) {
             .main-content {
-                max-width: 600px;
+                max-width: none;
                 padding: 1rem;
             }
 
@@ -471,7 +476,7 @@
             .main-content {
                 max-width: none;
                 padding: 0.75rem;
-                margin: 0 auto;
+                margin: 0;
             }
 
             .block-header {
@@ -555,7 +560,7 @@ MAIN CONTENT LAYOUT
     'main-content-boxed'                        Full width Main Content with a specific maximum width (screen width > 1200px)
     'main-content-narrow'                       Full width Main Content with a percentage width (screen width > 1200px)
 -->
-<div id="page-container" class="enable-cookies sidebar-o enable-page-overlay side-scroll page-header-modern main-content-narrow
+<div id="page-container" class="enable-cookies sidebar-o enable-page-overlay side-scroll page-header-modern
         {{$theme['header']['inverse'] ? 'page-header-inverse' : ''}}
         {{$theme['header']['fixed'] ? 'page-header-fixed' : ''}}
         {{$theme['sidebar']['inverse'] ? 'sidebar-inverse' : ''}}

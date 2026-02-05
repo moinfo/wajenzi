@@ -746,6 +746,9 @@
                     <div class="col-md-3">
                         <strong>Architect:</strong>
                         {{ $projectSchedule->assignedArchitect->name ?? 'Unassigned' }}
+                        <button type="button" class="btn btn-sm btn-outline-primary ml-2" data-toggle="modal" data-target="#changeArchitectModal" title="Change Architect">
+                            <i class="fa fa-exchange-alt"></i>
+                        </button>
                     </div>
                     <div class="col-md-3">
                         <strong>Start:</strong>
@@ -805,6 +808,50 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-success">Create Schedule</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Change Architect Modal -->
+    @if($projectSchedule)
+    <div class="modal fade" id="changeArchitectModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="{{ route('project-schedules.change-architect', $projectSchedule) }}" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fa fa-user-edit mr-2"></i>Change Assigned Architect</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-info mb-3">
+                            <strong>Current Architect:</strong> {{ $projectSchedule->assignedArchitect->name ?? 'Unassigned' }}
+                        </div>
+                        <div class="form-group">
+                            <label for="assigned_architect_id"><strong>Select New Architect</strong> <span class="text-danger">*</span></label>
+                            <select name="assigned_architect_id" id="assigned_architect_id" class="form-control" required>
+                                <option value="">-- Select Architect --</option>
+                                @php
+                                    $architects = \App\Models\User::whereHas('roles', function($q) {
+                                        $q->whereIn('name', ['Architect', 'Admin', 'Super Admin', 'Project Manager']);
+                                    })->orWhere('designation', 'like', '%architect%')->orderBy('name')->get();
+                                @endphp
+                                @foreach($architects as $architect)
+                                    <option value="{{ $architect->id }}" {{ $projectSchedule->assigned_architect_id == $architect->id ? 'selected' : '' }}>
+                                        {{ $architect->name }} ({{ $architect->designation ?? $architect->roles->first()->name ?? 'Staff' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">The new architect will be notified of this assignment.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa fa-save mr-1"></i>Change Architect</button>
                     </div>
                 </form>
             </div>
