@@ -26,6 +26,12 @@
                         <i class="fa fa-envelope"></i> Send Email
                     </button>
 
+                    @if($invoice->client->phone_number)
+                        <button type="button" class="btn btn-success" onclick="sendWhatsAppModal()">
+                            <i class="fa fa-whatsapp"></i> WhatsApp
+                        </button>
+                    @endif
+
                     @if(!$invoice->is_paid && $invoice->balance_amount > 0)
                         <button type="button" class="btn btn-warning" onclick="sendReminderModal()">
                             <i class="fa fa-bell"></i> Send Reminder
@@ -648,10 +654,158 @@ Best regards,
     </div>
 </div>
 
+<!-- WhatsApp Modal -->
+<div class="modal fade" id="whatsappModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fa fa-whatsapp"></i> Send Invoice via WhatsApp</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="shareModeBadge" class="alert alert-info mb-3" style="display: none;">
+                    <i class="fa fa-mobile"></i> <strong>Mobile detected:</strong> PDF will be attached directly to WhatsApp
+                </div>
+                <div id="shareModeDesktop" class="alert alert-secondary mb-3" style="display: none;">
+                    <i class="fa fa-desktop"></i> <strong>Desktop mode:</strong> PDF download link will be included in message
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="whatsappPhone" class="form-control"
+                           value="{{ $invoice->client->phone_number }}"
+                           placeholder="e.g., 255712345678">
+                    <small class="text-muted">Format: Country code + number (no + sign, spaces or dashes)</small>
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    @php
+    $shareToken = \App\Http\Controllers\Billing\InvoiceController::generateShareToken($invoice);
+    $publicPdfUrl = route('invoice.public', ['token' => $shareToken]);
+@endphp
+                    <textarea id="whatsappMessage" class="form-control" rows="8">Hello {{ $invoice->client->first_name }} {{ $invoice->client->last_name }},
+
+Please find your invoice details below:
+
+📄 Invoice #: {{ $invoice->document_number }}
+📅 Issue Date: {{ $invoice->issue_date->format('d/m/Y') }}
+@if($invoice->due_date)💳 Due Date: {{ $invoice->due_date->format('d/m/Y') }}
+@endif💰 Total Amount: {{ $invoice->currency_code }} {{ number_format($invoice->total_amount, 2) }}
+@if($invoice->balance_amount > 0)⚠️ Balance Due: {{ $invoice->currency_code }} {{ number_format($invoice->balance_amount, 2) }}
+@endif
+
+📥 Download PDF: {{ $publicPdfUrl }}
+
+Thank you for your business!
+
+Wajenzi Professional Co. Ltd</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="sendWhatsApp()">
+                    <i class="fa fa-whatsapp"></i> Open WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{--@push('scripts')--}}
 <script>
 function sendEmailModal() {
     $('#emailModal').modal('show');
+}
+
+function sendWhatsAppModal() {
+    // Detect if file sharing is supported
+    let canShareFiles = false;
+    try {
+        canShareFiles = navigator.canShare && navigator.canShare({ files: [new File([''], 'test.pdf', { type: 'application/pdf' })] });
+    } catch (e) {
+        canShareFiles = false;
+    }
+
+    // Show appropriate badge
+    document.getElementById('shareModeBadge').style.display = canShareFiles ? 'block' : 'none';
+    document.getElementById('shareModeDesktop').style.display = canShareFiles ? 'none' : 'block';
+
+    $('#whatsappModal').modal('show');
+}
+
+async function sendWhatsApp() {
+    let phone = document.getElementById('whatsappPhone').value;
+    let message = document.getElementById('whatsappMessage').value;
+    const btn = document.querySelector('#whatsappModal .btn-success');
+
+    // Clean phone number - remove spaces, dashes, and + sign
+    phone = phone.replace(/[\s\-\+\(\)]/g, '');
+
+    // If phone starts with 0, replace with Tanzania country code
+    if (phone.startsWith('0')) {
+        phone = '255' + phone.substring(1);
+    }
+
+    // Check if Web Share API with files is supported (mainly mobile devices)
+    let canShareFiles = false;
+    try {
+        canShareFiles = navigator.canShare && navigator.canShare({ files: [new File([''], 'test.pdf', { type: 'application/pdf' })] });
+    } catch (e) {
+        canShareFiles = false;
+    }
+
+    if (canShareFiles) {
+        try {
+            // Show loading state
+            btn.disabled = true;
+            btn.querySelector('i').className = 'fa fa-spinner fa-spin';
+
+            // Fetch the PDF using public URL
+            const pdfUrl = '{{ $publicPdfUrl }}';
+            const response = await fetch(pdfUrl);
+            const blob = await response.blob();
+
+            // Create file from blob
+            const file = new File([blob], 'Invoice-{{ $invoice->document_number }}.pdf', { type: 'application/pdf' });
+
+            // Share with file
+            await navigator.share({
+                title: 'Invoice {{ $invoice->document_number }}',
+                text: message,
+                files: [file]
+            });
+
+            // Close modal on success
+            $('#whatsappModal').modal('hide');
+
+        } catch (error) {
+            console.error('Share failed:', error);
+            if (error.name !== 'AbortError') {
+                // User didn't cancel, something went wrong - use fallback
+                fallbackWhatsAppShare(phone, message);
+            }
+        } finally {
+            // Reset button
+            btn.disabled = false;
+            btn.querySelector('i').className = 'fa fa-whatsapp';
+        }
+    } else {
+        // Desktop or unsupported browser - use link-based sharing
+        fallbackWhatsAppShare(phone, message);
+    }
+}
+
+function fallbackWhatsAppShare(phone, message) {
+    // Encode message for URL
+    const encodedMessage = encodeURIComponent(message);
+
+    // Create WhatsApp URL
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+
+    // Open in new tab
+    window.open(whatsappUrl, '_blank');
+
+    // Close modal
+    $('#whatsappModal').modal('hide');
 }
 
 function recordPaymentModal() {
