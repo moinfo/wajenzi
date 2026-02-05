@@ -105,7 +105,7 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
-                                                <a class="btn btn-sm btn-success" href="{{route('project_boq',['id' => $boq->id])}}">
+                                                <a class="btn btn-sm btn-success" href="{{route('project_boq.show',['id' => $boq->id])}}">
                                                     <i class="fa fa-eye"></i>
                                                 </a>
                                                 @can('Edit BOQ')
