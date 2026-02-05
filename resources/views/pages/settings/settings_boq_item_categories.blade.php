@@ -26,7 +26,7 @@
         }
     </style>
 
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <div class="content-heading">BOQ Item Categories
                 <div class="float-right">

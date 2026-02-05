@@ -2,7 +2,7 @@
 
 @section('content')
 
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <div class="content-heading">BOQ Templates
                 <div class="float-right">

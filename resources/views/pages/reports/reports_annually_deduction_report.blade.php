@@ -15,7 +15,7 @@
                 $total_employer = 0;
                 $total_total = 0;
     @endphp
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <div class="content-heading">Reports
             </div>

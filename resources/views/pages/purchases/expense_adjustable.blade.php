@@ -3,7 +3,7 @@
 
 @section('content')
 
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <div class="content-heading">Adjustment Expenses
                 <div class="float-right">

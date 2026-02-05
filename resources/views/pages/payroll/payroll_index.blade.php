@@ -85,7 +85,7 @@
          $payroll_records = $payroll_record->getCurrentPayroll($start_date,$end_date);
          $is_current_payroll_paid = \App\Models\Payroll::isCurrentPayrollPaid($start_date,$end_date);
      ?>
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <div class="content-heading">Payroll
                 <div class="float-right">
@@ -235,20 +235,26 @@
                                         $current_loan_deduction = 0;
                                     }
 
-                                    if($pension['nature'] == 'GROSS'){
+                                    if($pension && $pension['nature'] == 'GROSS'){
                                         $employer_pension_amount = $gross_pay * ($pension['employer_percentage']/100);
                                         $employee_pension_amount = $gross_pay * ($pension['employee_percentage']/100);
-                                    }else{
+                                    }elseif($pension){
                                         $employer_pension_amount = $basic_salary * ($pension['employer_percentage']/100);
                                         $employee_pension_amount = $basic_salary * ($pension['employee_percentage']/100);
+                                    }else{
+                                        $employer_pension_amount = 0;
+                                        $employee_pension_amount = 0;
                                     }
 
-                                    if($health['nature'] == 'GROSS'){
+                                    if($health && $health['nature'] == 'GROSS'){
                                         $employer_health_amount = $gross_pay * ($health['employer_percentage']/100);
                                         $employee_health_amount = $gross_pay * ($health['employee_percentage']/100);
-                                    }else{
+                                    }elseif($health){
                                         $employer_health_amount = $basic_salary * ($health['employer_percentage']/100);
                                         $employee_health_amount = $basic_salary * ($health['employee_percentage']/100);
+                                    }else{
+                                        $employer_health_amount = 0;
+                                        $employee_health_amount = 0;
                                     }
                                     $taxable = $gross_pay - ($employee_pension_amount+$employee_health_amount);
 
@@ -277,28 +283,34 @@
                                     $paye_amount = ($additional_amount + $employee_percentage* ($maximum_amount - $taxable));
 
 
-                                    if($wcf['nature'] == 'GROSS'){
+                                    if($wcf && $wcf['nature'] == 'GROSS'){
                                         $employer_wcf_amount = $gross_pay * ($wcf['employer_percentage']/100);
-                                    }elseif($wcf['nature'] == 'PAYE'){
+                                    }elseif($wcf && $wcf['nature'] == 'PAYE'){
                                         $employer_wcf_amount = $paye_amount * ($wcf['employer_percentage']/100);
-                                    } else{
+                                    }elseif($wcf){
                                         $employer_wcf_amount = $basic_salary * ($wcf['employer_percentage']/100);
+                                    }else{
+                                        $employer_wcf_amount = 0;
                                     }
 
-                                    if($sdl['nature'] == 'GROSS'){
+                                    if($sdl && $sdl['nature'] == 'GROSS'){
                                         $employer_sdl_amount = $gross_pay * ($sdl['employer_percentage']/100);
-                                    }elseif($wcf['nature'] == 'PAYE'){
+                                    }elseif($sdl && $sdl['nature'] == 'PAYE'){
                                         $employer_sdl_amount = $paye_amount * ($sdl['employer_percentage']/100);
-                                    } else{
+                                    }elseif($sdl){
                                         $employer_sdl_amount = $basic_salary * ($sdl['employer_percentage']/100);
+                                    }else{
+                                        $employer_sdl_amount = 0;
                                     }
 
-                                    if($heslb['nature'] == 'GROSS'){
+                                    if($heslb && $heslb['nature'] == 'GROSS'){
                                         $employee_heslb_amount = $gross_pay * ($heslb['employee_percentage']/100);
-                                    }elseif($wcf['nature'] == 'PAYE'){
+                                    }elseif($heslb && $heslb['nature'] == 'PAYE'){
                                         $employee_heslb_amount = $paye_amount * ($heslb['employee_percentage']/100);
-                                    } else{
+                                    }elseif($heslb){
                                         $employee_heslb_amount = $basic_salary * ($heslb['employee_percentage']/100);
+                                    }else{
+                                        $employee_heslb_amount = 0;
                                     }
 //                                    $net = $taxable - ($paye_amount+$employee_heslb_amount+$advance_salary+$current_loan_deduction);
                                     $net = $taxable - ($advance_salary+$current_loan_deduction);

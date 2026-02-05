@@ -7,7 +7,7 @@
     $end_date = $_POST['end_date'] ?? date('Y-m-t');
     ?>
     
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             @if($payroll)
                 @include('components.headed_paper_print', ['title' => 'PAYSLIP', 'subtitle' => date('F Y', strtotime($payroll->year.'-'.$payroll->month.'-01')), 'showPrintButton' => true])
