@@ -197,8 +197,16 @@ class MaterialInspection extends Model implements ApprovableModel
         }
 
         DB::transaction(function () {
-            // Get a valid material_id (required by FK constraint)
-            $materialId = \App\Models\ProjectMaterial::first()?->id ?? 1;
+            // Get or create a valid material (required by FK constraint)
+            $material = \App\Models\ProjectMaterial::first();
+            if (!$material) {
+                $material = \App\Models\ProjectMaterial::create([
+                    'name' => 'General Material',
+                    'description' => 'Default material for procurement',
+                    'unit' => 'pcs',
+                    'current_price' => 0,
+                ]);
+            }
 
             // Find or create inventory record
             $inventory = ProjectMaterialInventory::firstOrCreate(
@@ -207,7 +215,7 @@ class MaterialInspection extends Model implements ApprovableModel
                     'boq_item_id' => $this->boq_item_id,
                 ],
                 [
-                    'material_id' => $materialId,
+                    'material_id' => $material->id,
                     'quantity' => 0,
                     'quantity_used' => 0
                 ]
