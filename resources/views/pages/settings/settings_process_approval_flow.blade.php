@@ -1,7 +1,7 @@
 @extends('layouts.backend')
 
 @section('content')
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <!-- Page Header -->
             <div class="bg-white rounded shadow-sm p-4 mb-4">

@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
@@ -23,10 +25,43 @@ class Purchase extends Model implements ApprovableModel
 
     }
 
-    public function supplier() {
+    public function supplier(): BelongsTo
+    {
         return $this->belongsTo(Supplier::class);
     }
-    public $fillable = ['id', 'supplier_id','is_expense', 'item_id', 'tax_invoice', 'invoice_date', 'create_by_id', 'total_amount', 'amount_vat_exc', 'vat_amount', 'purchase_type', 'file', 'date', 'status','document_number'];
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function materialRequest(): BelongsTo
+    {
+        return $this->belongsTo(ProjectMaterialRequest::class, 'material_request_id');
+    }
+
+    public function quotationComparison(): BelongsTo
+    {
+        return $this->belongsTo(QuotationComparison::class, 'quotation_comparison_id');
+    }
+
+    public function purchaseItems(): HasMany
+    {
+        return $this->hasMany(PurchaseItem::class);
+    }
+
+    public function receivings(): HasMany
+    {
+        return $this->hasMany(SupplierReceiving::class);
+    }
+    public $fillable = [
+        'id', 'supplier_id', 'is_expense', 'item_id', 'tax_invoice', 'invoice_date',
+        'create_by_id', 'total_amount', 'amount_vat_exc', 'vat_amount', 'purchase_type',
+        'file', 'date', 'status', 'document_number',
+        // Procurement workflow fields
+        'project_id', 'material_request_id', 'quotation_comparison_id',
+        'expected_delivery_date', 'delivery_address', 'payment_terms', 'notes'
+    ];
 
     public function getAll($start_date, $end_date, $supplier_id = null, $purchase_type = null){
         $purchases = DB::table('purchases')
@@ -55,7 +90,80 @@ class Purchase extends Model implements ApprovableModel
         $this->status = 'APPROVED';
         $this->updated_at = now();
         $this->save();
+
+        // Update BOQ item quantities for purchase items
+        foreach ($this->purchaseItems as $item) {
+            $item->updateBoqItemQuantities();
+        }
+
         return true;
+    }
+
+    /**
+     * Create purchase from approved quotation comparison
+     *
+     * @param QuotationComparison $comparison
+     * @param int|null $userId Optional user ID (defaults to auth user)
+     * @return self|null
+     */
+    public static function createFromComparison(QuotationComparison $comparison, ?int $userId = null): ?self
+    {
+        if (!$comparison->isApproved() || !$comparison->selectedQuotation) {
+            return null;
+        }
+
+        $quotation = $comparison->selectedQuotation;
+        $request = $comparison->materialRequest;
+
+        // Get next ID (workaround for tables without proper auto_increment)
+        $nextId = (self::max('id') ?? 0) + 1;
+
+        // Use DB::table to bypass Eloquent events that trigger approval system
+        DB::table('purchases')->insert([
+            'id' => $nextId,
+            'project_id' => $request->project_id,
+            'material_request_id' => $request->id,
+            'quotation_comparison_id' => $comparison->id,
+            'supplier_id' => $quotation->supplier_id,
+            'total_amount' => $quotation->grand_total,
+            'amount_vat_exc' => $quotation->total_amount,
+            'vat_amount' => $quotation->vat_amount,
+            'invoice_date' => now(),
+            'date' => now(),
+            'payment_terms' => $quotation->payment_terms,
+            'expected_delivery_date' => now()->addDays($quotation->delivery_time_days ?? 7),
+            'status' => 'pending',
+            'create_by_id' => $userId ?? auth()->id() ?? 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $purchase = self::find($nextId);
+
+        // Create purchase item linked to BOQ
+        if ($request->boq_item_id) {
+            PurchaseItem::create([
+                'purchase_id' => $purchase->id,
+                'boq_item_id' => $request->boq_item_id,
+                'description' => $request->boqItem?->description ?? 'Material from request',
+                'unit' => $request->unit ?? $request->boqItem?->unit ?? 'pcs',
+                'quantity' => $quotation->quantity,
+                'unit_price' => $quotation->unit_price,
+                'total_price' => $quotation->total_amount
+            ]);
+        }
+
+        return $purchase;
+    }
+
+    public function isProjectPurchase(): bool
+    {
+        return $this->project_id !== null;
+    }
+
+    public function isProcurementLinked(): bool
+    {
+        return $this->material_request_id !== null;
     }
 
     public static function getTotalPurchases($end_date, $supplier_id = null, $purchase_type = null){

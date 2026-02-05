@@ -1,7 +1,7 @@
 @extends('layouts.backend')
 
 @section('content')
-<div class="main-container">
+<div class="container-fluid">
     <div class="content">
         <div class="content-heading d-flex justify-content-between align-items-center mb-3">
             <h2 class="flex-grow-1"><i class="fa fa-calendar-alt text-primary mr-2"></i> Project Schedules</h2>

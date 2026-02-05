@@ -17,20 +17,18 @@ class ProjectMaterialRequestController extends Controller
             return back();
         }
 
-        $requests = ProjectMaterialRequest::with(['project', 'material', 'requester'])->get();
+        $requests = ProjectMaterialRequest::with(['project', 'boqItem', 'requester'])->get();
         $projects = Project::all();
-        $materials = ProjectMaterial::all();
 
         $data = [
             'requests' => $requests,
             'projects' => $projects,
-            'materials' => $materials
         ];
         return view('pages.projects.project_material_requests')->with($data);
     }
 
     public function request($id, $document_type_id){
-        $request = ProjectMaterialRequest::where('id', $id)->first();
+        $request = ProjectMaterialRequest::with(['project', 'boqItem', 'requester', 'approver', 'quotations'])->where('id', $id)->first();
         $approvalStages = Approval::getApprovalStages($id, $document_type_id);
         $nextApproval = Approval::getNextApproval($id, $document_type_id);
         $approvalCompleted = Approval::isApprovalCompleted($id, $document_type_id);

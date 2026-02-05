@@ -166,6 +166,15 @@
                     <input type="file" name="file" class="form-control" id="chooseFile">
                 </div>
             </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label class="control-label" for="contractFile">Staff Contract (PDF)</label>
+                    <input type="file" name="contract" class="form-control" id="contractFile" accept=".pdf">
+                    @if($object->contract ?? null)
+                        <small class="text-success"><i class="fa fa-check"></i> Contract uploaded: <a href="{{ url($object->contract) }}" target="_blank">View Contract</a></small>
+                    @endif
+                </div>
+            </div>
 {{--            <div class="col-sm-6">--}}
 {{--                <div class="form-group">--}}
 {{--                    <label for="example-nf-password">Password</label>--}}

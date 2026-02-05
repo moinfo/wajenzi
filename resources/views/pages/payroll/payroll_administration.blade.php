@@ -15,9 +15,10 @@
     $document_id = \App\Classes\Utility::getLastId('Payroll')+1;
 
     ?>
-    <div class="main-container">
-        <div class="content">
-            <div class="content-heading">Payroll
+    <div class="wajenzi-dashboard">
+        <div class="container-fluid">
+            <div class="content-heading d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Payroll Administration</h2>
                 @php
 
                     $this_year = date('Y');
@@ -25,6 +26,9 @@
 
                 @endphp
                 <div class="float-right">
+                    <a href="{{ route('payroll_preview') }}" class="btn btn-md btn-info mr-2">
+                        <i class="fa fa-eye text-light">&nbsp;&nbsp;</i>Preview Current Payroll
+                    </a>
                     <div class='btn-group'>
                         <button type='button' class='btn btn-md btn-primary pull-left'
                                 onclick="loadFormModal('payroll_form', {className: 'Payroll'}, 'Payroll Preview', 'modal-xl');">
@@ -195,7 +199,7 @@
             </div>
         </div>
     </div>
-    </div>
+</div>
 
 @endsection
 

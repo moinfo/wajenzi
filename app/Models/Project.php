@@ -86,6 +86,14 @@ class Project extends Model implements ApprovableModel
     ];
 
     /**
+     * Alias for project_name to allow $project->name access
+     */
+    public function getNameAttribute(): ?string
+    {
+        return $this->project_name;
+    }
+
+    /**
      * Get planned duration in days
      */
     public function getPlannedDurationAttribute(): ?int

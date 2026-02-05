@@ -221,6 +221,33 @@ class AjaxController
                     $project_clients = ProjectClient::where('status','APPROVED')->get();
                     $projects = Project::where('status','APPROVED')->get();
                     $project_types = ProjectType::all();
+
+                    // Procurement workflow data
+                    $approved_material_requests = \App\Models\ProjectMaterialRequest::whereRaw('UPPER(status) = ?', ['APPROVED'])
+                        ->with(['project', 'boqItem'])
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+                    $project_boq_items = \App\Models\ProjectBoqItem::with(['boq.project'])->get();
+                    $construction_phases = \App\Models\ProjectConstructionPhase::orderBy('phase_name')->get();
+                    $item_categories = BoqItemCategory::orderBy('name')->get();
+                    $priorities = [
+                        ['id' => 'low', 'name' => 'Low'],
+                        ['id' => 'medium', 'name' => 'Medium'],
+                        ['id' => 'high', 'name' => 'High'],
+                        ['id' => 'urgent', 'name' => 'Urgent']
+                    ];
+                    $quotation_statuses = [
+                        ['id' => 'received', 'name' => 'Received'],
+                        ['id' => 'selected', 'name' => 'Selected'],
+                        ['id' => 'rejected', 'name' => 'Rejected']
+                    ];
+                    $overall_conditions = [
+                        ['id' => 'excellent', 'name' => 'Excellent'],
+                        ['id' => 'good', 'name' => 'Good'],
+                        ['id' => 'acceptable', 'name' => 'Acceptable'],
+                        ['id' => 'poor', 'name' => 'Poor'],
+                        ['id' => 'rejected', 'name' => 'Rejected']
+                    ];
                     $cost_categories = CostCategory::orderBy('name')->get();
                     $departments = Department::all();
                     $payroll_types = PayrollType::all();
@@ -313,6 +340,14 @@ class AjaxController
                             'supervisors' => $supervisors,
                             'expenses_categories' => $expenses_categories,
                             'financial_charge_categories' => $financial_charge_categories,
+                            // Procurement workflow data
+                            'approved_material_requests' => $approved_material_requests,
+                            'project_boq_items' => $project_boq_items,
+                            'construction_phases' => $construction_phases,
+                            'item_categories' => $item_categories,
+                            'priorities' => $priorities,
+                            'quotation_statuses' => $quotation_statuses,
+                            'overall_conditions' => $overall_conditions,
                         ];
                     $object = $request->has('className') ? ucfirst($request->input('className')) : null;
                     $metadata = $request->has('metadata') ? $request->input('metadata') : [];

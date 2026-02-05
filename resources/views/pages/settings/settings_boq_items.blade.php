@@ -23,7 +23,7 @@
         }
     </style>
 
-    <div class="main-container">
+    <div class="container-fluid">
         <div class="content">
             <div class="content-heading">BOQ Items
                 <div class="float-right">

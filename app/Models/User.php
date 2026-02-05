@@ -34,6 +34,7 @@ class User extends Authenticatable
         'designation',
         'profile',
         'file',
+        'contract',
         'department_id',
         'user_device_id',
         'attendance_type_id',
