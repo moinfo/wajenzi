@@ -343,6 +343,7 @@ class AjaxController
                             // Procurement workflow data
                             'approved_material_requests' => $approved_material_requests,
                             'project_boq_items' => $project_boq_items,
+                            'boq_sections' => \App\Models\ProjectBoqSection::orderBy('sort_order')->get(),
                             'construction_phases' => $construction_phases,
                             'item_categories' => $item_categories,
                             'priorities' => $priorities,
@@ -535,6 +536,14 @@ class AjaxController
                     $artisanId = $request->input('artisan_id');
                     $artisan = Supplier::artisans()->find($artisanId);
                     return response()->json($artisan);
+                    break;
+
+                case 'get_boq_sections':
+                    $boqId = $request->input('boq_id');
+                    $sections = \App\Models\ProjectBoqSection::where('boq_id', $boqId)
+                        ->orderBy('sort_order')
+                        ->get(['id', 'parent_id', 'name', 'sort_order']);
+                    return response()->json($sections);
                     break;
 
                 default:
