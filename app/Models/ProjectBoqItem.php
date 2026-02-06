@@ -16,13 +16,16 @@ class ProjectBoqItem extends Model
     protected $fillable = [
         'item_code',
         'boq_id',
+        'section_id',
         'category_id',
         'description',
+        'item_type',
         'specification',
         'quantity',
         'unit',
         'unit_price',
         'total_price',
+        'sort_order',
         'quantity_requested',
         'quantity_ordered',
         'quantity_received',
@@ -82,6 +85,26 @@ class ProjectBoqItem extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ItemCategory::class, 'category_id');
+    }
+
+    public function section(): BelongsTo
+    {
+        return $this->belongsTo(ProjectBoqSection::class, 'section_id');
+    }
+
+    public function scopeMaterials($query)
+    {
+        return $query->where('item_type', 'material');
+    }
+
+    public function scopeLabour($query)
+    {
+        return $query->where('item_type', 'labour');
+    }
+
+    public function scopeUnsectioned($query)
+    {
+        return $query->whereNull('section_id');
     }
 
     public function materialRequests(): HasMany

@@ -411,6 +411,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_boq/store', [App\Http\Controllers\ProjectBoqController::class, 'store'])->name('project_boq.store');
     Route::post('/project_boq/update/{id}', [App\Http\Controllers\ProjectBoqController::class, 'update'])->name('project_boq.update');
     Route::post('/project_boq/delete/{id}', [App\Http\Controllers\ProjectBoqController::class, 'destroy'])->name('project_boq.delete');
+    Route::get('/project_boqs/next-version', [App\Http\Controllers\ProjectBoqController::class, 'getNextVersion'])->name('project_boq.next_version');
+    Route::get('/project_boq/{id}/pdf', [App\Http\Controllers\ProjectBoqController::class, 'exportPdf'])->name('project_boq.pdf');
+    Route::get('/project_boq/{id}/csv', [App\Http\Controllers\ProjectBoqController::class, 'exportCsv'])->name('project_boq.csv');
+
+    // Project BOQ Sections Routes
+    Route::match(['get', 'post'], '/project_boq_sections', [App\Http\Controllers\ProjectBoqController::class, 'sections'])->name('project_boq_sections');
 
     // Project BOQ Items Routes
     Route::match(['get', 'post'], '/project_boq_items', [App\Http\Controllers\ProjectBoqItemController::class, 'index'])->name('project_boq_items');
