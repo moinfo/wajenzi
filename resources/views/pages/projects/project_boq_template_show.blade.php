@@ -8,6 +8,13 @@
                 {{ $template->name }}
                 <small class="text-muted">({{ ucfirst($template->type) }} Template)</small>
                 <div class="float-right">
+                    <a href="{{ route('project_boq_template.csv', $template->id) }}" class="btn btn-rounded min-width-125 mb-10 btn-alt-success">
+                        <i class="si si-cloud-download">&nbsp;</i>Export CSV
+                    </a>
+                    <button type="button" class="btn btn-rounded min-width-125 mb-10 btn-alt-warning"
+                        onclick="$('#csv-import-modal').modal('show');">
+                        <i class="si si-cloud-upload">&nbsp;</i>Import CSV
+                    </button>
                     <a href="{{ route('project_boq_templates') }}" class="btn btn-rounded min-width-125 mb-10 btn-alt-secondary">
                         <i class="si si-arrow-left">&nbsp;</i>Back to Templates
                     </a>
@@ -140,6 +147,44 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- CSV Import Modal --}}
+    <div class="modal fade" id="csv-import-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <form action="{{ route('project_boq_template.import_csv', $template->id) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="block block-themed block-transparent mb-0">
+                        <div class="block-header bg-primary">
+                            <h3 class="block-title">Import CSV</h3>
+                            <div class="block-options">
+                                <button type="button" class="btn-block-option" data-dismiss="modal"><i class="si si-close"></i></button>
+                            </div>
+                        </div>
+                        <div class="block-content">
+                            <div class="alert alert-warning" style="font-size: 12px;">
+                                <strong>Warning:</strong> This will <strong>replace all existing sections & items</strong> in this template with the contents of the CSV file.
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label">CSV File</label>
+                                <input type="file" name="csv_file" class="form-control" accept=".csv,.txt" required>
+                                <small class="text-muted">
+                                    Use the <strong>Export CSV</strong> button to get the correct format.
+                                    Columns: Section, Description, Type, Specification, Unit, Qty, Unit Price
+                                </small>
+                            </div>
+                        </div>
+                        <div class="block-content block-content-full text-right border-top">
+                            <button type="button" class="btn btn-alt-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-alt-warning">
+                                <i class="si si-cloud-upload">&nbsp;</i>Import & Replace
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

@@ -6,6 +6,9 @@
         <div class="content">
             <div class="content-heading">Project BOQs
                 <div class="float-right">
+                    <a href="{{ route('project_boq_templates') }}" class="btn btn-rounded min-width-125 mb-10 btn-alt-info">
+                        <i class="si si-layers">&nbsp;</i>BOQ Templates
+                    </a>
                     @can('Create BOQ')
                         <button type="button" onclick="loadFormModal('project_boq_form', {className: 'ProjectBoq'}, 'Create New BOQ', 'modal-md');" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn"><i class="si si-plus">&nbsp;</i>New BOQ</button>
                     @endcan

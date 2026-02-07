@@ -425,6 +425,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_boq/{id}/apply-template', [App\Http\Controllers\ProjectBoqController::class, 'applyTemplate'])->name('project_boq.apply_template');
     Route::get('/project_boq_template/{id}', [App\Http\Controllers\ProjectBoqController::class, 'showTemplate'])->name('project_boq_template.show');
     Route::delete('/project_boq_template/{id}', [App\Http\Controllers\ProjectBoqController::class, 'deleteTemplate'])->name('project_boq_template.delete');
+    Route::get('/project_boq_template/{id}/csv', [App\Http\Controllers\ProjectBoqController::class, 'exportTemplateCsv'])->name('project_boq_template.csv');
+    Route::post('/project_boq_template/{id}/import-csv', [App\Http\Controllers\ProjectBoqController::class, 'importTemplateCsv'])->name('project_boq_template.import_csv');
 
     // Project BOQ Items Routes
     Route::match(['get', 'post'], '/project_boq_items', [App\Http\Controllers\ProjectBoqItemController::class, 'index'])->name('project_boq_items');
