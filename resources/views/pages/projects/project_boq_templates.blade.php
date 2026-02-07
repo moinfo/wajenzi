@@ -7,6 +7,11 @@
             <div class="content-heading">BOQ Templates
                 <small class="text-muted">({{ $templates->count() }} templates)</small>
                 <div class="float-right">
+                    <button type="button"
+                        onclick="loadFormModal('boq_template_form', {className: 'ProjectBoqTemplate'}, 'Create New Template', 'modal-md');"
+                        class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
+                        <i class="si si-plus">&nbsp;</i>New Template
+                    </button>
                     <a href="{{ route('project_boqs') }}" class="btn btn-rounded min-width-125 mb-10 btn-alt-secondary">
                         <i class="si si-arrow-left">&nbsp;</i>Back to BOQs
                     </a>
@@ -84,7 +89,7 @@
                                 <i class="si si-layers fa-3x text-muted mb-10"></i>
                                 <p class="text-muted">No templates saved yet.</p>
                                 <p class="text-muted" style="font-size: 12px;">
-                                    Open any BOQ and click <strong>More > Save as Template</strong> to create one.
+                                    Click <strong>New Template</strong> to create one, or open a BOQ and use <strong>Templates > Save as Template</strong>.
                                 </p>
                             </div>
                         @endif

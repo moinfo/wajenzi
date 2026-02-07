@@ -200,96 +200,21 @@ class ProjectBoqController extends Controller
         ]);
 
         $boq = ProjectBoq::findOrFail($id);
+        $items = $this->parseCsvItems($request->file('csv_file')->getRealPath());
 
-        $csv = array_map('str_getcsv', file($request->file('csv_file')->getRealPath()));
-
-        // Remove BOM if present
-        if (!empty($csv[0][0])) {
-            $csv[0][0] = preg_replace('/^\x{FEFF}/u', '', $csv[0][0]);
-        }
-
-        // Find header row (look for "Section" column)
-        $headerIndex = null;
-        foreach ($csv as $i => $row) {
-            if (isset($row[0]) && strtolower(trim($row[0])) === 'section') {
-                $headerIndex = $i;
-                break;
-            }
-        }
-
-        if ($headerIndex === null) {
-            return back()->with('error', 'CSV must have a header row with "Section" column. Export a CSV first to see the format.');
-        }
-
-        $headers = array_map(fn($h) => strtolower(trim($h)), $csv[$headerIndex]);
-        $dataRows = array_slice($csv, $headerIndex + 1);
-
-        // Map column positions
-        $col = [
-            'section' => array_search('section', $headers),
-            'description' => array_search('description', $headers),
-            'type' => array_search('type', $headers),
-            'specification' => array_search('specification', $headers),
-            'unit' => array_search('unit', $headers),
-            'qty' => array_search('qty', $headers),
-            'unit_price' => array_search('unit price', $headers),
-        ];
-
-        if ($col['description'] === false || $col['qty'] === false || $col['unit_price'] === false) {
-            return back()->with('error', 'CSV must have at least: Description, Qty, Unit Price columns.');
-        }
-
-        // Parse items from CSV
-        $items = [];
-        foreach ($dataRows as $row) {
-            $description = trim($row[$col['description']] ?? '');
-            if ($description === '') continue; // skip empty rows
-
-            $items[] = [
-                'section_path' => trim($row[$col['section']] ?? ''),
-                'description' => $description,
-                'item_type' => strtolower(trim($row[$col['type']] ?? 'material')) ?: 'material',
-                'specification' => trim($row[$col['specification']] ?? '') ?: null,
-                'unit' => trim($row[$col['unit']] ?? '') ?: null,
-                'quantity' => (float) str_replace(',', '', $row[$col['qty']] ?? 0),
-                'unit_price' => (float) str_replace(',', '', $row[$col['unit_price']] ?? 0),
-            ];
-        }
-
-        if (empty($items)) {
-            return back()->with('error', 'No items found in CSV.');
+        if (is_string($items)) {
+            return back()->with('error', $items);
         }
 
         // Delete existing sections & items
         $boq->items()->delete();
         $boq->sections()->delete();
 
-        // Collect unique section paths and create sections
-        $sectionMap = []; // 'PARENT/CHILD' => section_id
-        $sortOrder = 0;
-
-        foreach ($items as $item) {
-            if ($item['section_path'] === '') continue;
-
-            $parts = array_map('trim', explode('/', $item['section_path']));
-            $currentPath = '';
-
-            foreach ($parts as $depth => $name) {
-                $currentPath = $depth === 0 ? $name : ($currentPath . '/' . $name);
-
-                if (!isset($sectionMap[$currentPath])) {
-                    $parentPath = $depth > 0 ? implode('/', array_slice($parts, 0, $depth)) : null;
-                    $parentId = $parentPath ? ($sectionMap[$parentPath] ?? null) : null;
-
-                    $section = $boq->sections()->create([
-                        'name' => $name,
-                        'parent_id' => $parentId,
-                        'sort_order' => $sortOrder++,
-                    ]);
-                    $sectionMap[$currentPath] = $section->id;
-                }
-            }
-        }
+        // Create sections
+        $sectionMap = $this->createSectionsFromPaths(
+            $items,
+            fn($data) => $boq->sections()->create($data)
+        );
 
         // Create items
         foreach ($items as $item) {
@@ -404,5 +329,200 @@ class ProjectBoqController extends Controller
     {
         ProjectBoqTemplate::findOrFail($id)->delete();
         return back()->with('success', 'Template deleted.');
+    }
+
+    /**
+     * Export a template as CSV (same flat format as BOQ export).
+     */
+    public function exportTemplateCsv($id)
+    {
+        $template = ProjectBoqTemplate::with([
+            'rootSections.items',
+            'rootSections.childrenRecursive.items',
+            'unsectionedItems',
+        ])->findOrFail($id);
+
+        $filename = 'Template-' . str_replace(' ', '_', $template->name) . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($template) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            fputcsv($file, ['Section', 'Description', 'Type', 'Specification', 'Unit', 'Qty', 'Unit Price']);
+
+            $this->writeCsvSectionFlat($file, $template->rootSections, '');
+
+            foreach ($template->unsectionedItems as $item) {
+                fputcsv($file, [
+                    '',
+                    $item->description,
+                    $item->item_type,
+                    $item->specification ?? '',
+                    $item->unit,
+                    $item->quantity,
+                    $item->unit_price,
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Import CSV into a template — replaces all existing sections & items.
+     */
+    public function importTemplateCsv(Request $request, $id)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $template = ProjectBoqTemplate::findOrFail($id);
+        $items = $this->parseCsvItems($request->file('csv_file')->getRealPath());
+
+        if (is_string($items)) {
+            return back()->with('error', $items);
+        }
+
+        // Delete existing
+        $template->items()->delete();
+        $template->sections()->delete();
+
+        // Create sections
+        $sectionMap = $this->createSectionsFromPaths(
+            $items,
+            fn($data) => $template->sections()->create($data)
+        );
+
+        // Create items
+        foreach ($items as $item) {
+            $sectionId = $item['section_path'] !== '' ? ($sectionMap[$item['section_path']] ?? null) : null;
+            $quantity = $item['quantity'];
+            $unitPrice = $item['unit_price'];
+
+            $template->items()->create([
+                'section_id' => $sectionId,
+                'description' => $item['description'],
+                'item_type' => in_array($item['item_type'], ['material', 'labour']) ? $item['item_type'] : 'material',
+                'specification' => $item['specification'],
+                'unit' => $item['unit'],
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'total_price' => $quantity * $unitPrice,
+                'sort_order' => 0,
+            ]);
+        }
+
+        // Update template total
+        $template->update([
+            'total_amount' => $template->items()->sum('total_price'),
+        ]);
+
+        return back()->with('success', count($items) . ' items imported successfully from CSV.');
+    }
+
+    /**
+     * Parse CSV file into an array of item data. Returns error string on failure.
+     */
+    private function parseCsvItems(string $filePath): array|string
+    {
+        $csv = array_map('str_getcsv', file($filePath));
+
+        if (!empty($csv[0][0])) {
+            $csv[0][0] = preg_replace('/^\x{FEFF}/u', '', $csv[0][0]);
+        }
+
+        $headerIndex = null;
+        foreach ($csv as $i => $row) {
+            if (isset($row[0]) && strtolower(trim($row[0])) === 'section') {
+                $headerIndex = $i;
+                break;
+            }
+        }
+
+        if ($headerIndex === null) {
+            return 'CSV must have a header row with "Section" column. Export a CSV first to see the format.';
+        }
+
+        $headers = array_map(fn($h) => strtolower(trim($h)), $csv[$headerIndex]);
+        $dataRows = array_slice($csv, $headerIndex + 1);
+
+        $col = [
+            'section' => array_search('section', $headers),
+            'description' => array_search('description', $headers),
+            'type' => array_search('type', $headers),
+            'specification' => array_search('specification', $headers),
+            'unit' => array_search('unit', $headers),
+            'qty' => array_search('qty', $headers),
+            'unit_price' => array_search('unit price', $headers),
+        ];
+
+        if ($col['description'] === false || $col['qty'] === false || $col['unit_price'] === false) {
+            return 'CSV must have at least: Description, Qty, Unit Price columns.';
+        }
+
+        $items = [];
+        foreach ($dataRows as $row) {
+            $description = trim($row[$col['description']] ?? '');
+            if ($description === '') continue;
+
+            $items[] = [
+                'section_path' => trim($row[$col['section']] ?? ''),
+                'description' => $description,
+                'item_type' => strtolower(trim($row[$col['type']] ?? 'material')) ?: 'material',
+                'specification' => trim($row[$col['specification']] ?? '') ?: null,
+                'unit' => trim($row[$col['unit']] ?? '') ?: null,
+                'quantity' => (float) str_replace(',', '', $row[$col['qty']] ?? 0),
+                'unit_price' => (float) str_replace(',', '', $row[$col['unit_price']] ?? 0),
+            ];
+        }
+
+        if (empty($items)) {
+            return 'No items found in CSV.';
+        }
+
+        return $items;
+    }
+
+    /**
+     * Create hierarchical sections from parsed CSV section paths.
+     * Returns map of 'SECTION/PATH' => section_id.
+     */
+    private function createSectionsFromPaths(array $items, \Closure $createFn): array
+    {
+        $sectionMap = [];
+        $sortOrder = 0;
+
+        foreach ($items as $item) {
+            if ($item['section_path'] === '') continue;
+
+            $parts = array_map('trim', explode('/', $item['section_path']));
+            $currentPath = '';
+
+            foreach ($parts as $depth => $name) {
+                $currentPath = $depth === 0 ? $name : ($currentPath . '/' . $name);
+
+                if (!isset($sectionMap[$currentPath])) {
+                    $parentPath = $depth > 0 ? implode('/', array_slice($parts, 0, $depth)) : null;
+                    $parentId = $parentPath ? ($sectionMap[$parentPath] ?? null) : null;
+
+                    $section = $createFn([
+                        'name' => $name,
+                        'parent_id' => $parentId,
+                        'sort_order' => $sortOrder++,
+                    ]);
+                    $sectionMap[$currentPath] = $section->id;
+                }
+            }
+        }
+
+        return $sectionMap;
     }
 }
