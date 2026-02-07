@@ -414,6 +414,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/project_boqs/next-version', [App\Http\Controllers\ProjectBoqController::class, 'getNextVersion'])->name('project_boq.next_version');
     Route::get('/project_boq/{id}/pdf', [App\Http\Controllers\ProjectBoqController::class, 'exportPdf'])->name('project_boq.pdf');
     Route::get('/project_boq/{id}/csv', [App\Http\Controllers\ProjectBoqController::class, 'exportCsv'])->name('project_boq.csv');
+    Route::post('/project_boq/{id}/import-csv', [App\Http\Controllers\ProjectBoqController::class, 'importCsv'])->name('project_boq.import_csv');
 
     // Project BOQ Sections Routes
     Route::match(['get', 'post'], '/project_boq_sections', [App\Http\Controllers\ProjectBoqController::class, 'sections'])->name('project_boq_sections');
