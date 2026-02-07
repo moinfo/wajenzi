@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\ProjectBoq;
 use App\Models\ProjectBoqItem;
 use App\Models\ProjectBoqSection;
+use App\Models\ProjectBoqTemplate;
 use App\Models\Approval;
 use Illuminate\Http\Request;
 use PDF;
@@ -135,53 +136,24 @@ class ProjectBoqController extends Controller
             // UTF-8 BOM for Excel compatibility
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            // Header info
-            fputcsv($file, ['BILL OF QUANTITIES']);
-            fputcsv($file, ['Project:', $boq->project->project_name ?? '', '', 'Version:', $boq->version]);
-            fputcsv($file, ['Type:', ucfirst($boq->type), '', 'Status:', ucfirst($boq->status)]);
-            fputcsv($file, ['Date:', now()->format('d/m/Y'), '', 'Items:', $boq->items->count()]);
-            fputcsv($file, []);
-
-            // Column headers
-            fputcsv($file, ['S/N', 'Item Code', 'Description', 'Type', 'Unit', 'Qty', 'Rate (TZS)', 'Amount (TZS)']);
+            // Column headers — flat editable format
+            fputcsv($file, ['Section', 'Description', 'Type', 'Specification', 'Unit', 'Qty', 'Unit Price']);
 
             // Write sections recursively
-            $counter = 0;
-            $this->writeCsvSection($file, $boq->rootSections, 0, $counter);
+            $this->writeCsvSectionFlat($file, $boq->rootSections, '');
 
             // Unsectioned items
-            if ($boq->unsectionedItems->count() > 0) {
-                if ($boq->rootSections->count() > 0) {
-                    fputcsv($file, ['', '', 'OTHER ITEMS', '', '', '', '', number_format($boq->unsectionedItems->sum('total_price'), 2)]);
-                }
-                foreach ($boq->unsectionedItems as $item) {
-                    $counter++;
-                    fputcsv($file, [
-                        $counter,
-                        $item->item_code,
-                        $item->description,
-                        ucfirst($item->item_type),
-                        $item->unit,
-                        number_format($item->quantity, 2),
-                        number_format($item->unit_price, 2),
-                        number_format($item->total_price, 2),
-                    ]);
-                }
-                fputcsv($file, ['', '', '', '', '', '', 'Subtotal - Other Items', number_format($boq->unsectionedItems->sum('total_price'), 2)]);
+            foreach ($boq->unsectionedItems as $item) {
+                fputcsv($file, [
+                    '',
+                    $item->description,
+                    $item->item_type,
+                    $item->specification ?? '',
+                    $item->unit,
+                    $item->quantity,
+                    $item->unit_price,
+                ]);
             }
-
-            // Grand total
-            fputcsv($file, []);
-            fputcsv($file, ['', '', '', '', '', '', 'GRAND TOTAL (TZS)', number_format($boq->total_amount, 2)]);
-
-            // Summary breakdown
-            $materialTotal = $boq->items()->where('item_type', 'material')->sum('total_price');
-            $labourTotal = $boq->items()->where('item_type', 'labour')->sum('total_price');
-            fputcsv($file, []);
-            fputcsv($file, ['', '', '', '', '', '', 'SUMMARY']);
-            fputcsv($file, ['', '', '', '', '', '', 'Total Materials (TZS)', number_format($materialTotal, 2)]);
-            fputcsv($file, ['', '', '', '', '', '', 'Total Labour (TZS)', number_format($labourTotal, 2)]);
-            fputcsv($file, ['', '', '', '', '', '', 'Grand Total (TZS)', number_format($boq->total_amount, 2)]);
 
             fclose($file);
         };
@@ -190,41 +162,157 @@ class ProjectBoqController extends Controller
     }
 
     /**
-     * Recursively write sections to CSV.
+     * Recursively write sections to CSV in flat format.
+     * Section path uses / for nesting: "PARENT/CHILD"
      */
-    private function writeCsvSection($file, $sections, $depth, &$counter)
+    private function writeCsvSectionFlat($file, $sections, string $parentPath)
     {
-        $indent = str_repeat('  ', $depth);
-
         foreach ($sections as $section) {
-            // Section header row with subtotal
-            fputcsv($file, ['', '', $indent . strtoupper($section->name), '', '', '', '', number_format($section->subtotal, 2)]);
+            $sectionPath = $parentPath ? ($parentPath . '/' . $section->name) : $section->name;
 
             // Items in this section
             foreach ($section->items as $item) {
-                $counter++;
                 fputcsv($file, [
-                    $counter,
-                    $item->item_code,
+                    $sectionPath,
                     $item->description,
-                    ucfirst($item->item_type),
+                    $item->item_type,
+                    $item->specification ?? '',
                     $item->unit,
-                    number_format($item->quantity, 2),
-                    number_format($item->unit_price, 2),
-                    number_format($item->total_price, 2),
+                    $item->quantity,
+                    $item->unit_price,
                 ]);
             }
 
             // Recurse into children
             if ($section->childrenRecursive->count() > 0) {
-                $this->writeCsvSection($file, $section->childrenRecursive, $depth + 1, $counter);
-            }
-
-            // Section subtotal (only if has content)
-            if ($section->items->count() > 0 || $section->childrenRecursive->count() > 0) {
-                fputcsv($file, ['', '', '', '', '', '', 'Subtotal - ' . $section->name, number_format($section->subtotal, 2)]);
+                $this->writeCsvSectionFlat($file, $section->childrenRecursive, $sectionPath);
             }
         }
+    }
+
+    /**
+     * Import BOQ items from CSV — replaces all existing sections & items.
+     */
+    public function importCsv(Request $request, $id)
+    {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $boq = ProjectBoq::findOrFail($id);
+
+        $csv = array_map('str_getcsv', file($request->file('csv_file')->getRealPath()));
+
+        // Remove BOM if present
+        if (!empty($csv[0][0])) {
+            $csv[0][0] = preg_replace('/^\x{FEFF}/u', '', $csv[0][0]);
+        }
+
+        // Find header row (look for "Section" column)
+        $headerIndex = null;
+        foreach ($csv as $i => $row) {
+            if (isset($row[0]) && strtolower(trim($row[0])) === 'section') {
+                $headerIndex = $i;
+                break;
+            }
+        }
+
+        if ($headerIndex === null) {
+            return back()->with('error', 'CSV must have a header row with "Section" column. Export a CSV first to see the format.');
+        }
+
+        $headers = array_map(fn($h) => strtolower(trim($h)), $csv[$headerIndex]);
+        $dataRows = array_slice($csv, $headerIndex + 1);
+
+        // Map column positions
+        $col = [
+            'section' => array_search('section', $headers),
+            'description' => array_search('description', $headers),
+            'type' => array_search('type', $headers),
+            'specification' => array_search('specification', $headers),
+            'unit' => array_search('unit', $headers),
+            'qty' => array_search('qty', $headers),
+            'unit_price' => array_search('unit price', $headers),
+        ];
+
+        if ($col['description'] === false || $col['qty'] === false || $col['unit_price'] === false) {
+            return back()->with('error', 'CSV must have at least: Description, Qty, Unit Price columns.');
+        }
+
+        // Parse items from CSV
+        $items = [];
+        foreach ($dataRows as $row) {
+            $description = trim($row[$col['description']] ?? '');
+            if ($description === '') continue; // skip empty rows
+
+            $items[] = [
+                'section_path' => trim($row[$col['section']] ?? ''),
+                'description' => $description,
+                'item_type' => strtolower(trim($row[$col['type']] ?? 'material')) ?: 'material',
+                'specification' => trim($row[$col['specification']] ?? '') ?: null,
+                'unit' => trim($row[$col['unit']] ?? '') ?: null,
+                'quantity' => (float) str_replace(',', '', $row[$col['qty']] ?? 0),
+                'unit_price' => (float) str_replace(',', '', $row[$col['unit_price']] ?? 0),
+            ];
+        }
+
+        if (empty($items)) {
+            return back()->with('error', 'No items found in CSV.');
+        }
+
+        // Delete existing sections & items
+        $boq->items()->delete();
+        $boq->sections()->delete();
+
+        // Collect unique section paths and create sections
+        $sectionMap = []; // 'PARENT/CHILD' => section_id
+        $sortOrder = 0;
+
+        foreach ($items as $item) {
+            if ($item['section_path'] === '') continue;
+
+            $parts = array_map('trim', explode('/', $item['section_path']));
+            $currentPath = '';
+
+            foreach ($parts as $depth => $name) {
+                $currentPath = $depth === 0 ? $name : ($currentPath . '/' . $name);
+
+                if (!isset($sectionMap[$currentPath])) {
+                    $parentPath = $depth > 0 ? implode('/', array_slice($parts, 0, $depth)) : null;
+                    $parentId = $parentPath ? ($sectionMap[$parentPath] ?? null) : null;
+
+                    $section = $boq->sections()->create([
+                        'name' => $name,
+                        'parent_id' => $parentId,
+                        'sort_order' => $sortOrder++,
+                    ]);
+                    $sectionMap[$currentPath] = $section->id;
+                }
+            }
+        }
+
+        // Create items
+        foreach ($items as $item) {
+            $sectionId = $item['section_path'] !== '' ? ($sectionMap[$item['section_path']] ?? null) : null;
+            $quantity = $item['quantity'];
+            $unitPrice = $item['unit_price'];
+
+            $boq->items()->create([
+                'section_id' => $sectionId,
+                'description' => $item['description'],
+                'item_type' => in_array($item['item_type'], ['material', 'labour']) ? $item['item_type'] : 'material',
+                'specification' => $item['specification'],
+                'unit' => $item['unit'],
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'total_price' => $quantity * $unitPrice,
+                'sort_order' => 0,
+            ]);
+        }
+
+        $boq->recalculateTotals();
+
+        return back()->with('success', count($items) . ' items imported successfully from CSV.');
     }
 
     /**
@@ -237,5 +325,84 @@ class ProjectBoqController extends Controller
         }
 
         return back();
+    }
+
+    /**
+     * List and manage BOQ templates.
+     */
+    public function templates(Request $request)
+    {
+        if ($this->handleCrud($request, 'ProjectBoqTemplate')) {
+            return back();
+        }
+
+        $templates = ProjectBoqTemplate::with(['sourceBoq.project', 'creator'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('pages.projects.project_boq_templates')->with(['templates' => $templates]);
+    }
+
+    /**
+     * Show a single template with all sections and items.
+     */
+    public function showTemplate($id)
+    {
+        $template = ProjectBoqTemplate::with([
+            'sourceBoq.project',
+            'creator',
+            'rootSections.items',
+            'rootSections.childrenRecursive.items',
+            'unsectionedItems',
+        ])->findOrFail($id);
+
+        return view('pages.projects.project_boq_template_show')->with(['template' => $template]);
+    }
+
+    /**
+     * Save an existing BOQ as a reusable template.
+     */
+    public function saveAsTemplate(Request $request, $id)
+    {
+        $request->validate([
+            'template_name' => 'required|string|max:255',
+            'template_description' => 'nullable|string',
+        ]);
+
+        $boq = ProjectBoq::findOrFail($id);
+
+        ProjectBoqTemplate::createFromBoq(
+            $boq,
+            $request->template_name,
+            $request->template_description
+        );
+
+        return back()->with('success', 'BOQ saved as template successfully.');
+    }
+
+    /**
+     * Apply a template to an existing BOQ (clones sections + items).
+     */
+    public function applyTemplate(Request $request, $id)
+    {
+        $request->validate([
+            'template_id' => 'required|exists:project_boq_templates,id',
+        ]);
+
+        $boq = ProjectBoq::findOrFail($id);
+        $template = ProjectBoqTemplate::findOrFail($request->template_id);
+
+        $template->applyToBoq($boq);
+
+        return back()->with('success', 'Template applied successfully.');
+    }
+
+    /**
+     * Delete a BOQ template.
+     */
+    public function deleteTemplate($id)
+    {
+        ProjectBoqTemplate::findOrFail($id)->delete();
+        return back()->with('success', 'Template deleted.');
     }
 }

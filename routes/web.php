@@ -418,6 +418,13 @@ Route::middleware(['auth'])->group(function () {
     // Project BOQ Sections Routes
     Route::match(['get', 'post'], '/project_boq_sections', [App\Http\Controllers\ProjectBoqController::class, 'sections'])->name('project_boq_sections');
 
+    // Project BOQ Templates
+    Route::match(['get', 'post'], '/project_boq_templates', [App\Http\Controllers\ProjectBoqController::class, 'templates'])->name('project_boq_templates');
+    Route::post('/project_boq/{id}/save-template', [App\Http\Controllers\ProjectBoqController::class, 'saveAsTemplate'])->name('project_boq.save_template');
+    Route::post('/project_boq/{id}/apply-template', [App\Http\Controllers\ProjectBoqController::class, 'applyTemplate'])->name('project_boq.apply_template');
+    Route::get('/project_boq_template/{id}', [App\Http\Controllers\ProjectBoqController::class, 'showTemplate'])->name('project_boq_template.show');
+    Route::delete('/project_boq_template/{id}', [App\Http\Controllers\ProjectBoqController::class, 'deleteTemplate'])->name('project_boq_template.delete');
+
     // Project BOQ Items Routes
     Route::match(['get', 'post'], '/project_boq_items', [App\Http\Controllers\ProjectBoqItemController::class, 'index'])->name('project_boq_items');
     Route::match(['get', 'post'], '/project_boq_item/create', [App\Http\Controllers\ProjectBoqItemController::class, 'create'])->name('project_boq_item.create');

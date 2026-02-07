@@ -26,6 +26,25 @@
                     <a href="{{ route('project_boq.csv', $boq->id) }}" class="btn btn-rounded min-width-125 mb-10 btn-alt-success">
                         <i class="si si-cloud-download">&nbsp;</i>CSV
                     </a>
+                    <div class="btn-group mb-10">
+                        <button type="button" class="btn btn-rounded btn-alt-secondary dropdown-toggle" data-toggle="dropdown">
+                            <i class="si si-layers">&nbsp;</i>Templates
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right">
+                            <a class="dropdown-item" href="javascript:void(0)"
+                                onclick="loadFormModal('boq_save_template_form', {className: 'ProjectBoq', boq_id: {{ $boq->id }}, id: {{ $boq->id }}}, 'Save BOQ as Template', 'modal-md');">
+                                <i class="si si-layers text-info">&nbsp;</i>Save as Template
+                            </a>
+                            <a class="dropdown-item" href="javascript:void(0)"
+                                onclick="loadFormModal('boq_apply_template_form', {className: 'ProjectBoq', boq_id: {{ $boq->id }}, id: {{ $boq->id }}}, 'Apply Template to BOQ', 'modal-md');">
+                                <i class="si si-cloud-upload text-primary">&nbsp;</i>Apply Template
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ route('project_boq_templates') }}">
+                                <i class="si si-folder text-muted">&nbsp;</i>View All Templates
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
