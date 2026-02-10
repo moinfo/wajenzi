@@ -22,6 +22,12 @@
                         <i class="fa fa-download"></i> PDF
                     </a>
 
+                    @if($invoice->is_paid)
+                        <a href="{{ route('billing.invoices.receipt', $invoice) }}" class="btn btn-success" target="_blank">
+                            <i class="fa fa-file-text"></i> Receipt
+                        </a>
+                    @endif
+
                     <button type="button" class="btn btn-info" onclick="sendEmailModal()">
                         <i class="fa fa-envelope"></i> Send Email
                     </button>

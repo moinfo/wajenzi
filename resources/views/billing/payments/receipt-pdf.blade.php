@@ -1,3 +1,35 @@
+@php
+    if (!function_exists('numberToWords')) {
+        function numberToWords($number) {
+            $ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+                     'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+                     'Seventeen', 'Eighteen', 'Nineteen'];
+            $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+            $number = (float) $number;
+            $whole = (int) floor($number);
+            $cents = round(($number - $whole) * 100);
+
+            if ($whole === 0) return 'Zero';
+
+            $convert = function($n) use (&$convert, $ones, $tens) {
+                if ($n < 20) return $ones[$n];
+                if ($n < 100) return $tens[(int)($n / 10)] . ($n % 10 ? ' ' . $ones[$n % 10] : '');
+                if ($n < 1000) return $ones[(int)($n / 100)] . ' Hundred' . ($n % 100 ? ' and ' . $convert($n % 100) : '');
+                if ($n < 1000000) return $convert((int)($n / 1000)) . ' Thousand' . ($n % 1000 ? ' ' . $convert($n % 1000) : '');
+                if ($n < 1000000000) return $convert((int)($n / 1000000)) . ' Million' . ($n % 1000000 ? ' ' . $convert($n % 1000000) : '');
+                return $convert((int)($n / 1000000000)) . ' Billion' . ($n % 1000000000 ? ' ' . $convert($n % 1000000000) : '');
+            };
+
+            $result = $convert($whole);
+            if ($cents > 0) {
+                $result .= ' and ' . $convert($cents) . ' Cents';
+            }
+            return $result;
+        }
+    }
+    $currency = $payment->document->currency_code ?? 'TZS';
+@endphp
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,224 +39,269 @@
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
-            line-height: 1.4;
+            line-height: 1.5;
             margin: 0;
             padding: 20px;
+            color: #333;
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 20px;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #28a745;
+            padding-bottom: 15px;
         }
         .company-name {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
             color: #333;
+            margin-top: 8px;
         }
         .company-details {
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
-            margin-top: 5px;
+            margin-top: 4px;
         }
-        .receipt-title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
+        .receipt-banner {
+            background-color: #28a745;
+            color: white;
             text-align: center;
+            padding: 12px 0;
+            margin-bottom: 20px;
+        }
+        .receipt-banner h1 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 3px;
+        }
+        .receipt-banner .receipt-no {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        .two-col {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .two-col td {
+            vertical-align: top;
+            padding: 0;
+        }
+        .info-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 12px 15px;
+            margin: 0 3px;
+        }
+        .info-box .box-title {
+            font-size: 11px;
+            font-weight: bold;
+            color: #28a745;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 5px;
+        }
+        .info-box table td {
+            padding: 2px 0;
+            font-size: 12px;
+        }
+        .info-box table td:first-child {
+            color: #666;
+            width: 100px;
+        }
+        .amount-highlight {
+            background-color: #28a745;
+            color: white;
+            text-align: center;
+            padding: 15px;
             margin: 20px 0;
         }
-        .receipt-number {
-            font-size: 16px;
+        .amount-highlight .label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.9;
+        }
+        .amount-highlight .amount {
+            font-size: 28px;
             font-weight: bold;
-            color: #666;
-            text-align: center;
-            margin-bottom: 30px;
+            margin: 5px 0;
         }
-        .details-table {
-            width: 100%;
-            margin-bottom: 30px;
-        }
-        .details-table td {
-            vertical-align: top;
-            padding: 10px 0;
-        }
-        .client-details {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .payment-details {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-        }
-        .section-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 10px;
+        .amount-words {
+            background-color: #f0f9f4;
+            border-left: 4px solid #28a745;
+            padding: 10px 15px;
+            margin: 15px 0;
+            font-style: italic;
+            font-size: 12px;
         }
         .invoice-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            margin: 15px 0;
         }
         .invoice-table th {
-            background-color: #333;
+            background-color: #343a40;
             color: white;
-            padding: 12px 8px;
+            padding: 10px 8px;
             text-align: left;
-            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .invoice-table td {
             padding: 10px 8px;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 12px;
         }
-        .invoice-table .text-right {
-            text-align: right;
+        .invoice-table .text-right { text-align: right; }
+        .invoice-table .highlight {
+            background-color: #d4edda;
+            font-weight: bold;
         }
-        .invoice-table .text-center {
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .balance-box {
             text-align: center;
-        }
-        .amount-paid {
-            background-color: #28a745;
-            color: white;
+            padding: 12px;
+            margin: 15px 0;
             font-weight: bold;
             font-size: 14px;
         }
-        .amount-words {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-            font-style: italic;
-        }
-        .signatures {
-            margin-top: 50px;
-        }
-        .signature-line {
-            border-top: 1px solid #333;
-            width: 200px;
-            margin-top: 40px;
-            text-align: center;
-        }
-        .signature-title {
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        .signature-name {
-            color: #666;
-            font-size: 11px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status-completed { background-color: #28a745; color: white; }
-        .status-pending { background-color: #ffc107; color: black; }
-        .status-voided { background-color: #dc3545; color: white; }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ddd;
-            font-size: 10px;
-            color: #666;
-        }
-        .balance-info {
+        .balance-outstanding {
             background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
-            text-align: center;
+            border: 2px solid #ffc107;
+            color: #856404;
         }
         .balance-paid {
             background-color: #d4edda;
-            border: 1px solid #c3e6cb;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .notes-box {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 10px 15px;
+            margin: 15px 0;
+            font-size: 12px;
+        }
+        .signatures {
+            margin-top: 40px;
+        }
+        .signature-cell {
+            text-align: center;
+            vertical-align: bottom;
+            width: 50%;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 180px;
+            margin: 0 auto;
+            padding-top: 8px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 2px solid #28a745;
+            font-size: 10px;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <!-- Header -->
     <div class="header">
-        <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="{{ config('app.name') }}" style="max-height: 60px; margin-bottom: 10px;">
+        <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="{{ config('app.name') }}" style="max-height: 55px; margin-bottom: 5px;">
         <div class="company-name">{{ config('app.name') }}</div>
         <div class="company-details">
             PSSSF COMMERCIAL COMPLEX, SAM NUJOMA ROAD, DSM-TANZANIA<br>
             P. O. Box 14492, Dar es Salaam Tanzania<br>
-            Phone: +255 793 444 400 | Email: billing@wajenziprofessional.co.tz<br>
-            TIN: 154-867-805
+            Phone: +255 793 444 400 | Email: billing@wajenziprofessional.co.tz | TIN: 154-867-805
         </div>
     </div>
 
-    <!-- Receipt Title -->
-    <div class="receipt-title">PAYMENT RECEIPT</div>
-    <div class="receipt-number">Receipt No: {{ $payment->payment_number }}</div>
-
-    <!-- Payment Status -->
-    <div style="text-align: center; margin-bottom: 30px;">
-        <span class="status-badge status-{{ $payment->status }}">
-            {{ ucfirst($payment->status) }}
-        </span>
+    <!-- Receipt Banner -->
+    <div class="receipt-banner">
+        <h1>PAYMENT RECEIPT</h1>
+        <div class="receipt-no">{{ $payment->payment_number }}</div>
     </div>
 
-    <!-- Payment and Client Details -->
-    <table class="details-table">
+    <!-- Client & Payment Details -->
+    <table class="two-col">
         <tr>
-            <td width="50%">
-                <div class="client-details">
-                    <div class="section-title">RECEIVED FROM:</div>
-                    <strong>{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</strong><br>
+            <td width="48%">
+                <div class="info-box">
+                    <div class="box-title">Received From</div>
+                    <strong style="font-size: 14px;">{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</strong><br>
                     @if($payment->document->client->address)
                         {{ $payment->document->client->address }}<br>
                     @endif
                     @if($payment->document->client->phone_number)
-                        <strong>Phone:</strong> {{ $payment->document->client->phone_number }}<br>
+                        Phone: {{ $payment->document->client->phone_number }}<br>
                     @endif
                     @if($payment->document->client->email)
-                        <strong>Email:</strong> {{ $payment->document->client->email }}<br>
+                        Email: {{ $payment->document->client->email }}<br>
                     @endif
                     @if($payment->document->client->identification_number)
-                        <strong>ID:</strong> {{ $payment->document->client->identification_number }}
+                        ID: {{ $payment->document->client->identification_number }}
                     @endif
                 </div>
             </td>
-            <td width="50%">
-                <div class="payment-details">
-                    <div class="section-title">PAYMENT DETAILS:</div>
-                    <table style="width: 100%; font-size: 12px;">
+            <td width="4%"></td>
+            <td width="48%">
+                <div class="info-box">
+                    <div class="box-title">Payment Details</div>
+                    <table style="width: 100%;">
                         <tr>
-                            <td><strong>Receipt No:</strong></td>
-                            <td>{{ $payment->payment_number }}</td>
+                            <td>Receipt No:</td>
+                            <td><strong>{{ $payment->payment_number }}</strong></td>
                         </tr>
                         <tr>
-                            <td><strong>Date:</strong></td>
-                            <td>{{ $payment->payment_date->format('d/m/Y') }}</td>
+                            <td>Date:</td>
+                            <td><strong>{{ $payment->payment_date->format('d/m/Y') }}</strong></td>
                         </tr>
                         <tr>
-                            <td><strong>Time:</strong></td>
+                            <td>Time:</td>
                             <td>{{ $payment->created_at->format('H:i:s') }}</td>
                         </tr>
                         <tr>
-                            <td><strong>Method:</strong></td>
-                            <td>{{ ucwords(str_replace('_', ' ', $payment->payment_method)) }}</td>
+                            <td>Method:</td>
+                            <td><strong>{{ ucwords(str_replace('_', ' ', $payment->payment_method)) }}</strong></td>
                         </tr>
                         @if($payment->reference_number)
                             <tr>
-                                <td><strong>Reference:</strong></td>
+                                <td>Reference:</td>
                                 <td>{{ $payment->reference_number }}</td>
                             </tr>
                         @endif
+                        @if($payment->bank_name)
+                            <tr>
+                                <td>Bank:</td>
+                                <td>{{ $payment->bank_name }}</td>
+                            </tr>
+                        @endif
+                        @if($payment->cheque_number)
+                            <tr>
+                                <td>Cheque No:</td>
+                                <td>{{ $payment->cheque_number }}</td>
+                            </tr>
+                        @endif
+                        @if($payment->transaction_id)
+                            <tr>
+                                <td>Transaction:</td>
+                                <td>{{ $payment->transaction_id }}</td>
+                            </tr>
+                        @endif
                         <tr>
-                            <td><strong>Received By:</strong></td>
+                            <td>Received By:</td>
                             <td>{{ $payment->receiver->name ?? 'System' }}</td>
                         </tr>
                     </table>
@@ -233,87 +310,91 @@
         </tr>
     </table>
 
+    <!-- Amount Highlight -->
+    <div class="amount-highlight">
+        <div class="label">Amount Received</div>
+        <div class="amount">{{ $currency }} {{ number_format($payment->amount, 2) }}</div>
+    </div>
+
+    <!-- Amount in Words -->
+    <div class="amount-words">
+        <strong>Amount in Words:</strong> {{ numberToWords($payment->amount) }} {{ $currency }} Only
+    </div>
+
     <!-- Invoice Payment Breakdown -->
-    <div class="section-title">PAYMENT FOR:</div>
+    <div class="section-title">Payment For</div>
     <table class="invoice-table">
         <thead>
             <tr>
-                <th width="20%">Invoice Number</th>
-                <th width="15%">Invoice Date</th>
-                <th width="15%" class="text-right">Invoice Amount</th>
-                <th width="15%" class="text-right">Previous Paid</th>
-                <th width="15%" class="text-right">This Payment</th>
-                <th width="20%" class="text-right">Balance</th>
+                <th>Invoice Number</th>
+                <th>Invoice Date</th>
+                <th class="text-right">Invoice Amount</th>
+                <th class="text-right">Previously Paid</th>
+                <th class="text-right">This Payment</th>
+                <th class="text-right">Balance</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>{{ $payment->document->document_number }}</td>
+                <td><strong>{{ $payment->document->document_number }}</strong></td>
                 <td>{{ $payment->document->issue_date->format('d/m/Y') }}</td>
-                <td class="text-right">{{ $payment->document->currency_code ?? 'TZS' }} {{ number_format($payment->document->total_amount, 2) }}</td>
-                <td class="text-right">{{ $payment->document->currency_code ?? 'TZS' }} {{ number_format($payment->document->paid_amount - $payment->amount, 2) }}</td>
-                <td class="text-right amount-paid">{{ $payment->document->currency_code ?? 'TZS' }} {{ number_format($payment->amount, 2) }}</td>
-                <td class="text-right">{{ $payment->document->currency_code ?? 'TZS' }} {{ number_format($payment->document->balance_amount, 2) }}</td>
+                <td class="text-right">{{ $currency }} {{ number_format($payment->document->total_amount, 2) }}</td>
+                <td class="text-right">{{ $currency }} {{ number_format($payment->document->paid_amount - $payment->amount, 2) }}</td>
+                <td class="text-right highlight">{{ $currency }} {{ number_format($payment->amount, 2) }}</td>
+                <td class="text-right">{{ $currency }} {{ number_format($payment->document->balance_amount, 2) }}</td>
             </tr>
         </tbody>
     </table>
 
-    <!-- Amount in Words -->
-    <div class="amount-words">
-        <strong>Amount in Words:</strong><br>
-        <em>{{ ucfirst(\Illuminate\Support\Str::title(number_format($payment->amount, 2))) }} {{ $payment->document->currency_code ?? 'TZS' }} Only</em>
-    </div>
-
-    <!-- Notes -->
-    @if($payment->notes)
-        <div style="margin: 20px 0;">
-            <div class="section-title">NOTES:</div>
-            {{ $payment->notes }}
+    <!-- Balance Status -->
+    @if($payment->document->balance_amount > 0)
+        <div class="balance-box balance-outstanding">
+            OUTSTANDING BALANCE: {{ $currency }} {{ number_format($payment->document->balance_amount, 2) }}
+        </div>
+    @else
+        <div class="balance-box balance-paid">
+            INVOICE FULLY PAID
         </div>
     @endif
 
-    <!-- Balance Status -->
-    @if($payment->document->balance_amount > 0)
-        <div class="balance-info">
-            <strong>OUTSTANDING BALANCE: {{ $payment->document->currency_code ?? 'TZS' }} {{ number_format($payment->document->balance_amount, 2) }}</strong>
-        </div>
-    @else
-        <div class="balance-info balance-paid">
-            <strong>INVOICE FULLY PAID</strong>
+    <!-- Notes -->
+    @if($payment->notes)
+        <div class="notes-box">
+            <strong>Notes:</strong> {{ $payment->notes }}
         </div>
     @endif
 
     <!-- Signatures -->
     <table class="signatures" style="width: 100%;">
         <tr>
-            <td width="50%" style="text-align: center; vertical-align: bottom;">
-                <div style="height: 80px; margin-bottom: 10px;">
+            <td class="signature-cell">
+                <div style="height: 70px;">
                     <!-- Space for customer signature -->
                 </div>
                 <div class="signature-line">
-                    <div class="signature-title">Customer Signature</div>
-                    <div class="signature-name">{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</div>
+                    <strong>Customer Signature</strong><br>
+                    <small style="color: #666;">{{ $payment->document->client->first_name }} {{ $payment->document->client->last_name }}</small>
                 </div>
             </td>
-            <td width="50%" style="text-align: center; vertical-align: bottom;">
+            <td class="signature-cell">
                 @if($payment->is_receipt_signed && $payment->receiver_signature && file_exists(public_path($payment->receiver_signature)))
-                    <img src="{{ public_path($payment->receiver_signature) }}" 
-                         style="max-height: 60px; max-width: 150px; margin-bottom: 10px;"
+                    <img src="{{ public_path($payment->receiver_signature) }}"
+                         style="max-height: 55px; max-width: 140px; margin-bottom: 5px;"
                          alt="Receiver Signature">
                 @else
-                    <div style="height: 60px; margin-bottom: 10px;">
+                    <div style="height: 55px;">
                         <!-- Signature placeholder -->
                     </div>
                 @endif
                 <div class="signature-line">
-                    <div class="signature-title">Received By</div>
-                    <div class="signature-name">
-                        <strong>{{ $payment->receiver->name ?? 'System' }}</strong><br>
-                        <small>{{ $payment->receiver->designation ?? 'Cashier' }}</small>
+                    <strong>Received By</strong><br>
+                    <small style="color: #666;">
+                        {{ $payment->receiver->name ?? 'System' }}<br>
+                        {{ $payment->receiver->designation ?? 'Cashier' }}
                         @if($payment->receipt_signed_at)
-                            <br><small>{{ $payment->receipt_signed_at->format('d/m/Y H:i') }}</small>
+                            <br>{{ $payment->receipt_signed_at->format('d/m/Y H:i') }}
                         @endif
-                    </div>
+                    </small>
                 </div>
             </td>
         </tr>
@@ -322,12 +403,11 @@
     <!-- Footer -->
     <div class="footer">
         <strong>Thank you for your payment!</strong><br>
-        Receipt generated on {{ now()->format('d/m/Y H:i:s') }} | Original Receipt<br>
+        Receipt generated on {{ now()->format('d/m/Y H:i:s') }}
         @if($payment->is_receipt_signed)
-            Digitally signed receipt verified on {{ $payment->receipt_signed_at->format('d/m/Y H:i:s') }}
-        @else
-            This is a computer-generated receipt.
+            | Digitally signed on {{ $payment->receipt_signed_at->format('d/m/Y H:i:s') }}
         @endif
+        <br>This is a computer-generated receipt.
     </div>
 </body>
 </html>

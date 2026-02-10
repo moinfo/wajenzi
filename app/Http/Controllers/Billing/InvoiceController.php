@@ -294,6 +294,23 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Generate receipt PDF for a fully paid invoice.
+     */
+    public function generateReceipt(BillingDocument $invoice)
+    {
+        if (!$invoice->is_paid) {
+            return redirect()->route('billing.invoices.show', $invoice)
+                ->with('error', 'Receipt can only be generated for fully paid invoices.');
+        }
+
+        $invoice->load(['client', 'items', 'payments.receiver', 'creator']);
+
+        $pdf = PDF::loadView('billing.invoices.receipt-pdf', compact('invoice'));
+
+        return $pdf->download('receipt-' . $invoice->document_number . '.pdf');
+    }
+
+    /**
      * Generate a share token for the invoice.
      */
     public static function generateShareToken(BillingDocument $invoice): string
