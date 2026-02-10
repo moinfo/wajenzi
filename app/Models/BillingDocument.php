@@ -151,8 +151,9 @@ class BillingDocument extends Model
 
     public function calculateTotals()
     {
+        // Subtotal is sum of pre-tax line totals
         $subtotal = $this->items->sum('line_total');
-        
+
         // Calculate discount
         $discountAmount = 0;
         if ($this->discount_type === 'percentage' && $this->discount_value > 0) {
@@ -160,13 +161,12 @@ class BillingDocument extends Model
         } elseif ($this->discount_type === 'fixed' && $this->discount_value > 0) {
             $discountAmount = $this->discount_value;
         }
-        
-        // Calculate tax (on subtotal after discount)
-        $taxableAmount = $subtotal - $discountAmount;
+
+        // Tax is sum of per-item tax amounts
         $taxAmount = $this->items->sum('tax_amount');
-        
-        // Calculate total
-        $total = $taxableAmount + $taxAmount + $this->shipping_amount;
+
+        // Total = subtotal - discount + tax + shipping
+        $total = $subtotal - $discountAmount + $taxAmount + $this->shipping_amount;
         
         // Update the document
         $this->update([

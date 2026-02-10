@@ -73,9 +73,9 @@ class BillingDocumentItem extends Model
             $taxAmount = ($taxableAmount * $this->tax_percentage) / 100;
         }
         
-        // Calculate line total
-        $lineTotal = $taxableAmount + $taxAmount;
-        
+        // Line total is the pre-tax amount (tax is added at document level)
+        $lineTotal = $taxableAmount;
+
         // Update the item
         $this->update([
             'discount_amount' => $discountAmount,
@@ -116,10 +116,10 @@ class BillingDocumentItem extends Model
                 $taxAmount = ($taxableAmount * $item->tax_percentage) / 100;
             }
             
-            // Set calculated values
+            // Set calculated values (line_total is pre-tax, tax added at document level)
             $item->discount_amount = $discountAmount;
             $item->tax_amount = $taxAmount;
-            $item->line_total = $taxableAmount + $taxAmount;
+            $item->line_total = $taxableAmount;
         });
         
         static::saved(function ($item) {
