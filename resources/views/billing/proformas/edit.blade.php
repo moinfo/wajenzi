@@ -385,9 +385,9 @@ function calculateRow(itemId) {
     
     const subtotal = quantity * unitPrice;
     const taxAmount = subtotal * (taxPercentage / 100);
-    const total = subtotal + taxAmount;
-    
-    document.querySelector(`input[name="items[${itemId}][line_total]"]`).value = total.toFixed(2);
+
+    // line_total is pre-tax amount (tax is added at document level)
+    document.querySelector(`input[name="items[${itemId}][line_total]"]`).value = subtotal.toFixed(2);
     
     calculateTotals();
 }
