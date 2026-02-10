@@ -693,6 +693,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('invoices/status/refunded', [App\Http\Controllers\Billing\InvoiceController::class, 'refunded'])->name('invoices.refunded');
         Route::post('invoices/{invoice}/payment', [App\Http\Controllers\Billing\InvoiceController::class, 'recordPayment'])->name('invoices.payment');
         Route::get('invoices/{invoice}/pdf', [App\Http\Controllers\Billing\InvoiceController::class, 'generatePDF'])->name('invoices.pdf');
+        Route::get('invoices/{invoice}/receipt', [App\Http\Controllers\Billing\InvoiceController::class, 'generateReceipt'])->name('invoices.receipt');
         Route::post('invoices/{invoice}/send-email', [App\Http\Controllers\Billing\InvoiceController::class, 'sendEmail'])->name('invoices.send-email');
         Route::get('invoices/{invoice}/duplicate', [App\Http\Controllers\Billing\InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
         Route::post('invoices/{invoice}/void', [App\Http\Controllers\Billing\InvoiceController::class, 'void'])->name('invoices.void');
