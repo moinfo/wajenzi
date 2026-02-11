@@ -415,6 +415,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/project_boq/{id}/pdf', [App\Http\Controllers\ProjectBoqController::class, 'exportPdf'])->name('project_boq.pdf');
     Route::get('/project_boq/{id}/csv', [App\Http\Controllers\ProjectBoqController::class, 'exportCsv'])->name('project_boq.csv');
     Route::post('/project_boq/{id}/import-csv', [App\Http\Controllers\ProjectBoqController::class, 'importCsv'])->name('project_boq.import_csv');
+    Route::match(['get', 'post'], '/project_boq/{id}/{document_type_id}', [App\Http\Controllers\ProjectBoqController::class, 'boq'])->name('project_boq');
 
     // Project BOQ Sections Routes
     Route::match(['get', 'post'], '/project_boq_sections', [App\Http\Controllers\ProjectBoqController::class, 'sections'])->name('project_boq_sections');
@@ -582,6 +583,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_material_request/store', [App\Http\Controllers\ProjectMaterialRequestController::class, 'store'])->name('project_material_request.store');
     Route::post('/project_material_request/update/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'update'])->name('project_material_request.update');
     Route::post('/project_material_request/delete/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'destroy'])->name('project_material_request.delete');
+    Route::post('/project_material_request/bulk/{project_id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'storeBulk'])->name('project_material_request.bulk');
     Route::match(['get', 'post'], '/project_material_request/{id}/{document_type_id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'request'])->name('project_material_request');
 
 // Procurement - Supplier Quotations Routes
