@@ -72,8 +72,7 @@
                             <thead>
                                 <tr style="background: #fafafa;">
                                     <th style="padding: 6px 10px;">Request No.</th>
-                                    <th style="padding: 6px 10px;">BOQ Item</th>
-                                    <th class="text-right" style="padding: 6px 10px;">Qty</th>
+                                    <th style="padding: 6px 10px;">Items</th>
                                     <th style="padding: 6px 10px;">Priority</th>
                                     <th style="padding: 6px 10px;">Requester</th>
                                     <th style="padding: 6px 10px;">Date</th>
@@ -85,8 +84,14 @@
                                 @foreach($pendingRequests as $req)
                                     <tr>
                                         <td style="padding: 5px 10px;" class="font-w600">{{ $req->request_number }}</td>
-                                        <td style="padding: 5px 10px;">{{ $req->boqItem->item_code ?? '-' }} — {{ Str::limit($req->boqItem->description ?? '', 30) }}</td>
-                                        <td style="padding: 5px 10px;" class="text-right">{{ number_format($req->quantity_requested, 2) }} {{ $req->unit }}</td>
+                                        <td style="padding: 5px 10px;">
+                                            @foreach($req->items as $rItem)
+                                                <div style="font-size: 11px;">
+                                                    {{ $rItem->boqItem->item_code ?? '-' }} — {{ Str::limit($rItem->boqItem->description ?? $rItem->description ?? '', 25) }}
+                                                    <span class="text-muted">({{ number_format($rItem->quantity_requested, 1) }} {{ $rItem->unit }})</span>
+                                                </div>
+                                            @endforeach
+                                        </td>
                                         <td style="padding: 5px 10px;">
                                             @php $pColors = ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger']; @endphp
                                             <span class="badge badge-{{ $pColors[$req->priority] ?? 'secondary' }}">{{ ucfirst($req->priority) }}</span>
@@ -126,9 +131,14 @@
                     </div>
                     <div class="block-content block-content-full">
                         <div class="table-responsive">
-                            <table class="table table-bordered table-vcenter table-sm" style="font-size: 12px;">
+                            <table class="table table-bordered table-vcenter table-sm" id="boq-items-table" style="font-size: 12px;">
                                 <thead>
                                     <tr style="background-color: #4a9ad4; color: #fff;">
+                                        <th class="text-center" style="width: 35px; padding: 6px;">
+                                            @can('Add Material Request')
+                                                <input type="checkbox" id="select-all-materials" title="Select all material items">
+                                            @endcan
+                                        </th>
                                         <th class="text-center" style="width: 90px; padding: 6px;">Item Code</th>
                                         <th style="padding: 6px;">Description</th>
                                         <th class="text-right" style="width: 80px; padding: 6px;">Qty</th>
@@ -149,11 +159,28 @@
                                     @if($boq->unsectionedItems->count() > 0)
                                         @if($boq->rootSections->count() > 0)
                                             <tr style="background-color: rgba(108, 117, 125, 0.1);">
-                                                <td colspan="8" style="padding: 5px 8px; font-weight: bold;">Unsectioned Items</td>
+                                                <td colspan="9" style="padding: 5px 8px; font-weight: bold;">Unsectioned Items</td>
                                             </tr>
                                         @endif
                                         @foreach($boq->unsectionedItems as $item)
                                             <tr id="boq-item-tr-{{ $item->id }}">
+                                                <td class="text-center" style="padding: 4px 6px;">
+                                                    @if($item->item_type == 'material')
+                                                        @can('Add Material Request')
+                                                            @if(in_array($item->id, $pendingBoqItemIds ?? []))
+                                                                <span class="badge badge-warning" style="font-size: 8px; padding: 2px 4px;" title="Has pending request">PENDING</span>
+                                                            @else
+                                                                <input type="checkbox" class="boq-item-checkbox" value="{{ $item->id }}"
+                                                                    data-code="{{ $item->item_code }}"
+                                                                    data-description="{{ $item->description }}"
+                                                                    data-qty="{{ $item->quantity }}"
+                                                                    data-requested="{{ $item->quantity_requested ?? 0 }}"
+                                                                    data-available="{{ $item->quantity_remaining }}"
+                                                                    data-unit="{{ $item->unit }}">
+                                                            @endif
+                                                        @endcan
+                                                    @endif
+                                                </td>
                                                 <td class="text-center" style="padding: 4px 6px; font-size: 11px; color: #888;">{{ $item->item_code }}</td>
                                                 <td style="padding: 4px 8px;">
                                                     {{ $item->description }}
@@ -181,15 +208,6 @@
                                                 <td class="text-right" style="padding: 4px 6px; font-weight: 500;">{{ number_format($item->total_price, 2) }}</td>
                                                 <td class="text-center" style="padding: 3px;">
                                                     <div class="btn-group btn-group-xs">
-                                                        @if($item->item_type == 'material')
-                                                            @can('Add Material Request')
-                                                                <button type="button"
-                                                                    onclick="loadFormModal('project_material_request_form', {className: 'ProjectMaterialRequest', boq_item_id: {{ $item->id }}, project_id: {{ $boq->project_id }}}, 'Request Material', 'modal-md');"
-                                                                    class="btn btn-xs btn-warning" title="Request Material">
-                                                                    <i class="fa fa-shopping-cart"></i>
-                                                                </button>
-                                                            @endcan
-                                                        @endif
                                                         @can('Edit BOQ Item')
                                                             <button type="button"
                                                                 onclick="loadFormModal('project_boq_item_form', {className: 'ProjectBoqItem', id: {{ $item->id }}}, 'Edit Item', 'modal-md');"
@@ -212,6 +230,7 @@
                                 </tbody>
                                 <tfoot>
                                     <tr style="background-color: #333; color: #fff; font-weight: bold;">
+                                        <td></td>
                                         <td colspan="6" class="text-right" style="padding: 8px;">GRAND TOTAL:</td>
                                         <td class="text-right" style="padding: 8px; font-size: 13px;">{{ number_format($boq->total_amount, 2) }}</td>
                                         <td></td>
@@ -221,6 +240,110 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Approval Flow Card --}}
+    <div class="block" style="border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1px solid rgba(0,0,0,0.05); overflow: hidden;">
+        <div class="block-header block-header-default" style="background-color: #f8f9fa; border-bottom: 1px solid #e9ecef;">
+            <h3 class="block-title" style="color: #0066cc; font-weight: 600;">
+                <i class="fas fa-tasks" style="margin-right: 8px;"></i> Approval Flow
+            </h3>
+            <div class="block-options">
+                @php $approvalStatus = $boq->approvalStatus?->status ?? 'Pending'; @endphp
+                <span class="badge badge-{{ $approvalStatus === 'Approved' ? 'success' : ($approvalStatus === 'Rejected' ? 'danger' : 'info') }}" style="font-size: 0.9em; padding: 6px 12px;">
+                    {{ $approvalStatus }}
+                </span>
+            </div>
+        </div>
+        <div class="block-content" style="padding: 20px;">
+            <x-ringlesoft-approval-actions :model="$boq" />
+        </div>
+    </div>
+
+    {{-- Floating "Request Selected" button --}}
+    @can('Add Material Request')
+    <div id="bulk-request-bar" style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999;
+        background: #fff; border: 2px solid #f0ad4e; border-radius: 50px; padding: 10px 30px; box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+        text-align: center; white-space: nowrap;">
+        <button type="button" id="btn-request-selected" class="btn btn-warning" onclick="openBulkRequestModal()" style="border-radius: 25px; font-weight: 600;">
+            <i class="fa fa-shopping-cart"></i>&nbsp;
+            Request Selected (<span id="selected-count">0</span>)
+        </button>
+        <button type="button" class="btn btn-outline-secondary ml-2" onclick="clearSelection()" style="border-radius: 25px;">Clear</button>
+    </div>
+    @endcan
+
+    {{-- Bulk Material Request Modal --}}
+    <div class="modal fade" id="bulk-request-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <form method="POST" action="{{ route('project_material_request.bulk', ['project_id' => $boq->project_id]) }}" id="bulk-request-form">
+                    @csrf
+                    <input type="hidden" name="project_id" value="{{ $boq->project_id }}">
+                    <div class="block block-themed block-transparent mb-0">
+                        <div class="block-header bg-warning">
+                            <h3 class="block-title">Bulk Material Request</h3>
+                            <div class="block-options">
+                                <button type="button" class="btn-block-option" data-dismiss="modal"><i class="si si-close"></i></button>
+                            </div>
+                        </div>
+                        <div class="block-content">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered" style="font-size: 12px;">
+                                    <thead>
+                                        <tr style="background: #f8f9fa;">
+                                            <th style="padding: 6px;">Item Code</th>
+                                            <th style="padding: 6px;">Description</th>
+                                            <th class="text-right" style="padding: 6px;">BOQ Qty</th>
+                                            <th class="text-right" style="padding: 6px;">Available</th>
+                                            <th style="padding: 6px; width: 130px;">Request Qty</th>
+                                            <th style="padding: 6px; width: 70px;">Unit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bulk-items-body">
+                                        {{-- Populated by JS --}}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label required">Required Date</label>
+                                        <input type="text" class="form-control datepicker" name="required_date"
+                                            value="{{ date('Y-m-d', strtotime('+7 days')) }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label required">Priority</label>
+                                        <select name="priority" class="form-control" required>
+                                            <option value="low">Low</option>
+                                            <option value="medium" selected>Medium</option>
+                                            <option value="high">High</option>
+                                            <option value="urgent">Urgent</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label class="control-label">Purpose <small class="text-muted">(optional)</small></label>
+                                        <input type="text" class="form-control" name="purpose" placeholder="Brief reason">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="block-content block-content-full text-right border-top">
+                            <button type="button" class="btn btn-alt-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fa fa-shopping-cart">&nbsp;</i>Submit Request
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -262,4 +385,80 @@
             </div>
         </div>
     </div>
+
+@endsection
+
+@section('js_after')
+<script>
+    $(document).ready(function() {
+        // Track selected items and update floating bar
+        $(document).on('change', '.boq-item-checkbox', function() {
+            updateSelectionBar();
+        });
+
+        $('#select-all-materials').on('change', function() {
+            var checked = $(this).is(':checked');
+            $('.boq-item-checkbox').prop('checked', checked);
+            updateSelectionBar();
+        });
+    });
+
+    function updateSelectionBar() {
+        var count = $('.boq-item-checkbox:checked').length;
+        $('#selected-count').text(count);
+        if (count > 0) {
+            $('#bulk-request-bar').fadeIn(200);
+        } else {
+            $('#bulk-request-bar').fadeOut(200);
+            $('#select-all-materials').prop('checked', false);
+        }
+    }
+
+    function clearSelection() {
+        $('.boq-item-checkbox').prop('checked', false);
+        $('#select-all-materials').prop('checked', false);
+        updateSelectionBar();
+    }
+
+    function openBulkRequestModal() {
+        var $body = $('#bulk-items-body');
+        $body.empty();
+
+        $('.boq-item-checkbox:checked').each(function(i) {
+            var $cb = $(this);
+            var id = $cb.val();
+            var code = $cb.data('code');
+            var desc = $cb.data('description');
+            var qty = parseFloat($cb.data('qty'));
+            var available = parseFloat($cb.data('available'));
+            var unit = $cb.data('unit');
+
+            $body.append(
+                '<tr>' +
+                    '<td style="padding:5px 6px;">' + code + '</td>' +
+                    '<td style="padding:5px 6px;">' + desc + '</td>' +
+                    '<td class="text-right" style="padding:5px 6px;">' + qty.toFixed(2) + '</td>' +
+                    '<td class="text-right" style="padding:5px 6px;">' + available.toFixed(2) + '</td>' +
+                    '<td style="padding:5px 6px;">' +
+                        '<input type="hidden" name="items[' + i + '][boq_item_id]" value="' + id + '">' +
+                        '<input type="hidden" name="items[' + i + '][unit]" value="' + unit + '">' +
+                        '<input type="number" step="0.01" min="0.01" max="' + available.toFixed(2) + '" ' +
+                            'name="items[' + i + '][quantity_requested]" class="form-control form-control-sm" ' +
+                            'value="' + available.toFixed(2) + '" required style="font-size:12px;">' +
+                    '</td>' +
+                    '<td style="padding:5px 6px;">' + unit + '</td>' +
+                '</tr>'
+            );
+        });
+
+        $('#bulk-request-modal').modal('show');
+
+        // Init datepicker in modal
+        $('#bulk-request-modal .datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true
+        });
+    }
+</script>
 @endsection

@@ -50,7 +50,7 @@ class SupplierQuotationController extends Controller
             return back();
         }
 
-        $materialRequest = ProjectMaterialRequest::with(['project', 'boqItem', 'requester'])
+        $materialRequest = ProjectMaterialRequest::with(['project', 'items.boqItem', 'requester'])
             ->findOrFail($id);
 
         $quotations = SupplierQuotation::with(['supplier', 'createdBy'])
@@ -93,7 +93,7 @@ class SupplierQuotationController extends Controller
      */
     public function compare($materialRequestId)
     {
-        $materialRequest = ProjectMaterialRequest::with(['project', 'boqItem'])
+        $materialRequest = ProjectMaterialRequest::with(['project', 'items.boqItem'])
             ->findOrFail($materialRequestId);
 
         $quotations = SupplierQuotation::with('supplier')

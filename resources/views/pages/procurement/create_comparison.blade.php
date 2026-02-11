@@ -162,11 +162,13 @@
                     <div class="block-content">
                         <p><strong>Request #:</strong> {{ $materialRequest->request_number }}</p>
                         <p><strong>Project:</strong> {{ $materialRequest->project?->name ?? 'N/A' }}</p>
-                        <p><strong>Quantity:</strong> {{ number_format($materialRequest->quantity_requested, 2) }} {{ $materialRequest->unit }}</p>
+                        <p><strong>Items:</strong> {{ $materialRequest->items->count() }} item(s)</p>
                         <p><strong>Required:</strong> {{ $materialRequest->required_date?->format('Y-m-d') ?? 'N/A' }}</p>
-                        @if($materialRequest->boqItem)
-                        <p><strong>BOQ Item:</strong><br>
-                            <small>{{ $materialRequest->boqItem->description }}</small>
+                        @if($materialRequest->items->count() > 0)
+                        <p><strong>BOQ Items:</strong><br>
+                            @foreach($materialRequest->items as $mrItem)
+                                <small>{{ $mrItem->boqItem->item_code ?? '' }} - {{ $mrItem->boqItem->description ?? $mrItem->description ?? '' }} ({{ number_format($mrItem->quantity_requested, 2) }} {{ $mrItem->unit }})</small>@if(!$loop->last)<br>@endif
+                            @endforeach
                         </p>
                         @endif
                     </div>

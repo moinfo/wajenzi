@@ -38,19 +38,22 @@
                         {{ $materialRequest->project?->name ?? 'N/A' }}
                     </div>
                     <div class="col-md-3">
-                        <strong>Quantity Requested:</strong><br>
-                        {{ number_format($materialRequest->quantity_requested, 2) }} {{ $materialRequest->unit }}
+                        <strong>Items:</strong><br>
+                        {{ $materialRequest->items->count() }} item(s)
                     </div>
                     <div class="col-md-3">
                         <strong>Required Date:</strong><br>
                         {{ $materialRequest->required_date?->format('Y-m-d') ?? 'N/A' }}
                     </div>
                 </div>
-                @if($materialRequest->boqItem)
+                @if($materialRequest->items->count() > 0)
                 <div class="row mt-3">
                     <div class="col-md-12">
-                        <strong>BOQ Item:</strong><br>
-                        {{ $materialRequest->boqItem->item_code ?? '' }} - {{ $materialRequest->boqItem->description }}
+                        <strong>BOQ Items:</strong><br>
+                        @foreach($materialRequest->items as $mrItem)
+                            {{ $mrItem->boqItem->item_code ?? '' }} - {{ $mrItem->boqItem->description ?? $mrItem->description ?? '' }}
+                            ({{ number_format($mrItem->quantity_requested, 2) }} {{ $mrItem->unit }})@if(!$loop->last), @endif
+                        @endforeach
                     </div>
                 </div>
                 @endif

@@ -140,17 +140,19 @@ class Purchase extends Model implements ApprovableModel
 
         $purchase = self::find($nextId);
 
-        // Create purchase item linked to BOQ
-        if ($request->boq_item_id) {
-            PurchaseItem::create([
-                'purchase_id' => $purchase->id,
-                'boq_item_id' => $request->boq_item_id,
-                'description' => $request->boqItem?->description ?? 'Material from request',
-                'unit' => $request->unit ?? $request->boqItem?->unit ?? 'pcs',
-                'quantity' => $quotation->quantity,
-                'unit_price' => $quotation->unit_price,
-                'total_price' => $quotation->total_amount
-            ]);
+        // Create purchase items linked to BOQ (from request items)
+        foreach ($request->items as $mrItem) {
+            if ($mrItem->boq_item_id) {
+                PurchaseItem::create([
+                    'purchase_id' => $purchase->id,
+                    'boq_item_id' => $mrItem->boq_item_id,
+                    'description' => $mrItem->boqItem?->description ?? $mrItem->description ?? 'Material from request',
+                    'unit' => $mrItem->unit ?? $mrItem->boqItem?->unit ?? 'pcs',
+                    'quantity' => $mrItem->quantity_approved ?? $mrItem->quantity_requested,
+                    'unit_price' => $quotation->unit_price,
+                    'total_price' => ($mrItem->quantity_approved ?? $mrItem->quantity_requested) * $quotation->unit_price
+                ]);
+            }
         }
 
         return $purchase;

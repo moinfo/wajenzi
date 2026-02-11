@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Auth;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 
@@ -22,14 +24,9 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
     protected $fillable = [
         'request_number',
         'project_id',
-        'boq_item_id',
-        'construction_phase_id',
         'requester_id',
         'approved_by',
         'status',
-        'quantity_requested',
-        'quantity_approved',
-        'unit',
         'required_date',
         'purpose',
         'priority',
@@ -38,8 +35,6 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
     ];
 
     protected $casts = [
-        'quantity_requested' => 'decimal:2',
-        'quantity_approved' => 'decimal:2',
         'requested_date' => 'datetime',
         'approved_date' => 'datetime',
         'required_date' => 'date'
@@ -60,6 +55,18 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
             if (empty($model->requested_date)) {
                 $model->requested_date = now();
             }
+        });
+
+        // Replicate Approvable trait's created callback (trait boot is overridden)
+        static::created(static function ($model) {
+            if (method_exists($model, 'bypassApprovalProcess') && $model->bypassApprovalProcess()) {
+                return;
+            }
+            $model->approvalStatus()->create([
+                'steps' => $model->approvalFlowSteps()->map(fn($item) => $item->toApprovalStatusArray()),
+                'status' => ApprovalStatusEnum::SUBMITTED->value,
+                'creator_id' => Auth::id(),
+            ]);
         });
     }
 
@@ -107,14 +114,9 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    public function boqItem(): BelongsTo
+    public function items(): HasMany
     {
-        return $this->belongsTo(ProjectBoqItem::class, 'boq_item_id');
-    }
-
-    public function constructionPhase(): BelongsTo
-    {
-        return $this->belongsTo(ProjectConstructionPhase::class, 'construction_phase_id');
+        return $this->hasMany(ProjectMaterialRequestItem::class, 'material_request_id');
     }
 
     public function quotations(): HasMany
@@ -125,24 +127,6 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
     public function comparisons(): HasMany
     {
         return $this->hasMany(QuotationComparison::class, 'material_request_id');
-    }
-
-    // Validation helpers
-    public function getAvailableQuantityAttribute(): float
-    {
-        if (!$this->boqItem) {
-            return PHP_FLOAT_MAX;
-        }
-        return max(0, $this->boqItem->quantity - $this->boqItem->quantity_requested);
-    }
-
-    public function validateQuantity(): bool
-    {
-        if (!$this->boq_item_id) {
-            return true;
-        }
-
-        return $this->quantity_requested <= $this->available_quantity;
     }
 
     public function canBeQuoted(): bool
@@ -156,13 +140,17 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
         $this->status = 'APPROVED';
         $this->approved_date = now();
         $this->approved_by = auth()->id();
-        $this->quantity_approved = $this->quantity_approved ?? $this->quantity_requested;
         $this->save();
 
-        // Update BOQ item quantity requested
-        if ($this->boqItem) {
-            $this->boqItem->increment('quantity_requested', $this->quantity_approved);
-            $this->boqItem->updateProcurementStatus();
+        // Update each item's BOQ quantity
+        foreach ($this->items as $item) {
+            $approved = $item->quantity_approved ?? $item->quantity_requested;
+            $item->update(['quantity_approved' => $approved]);
+
+            if ($item->boqItem) {
+                $item->boqItem->increment('quantity_requested', $approved);
+                $item->boqItem->updateProcurementStatus();
+            }
         }
 
         return true;
@@ -188,5 +176,16 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
             'low' => 'secondary',
             default => 'secondary'
         };
+    }
+
+    public function getItemsCountAttribute(): int
+    {
+        return $this->items()->count();
+    }
+
+    public function getItemsSummaryAttribute(): string
+    {
+        $count = $this->items_count;
+        return $count . ' ' . ($count === 1 ? 'item' : 'items');
     }
 }
