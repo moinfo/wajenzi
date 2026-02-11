@@ -52,7 +52,7 @@ class QuotationComparisonController extends Controller
      */
     public function create($materialRequestId)
     {
-        $materialRequest = ProjectMaterialRequest::with(['project', 'boqItem', 'requester'])
+        $materialRequest = ProjectMaterialRequest::with(['project', 'items.boqItem', 'requester'])
             ->findOrFail($materialRequestId);
 
         // Check if already has pending/approved comparison
@@ -146,7 +146,7 @@ class QuotationComparisonController extends Controller
 
         $comparison = QuotationComparison::with([
             'materialRequest.project',
-            'materialRequest.boqItem',
+            'materialRequest.items.boqItem',
             'selectedQuotation.supplier',
             'preparedBy',
             'approvedBy'

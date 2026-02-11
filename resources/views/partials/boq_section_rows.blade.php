@@ -3,7 +3,7 @@
 
 {{-- Section header row --}}
 <tr style="background-color: rgba(52, 144, 220, {{ 0.10 + ($depth * 0.05) }});">
-    <td colspan="5" style="padding: 6px 8px 6px {{ 15 + ($depth * 20) }}px; font-weight: bold; font-size: 13px;">
+    <td colspan="7" style="padding: 6px 8px 6px {{ 15 + ($depth * 20) }}px; font-weight: bold; font-size: 13px;">
         {{ $section->name }}
         @if($section->description)
             <small class="text-muted"> — {{ $section->description }}</small>
@@ -47,6 +47,23 @@
 {{-- Items in this section --}}
 @foreach($section->items as $item)
     <tr id="boq-item-tr-{{ $item->id }}">
+        <td class="text-center" style="padding: 4px 6px; width: 35px;">
+            @if($item->item_type == 'material')
+                @can('Add Material Request')
+                    @if(in_array($item->id, $pendingBoqItemIds ?? []))
+                        <span class="badge badge-warning" style="font-size: 8px; padding: 2px 4px;" title="Has pending request">PENDING</span>
+                    @else
+                        <input type="checkbox" class="boq-item-checkbox" value="{{ $item->id }}"
+                            data-code="{{ $item->item_code }}"
+                            data-description="{{ $item->description }}"
+                            data-qty="{{ $item->quantity }}"
+                            data-requested="{{ $item->quantity_requested ?? 0 }}"
+                            data-available="{{ $item->quantity_remaining }}"
+                            data-unit="{{ $item->unit }}">
+                    @endif
+                @endcan
+            @endif
+        </td>
         <td class="text-center" style="padding: 4px 6px; font-size: 11px; color: #888;">{{ $item->item_code }}</td>
         <td style="padding: 4px 8px 4px {{ 15 + ($depth * 20) }}px;">
             {{ $item->description }}
@@ -56,6 +73,19 @@
             @endif
         </td>
         <td class="text-right" style="padding: 4px 6px;">{{ number_format($item->quantity, 2) }}</td>
+        <td class="text-center" style="padding: 4px 6px;">
+            @if($item->item_type == 'material')
+                @php
+                    $reqQty = $item->quantity_requested ?? 0;
+                    $totalQty = $item->quantity;
+                    $pct = $totalQty > 0 ? ($reqQty / $totalQty) * 100 : 0;
+                    $color = $pct >= 100 ? '#28a745' : ($pct > 0 ? '#f0ad4e' : '#adb5bd');
+                @endphp
+                <span style="color: {{ $color }}; font-size: 11px; font-weight: 500;" title="{{ number_format($reqQty, 2) }} of {{ number_format($totalQty, 2) }} requested">
+                    {{ number_format($reqQty, 1) }}/{{ number_format($totalQty, 1) }}
+                </span>
+            @endif
+        </td>
         <td style="padding: 4px 6px;">{{ $item->unit }}</td>
         <td class="text-right" style="padding: 4px 6px;">{{ number_format($item->unit_price, 2) }}</td>
         <td class="text-right" style="padding: 4px 6px; font-weight: 500;">{{ number_format($item->total_price, 2) }}</td>
@@ -88,7 +118,8 @@
 {{-- Section subtotal row --}}
 @if($section->items->count() > 0 || $section->childrenRecursive->count() > 0)
 <tr style="background-color: rgba(52, 144, 220, 0.05); border-top: 1px solid #ccc;">
-    <td colspan="5" class="text-right" style="padding: 4px 8px; font-weight: bold; font-size: 11px; color: #666;">
+    <td></td>
+    <td colspan="6" class="text-right" style="padding: 4px 8px; font-weight: bold; font-size: 11px; color: #666;">
         Subtotal — {{ $section->name }}:
     </td>
     <td class="text-right" style="padding: 4px 6px; font-weight: bold; font-size: 12px;">{{ number_format($section->subtotal, 2) }}</td>

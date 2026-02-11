@@ -67,11 +67,11 @@
                                     <th class="text-center" style="width: 80px;">#</th>
                                     <th>Request No.</th>
                                     <th>Project</th>
-                                    <th>BOQ Item</th>
-                                    <th class="text-right">Quantity</th>
+                                    <th>Items</th>
                                     <th>Priority</th>
                                     <th>Required Date</th>
-                                    <th>Status</th>
+                                    <th scope="col">Approvals</th>
+                                    <th scope="col">Status</th>
                                     <th>Requester</th>
                                     <th class="text-center" style="width: 120px;">Actions</th>
                                 </tr>
@@ -86,8 +86,16 @@
                                             </a>
                                         </td>
                                         <td>{{ $request->project->name ?? '-' }}</td>
-                                        <td>{{ $request->boqItem->item_code ?? ($request->material->name ?? '-') }}</td>
-                                        <td class="text-right">{{ number_format($request->quantity_requested, 2) }} {{ $request->unit }}</td>
+                                        <td>
+                                            @if($request->items->count() > 0)
+                                                <span class="badge badge-primary" style="font-size: 0.85em;">{{ $request->items->count() }} item(s)</span>
+                                                <div style="font-size: 11px; color: #666; margin-top: 2px;">
+                                                    {{ Str::limit($request->items->pluck('boqItem.item_code')->filter()->implode(', '), 40) }}
+                                                </div>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             @php
                                                 $priorityColors = [
@@ -102,18 +110,23 @@
                                             </span>
                                         </td>
                                         <td>{{ $request->required_date ? \Carbon\Carbon::parse($request->required_date)->format('d M Y') : '-' }}</td>
-                                        <td>
+                                        <td class="text-center">
+                                            <x-ringlesoft-approval-status-summary :model="$request" />
+                                        </td>
+                                        <td class="text-center">
                                             @php
-                                                $statusColors = [
-                                                    'pending' => 'warning',
-                                                    'APPROVED' => 'success',
-                                                    'approved' => 'success',
-                                                    'rejected' => 'danger',
-                                                    'completed' => 'primary'
-                                                ];
+                                                $approvalStatus = $request->approvalStatus?->status ?? 'Pending';
+                                                $statusClass = [
+                                                    'Pending' => 'warning',
+                                                    'Submitted' => 'info',
+                                                    'Approved' => 'success',
+                                                    'Rejected' => 'danger',
+                                                    'Completed' => 'primary',
+                                                    'Discarded' => 'danger',
+                                                ][$approvalStatus] ?? 'secondary';
                                             @endphp
-                                            <span class="badge badge-{{ $statusColors[$request->status] ?? 'secondary' }}">
-                                                {{ ucfirst($request->status) }}
+                                            <span class="badge badge-{{ $statusClass }} badge-pill" style="font-size: 0.9em; padding: 6px 10px;">
+                                                {{ $approvalStatus }}
                                             </span>
                                         </td>
                                         <td>{{ $request->requester->name ?? '-' }}</td>
@@ -127,15 +140,6 @@
                                                         <i class="fa fa-file-invoice-dollar"></i>
                                                     </a>
                                                 @endif
-                                                @can('Edit Material Request')
-                                                    @if($request->status === 'pending')
-                                                        <button type="button"
-                                                                onclick="loadFormModal('project_material_request_form', {className: 'ProjectMaterialRequest', id: {{$request->id}}}, 'Edit Request', 'modal-lg');"
-                                                                class="btn btn-sm btn-primary" title="Edit">
-                                                            <i class="fa fa-pencil"></i>
-                                                        </button>
-                                                    @endif
-                                                @endcan
                                                 @can('Delete Material Request')
                                                     @if($request->status === 'pending')
                                                         <button type="button"

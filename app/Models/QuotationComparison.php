@@ -191,9 +191,13 @@ class QuotationComparison extends Model implements ApprovableModel
             $this->selectedQuotation->markAsSelected();
         }
 
-        // Update BOQ item to show ordered status
-        if ($this->materialRequest && $this->materialRequest->boqItem) {
-            $this->materialRequest->boqItem->updateProcurementStatus();
+        // Update BOQ items to show ordered status
+        if ($this->materialRequest) {
+            foreach ($this->materialRequest->items as $mrItem) {
+                if ($mrItem->boqItem) {
+                    $mrItem->boqItem->updateProcurementStatus();
+                }
+            }
         }
 
         return true;

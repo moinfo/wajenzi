@@ -107,12 +107,13 @@
                                 </span>
                             </div>
                         </div>
-                        @if($receiving->purchase?->materialRequest?->boqItem)
+                        @if($receiving->purchase?->materialRequest?->items?->count() > 0)
                         <div class="row mt-3">
                             <div class="col-md-12">
-                                <strong>BOQ Item:</strong><br>
-                                {{ $receiving->purchase?->materialRequest?->boqItem->item_code ?? '' }} -
-                                {{ $receiving->purchase?->materialRequest?->boqItem->description }}
+                                <strong>BOQ Items:</strong><br>
+                                @foreach($receiving->purchase->materialRequest->items as $mrItem)
+                                    {{ $mrItem->boqItem->item_code ?? '' }} - {{ $mrItem->boqItem->description ?? $mrItem->description ?? '' }}@if(!$loop->last), @endif
+                                @endforeach
                             </div>
                         </div>
                         @endif
