@@ -51,7 +51,16 @@ class ProjectBoqController extends Controller
             'unsectionedItems',
         ]);
 
-        return view('pages.projects.project_boq_items')->with(['boq' => $boq]);
+        $pendingRequests = \App\Models\ProjectMaterialRequest::with(['boqItem', 'requester', 'approvalStatus'])
+            ->where('project_id', $boq->project_id)
+            ->whereRaw('UPPER(status) NOT IN (?, ?)', ['APPROVED', 'COMPLETED'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('pages.projects.project_boq_items')->with([
+            'boq' => $boq,
+            'pendingRequests' => $pendingRequests,
+        ]);
     }
 
     public function boq($id, $document_type_id){

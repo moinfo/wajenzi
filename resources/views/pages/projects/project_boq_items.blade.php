@@ -49,6 +49,68 @@
                             </a>
                         </div>
                     </div>
+                    <button type="button" class="btn btn-rounded mb-10 btn-alt-warning" data-toggle="collapse" data-target="#pending-requests-panel">
+                        <i class="fa fa-clock">&nbsp;</i>Pending Requests
+                        @if($pendingRequests->count() > 0)
+                            <span class="badge badge-danger" style="margin-left: 4px;">{{ $pendingRequests->count() }}</span>
+                        @endif
+                    </button>
+                </div>
+            </div>
+
+            {{-- Pending Material Requests Panel --}}
+            <div class="collapse" id="pending-requests-panel">
+                <div class="block block-rounded mb-3" style="border-left: 3px solid #f0ad4e;">
+                    <div class="block-header block-header-default" style="background: #fff8ed;">
+                        <h3 class="block-title" style="font-size: 13px;">
+                            <i class="fa fa-clock text-warning"></i>&nbsp;Material Requests Pending Approval
+                        </h3>
+                    </div>
+                    <div class="block-content p-0">
+                        @if($pendingRequests->count() > 0)
+                        <table class="table table-sm table-hover mb-0" style="font-size: 12px;">
+                            <thead>
+                                <tr style="background: #fafafa;">
+                                    <th style="padding: 6px 10px;">Request No.</th>
+                                    <th style="padding: 6px 10px;">BOQ Item</th>
+                                    <th class="text-right" style="padding: 6px 10px;">Qty</th>
+                                    <th style="padding: 6px 10px;">Priority</th>
+                                    <th style="padding: 6px 10px;">Requester</th>
+                                    <th style="padding: 6px 10px;">Date</th>
+                                    <th style="padding: 6px 10px;">Approvals</th>
+                                    <th class="text-center" style="padding: 6px 10px; width: 60px;">View</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($pendingRequests as $req)
+                                    <tr>
+                                        <td style="padding: 5px 10px;" class="font-w600">{{ $req->request_number }}</td>
+                                        <td style="padding: 5px 10px;">{{ $req->boqItem->item_code ?? '-' }} — {{ Str::limit($req->boqItem->description ?? '', 30) }}</td>
+                                        <td style="padding: 5px 10px;" class="text-right">{{ number_format($req->quantity_requested, 2) }} {{ $req->unit }}</td>
+                                        <td style="padding: 5px 10px;">
+                                            @php $pColors = ['low'=>'secondary','medium'=>'info','high'=>'warning','urgent'=>'danger']; @endphp
+                                            <span class="badge badge-{{ $pColors[$req->priority] ?? 'secondary' }}">{{ ucfirst($req->priority) }}</span>
+                                        </td>
+                                        <td style="padding: 5px 10px;">{{ $req->requester->name ?? '-' }}</td>
+                                        <td style="padding: 5px 10px;">{{ $req->created_at ? $req->created_at->format('d M') : '-' }}</td>
+                                        <td style="padding: 5px 10px;">
+                                            <x-ringlesoft-approval-status-summary :model="$req" />
+                                        </td>
+                                        <td style="padding: 5px 10px;" class="text-center">
+                                            <a href="{{ route('project_material_request', ['id' => $req->id, 'document_type_id' => 0]) }}" class="btn btn-xs btn-success" title="View / Approve">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        @else
+                        <div class="p-3 text-center text-muted" style="font-size: 13px;">
+                            No pending material requests for this project.
+                        </div>
+                        @endif
+                    </div>
                 </div>
             </div>
 
@@ -70,10 +132,11 @@
                                         <th class="text-center" style="width: 90px; padding: 6px;">Item Code</th>
                                         <th style="padding: 6px;">Description</th>
                                         <th class="text-right" style="width: 80px; padding: 6px;">Qty</th>
+                                        <th class="text-center" style="width: 80px; padding: 6px;">Requested</th>
                                         <th style="width: 60px; padding: 6px;">Unit</th>
                                         <th class="text-right" style="width: 110px; padding: 6px;">Unit Price</th>
                                         <th class="text-right" style="width: 120px; padding: 6px;">Total</th>
-                                        <th class="text-center" style="width: 90px; padding: 6px;">Actions</th>
+                                        <th class="text-center" style="width: 110px; padding: 6px;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -86,7 +149,7 @@
                                     @if($boq->unsectionedItems->count() > 0)
                                         @if($boq->rootSections->count() > 0)
                                             <tr style="background-color: rgba(108, 117, 125, 0.1);">
-                                                <td colspan="7" style="padding: 5px 8px; font-weight: bold;">Unsectioned Items</td>
+                                                <td colspan="8" style="padding: 5px 8px; font-weight: bold;">Unsectioned Items</td>
                                             </tr>
                                         @endif
                                         @foreach($boq->unsectionedItems as $item)
@@ -100,11 +163,33 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-right" style="padding: 4px 6px;">{{ number_format($item->quantity, 2) }}</td>
+                                                <td class="text-center" style="padding: 4px 6px;">
+                                                    @if($item->item_type == 'material')
+                                                        @php
+                                                            $reqQty = $item->quantity_requested ?? 0;
+                                                            $totalQty = $item->quantity;
+                                                            $pct = $totalQty > 0 ? ($reqQty / $totalQty) * 100 : 0;
+                                                            $color = $pct >= 100 ? '#28a745' : ($pct > 0 ? '#f0ad4e' : '#adb5bd');
+                                                        @endphp
+                                                        <span style="color: {{ $color }}; font-size: 11px; font-weight: 500;" title="{{ number_format($reqQty, 2) }} of {{ number_format($totalQty, 2) }} requested">
+                                                            {{ number_format($reqQty, 1) }}/{{ number_format($totalQty, 1) }}
+                                                        </span>
+                                                    @endif
+                                                </td>
                                                 <td style="padding: 4px 6px;">{{ $item->unit }}</td>
                                                 <td class="text-right" style="padding: 4px 6px;">{{ number_format($item->unit_price, 2) }}</td>
                                                 <td class="text-right" style="padding: 4px 6px; font-weight: 500;">{{ number_format($item->total_price, 2) }}</td>
                                                 <td class="text-center" style="padding: 3px;">
                                                     <div class="btn-group btn-group-xs">
+                                                        @if($item->item_type == 'material')
+                                                            @can('Add Material Request')
+                                                                <button type="button"
+                                                                    onclick="loadFormModal('project_material_request_form', {className: 'ProjectMaterialRequest', boq_item_id: {{ $item->id }}, project_id: {{ $boq->project_id }}}, 'Request Material', 'modal-md');"
+                                                                    class="btn btn-xs btn-warning" title="Request Material">
+                                                                    <i class="fa fa-shopping-cart"></i>
+                                                                </button>
+                                                            @endcan
+                                                        @endif
                                                         @can('Edit BOQ Item')
                                                             <button type="button"
                                                                 onclick="loadFormModal('project_boq_item_form', {className: 'ProjectBoqItem', id: {{ $item->id }}}, 'Edit Item', 'modal-md');"
@@ -127,7 +212,7 @@
                                 </tbody>
                                 <tfoot>
                                     <tr style="background-color: #333; color: #fff; font-weight: bold;">
-                                        <td colspan="5" class="text-right" style="padding: 8px;">GRAND TOTAL:</td>
+                                        <td colspan="6" class="text-right" style="padding: 8px;">GRAND TOTAL:</td>
                                         <td class="text-right" style="padding: 8px; font-size: 13px;">{{ number_format($boq->total_amount, 2) }}</td>
                                         <td></td>
                                     </tr>

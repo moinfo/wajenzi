@@ -71,7 +71,8 @@
                                     <th class="text-right">Quantity</th>
                                     <th>Priority</th>
                                     <th>Required Date</th>
-                                    <th>Status</th>
+                                    <th scope="col">Approvals</th>
+                                    <th scope="col">Status</th>
                                     <th>Requester</th>
                                     <th class="text-center" style="width: 120px;">Actions</th>
                                 </tr>
@@ -102,18 +103,23 @@
                                             </span>
                                         </td>
                                         <td>{{ $request->required_date ? \Carbon\Carbon::parse($request->required_date)->format('d M Y') : '-' }}</td>
-                                        <td>
+                                        <td class="text-center">
+                                            <x-ringlesoft-approval-status-summary :model="$request" />
+                                        </td>
+                                        <td class="text-center">
                                             @php
-                                                $statusColors = [
-                                                    'pending' => 'warning',
-                                                    'APPROVED' => 'success',
-                                                    'approved' => 'success',
-                                                    'rejected' => 'danger',
-                                                    'completed' => 'primary'
-                                                ];
+                                                $approvalStatus = $request->approvalStatus?->status ?? 'Pending';
+                                                $statusClass = [
+                                                    'Pending' => 'warning',
+                                                    'Submitted' => 'info',
+                                                    'Approved' => 'success',
+                                                    'Rejected' => 'danger',
+                                                    'Completed' => 'primary',
+                                                    'Discarded' => 'danger',
+                                                ][$approvalStatus] ?? 'secondary';
                                             @endphp
-                                            <span class="badge badge-{{ $statusColors[$request->status] ?? 'secondary' }}">
-                                                {{ ucfirst($request->status) }}
+                                            <span class="badge badge-{{ $statusClass }} badge-pill" style="font-size: 0.9em; padding: 6px 10px;">
+                                                {{ $approvalStatus }}
                                             </span>
                                         </td>
                                         <td>{{ $request->requester->name ?? '-' }}</td>

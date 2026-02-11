@@ -85,6 +85,12 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
         return $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }
 
+    // Alias for shared approval header partial
+    public function getDocumentNumberAttribute(): ?string
+    {
+        return $this->request_number;
+    }
+
     // Relationships
     public function project(): BelongsTo
     {
