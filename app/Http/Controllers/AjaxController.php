@@ -227,7 +227,7 @@ class AjaxController
                         ->with(['project', 'boqItem'])
                         ->orderBy('created_at', 'desc')
                         ->get();
-                    $project_boq_items = \App\Models\ProjectBoqItem::with(['boq.project'])->get();
+                    $project_boq_items = \App\Models\ProjectBoqItem::with(['boq.project', 'section'])->get();
                     $construction_phases = \App\Models\ProjectConstructionPhase::orderBy('phase_name')->get();
                     $item_categories = BoqItemCategory::orderBy('name')->get();
                     $priorities = [
