@@ -8,18 +8,25 @@ use App\Models\ProjectBoqItem;
 use App\Models\ProjectBoqSection;
 use App\Models\ProjectBoqTemplate;
 use App\Models\Approval;
+use App\Services\ApprovalService;
 use Illuminate\Http\Request;
 use PDF;
 
 class ProjectBoqController extends Controller
 {
+    protected $approvalService;
+
+    public function __construct(ApprovalService $approvalService)
+    {
+        $this->approvalService = $approvalService;
+    }
     public function index(Request $request) {
         //handle crud operations
         if($this->handleCrud($request, 'ProjectBoq')) {
             return back();
         }
 
-        $boqs = ProjectBoq::with(['project'])->get();
+        $boqs = ProjectBoq::with(['project', 'approvalStatus'])->get();
         $projects = Project::all();
 
         $data = [
@@ -49,38 +56,48 @@ class ProjectBoqController extends Controller
             'rootSections.items',
             'rootSections.childrenRecursive.items',
             'unsectionedItems',
+            'approvalStatus',
         ]);
 
-        $pendingRequests = \App\Models\ProjectMaterialRequest::with(['boqItem', 'requester', 'approvalStatus'])
+        $pendingRequests = \App\Models\ProjectMaterialRequest::with(['items.boqItem', 'requester', 'approvalStatus'])
             ->where('project_id', $boq->project_id)
             ->whereRaw('UPPER(status) NOT IN (?, ?)', ['APPROVED', 'COMPLETED'])
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Collect BOQ item IDs that already have pending requests
+        $pendingBoqItemIds = $pendingRequests->flatMap(fn($r) => $r->items->pluck('boq_item_id'))->filter()->unique()->values()->all();
+
         return view('pages.projects.project_boq_items')->with([
             'boq' => $boq,
             'pendingRequests' => $pendingRequests,
+            'pendingBoqItemIds' => $pendingBoqItemIds,
         ]);
     }
 
     public function boq($id, $document_type_id){
-        $boq = ProjectBoq::where('id', $id)->first();
-        $approvalStages = Approval::getApprovalStages($id, $document_type_id);
-        $nextApproval = Approval::getNextApproval($id, $document_type_id);
-        $approvalCompleted = Approval::isApprovalCompleted($id, $document_type_id);
-        $rejected = Approval::isRejected($id, $document_type_id);
-        $document_id = $id;
+        $this->approvalService->markNotificationAsRead($id, $document_type_id, 'project_boq');
 
-        $boqItems = ProjectBoqItem::where('boq_id', $id)->get();
+        $boq = ProjectBoq::with(['project', 'items', 'approvalStatus'])->findOrFail($id);
+
+        $details = [
+            'Project' => $boq->project->project_name ?? 'N/A',
+            'Version' => $boq->version,
+            'Type' => ucfirst($boq->type ?? 'N/A'),
+            'Items' => $boq->items->count() . ' item(s)',
+            'Total Amount' => number_format($boq->total_amount, 2),
+        ];
 
         $data = [
+            'approval_data' => $boq,
             'boq' => $boq,
-            'boqItems' => $boqItems,
-            'approvalStages' => $approvalStages,
-            'nextApproval' => $nextApproval,
-            'approvalCompleted' => $approvalCompleted,
-            'rejected' => $rejected,
-            'document_id' => $document_id,
+            'document_id' => $id,
+            'approval_document_type_id' => $document_type_id,
+            'page_name' => 'Bill of Quantities',
+            'approval_data_name' => $boq->document_number,
+            'details' => $details,
+            'model' => 'ProjectBoq',
+            'route' => 'project_boq',
         ];
         return view('pages.projects.project_boq')->with($data);
     }

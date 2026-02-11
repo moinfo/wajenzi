@@ -156,14 +156,14 @@ class ProcurementDashboardController extends Controller
 
         // Recent activity (combine requests, comparisons, inspections)
         $recentActivity = collect();
-        ProjectMaterialRequest::where('project_id', $id)
+        ProjectMaterialRequest::with(['items.boqItem'])->where('project_id', $id)
             ->orderBy('created_at', 'desc')->limit(5)->get()
             ->each(function ($item) use (&$recentActivity) {
                 $recentActivity->push((object)[
                     'type' => 'request',
                     'type_label' => 'Material Request',
                     'reference_number' => $item->request_number,
-                    'description' => $item->boqItem?->description ?? 'Material Request',
+                    'description' => $item->items->first()?->boqItem?->description ?? 'Material Request',
                     'status' => $item->status,
                     'created_at' => $item->created_at
                 ]);
@@ -201,9 +201,11 @@ class ProcurementDashboardController extends Controller
             'constructionPhase'
         ])->findOrFail($id);
 
-        // Material requests for this BOQ item
-        $materialRequests = ProjectMaterialRequest::with(['user', 'approvedByUser'])
-            ->where('boq_item_id', $id)
+        // Material requests for this BOQ item (through items table)
+        $materialRequests = ProjectMaterialRequest::with(['requester', 'approver'])
+            ->whereHas('items', function ($q) use ($id) {
+                $q->where('boq_item_id', $id);
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -219,7 +221,7 @@ class ProcurementDashboardController extends Controller
             ->whereHas('items', function ($q) use ($id) {
                 $q->where('boq_item_id', $id);
             })
-            ->orWhereHas('materialRequest', function ($q) use ($id) {
+            ->orWhereHas('materialRequest.items', function ($q) use ($id) {
                 $q->where('boq_item_id', $id);
             })
             ->orderBy('date', 'desc')

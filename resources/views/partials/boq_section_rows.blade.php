@@ -3,7 +3,7 @@
 
 {{-- Section header row --}}
 <tr style="background-color: rgba(52, 144, 220, {{ 0.10 + ($depth * 0.05) }});">
-    <td colspan="6" style="padding: 6px 8px 6px {{ 15 + ($depth * 20) }}px; font-weight: bold; font-size: 13px;">
+    <td colspan="7" style="padding: 6px 8px 6px {{ 15 + ($depth * 20) }}px; font-weight: bold; font-size: 13px;">
         {{ $section->name }}
         @if($section->description)
             <small class="text-muted"> — {{ $section->description }}</small>
@@ -47,6 +47,23 @@
 {{-- Items in this section --}}
 @foreach($section->items as $item)
     <tr id="boq-item-tr-{{ $item->id }}">
+        <td class="text-center" style="padding: 4px 6px; width: 35px;">
+            @if($item->item_type == 'material')
+                @can('Add Material Request')
+                    @if(in_array($item->id, $pendingBoqItemIds ?? []))
+                        <span class="badge badge-warning" style="font-size: 8px; padding: 2px 4px;" title="Has pending request">PENDING</span>
+                    @else
+                        <input type="checkbox" class="boq-item-checkbox" value="{{ $item->id }}"
+                            data-code="{{ $item->item_code }}"
+                            data-description="{{ $item->description }}"
+                            data-qty="{{ $item->quantity }}"
+                            data-requested="{{ $item->quantity_requested ?? 0 }}"
+                            data-available="{{ $item->quantity_remaining }}"
+                            data-unit="{{ $item->unit }}">
+                    @endif
+                @endcan
+            @endif
+        </td>
         <td class="text-center" style="padding: 4px 6px; font-size: 11px; color: #888;">{{ $item->item_code }}</td>
         <td style="padding: 4px 8px 4px {{ 15 + ($depth * 20) }}px;">
             {{ $item->description }}
@@ -74,15 +91,6 @@
         <td class="text-right" style="padding: 4px 6px; font-weight: 500;">{{ number_format($item->total_price, 2) }}</td>
         <td class="text-center" style="padding: 3px;">
             <div class="btn-group btn-group-xs">
-                @if($item->item_type == 'material')
-                    @can('Add Material Request')
-                        <button type="button"
-                            onclick="loadFormModal('project_material_request_form', {className: 'ProjectMaterialRequest', boq_item_id: {{ $item->id }}, project_id: {{ $boq->project_id }}}, 'Request Material', 'modal-md');"
-                            class="btn btn-xs btn-warning" title="Request Material">
-                            <i class="fa fa-shopping-cart"></i>
-                        </button>
-                    @endcan
-                @endif
                 @can('Edit BOQ Item')
                     <button type="button"
                         onclick="loadFormModal('project_boq_item_form', {className: 'ProjectBoqItem', id: {{ $item->id }}}, 'Edit Item', 'modal-md');"
@@ -110,6 +118,7 @@
 {{-- Section subtotal row --}}
 @if($section->items->count() > 0 || $section->childrenRecursive->count() > 0)
 <tr style="background-color: rgba(52, 144, 220, 0.05); border-top: 1px solid #ccc;">
+    <td></td>
     <td colspan="6" class="text-right" style="padding: 4px 8px; font-weight: bold; font-size: 11px; color: #666;">
         Subtotal — {{ $section->name }}:
     </td>
