@@ -224,7 +224,7 @@ class AjaxController
 
                     // Procurement workflow data
                     $approved_material_requests = \App\Models\ProjectMaterialRequest::whereRaw('UPPER(status) = ?', ['APPROVED'])
-                        ->with(['project', 'boqItem'])
+                        ->with(['project', 'items.boqItem'])
                         ->orderBy('created_at', 'desc')
                         ->get();
                     $project_boq_items = \App\Models\ProjectBoqItem::with(['boq.project', 'section'])->get();

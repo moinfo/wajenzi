@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
+use RingleSoft\LaravelProcessApproval\ProcessApproval;
+use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 
-class ProjectBoq extends Model
+class ProjectBoq extends Model implements ApprovableModel
 {
-    use HasFactory;
+    use HasFactory, Approvable;
 
     protected $table = 'project_boqs';
 
@@ -25,6 +28,13 @@ class ProjectBoq extends Model
     protected $casts = [
         'total_amount' => 'decimal:2'
     ];
+
+    // Alias for shared approval header partial
+    public function getDocumentNumberAttribute(): ?string
+    {
+        $projectName = $this->project->project_name ?? 'BOQ';
+        return $projectName . ' v' . $this->version;
+    }
 
     public function project(): BelongsTo
     {
@@ -75,5 +85,13 @@ class ProjectBoq extends Model
         $this->update([
             'total_amount' => $this->items()->sum('total_price'),
         ]);
+    }
+
+    // Approvable interface implementation
+    public function onApprovalCompleted(ProcessApproval|\RingleSoft\LaravelProcessApproval\Models\ProcessApproval $approval): bool
+    {
+        $this->status = 'approved';
+        $this->save();
+        return true;
     }
 }

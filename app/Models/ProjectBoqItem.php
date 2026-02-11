@@ -107,9 +107,9 @@ class ProjectBoqItem extends Model
         return $query->whereNull('section_id');
     }
 
-    public function materialRequests(): HasMany
+    public function materialRequestItems(): HasMany
     {
-        return $this->hasMany(ProjectMaterialRequest::class, 'boq_item_id');
+        return $this->hasMany(ProjectMaterialRequestItem::class, 'boq_item_id');
     }
 
     public function purchaseItems(): HasMany

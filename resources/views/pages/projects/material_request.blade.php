@@ -19,47 +19,90 @@
             <!-- Request Details Card -->
             @include('approvals._payment_details', ['approval_data' => $approval_data, 'details' => $details])
 
-            <!-- BOQ Item Details (if linked) -->
-            @if($request->boqItem)
+            <!-- Request Items Table -->
+            @if($request->items->count() > 0)
             <div class="block">
                 <div class="block-header block-header-default">
-                    <h3 class="block-title">BOQ Item Details</h3>
+                    <h3 class="block-title">Requested Items ({{ $request->items->count() }})</h3>
+                </div>
+                <div class="block-content p-0">
+                    <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 12px;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 8px; width: 40px;">#</th>
+                                <th style="padding: 8px;">Item Code</th>
+                                <th style="padding: 8px;">Description</th>
+                                <th class="text-right" style="padding: 8px;">BOQ Qty</th>
+                                <th class="text-right" style="padding: 8px;">Requested</th>
+                                @if(strtoupper($request->status) === 'APPROVED')
+                                    <th class="text-right" style="padding: 8px;">Approved</th>
+                                @endif
+                                <th style="padding: 8px;">Unit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($request->items as $item)
+                                <tr>
+                                    <td style="padding: 6px 8px;" class="text-center text-muted">{{ $loop->iteration }}</td>
+                                    <td style="padding: 6px 8px;" class="font-w600">{{ $item->boqItem->item_code ?? '-' }}</td>
+                                    <td style="padding: 6px 8px;">
+                                        {{ $item->boqItem->description ?? $item->description ?? '-' }}
+                                        @if($item->specification)
+                                            <small class="text-muted">({{ $item->specification }})</small>
+                                        @endif
+                                    </td>
+                                    <td style="padding: 6px 8px;" class="text-right">
+                                        {{ $item->boqItem ? number_format($item->boqItem->quantity, 2) : '-' }}
+                                    </td>
+                                    <td style="padding: 6px 8px;" class="text-right font-w600">
+                                        {{ number_format($item->quantity_requested, 2) }}
+                                    </td>
+                                    @if(strtoupper($request->status) === 'APPROVED')
+                                        <td style="padding: 6px 8px;" class="text-right text-success font-w600">
+                                            {{ number_format($item->quantity_approved ?? $item->quantity_requested, 2) }}
+                                        </td>
+                                    @endif
+                                    <td style="padding: 6px 8px;">{{ $item->unit }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @endif
+
+            <!-- BOQ Item Summary Cards (for items linked to BOQ) -->
+            @php $boqItems = $request->items->filter(fn($i) => $i->boqItem); @endphp
+            @if($boqItems->count() > 0)
+            <div class="block">
+                <div class="block-header block-header-default">
+                    <h3 class="block-title">BOQ Procurement Status</h3>
                 </div>
                 <div class="block-content">
-                    <div class="row">
+                    @foreach($boqItems as $item)
+                    <div class="row mb-2" style="font-size: 12px;">
                         <div class="col-md-3">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted">BOQ Quantity</h6>
-                                    <h4>{{ number_format($request->boqItem->quantity, 2) }}</h4>
-                                </div>
-                            </div>
+                            <strong>{{ $item->boqItem->item_code }}</strong> — {{ Str::limit($item->boqItem->description, 30) }}
                         </div>
-                        <div class="col-md-3">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted">Already Requested</h6>
-                                    <h4>{{ number_format($request->boqItem->quantity_requested ?? 0, 2) }}</h4>
-                                </div>
-                            </div>
+                        <div class="col-md-2 text-center">
+                            <small class="text-muted">BOQ Qty</small><br>
+                            <strong>{{ number_format($item->boqItem->quantity, 2) }}</strong>
                         </div>
-                        <div class="col-md-3">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted">Received</h6>
-                                    <h4>{{ number_format($request->boqItem->quantity_received ?? 0, 2) }}</h4>
-                                </div>
-                            </div>
+                        <div class="col-md-2 text-center">
+                            <small class="text-muted">Requested</small><br>
+                            <strong>{{ number_format($item->boqItem->quantity_requested ?? 0, 2) }}</strong>
                         </div>
-                        <div class="col-md-3">
-                            <div class="card bg-light">
-                                <div class="card-body text-center">
-                                    <h6 class="text-muted">Remaining</h6>
-                                    <h4>{{ number_format($request->boqItem->quantity_remaining ?? 0, 2) }}</h4>
-                                </div>
-                            </div>
+                        <div class="col-md-2 text-center">
+                            <small class="text-muted">Received</small><br>
+                            <strong>{{ number_format($item->boqItem->quantity_received ?? 0, 2) }}</strong>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <small class="text-muted">Remaining</small><br>
+                            <strong>{{ number_format($item->boqItem->quantity_remaining ?? 0, 2) }}</strong>
                         </div>
                     </div>
+                    @if(!$loop->last) <hr class="my-1"> @endif
+                    @endforeach
                 </div>
             </div>
             @endif
