@@ -18,10 +18,9 @@
                 <a href="{{ route('procurement_dashboard') }}" class="btn btn-rounded btn-outline-info min-width-100 mb-10">
                     <i class="si si-graph"></i> Dashboard
                 </a>
-                <button type="button" onclick="loadFormModal('supplier_quotation_form', {className: 'SupplierQuotation'}, 'Add Quotation', 'modal-lg');"
-                    class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
+                <a href="{{ route('project_material_requests') }}" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
                     <i class="si si-plus"></i> New Quotation
-                </button>
+                </a>
             </div>
         </div>
 
@@ -62,9 +61,9 @@
                                 <th>Material Request</th>
                                 <th>Supplier</th>
                                 <th>Date</th>
-                                <th class="text-right">Quantity</th>
-                                <th class="text-right">Unit Price</th>
-                                <th class="text-right">Total</th>
+                                <th class="text-right">Subtotal</th>
+                                <th class="text-right">VAT</th>
+                                <th class="text-right">Grand Total</th>
                                 <th class="text-center">Status</th>
                                 <th class="text-center" style="width: 120px;">Actions</th>
                             </tr>
@@ -85,8 +84,8 @@
                                     </td>
                                     <td>{{ $quotation->supplier?->name ?? 'N/A' }}</td>
                                     <td>{{ $quotation->quotation_date?->format('Y-m-d') }}</td>
-                                    <td class="text-right">{{ number_format($quotation->quantity, 2) }}</td>
-                                    <td class="text-right">{{ number_format($quotation->unit_price, 2) }}</td>
+                                    <td class="text-right">{{ number_format($quotation->total_amount, 2) }}</td>
+                                    <td class="text-right">{{ number_format($quotation->vat_amount, 2) }}</td>
                                     <td class="text-right">
                                         <strong>{{ number_format($quotation->grand_total, 2) }}</strong>
                                     </td>
@@ -97,21 +96,22 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group">
+                                            <a href="{{ route('supplier_quotations.by_request', $quotation->material_request_id) }}"
+                                                class="btn btn-sm btn-success" title="View">
+                                                <i class="fa fa-eye"></i>
+                                            </a>
                                             @if($quotation->file)
                                                 <a href="{{ $quotation->file }}" target="_blank" class="btn btn-sm btn-info" title="View File">
                                                     <i class="fa fa-file"></i>
                                                 </a>
                                             @endif
-                                            <button type="button"
-                                                onclick="loadFormModal('supplier_quotation_form', {className: 'SupplierQuotation', id: {{ $quotation->id }}}, 'Edit Quotation', 'modal-lg');"
-                                                class="btn btn-sm btn-primary">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-                                            <button type="button"
-                                                onclick="deleteModelItem('SupplierQuotation', {{ $quotation->id }}, 'quotation-tr-{{ $quotation->id }}');"
-                                                class="btn btn-sm btn-danger">
-                                                <i class="fa fa-times"></i>
-                                            </button>
+                                            @if($quotation->status === 'received')
+                                                <button type="button"
+                                                    onclick="deleteModelItem('SupplierQuotation', {{ $quotation->id }}, 'quotation-tr-{{ $quotation->id }}');"
+                                                    class="btn btn-sm btn-danger">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>

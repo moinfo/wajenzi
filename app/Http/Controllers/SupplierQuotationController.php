@@ -63,14 +63,20 @@ class SupplierQuotationController extends Controller
         $suppliers = Supplier::orderBy('name')->get();
 
         // Check if comparison can be created
-        $canCreateComparison = $quotations->count() >= 3 &&
-                               !$materialRequest->comparisons()->whereIn('status', ['pending', 'approved', 'APPROVED'])->exists();
+        $approvedComparison = $materialRequest->comparisons()
+            ->whereRaw('UPPER(status) = ?', ['APPROVED'])
+            ->first();
+
+        $canCreateComparison = !$approvedComparison &&
+                               $quotations->count() >= 3 &&
+                               !$materialRequest->comparisons()->where('status', 'pending')->exists();
 
         return view('pages.procurement.request_quotations')->with([
             'materialRequest' => $materialRequest,
             'quotations' => $quotations,
             'suppliers' => $suppliers,
             'canCreateComparison' => $canCreateComparison,
+            'approvedComparison' => $approvedComparison,
             'quotationCount' => $quotations->count(),
             'minimumRequired' => 3
         ]);

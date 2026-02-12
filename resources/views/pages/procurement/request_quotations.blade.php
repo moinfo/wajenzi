@@ -9,16 +9,31 @@
                 <a href="{{ route('supplier_quotations') }}" class="btn btn-rounded btn-outline-secondary min-width-100 mb-10">
                     <i class="fa fa-arrow-left"></i> Back
                 </a>
-                @if($canCreateComparison)
-                    <a href="{{ route('quotation_comparison.create', $materialRequest->id) }}"
-                        class="btn btn-rounded btn-success min-width-125 mb-10">
-                        <i class="fa fa-balance-scale"></i> Create Comparison
-                    </a>
+                @php $hasSelected = $quotations->contains('status', 'selected'); @endphp
+                @if($hasSelected && ($approvedComparison ?? null))
+                    @if(!$approvedComparison->purchases()->exists())
+                        <a href="{{ route('quotation_comparison.create_purchase', $approvedComparison->id) }}"
+                            class="btn btn-rounded btn-primary min-width-125 mb-10"
+                            onclick="return confirm('Create purchase order from the approved comparison?')">
+                            <i class="fa fa-shopping-cart"></i> Create Purchase Order
+                        </a>
+                    @else
+                        <span class="badge badge-success" style="font-size: 13px; padding: 8px 15px;">
+                            <i class="fa fa-check"></i> Purchase Order Created
+                        </span>
+                    @endif
+                @else
+                    @if($canCreateComparison)
+                        <a href="{{ route('quotation_comparison.create', $materialRequest->id) }}"
+                            class="btn btn-rounded btn-success min-width-125 mb-10">
+                            <i class="fa fa-balance-scale"></i> Create Comparison
+                        </a>
+                    @endif
+                    <button type="button" onclick="openQuotationForm()"
+                        class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
+                        <i class="si si-plus"></i> Add Quotation
+                    </button>
                 @endif
-                <button type="button" onclick="openQuotationForm()"
-                    class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
-                    <i class="si si-plus"></i> Add Quotation
-                </button>
             </div>
         </div>
 
@@ -124,16 +139,18 @@
                                                     <i class="fa fa-file"></i>
                                                 </a>
                                             @endif
-                                            <button type="button"
-                                                onclick="openQuotationForm({{ $quotation->id }})"
-                                                class="btn btn-sm btn-primary" title="Edit">
-                                                <i class="fa fa-pencil"></i>
-                                            </button>
-                                            <button type="button"
-                                                onclick="deleteModelItem('SupplierQuotation', {{ $quotation->id }}, 'quotation-tr-{{ $quotation->id }}');"
-                                                class="btn btn-sm btn-danger" title="Delete">
-                                                <i class="fa fa-times"></i>
-                                            </button>
+                                            @if($quotation->status === 'received')
+                                                <button type="button"
+                                                    onclick="openQuotationForm({{ $quotation->id }})"
+                                                    class="btn btn-sm btn-primary" title="Edit">
+                                                    <i class="fa fa-pencil"></i>
+                                                </button>
+                                                <button type="button"
+                                                    onclick="deleteModelItem('SupplierQuotation', {{ $quotation->id }}, 'quotation-tr-{{ $quotation->id }}');"
+                                                    class="btn btn-sm btn-danger" title="Delete">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
