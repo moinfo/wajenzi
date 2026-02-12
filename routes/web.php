@@ -600,11 +600,25 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/quotation_comparisons', [App\Http\Controllers\QuotationComparisonController::class, 'index'])->name('quotation_comparisons');
     Route::get('/quotation_comparison/create/{material_request_id}', [App\Http\Controllers\QuotationComparisonController::class, 'create'])->name('quotation_comparison.create');
     Route::post('/quotation_comparison/store', [App\Http\Controllers\QuotationComparisonController::class, 'store'])->name('quotation_comparison.store');
+    Route::get('/quotation_comparison/{id}/create_purchase', [App\Http\Controllers\QuotationComparisonController::class, 'createPurchase'])->name('quotation_comparison.create_purchase');
     Route::match(['get', 'post'], '/quotation_comparison/{id}/{document_type_id}', [App\Http\Controllers\QuotationComparisonController::class, 'comparison'])->name('quotation_comparison');
     Route::post('/quotation_comparison/{comparison}/submit', [App\Http\Controllers\QuotationComparisonController::class, 'submit'])->name('quotation_comparison.submit');
     Route::post('/quotation_comparison/{comparison}/approve', [App\Http\Controllers\QuotationComparisonController::class, 'approve'])->name('quotation_comparison.approve');
     Route::post('/quotation_comparison/{comparison}/reject', [App\Http\Controllers\QuotationComparisonController::class, 'reject'])->name('quotation_comparison.reject');
-    Route::post('/quotation_comparison/{id}/create_purchase', [App\Http\Controllers\QuotationComparisonController::class, 'createPurchase'])->name('quotation_comparison.create_purchase');
+
+// Procurement - Purchase Orders Routes
+    Route::match(['get', 'post'], '/purchase_orders', [App\Http\Controllers\PurchaseController::class, 'purchaseOrders'])->name('purchase_orders');
+    // Specific routes must come before the wildcard {document_type_id} route
+    Route::get('/purchase_order/{id}/record_delivery', [App\Http\Controllers\PurchaseController::class, 'recordDelivery'])->name('purchase_order.record_delivery');
+    Route::post('/purchase_order/{id}/store_delivery', [App\Http\Controllers\PurchaseController::class, 'storeDelivery'])->name('purchase_order.store_delivery');
+    Route::match(['get', 'post'], '/purchase_order/{id}/{document_type_id}', [App\Http\Controllers\PurchaseController::class, 'purchaseOrderDetail'])->name('purchase_order');
+
+// Procurement - Record Deliveries Route
+    Route::match(['get', 'post'], '/record_deliveries', [App\Http\Controllers\PurchaseController::class, 'pendingDeliveries'])->name('record_deliveries');
+
+// Procurement - Supplier Receivings Routes
+    Route::match(['get', 'post'], '/supplier_receivings_procurement', [App\Http\Controllers\PurchaseController::class, 'receivings'])->name('supplier_receivings_procurement');
+    Route::get('/supplier_receiving_detail/{id}', [App\Http\Controllers\PurchaseController::class, 'receivingDetail'])->name('supplier_receiving_detail');
 
 // Procurement - Material Inspections Routes
     Route::match(['get', 'post'], '/material_inspections', [App\Http\Controllers\MaterialInspectionController::class, 'index'])->name('material_inspections');

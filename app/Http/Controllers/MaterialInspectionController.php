@@ -79,10 +79,11 @@ class MaterialInspectionController extends Controller
         // Check if inspection already exists
         if ($receiving->inspections()->exists()) {
             $existingInspection = $receiving->inspections()->first();
+            $this->notify('An inspection already exists for this delivery', 'Info', 'info');
             return redirect()->route('material_inspection', [
                 'id' => $existingInspection->id,
                 'document_type_id' => 0
-            ])->with('info', 'An inspection already exists for this delivery');
+            ]);
         }
 
         // Get BOQ items from purchase
@@ -168,13 +169,14 @@ class MaterialInspectionController extends Controller
 
             DB::commit();
 
-            return redirect()->route('material_inspections')
-                ->with('success', 'Material inspection created: ' . $inspection->inspection_number);
+            $this->notify('Material inspection created: ' . $inspection->inspection_number, 'Success', 'success');
+            return redirect()->route('material_inspections');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to create inspection: ' . $e->getMessage())
-                ->withInput();
+            \Log::error('Inspection creation failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            $this->notify('Failed to create inspection: ' . $e->getMessage(), 'Error', 'error');
+            return back()->withInput();
         }
     }
 
@@ -187,7 +189,7 @@ class MaterialInspectionController extends Controller
 
         $inspection = MaterialInspection::with([
             'supplierReceiving.supplier',
-            'supplierReceiving.purchase',
+            'supplierReceiving.purchase.purchaseItems.boqItem',
             'project',
             'boqItem',
             'inspector',
@@ -210,6 +212,9 @@ class MaterialInspectionController extends Controller
             'Stock Updated' => $inspection->stock_updated ? 'Yes' : 'No'
         ];
 
+        // Get PO items for display
+        $poItems = $inspection->supplierReceiving?->purchase?->purchaseItems;
+
         return view('approvals._approve_page')->with([
             'approval_data' => $inspection,
             'document_id' => $id,
@@ -221,7 +226,8 @@ class MaterialInspectionController extends Controller
             'route' => 'material_inspection',
             'inspection_notes' => $inspection->inspection_notes,
             'rejection_reason' => $inspection->rejection_reason,
-            'criteria_checklist' => $inspection->criteria_checklist
+            'criteria_checklist' => $inspection->criteria_checklist,
+            'inspectionItems' => $poItems,
         ]);
     }
 
@@ -233,18 +239,22 @@ class MaterialInspectionController extends Controller
         $inspection = MaterialInspection::findOrFail($id);
 
         if (!$inspection->isApproved()) {
-            return back()->with('error', 'Only approved inspections can update stock');
+            $this->notify('Only approved inspections can update stock', 'Error', 'error');
+            return back();
         }
 
         if ($inspection->stock_updated) {
-            return back()->with('info', 'Stock has already been updated for this inspection');
+            $this->notify('Stock has already been updated for this inspection', 'Info', 'info');
+            return back();
         }
 
         try {
             $inspection->updateStock();
-            return back()->with('success', 'Stock updated successfully');
+            $this->notify('Stock updated successfully', 'Success', 'success');
+            return back();
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update stock: ' . $e->getMessage());
+            $this->notify('Failed to update stock: ' . $e->getMessage(), 'Error', 'error');
+            return back();
         }
     }
 
@@ -257,18 +267,21 @@ class MaterialInspectionController extends Controller
         $inspection->save();
         $inspection->submit();
 
-        return back()->with('success', 'Inspection submitted for approval');
+        $this->notify('Inspection submitted for approval', 'Success', 'success');
+        return back();
     }
 
     public function approve(MaterialInspection $inspection)
     {
         $inspection->approve();
-        return back()->with('success', 'Inspection approved. Stock has been updated.');
+        $this->notify('Inspection approved. Stock has been updated.', 'Success', 'success');
+        return back();
     }
 
     public function reject(MaterialInspection $inspection, Request $request)
     {
         $inspection->reject($request->reason);
-        return back()->with('success', 'Inspection rejected');
+        $this->notify('Inspection rejected', 'Success', 'success');
+        return back();
     }
 }
