@@ -630,6 +630,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/material_inspection/{inspection}/reject', [App\Http\Controllers\MaterialInspectionController::class, 'reject'])->name('material_inspection.reject');
     Route::post('/material_inspection/{id}/update_stock', [App\Http\Controllers\MaterialInspectionController::class, 'updateStock'])->name('material_inspection.update_stock');
 
+// Site Stock Register Routes
+    Route::get('/stock_register', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'selectProject'])->name('stock_register_select');
+    Route::get('/stock_register/{project_id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'stockRegister'])->name('stock_register');
+    Route::get('/stock_register/{project_id}/movements', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'movements'])->name('stock_register.movements');
+    Route::get('/stock_register/{project_id}/issue', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'issueForm'])->name('stock_register.issue');
+    Route::post('/stock_register/{project_id}/issue', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'storeIssue'])->name('stock_register.issue.store');
+    Route::get('/stock_register/{project_id}/adjust/{inventory_id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'adjustForm'])->name('stock_register.adjust');
+    Route::post('/stock_register/{project_id}/adjust/{inventory_id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'storeAdjustment'])->name('stock_register.adjust.store');
+    Route::post('/stock_register/{project_id}/movements/{movement_id}/verify', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'verifyMovement'])->name('stock_register.movement.verify');
+
 // Procurement Dashboard Routes
     Route::get('/procurement_dashboard', [App\Http\Controllers\ProcurementDashboardController::class, 'index'])->name('procurement_dashboard');
     Route::get('/procurement_dashboard/project/{id}', [App\Http\Controllers\ProcurementDashboardController::class, 'project'])->name('procurement_dashboard.project');
