@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 
@@ -66,6 +67,15 @@ class LaborInspection extends Model implements ApprovableModel
             if (empty($model->inspector_id)) {
                 $model->inspector_id = auth()->id();
             }
+        });
+
+        // Re-register the Approvable trait's created hook since overriding boot() prevents it from running
+        static::created(static function ($model) {
+            $model->approvalStatus()->create([
+                'steps' => $model->approvalFlowSteps()->map(fn($item) => $item->toApprovalStatusArray()),
+                'status' => ApprovalStatusEnum::CREATED->value,
+                'creator_id' => auth()->id(),
+            ]);
         });
 
         static::saving(function ($model) {

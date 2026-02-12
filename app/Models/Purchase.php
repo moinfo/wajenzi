@@ -119,12 +119,7 @@ class Purchase extends Model implements ApprovableModel
         // Build lookup: material_request_item_id => SupplierQuotationItem
         $quotationItemsByMrItem = $quotation->items->keyBy('material_request_item_id');
 
-        // Get next ID (workaround for tables without proper auto_increment)
-        $nextId = (self::max('id') ?? 0) + 1;
-
-        // Use DB::table to bypass Eloquent events that trigger approval system
-        DB::table('purchases')->insert([
-            'id' => $nextId,
+        $purchase = self::create([
             'project_id' => $request->project_id,
             'material_request_id' => $request->id,
             'quotation_comparison_id' => $comparison->id,
@@ -137,12 +132,8 @@ class Purchase extends Model implements ApprovableModel
             'payment_terms' => $quotation->payment_terms,
             'expected_delivery_date' => now()->addDays($quotation->delivery_time_days ?? 7),
             'status' => 'pending',
-            'create_by_id' => $userId ?? auth()->id() ?? 1,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'create_by_id' => $userId ?? auth()->id(),
         ]);
-
-        $purchase = self::find($nextId);
 
         // Create purchase items using per-item pricing from supplier quotation
         foreach ($request->items as $mrItem) {

@@ -159,7 +159,7 @@ class QuotationComparisonController extends Controller
             'approvedBy'
         ])->findOrFail($id);
 
-        $quotations = SupplierQuotation::with('supplier')
+        $quotations = SupplierQuotation::with(['supplier', 'items.boqItem'])
             ->where('material_request_id', $comparison->material_request_id)
             ->orderBy('grand_total', 'asc')
             ->get();
@@ -209,8 +209,8 @@ class QuotationComparisonController extends Controller
             $purchase = Purchase::createFromComparison($comparison);
 
             if ($purchase) {
-                return redirect()->route('purchases')
-                    ->with('success', 'Purchase order created: ' . ($purchase->document_number ?? $purchase->id));
+                return redirect()->route('purchase_orders')
+                    ->with('success', 'Purchase order created: ' . ($purchase->document_number ?? 'PO-' . $purchase->id));
             }
 
             return back()->with('error', 'Failed to create purchase order');
