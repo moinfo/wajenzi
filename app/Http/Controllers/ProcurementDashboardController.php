@@ -284,7 +284,7 @@ class ProcurementDashboardController extends Controller
         ];
 
         $query = ProjectMaterialRequest::with([
-            'project', 'boqItem', 'quotations', 'comparisons'
+            'project', 'items.boqItem', 'quotations', 'comparisons'
         ])->whereBetween('created_at', [$startDate, $endDate]);
 
         if ($projectId) {

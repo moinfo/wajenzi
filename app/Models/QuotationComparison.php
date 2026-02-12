@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use Illuminate\Support\Facades\Auth;
 
 class QuotationComparison extends Model implements ApprovableModel
 {
@@ -51,6 +53,18 @@ class QuotationComparison extends Model implements ApprovableModel
             if (empty($model->prepared_by)) {
                 $model->prepared_by = auth()->id();
             }
+        });
+
+        // Replicate Approvable trait's created callback (trait boot is overridden)
+        static::created(static function ($model) {
+            if (method_exists($model, 'bypassApprovalProcess') && $model->bypassApprovalProcess()) {
+                return;
+            }
+            $model->approvalStatus()->create([
+                'steps' => $model->approvalFlowSteps()->map(fn($item) => $item->toApprovalStatusArray()),
+                'status' => ApprovalStatusEnum::SUBMITTED->value,
+                'creator_id' => Auth::id(),
+            ]);
         });
     }
 

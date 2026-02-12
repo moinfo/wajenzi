@@ -1,32 +1,19 @@
 @extends('layouts.backend')
 
-@section('css')
-<style>
-    .status-badge {
-        padding: 5px 10px;
-        border-radius: 15px;
-        font-size: 0.85em;
-    }
-</style>
-@endsection
-
 @section('content')
 <div class="container-fluid">
     <div class="content">
-        <div class="content-heading">Supplier Quotations
+        <div class="content-heading">Supplier Receivings
             <div class="float-right">
                 <a href="{{ route('procurement_dashboard') }}" class="btn btn-rounded btn-outline-info min-width-100 mb-10">
                     <i class="si si-graph"></i> Dashboard
-                </a>
-                <a href="{{ route('project_material_requests') }}" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
-                    <i class="si si-plus"></i> New Quotation
                 </a>
             </div>
         </div>
 
         <div class="block">
             <div class="block-header block-header-default">
-                <h3 class="block-title">All Quotations</h3>
+                <h3 class="block-title">All Receivings</h3>
             </div>
             <div class="block-content">
                 <form method="post" id="filter-form" autocomplete="off">
@@ -57,60 +44,64 @@
                         <thead>
                             <tr>
                                 <th class="text-center" style="width: 50px;">#</th>
-                                <th>Quotation #</th>
-                                <th>Material Request</th>
+                                <th>Receiving #</th>
+                                <th>PO Number</th>
+                                <th>Project</th>
                                 <th>Supplier</th>
-                                <th>Date</th>
-                                <th class="text-right">Subtotal</th>
-                                <th class="text-right">VAT</th>
-                                <th class="text-right">Grand Total</th>
+                                <th>Delivery Date</th>
+                                <th>Delivery Note</th>
+                                <th class="text-right">Qty Delivered</th>
+                                <th class="text-center">Condition</th>
                                 <th class="text-center">Status</th>
                                 <th class="text-center" style="width: 120px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($quotations as $quotation)
-                                <tr id="quotation-tr-{{ $quotation->id }}">
-                                    <td class="text-center">{{ $loop->index + 1 }}</td>
+                            @foreach($receivings as $receiving)
+                                <tr>
+                                    <td class="text-center">{{ $loop->iteration }}</td>
+                                    <td><strong>{{ $receiving->receiving_number }}</strong></td>
                                     <td>
-                                        <strong>{{ $quotation->quotation_number }}</strong>
+                                        @if($receiving->purchase)
+                                            <a href="{{ route('purchase_order', ['id' => $receiving->purchase_id, 'document_type_id' => 0]) }}">
+                                                {{ $receiving->purchase->document_number ?? 'PO-' . $receiving->purchase_id }}
+                                            </a>
+                                        @else
+                                            N/A
+                                        @endif
                                     </td>
-                                    <td>
-                                        <a href="{{ route('supplier_quotations.by_request', $quotation->material_request_id) }}">
-                                            {{ $quotation->materialRequest?->request_number ?? 'N/A' }}
-                                        </a>
-                                        <br>
-                                        <small class="text-muted">{{ $quotation->materialRequest?->project?->name ?? '' }}</small>
-                                    </td>
-                                    <td>{{ $quotation->supplier?->name ?? 'N/A' }}</td>
-                                    <td>{{ $quotation->quotation_date?->format('Y-m-d') }}</td>
-                                    <td class="text-right">{{ number_format($quotation->total_amount, 2) }}</td>
-                                    <td class="text-right">{{ number_format($quotation->vat_amount, 2) }}</td>
-                                    <td class="text-right">
-                                        <strong>{{ number_format($quotation->grand_total, 2) }}</strong>
+                                    <td>{{ $receiving->project?->name ?? 'N/A' }}</td>
+                                    <td>{{ $receiving->supplier?->name ?? 'N/A' }}</td>
+                                    <td>{{ $receiving->date?->format('Y-m-d') ?? 'N/A' }}</td>
+                                    <td>{{ $receiving->delivery_note_number ?? '-' }}</td>
+                                    <td class="text-right">{{ number_format($receiving->quantity_delivered, 2) }}</td>
+                                    <td class="text-center">
+                                        <span class="badge badge-{{ $receiving->condition_badge_class }}">
+                                            {{ ucfirst(str_replace('_', ' ', $receiving->condition ?? 'N/A')) }}
+                                        </span>
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge badge-{{ $quotation->status_badge_class }}">
-                                            {{ ucfirst($quotation->status) }}
+                                        <span class="badge badge-{{ $receiving->status_badge_class }}">
+                                            {{ ucfirst($receiving->status ?? 'pending') }}
                                         </span>
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group">
-                                            <a href="{{ route('supplier_quotations.by_request', $quotation->material_request_id) }}"
+                                            <a href="{{ route('supplier_receiving_detail', $receiving->id) }}"
                                                 class="btn btn-sm btn-success" title="View">
                                                 <i class="fa fa-eye"></i>
                                             </a>
-                                            @if($quotation->file)
-                                                <a href="{{ $quotation->file }}" target="_blank" class="btn btn-sm btn-info" title="View File">
-                                                    <i class="fa fa-file"></i>
+                                            @if($receiving->needsInspection())
+                                                <a href="{{ route('material_inspection.create', $receiving->id) }}"
+                                                    class="btn btn-sm btn-primary" title="Inspect">
+                                                    <i class="fa fa-clipboard-check"></i>
                                                 </a>
                                             @endif
-                                            @if($quotation->status === 'received')
-                                                <button type="button"
-                                                    onclick="deleteModelItem('SupplierQuotation', {{ $quotation->id }}, 'quotation-tr-{{ $quotation->id }}');"
-                                                    class="btn btn-sm btn-danger">
-                                                    <i class="fa fa-times"></i>
-                                                </button>
+                                            @if($receiving->file)
+                                                <a href="{{ asset('storage/' . $receiving->file) }}"
+                                                    class="btn btn-sm btn-info" title="View Delivery Note" target="_blank">
+                                                    <i class="fa fa-file"></i>
+                                                </a>
                                             @endif
                                         </div>
                                     </td>

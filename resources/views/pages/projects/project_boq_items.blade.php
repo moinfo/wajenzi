@@ -2,53 +2,61 @@
 @extends('layouts.backend')
 
 @section('content')
+    @php $boqApproved = strtolower($boq->approvalStatus?->status ?? '') === 'approved'; @endphp
     <div class="container-fluid">
         <div class="content">
             <div class="content-heading">
                 BOQ Items for {{ $boq->project->project_name }}
                 <small class="text-muted">v{{ $boq->version }} ({{ ucfirst($boq->type) }})</small>
+                @if($boqApproved)
+                    <span class="badge badge-success" style="font-size: 12px; vertical-align: middle; margin-left: 8px;">APPROVED</span>
+                @endif
                 <div class="float-right">
-                    @can('Add BOQ Item')
-                        <button type="button"
-                            onclick="loadFormModal('boq_section_form', {className: 'ProjectBoqSection', boq_id: {{ $boq->id }}}, 'Add Section', 'modal-md');"
-                            class="btn btn-rounded min-width-125 mb-10 btn-alt-info">
-                            <i class="si si-layers">&nbsp;</i>Add Section
-                        </button>
-                        <button type="button"
-                            onclick="loadFormModal('project_boq_item_form', {className: 'ProjectBoqItem', boq_id: {{ $boq->id }}}, 'Add BOQ Item', 'modal-md');"
-                            class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
-                            <i class="si si-plus">&nbsp;</i>Add Item
-                        </button>
-                    @endcan
+                    @if(!$boqApproved)
+                        @can('Add BOQ Item')
+                            <button type="button"
+                                onclick="loadFormModal('boq_section_form', {className: 'ProjectBoqSection', boq_id: {{ $boq->id }}}, 'Add Section', 'modal-md');"
+                                class="btn btn-rounded min-width-125 mb-10 btn-alt-info">
+                                <i class="si si-layers">&nbsp;</i>Add Section
+                            </button>
+                            <button type="button"
+                                onclick="loadFormModal('project_boq_item_form', {className: 'ProjectBoqItem', boq_id: {{ $boq->id }}}, 'Add BOQ Item', 'modal-md');"
+                                class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
+                                <i class="si si-plus">&nbsp;</i>Add Item
+                            </button>
+                        @endcan
+                    @endif
                     <a href="{{ route('project_boq.pdf', $boq->id) }}" class="btn btn-rounded min-width-125 mb-10 btn-alt-danger" target="_blank">
                         <i class="si si-doc">&nbsp;</i>PDF
                     </a>
                     <a href="{{ route('project_boq.csv', $boq->id) }}" class="btn btn-rounded min-width-125 mb-10 btn-alt-success">
                         <i class="si si-cloud-download">&nbsp;</i>Export CSV
                     </a>
-                    <button type="button" class="btn btn-rounded min-width-125 mb-10 btn-alt-warning"
-                        onclick="$('#csv-import-modal').modal('show');">
-                        <i class="si si-cloud-upload">&nbsp;</i>Import CSV
-                    </button>
-                    <div class="btn-group mb-10">
-                        <button type="button" class="btn btn-rounded btn-alt-secondary dropdown-toggle" data-toggle="dropdown">
-                            <i class="si si-layers">&nbsp;</i>Templates
+                    @if(!$boqApproved)
+                        <button type="button" class="btn btn-rounded min-width-125 mb-10 btn-alt-warning"
+                            onclick="$('#csv-import-modal').modal('show');">
+                            <i class="si si-cloud-upload">&nbsp;</i>Import CSV
                         </button>
-                        <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="javascript:void(0)"
-                                onclick="loadFormModal('boq_save_template_form', {className: 'ProjectBoq', boq_id: {{ $boq->id }}, id: {{ $boq->id }}}, 'Save BOQ as Template', 'modal-md');">
-                                <i class="si si-layers text-info">&nbsp;</i>Save as Template
-                            </a>
-                            <a class="dropdown-item" href="javascript:void(0)"
-                                onclick="loadFormModal('boq_apply_template_form', {className: 'ProjectBoq', boq_id: {{ $boq->id }}, id: {{ $boq->id }}}, 'Apply Template to BOQ', 'modal-md');">
-                                <i class="si si-cloud-upload text-primary">&nbsp;</i>Apply Template
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="{{ route('project_boq_templates') }}">
-                                <i class="si si-folder text-muted">&nbsp;</i>View All Templates
-                            </a>
+                        <div class="btn-group mb-10">
+                            <button type="button" class="btn btn-rounded btn-alt-secondary dropdown-toggle" data-toggle="dropdown">
+                                <i class="si si-layers">&nbsp;</i>Templates
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" href="javascript:void(0)"
+                                    onclick="loadFormModal('boq_save_template_form', {className: 'ProjectBoq', boq_id: {{ $boq->id }}, id: {{ $boq->id }}}, 'Save BOQ as Template', 'modal-md');">
+                                    <i class="si si-layers text-info">&nbsp;</i>Save as Template
+                                </a>
+                                <a class="dropdown-item" href="javascript:void(0)"
+                                    onclick="loadFormModal('boq_apply_template_form', {className: 'ProjectBoq', boq_id: {{ $boq->id }}, id: {{ $boq->id }}}, 'Apply Template to BOQ', 'modal-md');">
+                                    <i class="si si-cloud-upload text-primary">&nbsp;</i>Apply Template
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ route('project_boq_templates') }}">
+                                    <i class="si si-folder text-muted">&nbsp;</i>View All Templates
+                                </a>
+                            </div>
                         </div>
-                    </div>
+                    @endif
                     <button type="button" class="btn btn-rounded mb-10 btn-alt-warning" data-toggle="collapse" data-target="#pending-requests-panel">
                         <i class="fa fa-clock">&nbsp;</i>Pending Requests
                         @if($pendingRequests->count() > 0)
@@ -152,7 +160,7 @@
                                 <tbody>
                                     {{-- Render hierarchical sections --}}
                                     @foreach($boq->rootSections as $section)
-                                        @include('partials.boq_section_rows', ['section' => $section, 'depth' => 0])
+                                        @include('partials.boq_section_rows', ['section' => $section, 'depth' => 0, 'boqApproved' => $boqApproved])
                                     @endforeach
 
                                     {{-- Render unsectioned items (backward compatibility) --}}
@@ -207,6 +215,7 @@
                                                 <td class="text-right" style="padding: 4px 6px;">{{ number_format($item->unit_price, 2) }}</td>
                                                 <td class="text-right" style="padding: 4px 6px; font-weight: 500;">{{ number_format($item->total_price, 2) }}</td>
                                                 <td class="text-center" style="padding: 3px;">
+                                                    @if(!$boqApproved)
                                                     <div class="btn-group btn-group-xs">
                                                         @can('Edit BOQ Item')
                                                             <button type="button"
@@ -223,6 +232,7 @@
                                                             </button>
                                                         @endcan
                                                     </div>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @endforeach

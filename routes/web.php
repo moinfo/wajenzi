@@ -584,11 +584,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_material_request/update/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'update'])->name('project_material_request.update');
     Route::post('/project_material_request/delete/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'destroy'])->name('project_material_request.delete');
     Route::post('/project_material_request/bulk/{project_id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'storeBulk'])->name('project_material_request.bulk');
+    Route::post('/project_material_request/{id}/update-quantities', [App\Http\Controllers\ProjectMaterialRequestController::class, 'updateQuantities'])->name('project_material_request.update_quantities');
     Route::match(['get', 'post'], '/project_material_request/{id}/{document_type_id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'request'])->name('project_material_request');
 
 // Procurement - Supplier Quotations Routes
     Route::match(['get', 'post'], '/supplier_quotations', [App\Http\Controllers\SupplierQuotationController::class, 'index'])->name('supplier_quotations');
     Route::match(['get', 'post'], '/supplier_quotations/request/{id}', [App\Http\Controllers\SupplierQuotationController::class, 'byRequest'])->name('supplier_quotations.by_request');
+    Route::post('/supplier_quotations/store', [App\Http\Controllers\SupplierQuotationController::class, 'store'])->name('supplier_quotations.store');
+    Route::post('/supplier_quotations/update/{id}', [App\Http\Controllers\SupplierQuotationController::class, 'update'])->name('supplier_quotations.update');
     Route::get('/supplier_quotation/{id}', [App\Http\Controllers\SupplierQuotationController::class, 'show'])->name('supplier_quotation.show');
     Route::get('/supplier_quotations/compare/{material_request_id}', [App\Http\Controllers\SupplierQuotationController::class, 'compare'])->name('supplier_quotations.compare');
     Route::get('/supplier_quotations/available_suppliers/{material_request_id}', [App\Http\Controllers\SupplierQuotationController::class, 'availableSuppliers'])->name('supplier_quotations.available_suppliers');
@@ -597,11 +600,25 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/quotation_comparisons', [App\Http\Controllers\QuotationComparisonController::class, 'index'])->name('quotation_comparisons');
     Route::get('/quotation_comparison/create/{material_request_id}', [App\Http\Controllers\QuotationComparisonController::class, 'create'])->name('quotation_comparison.create');
     Route::post('/quotation_comparison/store', [App\Http\Controllers\QuotationComparisonController::class, 'store'])->name('quotation_comparison.store');
+    Route::get('/quotation_comparison/{id}/create_purchase', [App\Http\Controllers\QuotationComparisonController::class, 'createPurchase'])->name('quotation_comparison.create_purchase');
     Route::match(['get', 'post'], '/quotation_comparison/{id}/{document_type_id}', [App\Http\Controllers\QuotationComparisonController::class, 'comparison'])->name('quotation_comparison');
     Route::post('/quotation_comparison/{comparison}/submit', [App\Http\Controllers\QuotationComparisonController::class, 'submit'])->name('quotation_comparison.submit');
     Route::post('/quotation_comparison/{comparison}/approve', [App\Http\Controllers\QuotationComparisonController::class, 'approve'])->name('quotation_comparison.approve');
     Route::post('/quotation_comparison/{comparison}/reject', [App\Http\Controllers\QuotationComparisonController::class, 'reject'])->name('quotation_comparison.reject');
-    Route::post('/quotation_comparison/{id}/create_purchase', [App\Http\Controllers\QuotationComparisonController::class, 'createPurchase'])->name('quotation_comparison.create_purchase');
+
+// Procurement - Purchase Orders Routes
+    Route::match(['get', 'post'], '/purchase_orders', [App\Http\Controllers\PurchaseController::class, 'purchaseOrders'])->name('purchase_orders');
+    // Specific routes must come before the wildcard {document_type_id} route
+    Route::get('/purchase_order/{id}/record_delivery', [App\Http\Controllers\PurchaseController::class, 'recordDelivery'])->name('purchase_order.record_delivery');
+    Route::post('/purchase_order/{id}/store_delivery', [App\Http\Controllers\PurchaseController::class, 'storeDelivery'])->name('purchase_order.store_delivery');
+    Route::match(['get', 'post'], '/purchase_order/{id}/{document_type_id}', [App\Http\Controllers\PurchaseController::class, 'purchaseOrderDetail'])->name('purchase_order');
+
+// Procurement - Record Deliveries Route
+    Route::match(['get', 'post'], '/record_deliveries', [App\Http\Controllers\PurchaseController::class, 'pendingDeliveries'])->name('record_deliveries');
+
+// Procurement - Supplier Receivings Routes
+    Route::match(['get', 'post'], '/supplier_receivings_procurement', [App\Http\Controllers\PurchaseController::class, 'receivings'])->name('supplier_receivings_procurement');
+    Route::get('/supplier_receiving_detail/{id}', [App\Http\Controllers\PurchaseController::class, 'receivingDetail'])->name('supplier_receiving_detail');
 
 // Procurement - Material Inspections Routes
     Route::match(['get', 'post'], '/material_inspections', [App\Http\Controllers\MaterialInspectionController::class, 'index'])->name('material_inspections');
@@ -612,6 +629,16 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/material_inspection/{inspection}/approve', [App\Http\Controllers\MaterialInspectionController::class, 'approve'])->name('material_inspection.approve');
     Route::post('/material_inspection/{inspection}/reject', [App\Http\Controllers\MaterialInspectionController::class, 'reject'])->name('material_inspection.reject');
     Route::post('/material_inspection/{id}/update_stock', [App\Http\Controllers\MaterialInspectionController::class, 'updateStock'])->name('material_inspection.update_stock');
+
+// Site Stock Register Routes
+    Route::get('/stock_register', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'selectProject'])->name('stock_register_select');
+    Route::get('/stock_register/{project_id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'stockRegister'])->name('stock_register');
+    Route::get('/stock_register/{project_id}/movements', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'movements'])->name('stock_register.movements');
+    Route::get('/stock_register/{project_id}/issue', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'issueForm'])->name('stock_register.issue');
+    Route::post('/stock_register/{project_id}/issue', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'storeIssue'])->name('stock_register.issue.store');
+    Route::get('/stock_register/{project_id}/adjust/{inventory_id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'adjustForm'])->name('stock_register.adjust');
+    Route::post('/stock_register/{project_id}/adjust/{inventory_id}', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'storeAdjustment'])->name('stock_register.adjust.store');
+    Route::post('/stock_register/{project_id}/movements/{movement_id}/verify', [App\Http\Controllers\ProjectMaterialInventoryController::class, 'verifyMovement'])->name('stock_register.movement.verify');
 
 // Procurement Dashboard Routes
     Route::get('/procurement_dashboard', [App\Http\Controllers\ProcurementDashboardController::class, 'index'])->name('procurement_dashboard');

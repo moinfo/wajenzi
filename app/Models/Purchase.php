@@ -113,14 +113,13 @@ class Purchase extends Model implements ApprovableModel
         }
 
         $quotation = $comparison->selectedQuotation;
+        $quotation->load('items');
         $request = $comparison->materialRequest;
 
-        // Get next ID (workaround for tables without proper auto_increment)
-        $nextId = (self::max('id') ?? 0) + 1;
+        // Build lookup: material_request_item_id => SupplierQuotationItem
+        $quotationItemsByMrItem = $quotation->items->keyBy('material_request_item_id');
 
-        // Use DB::table to bypass Eloquent events that trigger approval system
-        DB::table('purchases')->insert([
-            'id' => $nextId,
+        $purchase = self::create([
             'project_id' => $request->project_id,
             'material_request_id' => $request->id,
             'quotation_comparison_id' => $comparison->id,
@@ -133,26 +132,24 @@ class Purchase extends Model implements ApprovableModel
             'payment_terms' => $quotation->payment_terms,
             'expected_delivery_date' => now()->addDays($quotation->delivery_time_days ?? 7),
             'status' => 'pending',
-            'create_by_id' => $userId ?? auth()->id() ?? 1,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'create_by_id' => $userId ?? auth()->id(),
         ]);
 
-        $purchase = self::find($nextId);
-
-        // Create purchase items linked to BOQ (from request items)
+        // Create purchase items using per-item pricing from supplier quotation
         foreach ($request->items as $mrItem) {
-            if ($mrItem->boq_item_id) {
-                PurchaseItem::create([
-                    'purchase_id' => $purchase->id,
-                    'boq_item_id' => $mrItem->boq_item_id,
-                    'description' => $mrItem->boqItem?->description ?? $mrItem->description ?? 'Material from request',
-                    'unit' => $mrItem->unit ?? $mrItem->boqItem?->unit ?? 'pcs',
-                    'quantity' => $mrItem->quantity_approved ?? $mrItem->quantity_requested,
-                    'unit_price' => $quotation->unit_price,
-                    'total_price' => ($mrItem->quantity_approved ?? $mrItem->quantity_requested) * $quotation->unit_price
-                ]);
-            }
+            $qItem = $quotationItemsByMrItem->get($mrItem->id);
+            $qty = $mrItem->quantity_approved ?? $mrItem->quantity_requested;
+            $unitPrice = $qItem->unit_price ?? 0;
+
+            PurchaseItem::create([
+                'purchase_id' => $purchase->id,
+                'boq_item_id' => $mrItem->boq_item_id,
+                'description' => $qItem->description ?? $mrItem->boqItem?->description ?? $mrItem->description ?? 'Material',
+                'unit' => $qItem->unit ?? $mrItem->unit ?? $mrItem->boqItem?->unit ?? 'pcs',
+                'quantity' => $qty,
+                'unit_price' => $unitPrice,
+                'total_price' => $qty * $unitPrice,
+            ]);
         }
 
         return $purchase;

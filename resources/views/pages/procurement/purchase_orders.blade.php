@@ -1,32 +1,19 @@
 @extends('layouts.backend')
 
-@section('css')
-<style>
-    .status-badge {
-        padding: 5px 10px;
-        border-radius: 15px;
-        font-size: 0.85em;
-    }
-</style>
-@endsection
-
 @section('content')
 <div class="container-fluid">
     <div class="content">
-        <div class="content-heading">Supplier Quotations
+        <div class="content-heading">Purchase Orders
             <div class="float-right">
                 <a href="{{ route('procurement_dashboard') }}" class="btn btn-rounded btn-outline-info min-width-100 mb-10">
                     <i class="si si-graph"></i> Dashboard
-                </a>
-                <a href="{{ route('project_material_requests') }}" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
-                    <i class="si si-plus"></i> New Quotation
                 </a>
             </div>
         </div>
 
         <div class="block">
             <div class="block-header block-header-default">
-                <h3 class="block-title">All Quotations</h3>
+                <h3 class="block-title">All Purchase Orders</h3>
             </div>
             <div class="block-content">
                 <form method="post" id="filter-form" autocomplete="off">
@@ -57,58 +44,78 @@
                         <thead>
                             <tr>
                                 <th class="text-center" style="width: 50px;">#</th>
-                                <th>Quotation #</th>
-                                <th>Material Request</th>
+                                <th>PO Number</th>
+                                <th>Project</th>
                                 <th>Supplier</th>
-                                <th>Date</th>
+                                <th>Material Request</th>
+                                <th class="text-center">Items</th>
                                 <th class="text-right">Subtotal</th>
                                 <th class="text-right">VAT</th>
-                                <th class="text-right">Grand Total</th>
+                                <th class="text-right">Total</th>
+                                <th class="text-center">Approvals</th>
                                 <th class="text-center">Status</th>
-                                <th class="text-center" style="width: 120px;">Actions</th>
+                                <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($quotations as $quotation)
-                                <tr id="quotation-tr-{{ $quotation->id }}">
+                            @foreach($purchaseOrders as $po)
+                                <tr id="purchase-tr-{{ $po->id }}">
                                     <td class="text-center">{{ $loop->index + 1 }}</td>
                                     <td>
-                                        <strong>{{ $quotation->quotation_number }}</strong>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('supplier_quotations.by_request', $quotation->material_request_id) }}">
-                                            {{ $quotation->materialRequest?->request_number ?? 'N/A' }}
+                                        <a href="{{ route('purchase_order', ['id' => $po->id, 'document_type_id' => 0]) }}">
+                                            <strong>{{ $po->document_number ?? 'PO-' . $po->id }}</strong>
                                         </a>
-                                        <br>
-                                        <small class="text-muted">{{ $quotation->materialRequest?->project?->name ?? '' }}</small>
                                     </td>
-                                    <td>{{ $quotation->supplier?->name ?? 'N/A' }}</td>
-                                    <td>{{ $quotation->quotation_date?->format('Y-m-d') }}</td>
-                                    <td class="text-right">{{ number_format($quotation->total_amount, 2) }}</td>
-                                    <td class="text-right">{{ number_format($quotation->vat_amount, 2) }}</td>
-                                    <td class="text-right">
-                                        <strong>{{ number_format($quotation->grand_total, 2) }}</strong>
+                                    <td>{{ $po->project?->name ?? 'N/A' }}</td>
+                                    <td>{{ $po->supplier?->name ?? 'N/A' }}</td>
+                                    <td>
+                                        @if($po->materialRequest)
+                                            <a href="{{ route('supplier_quotations.by_request', $po->material_request_id) }}">
+                                                {{ $po->materialRequest->request_number }}
+                                            </a>
+                                        @else
+                                            N/A
+                                        @endif
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge badge-{{ $quotation->status_badge_class }}">
-                                            {{ ucfirst($quotation->status) }}
-                                        </span>
+                                        <span class="badge badge-info">{{ $po->purchaseItems->count() }}</span>
+                                    </td>
+                                    <td class="text-right">{{ number_format($po->amount_vat_exc, 2) }}</td>
+                                    <td class="text-right">{{ number_format($po->vat_amount, 2) }}</td>
+                                    <td class="text-right">
+                                        <strong>{{ number_format($po->total_amount, 2) }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <x-ringlesoft-approval-status-summary :model="$po" />
+                                    </td>
+                                    <td class="text-center">
+                                        @php
+                                            $status = strtoupper($po->approvalStatus?->status ?? $po->status ?? 'pending');
+                                            $statusClass = match($status) {
+                                                'APPROVED' => 'success',
+                                                'PENDING', 'SUBMITTED' => 'warning',
+                                                'REJECTED' => 'danger',
+                                                default => 'secondary'
+                                            };
+                                        @endphp
+                                        <span class="badge badge-{{ $statusClass }}">{{ $status }}</span>
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group">
-                                            <a href="{{ route('supplier_quotations.by_request', $quotation->material_request_id) }}"
+                                            <a href="{{ route('purchase_order', ['id' => $po->id, 'document_type_id' => 0]) }}"
                                                 class="btn btn-sm btn-success" title="View">
                                                 <i class="fa fa-eye"></i>
                                             </a>
-                                            @if($quotation->file)
-                                                <a href="{{ $quotation->file }}" target="_blank" class="btn btn-sm btn-info" title="View File">
-                                                    <i class="fa fa-file"></i>
+                                            @if(strtoupper($status) === 'APPROVED' && $po->material_request_id && $po->purchaseItems->contains(fn($i) => !$i->isFullyReceived()))
+                                                <a href="{{ route('purchase_order.record_delivery', $po->id) }}"
+                                                    class="btn btn-sm btn-info" title="Record Delivery">
+                                                    <i class="fa fa-truck"></i>
                                                 </a>
                                             @endif
-                                            @if($quotation->status === 'received')
+                                            @if(strtoupper($po->status) !== 'APPROVED')
                                                 <button type="button"
-                                                    onclick="deleteModelItem('SupplierQuotation', {{ $quotation->id }}, 'quotation-tr-{{ $quotation->id }}');"
-                                                    class="btn btn-sm btn-danger">
+                                                    onclick="deleteModelItem('Purchase', {{ $po->id }}, 'purchase-tr-{{ $po->id }}');"
+                                                    class="btn btn-sm btn-danger" title="Delete">
                                                     <i class="fa fa-times"></i>
                                                 </button>
                                             @endif

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 
@@ -69,6 +70,15 @@ class LaborRequest extends Model implements ApprovableModel
             if (empty($model->requested_by)) {
                 $model->requested_by = auth()->id();
             }
+        });
+
+        // Re-register the Approvable trait's created hook since overriding boot() prevents it from running
+        static::created(static function ($model) {
+            $model->approvalStatus()->create([
+                'steps' => $model->approvalFlowSteps()->map(fn($item) => $item->toApprovalStatusArray()),
+                'status' => ApprovalStatusEnum::CREATED->value,
+                'creator_id' => auth()->id(),
+            ]);
         });
     }
 
