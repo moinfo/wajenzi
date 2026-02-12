@@ -10,11 +10,9 @@
                         <option value="">Select Material Request</option>
                         @foreach ($approved_material_requests ?? [] as $request)
                             <option value="{{ $request->id }}"
-                                data-quantity="{{ $request->quantity_requested }}"
-                                data-unit="{{ $request->unit }}"
                                 {{ ($request->id == ($object->material_request_id ?? '')) ? 'selected' : '' }}>
                                 {{ $request->request_number }} - {{ $request->project?->name ?? 'N/A' }}
-                                ({{ number_format($request->quantity_requested, 2) }} {{ $request->unit }})
+                                ({{ $request->items->count() }} item(s))
                             </option>
                         @endforeach
                     </select>
@@ -179,14 +177,9 @@
         $('#input-quantity, #input-unit-price').on('input', calculateTotal);
         $('#input-total-amount, #input-vat-amount').on('input', calculateGrandTotal);
 
-        // Auto-fill quantity from material request
-        $('#input-material-request').change(function() {
-            var selected = $(this).find(':selected');
-            if (selected.val()) {
-                var qty = selected.data('quantity');
-                $('#input-quantity').val(qty);
-                calculateTotal();
-            }
-        });
+        // Pre-select material request if passed as parameter
+        @if(request('material_request_id'))
+            $('#input-material-request').val('{{ request('material_request_id') }}').trigger('change');
+        @endif
     });
 </script>

@@ -129,4 +129,30 @@ class ProjectMaterialRequestController extends Controller
 
         return back()->with('success', 'Material request submitted with ' . count($request->items) . ' items.');
     }
+
+    public function updateQuantities(Request $request, $id)
+    {
+        $materialRequest = ProjectMaterialRequest::findOrFail($id);
+
+        if (strtoupper($materialRequest->status) === 'APPROVED') {
+            return back()->with('error', 'Cannot edit quantities on an approved request.');
+        }
+
+        $request->validate([
+            'quantities' => 'required|array',
+            'quantities.*' => 'required|numeric|min:0.01',
+        ]);
+
+        foreach ($request->quantities as $itemId => $qty) {
+            $item = ProjectMaterialRequestItem::where('id', $itemId)
+                ->where('material_request_id', $materialRequest->id)
+                ->first();
+
+            if ($item) {
+                $item->update(['quantity_approved' => $qty]);
+            }
+        }
+
+        return back()->with('success', 'Quantities updated successfully.');
+    }
 }

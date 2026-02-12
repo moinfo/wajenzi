@@ -1,5 +1,5 @@
 {{-- Recursive partial: renders a section header, its items, subtotal, then recurses into children --}}
-@php $depth = $depth ?? 0; @endphp
+@php $depth = $depth ?? 0; $boqApproved = $boqApproved ?? false; @endphp
 
 {{-- Section header row --}}
 <tr style="background-color: rgba(52, 144, 220, {{ 0.10 + ($depth * 0.05) }});">
@@ -13,6 +13,7 @@
         {{ number_format($section->subtotal, 2) }}
     </td>
     <td class="text-center" style="padding: 4px;">
+        @if(!$boqApproved)
         <div class="btn-group btn-group-xs">
             @can('Add BOQ Item')
                 <button type="button"
@@ -41,6 +42,7 @@
                 </button>
             @endcan
         </div>
+        @endif
     </td>
 </tr>
 
@@ -90,6 +92,7 @@
         <td class="text-right" style="padding: 4px 6px;">{{ number_format($item->unit_price, 2) }}</td>
         <td class="text-right" style="padding: 4px 6px; font-weight: 500;">{{ number_format($item->total_price, 2) }}</td>
         <td class="text-center" style="padding: 3px;">
+            @if(!$boqApproved)
             <div class="btn-group btn-group-xs">
                 @can('Edit BOQ Item')
                     <button type="button"
@@ -106,13 +109,14 @@
                     </button>
                 @endcan
             </div>
+            @endif
         </td>
     </tr>
 @endforeach
 
 {{-- Recurse into children --}}
 @foreach($section->childrenRecursive as $child)
-    @include('partials.boq_section_rows', ['section' => $child, 'depth' => $depth + 1])
+    @include('partials.boq_section_rows', ['section' => $child, 'depth' => $depth + 1, 'boqApproved' => $boqApproved])
 @endforeach
 
 {{-- Section subtotal row --}}

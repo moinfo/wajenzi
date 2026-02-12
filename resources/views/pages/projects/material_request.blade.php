@@ -21,52 +21,67 @@
 
             <!-- Request Items Table -->
             @if($request->items->count() > 0)
+            @php $isPending = strtoupper($request->status) !== 'APPROVED'; @endphp
             <div class="block">
                 <div class="block-header block-header-default">
                     <h3 class="block-title">Requested Items ({{ $request->items->count() }})</h3>
                 </div>
                 <div class="block-content p-0">
-                    <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 12px;">
-                        <thead>
-                            <tr style="background: #f8f9fa;">
-                                <th style="padding: 8px; width: 40px;">#</th>
-                                <th style="padding: 8px;">Item Code</th>
-                                <th style="padding: 8px;">Description</th>
-                                <th class="text-right" style="padding: 8px;">BOQ Qty</th>
-                                <th class="text-right" style="padding: 8px;">Requested</th>
-                                @if(strtoupper($request->status) === 'APPROVED')
-                                    <th class="text-right" style="padding: 8px;">Approved</th>
-                                @endif
-                                <th style="padding: 8px;">Unit</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($request->items as $item)
-                                <tr>
-                                    <td style="padding: 6px 8px;" class="text-center text-muted">{{ $loop->iteration }}</td>
-                                    <td style="padding: 6px 8px;" class="font-w600">{{ $item->boqItem->item_code ?? '-' }}</td>
-                                    <td style="padding: 6px 8px;">
-                                        {{ $item->boqItem->description ?? $item->description ?? '-' }}
-                                        @if($item->specification)
-                                            <small class="text-muted">({{ $item->specification }})</small>
-                                        @endif
-                                    </td>
-                                    <td style="padding: 6px 8px;" class="text-right">
-                                        {{ $item->boqItem ? number_format($item->boqItem->quantity, 2) : '-' }}
-                                    </td>
-                                    <td style="padding: 6px 8px;" class="text-right font-w600">
-                                        {{ number_format($item->quantity_requested, 2) }}
-                                    </td>
-                                    @if(strtoupper($request->status) === 'APPROVED')
-                                        <td style="padding: 6px 8px;" class="text-right text-success font-w600">
-                                            {{ number_format($item->quantity_approved ?? $item->quantity_requested, 2) }}
-                                        </td>
-                                    @endif
-                                    <td style="padding: 6px 8px;">{{ $item->unit }}</td>
+                    <form method="POST" action="{{ route('project_material_request.update_quantities', $request->id) }}" id="qty-form">
+                        @csrf
+                        <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 12px;">
+                            <thead>
+                                <tr style="background: #f8f9fa;">
+                                    <th style="padding: 8px; width: 40px;">#</th>
+                                    <th style="padding: 8px;">Item Code</th>
+                                    <th style="padding: 8px;">Description</th>
+                                    <th class="text-right" style="padding: 8px;">BOQ Qty</th>
+                                    <th class="text-right" style="padding: 8px;">Requested</th>
+                                    <th class="text-right" style="padding: 8px;">Approve Qty</th>
+                                    <th style="padding: 8px;">Unit</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach($request->items as $item)
+                                    <tr>
+                                        <td style="padding: 6px 8px;" class="text-center text-muted">{{ $loop->iteration }}</td>
+                                        <td style="padding: 6px 8px;" class="font-w600">{{ $item->boqItem->item_code ?? '-' }}</td>
+                                        <td style="padding: 6px 8px;">
+                                            {{ $item->boqItem->description ?? $item->description ?? '-' }}
+                                            @if($item->specification)
+                                                <small class="text-muted">({{ $item->specification }})</small>
+                                            @endif
+                                        </td>
+                                        <td style="padding: 6px 8px;" class="text-right">
+                                            {{ $item->boqItem ? number_format($item->boqItem->quantity, 2) : '-' }}
+                                        </td>
+                                        <td style="padding: 6px 8px;" class="text-right font-w600">
+                                            {{ number_format($item->quantity_requested, 2) }}
+                                        </td>
+                                        <td style="padding: 6px 8px;" class="text-right">
+                                            @if($isPending)
+                                                <input type="number" step="0.01" min="0.01"
+                                                    max="{{ $item->quantity_requested }}"
+                                                    name="quantities[{{ $item->id }}]"
+                                                    value="{{ $item->quantity_approved ?? $item->quantity_requested }}"
+                                                    class="form-control form-control-sm text-right" style="width: 100px; display: inline-block; font-size: 12px;">
+                                            @else
+                                                <span class="text-success font-w600">{{ number_format($item->quantity_approved ?? $item->quantity_requested, 2) }}</span>
+                                            @endif
+                                        </td>
+                                        <td style="padding: 6px 8px;">{{ $item->unit }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                        @if($isPending)
+                            <div class="text-right" style="padding: 10px 15px;">
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    <i class="fa fa-save"></i> Save Quantities
+                                </button>
+                            </div>
+                        @endif
+                    </form>
                 </div>
             </div>
             @endif

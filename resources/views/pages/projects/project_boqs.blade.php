@@ -124,9 +124,6 @@
                                                 <a class="btn btn-sm btn-success" href="{{route('project_boq.show',['id' => $boq->id])}}" title="Items">
                                                     <i class="fa fa-list"></i>
                                                 </a>
-                                                <a class="btn btn-sm btn-info" href="{{ route('project_boq', ['id' => $boq->id, 'document_type_id' => 0]) }}" title="Approval">
-                                                    <i class="fa fa-check-circle"></i>
-                                                </a>
                                                 @can('Edit BOQ')
                                                     <button type="button"
                                                             onclick="loadFormModal('project_boq_form', {className: 'ProjectBoq', id: {{$boq->id}}}, 'Edit BOQ', 'modal-md');"

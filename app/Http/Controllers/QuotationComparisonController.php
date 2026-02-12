@@ -67,7 +67,7 @@ class QuotationComparisonController extends Controller
             ])->with('info', 'A comparison already exists for this request');
         }
 
-        $quotations = SupplierQuotation::with('supplier')
+        $quotations = SupplierQuotation::with(['supplier', 'items'])
             ->where('material_request_id', $materialRequestId)
             ->where('status', '!=', 'rejected')
             ->orderBy('grand_total', 'asc')
@@ -84,10 +84,19 @@ class QuotationComparisonController extends Controller
             'variance' => $quotations->last()->grand_total - $quotations->first()->grand_total,
         ];
 
+        // Build per-item comparison matrix: mrItemId => [quotation_id => unit_price]
+        $itemPriceMatrix = [];
+        foreach ($quotations as $q) {
+            foreach ($q->items as $qItem) {
+                $itemPriceMatrix[$qItem->material_request_item_id][$q->id] = $qItem;
+            }
+        }
+
         return view('pages.procurement.create_comparison')->with([
             'materialRequest' => $materialRequest,
             'quotations' => $quotations,
-            'analysis' => $analysis
+            'analysis' => $analysis,
+            'itemPriceMatrix' => $itemPriceMatrix,
         ]);
     }
 
@@ -121,9 +130,7 @@ class QuotationComparisonController extends Controller
                 'prepared_by' => auth()->id(),
                 'status' => 'pending'
             ]);
-
-            // Auto-submit for approval
-            $comparison->submit();
+            // Approval status auto-created with SUBMITTED status via model boot
 
             DB::commit();
 
