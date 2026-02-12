@@ -164,6 +164,137 @@
             </div>
             @endif
 
+            {{-- Quotation Comparison Items --}}
+            @if(isset($quotations) && $quotations->count())
+            <div class="details-card" style="margin-bottom: 25px;">
+                <div class="card-header" style="background-color: #f8f9fa; padding: 15px 25px; border-bottom: 1px solid #e9ecef;">
+                    <h3 style="margin: 0; color: #0066cc; font-weight: 600; font-size: 18px;">
+                        <i class="fas fa-balance-scale me-2"></i> Supplier Quotation Comparison
+                    </h3>
+                </div>
+                <div class="card-body" style="padding: 25px;">
+                    @if(isset($recommendation_reason) && $recommendation_reason)
+                    <div style="background: #e8f5e9; border-left: 4px solid #4CAF50; padding: 12px 16px; border-radius: 4px; margin-bottom: 20px;">
+                        <strong style="color: #2e7d32;"><i class="fas fa-thumbs-up me-1"></i> Recommendation:</strong>
+                        <span style="color: #333;">{{ $recommendation_reason }}</span>
+                    </div>
+                    @endif
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-vcenter" style="font-size: 14px;">
+                            <thead style="background: #f1f3f5;">
+                                <tr>
+                                    <th style="width: 35px;">#</th>
+                                    <th>Item Description</th>
+                                    <th class="text-center">Unit</th>
+                                    <th class="text-center">Qty</th>
+                                    @foreach($quotations as $q)
+                                        <th class="text-right" style="min-width: 120px; {{ $approval_data->selected_quotation_id == $q->id ? 'background: #e8f5e9;' : '' }}">
+                                            {{ $q->supplier?->name ?? 'Supplier' }}
+                                            @if($approval_data->selected_quotation_id == $q->id)
+                                                <br><span class="badge bg-success" style="font-size: 10px;">Selected</span>
+                                            @endif
+                                        </th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    // Build lookup: material_request_item_id => [quotation_id => item]
+                                    $itemMatrix = [];
+                                    $mrItems = $approval_data->materialRequest?->items ?? collect();
+
+                                    foreach ($quotations as $q) {
+                                        foreach ($q->items as $qi) {
+                                            $key = $qi->material_request_item_id ?? $qi->boq_item_id ?? $qi->description;
+                                            $itemMatrix[$key][$q->id] = $qi;
+                                        }
+                                    }
+                                    $rowNum = 0;
+                                @endphp
+
+                                @if($mrItems->count())
+                                    @foreach($mrItems as $mrItem)
+                                        @php $rowNum++; $key = $mrItem->id; @endphp
+                                        <tr>
+                                            <td>{{ $rowNum }}</td>
+                                            <td>{{ $mrItem->boqItem?->description ?? $mrItem->description ?? '-' }}</td>
+                                            <td class="text-center">{{ $mrItem->unit ?? $mrItem->boqItem?->unit ?? '-' }}</td>
+                                            <td class="text-center">{{ number_format($mrItem->quantity_requested, 2) }}</td>
+                                            @foreach($quotations as $q)
+                                                @php $qi = $itemMatrix[$key][$q->id] ?? null; @endphp
+                                                <td class="text-right" style="{{ $approval_data->selected_quotation_id == $q->id ? 'background: #f1f8e9;' : '' }}">
+                                                    @if($qi)
+                                                        {{ number_format($qi->unit_price, 2) }}
+                                                        <br><small class="text-muted">= {{ number_format($qi->total_price, 2) }}</small>
+                                                    @else
+                                                        <span class="text-muted">-</span>
+                                                    @endif
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    {{-- Fallback: use first quotation's items as rows --}}
+                                    @foreach($quotations->first()?->items ?? [] as $qi)
+                                        @php $rowNum++; @endphp
+                                        <tr>
+                                            <td>{{ $rowNum }}</td>
+                                            <td>{{ $qi->description ?? $qi->boqItem?->description ?? '-' }}</td>
+                                            <td class="text-center">{{ $qi->unit ?? '-' }}</td>
+                                            <td class="text-center">{{ number_format($qi->quantity, 2) }}</td>
+                                            @foreach($quotations as $q)
+                                                @php
+                                                    $matchItem = $q->items->first(function($i) use ($qi) {
+                                                        return ($i->material_request_item_id && $i->material_request_item_id == $qi->material_request_item_id)
+                                                            || ($i->boq_item_id && $i->boq_item_id == $qi->boq_item_id);
+                                                    });
+                                                @endphp
+                                                <td class="text-right" style="{{ $approval_data->selected_quotation_id == $q->id ? 'background: #f1f8e9;' : '' }}">
+                                                    @if($matchItem)
+                                                        {{ number_format($matchItem->unit_price, 2) }}
+                                                        <br><small class="text-muted">= {{ number_format($matchItem->total_price, 2) }}</small>
+                                                    @else
+                                                        <span class="text-muted">-</span>
+                                                    @endif
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    @endforeach
+                                @endif
+                            </tbody>
+                            <tfoot style="font-weight: 600; background: #f8f9fa;">
+                                <tr>
+                                    <td colspan="4" class="text-right">Subtotal</td>
+                                    @foreach($quotations as $q)
+                                        <td class="text-right" style="{{ $approval_data->selected_quotation_id == $q->id ? 'background: #e8f5e9;' : '' }}">
+                                            {{ number_format($q->total_amount ?? 0, 2) }}
+                                        </td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="text-right">VAT</td>
+                                    @foreach($quotations as $q)
+                                        <td class="text-right" style="{{ $approval_data->selected_quotation_id == $q->id ? 'background: #e8f5e9;' : '' }}">
+                                            {{ number_format($q->vat_amount ?? 0, 2) }}
+                                        </td>
+                                    @endforeach
+                                </tr>
+                                <tr style="font-size: 1.05em;">
+                                    <td colspan="4" class="text-right"><strong>Grand Total</strong></td>
+                                    @foreach($quotations as $q)
+                                        <td class="text-right" style="{{ $approval_data->selected_quotation_id == $q->id ? 'background: #c8e6c9; font-weight: 700;' : '' }}">
+                                            <strong>{{ number_format($q->grand_total ?? 0, 2) }}</strong>
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Approvals Section -->
             <div class="approvals-section">
                 <style>

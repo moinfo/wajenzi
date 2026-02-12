@@ -111,10 +111,11 @@ class PurchaseController extends Controller
         $document_id = $id;
 
         $details = [
-            'Supplier VRN' => $approval_data->supplier->vrn,
+            'Supplier' => $approval_data->supplier?->name ?? '-',
+            'Supplier VRN' => $approval_data->supplier?->vrn ?? '-',
             'Tax Invoice' => $approval_data->tax_invoice,
             'Invoice Date' => $approval_data->invoice_date,
-            'Goods' => $approval_data->item->name,
+            'Goods' => $approval_data->item?->name ?? ($approval_data->document_number ?? '-'),
             'Total Amount' => number_format($approval_data->total_amount),
             'Amount VAT EXC' => number_format($approval_data->amount_vat_exc),
             'Date' => $approval_data->date,
@@ -122,16 +123,19 @@ class PurchaseController extends Controller
             'Uploaded File' => $approval_data->file
         ];
 
+        // Load purchase items for procurement-linked purchases
+        $purchaseItems = $approval_data->purchaseItems()->with('boqItem')->get();
+
         $data = [
             'approval_data' => $approval_data,
             'document_id' => $document_id,
-            'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
+            'approval_document_type_id' => $document_type_id,
             'page_name' => 'Purchases',
-            'approval_data_name' => $approval_data->supplier->name,
+            'approval_data_name' => $approval_data->supplier?->name ?? $approval_data->document_number ?? 'Purchase #'.$id,
             'details' => $details,
             'model' => 'Purchase',
             'route' => 'purchase',
-
+            'purchaseItems' => $purchaseItems,
         ];
         return view('approvals._approve_page')->with($data);
     }

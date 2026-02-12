@@ -136,11 +136,11 @@
                                             {{$loop->index + 1}}
                                         </td>
                                         <td class="font-w600">{{ $purchase->date }}</td>
-                                        <td class="font-w600">{{ $purchase->supplier->name }}</td>
-                                        <td class="font-w600">{{ $purchase->supplier->vrn }}</td>
+                                        <td class="font-w600">{{ $purchase->supplier?->name ?? '-' }}</td>
+                                        <td class="font-w600">{{ $purchase->supplier?->vrn ?? '-' }}</td>
                                         <td class="font-w600">{{ $purchase->tax_invoice }}</td>
                                         <td class="font-w600">{{ $purchase->invoice_date }}</td>
-                                        <td class="font-w600">{{ $purchase->item->name }}</td>
+                                        <td class="font-w600">{{ $purchase->item?->name ?? ($purchase->document_number ? 'Project Purchase' : '-') }}</td>
                                         <td class="font-w600">{{ number_format($purchase->total_amount, 2) }}</td>
                                         <td class="font-w600">{{ number_format($purchase->amount_vat_exc,2) }}</td>
                                         <td class="font-w600">{{ number_format($purchase->vat_amount, 2) }}</td>
