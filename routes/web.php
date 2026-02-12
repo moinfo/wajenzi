@@ -584,11 +584,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/project_material_request/update/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'update'])->name('project_material_request.update');
     Route::post('/project_material_request/delete/{id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'destroy'])->name('project_material_request.delete');
     Route::post('/project_material_request/bulk/{project_id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'storeBulk'])->name('project_material_request.bulk');
+    Route::post('/project_material_request/{id}/update-quantities', [App\Http\Controllers\ProjectMaterialRequestController::class, 'updateQuantities'])->name('project_material_request.update_quantities');
     Route::match(['get', 'post'], '/project_material_request/{id}/{document_type_id}', [App\Http\Controllers\ProjectMaterialRequestController::class, 'request'])->name('project_material_request');
 
 // Procurement - Supplier Quotations Routes
     Route::match(['get', 'post'], '/supplier_quotations', [App\Http\Controllers\SupplierQuotationController::class, 'index'])->name('supplier_quotations');
     Route::match(['get', 'post'], '/supplier_quotations/request/{id}', [App\Http\Controllers\SupplierQuotationController::class, 'byRequest'])->name('supplier_quotations.by_request');
+    Route::post('/supplier_quotations/store', [App\Http\Controllers\SupplierQuotationController::class, 'store'])->name('supplier_quotations.store');
+    Route::post('/supplier_quotations/update/{id}', [App\Http\Controllers\SupplierQuotationController::class, 'update'])->name('supplier_quotations.update');
     Route::get('/supplier_quotation/{id}', [App\Http\Controllers\SupplierQuotationController::class, 'show'])->name('supplier_quotation.show');
     Route::get('/supplier_quotations/compare/{material_request_id}', [App\Http\Controllers\SupplierQuotationController::class, 'compare'])->name('supplier_quotations.compare');
     Route::get('/supplier_quotations/available_suppliers/{material_request_id}', [App\Http\Controllers\SupplierQuotationController::class, 'availableSuppliers'])->name('supplier_quotations.available_suppliers');

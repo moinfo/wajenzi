@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class SupplierQuotation extends Model
@@ -91,6 +92,11 @@ class SupplierQuotation extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(SupplierQuotationItem::class, 'supplier_quotation_id')->orderBy('sort_order');
     }
 
     public function comparison(): HasOne
