@@ -306,8 +306,8 @@
                         </div>
 
                         @if($invoice->footer_text)
-                            <div class="mt-3 text-center">
-                                <em>{{ $invoice->footer_text }}</em>
+                            <div class="mt-3 text-center" style="padding: 15px; border-top: 2px solid #dee2e6;">
+                                <strong style="font-size: 13px; color: #333;">{{ $invoice->footer_text }}</strong>
                             </div>
                         @endif
                     </div>
