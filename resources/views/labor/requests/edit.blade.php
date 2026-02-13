@@ -35,7 +35,7 @@
                                     <option value="">Select Phase</option>
                                     @foreach($constructionPhases as $phase)
                                         <option value="{{ $phase->id }}" {{ $request->construction_phase_id == $phase->id ? 'selected' : '' }}>
-                                            {{ $phase->phase_name }}
+                                            {{ $phase->name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -159,7 +159,7 @@
 </div>
 @endsection
 
-@section('js')
+@section('js_after')
 <script>
     $(document).ready(function() {
         $('.select2').select2();

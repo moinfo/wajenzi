@@ -6,7 +6,8 @@ use App\Classes\Utility;
 use App\Models\Approval;
 use App\Models\LaborRequest;
 use App\Models\Project;
-use App\Models\ProjectConstructionPhase;
+use App\Models\ProjectBoq;
+use App\Models\ProjectBoqSection;
 use App\Models\Supplier;
 use App\Services\ApprovalService;
 use Illuminate\Http\Request;
@@ -71,7 +72,7 @@ class LaborRequestController extends Controller
         $constructionPhases = [];
 
         if ($request->has('project_id')) {
-            $constructionPhases = ProjectConstructionPhase::where('project_id', $request->project_id)->get();
+            $constructionPhases = ProjectBoqSection::whereIn('boq_id', ProjectBoq::where('project_id', $request->project_id)->pluck('id'))->whereNull('parent_id')->orderBy('name')->get();
         }
 
         return view('labor.requests.create')->with([
@@ -87,6 +88,11 @@ class LaborRequestController extends Controller
      */
     public function store(Request $request)
     {
+        $request->merge([
+            'proposed_amount' => Utility::strip_commas($request->proposed_amount),
+            'negotiated_amount' => $request->negotiated_amount ? Utility::strip_commas($request->negotiated_amount) : null,
+        ]);
+
         $request->validate([
             'project_id' => 'required|exists:projects,id',
             'work_description' => 'required|string|min:10',
@@ -168,7 +174,7 @@ class LaborRequestController extends Controller
 
         $projects = Project::orderBy('project_name')->get();
         $artisans = Supplier::artisans()->orderBy('name')->get();
-        $constructionPhases = ProjectConstructionPhase::where('project_id', $laborRequest->project_id)->get();
+        $constructionPhases = ProjectBoqSection::whereIn('boq_id', ProjectBoq::where('project_id', $laborRequest->project_id)->pluck('id'))->whereNull('parent_id')->orderBy('name')->get();
 
         return view('labor.requests.edit')->with([
             'request' => $laborRequest,

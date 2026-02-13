@@ -223,19 +223,23 @@
                         <h3 class="block-title">Actions</h3>
                     </div>
                     <div class="block-content">
-                        @if($inspection->status === 'pending')
-                            <a href="{{ route('labor.contracts.show', $inspection->labor_contract_id) }}"
-                                class="btn btn-primary btn-block mb-2">
-                                <i class="fa fa-eye"></i> View Contract
+                        <a href="{{ route('labor.contracts.show', $inspection->labor_contract_id) }}"
+                            class="btn btn-primary btn-block mb-2">
+                            <i class="fa fa-eye"></i> View Contract
+                        </a>
+                        @if($inspection->isDraft())
+                            <a href="{{ route('labor.inspections.edit', $inspection->id) }}"
+                                class="btn btn-warning btn-block mb-2">
+                                <i class="fa fa-edit"></i> Edit Inspection
                             </a>
-                            @if($inspection->log_date && $inspection->log_date->diffInDays(now()) <= 3)
-                                <a href="{{ route('labor.inspections.edit', $inspection->id) }}"
-                                    class="btn btn-warning btn-block mb-2">
-                                    <i class="fa fa-edit"></i> Edit Inspection
-                                </a>
-                            @endif
+                            <form action="{{ route('labor.inspections.submit', $inspection->id) }}" method="POST">
+                                @csrf
+                                <button type="submit" class="btn btn-success btn-block mb-2"
+                                    onclick="return confirm('Submit this inspection for approval?')">
+                                    <i class="fa fa-paper-plane"></i> Submit for Approval
+                                </button>
+                            </form>
                         @endif
-
                         <a href="{{ route('labor.inspections.index') }}" class="btn btn-secondary btn-block">
                             <i class="fa fa-list"></i> All Inspections
                         </a>
@@ -243,6 +247,57 @@
                 </div>
             </div>
         </div>
+        {{-- Approval Flow Section (visible once submitted) --}}
+        @if(!$inspection->isDraft())
+        <div class="approvals-section">
+            <style>
+                .approvals-section {
+                    background-color: #fff;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+                    margin-bottom: 30px;
+                    overflow: hidden;
+                    border: 1px solid rgba(0, 0, 0, 0.05);
+                }
+                .section-header {
+                    background-color: #f8f9fa;
+                    padding: 15px 25px;
+                    border-bottom: 1px solid #e9ecef;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .section-title {
+                    margin: 0;
+                    color: #0066cc;
+                    font-weight: 600;
+                    font-size: 18px;
+                    display: flex;
+                    align-items: center;
+                }
+                .section-title i {
+                    margin-right: 10px;
+                    color: #0066cc;
+                }
+                .section-body {
+                    padding: 25px;
+                }
+            </style>
+
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-tasks"></i> Approval Flow
+                </h2>
+                <div class="flow-status">
+                    <span class="badge badge-{{ $inspection->status_badge_class }}">{{ ucfirst($inspection->status) }}</span>
+                </div>
+            </div>
+
+            <div class="section-body">
+                <x-ringlesoft-approval-actions :model="$inspection" />
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 @endsection
