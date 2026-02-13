@@ -138,8 +138,12 @@ class Controller extends BaseController
                 'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                 'deduction' => Utility::strip_commas($request->input('deduction')),
                 'price' => Utility::strip_commas($request->input('price')),
-//                'password' => bcrypt($request->input('password')),
             ]);
+            if ($request->filled('password')) {
+                $request->merge(['password' => bcrypt($request->input('password'))]);
+            } else {
+                $request->request->remove('password');
+            }
             $newObj->fill($request->all());
             $name = time().'_'.$request->file->getClientOriginalName();
             $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
@@ -179,8 +183,12 @@ class Controller extends BaseController
                 'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                 'deduction' => Utility::strip_commas($request->input('deduction')),
                 'price' => Utility::strip_commas($request->input('price')),
-//                'password' => bcrypt($request->input('password')),
             ]);
+            if ($request->filled('password')) {
+                $request->merge(['password' => bcrypt($request->input('password'))]);
+            } else {
+                $request->request->remove('password');
+            }
             $newObj->fill($request->all());
             // Handle contract file if present
             if($request->hasFile('contract')) {
@@ -225,8 +233,12 @@ class Controller extends BaseController
                     'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                     'deduction' => Utility::strip_commas($request->input('deduction')),
                     'price' => Utility::strip_commas($request->input('price')),
-//                'password' => bcrypt($request->input('password')),
                 ]);
+                if ($request->filled('password')) {
+                    $request->merge(['password' => bcrypt($request->input('password'))]);
+                } else {
+                    $request->request->remove('password');
+                }
                 $obj->fill($request->all());
                 $name = time() . '_' . $request->profile->getClientOriginalName();
                 $filePath = $request->file('profile')->storeAs('uploads', $name, 'public');
@@ -266,8 +278,12 @@ class Controller extends BaseController
                     'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                     'deduction' => Utility::strip_commas($request->input('deduction')),
                     'price' => Utility::strip_commas($request->input('price')),
-//                'password' => bcrypt($request->input('password')),
                 ]);
+                if ($request->filled('password')) {
+                    $request->merge(['password' => bcrypt($request->input('password'))]);
+                } else {
+                    $request->request->remove('password');
+                }
                 $obj->fill($request->all());
                 $name = time().'_'.$request->file->getClientOriginalName();
                 $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
@@ -334,8 +350,12 @@ class Controller extends BaseController
                 'vat_amount' => Utility::strip_commas($request->input('vat_amount')),
                 'deduction' => Utility::strip_commas($request->input('deduction')),
                 'price' => Utility::strip_commas($request->input('price')),
-//                'password' => bcrypt($request->input('password')),
             ]);
+            if ($request->filled('password')) {
+                $request->merge(['password' => bcrypt($request->input('password'))]);
+            } else {
+                $request->request->remove('password');
+            }
             $obj->fill($request->all());
             // Handle contract file if present
             if($request->hasFile('contract')) {

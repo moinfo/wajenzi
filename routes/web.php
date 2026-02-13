@@ -796,6 +796,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('labor')->name('labor.')->group(function () {
         // Dashboard
         Route::get('/dashboard', [App\Http\Controllers\LaborDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/training-guide', [App\Http\Controllers\LaborDashboardController::class, 'trainingGuide'])->name('training-guide');
 
         // Labor Requests
         Route::match(['get', 'post'], '/requests', [App\Http\Controllers\LaborRequestController::class, 'index'])->name('requests.index');
@@ -857,6 +858,27 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/payments/report', [App\Http\Controllers\LaborPaymentController::class, 'report'])->name('payments.report');
     });
 
+});
+
+// ===== Client Portal Routes =====
+Route::prefix('client')->name('client.')->group(function () {
+    // Guest routes (login)
+    Route::middleware('guest:client')->group(function () {
+        Route::get('/login', [App\Http\Controllers\Client\ClientAuthController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [App\Http\Controllers\Client\ClientAuthController::class, 'login']);
+    });
+
+    // Authenticated client routes
+    Route::middleware('client.auth')->group(function () {
+        Route::post('/logout', [App\Http\Controllers\Client\ClientAuthController::class, 'logout'])->name('logout');
+        Route::get('/dashboard', [App\Http\Controllers\Client\ClientPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/project/{id}', [App\Http\Controllers\Client\ClientPortalController::class, 'projectShow'])->name('project.show');
+        Route::get('/project/{id}/boq', [App\Http\Controllers\Client\ClientPortalController::class, 'projectBoq'])->name('project.boq');
+        Route::get('/project/{id}/schedule', [App\Http\Controllers\Client\ClientPortalController::class, 'projectSchedule'])->name('project.schedule');
+        Route::get('/project/{id}/financials', [App\Http\Controllers\Client\ClientPortalController::class, 'projectFinancials'])->name('project.financials');
+        Route::get('/project/{id}/documents', [App\Http\Controllers\Client\ClientPortalController::class, 'projectDocuments'])->name('project.documents');
+        Route::get('/project/{id}/reports', [App\Http\Controllers\Client\ClientPortalController::class, 'projectReports'])->name('project.reports');
+    });
 });
 
 Auth::routes(['register' => false]);

@@ -4,15 +4,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 
-class ProjectClient extends Model implements ApprovableModel
+class ProjectClient extends Authenticatable implements ApprovableModel
 {
-    use HasFactory,Approvable;
+    use HasFactory, Approvable;
 
     protected $table = 'project_clients';
 
@@ -27,8 +27,20 @@ class ProjectClient extends Model implements ApprovableModel
         'create_by_id',
         'client_source_id',
         'status',
-        'document_number'
+        'document_number',
+        'password',
+        'portal_access_enabled',
     ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    public function getFullNameAttribute(): string
+    {
+        return $this->first_name . ' ' . $this->last_name;
+    }
 
     /**
      * Logic executed when the approval process is completed.
