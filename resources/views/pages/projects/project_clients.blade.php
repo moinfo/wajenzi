@@ -29,6 +29,8 @@
                                     <th>Source</th>
                                     <th>Projects</th>
                                     <th>Documents</th>
+                                    <th>Portal</th>
+                                    <th>Last Login</th>
                                     <th>Approvals</th>
                                     <th>Status</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
@@ -45,6 +47,21 @@
                                         <td>{{ $client->client_source->name ?? null }}</td>
                                         <td class="text-center">{{ $client->projects_count }}</td>
                                         <td class="text-center">{{ $client->documents_count }}</td>
+                                        <td class="text-center">
+                                            @if($client->password)
+                                                <span class="badge badge-{{ $client->portal_access_enabled ? 'success' : 'danger' }} badge-pill" style="font-size: 0.8em;">
+                                                    <i class="fas fa-{{ $client->portal_access_enabled ? 'check' : 'times' }}"></i>
+                                                    {{ $client->portal_access_enabled ? 'Active' : 'Disabled' }}
+                                                </span>
+                                            @else
+                                                <span class="badge badge-secondary badge-pill" style="font-size: 0.8em;">
+                                                    <i class="fas fa-minus"></i> No Account
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center" style="font-size: 0.85em;">
+                                            {{ $client->last_login_at ? \Carbon\Carbon::parse($client->last_login_at)->diffForHumans() : '-' }}
+                                        </td>
                                         <td class="text-center">
                                             <!-- Approval status summary component -->
                                             <x-ringlesoft-approval-status-summary :model="$client" />
