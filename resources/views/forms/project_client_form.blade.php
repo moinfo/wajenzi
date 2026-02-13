@@ -19,8 +19,8 @@ $document_id = \App\Classes\Utility::getLastId('ProjectClient')+1;
             </div>
             <div class="col-sm-12">
                 <div class="form-group">
-                    <label for="email" class="control-label required">Email</label>
-                    <input type="email" class="form-control" id="input-email" name="email" value="{{ $object->email ?? '' }}" placeholder="Email" required="required">
+                    <label for="email" class="control-label">Email</label>
+                    <input type="email" class="form-control" id="input-email" name="email" value="{{ $object->email ?? '' }}" placeholder="Email">
                 </div>
             </div>
             <div class="col-sm-12">
