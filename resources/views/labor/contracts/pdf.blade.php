@@ -1,255 +1,479 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Labor Contract - {{ $contract->contract_number }}</title>
     <style>
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: Arial, sans-serif;
             font-size: 12px;
             line-height: 1.5;
             color: #333;
+            margin: 0;
+            padding: 20px;
         }
+
+        /* Header */
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #1BC5BD;
         }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
+        .company-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: #222;
+            margin: 8px 0 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .header p {
-            margin: 5px 0;
-        }
-        .contract-number {
-            font-size: 14px;
+        .company-details {
+            font-size: 10px;
             color: #666;
+            line-height: 1.6;
         }
+
+        /* Document Title */
+        .document-title {
+            text-align: center;
+            margin: 20px 0 5px;
+        }
+        .document-title h1 {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .contract-meta {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .contract-meta span {
+            display: inline-block;
+            background-color: #1BC5BD;
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        /* Sections */
         .section {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
         .section-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            background-color: #f5f5f5;
-            padding: 8px;
+            color: #fff;
+            background-color: #2d3436;
+            padding: 7px 12px;
             margin-bottom: 10px;
-            border-left: 4px solid #333;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .details-table {
+
+        /* Parties Table */
+        .parties-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+        }
+        .parties-table td {
+            padding: 6px 12px;
+            vertical-align: top;
+            border-bottom: 1px solid #eee;
+        }
+        .parties-table .label {
+            width: 28%;
+            font-weight: bold;
+            color: #555;
+            background-color: #f8f9fa;
+        }
+        .parties-table .value {
+            color: #222;
+        }
+
+        /* Period info */
+        .period-grid {
             width: 100%;
             border-collapse: collapse;
         }
-        .details-table td {
-            padding: 5px 10px;
-            vertical-align: top;
+        .period-grid td {
+            width: 33.33%;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
         }
-        .details-table .label {
-            width: 30%;
+        .period-grid .period-label {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .period-grid .period-value {
+            font-size: 14px;
             font-weight: bold;
-            background-color: #f9f9f9;
+            color: #222;
+            margin-top: 3px;
         }
+
+        /* Scope box */
+        .scope-box {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            border-left: 3px solid #1BC5BD;
+            margin-top: 8px;
+            line-height: 1.7;
+        }
+
+        /* Payment Table */
         .payment-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
         }
-        .payment-table th, .payment-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
         .payment-table th {
-            background-color: #f5f5f5;
+            background-color: #2d3436;
+            color: #fff;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
-        .payment-table .amount {
+        .payment-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .payment-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .payment-table .text-right {
             text-align: right;
         }
-        .scope-box {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border: 1px solid #ddd;
-            margin-top: 10px;
-        }
-        .signature-section {
-            margin-top: 50px;
-            page-break-inside: avoid;
-        }
-        .signature-row {
-            display: table;
-            width: 100%;
-        }
-        .signature-box {
-            display: table-cell;
-            width: 45%;
-            padding: 20px;
+        .payment-table .text-center {
             text-align: center;
         }
-        .signature-line {
-            border-top: 1px solid #333;
-            margin-top: 50px;
-            padding-top: 5px;
+        .payment-table tfoot td {
+            background-color: #1BC5BD;
+            color: #fff;
+            font-weight: bold;
+            border: none;
         }
+
+        /* Contract value highlight */
+        .value-box {
+            background: linear-gradient(135deg, #f8f9fa, #e8f8f7);
+            border: 2px solid #1BC5BD;
+            border-radius: 4px;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .value-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 1px;
+        }
+        .value-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+
+        /* General conditions */
+        .conditions ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        .conditions li {
+            margin-bottom: 6px;
+            line-height: 1.6;
+            color: #444;
+        }
+
+        /* Signature Section */
+        .signature-section {
+            margin-top: 40px;
+            page-break-inside: avoid;
+        }
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .signature-table td {
+            width: 45%;
+            text-align: center;
+            padding: 15px;
+            vertical-align: bottom;
+        }
+        .signature-table td.spacer {
+            width: 10%;
+        }
+        .signature-line {
+            border-top: 2px solid #333;
+            padding-top: 8px;
+            margin-top: 60px;
+        }
+        .signature-role {
+            font-weight: bold;
+            font-size: 12px;
+            color: #222;
+        }
+        .signature-name {
+            color: #666;
+            font-size: 11px;
+            margin-top: 3px;
+        }
+
+        /* Footer */
         .footer {
             margin-top: 30px;
             padding-top: 10px;
-            border-top: 1px solid #ddd;
-            font-size: 10px;
-            color: #666;
+            border-top: 2px solid #1BC5BD;
+            font-size: 9px;
+            color: #999;
             text-align: center;
         }
+
+        /* Watermark for draft */
+        @if($contract->status === 'draft')
+        .watermark {
+            position: fixed;
+            top: 40%;
+            left: 15%;
+            font-size: 100px;
+            color: rgba(0,0,0,0.04);
+            transform: rotate(-35deg);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 15px;
+            z-index: -1;
+        }
+        @endif
     </style>
 </head>
 <body>
+    @if($contract->status === 'draft')
+    <div class="watermark">DRAFT</div>
+    @endif
+
+    <!-- Company Header -->
     <div class="header">
-        <h1>LABOR CONTRACT</h1>
-        <p class="contract-number">Contract No: {{ $contract->contract_number }}</p>
-        <p>Date: {{ $contract->contract_date?->format('F d, Y') }}</p>
+        <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="Logo" style="height: 70px; margin-bottom: 5px;">
+        <div class="company-name">{{ settings('ORGANIZATION_NAME') }}</div>
+        <div class="company-details">
+            {{ settings('COMPANY_ADDRESS_LINE_1') }}
+            @if(settings('COMPANY_ADDRESS_LINE_2'))
+                | {{ settings('COMPANY_ADDRESS_LINE_2') }}
+            @endif
+            <br>
+            Phone: {{ settings('COMPANY_PHONE_NUMBER') }}
+            @if(settings('TAX_IDENTIFICATION_NUMBER'))
+                | TIN: {{ settings('TAX_IDENTIFICATION_NUMBER') }}
+            @endif
+        </div>
     </div>
 
+    <!-- Document Title -->
+    <div class="document-title">
+        <h1>Labor Contract</h1>
+    </div>
+    <div class="contract-meta">
+        <span>{{ $contract->contract_number }}</span>
+        &nbsp;&nbsp;
+        <span style="background-color: #636e72;">Date: {{ $contract->contract_date?->format('F d, Y') }}</span>
+    </div>
+
+    <!-- 1. Parties -->
     <div class="section">
-        <div class="section-title">1. PARTIES</div>
-        <table class="details-table">
+        <div class="section-title">1. Parties to the Contract</div>
+        <table class="parties-table">
             <tr>
-                <td class="label">Employer/Project:</td>
-                <td>{{ $contract->project?->project_name }}</td>
+                <td class="label">Project</td>
+                <td class="value">{{ $contract->project?->project_name }}</td>
             </tr>
             <tr>
-                <td class="label">Contractor/Artisan:</td>
-                <td>
-                    {{ $contract->artisan?->name }}<br>
+                <td class="label">Contractor / Artisan</td>
+                <td class="value">
+                    <strong>{{ $contract->artisan?->name }}</strong>
                     @if($contract->artisan?->trade_skill)
-                        Trade: {{ $contract->artisan->trade_skill }}<br>
+                        &mdash; {{ $contract->artisan->trade_skill }}
                     @endif
                     @if($contract->artisan?->phone)
-                        Phone: {{ $contract->artisan->phone }}<br>
+                        <br>Phone: {{ $contract->artisan->phone }}
                     @endif
                     @if($contract->artisan?->id_number)
-                        ID: {{ $contract->artisan->id_number }}
+                        <br>ID No: {{ $contract->artisan->id_number }}
                     @endif
                 </td>
             </tr>
             @if($contract->supervisor)
-                <tr>
-                    <td class="label">Supervisor:</td>
-                    <td>{{ $contract->supervisor->name }}</td>
-                </tr>
+            <tr>
+                <td class="label">Site Supervisor</td>
+                <td class="value">{{ $contract->supervisor->name }}</td>
+            </tr>
+            @endif
+            @if($contract->laborRequest?->constructionPhase)
+            <tr>
+                <td class="label">Construction Phase</td>
+                <td class="value">{{ $contract->laborRequest->constructionPhase->name }}</td>
+            </tr>
             @endif
         </table>
     </div>
 
+    <!-- 2. Contract Period -->
     <div class="section">
-        <div class="section-title">2. CONTRACT PERIOD</div>
-        <table class="details-table">
+        <div class="section-title">2. Contract Period</div>
+        <table class="period-grid">
             <tr>
-                <td class="label">Start Date:</td>
-                <td>{{ $contract->start_date?->format('F d, Y') }}</td>
-            </tr>
-            <tr>
-                <td class="label">End Date:</td>
-                <td>{{ $contract->end_date?->format('F d, Y') }}</td>
-            </tr>
-            <tr>
-                <td class="label">Duration:</td>
-                <td>{{ $contract->start_date?->diffInDays($contract->end_date) }} days</td>
+                <td>
+                    <div class="period-label">Start Date</div>
+                    <div class="period-value">{{ $contract->start_date?->format('d M Y') }}</div>
+                </td>
+                <td>
+                    <div class="period-label">End Date</div>
+                    <div class="period-value">{{ $contract->end_date?->format('d M Y') }}</div>
+                </td>
+                <td>
+                    <div class="period-label">Duration</div>
+                    <div class="period-value">{{ $contract->start_date?->diffInDays($contract->end_date) }} Days</div>
+                </td>
             </tr>
         </table>
     </div>
 
+    <!-- 3. Scope of Work -->
     <div class="section">
-        <div class="section-title">3. SCOPE OF WORK</div>
+        <div class="section-title">3. Scope of Work</div>
         <div class="scope-box">
-            {{ $contract->scope_of_work }}
+            {!! nl2br(e($contract->scope_of_work)) !!}
         </div>
     </div>
 
+    <!-- 4. Contract Value & Payment -->
     <div class="section">
-        <div class="section-title">4. CONTRACT VALUE & PAYMENT SCHEDULE</div>
-        <table class="details-table">
-            <tr>
-                <td class="label">Total Contract Value:</td>
-                <td><strong>{{ number_format($contract->total_amount, 2) }} {{ $contract->currency }}</strong></td>
-            </tr>
-        </table>
+        <div class="section-title">4. Contract Value &amp; Payment Schedule</div>
 
+        <div class="value-box">
+            <div class="value-label">Total Contract Value</div>
+            <div class="value-amount">{{ $contract->currency }} {{ number_format($contract->total_amount, 2) }}</div>
+        </div>
+
+        @if($contract->paymentPhases->count())
         <table class="payment-table">
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Phase</th>
-                    <th>Milestone</th>
-                    <th>%</th>
-                    <th class="amount">Amount ({{ $contract->currency }})</th>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 20%;">Phase</th>
+                    <th style="width: 40%;">Milestone Description</th>
+                    <th class="text-center" style="width: 10%;">%</th>
+                    <th class="text-right" style="width: 25%;">Amount ({{ $contract->currency }})</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($contract->paymentPhases as $phase)
-                    <tr>
-                        <td>{{ $phase->phase_number }}</td>
-                        <td>{{ $phase->phase_name }}</td>
-                        <td>{{ $phase->milestone_description }}</td>
-                        <td>{{ $phase->percentage }}%</td>
-                        <td class="amount">{{ number_format($phase->amount, 2) }}</td>
-                    </tr>
+                <tr>
+                    <td class="text-center">{{ $phase->phase_number }}</td>
+                    <td><strong>{{ $phase->phase_name }}</strong></td>
+                    <td>{{ $phase->milestone_description }}</td>
+                    <td class="text-center">{{ $phase->percentage }}%</td>
+                    <td class="text-right">{{ number_format($phase->amount, 2) }}</td>
+                </tr>
                 @endforeach
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="3"><strong>Total</strong></td>
-                    <td><strong>100%</strong></td>
-                    <td class="amount"><strong>{{ number_format($contract->total_amount, 2) }}</strong></td>
+                    <td colspan="3" class="text-right"><strong>Total</strong></td>
+                    <td class="text-center"><strong>100%</strong></td>
+                    <td class="text-right"><strong>{{ number_format($contract->total_amount, 2) }}</strong></td>
                 </tr>
             </tfoot>
         </table>
+        @endif
     </div>
 
+    <!-- 5. Terms & Conditions (if any) -->
     @if($contract->terms_conditions)
-        <div class="section">
-            <div class="section-title">5. TERMS & CONDITIONS</div>
-            <div class="scope-box">
-                {{ $contract->terms_conditions }}
-            </div>
+    <div class="section">
+        <div class="section-title">5. Special Terms &amp; Conditions</div>
+        <div class="scope-box">
+            {!! nl2br(e($contract->terms_conditions)) !!}
         </div>
+    </div>
     @endif
 
+    <!-- General Conditions -->
     <div class="section">
-        <div class="section-title">{{ $contract->terms_conditions ? '6' : '5' }}. GENERAL CONDITIONS</div>
-        <ol>
-            <li>The Contractor agrees to perform the work described above in a professional manner.</li>
-            <li>Payment shall be made upon satisfactory completion of each milestone and approval by the Supervisor.</li>
-            <li>The Contractor shall be responsible for the quality of work and rectification of any defects.</li>
-            <li>Either party may terminate this contract with 7 days written notice.</li>
-            <li>All work must comply with applicable building codes and safety regulations.</li>
-        </ol>
+        <div class="section-title">{{ $contract->terms_conditions ? '6' : '5' }}. General Conditions</div>
+        <div class="conditions">
+            <ol>
+                <li>The Contractor agrees to perform the work described above in a professional and workmanlike manner, consistent with accepted industry standards.</li>
+                <li>Payment shall be made upon satisfactory completion of each milestone and written approval by the designated Supervisor.</li>
+                <li>The Contractor shall be responsible for the quality of all work and shall rectify any defects at their own cost within a reasonable period.</li>
+                <li>The Contractor shall comply with all applicable building codes, safety regulations, and site rules at all times.</li>
+                <li>Either party may terminate this contract with a minimum of 7 (seven) days written notice to the other party.</li>
+                <li>In the event of early termination, the Contractor shall be compensated for work satisfactorily completed up to the date of termination.</li>
+            </ol>
+        </div>
     </div>
 
+    <!-- Signatures -->
     <div class="signature-section">
-        <div class="section-title">SIGNATURES</div>
-        <table style="width: 100%;">
+        <div class="section-title">Signatures</div>
+        <p style="font-size: 11px; color: #666; margin-bottom: 5px;">
+            IN WITNESS WHEREOF, the parties have executed this contract as of the date first written above.
+        </p>
+        <table class="signature-table">
             <tr>
-                <td style="width: 45%; text-align: center; padding: 20px;">
+                <td>
                     <div class="signature-line">
-                        <strong>Contractor/Artisan</strong><br>
-                        {{ $contract->artisan?->name }}<br>
-                        Date: _______________
+                        <div class="signature-role">Contractor / Artisan</div>
+                        <div class="signature-name">{{ $contract->artisan?->name }}</div>
+                        <div class="signature-name">Date: ___________________</div>
                     </div>
                 </td>
-                <td style="width: 10%;"></td>
-                <td style="width: 45%; text-align: center; padding: 20px;">
+                <td class="spacer"></td>
+                <td>
                     <div class="signature-line">
-                        <strong>Employer/Supervisor</strong><br>
-                        {{ $contract->supervisor?->name ?? '_______________' }}<br>
-                        Date: _______________
+                        <div class="signature-role">Employer / Authorized Representative</div>
+                        <div class="signature-name">{{ $contract->supervisor?->name ?? '___________________' }}</div>
+                        <div class="signature-name">Date: ___________________</div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <table class="signature-table" style="margin-top: 20px;">
+            <tr>
+                <td>
+                    <div class="signature-line">
+                        <div class="signature-role">Witness 1</div>
+                        <div class="signature-name">Name: ___________________</div>
+                        <div class="signature-name">Date: ___________________</div>
+                    </div>
+                </td>
+                <td class="spacer"></td>
+                <td>
+                    <div class="signature-line">
+                        <div class="signature-role">Witness 2</div>
+                        <div class="signature-name">Name: ___________________</div>
+                        <div class="signature-name">Date: ___________________</div>
                     </div>
                 </td>
             </tr>
         </table>
     </div>
 
+    <!-- Footer -->
     <div class="footer">
-        Generated on {{ now()->format('F d, Y H:i') }} | {{ $contract->contract_number }}
+        {{ settings('ORGANIZATION_NAME') }} &bull; {{ $contract->contract_number }} &bull; Generated on {{ now()->format('F d, Y \a\t H:i') }}
     </div>
 </body>
 </html>

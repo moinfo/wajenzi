@@ -174,6 +174,58 @@
                 @endif
             </div>
         </div>
+
+        {{-- Approval Flow Section (visible once submitted) --}}
+        @if(!$request->isDraft())
+        <div class="approvals-section">
+            <style>
+                .approvals-section {
+                    background-color: #fff;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+                    margin-bottom: 30px;
+                    overflow: hidden;
+                    border: 1px solid rgba(0, 0, 0, 0.05);
+                }
+                .section-header {
+                    background-color: #f8f9fa;
+                    padding: 15px 25px;
+                    border-bottom: 1px solid #e9ecef;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                .section-title {
+                    margin: 0;
+                    color: #0066cc;
+                    font-weight: 600;
+                    font-size: 18px;
+                    display: flex;
+                    align-items: center;
+                }
+                .section-title i {
+                    margin-right: 10px;
+                    color: #0066cc;
+                }
+                .section-body {
+                    padding: 25px;
+                }
+            </style>
+
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-tasks"></i> Approval Flow
+                </h2>
+                <div class="flow-status">
+                    <span class="badge badge-{{ $request->status_badge_class }}">{{ ucfirst($request->status) }}</span>
+                </div>
+            </div>
+
+            <div class="section-body">
+                <x-ringlesoft-approval-actions :model="$request" />
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 @endsection

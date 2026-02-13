@@ -110,6 +110,10 @@
                                         <span class="badge badge-{{ $request->status_badge_class }}">
                                             {{ ucfirst($request->status) }}
                                         </span>
+                                        @if(!$request->isDraft())
+                                            <br>
+                                            <x-ringlesoft-approval-status-summary :model="$request" />
+                                        @endif
                                         @if($request->contract)
                                             <br>
                                             <a href="{{ route('labor.contracts.show', $request->contract->id) }}" class="small">
@@ -159,7 +163,7 @@
 </div>
 @endsection
 
-@section('js')
+@section('js_after')
 <script>
     $(document).ready(function() {
         $('.datepicker').datepicker({
