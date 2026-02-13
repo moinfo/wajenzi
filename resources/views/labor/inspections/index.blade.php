@@ -149,20 +149,16 @@
                                         <span class="badge badge-{{ $inspection->status_badge_class }}">
                                             {{ ucfirst($inspection->status) }}
                                         </span>
+                                        @if(!$inspection->isDraft())
+                                            <br>
+                                            <x-ringlesoft-approval-status-summary :model="$inspection" />
+                                        @endif
                                     </td>
                                     <td class="text-center">
-                                        <div class="btn-group">
-                                            <a href="{{ route('labor.inspections.show', $inspection->id) }}"
-                                                class="btn btn-sm btn-info" title="View">
-                                                <i class="fa fa-eye"></i>
-                                            </a>
-                                            @if($inspection->isPending() || $inspection->isVerified())
-                                                <a href="{{ route('labor.inspections.approval', ['id' => $inspection->id, 'document_type_id' => 0]) }}"
-                                                    class="btn btn-sm btn-success" title="Approval">
-                                                    <i class="fa fa-check-circle"></i>
-                                                </a>
-                                            @endif
-                                        </div>
+                                        <a href="{{ route('labor.inspections.show', $inspection->id) }}"
+                                            class="btn btn-sm btn-info" title="View">
+                                            <i class="fa fa-eye"></i>
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -175,7 +171,7 @@
 </div>
 @endsection
 
-@section('js')
+@section('js_after')
 <script>
     $(document).ready(function() {
         $('.datepicker').datepicker({

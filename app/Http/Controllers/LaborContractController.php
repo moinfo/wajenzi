@@ -64,7 +64,7 @@ class LaborContractController extends Controller
             return back()->with('error', 'This request is not eligible for contract creation');
         }
 
-        $supervisors = User::role('Site Supervisor')->orderBy('name')->get();
+        $supervisors = User::whereHas('roles', fn($q) => $q->where('name', 'Site Supervisor'))->orderBy('name')->get();
 
         // Default payment phases structure
         $defaultPhases = [
@@ -86,6 +86,10 @@ class LaborContractController extends Controller
      */
     public function store(Request $request)
     {
+        $request->merge([
+            'total_amount' => Utility::strip_commas($request->total_amount),
+        ]);
+
         $request->validate([
             'labor_request_id' => 'required|exists:labor_requests,id',
             'start_date' => 'required|date',
@@ -180,7 +184,7 @@ class LaborContractController extends Controller
             return back()->with('error', 'Only draft contracts can be edited');
         }
 
-        $supervisors = User::role('Site Supervisor')->orderBy('name')->get();
+        $supervisors = User::whereHas('roles', fn($q) => $q->where('name', 'Site Supervisor'))->orderBy('name')->get();
 
         return view('labor.contracts.edit')->with([
             'contract' => $contract,
@@ -299,12 +303,13 @@ class LaborContractController extends Controller
         $contract = LaborContract::with([
             'project',
             'artisan',
-            'laborRequest',
+            'laborRequest.constructionPhase',
             'supervisor',
             'paymentPhases'
         ])->findOrFail($id);
 
         $pdf = Pdf::loadView('labor.contracts.pdf', ['contract' => $contract]);
+        $pdf->setPaper('A4');
 
         return $pdf->download('Labor_Contract_' . $contract->contract_number . '.pdf');
     }

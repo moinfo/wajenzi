@@ -178,7 +178,7 @@
 </div>
 @endsection
 
-@section('js')
+@section('js_after')
 <script>
     $(document).ready(function() {
         // Show/hide rectification notes

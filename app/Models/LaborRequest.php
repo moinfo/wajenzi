@@ -112,7 +112,7 @@ class LaborRequest extends Model implements ApprovableModel
 
     public function constructionPhase(): BelongsTo
     {
-        return $this->belongsTo(ProjectConstructionPhase::class, 'construction_phase_id');
+        return $this->belongsTo(ProjectBoqSection::class, 'construction_phase_id');
     }
 
     public function artisan(): BelongsTo

@@ -164,10 +164,10 @@
 </div>
 @endsection
 
-@section('js')
+@section('js_after')
 <script>
     $(document).ready(function() {
-        $('.select2').select2();
+        $('.select2').select2({ width: '100%' });
         $('.datepicker').datepicker({
             format: 'yyyy-mm-dd',
             autoclose: true,
@@ -175,18 +175,34 @@
         });
 
         // Load construction phases when project changes
-        $('#project_id').change(function() {
-            var projectId = $(this).val();
-            if (projectId) {
-                $.get('/ajax/get_construction_phases', { project_id: projectId }, function(data) {
-                    var select = $('#construction_phase_id');
-                    select.empty().append('<option value="">Select Phase</option>');
-                    $.each(data, function(i, phase) {
-                        select.append('<option value="' + phase.id + '">' + phase.name + '</option>');
-                    });
-                });
+        function loadConstructionPhases(projectId, selectedId) {
+            var select = $('#construction_phase_id');
+            // Destroy Select2 before modifying options
+            if (select.hasClass('select2-hidden-accessible')) {
+                select.select2('destroy');
             }
+            select.empty().append('<option value="">Select Phase</option>');
+            if (!projectId) {
+                select.select2({ width: '100%' });
+                return;
+            }
+            $.get('/ajax/get_construction_phases', { project_id: projectId }, function(data) {
+                $.each(data, function(i, phase) {
+                    select.append('<option value="' + phase.id + '"' + (phase.id == selectedId ? ' selected' : '') + '>' + phase.name + '</option>');
+                });
+                select.select2({ width: '100%' });
+            });
+        }
+
+        $('#project_id').on('change', function() {
+            loadConstructionPhases($(this).val());
         });
+
+        // Load phases on page load if project is pre-selected
+        var initialProject = $('#project_id').val();
+        if (initialProject) {
+            loadConstructionPhases(initialProject, '{{ old("construction_phase_id") }}');
+        }
 
         // Format money inputs
         $('.money-input').on('keyup', function() {

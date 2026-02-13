@@ -19,6 +19,20 @@
                         <h3 class="block-title">Work Log Entry</h3>
                     </div>
                     <div class="block-content">
+                        @if($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        @if(session('error'))
+                            <div class="alert alert-danger">{{ session('error') }}</div>
+                        @endif
+
                         <form action="{{ route('labor.logs.store') }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <input type="hidden" name="labor_contract_id" value="{{ $contract->id }}">
@@ -156,7 +170,7 @@
 </div>
 @endsection
 
-@section('js')
+@section('js_after')
 <script>
     $(document).ready(function() {
         $('.datepicker').datepicker({

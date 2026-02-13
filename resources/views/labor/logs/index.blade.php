@@ -118,7 +118,7 @@
 </div>
 @endsection
 
-@section('js')
+@section('js_after')
 <script>
     $(document).ready(function() {
         $('.datepicker').datepicker({

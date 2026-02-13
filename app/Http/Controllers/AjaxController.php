@@ -519,9 +519,11 @@ class AjaxController
                 // Labor Procurement AJAX Methods
                 case 'get_construction_phases':
                     $projectId = $request->input('project_id');
-                    $phases = \App\Models\ProjectConstructionPhase::where('project_id', $projectId)
-                        ->orderBy('phase_name')
-                        ->get(['id', 'phase_name as name']);
+                    $boqIds = \App\Models\ProjectBoq::where('project_id', $projectId)->pluck('id');
+                    $phases = \App\Models\ProjectBoqSection::whereIn('boq_id', $boqIds)
+                        ->whereNull('parent_id')
+                        ->orderBy('name')
+                        ->get(['id', 'name']);
                     return response()->json($phases);
                     break;
 
