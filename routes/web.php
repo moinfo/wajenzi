@@ -872,12 +872,17 @@ Route::prefix('client')->name('client.')->group(function () {
     Route::middleware('client.auth')->group(function () {
         Route::post('/logout', [App\Http\Controllers\Client\ClientAuthController::class, 'logout'])->name('logout');
         Route::get('/dashboard', [App\Http\Controllers\Client\ClientPortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/billing', [App\Http\Controllers\Client\ClientPortalController::class, 'billing'])->name('billing');
+        Route::get('/billing/{documentId}/pdf', [App\Http\Controllers\Client\ClientPortalController::class, 'billingPdf'])->name('billing.pdf');
         Route::get('/project/{id}', [App\Http\Controllers\Client\ClientPortalController::class, 'projectShow'])->name('project.show');
         Route::get('/project/{id}/boq', [App\Http\Controllers\Client\ClientPortalController::class, 'projectBoq'])->name('project.boq');
         Route::get('/project/{id}/schedule', [App\Http\Controllers\Client\ClientPortalController::class, 'projectSchedule'])->name('project.schedule');
         Route::get('/project/{id}/financials', [App\Http\Controllers\Client\ClientPortalController::class, 'projectFinancials'])->name('project.financials');
         Route::get('/project/{id}/documents', [App\Http\Controllers\Client\ClientPortalController::class, 'projectDocuments'])->name('project.documents');
         Route::get('/project/{id}/reports', [App\Http\Controllers\Client\ClientPortalController::class, 'projectReports'])->name('project.reports');
+        Route::get('/project/{id}/billing/{documentId}/pdf', [App\Http\Controllers\Client\ClientPortalController::class, 'billingDocumentPdf'])->name('project.billing_pdf');
+        Route::get('/project/{id}/site-visit/{visitId}/pdf', [App\Http\Controllers\Client\ClientPortalController::class, 'siteVisitPdf'])->name('project.site_visit_pdf');
+        Route::get('/project/{id}/gallery', [App\Http\Controllers\Client\ClientPortalController::class, 'projectGallery'])->name('project.gallery');
     });
 });
 
