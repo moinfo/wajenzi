@@ -26,7 +26,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ? {
           'welcome': 'Karibu Tena',
           'signInContinue': 'Ingia kuendelea',
-          'email': 'Barua Pepe',
+          'email': 'Barua Pepe au Simu',
           'password': 'Nywila',
           'forgotPassword': 'Umesahau Nywila?',
           'signIn': 'Ingia',
@@ -35,7 +35,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       : {
           'welcome': 'Welcome Back',
           'signInContinue': 'Sign in to continue',
-          'email': 'Email Address',
+          'email': 'Email or Phone',
           'password': 'Password',
           'forgotPassword': 'Forgot Password?',
           'signIn': 'Sign In',
@@ -388,8 +388,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               _buildTextField(
                                 controller: _emailController,
                                 hint: _t['email']!,
-                                icon: Icons.email_outlined,
-                                keyboardType: TextInputType.emailAddress,
+                                icon: Icons.person_outlined,
+                                keyboardType: TextInputType.text,
                                 bgColor: inputBgColor,
                                 borderColor: inputBorderColor,
                                 textColor: textColor,
@@ -397,10 +397,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 isDarkMode: _isDarkMode,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return _isSwahili ? 'Tafadhali weka barua pepe' : 'Please enter your email';
-                                  }
-                                  if (!value.contains('@')) {
-                                    return _isSwahili ? 'Tafadhali weka barua pepe halali' : 'Please enter a valid email';
+                                    return _isSwahili ? 'Tafadhali weka barua pepe au simu' : 'Please enter your email or phone';
                                   }
                                   return null;
                                 },

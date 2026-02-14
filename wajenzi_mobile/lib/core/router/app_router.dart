@@ -6,6 +6,7 @@ import '../../presentation/providers/settings_provider.dart';
 import '../../presentation/screens/landing/landing_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/dashboard/dashboard_screen.dart';
+import '../../presentation/screens/dashboard/client_dashboard_screen.dart';
 import '../../presentation/screens/attendance/attendance_screen.dart';
 import '../../presentation/screens/reports/site_daily_report_list_screen.dart';
 import '../../presentation/screens/expenses/expense_list_screen.dart';
@@ -90,7 +91,15 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/dashboard',
             name: 'dashboard',
-            builder: (context, state) => const DashboardScreen(),
+            builder: (context, state) => Consumer(
+              builder: (context, ref, _) {
+                final userType = ref.watch(userTypeProvider);
+                if (userType == 'client') {
+                  return const ClientDashboardScreen();
+                }
+                return const DashboardScreen();
+              },
+            ),
           ),
           GoRoute(
             path: '/attendance',
@@ -113,6 +122,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ApprovalsScreen(),
           ),
           GoRoute(
+            path: '/billing',
+            name: 'billing',
+            builder: (context, state) => const Scaffold(
+              body: Center(child: Text('Billing - Coming Soon')),
+            ),
+          ),
+          GoRoute(
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsScreen(),
@@ -131,24 +147,37 @@ class MainScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final location = GoRouterState.of(context).matchedLocation;
+    final userType = ref.watch(userTypeProvider);
+    final isClient = userType == 'client';
 
     int currentIndex = 0;
-    if (location.startsWith('/dashboard')) currentIndex = 0;
-    if (location.startsWith('/attendance')) currentIndex = 1;
-    if (location.startsWith('/reports')) currentIndex = 2;
-    if (location.startsWith('/approvals')) currentIndex = 3;
+    if (isClient) {
+      if (location.startsWith('/dashboard')) currentIndex = 0;
+      if (location.startsWith('/billing')) currentIndex = 1;
+      if (location.startsWith('/settings')) currentIndex = 2;
+    } else {
+      if (location.startsWith('/dashboard')) currentIndex = 0;
+      if (location.startsWith('/attendance')) currentIndex = 1;
+      if (location.startsWith('/reports')) currentIndex = 2;
+      if (location.startsWith('/approvals')) currentIndex = 3;
+    }
 
     return Scaffold(
       extendBody: true,
-      drawer: const MainDrawer(),
+      drawer: MainDrawer(isClient: isClient),
       body: child,
-      bottomNavigationBar: CurvedInternalNav(selectedIndex: currentIndex),
+      bottomNavigationBar: CurvedInternalNav(
+        selectedIndex: currentIndex,
+        isClient: isClient,
+      ),
     );
   }
 }
 
 class MainDrawer extends ConsumerWidget {
-  const MainDrawer({super.key});
+  final bool isClient;
+
+  const MainDrawer({super.key, this.isClient = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -232,24 +261,54 @@ class MainDrawer extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // Menu Items
-            _DrawerItem(
-              icon: Icons.settings_rounded,
-              label: isSwahili ? 'Mipangilio' : 'Settings',
-              isDarkMode: isDarkMode,
-              onTap: () {
-                Navigator.pop(context);
-                context.go('/settings');
-              },
-            ),
-            _DrawerItem(
-              icon: Icons.receipt_long_rounded,
-              label: isSwahili ? 'Matumizi' : 'Expenses',
-              isDarkMode: isDarkMode,
-              onTap: () {
-                Navigator.pop(context);
-                context.go('/expenses');
-              },
-            ),
+            if (isClient) ...[
+              _DrawerItem(
+                icon: Icons.dashboard_rounded,
+                label: isSwahili ? 'Dashibodi' : 'Dashboard',
+                isDarkMode: isDarkMode,
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go('/dashboard');
+                },
+              ),
+              _DrawerItem(
+                icon: Icons.receipt_long_rounded,
+                label: isSwahili ? 'Ankara' : 'Billing',
+                isDarkMode: isDarkMode,
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go('/billing');
+                },
+              ),
+              _DrawerItem(
+                icon: Icons.settings_rounded,
+                label: isSwahili ? 'Mipangilio' : 'Settings',
+                isDarkMode: isDarkMode,
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go('/settings');
+                },
+              ),
+            ] else ...[
+              _DrawerItem(
+                icon: Icons.settings_rounded,
+                label: isSwahili ? 'Mipangilio' : 'Settings',
+                isDarkMode: isDarkMode,
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go('/settings');
+                },
+              ),
+              _DrawerItem(
+                icon: Icons.receipt_long_rounded,
+                label: isSwahili ? 'Matumizi' : 'Expenses',
+                isDarkMode: isDarkMode,
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go('/expenses');
+                },
+              ),
+            ],
             _DrawerItem(
               icon: Icons.help_outline_rounded,
               label: isSwahili ? 'Msaada' : 'Help & Support',
