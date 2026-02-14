@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\BillingPaymentController;
 use App\Http\Controllers\Api\V1\LeaveRequestController;
 use App\Http\Controllers\Api\V1\PayrollController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +33,17 @@ Route::post('auth/login', [AuthController::class, 'login']);
 
 // Protected routes (require Sanctum authentication)
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Dashboard
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/', [DashboardController::class, 'index']);
+        Route::get('/activities', [DashboardController::class, 'activities']);
+        Route::get('/invoices', [DashboardController::class, 'invoices']);
+        Route::get('/followups', [DashboardController::class, 'followups']);
+        Route::get('/calendar', [DashboardController::class, 'calendar']);
+        Route::get('/project-status', [DashboardController::class, 'projectStatus']);
+        Route::get('/recent-activities', [DashboardController::class, 'recentActivities']);
+    });
 
     // Authentication
     Route::prefix('auth')->group(function () {
