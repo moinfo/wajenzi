@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\LeaveRequestController;
 use App\Http\Controllers\Api\V1\PayrollController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\MenuController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +34,9 @@ Route::post('auth/login', [AuthController::class, 'login']);
 
 // Protected routes (require Sanctum authentication)
 Route::middleware('auth:sanctum')->group(function () {
+
+    // Menus (permission-filtered sidebar)
+    Route::get('menus', [MenuController::class, 'index']);
 
     // Dashboard
     Route::prefix('dashboard')->group(function () {
