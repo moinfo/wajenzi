@@ -18,10 +18,18 @@ class ProjectController extends Controller
     {
         $user = $request->user();
 
-        $projects = $user->projects()
-            ->with(['client', 'projectType'])
-            ->wherePivot('status', 'active')
-            ->orderBy('created_at', 'desc')
+        $query = Project::with(['client', 'projectType']);
+
+        // If user is not admin, show only projects they manage or are assigned to
+        if (!$user->hasRole('admin') && !$user->hasRole('super-admin')) {
+            $query->where(function ($q) use ($user) {
+                $q->where('project_manager_id', $user->id)
+                  ->orWhere('salesperson_id', $user->id)
+                  ->orWhere('create_by_id', $user->id);
+            });
+        }
+
+        $projects = $query->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
         return response()->json([
