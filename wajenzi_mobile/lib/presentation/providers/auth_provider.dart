@@ -132,6 +132,72 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
     }
   }
 
+  Future<Map<String, dynamic>> getClientProfile() async {
+    return await _authApi.getClientProfile();
+  }
+
+  Future<bool> updateClientProfile({
+    required String firstName,
+    required String lastName,
+    required String email,
+    String? phoneNumber,
+    String? address,
+  }) async {
+    try {
+      final data = await _authApi.updateClientProfile(
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        phoneNumber: phoneNumber,
+        address: address,
+      );
+
+      // Update local user state with new name/email
+      final fullName = data['full_name'] as String? ?? '$firstName $lastName';
+      final currentState = state.valueOrNull;
+      if (currentState != null && currentState.user != null) {
+        final updatedUser = UserModel(
+          id: currentState.user!.id,
+          name: fullName,
+          email: email,
+        );
+        await _storageService.saveUser(updatedUser.toJson());
+        state = AsyncValue.data(AuthState(user: updatedUser, token: currentState.token));
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<String?> changeClientPassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    try {
+      await _authApi.changeClientPassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        newPasswordConfirmation: newPasswordConfirmation,
+      );
+      return null; // success
+    } catch (e) {
+      if (e is DioException) {
+        final data = e.response?.data;
+        if (data is Map<String, dynamic>) {
+          if (data['errors'] != null) {
+            final errors = data['errors'] as Map<String, dynamic>;
+            final first = errors.values.first;
+            if (first is List && first.isNotEmpty) return first.first as String;
+          }
+          if (data['message'] != null) return data['message'] as String;
+        }
+      }
+      return 'Failed to change password';
+    }
+  }
+
   void clearError() {
     final currentState = state.valueOrNull;
     if (currentState != null) {

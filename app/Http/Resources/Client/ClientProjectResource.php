@@ -23,7 +23,7 @@ class ClientProjectResource extends JsonResource
             'project_type' => $this->whenLoaded('projectType', fn() => $this->projectType?->name),
             'service_type' => $this->whenLoaded('serviceType', fn() => $this->serviceType?->name),
             'project_manager' => $this->whenLoaded('projectManager', fn() => $this->projectManager?->name),
-            'invoices_count' => $this->whenCounted('invoices'),
+            'invoices_count' => ($this->invoices_count ?? 0) + ($this->billing_invoices_count ?? 0),
             'boqs_count' => $this->whenCounted('boqs'),
             'daily_reports_count' => $this->whenCounted('dailyReports'),
             'phases' => ClientConstructionPhaseResource::collection($this->whenLoaded('constructionPhases')),

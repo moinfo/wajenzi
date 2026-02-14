@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -18,11 +19,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
-  bool _isDarkMode = false;
-  bool _isSwahili = false;
 
   // Translations
-  Map<String, String> get _t => _isSwahili
+  Map<String, String> _t(bool isSwahili) => isSwahili
       ? {
           'welcome': 'Karibu Tena',
           'signInContinue': 'Ingia kuendelea',
@@ -73,18 +72,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authStateProvider);
     final error = authState.valueOrNull?.error;
     final size = MediaQuery.of(context).size;
+    final isDark = ref.watch(isDarkModeProvider);
+    final isSw = ref.watch(isSwahiliProvider);
+    final t = _t(isSw);
 
     // Dark mode colors
-    final gradientColors = _isDarkMode
+    final gradientColors = isDark
         ? [const Color(0xFF0D1B2A), const Color(0xFF1B263B), const Color(0xFF415A77)]
         : [const Color(0xFF3498DB), const Color(0xFF1ABC9C), const Color(0xFF2ECC71)];
 
-    final cardColor = _isDarkMode ? const Color(0xFF1B263B).withValues(alpha: 0.95) : const Color(0xFFE8F8F5);  // Light mint card
-    final textColor = _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
-    final subtextColor = _isDarkMode ? const Color(0xFF778DA9) : Colors.grey.shade500;
-    final inputBgColor = _isDarkMode ? const Color(0xFF0D1B2A) : Colors.white;  // White inputs on tinted card
-    final inputBorderColor = _isDarkMode ? const Color(0xFF415A77) : const Color(0xFF1ABC9C).withValues(alpha: 0.4);
-    final inputHintColor = _isDarkMode ? const Color(0xFF778DA9) : Colors.grey.shade400;
+    final cardColor = isDark ? const Color(0xFF1B263B).withValues(alpha: 0.95) : const Color(0xFFE8F8F5);  // Light mint card
+    final textColor = isDark ? Colors.white : const Color(0xFF2C3E50);
+    final subtextColor = isDark ? const Color(0xFF778DA9) : Colors.grey.shade500;
+    final inputBgColor = isDark ? const Color(0xFF0D1B2A) : Colors.white;  // White inputs on tinted card
+    final inputBorderColor = isDark ? const Color(0xFF415A77) : const Color(0xFF1ABC9C).withValues(alpha: 0.4);
+    final inputHintColor = isDark ? const Color(0xFF778DA9) : Colors.grey.shade400;
 
     return Scaffold(
       body: Container(
@@ -185,16 +187,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const SizedBox(width: 12),
                               // Dark mode toggle
                               GestureDetector(
-                                onTap: () => setState(() => _isDarkMode = !_isDarkMode),
+                                onTap: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
                                 child: Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.15),
+                                    color: isDark
+                                        ? const Color(0xFFFFC107).withValues(alpha: 0.2)
+                                        : Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(12),
+                                    border: isDark
+                                        ? Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.4))
+                                        : null,
                                   ),
                                   child: Icon(
-                                    _isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                                    color: Colors.white,
+                                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                                    color: isDark ? const Color(0xFFFFC107) : Colors.white,
                                     size: 22,
                                   ),
                                 ),
@@ -203,7 +210,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           // Language toggle
                           GestureDetector(
-                            onTap: () => setState(() => _isSwahili = !_isSwahili),
+                            onTap: () => ref.read(settingsProvider.notifier).toggleLanguage(),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
@@ -214,12 +221,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    _isSwahili ? '🇹🇿' : '🇬🇧',
+                                    isSw ? '🇹🇿' : '🇬🇧',
                                     style: const TextStyle(fontSize: 20),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    _isSwahili ? 'SW' : 'EN',
+                                    isSw ? 'SW' : 'EN',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w600,
@@ -240,11 +247,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: _isDarkMode
+                              color: isDark
                                   ? const Color(0xFF4CC9F0).withValues(alpha: 0.5)
                                   : const Color(0xFF1ABC9C).withValues(alpha: 0.4),
-                              blurRadius: _isDarkMode ? 40 : 30,
-                              spreadRadius: _isDarkMode ? 8 : 5,
+                              blurRadius: isDark ? 40 : 30,
+                              spreadRadius: isDark ? 8 : 5,
                             ),
                           ],
                         ),
@@ -291,7 +298,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _t['tagline']!,
+                        t['tagline']!,
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.white.withValues(alpha: 0.85),
@@ -307,7 +314,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         decoration: BoxDecoration(
                           color: cardColor,
                           borderRadius: BorderRadius.circular(24),
-                          border: _isDarkMode
+                          border: isDark
                               ? Border.all(
                                   color: const Color(0xFF415A77).withValues(alpha: 0.5),
                                   width: 1,
@@ -315,7 +322,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               : null,
                           boxShadow: [
                             BoxShadow(
-                              color: _isDarkMode
+                              color: isDark
                                   ? const Color(0xFF4CC9F0).withValues(alpha: 0.1)
                                   : Colors.black.withValues(alpha: 0.15),
                               blurRadius: 40,
@@ -329,7 +336,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Text(
-                                _t['welcome']!,
+                                t['welcome']!,
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -339,7 +346,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                _t['signInContinue']!,
+                                t['signInContinue']!,
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: subtextColor,
@@ -387,17 +394,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               // Email field
                               _buildTextField(
                                 controller: _emailController,
-                                hint: _t['email']!,
+                                hint: t['email']!,
                                 icon: Icons.person_outlined,
                                 keyboardType: TextInputType.text,
                                 bgColor: inputBgColor,
                                 borderColor: inputBorderColor,
                                 textColor: textColor,
                                 hintColor: inputHintColor,
-                                isDarkMode: _isDarkMode,
+                                isDarkMode: isDark,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return _isSwahili ? 'Tafadhali weka barua pepe au simu' : 'Please enter your email or phone';
+                                    return isSw ? 'Tafadhali weka barua pepe au simu' : 'Please enter your email or phone';
                                   }
                                   return null;
                                 },
@@ -406,7 +413,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               // Password field
                               _buildTextField(
                                 controller: _passwordController,
-                                hint: _t['password']!,
+                                hint: t['password']!,
                                 icon: Icons.lock_outline,
                                 isPassword: true,
                                 obscureText: _obscurePassword,
@@ -414,17 +421,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 borderColor: inputBorderColor,
                                 textColor: textColor,
                                 hintColor: inputHintColor,
-                                isDarkMode: _isDarkMode,
+                                isDarkMode: isDark,
                                 onTogglePassword: () {
                                   setState(() => _obscurePassword = !_obscurePassword);
                                 },
                                 onSubmit: (_) => _handleLogin(),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return _isSwahili ? 'Tafadhali weka nywila' : 'Please enter your password';
+                                    return isSw ? 'Tafadhali weka nywila' : 'Please enter your password';
                                   }
                                   if (value.length < 6) {
-                                    return _isSwahili ? 'Nywila lazima iwe angalau herufi 6' : 'Password must be at least 6 characters';
+                                    return isSw ? 'Nywila lazima iwe angalau herufi 6' : 'Password must be at least 6 characters';
                                   }
                                   return null;
                                 },
@@ -441,7 +448,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   child: Text(
-                                    _t['forgotPassword']!,
+                                    t['forgotPassword']!,
                                     style: const TextStyle(
                                       color: Color(0xFF1ABC9C),
                                       fontSize: 13,
@@ -459,7 +466,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   gradient: _isLoading
                                       ? null
                                       : LinearGradient(
-                                          colors: _isDarkMode
+                                          colors: isDark
                                               ? [
                                                   const Color(0xFF4361EE),
                                                   const Color(0xFF4CC9F0),
@@ -472,13 +479,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                 ],
                                         ),
                                   color: _isLoading
-                                      ? (_isDarkMode ? const Color(0xFF415A77) : Colors.grey.shade300)
+                                      ? (isDark ? const Color(0xFF415A77) : Colors.grey.shade300)
                                       : null,
                                   boxShadow: _isLoading
                                       ? null
                                       : [
                                           BoxShadow(
-                                            color: _isDarkMode
+                                            color: isDark
                                                 ? const Color(0xFF4CC9F0).withValues(alpha: 0.4)
                                                 : const Color(0xFF1ABC9C).withValues(alpha: 0.4),
                                             blurRadius: 20,
@@ -508,7 +515,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Text(
-                                              _t['signIn']!,
+                                              t['signIn']!,
                                               style: const TextStyle(
                                                 fontSize: 17,
                                                 fontWeight: FontWeight.w600,
