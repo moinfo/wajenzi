@@ -1,296 +1,568 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
+import '../../../core/network/api_client.dart';
 import '../../providers/settings_provider.dart';
 
-class AttendanceScreen extends ConsumerStatefulWidget {
+final _selectedDateProvider = StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
+
+final _dailyReportProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, date) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/attendance/daily-report', queryParameters: {'date': date});
+  return response.data['data'] as Map<String, dynamic>;
+});
+
+class AttendanceScreen extends ConsumerWidget {
   const AttendanceScreen({super.key});
 
   @override
-  ConsumerState<AttendanceScreen> createState() => _AttendanceScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedDate = ref.watch(_selectedDateProvider);
+    final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
+    final reportAsync = ref.watch(_dailyReportProvider(dateStr));
+    final isSwahili = ref.watch(isSwahiliProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
 
-class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
-  bool _hasCheckedIn = false;
-  bool _hasCheckedOut = false;
-  bool _isLoading = false;
-
-  bool get _isSwahili => ref.watch(isSwahiliProvider);
-
-  Future<void> _handleCheckIn() async {
-    setState(() => _isLoading = true);
-
-    // TODO: Implement check-in with GPS
-    await Future.delayed(const Duration(seconds: 1));
-
-    setState(() {
-      _hasCheckedIn = true;
-      _isLoading = false;
-    });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isSwahili ? 'Kuingia kumerekodiwa kikamilifu' : 'Check-in recorded successfully')),
-      );
-    }
-  }
-
-  Future<void> _handleCheckOut() async {
-    setState(() => _isLoading = true);
-
-    // TODO: Implement check-out with GPS
-    await Future.delayed(const Duration(seconds: 1));
-
-    setState(() {
-      _hasCheckedOut = true;
-      _isLoading = false;
-    });
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_isSwahili ? 'Kutoka kumerekodiwa kikamilifu' : 'Check-out recorded successfully')),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isSwahili ? 'Mahudhurio' : 'Attendance'),
+        title: Text(isSwahili ? 'Mahudhurio' : 'Attendance'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Today's Status Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    Text(
-                      _isSwahili ? 'Leo' : 'Today',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _formatDate(DateTime.now()),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Status indicators
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _StatusIndicator(
-                          label: _isSwahili ? 'Kuingia' : 'Check In',
-                          time: _hasCheckedIn ? '08:30 AM' : '--:--',
-                          isComplete: _hasCheckedIn,
-                        ),
-                        Container(
-                          width: 1,
-                          height: 50,
-                          color: Colors.grey.shade300,
-                        ),
-                        _StatusIndicator(
-                          label: _isSwahili ? 'Kutoka' : 'Check Out',
-                          time: _hasCheckedOut ? '05:30 PM' : '--:--',
-                          isComplete: _hasCheckedOut,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Action Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton.icon(
-                        onPressed: _isLoading
-                            ? null
-                            : (!_hasCheckedIn
-                                ? _handleCheckIn
-                                : (!_hasCheckedOut ? _handleCheckOut : null)),
-                        icon: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : Icon(
-                                !_hasCheckedIn
-                                    ? Icons.login
-                                    : (!_hasCheckedOut
-                                        ? Icons.logout
-                                        : Icons.check_circle),
-                              ),
-                        label: Text(
-                          !_hasCheckedIn
-                              ? (_isSwahili ? 'Kuingia' : 'Check In')
-                              : (!_hasCheckedOut
-                                  ? (_isSwahili ? 'Kutoka' : 'Check Out')
-                                  : (_isSwahili ? 'Imekamilika' : 'Completed')),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: !_hasCheckedIn
-                              ? AppColors.success
-                              : (!_hasCheckedOut
-                                  ? AppColors.warning
-                                  : AppColors.textHint),
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Recent History
-            Text(
-              _isSwahili ? 'Historia ya Hivi Karibuni' : 'Recent History',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 12),
-
-            // Placeholder history items
-            _HistoryItem(
-              date: DateTime.now().subtract(const Duration(days: 1)),
-              checkIn: '08:45 AM',
-              checkOut: '05:30 PM',
-              status: _isSwahili ? 'Alikuwepo' : 'Present',
-              isLate: false,
-            ),
-            _HistoryItem(
-              date: DateTime.now().subtract(const Duration(days: 2)),
-              checkIn: '09:15 AM',
-              checkOut: '06:00 PM',
-              status: _isSwahili ? 'Amechelewa' : 'Late',
-              isLate: true,
-            ),
-            _HistoryItem(
-              date: DateTime.now().subtract(const Duration(days: 3)),
-              checkIn: '08:30 AM',
-              checkOut: '05:45 PM',
-              status: _isSwahili ? 'Alikuwepo' : 'Present',
-              isLate: false,
-            ),
-          ],
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(_dailyReportProvider(dateStr).future),
+        child: reportAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => _ErrorView(
+            error: e,
+            isSwahili: isSwahili,
+            onRetry: () => ref.invalidate(_dailyReportProvider(dateStr)),
+          ),
+          data: (data) => _ReportBody(
+            data: data,
+            selectedDate: selectedDate,
+            isDarkMode: isDarkMode,
+            isSwahili: isSwahili,
+          ),
         ),
       ),
     );
   }
-
-  String _formatDate(DateTime date) {
-    final months = _isSwahili
-        ? ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ago', 'Sep', 'Okt', 'Nov', 'Des']
-        : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    final days = _isSwahili
-        ? ['Jmt', 'Jmt', 'Jmt', 'Alk', 'Ijm', 'Jma', 'Jpi']
-        : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return '${days[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
-  }
 }
 
-class _StatusIndicator extends StatelessWidget {
-  final String label;
-  final String time;
-  final bool isComplete;
+class _ReportBody extends ConsumerWidget {
+  final Map<String, dynamic> data;
+  final DateTime selectedDate;
+  final bool isDarkMode;
+  final bool isSwahili;
 
-  const _StatusIndicator({
-    required this.label,
-    required this.time,
-    required this.isComplete,
+  const _ReportBody({
+    required this.data,
+    required this.selectedDate,
+    required this.isDarkMode,
+    required this.isSwahili,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = data['stats'] as Map<String, dynamic>? ?? {};
+    final staff = (data['staff'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final searchController = TextEditingController();
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
       children: [
-        Icon(
-          isComplete ? Icons.check_circle : Icons.circle_outlined,
-          color: isComplete ? AppColors.success : AppColors.textHint,
-          size: 32,
+        // Date picker row
+        _DatePickerRow(
+          selectedDate: selectedDate,
+          isDarkMode: isDarkMode,
+          isSwahili: isSwahili,
+          onDateChanged: (date) =>
+              ref.read(_selectedDateProvider.notifier).state = date,
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
-              ),
+        const SizedBox(height: 16),
+
+        // Stats row
+        _StatsRow(stats: stats, isDarkMode: isDarkMode, isSwahili: isSwahili),
+        const SizedBox(height: 16),
+
+        // Search bar
+        _SearchBar(
+          controller: searchController,
+          isDarkMode: isDarkMode,
+          isSwahili: isSwahili,
         ),
-        Text(
-          time,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isComplete ? AppColors.textPrimary : AppColors.textHint,
-              ),
-        ),
+        const SizedBox(height: 12),
+
+        // Staff list
+        if (staff.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 40),
+            child: Column(
+              children: [
+                Icon(Icons.people_outline, size: 56, color: Colors.grey[300]),
+                const SizedBox(height: 12),
+                Text(
+                  isSwahili ? 'Hakuna wafanyakazi' : 'No staff found',
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          )
+        else
+          ...staff.map((s) => _StaffCard(staff: s, isDarkMode: isDarkMode)),
+
+        const SizedBox(height: 80),
       ],
     );
   }
 }
 
-class _HistoryItem extends StatelessWidget {
-  final DateTime date;
-  final String checkIn;
-  final String checkOut;
-  final String status;
-  final bool isLate;
+class _DatePickerRow extends StatelessWidget {
+  final DateTime selectedDate;
+  final bool isDarkMode;
+  final bool isSwahili;
+  final ValueChanged<DateTime> onDateChanged;
 
-  const _HistoryItem({
-    required this.date,
-    required this.checkIn,
-    required this.checkOut,
-    required this.status,
-    required this.isLate,
+  const _DatePickerRow({
+    required this.selectedDate,
+    required this.isDarkMode,
+    required this.isSwahili,
+    required this.onDateChanged,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isToday = DateUtils.isSameDay(selectedDate, DateTime.now());
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: isLate
-              ? AppColors.warning.withOpacity(0.1)
-              : AppColors.success.withOpacity(0.1),
-          child: Icon(
-            isLate ? Icons.schedule : Icons.check,
-            color: isLate ? AppColors.warning : AppColors.success,
-          ),
-        ),
-        title: Text(
-          '${date.day}/${date.month}/${date.year}',
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-        subtitle: Text('$checkIn - $checkOut'),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: isLate
-                ? AppColors.warning.withOpacity(0.1)
-                : AppColors.success.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            status,
-            style: TextStyle(
-              color: isLate ? AppColors.warning : AppColors.success,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E1E30) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isDarkMode
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.grey.withValues(alpha: 0.12),
         ),
       ),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => onDateChanged(
+              selectedDate.subtract(const Duration(days: 1)),
+            ),
+            icon: const Icon(Icons.chevron_left_rounded),
+            iconSize: 22,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () async {
+                final picked = await showDatePicker(
+                  context: context,
+                  initialDate: selectedDate,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now(),
+                );
+                if (picked != null) onDateChanged(picked);
+              },
+              child: Column(
+                children: [
+                  Text(
+                    DateFormat('EEEE, dd MMM yyyy').format(selectedDate),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                  if (isToday)
+                    Text(
+                      isSwahili ? 'Leo' : 'Today',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF1ABC9C),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: DateUtils.isSameDay(selectedDate, DateTime.now())
+                ? null
+                : () => onDateChanged(
+                      selectedDate.add(const Duration(days: 1)),
+                    ),
+            icon: const Icon(Icons.chevron_right_rounded),
+            iconSize: 22,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatsRow extends StatelessWidget {
+  final Map<String, dynamic> stats;
+  final bool isDarkMode;
+  final bool isSwahili;
+
+  const _StatsRow({
+    required this.stats,
+    required this.isDarkMode,
+    required this.isSwahili,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _StatItem(
+        label: isSwahili ? 'Jumla' : 'Total',
+        value: '${stats['total_users'] ?? 0}',
+        color: const Color(0xFF3B82F6),
+        icon: Icons.people_rounded,
+      ),
+      _StatItem(
+        label: isSwahili ? 'Walio' : 'Present',
+        value: '${stats['present'] ?? 0}',
+        color: const Color(0xFF27AE60),
+        icon: Icons.check_circle_rounded,
+      ),
+      _StatItem(
+        label: isSwahili ? 'Kwa wakati' : 'On Time',
+        value: '${stats['on_time'] ?? 0}',
+        color: const Color(0xFF1ABC9C),
+        icon: Icons.schedule_rounded,
+      ),
+      _StatItem(
+        label: isSwahili ? 'Wachelewa' : 'Late',
+        value: '${stats['late'] ?? 0}',
+        color: const Color(0xFFF59E0B),
+        icon: Icons.warning_rounded,
+      ),
+      _StatItem(
+        label: isSwahili ? 'Hawako' : 'Absent',
+        value: '${stats['absent'] ?? 0}',
+        color: const Color(0xFFEF4444),
+        icon: Icons.cancel_rounded,
+      ),
+    ];
+
+    return Row(
+      children: items
+          .map((item) => Expanded(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? item.color.withValues(alpha: 0.15)
+                        : item.color.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: item.color.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(item.icon, size: 18, color: item.color),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.value,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: item.color,
+                        ),
+                      ),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ))
+          .toList(),
+    );
+  }
+}
+
+class _StatItem {
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+
+  const _StatItem({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+}
+
+class _SearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final bool isDarkMode;
+  final bool isSwahili;
+
+  const _SearchBar({
+    required this.controller,
+    required this.isDarkMode,
+    required this.isSwahili,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 42,
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E1E30) : const Color(0xFFF5F6FA),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextField(
+        controller: controller,
+        style: TextStyle(
+          fontSize: 13,
+          color: isDarkMode ? Colors.white : AppColors.textPrimary,
+        ),
+        decoration: InputDecoration(
+          hintText: isSwahili ? 'Tafuta mfanyakazi...' : 'Search staff...',
+          hintStyle: TextStyle(
+            fontSize: 13,
+            color: isDarkMode ? Colors.white38 : AppColors.textHint,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 18,
+            color: isDarkMode ? Colors.white38 : AppColors.textHint,
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
+}
+
+class _StaffCard extends StatelessWidget {
+  final Map<String, dynamic> staff;
+  final bool isDarkMode;
+
+  const _StaffCard({required this.staff, required this.isDarkMode});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = staff['name'] as String? ?? '';
+    final department = staff['department'] as String? ?? 'N/A';
+    final checkIn = staff['check_in'] as String?;
+    final status = staff['status'] as String? ?? 'ABSENT';
+    final deviceId = staff['device_id'];
+
+    Color statusColor;
+    String statusLabel;
+    IconData statusIcon;
+
+    switch (status) {
+      case 'ON_TIME':
+        statusColor = const Color(0xFF27AE60);
+        statusLabel = 'ON TIME';
+        statusIcon = Icons.check_circle_rounded;
+        break;
+      case 'LATE':
+        statusColor = const Color(0xFFF59E0B);
+        statusLabel = 'LATE';
+        statusIcon = Icons.warning_rounded;
+        break;
+      default:
+        statusColor = const Color(0xFFEF4444);
+        statusLabel = 'ABSENT';
+        statusIcon = Icons.cancel_rounded;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF1E1E30) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDarkMode
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.grey.withValues(alpha: 0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.15 : 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: statusColor.withValues(alpha: 0.12),
+            child: Text(
+              name.isNotEmpty ? name[0].toUpperCase() : '?',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: statusColor,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(Icons.apartment_rounded,
+                        size: 11,
+                        color: isDarkMode ? Colors.white38 : AppColors.textHint),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        department,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                if (deviceId != null) ...[
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(Icons.fingerprint_rounded,
+                          size: 11,
+                          color: isDarkMode ? Colors.white38 : AppColors.textHint),
+                      const SizedBox(width: 4),
+                      Text(
+                        'ID: $deviceId',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isDarkMode ? Colors.white38 : AppColors.textHint,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Check-in time + Status
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (checkIn != null)
+                Text(
+                  checkIn,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(statusIcon, size: 10, color: statusColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      statusLabel,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final Object error;
+  final bool isSwahili;
+  final VoidCallback onRetry;
+
+  const _ErrorView({
+    required this.error,
+    required this.isSwahili,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(32),
+      children: [
+        const SizedBox(height: 100),
+        const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+        const SizedBox(height: 16),
+        Text(
+          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 24),
+        Center(
+          child: ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+          ),
+        ),
+      ],
     );
   }
 }

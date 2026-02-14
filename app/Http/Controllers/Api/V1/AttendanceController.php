@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AttendanceResource;
 use App\Models\Attendance;
+use App\Models\AttendanceType;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
@@ -181,6 +184,117 @@ class AttendanceController extends Controller
                 'status' => $status[0] ?? 'absent',
                 'is_late' => $status[3] ?? false,
                 'working_hours' => $status[4] ?? null,
+            ],
+        ]);
+    }
+
+    /**
+     * Daily attendance report — all staff with check-in status for a given date.
+     */
+    public function dailyReport(Request $request): JsonResponse
+    {
+        $date = $request->input('date', now()->toDateString());
+        $search = $request->input('search');
+        $attendanceTypeId = $request->input('attendance_type_id');
+
+        $lateInTime = settings('ATTENDANCE_LATE_THRESHOLD', '09:00:00');
+
+        // Get attendance types for filter options
+        $attendanceTypes = AttendanceType::select('id', 'name')->orderBy('name')->get();
+
+        // Build users query
+        $usersQuery = User::select([
+                'users.id',
+                'users.name',
+                'users.email',
+                'users.user_device_id',
+                'users.department_id',
+                'users.attendance_type_id',
+                'departments.name as department_name',
+                'attendance_types.name as attendance_type_name',
+            ])
+            ->leftJoin('departments', 'users.department_id', '=', 'departments.id')
+            ->leftJoin('attendance_types', 'users.attendance_type_id', '=', 'attendance_types.id')
+            ->where('users.status', 'ACTIVE')
+            ->where('users.attendance_status', 'ENABLED');
+
+        if ($attendanceTypeId) {
+            $usersQuery->where('users.attendance_type_id', $attendanceTypeId);
+        }
+
+        if ($search) {
+            $usersQuery->where(function ($q) use ($search) {
+                $q->where('users.name', 'like', "%{$search}%")
+                  ->orWhere('users.email', 'like', "%{$search}%")
+                  ->orWhere('users.user_device_id', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $usersQuery->orderBy('attendance_types.name')
+            ->orderBy('users.name')
+            ->get();
+
+        $userIds = $users->pluck('id')->toArray();
+
+        // Single query for all attendance records on this date
+        $attendanceData = DB::table('attendances')
+            ->select([
+                'user_id',
+                DB::raw('MIN(record_time) as record_time'),
+                DB::raw('MAX(comment) as comment'),
+            ])
+            ->whereIn('user_id', $userIds)
+            ->whereDate('record_time', $date)
+            ->groupBy('user_id')
+            ->get()
+            ->keyBy('user_id');
+
+        $lateDateTime = $date . ' ' . $lateInTime;
+
+        // Map users with attendance status
+        $staff = $users->map(function ($user) use ($attendanceData, $lateDateTime) {
+            $attendance = $attendanceData->get($user->id);
+            $inTime = $attendance?->record_time;
+
+            $status = 'ABSENT';
+            if ($inTime) {
+                $status = $inTime <= $lateDateTime ? 'ON_TIME' : 'LATE';
+            }
+
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'department' => $user->department_name ?? 'N/A',
+                'device_id' => $user->user_device_id,
+                'attendance_type' => $user->attendance_type_name ?? 'N/A',
+                'check_in' => $inTime ? Carbon::parse($inTime)->format('H:i') : null,
+                'status' => $status,
+                'comment' => $attendance?->comment,
+            ];
+        });
+
+        // Stats
+        $totalUsers = $staff->count();
+        $present = $staff->where('status', '!=', 'ABSENT')->count();
+        $onTime = $staff->where('status', 'ON_TIME')->count();
+        $late = $staff->where('status', 'LATE')->count();
+        $absent = $staff->where('status', 'ABSENT')->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'date' => $date,
+                'late_threshold' => $lateInTime,
+                'stats' => [
+                    'total_users' => $totalUsers,
+                    'present' => $present,
+                    'on_time' => $onTime,
+                    'late' => $late,
+                    'absent' => $absent,
+                ],
+                'attendance_types' => $attendanceTypes,
+                'staff' => $staff->values(),
             ],
         ]);
     }

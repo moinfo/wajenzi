@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('check-in', [AttendanceController::class, 'checkIn']);
         Route::post('check-out', [AttendanceController::class, 'checkOut']);
         Route::get('status', [AttendanceController::class, 'status']);
+        Route::get('daily-report', [AttendanceController::class, 'dailyReport']);
         Route::get('summary', [AttendanceController::class, 'summary']);
     });
 
