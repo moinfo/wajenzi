@@ -22,6 +22,8 @@ import '../../presentation/screens/settings/profile_screen.dart';
 import '../../presentation/screens/settings/change_password_screen.dart';
 import '../../presentation/screens/settings/legal_screen.dart';
 import '../../presentation/screens/dashboard/activities_screen.dart';
+import '../../presentation/screens/dashboard/followups_screen.dart';
+import '../../presentation/screens/dashboard/invoices_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -106,6 +108,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/dashboard/activities',
         name: 'dashboard-activities',
         builder: (context, state) => const ActivitiesScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard/followups',
+        name: 'dashboard-followups',
+        builder: (context, state) => const FollowupsScreen(),
+      ),
+      GoRoute(
+        path: '/dashboard/invoices',
+        name: 'dashboard-invoices',
+        builder: (context, state) => const InvoicesScreen(),
       ),
       GoRoute(
         path: '/project/:id',
