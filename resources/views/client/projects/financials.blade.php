@@ -3,56 +3,58 @@
 @section('title', 'Financials - ' . $project->project_name)
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <div>
-            <a href="{{ route('client.dashboard') }}" class="text-muted text-decoration-none" style="font-size: 0.8125rem;">
-                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-            </a>
-            <h4 class="fw-bold mt-2 mb-0">{{ $project->project_name }}</h4>
-        </div>
+    <div style="margin-bottom: var(--m-md);">
+        <a href="{{ route('client.dashboard') }}" class="m-dimmed m-text-xs" style="text-decoration: none;">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+        <h1 class="m-title m-title-3" style="margin-top: var(--m-sm); margin-bottom: 0;">{{ $project->project_name }}</h1>
     </div>
 
     @include('client.partials.project_tabs')
 
-    <!-- Financial Summary Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-label mb-1">Contract Value</div>
-                <div class="stat-value" style="color: #2563EB;">TZS {{ number_format($summary['contract_value'], 2) }}</div>
+    <!-- Financial Summary -->
+    <div class="m-stat-grid" style="margin-bottom: var(--m-xl);">
+        <div class="m-stat">
+            <div class="m-stat-top">
+                <span class="m-stat-title">Contract Value</span>
+                <i class="fas fa-file-contract m-stat-icon"></i>
             </div>
+            <div class="m-stat-value" style="font-size: 1.125rem;">TZS {{ number_format($summary['contract_value'], 2) }}</div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-label mb-1">Total Invoiced</div>
-                <div class="stat-value" style="color: #D97706;">TZS {{ number_format($summary['total_invoiced'], 2) }}</div>
+        <div class="m-stat">
+            <div class="m-stat-top">
+                <span class="m-stat-title">Total Invoiced</span>
+                <i class="fas fa-file-invoice m-stat-icon"></i>
             </div>
+            <div class="m-stat-value" style="font-size: 1.125rem;">TZS {{ number_format($summary['total_invoiced'], 2) }}</div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-label mb-1">Total Paid</div>
-                <div class="stat-value" style="color: #16A34A;">TZS {{ number_format($summary['total_paid'], 2) }}</div>
+        <div class="m-stat">
+            <div class="m-stat-top">
+                <span class="m-stat-title">Total Paid</span>
+                <i class="fas fa-check-circle m-stat-icon"></i>
             </div>
+            <div class="m-stat-value" style="font-size: 1.125rem; color: var(--m-teal-6);">TZS {{ number_format($summary['total_paid'], 2) }}</div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-label mb-1">Balance Due</div>
-                <div class="stat-value" style="color: {{ $summary['balance_due'] > 0 ? '#DC2626' : '#16A34A' }};">
-                    TZS {{ number_format($summary['balance_due'], 2) }}
-                </div>
+        <div class="m-stat">
+            <div class="m-stat-top">
+                <span class="m-stat-title">Balance Due</span>
+                <i class="fas fa-exclamation-circle m-stat-icon"></i>
+            </div>
+            <div class="m-stat-value" style="font-size: 1.125rem; color: {{ $summary['balance_due'] > 0 ? 'var(--m-red-6)' : 'var(--m-teal-6)' }};">
+                TZS {{ number_format($summary['balance_due'], 2) }}
             </div>
         </div>
     </div>
 
     <!-- Invoices -->
-    <div class="portal-card mb-3">
-        <div class="portal-card-header">
-            <h5><i class="fas fa-file-invoice me-2"></i>Invoices</h5>
+    <div class="m-paper mb-3">
+        <div class="m-paper-header">
+            <h5><i class="fas fa-file-invoice me-2" style="color: var(--m-blue-6);"></i>Invoices</h5>
         </div>
         @if($invoices->count())
-            <div class="portal-card-body p-0">
+            <div style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="portal-table">
+                    <table class="m-table">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -72,18 +74,18 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td class="fw-semibold">{{ $invoice->invoice_number }}</td>
+                                    <td class="m-fw-500">{{ $invoice->invoice_number }}</td>
                                     <td>{{ $invoice->due_date?->format('M d, Y') ?? '-' }}</td>
                                     <td class="text-end">{{ number_format($invoice->amount ?? 0, 2) }}</td>
-                                    <td class="text-end" style="color: #16A34A;">{{ number_format($paid, 2) }}</td>
-                                    <td class="text-end fw-semibold" style="color: {{ $balance > 0 ? '#DC2626' : '#16A34A' }};">
+                                    <td class="text-end" style="color: var(--m-teal-6);">{{ number_format($paid, 2) }}</td>
+                                    <td class="text-end m-fw-600" style="color: {{ $balance > 0 ? 'var(--m-red-6)' : 'var(--m-teal-6)' }};">
                                         {{ number_format($balance, 2) }}
                                     </td>
                                     <td>
                                         @php
-                                            $invStatusMap = ['paid' => 'success', 'partial' => 'warning', 'unpaid' => 'danger', 'overdue' => 'danger', 'sent' => 'info'];
+                                            $invMap = ['paid' => 'teal', 'partial' => 'yellow', 'unpaid' => 'red', 'overdue' => 'red', 'sent' => 'blue'];
                                         @endphp
-                                        <span class="status-badge {{ $invStatusMap[$invoice->status] ?? 'secondary' }}">
+                                        <span class="m-badge m-badge-{{ $invMap[$invoice->status] ?? 'gray' }}">
                                             {{ ucfirst($invoice->status ?? 'N/A') }}
                                         </span>
                                     </td>
@@ -91,11 +93,11 @@
                             @endforeach
                         </tbody>
                         <tfoot>
-                            <tr style="background: var(--wajenzi-gray-50);">
-                                <td colspan="3" class="fw-bold text-end">Totals</td>
-                                <td class="text-end fw-bold">TZS {{ number_format($invoices->sum('amount'), 2) }}</td>
-                                <td class="text-end fw-bold" style="color: #16A34A;">TZS {{ number_format($summary['total_paid'], 2) }}</td>
-                                <td class="text-end fw-bold" style="color: {{ $summary['balance_due'] > 0 ? '#DC2626' : '#16A34A' }};">
+                            <tr style="background: var(--m-gray-0);">
+                                <td colspan="3" class="m-fw-700 text-end">Totals</td>
+                                <td class="text-end m-fw-700">TZS {{ number_format($invoices->sum('amount'), 2) }}</td>
+                                <td class="text-end m-fw-700" style="color: var(--m-teal-6);">TZS {{ number_format($summary['total_paid'], 2) }}</td>
+                                <td class="text-end m-fw-700" style="color: {{ $summary['balance_due'] > 0 ? 'var(--m-red-6)' : 'var(--m-teal-6)' }};">
                                     TZS {{ number_format($summary['balance_due'], 2) }}
                                 </td>
                                 <td></td>
@@ -105,9 +107,9 @@
                 </div>
             </div>
         @else
-            <div class="portal-card-body text-center py-4 text-muted">
-                <i class="fas fa-file-invoice fa-2x mb-2"></i>
-                <p class="mb-0">No invoices have been created yet.</p>
+            <div class="m-paper-body" style="text-align: center; padding: 2rem;">
+                <i class="fas fa-file-invoice" style="font-size: 2rem; color: var(--m-gray-3); margin-bottom: 0.5rem;"></i>
+                <p class="m-text-sm m-dimmed" style="margin: 0;">No invoices have been created yet.</p>
             </div>
         @endif
     </div>
@@ -117,13 +119,13 @@
         $allPayments = $invoices->flatMap(fn($inv) => $inv->payments->map(fn($p) => $p->setAttribute('invoice_number', $inv->invoice_number)));
     @endphp
     @if($allPayments->count())
-        <div class="portal-card">
-            <div class="portal-card-header">
-                <h5><i class="fas fa-money-check-alt me-2"></i>Payments</h5>
+        <div class="m-paper">
+            <div class="m-paper-header">
+                <h5><i class="fas fa-money-check-alt me-2" style="color: var(--m-teal-6);"></i>Payments</h5>
             </div>
-            <div class="portal-card-body p-0">
+            <div style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="portal-table">
+                    <table class="m-table">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -138,11 +140,11 @@
                             @foreach($allPayments->sortByDesc('payment_date') as $payment)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td class="fw-semibold">{{ $payment->invoice_number }}</td>
+                                    <td class="m-fw-500">{{ $payment->invoice_number }}</td>
                                     <td>{{ $payment->payment_date?->format('M d, Y') ?? '-' }}</td>
                                     <td>{{ ucfirst($payment->payment_method ?? '-') }}</td>
                                     <td>{{ $payment->reference_number ?? '-' }}</td>
-                                    <td class="text-end fw-semibold" style="color: #16A34A;">TZS {{ number_format($payment->amount ?? 0, 2) }}</td>
+                                    <td class="text-end m-fw-600" style="color: var(--m-teal-6);">TZS {{ number_format($payment->amount ?? 0, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

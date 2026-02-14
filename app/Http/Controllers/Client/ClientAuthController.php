@@ -16,25 +16,28 @@ class ClientAuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'login' => 'required|string',
             'password' => 'required',
         ]);
 
-        $credentials = $request->only('email', 'password');
+        $login = $request->input('login');
         $remember = $request->boolean('remember');
+
+        // Determine if input is email or phone number
+        $field = filter_var($login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone_number';
+        $credentials = [$field => $login, 'password' => $request->input('password')];
 
         if (Auth::guard('client')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            // Update last login timestamp
             Auth::guard('client')->user()->update(['last_login_at' => now()]);
 
             return redirect()->intended(route('client.dashboard'));
         }
 
         return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+            'login' => 'The provided credentials do not match our records.',
+        ])->onlyInput('login');
     }
 
     public function logout(Request $request)
