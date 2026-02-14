@@ -48,20 +48,19 @@
                         @csrf
 
                         <div class="form-group">
-                            <label for="email" class="form-label">
-                                <i class="fas fa-envelope"></i>
-                                Email Address
+                            <label for="login" class="form-label">
+                                <i class="fas fa-user"></i>
+                                Email or Phone Number
                             </label>
-                            <input id="email"
-                                   type="email"
-                                   class="form-input @error('email') is-invalid @enderror"
-                                   name="email"
-                                   value="{{ old('email') }}"
-                                   placeholder="Enter your email"
+                            <input id="login"
+                                   type="text"
+                                   class="form-input @error('login') is-invalid @enderror"
+                                   name="login"
+                                   value="{{ old('login') }}"
+                                   placeholder="Enter your email or phone number"
                                    required
-                                   autocomplete="email"
                                    autofocus>
-                            @error('email')
+                            @error('login')
                                 <span class="error-message">
                                     <i class="fas fa-exclamation-circle"></i>
                                     {{ $message }}

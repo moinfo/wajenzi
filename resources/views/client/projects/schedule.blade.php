@@ -3,26 +3,24 @@
 @section('title', 'Schedule - ' . $project->project_name)
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <div>
-            <a href="{{ route('client.dashboard') }}" class="text-muted text-decoration-none" style="font-size: 0.8125rem;">
-                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-            </a>
-            <h4 class="fw-bold mt-2 mb-0">{{ $project->project_name }}</h4>
-        </div>
+    <div style="margin-bottom: var(--m-md);">
+        <a href="{{ route('client.dashboard') }}" class="m-dimmed m-text-xs" style="text-decoration: none;">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+        <h1 class="m-title m-title-3" style="margin-top: var(--m-sm); margin-bottom: 0;">{{ $project->project_name }}</h1>
     </div>
 
     @include('client.partials.project_tabs')
 
     <!-- Construction Phases -->
-    <div class="portal-card mb-3">
-        <div class="portal-card-header">
-            <h5><i class="fas fa-layer-group me-2"></i>Construction Phases</h5>
+    <div class="m-paper mb-3">
+        <div class="m-paper-header">
+            <h5><i class="fas fa-layer-group me-2" style="color: var(--m-violet-6);"></i>Construction Phases</h5>
         </div>
         @if($phases->count())
-            <div class="portal-card-body p-0">
+            <div style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="portal-table">
+                    <table class="m-table">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -36,14 +34,14 @@
                             @foreach($phases as $phase)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td class="fw-semibold">{{ $phase->phase_name }}</td>
+                                    <td class="m-fw-500">{{ $phase->phase_name }}</td>
                                     <td>{{ $phase->start_date?->format('M d, Y') ?? '-' }}</td>
                                     <td>{{ $phase->end_date?->format('M d, Y') ?? '-' }}</td>
                                     <td>
                                         @php
-                                            $map = ['pending' => 'warning', 'in_progress' => 'info', 'completed' => 'success'];
+                                            $map = ['pending' => 'yellow', 'in_progress' => 'blue', 'completed' => 'teal'];
                                         @endphp
-                                        <span class="status-badge {{ $map[$phase->status] ?? 'secondary' }}">
+                                        <span class="m-badge m-badge-{{ $map[$phase->status] ?? 'gray' }}">
                                             {{ ucfirst(str_replace('_', ' ', $phase->status ?? 'N/A')) }}
                                         </span>
                                     </td>
@@ -54,22 +52,22 @@
                 </div>
             </div>
         @else
-            <div class="portal-card-body text-center py-4 text-muted">
-                <i class="fas fa-layer-group fa-2x mb-2"></i>
-                <p class="mb-0">No construction phases defined yet.</p>
+            <div class="m-paper-body" style="text-align: center; padding: 2rem;">
+                <i class="fas fa-layer-group" style="font-size: 2rem; color: var(--m-gray-3); margin-bottom: 0.5rem;"></i>
+                <p class="m-text-sm m-dimmed" style="margin: 0;">No construction phases defined yet.</p>
             </div>
         @endif
     </div>
 
     <!-- Schedule Activities -->
-    <div class="portal-card">
-        <div class="portal-card-header">
-            <h5><i class="fas fa-calendar-check me-2"></i>Schedule Activities</h5>
+    <div class="m-paper">
+        <div class="m-paper-header">
+            <h5><i class="fas fa-calendar-check me-2" style="color: var(--m-teal-6);"></i>Schedule Activities</h5>
         </div>
         @if($activities->count())
-            <div class="portal-card-body p-0">
+            <div style="padding: 0;">
                 <div class="table-responsive">
-                    <table class="portal-table">
+                    <table class="m-table">
                         <thead>
                             <tr>
                                 <th>Code</th>
@@ -84,19 +82,19 @@
                         <tbody>
                             @foreach($activities as $activity)
                                 <tr>
-                                    <td><code>{{ $activity->activity_code }}</code></td>
-                                    <td class="fw-semibold">{{ $activity->name }}</td>
+                                    <td><code style="background: var(--m-gray-1); padding: 0.125rem 0.375rem; border-radius: var(--m-radius-xs); font-size: 0.8125rem;">{{ $activity->activity_code }}</code></td>
+                                    <td class="m-fw-500">{{ $activity->name }}</td>
                                     <td>{{ $activity->phase ?? '-' }}</td>
                                     <td>{{ $activity->start_date?->format('M d, Y') ?? '-' }}</td>
                                     <td>{{ $activity->duration_days }} days</td>
                                     <td>{{ $activity->end_date?->format('M d, Y') ?? '-' }}</td>
                                     <td>
                                         @php
-                                            $actMap = ['pending' => 'warning', 'in_progress' => 'info', 'completed' => 'success', 'overdue' => 'danger'];
+                                            $actMap = ['pending' => 'yellow', 'in_progress' => 'blue', 'completed' => 'teal', 'overdue' => 'red'];
                                             $actStatus = $activity->status;
                                             if ($actStatus !== 'completed' && $activity->isOverdue()) $actStatus = 'overdue';
                                         @endphp
-                                        <span class="status-badge {{ $actMap[$actStatus] ?? 'secondary' }}">
+                                        <span class="m-badge m-badge-{{ $actMap[$actStatus] ?? 'gray' }}">
                                             {{ ucfirst(str_replace('_', ' ', $actStatus)) }}
                                         </span>
                                     </td>
@@ -107,9 +105,9 @@
                 </div>
             </div>
         @else
-            <div class="portal-card-body text-center py-4 text-muted">
-                <i class="fas fa-calendar-alt fa-2x mb-2"></i>
-                <p class="mb-0">No schedule activities defined yet.</p>
+            <div class="m-paper-body" style="text-align: center; padding: 2rem;">
+                <i class="fas fa-calendar-alt" style="font-size: 2rem; color: var(--m-gray-3); margin-bottom: 0.5rem;"></i>
+                <p class="m-text-sm m-dimmed" style="margin: 0;">No schedule activities defined yet.</p>
             </div>
         @endif
     </div>

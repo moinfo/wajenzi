@@ -3,13 +3,11 @@
 @section('title', 'Reports - ' . $project->project_name)
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <div>
-            <a href="{{ route('client.dashboard') }}" class="text-muted text-decoration-none" style="font-size: 0.8125rem;">
-                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-            </a>
-            <h4 class="fw-bold mt-2 mb-0">{{ $project->project_name }}</h4>
-        </div>
+    <div style="margin-bottom: var(--m-md);">
+        <a href="{{ route('client.dashboard') }}" class="m-dimmed m-text-xs" style="text-decoration: none;">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+        <h1 class="m-title m-title-3" style="margin-top: var(--m-sm); margin-bottom: 0;">{{ $project->project_name }}</h1>
     </div>
 
     @include('client.partials.project_tabs')
@@ -17,58 +15,60 @@
     <div class="row g-3">
         <!-- Daily Reports -->
         <div class="col-lg-7">
-            <div class="portal-card">
-                <div class="portal-card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Daily Reports</h5>
-                    <span class="badge bg-primary rounded-pill">{{ $dailyReports->count() }}</span>
+            <div class="m-paper">
+                <div class="m-paper-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h5 style="margin: 0;"><i class="fas fa-clipboard-list me-2" style="color: var(--m-blue-6);"></i>Daily Reports</h5>
+                    <span class="m-badge m-badge-blue">{{ $dailyReports->count() }}</span>
                 </div>
                 @if($dailyReports->count())
-                    <div class="portal-card-body p-0">
+                    <div style="padding: 0;">
                         <div class="accordion" id="dailyReportsAccordion">
                             @foreach($dailyReports as $report)
-                                <div class="accordion-item border-0 border-bottom">
+                                <div class="accordion-item" style="border: none; border-bottom: 1px solid var(--m-gray-3);">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }} py-3" type="button" data-bs-toggle="collapse" data-bs-target="#report-{{ $report->id }}">
-                                            <div class="d-flex align-items-center gap-2 w-100">
-                                                <i class="fas fa-calendar-day text-primary"></i>
+                                        <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }}" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#report-{{ $report->id }}"
+                                                style="padding: 0.75rem var(--m-lg); font-size: 0.875rem;">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem; width: 100%;">
+                                                <i class="fas fa-calendar-day" style="color: var(--m-blue-6);"></i>
                                                 <strong>{{ $report->report_date?->format('M d, Y') ?? 'N/A' }}</strong>
                                                 @if($report->weather_conditions)
-                                                    <span class="badge bg-light text-dark ms-auto me-3" style="font-size: 0.75rem;">
-                                                        <i class="fas fa-cloud-sun me-1"></i>{{ $report->weather_conditions }}
+                                                    <span class="m-badge m-badge-gray" style="margin-left: auto; margin-right: 1rem;">
+                                                        <i class="fas fa-cloud-sun" style="margin-right: 0.25rem;"></i>{{ $report->weather_conditions }}
                                                     </span>
                                                 @endif
                                             </div>
                                         </button>
                                     </h2>
                                     <div id="report-{{ $report->id }}" class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}" data-bs-parent="#dailyReportsAccordion">
-                                        <div class="accordion-body">
+                                        <div class="accordion-body" style="padding: 0.75rem var(--m-lg) var(--m-lg);">
                                             @if($report->supervisor)
-                                                <div class="mb-2" style="font-size: 0.8125rem; color: var(--wajenzi-gray-600);">
+                                                <div style="font-size: 0.8125rem; color: var(--m-gray-6); margin-bottom: 0.5rem;">
                                                     <i class="fas fa-user me-1"></i> Supervisor: <strong>{{ $report->supervisor->name }}</strong>
                                                 </div>
                                             @endif
                                             @if($report->work_completed)
-                                                <div class="mb-2">
-                                                    <label class="fw-bold d-block" style="font-size: 0.8125rem; color: var(--wajenzi-gray-600);">Work Completed</label>
-                                                    <p class="mb-0">{{ $report->work_completed }}</p>
+                                                <div style="margin-bottom: 0.5rem;">
+                                                    <label class="m-fw-600 d-block m-text-xs m-dimmed" style="text-transform: uppercase; letter-spacing: 0.05em;">Work Completed</label>
+                                                    <p class="m-text-sm" style="margin: 0.125rem 0 0;">{{ $report->work_completed }}</p>
                                                 </div>
                                             @endif
                                             @if($report->materials_used)
-                                                <div class="mb-2">
-                                                    <label class="fw-bold d-block" style="font-size: 0.8125rem; color: var(--wajenzi-gray-600);">Materials Used</label>
-                                                    <p class="mb-0">{{ $report->materials_used }}</p>
+                                                <div style="margin-bottom: 0.5rem;">
+                                                    <label class="m-fw-600 d-block m-text-xs m-dimmed" style="text-transform: uppercase; letter-spacing: 0.05em;">Materials Used</label>
+                                                    <p class="m-text-sm" style="margin: 0.125rem 0 0;">{{ $report->materials_used }}</p>
                                                 </div>
                                             @endif
                                             @if($report->labor_hours)
-                                                <div class="mb-2">
-                                                    <label class="fw-bold d-block" style="font-size: 0.8125rem; color: var(--wajenzi-gray-600);">Labor Hours</label>
-                                                    <p class="mb-0">{{ $report->labor_hours }} hours</p>
+                                                <div style="margin-bottom: 0.5rem;">
+                                                    <label class="m-fw-600 d-block m-text-xs m-dimmed" style="text-transform: uppercase; letter-spacing: 0.05em;">Labor Hours</label>
+                                                    <p class="m-text-sm" style="margin: 0.125rem 0 0;">{{ $report->labor_hours }} hours</p>
                                                 </div>
                                             @endif
                                             @if($report->issues_faced)
-                                                <div class="mb-0">
-                                                    <label class="fw-bold d-block" style="font-size: 0.8125rem; color: #DC2626;">Issues Faced</label>
-                                                    <p class="mb-0">{{ $report->issues_faced }}</p>
+                                                <div>
+                                                    <label class="m-fw-600 d-block m-text-xs" style="color: var(--m-red-6); text-transform: uppercase; letter-spacing: 0.05em;">Issues Faced</label>
+                                                    <p class="m-text-sm" style="margin: 0.125rem 0 0;">{{ $report->issues_faced }}</p>
                                                 </div>
                                             @endif
                                         </div>
@@ -78,9 +78,9 @@
                         </div>
                     </div>
                 @else
-                    <div class="portal-card-body text-center py-4 text-muted">
-                        <i class="fas fa-clipboard-list fa-2x mb-2"></i>
-                        <p class="mb-0">No daily reports submitted yet.</p>
+                    <div class="m-paper-body" style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-clipboard-list" style="font-size: 2rem; color: var(--m-gray-3); margin-bottom: 0.5rem;"></i>
+                        <p class="m-text-sm m-dimmed" style="margin: 0;">No daily reports submitted yet.</p>
                     </div>
                 @endif
             </div>
@@ -88,43 +88,43 @@
 
         <!-- Site Visits -->
         <div class="col-lg-5">
-            <div class="portal-card">
-                <div class="portal-card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Site Visits</h5>
-                    <span class="badge bg-primary rounded-pill">{{ $siteVisits->count() }}</span>
+            <div class="m-paper">
+                <div class="m-paper-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h5 style="margin: 0;"><i class="fas fa-map-marker-alt me-2" style="color: var(--m-orange-6);"></i>Site Visits</h5>
+                    <span class="m-badge m-badge-yellow">{{ $siteVisits->count() }}</span>
                 </div>
                 @if($siteVisits->count())
-                    <div class="portal-card-body p-0">
+                    <div style="padding: 0;">
                         @foreach($siteVisits as $visit)
-                            <div class="p-3 {{ !$loop->last ? 'border-bottom' : '' }}">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div style="padding: 0.75rem var(--m-lg); {{ !$loop->last ? 'border-bottom: 1px solid var(--m-gray-3);' : '' }}">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.375rem;">
                                     <div>
-                                        <strong style="font-size: 0.875rem;">{{ $visit->visit_date?->format('M d, Y') ?? 'N/A' }}</strong>
+                                        <strong class="m-text-sm">{{ $visit->visit_date?->format('M d, Y') ?? 'N/A' }}</strong>
                                         @if($visit->inspector)
-                                            <div style="font-size: 0.8125rem; color: var(--wajenzi-gray-600);">
+                                            <div style="font-size: 0.8125rem; color: var(--m-gray-6);">
                                                 <i class="fas fa-user-tie me-1"></i>{{ $visit->inspector->name }}
                                             </div>
                                         @endif
                                     </div>
                                     @php
-                                        $vMap = ['approved' => 'success', 'pending' => 'warning', 'completed' => 'success'];
+                                        $vMap = ['approved' => 'teal', 'pending' => 'yellow', 'completed' => 'teal'];
                                     @endphp
-                                    <span class="status-badge {{ $vMap[$visit->status] ?? 'secondary' }}" style="font-size: 0.7rem;">
+                                    <span class="m-badge m-badge-{{ $vMap[$visit->status] ?? 'gray' }}">
                                         {{ ucfirst($visit->status ?? 'N/A') }}
                                     </span>
                                 </div>
                                 @if($visit->location)
-                                    <div style="font-size: 0.8125rem;" class="mb-1">
-                                        <i class="fas fa-map-pin me-1 text-muted"></i>{{ $visit->location }}
+                                    <div class="m-text-sm" style="margin-bottom: 0.25rem;">
+                                        <i class="fas fa-map-pin me-1 m-dimmed"></i>{{ $visit->location }}
                                     </div>
                                 @endif
                                 @if($visit->findings)
-                                    <div style="font-size: 0.8125rem;" class="mb-1">
+                                    <div class="m-text-sm" style="margin-bottom: 0.25rem;">
                                         <strong>Findings:</strong> {{ Str::limit($visit->findings, 200) }}
                                     </div>
                                 @endif
                                 @if($visit->recommendations)
-                                    <div style="font-size: 0.8125rem; color: #2563EB;">
+                                    <div class="m-text-sm" style="color: var(--m-blue-6);">
                                         <strong>Recommendations:</strong> {{ Str::limit($visit->recommendations, 200) }}
                                     </div>
                                 @endif
@@ -132,9 +132,9 @@
                         @endforeach
                     </div>
                 @else
-                    <div class="portal-card-body text-center py-4 text-muted">
-                        <i class="fas fa-map-marker-alt fa-2x mb-2"></i>
-                        <p class="mb-0">No site visits recorded yet.</p>
+                    <div class="m-paper-body" style="text-align: center; padding: 2rem;">
+                        <i class="fas fa-map-marker-alt" style="font-size: 2rem; color: var(--m-gray-3); margin-bottom: 0.5rem;"></i>
+                        <p class="m-text-sm m-dimmed" style="margin: 0;">No site visits recorded yet.</p>
                     </div>
                 @endif
             </div>

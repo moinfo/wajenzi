@@ -3,121 +3,103 @@
 @section('title', 'Dashboard')
 
 @section('content')
-    <div class="mb-4">
-        <h4 class="fw-bold mb-1">Welcome back, {{ $client->first_name }}!</h4>
-        <p class="text-muted mb-0">Here's an overview of your projects.</p>
-    </div>
+    {{-- Page title --}}
+    <h1 class="m-title m-title-2" style="margin-bottom: 0.25rem;">Welcome back, {{ $client->first_name }}</h1>
+    <p class="m-text-sm m-dimmed" style="margin: 0 0 var(--m-xl);">Here's an overview of your construction projects</p>
 
-    <!-- Stats -->
-    <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon" style="background: #EFF6FF; color: #2563EB;">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <div>
-                        <div class="stat-value">{{ $stats['total_projects'] }}</div>
-                        <div class="stat-label">Total Projects</div>
-                    </div>
-                </div>
+    {{-- Mantine StatsGrid: Paper withBorder p="md" radius="md" --}}
+    <div class="m-stat-grid" style="margin-bottom: calc(var(--m-xl) * 1.5);">
+        <div class="m-stat">
+            <div class="m-stat-top">
+                <span class="m-stat-title">Total Projects</span>
+                <i class="fas fa-building m-stat-icon"></i>
             </div>
+            <div class="m-group" style="align-items: flex-end; gap: var(--m-xs);">
+                <span class="m-stat-value">{{ $stats['total_projects'] }}</span>
+            </div>
+            <p class="m-stat-desc">All assigned projects</p>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon" style="background: #DCFCE7; color: #16A34A;">
-                        <i class="fas fa-hard-hat"></i>
-                    </div>
-                    <div>
-                        <div class="stat-value">{{ $stats['active_projects'] }}</div>
-                        <div class="stat-label">Active Projects</div>
-                    </div>
-                </div>
+        <div class="m-stat">
+            <div class="m-stat-top">
+                <span class="m-stat-title">Active Projects</span>
+                <i class="fas fa-hard-hat m-stat-icon"></i>
             </div>
+            <div class="m-group" style="align-items: flex-end; gap: var(--m-xs);">
+                <span class="m-stat-value">{{ $stats['active_projects'] }}</span>
+            </div>
+            <p class="m-stat-desc">Currently in progress</p>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon" style="background: #FEF3C7; color: #D97706;">
-                        <i class="fas fa-file-contract"></i>
-                    </div>
-                    <div>
-                        <div class="stat-value">TZS {{ number_format($stats['total_contract_value'], 0) }}</div>
-                        <div class="stat-label">Contract Value</div>
-                    </div>
-                </div>
+        <div class="m-stat">
+            <div class="m-stat-top">
+                <span class="m-stat-title">Contract Value</span>
+                <i class="fas fa-file-contract m-stat-icon"></i>
             </div>
+            <div class="m-group" style="align-items: flex-end; gap: var(--m-xs);">
+                <span class="m-stat-value" style="font-size: {{ strlen(number_format($stats['total_contract_value'], 0)) > 10 ? '1rem' : '1.5rem' }};">TZS {{ number_format($stats['total_contract_value'], 0) }}</span>
+            </div>
+            <p class="m-stat-desc">Combined contract value</p>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="stat-icon" style="background: #F3E8FF; color: #7C3AED;">
-                        <i class="fas fa-receipt"></i>
-                    </div>
-                    <div>
-                        <div class="stat-value">TZS {{ number_format($stats['total_invoiced'], 0) }}</div>
-                        <div class="stat-label">Total Invoiced</div>
-                    </div>
-                </div>
+        <div class="m-stat">
+            <div class="m-stat-top">
+                <span class="m-stat-title">Total Invoiced</span>
+                <i class="fas fa-receipt m-stat-icon"></i>
             </div>
+            <div class="m-group" style="align-items: flex-end; gap: var(--m-xs);">
+                <span class="m-stat-value" style="font-size: {{ strlen(number_format($stats['total_invoiced'], 0)) > 10 ? '1rem' : '1.5rem' }};">TZS {{ number_format($stats['total_invoiced'], 0) }}</span>
+            </div>
+            <p class="m-stat-desc">Total amount invoiced</p>
         </div>
     </div>
 
-    <!-- Projects Grid -->
-    <div class="row g-3">
-        @forelse($projects as $project)
-            <div class="col-md-6 col-xl-4">
-                <div class="portal-card h-100">
-                    <div class="portal-card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h6 class="fw-bold mb-1">{{ $project->project_name }}</h6>
-                                <span class="text-muted" style="font-size: 0.8125rem;">{{ $project->document_number }}</span>
-                            </div>
-                            @php
-                                $statusMap = [
-                                    'APPROVED' => 'success',
-                                    'PENDING' => 'warning',
-                                    'REJECTED' => 'danger',
-                                    'COMPLETED' => 'info',
-                                ];
-                            @endphp
-                            <span class="status-badge {{ $statusMap[$project->status] ?? 'secondary' }}">
-                                {{ $project->status ?? 'N/A' }}
-                            </span>
-                        </div>
-
-                        <div class="mb-3" style="font-size: 0.8125rem; color: var(--wajenzi-gray-600);">
-                            @if($project->start_date)
-                                <div class="mb-1"><i class="fas fa-calendar me-1"></i> {{ $project->start_date->format('M d, Y') }} - {{ $project->expected_end_date?->format('M d, Y') ?? 'Ongoing' }}</div>
-                            @endif
-                            <div><i class="fas fa-money-bill me-1"></i> TZS {{ number_format($project->contract_value ?? 0, 0) }}</div>
-                        </div>
-
-                        <div class="d-flex gap-2 flex-wrap" style="font-size: 0.75rem;">
-                            <span class="badge bg-light text-dark"><i class="fas fa-list me-1"></i> {{ $project->boqs_count }} BOQs</span>
-                            <span class="badge bg-light text-dark"><i class="fas fa-receipt me-1"></i> {{ $project->invoices_count }} Invoices</span>
-                            <span class="badge bg-light text-dark"><i class="fas fa-clipboard me-1"></i> {{ $project->daily_reports_count }} Reports</span>
-                        </div>
-
-                        <hr class="my-3">
-                        <a href="{{ route('client.project.show', $project->id) }}" class="btn btn-sm w-100" style="background: linear-gradient(135deg, #2563EB, #22C55E); color: white; font-weight: 600;">
-                            View Project <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        @empty
-            <div class="col-12">
-                <div class="portal-card">
-                    <div class="portal-card-body text-center py-5">
-                        <i class="fas fa-building fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No Projects Yet</h5>
-                        <p class="text-muted">You don't have any projects assigned yet. Contact your project manager for details.</p>
-                    </div>
-                </div>
-            </div>
-        @endforelse
+    {{-- Section Header --}}
+    <div class="m-group" style="justify-content: space-between; margin-bottom: var(--m-md);">
+        <h2 class="m-title m-title-4">Your Projects</h2>
+        <span class="m-badge m-badge-gray">{{ $stats['total_projects'] }} {{ Str::plural('project', $stats['total_projects']) }}</span>
     </div>
+
+    {{-- Projects List --}}
+    @forelse($projects as $project)
+        <div class="m-paper" style="margin-bottom: var(--m-md);">
+            <div class="m-paper-body">
+                <div class="m-group" style="justify-content: space-between; margin-bottom: var(--m-sm);">
+                    <div style="min-width: 0;">
+                        <span class="m-fw-600" style="font-size: var(--m-fz-sm);">{{ $project->project_name }}</span>
+                        <span class="m-text-xs m-dimmed" style="margin-left: var(--m-sm);">{{ $project->document_number }}</span>
+                    </div>
+                    @php
+                        $badgeMap = ['APPROVED' => 'teal', 'PENDING' => 'yellow', 'REJECTED' => 'red', 'COMPLETED' => 'blue'];
+                    @endphp
+                    <span class="m-badge m-badge-{{ $badgeMap[$project->status] ?? 'gray' }}">{{ $project->status ?? 'N/A' }}</span>
+                </div>
+
+                <div class="m-group" style="gap: var(--m-xl); margin-bottom: var(--m-sm);">
+                    @if($project->start_date)
+                        <span class="m-text-sm m-dimmed">
+                            <i class="fas fa-calendar" style="margin-right: 0.375rem; font-size: var(--m-fz-xs);"></i>{{ $project->start_date->format('M d, Y') }} — {{ $project->expected_end_date?->format('M d, Y') ?? 'Ongoing' }}
+                        </span>
+                    @endif
+                    <span class="m-text-sm m-dimmed">
+                        <i class="fas fa-money-bill-wave" style="margin-right: 0.375rem; font-size: var(--m-fz-xs);"></i>TZS {{ number_format($project->contract_value ?? 0, 0) }}
+                    </span>
+                </div>
+
+                <div class="m-group" style="gap: var(--m-sm);">
+                    <span class="m-badge m-badge-gray"><i class="fas fa-list" style="margin-right: 0.25rem;"></i>{{ $project->boqs_count }} BOQs</span>
+                    <span class="m-badge m-badge-gray"><i class="fas fa-receipt" style="margin-right: 0.25rem;"></i>{{ $project->invoices_count }} Invoices</span>
+                    <span class="m-badge m-badge-gray"><i class="fas fa-clipboard" style="margin-right: 0.25rem;"></i>{{ $project->daily_reports_count }} Reports</span>
+                    <a href="{{ route('client.project.show', $project->id) }}" class="m-btn m-btn-light m-btn-sm" style="margin-left: auto;">
+                        View Project <i class="fas fa-arrow-right" style="font-size: var(--m-fz-xs);"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    @empty
+        <div class="m-paper">
+            <div class="m-paper-body" style="text-align: center; padding: calc(var(--m-xl) * 2) var(--m-lg);">
+                <i class="fas fa-building" style="font-size: 2.5rem; color: var(--m-gray-4); margin-bottom: var(--m-md);"></i>
+                <h3 class="m-title m-title-4" style="margin-bottom: 0.25rem;">No Projects Yet</h3>
+                <p class="m-text-sm m-dimmed" style="margin: 0;">You don't have any projects assigned. Contact your project manager for details.</p>
+            </div>
+        </div>
+    @endforelse
 @endsection
