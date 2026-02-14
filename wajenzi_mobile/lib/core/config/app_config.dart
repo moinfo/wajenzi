@@ -23,6 +23,7 @@ class AppConfig {
   // Storage Keys
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';
+  static const String userTypeKey = 'user_type';
   static const String lastSyncKey = 'last_sync_time';
   static const String deviceIdKey = 'device_id';
 
@@ -35,4 +36,6 @@ class AppConfig {
   static bool get isProduction => const bool.fromEnvironment('dart.vm.product');
 
   static String get baseUrl => isProduction ? apiBaseUrl : devApiBaseUrl;
+
+  static String get clientBaseUrl => baseUrl.replaceAll('/api/v1', '/api/client');
 }

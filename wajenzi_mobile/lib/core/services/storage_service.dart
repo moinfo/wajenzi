@@ -44,6 +44,19 @@ class StorageService {
     await _storage.delete(key: AppConfig.userKey);
   }
 
+  // User Type (staff or client)
+  Future<void> saveUserType(String type) async {
+    await _storage.write(key: AppConfig.userTypeKey, value: type);
+  }
+
+  Future<String?> getUserType() async {
+    return _storage.read(key: AppConfig.userTypeKey);
+  }
+
+  Future<void> deleteUserType() async {
+    await _storage.delete(key: AppConfig.userTypeKey);
+  }
+
   // Device ID
   Future<String> getDeviceId() async {
     var deviceId = await _storage.read(key: AppConfig.deviceIdKey);
