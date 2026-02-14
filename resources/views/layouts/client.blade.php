@@ -1,5 +1,14 @@
 <!doctype html>
-<html lang="{{ config('app.locale') }}">
+<html lang="{{ config('app.locale') }}" data-theme="">
+<!-- Prevent flash: apply saved theme before paint -->
+<script>
+    (function(){
+        var t = localStorage.getItem('client-theme');
+        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    })();
+</script>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
@@ -116,6 +125,53 @@
             /* Layout */
             --m-navbar-w: 300px;
             --m-header-h: 60px;
+        }
+
+        /* ═══════════════════════════════════════════
+           Mantine Dark Theme (data-theme="dark")
+           Uses Mantine's dark color scale
+           ═══════════════════════════════════════════ */
+        [data-theme="dark"] {
+            /* Dark scale (exact Mantine values) */
+            --m-dark-0: #C1C2C5;
+            --m-dark-1: #A6A7AB;
+            --m-dark-2: #909296;
+            --m-dark-3: #5C5F66;
+            --m-dark-4: #373A40;
+            --m-dark-5: #2C2E33;
+            --m-dark-6: #25262B;
+            --m-dark-7: #1A1B1E;
+            --m-dark-8: #141517;
+            --m-dark-9: #101113;
+
+            /* Remap grays to dark scale */
+            --m-gray-0: var(--m-dark-5);
+            --m-gray-1: var(--m-dark-4);
+            --m-gray-2: var(--m-dark-4);
+            --m-gray-3: var(--m-dark-4);
+            --m-gray-4: var(--m-dark-3);
+            --m-gray-5: var(--m-dark-2);
+            --m-gray-6: var(--m-dark-1);
+            --m-gray-7: var(--m-dark-0);
+            --m-gray-8: #d5d7e0;
+            --m-gray-9: #e0e1e6;
+
+            /* Color-0 (light accent backgrounds) → dark transparent versions */
+            --m-blue-0: rgba(34,139,230,.15);
+            --m-blue-1: rgba(34,139,230,.25);
+            --m-teal-0: rgba(18,184,134,.15);
+            --m-teal-1: rgba(18,184,134,.25);
+            --m-green-0: rgba(64,192,87,.15);
+            --m-violet-0: rgba(121,80,242,.15);
+            --m-orange-0: rgba(253,126,20,.15);
+            --m-red-0: rgba(250,82,82,.15);
+            --m-yellow-0: rgba(250,176,5,.15);
+
+            /* Shadows for dark mode */
+            --m-shadow-xs: 0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.4);
+            --m-shadow-sm: 0 1px 3px rgba(0,0,0,.3), rgba(0,0,0,.3) 0 10px 15px -5px;
+            --m-shadow-md: 0 1px 3px rgba(0,0,0,.3), rgba(0,0,0,.3) 0 20px 25px -5px;
+            --m-shadow-lg: 0 1px 3px rgba(0,0,0,.3), rgba(0,0,0,.3) 0 28px 23px -7px;
         }
 
         /* ═══════════════════════════════════════════
@@ -636,6 +692,64 @@
         .m-text-dimmed { color: var(--m-gray-6); }
 
         /* ═══════════════════════════════════════════
+           Dark Mode Toggle (Mantine ActionIcon style)
+           ═══════════════════════════════════════════ */
+        .m-color-scheme-toggle {
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--m-radius-sm);
+            border: 1px solid var(--m-gray-3);
+            background: transparent;
+            color: var(--m-gray-7);
+            cursor: pointer;
+            font-size: 1.05rem;
+            transition: background-color 150ms ease, color 150ms ease;
+        }
+
+        .m-color-scheme-toggle:hover { background: var(--m-gray-0); }
+        .m-color-scheme-toggle .fa-sun { display: none; }
+        .m-color-scheme-toggle .fa-moon { display: inline; }
+
+        [data-theme="dark"] .m-color-scheme-toggle .fa-sun { display: inline; }
+        [data-theme="dark"] .m-color-scheme-toggle .fa-moon { display: none; }
+
+        /* ── Dark mode surface overrides ── */
+        [data-theme="dark"] body { background-color: var(--m-dark-7); color: var(--m-gray-9); }
+        [data-theme="dark"] .m-header { background: var(--m-dark-6); border-bottom-color: var(--m-dark-4); }
+        [data-theme="dark"] .m-navbar { background: var(--m-dark-6); border-right-color: var(--m-dark-4); }
+        [data-theme="dark"] .m-paper { background: var(--m-dark-6); border-color: var(--m-dark-4); }
+        [data-theme="dark"] .m-stat { background: var(--m-dark-6); border-color: var(--m-dark-4); }
+        [data-theme="dark"] .m-code { background: var(--m-dark-5); color: var(--m-dark-0); }
+        [data-theme="dark"] .m-header-brand-name { color: var(--m-gray-9); }
+        [data-theme="dark"] .m-title { color: var(--m-gray-9); }
+        [data-theme="dark"] .m-stat-value { color: var(--m-gray-9); }
+        [data-theme="dark"] .m-control { color: var(--m-dark-0); }
+        [data-theme="dark"] .m-control:hover { background-color: var(--m-dark-5); }
+        [data-theme="dark"] .m-control.active { background-color: var(--m-blue-0); color: var(--m-blue-4); }
+        [data-theme="dark"] .m-link { color: var(--m-dark-1); border-left-color: var(--m-dark-4); }
+        [data-theme="dark"] .m-link:hover { background-color: var(--m-dark-5); color: var(--m-dark-0); }
+        [data-theme="dark"] .m-link.active { color: var(--m-blue-4); border-left-color: var(--m-blue-5); }
+        [data-theme="dark"] .m-user-btn { color: var(--m-dark-0); }
+        [data-theme="dark"] .m-user-btn:hover { background-color: var(--m-dark-5); }
+        [data-theme="dark"] .m-user-email { color: var(--m-dark-2); }
+        [data-theme="dark"] .m-tab { color: var(--m-dark-2); }
+        [data-theme="dark"] .m-tab:hover { color: var(--m-dark-0); }
+        [data-theme="dark"] .m-tab.active { color: var(--m-blue-4); border-bottom-color: var(--m-blue-4); }
+        [data-theme="dark"] .m-table tbody tr:hover { background: var(--m-dark-5); }
+        [data-theme="dark"] .m-btn-subtle { color: var(--m-dark-0); }
+        [data-theme="dark"] .m-btn-subtle:hover { background: var(--m-dark-5); }
+        [data-theme="dark"] .m-overlay { background: rgba(0,0,0,.7); }
+
+        /* Accordion overrides for dark mode */
+        [data-theme="dark"] .accordion-button { background: var(--m-dark-6); color: var(--m-dark-0); }
+        [data-theme="dark"] .accordion-button:not(.collapsed) { background: var(--m-dark-5); color: var(--m-dark-0); box-shadow: none; }
+        [data-theme="dark"] .accordion-button::after { filter: invert(1) grayscale(100%) brightness(200%); }
+        [data-theme="dark"] .accordion-body { background: var(--m-dark-6); }
+
+        /* ═══════════════════════════════════════════
            Responsive
            ═══════════════════════════════════════════ */
         @media (max-width: 992px) {
@@ -683,6 +797,10 @@
                 </div>
 
                 <div class="m-header-right">
+                    <button class="m-color-scheme-toggle" onclick="toggleTheme()" aria-label="Toggle color scheme" title="Toggle dark mode">
+                        <i class="fas fa-moon"></i>
+                        <i class="fas fa-sun"></i>
+                    </button>
                     <div class="m-group d-none d-md-flex" style="gap: var(--m-sm);">
                         <div class="m-avatar m-avatar-sm">{{ $initials }}</div>
                         <span class="m-fw-500 m-text-sm">{{ $clientUser->full_name }}</span>
@@ -779,6 +897,13 @@
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('sidebarOverlay').classList.toggle('open');
+        }
+
+        function toggleTheme() {
+            var html = document.documentElement;
+            var isDark = html.getAttribute('data-theme') === 'dark';
+            html.setAttribute('data-theme', isDark ? '' : 'dark');
+            localStorage.setItem('client-theme', isDark ? 'light' : 'dark');
         }
     </script>
     @yield('js')
