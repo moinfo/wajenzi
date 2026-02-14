@@ -240,6 +240,18 @@
                                 </div>
                             </div>
 
+                            <!-- Title -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Invoice Title</label>
+                                        <input type="text" name="title" class="form-control"
+                                               value="{{ old('title') }}"
+                                               placeholder="e.g. Design Services for Residential House">
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Dates -->
                             <div class="row">
                                 <div class="col-md-4">
@@ -377,7 +389,10 @@
 
                             <div class="form-group">
                                 <label>Terms & Conditions</label>
-                                <textarea name="terms_conditions" class="form-control" rows="3">{{ old('terms_conditions', $settings['invoice_terms'] ?? '') }}</textarea>
+                                <button type="button" class="btn btn-sm btn-outline-secondary float-right" onclick="resetTerms()">
+                                    <i class="fa fa-refresh"></i> Reset to Default
+                                </button>
+                                <textarea name="terms_conditions" id="terms-editor" class="form-control">{!! old('terms_conditions', \App\Models\InvoiceSetting::getDefaultTermsHtml()) !!}</textarea>
                             </div>
 
                             <div class="form-group">
@@ -576,6 +591,24 @@ $(document).ready(function() {
         ],
         placeholder: 'Enter internal notes here...'
     });
+
+    $('#terms-editor').summernote({
+        height: 300,
+        toolbar: [
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link']],
+            ['view', ['fullscreen', 'codeview']]
+        ],
+        placeholder: 'Enter terms and conditions...'
+    });
+
+    window.resetTerms = function() {
+        if (confirm('Reset terms to default? This will replace the current content.')) {
+            var defaultTerms = @json(\App\Models\InvoiceSetting::getDefaultTermsHtml());
+            $('#terms-editor').summernote('code', defaultTerms);
+        }
+    };
 });
 </script>
 @endsection

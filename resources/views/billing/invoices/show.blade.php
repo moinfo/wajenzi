@@ -12,65 +12,71 @@
                     </span>
                 </div>
                 <div class="col-md-6 text-right">
-                    @if($invoice->is_editable)
-                        <a href="{{ route('billing.invoices.edit', $invoice) }}" class="btn btn-primary">
-                            <i class="fa fa-edit"></i> Edit
+                    {{-- Primary Actions --}}
+                    <div class="btn-group mr-1">
+                        @if($invoice->is_editable)
+                            <a href="{{ route('billing.invoices.edit', $invoice) }}" class="btn btn-sm btn-primary">
+                                <i class="fa fa-edit"></i> Edit
+                            </a>
+                        @endif
+                        <a href="{{ route('billing.invoices.pdf', $invoice) }}" class="btn btn-sm btn-secondary" target="_blank">
+                            <i class="fa fa-download"></i> PDF
                         </a>
-                    @endif
+                        @if($invoice->is_paid)
+                            <a href="{{ route('billing.invoices.receipt', $invoice) }}" class="btn btn-sm btn-outline-success" target="_blank">
+                                <i class="fa fa-file-text"></i> Receipt
+                            </a>
+                        @endif
+                    </div>
 
-                    <a href="{{ route('billing.invoices.pdf', $invoice) }}" class="btn btn-secondary" target="_blank">
-                        <i class="fa fa-download"></i> PDF
-                    </a>
-
-                    @if($invoice->is_paid)
-                        <a href="{{ route('billing.invoices.receipt', $invoice) }}" class="btn btn-success" target="_blank">
-                            <i class="fa fa-file-text"></i> Receipt
-                        </a>
-                    @endif
-
-                    <button type="button" class="btn btn-info" onclick="sendEmailModal()">
-                        <i class="fa fa-envelope"></i> Send Email
-                    </button>
-
-                    @if($invoice->client->phone_number)
-                        <button type="button" class="btn btn-success" onclick="sendWhatsAppModal()">
-                            <i class="fa fa-whatsapp"></i> WhatsApp
+                    {{-- Send Actions --}}
+                    <div class="btn-group mr-1">
+                        <button type="button" class="btn btn-sm btn-info" onclick="sendEmailModal()">
+                            <i class="fa fa-envelope"></i> Email
                         </button>
-                    @endif
+                        @if($invoice->client->phone_number)
+                            <button type="button" class="btn btn-sm btn-success" onclick="sendWhatsAppModal()">
+                                <i class="fa fa-whatsapp"></i> WhatsApp
+                            </button>
+                        @endif
+                    </div>
 
+                    {{-- Payment Actions --}}
                     @if(!$invoice->is_paid && $invoice->balance_amount > 0)
-                        <button type="button" class="btn btn-warning" onclick="sendReminderModal()">
-                            <i class="fa fa-bell"></i> Send Reminder
-                        </button>
+                        <div class="btn-group mr-1">
+                            <button type="button" class="btn btn-sm btn-warning" onclick="sendReminderModal()">
+                                <i class="fa fa-bell"></i> Reminder
+                            </button>
+                            <button type="button" class="btn btn-sm btn-success" onclick="recordPaymentModal()">
+                                <i class="fa fa-money"></i> Record Payment
+                            </button>
+                        </div>
                     @endif
 
-                    @if(!$invoice->is_paid && $invoice->balance_amount > 0)
-                        <button type="button" class="btn btn-success" onclick="recordPaymentModal()">
-                            <i class="fa fa-money"></i> Record Payment
-                        </button>
-                    @endif
-
+                    {{-- More Actions --}}
                     <div class="btn-group">
-                        <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">
-                            More Actions
+                        <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-toggle="dropdown">
+                            <i class="fa fa-ellipsis-v"></i>
                         </button>
-                        <div class="dropdown-menu">
+                        <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="{{ route('billing.invoices.duplicate', $invoice) }}">
-                                <i class="fa fa-copy"></i> Duplicate
+                                <i class="fa fa-copy mr-1"></i> Duplicate
                             </a>
                             @if(!$invoice->is_paid && $invoice->balance_amount > 0 && !$invoice->late_fee_applied_at)
                                 <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="applyLateFeeModal()">
-                                    <i class="fa fa-plus"></i> Apply Late Fee
+                                    <i class="fa fa-plus mr-1"></i> Apply Late Fee
                                 </a>
                             @endif
                             @if($invoice->status !== 'void')
+                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-warning" href="{{ route('billing.invoices.void', $invoice) }}"
                                    onclick="return confirm('Are you sure you want to void this invoice?')">
-                                    <i class="fa fa-ban"></i> Void
+                                    <i class="fa fa-ban mr-1"></i> Void Invoice
                                 </a>
                             @endif
+                            <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="{{ route('billing.invoices.index') }}">
-                                <i class="fa fa-list"></i> Back to List
+                                <i class="fa fa-list mr-1"></i> Back to List
                             </a>
                         </div>
                     </div>
@@ -148,6 +154,15 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Invoice Title -->
+                        @if($invoice->title)
+                            <div class="mt-4 mb-2 text-center">
+                                <h5 style="font-weight: 700; text-transform: uppercase; color: #333; letter-spacing: 0.5px;">
+                                    {{ $invoice->title }}
+                                </h5>
+                            </div>
+                        @endif
 
                         <!-- Line Items -->
                         <div class="table-responsive mt-4">
@@ -241,75 +256,37 @@
                             </div>
                         </div>
 
-                        <!-- Custom Terms (if any) -->
+                        <!-- Terms & Conditions -->
                         @if($invoice->terms_conditions)
-                            <div class="mt-4">
-                                <strong>Additional Notes:</strong><br>
-                                {{ $invoice->terms_conditions }}
+                            <div class="mt-4 p-3" style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; font-size: 12px; line-height: 1.6;">
+                                <h6 class="mb-3 pb-2" style="border-bottom: 1px solid #dee2e6; text-transform: uppercase; font-weight: bold;">
+                                    Terms and Conditions of the Invoice
+                                </h6>
+                                {!! $invoice->terms_conditions !!}
                             </div>
                         @endif
 
-                        <!-- Standard Terms & Conditions -->
-                        @php
-                            $terms = \App\Models\InvoiceSetting::getPaymentTerms();
-                        @endphp
-                        <div class="mt-4 p-3" style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; font-size: 12px; line-height: 1.6;">
-                            <h6 class="mb-3 pb-2" style="border-bottom: 1px solid #dee2e6; text-transform: uppercase; font-weight: bold;">
-                                Terms and Conditions of the Invoice
-                            </h6>
-
-                            <div class="mb-3">
-                                <strong>1. Payment Terms.</strong><br>
-                                <span class="ml-3">• Payment is due within {{ $terms['payment_due_days'] }} days from the invoice date. Design work will commence once the {{ $terms['deposit_percentage'] }}% deposit has been confirmed. A second payment of {{ $terms['second_payment_percentage'] }}% will be made after the second draft submission, with the remaining {{ $terms['final_payment_percentage'] }}% due upon finalization.</span>
-                            </div>
-
-                            <div class="mb-3">
-                                <strong>2. Project Deliverables Changes & Revisions.</strong><br>
-                                <span class="ml-3"><strong>I. The client will be issued 2D design.</strong></span><br>
-                                <span class="ml-4">• 2D 1st Draft - The client will review the 2D design and confirm their requirements. If changes are needed, should be submitted and rectified at this stage.</span><br>
-                                <span class="ml-4">• 2D Final Draft – All final changes must be identified and submitted. Any additional changes beyond this stage will incur extra charges.</span><br>
-                                <span class="ml-3"><strong>II. The client will be issued 3D design.</strong></span><br>
-                                <span class="ml-4">• 3D 1st Draft - The client will review the 3D design and confirm their requirements. If changes are needed, should be submitted and rectified at this stage.</span><br>
-                                <span class="ml-4">• 3D Final Draft – All final 3D changes must be identified and submitted. Any additional changes beyond this stage will incur extra charges.</span><br>
-                                <span class="ml-4">• The Completed Design will be submitted after all revisions have been incorporated and will be provided as stamped hard copies in {{ $terms['architectural_hard_copies'] }} files for Architectural drawings and {{ $terms['structural_hard_copies'] }} files for Structural design drawings.</span>
-                            </div>
-
-                            <div class="mb-3">
-                                <strong>3. Validity.</strong><br>
-                                <span class="ml-3">• This invoice is valid for {{ $terms['invoice_validity_days'] }} days from the date of issue. After expiration, prices and terms may be subject to review.</span>
-                            </div>
-
-                            <div class="mb-3">
-                                <strong>4. Taxes & Statutory Deductions.</strong><br>
-                                <span class="ml-3">• All prices are Tax inclusive.</span>
-                            </div>
-
-                            <div class="mb-3">
-                                <strong>5. Ownership of Work.</strong><br>
-                                <span class="ml-3">• All drawings, designs, BOQ documents and any other Document associated with this agreement remain the property of Wajenzi Professional Co. Ltd until payment is fully settled.</span>
-                            </div>
-
-                            <div class="mb-3">
-                                <strong>6. Cancellation Policy.</strong><br>
-                                <span class="ml-3">• After the work has started, if the client chooses to discontinue with the project there will be no refund.</span>
-                            </div>
-
-                            <div class="mb-3">
-                                <strong>7. Dispute Resolution.</strong><br>
-                                <span class="ml-3">• Any disputes related to this invoice or the services rendered shall be resolved amicably between both parties. If unresolved, the matter may be escalated as per applicable laws of Tanzania.</span>
-                            </div>
-
-                            <div class="mb-0">
-                                <strong>8. Agreement Clause.</strong><br>
-                                <span class="ml-3">• By making this payment, the client acknowledges and agrees to all the terms and conditions stated above.</span>
-                            </div>
+                        <!-- Payment Information -->
+                        <div class="mt-4 p-3" style="background-color: #f8f9fa; border-radius: 5px; font-size: 12px;">
+                            <h6 style="font-weight: bold;">Payment Information:</h6>
+                            <p><strong>Please arrange payment for the outstanding amount at your earliest convenience. The original invoice is attached for your reference.</strong></p>
+                            <p><strong>If you have already made this payment, please disregard this reminder and contact us with your payment reference.</strong></p>
                         </div>
 
-                        @if($invoice->footer_text)
-                            <div class="mt-3 text-center" style="padding: 15px; border-top: 2px solid #dee2e6;">
-                                <strong style="font-size: 13px; color: #333;">{{ $invoice->footer_text }}</strong>
-                            </div>
-                        @endif
+                        <div class="mt-3" style="font-size: 12px;">
+                            <p><strong>If you have any questions regarding this invoice or need to discuss payment arrangements, please don't hesitate to contact us.</strong></p>
+                        </div>
+
+                        <!-- Thank You & Contact -->
+                        <div class="mt-3 text-center" style="padding: 15px; border-top: 2px solid #dee2e6;">
+                            <p><strong style="font-size: 14px;">Thank you for your business!</strong></p>
+                            <p><strong>Best regards,<br>{{ config('app.name') }} Accounts Team</strong></p>
+                        </div>
+
+                        <div class="text-center" style="padding: 10px; background-color: #f1f3f5; border-radius: 5px; font-size: 11px; color: #666;">
+                            <strong>{{ config('app.name') }}</strong><br>
+                            <strong>Email:</strong> billing@wajenziprofessional.co.tz | <strong>Phone:</strong> +255 793 444 400
+                        </div>
                     </div>
                 </div>
             </div>
@@ -317,7 +294,7 @@
             <!-- Sidebar -->
             <div class="col-md-4">
                 <!-- Invoice Info -->
-                <div class="block block-themed">
+                <div class="block">
                     <div class="block-header">
                         <h3 class="block-title">Invoice Information</h3>
                     </div>
@@ -355,7 +332,7 @@
 
                 <!-- Payment History -->
                 @if($invoice->payments->count() > 0)
-                    <div class="block block-themed">
+                    <div class="block">
                         <div class="block-header">
                             <h3 class="block-title">Payment History</h3>
                         </div>
@@ -391,8 +368,8 @@
 
                 <!-- Linked Lead -->
                 @if($invoice->lead_id && $invoice->lead)
-                    <div class="block block-themed">
-                        <div class="block-header bg-info">
+                    <div class="block">
+                        <div class="block-header">
                             <h3 class="block-title">Linked Lead</h3>
                         </div>
                         <div class="block-content">
@@ -415,7 +392,7 @@
 
                 <!-- Related Documents -->
                 @if($invoice->parentDocument || $invoice->childDocuments->count() > 0)
-                    <div class="block block-themed">
+                    <div class="block">
                         <div class="block-header">
                             <h3 class="block-title">Related Documents</h3>
                         </div>

@@ -15,6 +15,7 @@ class BillingDocument extends Model
     protected $fillable = [
         'document_type',
         'document_number',
+        'title',
         'reference_number',
         'client_id',
         'project_id',

@@ -184,22 +184,22 @@
     @endif
 
     <div class="contact-info">
-        <h4>Payment Information:</h4>
-        <p>Please arrange payment for the outstanding amount at your earliest convenience. The original invoice is attached for your reference.</p>
-        <p>If you have already made this payment, please disregard this reminder and contact us with your payment reference.</p>
+        <h4 style="font-weight: bold;">Payment Information:</h4>
+        <p><strong>Please arrange payment for the outstanding amount at your earliest convenience. The original invoice is attached for your reference.</strong></p>
+        <p><strong>If you have already made this payment, please disregard this reminder and contact us with your payment reference.</strong></p>
     </div>
 
-    <p>If you have any questions regarding this invoice or need to discuss payment arrangements, please don't hesitate to contact us.</p>
+    <p><strong>If you have any questions regarding this invoice or need to discuss payment arrangements, please don't hesitate to contact us.</strong></p>
 
-    <p>Thank you for your business!</p>
+    <p><strong>Thank you for your business!</strong></p>
 
-    <p>Best regards,<br>
-    {{ config('app.name') }} Accounts Team</p>
+    <p><strong>Best regards,<br>
+    {{ config('app.name') }} Accounts Team</strong></p>
 
     <div class="footer">
         <strong>{{ config('app.name') }}</strong><br>
-        Email: billing@wajenziprofessional.co.tz | Phone: +255 793 444 400<br>
-        This is an automated reminder. Please do not reply to this email.
+        <strong>Email:</strong> billing@wajenziprofessional.co.tz | <strong>Phone:</strong> +255 793 444 400<br>
+        <strong>This is an automated reminder. Please do not reply to this email.</strong>
     </div>
 </body>
 </html>

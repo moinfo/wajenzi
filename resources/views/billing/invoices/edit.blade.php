@@ -1,6 +1,11 @@
 @extends('layouts.backend')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<style>
+    .note-editor.note-frame { border: 1px solid #ddd; border-radius: 4px; }
+    .note-toolbar { background: #f8f9fa; border-bottom: 1px solid #ddd; padding: 5px; }
+</style>
 <div class="container-fluid">
     <div class="content">
         <div class="content-heading">
@@ -221,6 +226,18 @@
                                 </div>
                             </div>
 
+                            <!-- Title -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Invoice Title</label>
+                                        <input type="text" name="title" class="form-control"
+                                               value="{{ old('title', $invoice->title) }}"
+                                               placeholder="e.g. Design Services for Residential House">
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Dates -->
                             <div class="row">
                                 <div class="col-md-4">
@@ -356,9 +373,19 @@
                                 <textarea name="notes" class="form-control" rows="3">{{ old('notes', $invoice->notes) }}</textarea>
                             </div>
 
+                            @php
+                                $termsValue = old('terms_conditions', $invoice->terms_conditions);
+                                // If terms are empty or plain text (no HTML), use the rich default
+                                if (!$termsValue || !str_contains($termsValue, '<')) {
+                                    $termsValue = \App\Models\InvoiceSetting::getDefaultTermsHtml();
+                                }
+                            @endphp
                             <div class="form-group">
                                 <label>Terms & Conditions</label>
-                                <textarea name="terms_conditions" class="form-control" rows="3">{{ old('terms_conditions', $invoice->terms_conditions) }}</textarea>
+                                <button type="button" class="btn btn-sm btn-outline-secondary float-right" onclick="resetTerms()">
+                                    <i class="fa fa-refresh"></i> Reset to Default
+                                </button>
+                                <textarea name="terms_conditions" id="terms-editor" class="form-control">{!! $termsValue !!}</textarea>
                             </div>
 
                             <div class="form-group">
@@ -537,4 +564,29 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+@endsection
+
+@section('js_after')
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#terms-editor').summernote({
+        height: 300,
+        toolbar: [
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link']],
+            ['view', ['fullscreen', 'codeview']]
+        ],
+        placeholder: 'Enter terms and conditions...'
+    });
+});
+
+function resetTerms() {
+    if (confirm('Reset terms to default? This will replace the current content.')) {
+        var defaultTerms = @json(\App\Models\InvoiceSetting::getDefaultTermsHtml());
+        $('#terms-editor').summernote('code', defaultTerms);
+    }
+}
+</script>
 @endsection
