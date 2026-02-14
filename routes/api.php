@@ -21,6 +21,11 @@ Route::prefix('v1')->group(function () {
     require __DIR__ . '/api/v1.php';
 });
 
+// Client Portal API
+Route::prefix('client')->group(function () {
+    require __DIR__ . '/api/client.php';
+});
+
 // Legacy API routes (to be deprecated)
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

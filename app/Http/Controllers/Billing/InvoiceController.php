@@ -97,6 +97,7 @@ class InvoiceController extends Controller
             $invoice = new BillingDocument();
             $invoice->document_type = 'invoice';
             $invoice->document_number = $invoice->generateDocumentNumber('invoice');
+            $invoice->title = $request->title;
             $invoice->client_id = $request->client_id;
             $invoice->project_id = $request->project_id;
             $invoice->lead_id = $request->lead_id;
@@ -219,7 +220,7 @@ class InvoiceController extends Controller
         try {
             // Update invoice
             $invoice->update($request->only([
-                'client_id', 'project_id', 'issue_date', 'due_date',
+                'title', 'client_id', 'project_id', 'issue_date', 'due_date',
                 'payment_terms', 'custom_payment_days', 'currency_code',
                 'exchange_rate', 'discount_type', 'discount_value',
                 'shipping_amount', 'notes', 'terms_conditions',

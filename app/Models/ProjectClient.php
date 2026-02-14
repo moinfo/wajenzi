@@ -6,13 +6,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 
 class ProjectClient extends Authenticatable implements ApprovableModel
 {
-    use HasFactory, Approvable;
+    use HasFactory, HasApiTokens, Approvable;
 
     protected $table = 'project_clients';
 
