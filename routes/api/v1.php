@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\V1\BillingPaymentController;
 use App\Http\Controllers\Api\V1\LeaveRequestController;
 use App\Http\Controllers\Api\V1\PayrollController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\MenuController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +35,20 @@ Route::post('auth/login', [AuthController::class, 'login']);
 // Protected routes (require Sanctum authentication)
 Route::middleware('auth:sanctum')->group(function () {
 
+    // Menus (permission-filtered sidebar)
+    Route::get('menus', [MenuController::class, 'index']);
+
+    // Dashboard
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/', [DashboardController::class, 'index']);
+        Route::get('/activities', [DashboardController::class, 'activities']);
+        Route::get('/invoices', [DashboardController::class, 'invoices']);
+        Route::get('/followups', [DashboardController::class, 'followups']);
+        Route::get('/calendar', [DashboardController::class, 'calendar']);
+        Route::get('/project-status', [DashboardController::class, 'projectStatus']);
+        Route::get('/recent-activities', [DashboardController::class, 'recentActivities']);
+    });
+
     // Authentication
     Route::prefix('auth')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
@@ -47,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('check-in', [AttendanceController::class, 'checkIn']);
         Route::post('check-out', [AttendanceController::class, 'checkOut']);
         Route::get('status', [AttendanceController::class, 'status']);
+        Route::get('daily-report', [AttendanceController::class, 'dailyReport']);
         Route::get('summary', [AttendanceController::class, 'summary']);
     });
 

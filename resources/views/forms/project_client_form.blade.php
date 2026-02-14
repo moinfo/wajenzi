@@ -52,6 +52,30 @@ $document_id = \App\Classes\Utility::getLastId('ProjectClient')+1;
                     </select>
                 </div>
             </div>
+            <!-- Portal Access Section -->
+            <div class="col-sm-12">
+                <hr class="my-3">
+                <h6 class="fw-bold text-muted mb-2"><i class="fas fa-globe me-1"></i> Client Portal Access</h6>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="password">Portal Password {{ ($object->id ?? null) ? '(leave blank to keep current)' : '' }}</label>
+                    <input type="password" class="form-control" id="input-password" name="password" placeholder="Enter password" {{ ($object->id ?? null) ? '' : '' }}>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
+                    <label for="password_confirmation">Confirm Password</label>
+                    <input type="password" class="form-control" id="input-password-confirm" name="password_confirmation" placeholder="Confirm password">
+                </div>
+            </div>
+            <div class="col-sm-12">
+                <div class="form-check mt-2">
+                    <input type="hidden" name="portal_access_enabled" value="0">
+                    <input class="form-check-input" type="checkbox" name="portal_access_enabled" id="input-portal-access" value="1" {{ ($object->portal_access_enabled ?? true) ? 'checked' : '' }}>
+                    <label class="form-check-label" for="input-portal-access">Enable Portal Access</label>
+                </div>
+            </div>
         </div>
         <input type="hidden" name="create_by_id" value="{{ Auth::user()->id }}">
         <div class="form-group">

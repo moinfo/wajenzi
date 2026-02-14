@@ -6,10 +6,12 @@ import '../providers/settings_provider.dart';
 
 class CurvedInternalNav extends ConsumerStatefulWidget {
   final int selectedIndex;
+  final bool isClient;
 
   const CurvedInternalNav({
     super.key,
     this.selectedIndex = 0,
+    this.isClient = false,
   });
 
   @override
@@ -19,24 +21,42 @@ class CurvedInternalNav extends ConsumerStatefulWidget {
 class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
   late int _selectedMenuIndex;
 
-  List<String> _getMenuLabels(bool isSwahili) => isSwahili
-      ? ['Nyumbani', 'Mahudhurio', 'Ripoti', 'Idhini']
-      : ['Home', 'Attendance', 'Reports', 'Approvals'];
+  bool get _isClient => widget.isClient;
 
-  final List<IconData> _menuIcons = [
-    Icons.dashboard_rounded,
-    Icons.access_time_rounded,
-    Icons.description_rounded,
-    Icons.check_circle_rounded,
-  ];
+  List<String> _getMenuLabels(bool isSwahili) {
+    if (_isClient) {
+      return isSwahili
+          ? ['Nyumbani', 'Ankara', 'Mipangilio']
+          : ['Home', 'Billing', 'Settings'];
+    }
+    return isSwahili
+        ? ['Miradi', 'Ankara', 'Nyumbani', 'Ununuzi', 'Mahudhurio']
+        : ['Projects', 'Billing', 'Home', 'Procurement', 'Attendance'];
+  }
 
-  // Route paths for each menu item
-  final List<String> _menuRoutes = [
-    '/dashboard',
-    '/attendance',
-    '/reports',
-    '/approvals',
-  ];
+  List<IconData> get _menuIcons {
+    if (_isClient) {
+      return [
+        Icons.dashboard_rounded,
+        Icons.receipt_long_rounded,
+        Icons.settings_rounded,
+      ];
+    }
+    return [
+      Icons.business_rounded,
+      Icons.receipt_long_rounded,
+      Icons.dashboard_rounded,
+      Icons.inventory_2_rounded,
+      Icons.access_time_rounded,
+    ];
+  }
+
+  List<String> get _menuRoutes {
+    if (_isClient) {
+      return ['/dashboard', '/billing', '/settings'];
+    }
+    return ['/staff-projects', '/staff-billing', '/dashboard', '/procurement', '/attendance'];
+  }
 
   @override
   void initState() {
@@ -80,6 +100,7 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
     }
 
     final reorderedIndices = getReorderedIndices();
+    final centerPosition = menuLabels.length ~/ 2;
 
     return SizedBox(
       height: 90 + bottomPadding,
@@ -94,7 +115,7 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
             bottom: 0,
             child: ClipPath(
               clipper: _CurvedNavClipper(
-                activeIndex: 2,
+                activeIndex: centerPosition,
                 itemCount: menuLabels.length,
               ),
               child: BackdropFilter(
@@ -127,7 +148,7 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
             bottom: 0,
             child: CustomPaint(
               painter: _CurvedNavBorderPainter(
-                activeIndex: 2,
+                activeIndex: centerPosition,
                 itemCount: menuLabels.length,
                 isDark: isDarkMode,
               ),
@@ -145,7 +166,7 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
                 menuLabels.length,
                 (position) => _buildNavItem(
                   reorderedIndices[position],
-                  position == 2,
+                  position == centerPosition,
                   menuLabels,
                   isDarkMode,
                 ),

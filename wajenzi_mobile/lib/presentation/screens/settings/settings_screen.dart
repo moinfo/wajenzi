@@ -13,6 +13,7 @@ class SettingsScreen extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull?.user;
     final isSwahili = ref.watch(isSwahiliProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -23,7 +24,7 @@ class SettingsScreen extends ConsumerWidget {
           // Profile Section
           Container(
             padding: const EdgeInsets.all(20),
-            color: AppColors.primary.withOpacity(0.05),
+            color: AppColors.primary.withValues(alpha: 0.05),
             child: Row(
               children: [
                 CircleAvatar(
@@ -67,9 +68,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
-                  onPressed: () {
-                    // Navigate to edit profile
-                  },
+                  onPressed: () => context.push('/profile'),
                 ),
               ],
             ),
@@ -84,12 +83,12 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsTile(
                 icon: Icons.person_outline,
                 title: isSwahili ? 'Wasifu' : 'Profile',
-                onTap: () {},
+                onTap: () => context.push('/profile'),
               ),
               _SettingsTile(
                 icon: Icons.lock_outline,
                 title: isSwahili ? 'Badilisha Nenosiri' : 'Change Password',
-                onTap: () {},
+                onTap: () => context.push('/change-password'),
               ),
             ],
           ),
@@ -98,24 +97,32 @@ class SettingsScreen extends ConsumerWidget {
             title: isSwahili ? 'Mipangilio ya Programu' : 'App Settings',
             children: [
               _SettingsTile(
-                icon: Icons.notifications_outlined,
-                title: isSwahili ? 'Arifa' : 'Notifications',
+                icon: isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                title: isSwahili ? 'Hali ya Giza' : 'Dark Mode',
                 trailing: Switch(
-                  value: true,
-                  onChanged: (value) {},
+                  value: isDarkMode,
+                  onChanged: (_) => ref.read(settingsProvider.notifier).toggleDarkMode(),
+                  activeTrackColor: AppColors.primary,
                 ),
-              ),
-              _SettingsTile(
-                icon: Icons.sync_outlined,
-                title: isSwahili ? 'Hali ya Usawazishaji' : 'Sync Status',
-                subtitle: isSwahili ? 'Ulisawazishwa: dakika 5 zilizopita' : 'Last synced: 5 minutes ago',
-                onTap: () {},
               ),
               _SettingsTile(
                 icon: Icons.language,
                 title: isSwahili ? 'Lugha' : 'Language',
                 subtitle: isSwahili ? 'Kiswahili' : 'English',
-                onTap: () {},
+                trailing: Switch(
+                  value: isSwahili,
+                  onChanged: (_) => ref.read(settingsProvider.notifier).toggleLanguage(),
+                  activeTrackColor: AppColors.primary,
+                ),
+              ),
+              _SettingsTile(
+                icon: Icons.notifications_outlined,
+                title: isSwahili ? 'Arifa' : 'Notifications',
+                trailing: Switch(
+                  value: true,
+                  onChanged: (value) {},
+                  activeTrackColor: AppColors.primary,
+                ),
               ),
             ],
           ),
@@ -126,17 +133,34 @@ class SettingsScreen extends ConsumerWidget {
               _SettingsTile(
                 icon: Icons.info_outline,
                 title: isSwahili ? 'Kuhusu Wajenzi' : 'About Wajenzi',
-                onTap: () {},
+                onTap: () {
+                  showAboutDialog(
+                    context: context,
+                    applicationName: 'Wajenzi',
+                    applicationVersion: '1.0.0',
+                    applicationIcon: Image.asset('assets/images/logo.png', height: 48),
+                    applicationLegalese: '\u00a9 2026 Wajenzi Professional Co. Ltd',
+                    children: [
+                      const SizedBox(height: 16),
+                      Text(
+                        isSwahili
+                            ? 'Programu ya portal ya mteja ya Wajenzi Professional. Fuatilia miradi yako ya ujenzi, angalia ankara, na pata taarifa za maendeleo kwa urahisi.'
+                            : 'The Wajenzi Professional client portal app. Track your construction projects, view invoices, and get progress updates with ease.',
+                        style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  );
+                },
               ),
               _SettingsTile(
                 icon: Icons.privacy_tip_outlined,
                 title: isSwahili ? 'Sera ya Faragha' : 'Privacy Policy',
-                onTap: () {},
+                onTap: () => context.push('/privacy-policy'),
               ),
               _SettingsTile(
                 icon: Icons.description_outlined,
                 title: isSwahili ? 'Masharti ya Huduma' : 'Terms of Service',
-                onTap: () {},
+                onTap: () => context.push('/terms-of-service'),
               ),
             ],
           ),

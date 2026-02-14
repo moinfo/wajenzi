@@ -135,7 +135,7 @@ class _AuthInterceptor extends Interceptor {
 class _LoggingInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    if (!AppConfig.isProduction) {
+    if (!AppConfig.isRelease) {
       print('REQUEST[${options.method}] => PATH: ${options.path}');
       print('Headers: ${options.headers}');
       if (options.data != null) {
@@ -147,7 +147,7 @@ class _LoggingInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    if (!AppConfig.isProduction) {
+    if (!AppConfig.isRelease) {
       print('RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
     }
     handler.next(response);
@@ -155,7 +155,7 @@ class _LoggingInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (!AppConfig.isProduction) {
+    if (!AppConfig.isRelease) {
       print('ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
       print('Message: ${err.message}');
     }
