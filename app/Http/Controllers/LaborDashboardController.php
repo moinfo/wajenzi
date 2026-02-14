@@ -9,6 +9,7 @@ use App\Models\LaborRequest;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PDF;
 
 class LaborDashboardController extends Controller
 {
@@ -86,5 +87,13 @@ class LaborDashboardController extends Controller
             'projects' => $projects,
             'selectedProject' => $projectId
         ]);
+    }
+
+    public function trainingGuide()
+    {
+        $pdf = PDF::loadView('labor.training-guide-pdf');
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->stream('Labor_Procurement_Training_Guide.pdf');
     }
 }
