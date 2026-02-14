@@ -200,4 +200,9 @@ class Project extends Model implements ApprovableModel
     {
         return $this->hasMany(ProjectExpense::class);
     }
+
+    public function progressImages(): HasMany
+    {
+        return $this->hasMany(ProjectProgressImage::class);
+    }
 }

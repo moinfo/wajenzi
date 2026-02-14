@@ -831,6 +831,12 @@
                             <span class="m-control-label">Dashboard</span>
                         </a>
 
+                        {{-- Billing --}}
+                        <a href="{{ route('client.billing') }}" class="m-control {{ request()->routeIs('client.billing') ? 'active' : '' }}">
+                            <span class="m-theme-icon m-theme-icon-teal"><i class="fas fa-file-invoice-dollar" style="font-size: 1rem;"></i></span>
+                            <span class="m-control-label">Billing</span>
+                        </a>
+
                         {{-- Projects --}}
                         @isset($sidebarProjects)
                             @foreach($sidebarProjects as $navProject)
@@ -859,6 +865,7 @@
                                     <a href="{{ route('client.project.schedule', $navProject->id) }}" class="m-link {{ request()->routeIs('client.project.schedule') ? 'active' : '' }}">Schedule</a>
                                     <a href="{{ route('client.project.financials', $navProject->id) }}" class="m-link {{ request()->routeIs('client.project.financials') ? 'active' : '' }}">Financials</a>
                                     <a href="{{ route('client.project.documents', $navProject->id) }}" class="m-link {{ request()->routeIs('client.project.documents') ? 'active' : '' }}">Documents</a>
+                                    <a href="{{ route('client.project.gallery', $navProject->id) }}" class="m-link {{ request()->routeIs('client.project.gallery') ? 'active' : '' }}">Gallery</a>
                                     <a href="{{ route('client.project.reports', $navProject->id) }}" class="m-link {{ request()->routeIs('client.project.reports') ? 'active' : '' }}">Reports</a>
                                 @endif
                             @endforeach

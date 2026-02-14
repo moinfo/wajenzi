@@ -109,9 +109,16 @@
                                     @php
                                         $vMap = ['approved' => 'teal', 'pending' => 'yellow', 'completed' => 'teal'];
                                     @endphp
-                                    <span class="m-badge m-badge-{{ $vMap[$visit->status] ?? 'gray' }}">
-                                        {{ ucfirst($visit->status ?? 'N/A') }}
-                                    </span>
+                                    <div style="display: flex; align-items: center; gap: 0.375rem;">
+                                        <span class="m-badge m-badge-{{ $vMap[$visit->status] ?? 'gray' }}">
+                                            {{ ucfirst($visit->status ?? 'N/A') }}
+                                        </span>
+                                        <a href="{{ route('client.project.site_visit_pdf', [$project->id, $visit->id]) }}"
+                                           class="m-btn m-btn-light m-btn-sm" style="height: 1.5rem; padding: 0 0.5rem; font-size: 0.6875rem;"
+                                           title="Download PDF">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                    </div>
                                 </div>
                                 @if($visit->location)
                                     <div class="m-text-sm" style="margin-bottom: 0.25rem;">

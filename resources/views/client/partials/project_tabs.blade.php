@@ -14,6 +14,9 @@
     <a href="{{ route('client.project.documents', $project->id) }}" class="m-tab {{ request()->routeIs('client.project.documents') ? 'active' : '' }}">
         <i class="fas fa-folder-open me-1"></i> Documents
     </a>
+    <a href="{{ route('client.project.gallery', $project->id) }}" class="m-tab {{ request()->routeIs('client.project.gallery') ? 'active' : '' }}">
+        <i class="fas fa-images me-1"></i> Gallery
+    </a>
     <a href="{{ route('client.project.reports', $project->id) }}" class="m-tab {{ request()->routeIs('client.project.reports') ? 'active' : '' }}">
         <i class="fas fa-clipboard-list me-1"></i> Reports
     </a>
