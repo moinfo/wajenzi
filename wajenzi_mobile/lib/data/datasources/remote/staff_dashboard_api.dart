@@ -50,6 +50,20 @@ class StaffDashboardApi {
         .toList();
   }
 
+  Future<CalendarData> fetchCalendar({int? month, int? year}) async {
+    final now = DateTime.now();
+    final response = await _apiClient.get(
+      '/dashboard/calendar',
+      queryParameters: {
+        'month': month ?? now.month,
+        'year': year ?? now.year,
+      },
+    );
+    final data = response.data['data'] as Map<String, dynamic>? ??
+        response.data as Map<String, dynamic>;
+    return CalendarData.fromJson(data);
+  }
+
   Future<List<RecentActivity>> fetchRecentActivities() async {
     final response = await _apiClient.get('/dashboard/recent-activities');
     final list = response.data['data'] as List? ?? [];
@@ -506,6 +520,82 @@ class RecentActivity {
       message: json['message'] as String? ?? '',
       timestamp: json['timestamp'] as String?,
       timeAgo: json['time_ago'] as String?,
+    );
+  }
+}
+
+// ─── Calendar Models ─────────────────────────────
+
+class CalendarData {
+  final int month;
+  final int year;
+  final Map<String, CalendarDayEvents> events;
+
+  CalendarData({required this.month, required this.year, required this.events});
+
+  factory CalendarData.fromJson(Map<String, dynamic> json) {
+    final rawEvents = json['events'] as Map<String, dynamic>? ?? {};
+    final events = <String, CalendarDayEvents>{};
+    rawEvents.forEach((dateStr, value) {
+      if (value is Map<String, dynamic>) {
+        events[dateStr] = CalendarDayEvents.fromJson(value);
+      }
+    });
+    return CalendarData(
+      month: _toInt(json['month']),
+      year: _toInt(json['year']),
+      events: events,
+    );
+  }
+}
+
+class CalendarDayEvents {
+  final List<CalendarEvent> followups;
+  final List<CalendarEvent> activities;
+  final List<CalendarEvent> invoices;
+
+  CalendarDayEvents({
+    this.followups = const [],
+    this.activities = const [],
+    this.invoices = const [],
+  });
+
+  bool get isEmpty => followups.isEmpty && activities.isEmpty && invoices.isEmpty;
+
+  factory CalendarDayEvents.fromJson(Map<String, dynamic> json) {
+    return CalendarDayEvents(
+      followups: (json['followups'] as List? ?? [])
+          .map((e) => CalendarEvent.fromJson(e as Map<String, dynamic>, 'followup'))
+          .toList(),
+      activities: (json['activities'] as List? ?? [])
+          .map((e) => CalendarEvent.fromJson(e as Map<String, dynamic>, 'activity'))
+          .toList(),
+      invoices: (json['invoices'] as List? ?? [])
+          .map((e) => CalendarEvent.fromJson(e as Map<String, dynamic>, 'invoice'))
+          .toList(),
+    );
+  }
+}
+
+class CalendarEvent {
+  final int id;
+  final String name;
+  final String? status;
+  final String type; // 'followup', 'activity', 'invoice'
+
+  CalendarEvent({
+    required this.id,
+    required this.name,
+    this.status,
+    required this.type,
+  });
+
+  factory CalendarEvent.fromJson(Map<String, dynamic> json, String type) {
+    return CalendarEvent(
+      id: _toInt(json['id']),
+      name: (json['name'] ?? json['lead_name'] ?? json['document_number'] ?? '') as String,
+      status: json['status'] as String?,
+      type: type,
     );
   }
 }

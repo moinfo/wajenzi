@@ -206,20 +206,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               badge: '${data.pendingApprovals.total}',
             ),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 90,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: data.pendingApprovals.items.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, index) {
-                  final item = data.pendingApprovals.items[index];
-                  if (item.count == 0) return const SizedBox.shrink();
-                  return _ApprovalChip(
-                    item: item,
-                    isDarkMode: isDarkMode,
-                  );
-                },
+            _GlassContainer(
+              isDarkMode: isDarkMode,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  children: data.pendingApprovals.items
+                      .where((item) => item.count > 0)
+                      .map((item) => _ApprovalRow(
+                            item: item,
+                            isDarkMode: isDarkMode,
+                            isSwahili: isSwahili,
+                          ))
+                      .toList(),
+                ),
               ),
             ),
             const SizedBox(height: 24),
@@ -258,28 +258,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _MiniSummaryCard(
-                  title: isSwahili ? 'Ankara' : 'Invoices',
-                  icon: Icons.receipt_long_rounded,
-                  color: AppColors.warning,
-                  isDarkMode: isDarkMode,
-                  rows: [
-                    _SummaryRow(
-                      isSwahili ? 'Zilizochelewa' : 'Overdue',
-                      data.invoicesSummary.overdue,
-                      AppColors.error,
-                    ),
-                    _SummaryRow(
-                      isSwahili ? 'Leo' : 'Due Today',
-                      data.invoicesSummary.dueToday,
-                      AppColors.warning,
-                    ),
-                    _SummaryRow(
-                      isSwahili ? 'Zinakuja' : 'Upcoming',
-                      data.invoicesSummary.upcoming,
-                      AppColors.info,
-                    ),
-                  ],
+                child: GestureDetector(
+                  onTap: () => context.push('/dashboard/invoices'),
+                  child: _MiniSummaryCard(
+                    title: isSwahili ? 'Ankara' : 'Invoices',
+                    icon: Icons.receipt_long_rounded,
+                    color: AppColors.warning,
+                    isDarkMode: isDarkMode,
+                    rows: [
+                      _SummaryRow(
+                        isSwahili ? 'Zilizochelewa' : 'Overdue',
+                        data.invoicesSummary.overdue,
+                        AppColors.error,
+                      ),
+                      _SummaryRow(
+                        isSwahili ? 'Leo' : 'Due Today',
+                        data.invoicesSummary.dueToday,
+                        AppColors.warning,
+                      ),
+                      _SummaryRow(
+                        isSwahili ? 'Zinakuja' : 'Upcoming',
+                        data.invoicesSummary.upcoming,
+                        AppColors.info,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -291,33 +294,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             title: isSwahili ? 'Ufuatiliaji' : 'Follow-ups',
           ),
           const SizedBox(height: 12),
-          _GlassContainer(
-            isDarkMode: isDarkMode,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  _FollowupPill(
-                    label: isSwahili ? 'Zilizochelewa' : 'Overdue',
-                    count: data.followupSummary.overdue,
-                    color: AppColors.error,
-                  ),
-                  _FollowupPill(
-                    label: isSwahili ? 'Leo' : 'Today',
-                    count: data.followupSummary.today,
-                    color: AppColors.warning,
-                  ),
-                  _FollowupPill(
-                    label: isSwahili ? 'Zinakuja' : 'Upcoming',
-                    count: data.followupSummary.upcoming,
-                    color: AppColors.info,
-                  ),
-                  _FollowupPill(
-                    label: isSwahili ? 'Zimekamilika' : 'Done',
-                    count: data.followupSummary.completedThisMonth,
-                    color: AppColors.success,
-                  ),
-                ],
+          GestureDetector(
+            onTap: () => context.push('/dashboard/followups'),
+            child: _GlassContainer(
+              isDarkMode: isDarkMode,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    _FollowupPill(
+                      label: isSwahili ? 'Zilizochelewa' : 'Overdue',
+                      count: data.followupSummary.overdue,
+                      color: AppColors.error,
+                    ),
+                    _FollowupPill(
+                      label: isSwahili ? 'Leo' : 'Today',
+                      count: data.followupSummary.today,
+                      color: AppColors.warning,
+                    ),
+                    _FollowupPill(
+                      label: isSwahili ? 'Zinakuja' : 'Upcoming',
+                      count: data.followupSummary.upcoming,
+                      color: AppColors.info,
+                    ),
+                    _FollowupPill(
+                      label: isSwahili ? 'Zimekamilika' : 'Done',
+                      count: data.followupSummary.completedThisMonth,
+                      color: AppColors.success,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -327,67 +333,110 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           if (data.projectProgress.projects.isNotEmpty) ...[
             _SectionHeader(
               title: isSwahili ? 'Maendeleo ya Miradi' : 'Project Progress',
-              badge:
-                  '${data.projectProgress.overallPercentage.toStringAsFixed(0)}%',
+              badge: '${data.projectProgress.projects.length} ${isSwahili ? 'Hai' : 'Active'}',
             ),
             const SizedBox(height: 12),
-            // Overall progress bar
+            // Overall ring + status counts
             _GlassContainer(
               isDarkMode: isDarkMode,
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          isSwahili ? 'Jumla' : 'Overall',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: isDarkMode
-                                ? Colors.white
-                                : AppColors.textPrimary,
+                    // Circular progress ring
+                    SizedBox(
+                      width: 110,
+                      height: 110,
+                      child: CustomPaint(
+                        painter: _RingPainter(
+                          percentage: data.projectProgress.overallPercentage / 100,
+                          isDarkMode: isDarkMode,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${data.projectProgress.overallPercentage.toStringAsFixed(0)}%',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                            ),
                           ),
                         ),
-                        Text(
-                          '${data.projectProgress.completed}/${data.projectProgress.totalActivities}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: data.projectProgress.overallPercentage / 100,
-                        minHeight: 8,
-                        backgroundColor: isDarkMode
-                            ? Colors.white12
-                            : AppColors.primary.withValues(alpha: 0.12),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.primary),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    // Per-project progress
-                    ...data.projectProgress.projects.map(
-                      (p) => _ProjectProgressRow(
-                        project: p,
-                        isDarkMode: isDarkMode,
+                    const SizedBox(width: 16),
+                    // Status count grid
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _StatusCountBox(
+                                  count: data.projectProgress.completed,
+                                  label: isSwahili ? 'Zimekamilika' : 'Completed',
+                                  color: const Color(0xFF27AE60),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _StatusCountBox(
+                                  count: data.projectProgress.inProgress,
+                                  label: isSwahili ? 'Zinaendelea' : 'In Progress',
+                                  color: const Color(0xFF3B82F6),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _StatusCountBox(
+                                  count: data.projectProgress.pending,
+                                  label: isSwahili ? 'Zinasubiri' : 'Pending',
+                                  color: const Color(0xFFF59E0B),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _StatusCountBox(
+                                  count: data.projectProgress.overdue,
+                                  label: isSwahili ? 'Zilizochelewa' : 'Overdue',
+                                  color: const Color(0xFFEF4444),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            // Per-project cards
+            ...data.projectProgress.projects.map(
+              (p) => _ProjectProgressCard(
+                project: p,
+                isDarkMode: isDarkMode,
+              ),
+            ),
             const SizedBox(height: 24),
           ],
+
+          // ─── Calendar ─────────────────────────────────
+          _SectionHeader(
+            title: isSwahili ? 'Kalenda' : 'Calendar',
+          ),
+          const SizedBox(height: 12),
+          _CalendarWidget(isDarkMode: isDarkMode, isSwahili: isSwahili),
+          const SizedBox(height: 24),
 
           // Bottom spacing for nav bar
           const SizedBox(height: 80),
@@ -602,13 +651,18 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-// ─── Approval Chip (horizontal scroll) ───────────
+// ─── Approval Row (vertical list) ────────────────
 
-class _ApprovalChip extends StatelessWidget {
+class _ApprovalRow extends StatelessWidget {
   final ApprovalItem item;
   final bool isDarkMode;
+  final bool isSwahili;
 
-  const _ApprovalChip({required this.item, required this.isDarkMode});
+  const _ApprovalRow({
+    required this.item,
+    required this.isDarkMode,
+    required this.isSwahili,
+  });
 
   IconData _iconForType(String icon) {
     switch (icon) {
@@ -627,57 +681,105 @@ class _ApprovalChip extends StatelessWidget {
     }
   }
 
+  Color _colorForType(String icon) {
+    switch (icon) {
+      case 'inventory':
+        return const Color(0xFF7C3AED); // purple
+      case 'receipt':
+        return const Color(0xFF3B82F6); // blue
+      case 'payments':
+        return const Color(0xFFEF4444); // red
+      case 'location_on':
+        return const Color(0xFF10B981); // green
+      case 'description':
+        return const Color(0xFFF59E0B); // amber
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _GlassContainer(
-      isDarkMode: isDarkMode,
-      child: SizedBox(
-        width: 110,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final color = _colorForType(item.icon);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isDarkMode
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.grey.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.grey.withValues(alpha: 0.12),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Icon box
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: isDarkMode ? 0.2 : 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                _iconForType(item.icon),
+                size: 22,
+                color: color,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Label + subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    _iconForType(item.icon),
-                    size: 20,
-                    color: AppColors.warning,
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                  Text(
+                    item.label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode ? Colors.white : AppColors.textPrimary,
                     ),
-                    child: Text(
-                      '${item.count}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.warning,
-                      ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isSwahili ? 'Inahitaji umakini wako' : 'Requires your attention',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDarkMode
+                          ? Colors.white54
+                          : AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
-              const Spacer(),
-              Text(
-                item.label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            ),
+            // Count badge
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEF4444),
+                borderRadius: BorderRadius.circular(14),
               ),
-            ],
-          ),
+              child: Center(
+                child: Text(
+                  '${item.count}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -831,75 +933,99 @@ class _FollowupPill extends StatelessWidget {
   }
 }
 
-// ─── Project Progress Row ────────────────────────
+// ─── Ring Painter ────────────────────────────────
 
-class _ProjectProgressRow extends StatelessWidget {
-  final ProjectProgressItem project;
+class _RingPainter extends CustomPainter {
+  final double percentage;
   final bool isDarkMode;
 
-  const _ProjectProgressRow({
-    required this.project,
+  _RingPainter({required this.percentage, required this.isDarkMode});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 8;
+    const strokeWidth = 10.0;
+
+    // Track
+    final trackPaint = Paint()
+      ..color = isDarkMode ? Colors.white12 : const Color(0xFFE8EDF2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    // Progress arc
+    if (percentage > 0) {
+      final progressPaint = Paint()
+        ..color = const Color(0xFF3B82F6)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+      const startAngle = -1.5708; // -PI/2 (top)
+      final sweepAngle = 2 * 3.14159265 * percentage;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        progressPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter oldDelegate) =>
+      oldDelegate.percentage != percentage || oldDelegate.isDarkMode != isDarkMode;
+}
+
+// ─── Status Count Box ────────────────────────────
+
+class _StatusCountBox extends StatelessWidget {
+  final int count;
+  final String label;
+  final Color color;
+  final bool isDarkMode;
+
+  const _StatusCountBox({
+    required this.count,
+    required this.label,
+    required this.color,
     required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? color.withValues(alpha: 0.08)
+            : color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  project.name ?? 'Project',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: isDarkMode ? Colors.white70 : AppColors.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Text(
-                '${project.percentage.toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white : AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: project.percentage / 100,
-              minHeight: 6,
-              backgroundColor: isDarkMode
-                  ? Colors.white10
-                  : AppColors.primary.withValues(alpha: 0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                project.overdue > 0 ? AppColors.warning : AppColors.primary,
-              ),
+          Text(
+            '$count',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              _MiniChip('${project.completed} done', AppColors.success),
-              const SizedBox(width: 6),
-              if (project.inProgress > 0)
-                _MiniChip('${project.inProgress} active', AppColors.info),
-              if (project.overdue > 0) ...[
-                const SizedBox(width: 6),
-                _MiniChip('${project.overdue} late', AppColors.error),
-              ],
-            ],
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white60 : AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -907,24 +1033,798 @@ class _ProjectProgressRow extends StatelessWidget {
   }
 }
 
-class _MiniChip extends StatelessWidget {
-  final String label;
-  final Color color;
+// ─── Project Progress Card ───────────────────────
 
-  const _MiniChip(this.label, this.color);
+class _ProjectProgressCard extends StatelessWidget {
+  final ProjectProgressItem project;
+  final bool isDarkMode;
+
+  const _ProjectProgressCard({
+    required this.project,
+    required this.isDarkMode,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w500, color: color),
+    final total = project.completed + project.inProgress + project.pending + project.overdue;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: _GlassContainer(
+        isDarkMode: isDarkMode,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Project name + percentage badge
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          project.name ?? 'Project',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDarkMode
+                                ? Colors.white54
+                                : AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (project.leadName != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            project.leadName!,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF27AE60).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${project.percentage.toStringAsFixed(0)}%',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF27AE60),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Multi-segment progress bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: SizedBox(
+                  height: 8,
+                  child: total > 0
+                      ? Row(
+                          children: [
+                            if (project.completed > 0)
+                              Expanded(
+                                flex: project.completed,
+                                child: Container(color: const Color(0xFF27AE60)),
+                              ),
+                            if (project.inProgress > 0)
+                              Expanded(
+                                flex: project.inProgress,
+                                child: Container(color: const Color(0xFF3B82F6)),
+                              ),
+                            if (project.pending > 0)
+                              Expanded(
+                                flex: project.pending,
+                                child: Container(
+                                  color: isDarkMode
+                                      ? Colors.white12
+                                      : const Color(0xFFE8EDF2),
+                                ),
+                              ),
+                            if (project.overdue > 0)
+                              Expanded(
+                                flex: project.overdue,
+                                child: Container(color: const Color(0xFFEF4444)),
+                              ),
+                          ],
+                        )
+                      : Container(
+                          color: isDarkMode
+                              ? Colors.white12
+                              : const Color(0xFFE8EDF2),
+                        ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Status icon counts
+              Row(
+                children: [
+                  _StatusIconCount(
+                    icon: Icons.check_circle,
+                    count: project.completed,
+                    color: const Color(0xFF27AE60),
+                  ),
+                  const SizedBox(width: 12),
+                  _StatusIconCount(
+                    icon: Icons.sync_rounded,
+                    count: project.inProgress,
+                    color: const Color(0xFF3B82F6),
+                  ),
+                  const SizedBox(width: 12),
+                  _StatusIconCount(
+                    icon: Icons.radio_button_unchecked,
+                    count: project.pending,
+                    color: isDarkMode ? Colors.white38 : const Color(0xFF9CA3AF),
+                  ),
+                  if (project.overdue > 0) ...[
+                    const SizedBox(width: 12),
+                    _StatusIconCount(
+                      icon: Icons.warning_rounded,
+                      count: project.overdue,
+                      color: const Color(0xFFEF4444),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
+
+class _StatusIconCount extends StatelessWidget {
+  final IconData icon;
+  final int count;
+  final Color color;
+
+  const _StatusIconCount({
+    required this.icon,
+    required this.count,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 3),
+        Text(
+          '$count',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Calendar Widget ─────────────────────────────
+
+class _CalendarWidget extends ConsumerStatefulWidget {
+  final bool isDarkMode;
+  final bool isSwahili;
+
+  const _CalendarWidget({
+    required this.isDarkMode,
+    required this.isSwahili,
+  });
+
+  @override
+  ConsumerState<_CalendarWidget> createState() => _CalendarWidgetState();
+}
+
+class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
+  late int _month;
+  late int _year;
+  CalendarData? _calendarData;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _month = now.month;
+    _year = now.year;
+    _fetchCalendar();
+  }
+
+  Future<void> _fetchCalendar() async {
+    setState(() => _loading = true);
+    try {
+      final api = ref.read(staffDashboardApiProvider);
+      final data = await api.fetchCalendar(month: _month, year: _year);
+      if (mounted) setState(() { _calendarData = data; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _prevMonth() {
+    setState(() {
+      _month--;
+      if (_month < 1) { _month = 12; _year--; }
+    });
+    _fetchCalendar();
+  }
+
+  void _nextMonth() {
+    setState(() {
+      _month++;
+      if (_month > 12) { _month = 1; _year++; }
+    });
+    _fetchCalendar();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDarkMode;
+    final isSw = widget.isSwahili;
+    final now = DateTime.now();
+    final firstDay = DateTime(_year, _month, 1);
+    final daysInMonth = DateTime(_year, _month + 1, 0).day;
+    final startWeekday = firstDay.weekday % 7; // Sunday = 0
+
+    final monthName = DateFormat('MMMM yyyy').format(firstDay);
+
+    return _GlassContainer(
+      isDarkMode: isDark,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // ── Month navigation row ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: _prevMonth,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.chevron_left_rounded,
+                        size: 20,
+                        color: isDark ? Colors.white70 : AppColors.textPrimary),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3B82F6),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    monthName,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: _nextMonth,
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.chevron_right_rounded,
+                        size: 20,
+                        color: isDark ? Colors.white70 : AppColors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // ── Day headers ──
+            Row(
+              children: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+                  .map((d) => Expanded(
+                        child: Center(
+                          child: Text(
+                            d,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white38 : AppColors.textHint,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 8),
+
+            // ── Calendar grid ──
+            if (_loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                    child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )),
+              )
+            else
+              _buildGrid(isDark, now, startWeekday, daysInMonth),
+
+            const SizedBox(height: 12),
+            // ── Legend ──
+            Wrap(
+              spacing: 12,
+              runSpacing: 6,
+              alignment: WrapAlignment.center,
+              children: [
+                _LegendDot(
+                    color: const Color(0xFF3B82F6),
+                    label: isSw ? 'Leo' : 'Today'),
+                _LegendDot(
+                    color: const Color(0xFF10B981),
+                    label: isSw ? 'Ufuatiliaji' : 'Follow-up'),
+                _LegendDot(
+                    color: const Color(0xFF60A5FA),
+                    label: isSw ? 'Shughuli' : 'Activity'),
+                _LegendDot(
+                    color: const Color(0xFFF59E0B),
+                    label: isSw ? 'Ankara' : 'Invoice'),
+                _LegendDot(
+                    color: const Color(0xFFEF4444),
+                    label: isSw ? 'Zilizochelewa' : 'Overdue'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDayEvents(
+    BuildContext context,
+    String dateStr,
+    DateTime date,
+    CalendarDayEvents dayEvents,
+    bool isDark,
+  ) {
+    final isSw = widget.isSwahili;
+    final allEvents = [
+      ...dayEvents.followups,
+      ...dayEvents.activities,
+      ...dayEvents.invoices,
+    ];
+    final formattedDate = DateFormat('dd MMM yyyy').format(date);
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white24 : Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2C3E50),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      formattedDate,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF27AE60),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${allEvents.length} ${isSw ? 'matukio' : 'events'}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            // Event groups
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                children: [
+                  if (dayEvents.followups.isNotEmpty) ...[
+                    _EventGroupHeader(
+                      icon: Icons.phone_callback_rounded,
+                      label: isSw ? 'UFUATILIAJI' : 'FOLLOW-UPS',
+                      color: const Color(0xFF10B981),
+                      isDarkMode: isDark,
+                    ),
+                    ...dayEvents.followups.map((e) => _EventRow(
+                          event: e,
+                          color: const Color(0xFF10B981),
+                          isDarkMode: isDark,
+                        )),
+                    const SizedBox(height: 12),
+                  ],
+                  if (dayEvents.activities.isNotEmpty) ...[
+                    _EventGroupHeader(
+                      icon: Icons.assignment_rounded,
+                      label: isSw ? 'SHUGHULI' : 'ACTIVITIES',
+                      color: const Color(0xFF60A5FA),
+                      isDarkMode: isDark,
+                    ),
+                    ...dayEvents.activities.map((e) => _EventRow(
+                          event: e,
+                          color: const Color(0xFF60A5FA),
+                          isDarkMode: isDark,
+                        )),
+                    const SizedBox(height: 12),
+                  ],
+                  if (dayEvents.invoices.isNotEmpty) ...[
+                    _EventGroupHeader(
+                      icon: Icons.receipt_long_rounded,
+                      label: isSw ? 'ANKARA ZINAZOTAKIWA' : 'INVOICES DUE',
+                      color: const Color(0xFFF59E0B),
+                      isDarkMode: isDark,
+                    ),
+                    ...dayEvents.invoices.map((e) => _EventRow(
+                          event: e,
+                          color: const Color(0xFFF59E0B),
+                          isDarkMode: isDark,
+                        )),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGrid(bool isDark, DateTime now, int startWeekday, int daysInMonth) {
+    final events = _calendarData?.events ?? {};
+    final rows = <Widget>[];
+    int day = 1 - startWeekday;
+
+    while (day <= daysInMonth) {
+      final cells = <Widget>[];
+      for (int col = 0; col < 7; col++) {
+        if (day < 1 || day > daysInMonth) {
+          cells.add(const Expanded(child: SizedBox(height: 44)));
+        } else {
+          final dateStr =
+              '$_year-${_month.toString().padLeft(2, '0')}-${day.toString().padLeft(2, '0')}';
+          final dayEvents = events[dateStr];
+          final isToday =
+              day == now.day && _month == now.month && _year == now.year;
+
+          final capturedDay = day;
+          cells.add(Expanded(
+            child: GestureDetector(
+              onTap: (dayEvents != null && !dayEvents.isEmpty)
+                  ? () => _showDayEvents(
+                        context,
+                        dateStr,
+                        DateTime(_year, _month, capturedDay),
+                        dayEvents,
+                        isDark,
+                      )
+                  : null,
+              child: _CalendarDay(
+                day: capturedDay,
+                isToday: isToday,
+                events: dayEvents,
+                isDarkMode: isDark,
+              ),
+            ),
+          ));
+        }
+        day++;
+      }
+      rows.add(Row(children: cells));
+    }
+    return Column(children: rows);
+  }
+}
+
+class _CalendarDay extends StatelessWidget {
+  final int day;
+  final bool isToday;
+  final CalendarDayEvents? events;
+  final bool isDarkMode;
+
+  const _CalendarDay({
+    required this.day,
+    required this.isToday,
+    this.events,
+    required this.isDarkMode,
+  });
+
+  Color? get _borderColor {
+    if (events == null || events!.isEmpty) return null;
+    // Priority: overdue (red) > followup (green) > activity (blue) > invoice (orange)
+    if (events!.followups.any((e) => e.status == 'overdue')) {
+      return const Color(0xFFEF4444);
+    }
+
+    if (events!.invoices.any((e) => e.status == 'overdue')) {
+      return const Color(0xFFEF4444);
+    }
+    if (events!.followups.isNotEmpty) return const Color(0xFF10B981);
+    if (events!.activities.isNotEmpty) return const Color(0xFF60A5FA);
+    if (events!.invoices.isNotEmpty) return const Color(0xFFF59E0B);
+    return null;
+  }
+
+  List<Color> get _dots {
+    if (events == null || events!.isEmpty) return [];
+    final dots = <Color>[];
+    if (events!.followups.isNotEmpty) dots.add(const Color(0xFF10B981));
+    if (events!.activities.isNotEmpty) dots.add(const Color(0xFF60A5FA));
+    if (events!.invoices.isNotEmpty) dots.add(const Color(0xFFF59E0B));
+    return dots;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final border = _borderColor;
+    final dots = _dots;
+
+    return Container(
+      height: 44,
+      margin: const EdgeInsets.all(1),
+      decoration: BoxDecoration(
+        color: isToday
+            ? const Color(0xFF3B82F6)
+            : isDarkMode
+                ? Colors.transparent
+                : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: !isToday && border != null
+            ? Border.all(color: border, width: 1.5)
+            : null,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$day',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
+              color: isToday
+                  ? Colors.white
+                  : isDarkMode
+                      ? Colors.white70
+                      : AppColors.textPrimary,
+            ),
+          ),
+          if (dots.isNotEmpty && !isToday)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: dots
+                    .take(3)
+                    .map((c) => Container(
+                          width: 5,
+                          height: 5,
+                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                          decoration: BoxDecoration(
+                            color: c,
+                            shape: BoxShape.circle,
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String label;
+
+  const _LegendDot({required this.color, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Calendar Event Group Header ─────────────────
+
+class _EventGroupHeader extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isDarkMode;
+
+  const _EventGroupHeader({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: isDarkMode ? Colors.white54 : Colors.grey),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.8,
+              color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Calendar Event Row ──────────────────────────
+
+class _EventRow extends StatelessWidget {
+  final CalendarEvent event;
+  final Color color;
+  final bool isDarkMode;
+
+  const _EventRow({
+    required this.event,
+    required this.color,
+    required this.isDarkMode,
+  });
+
+  Color get _dotColor {
+    if (event.status == 'overdue' || event.status == 'completed') {
+      return event.status == 'overdue'
+          ? const Color(0xFFEF4444)
+          : const Color(0xFF27AE60);
+    }
+    return color;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6, left: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: _dotColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              event.name,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.white : AppColors.textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (event.status != null)
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: _dotColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                event.status!,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: _dotColor,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
