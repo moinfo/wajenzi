@@ -33,9 +33,12 @@ class AppConfig {
   static const bool enableBiometricAuth = false;
 
   // Environment
-  static bool get isProduction => const bool.fromEnvironment('dart.vm.product');
+  static const bool isRelease = bool.fromEnvironment('dart.vm.product');
+  static const bool isProfile = bool.fromEnvironment('dart.vm.profile');
+  static bool get isDebug => !isRelease && !isProfile;
 
-  static String get baseUrl => isProduction ? apiBaseUrl : devApiBaseUrl;
+  // Debug → localhost, Release/Profile (APK build) → live API
+  static String get baseUrl => isDebug ? devApiBaseUrl : apiBaseUrl;
 
   static String get clientBaseUrl => baseUrl.replaceAll('/api/v1', '/api/client');
 }
