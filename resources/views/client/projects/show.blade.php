@@ -75,7 +75,9 @@
                     </div>
                     <div class="m-paper-body">
                         @if(count($progressByPhase) > 0)
-                            <canvas id="phaseProgressChart" height="{{ max(count($progressByPhase) * 35, 120) }}"></canvas>
+                            <div style="height: {{ count($progressByPhase) * 40 + 30 }}px;">
+                                <canvas id="phaseProgressChart"></canvas>
+                            </div>
                             <!-- Phase details table -->
                             <div class="table-responsive" style="margin-top: 1rem;">
                                 <table class="m-table">
@@ -250,10 +252,9 @@
 <script src="{{ asset('js/plugins/chartjs/Chart.min.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Detect dark mode
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     var textColor = isDark ? '#C1C2C5' : '#495057';
-    var gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+    var gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
     // Overall Progress Doughnut
     var overallCtx = document.getElementById('overallProgressChart');
@@ -292,31 +293,48 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: 'Completion %',
                     data: percentages,
                     backgroundColor: percentages.map(function(p) {
-                        return p === 100 ? '#12b886' : (p > 0 ? '#228be6' : (isDark ? '#5C5F66' : '#ced4da'));
+                        return p === 100 ? '#12b886' : (p > 0 ? '#228be6' : (isDark ? '#5C5F66' : '#dee2e6'));
                     }),
                     borderRadius: 4,
-                    barPercentage: 0.6
+                    barPercentage: 0.55,
+                    categoryPercentage: 0.8
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 legend: { display: false },
+                layout: { padding: { top: 0, bottom: 0 } },
                 scales: {
                     xAxes: [{
-                        ticks: { min: 0, max: 100, fontColor: textColor, callback: function(v) { return v + '%'; } },
-                        gridLines: { color: gridColor }
+                        ticks: {
+                            min: 0, max: 100,
+                            stepSize: 25,
+                            fontColor: textColor,
+                            fontSize: 11,
+                            callback: function(v) { return v + '%'; }
+                        },
+                        gridLines: { color: gridColor, drawBorder: false }
                     }],
                     yAxes: [{
-                        ticks: { fontColor: textColor },
+                        ticks: {
+                            fontColor: textColor,
+                            fontSize: 11,
+                            padding: 8
+                        },
                         gridLines: { display: false }
                     }]
                 },
                 tooltips: {
+                    backgroundColor: isDark ? '#25262B' : '#fff',
+                    titleFontColor: isDark ? '#C1C2C5' : '#212529',
+                    bodyFontColor: isDark ? '#A6A7AB' : '#495057',
+                    borderColor: isDark ? '#373A40' : '#dee2e6',
+                    borderWidth: 1,
                     callbacks: {
                         label: function(item) {
                             var phase = phaseData[item.yLabel];
-                            return item.xLabel + '% (' + phase.completed + '/' + phase.total + ' activities)';
+                            return ' ' + item.xLabel + '% (' + phase.completed + '/' + phase.total + ' activities)';
                         }
                     }
                 }
