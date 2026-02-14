@@ -17,6 +17,7 @@ import '../../presentation/screens/services/services_screen.dart';
 import '../../presentation/screens/projects/projects_screen.dart';
 import '../../presentation/screens/awards/awards_screen.dart';
 import '../../presentation/screens/cart/cart_screen.dart';
+import '../../presentation/screens/billing/client_billing_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -124,9 +125,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/billing',
             name: 'billing',
-            builder: (context, state) => const Scaffold(
-              body: Center(child: Text('Billing - Coming Soon')),
-            ),
+            builder: (context, state) => const ClientBillingScreen(),
           ),
           GoRoute(
             path: '/settings',
