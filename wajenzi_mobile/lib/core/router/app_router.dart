@@ -21,6 +21,7 @@ import '../../presentation/screens/projects/client_project_detail_screen.dart';
 import '../../presentation/screens/settings/profile_screen.dart';
 import '../../presentation/screens/settings/change_password_screen.dart';
 import '../../presentation/screens/settings/legal_screen.dart';
+import '../../presentation/screens/dashboard/activities_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -100,6 +101,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/terms-of-service',
         name: 'terms-of-service',
         builder: (context, state) => LegalScreen.termsOfService(),
+      ),
+      GoRoute(
+        path: '/dashboard/activities',
+        name: 'dashboard-activities',
+        builder: (context, state) => const ActivitiesScreen(),
       ),
       GoRoute(
         path: '/project/:id',
