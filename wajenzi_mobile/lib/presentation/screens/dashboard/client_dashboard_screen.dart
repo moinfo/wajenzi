@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/client_dashboard_provider.dart';
@@ -233,11 +234,17 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
               ),
             )
           else
-            ...data.projects.map((project) => _ProjectCard(
-                  project: project,
-                  isSwahili: isSwahili,
-                  isDarkMode: isDarkMode,
-                  formatCurrency: _formatFullCurrency,
+            ...data.projects.map((project) => GestureDetector(
+                  onTap: () => context.push(
+                    '/project/${project.id}',
+                    extra: project.projectName,
+                  ),
+                  child: _ProjectCard(
+                    project: project,
+                    isSwahili: isSwahili,
+                    isDarkMode: isDarkMode,
+                    formatCurrency: _formatFullCurrency,
+                  ),
                 )),
 
           // Bottom spacing for nav bar

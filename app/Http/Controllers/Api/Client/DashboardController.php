@@ -19,7 +19,7 @@ class DashboardController extends Controller
         $client = $request->user();
 
         $projects = Project::where('client_id', $client->id)
-            ->withCount(['invoices', 'boqs', 'dailyReports'])
+            ->withCount(['invoices', 'billingInvoices', 'boqs', 'dailyReports'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -50,7 +50,7 @@ class DashboardController extends Controller
     public function projects(Request $request): JsonResponse
     {
         $projects = Project::where('client_id', $request->user()->id)
-            ->withCount(['invoices', 'boqs', 'dailyReports'])
+            ->withCount(['invoices', 'billingInvoices', 'boqs', 'dailyReports'])
             ->with(['projectType', 'serviceType', 'projectManager'])
             ->orderBy('created_at', 'desc')
             ->get();

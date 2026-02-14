@@ -16,8 +16,11 @@ import '../../presentation/screens/about/about_screen.dart';
 import '../../presentation/screens/services/services_screen.dart';
 import '../../presentation/screens/projects/projects_screen.dart';
 import '../../presentation/screens/awards/awards_screen.dart';
-import '../../presentation/screens/cart/cart_screen.dart';
 import '../../presentation/screens/billing/client_billing_screen.dart';
+import '../../presentation/screens/projects/client_project_detail_screen.dart';
+import '../../presentation/screens/settings/profile_screen.dart';
+import '../../presentation/screens/settings/change_password_screen.dart';
+import '../../presentation/screens/settings/legal_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -33,8 +36,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnServices = state.matchedLocation == '/services';
       final isOnProjects = state.matchedLocation == '/projects';
       final isOnAwards = state.matchedLocation == '/awards';
-      final isOnCart = state.matchedLocation == '/cart';
-      final isOnPublicPage = isOnLanding || isOnLogin || isOnAbout || isOnServices || isOnProjects || isOnAwards || isOnCart;
+      final isOnPublicPage = isOnLanding || isOnLogin || isOnAbout || isOnServices || isOnProjects || isOnAwards;
 
       // Allow access to public pages without auth
       if (!isLoggedIn && !isOnPublicPage) {
@@ -80,9 +82,32 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AwardsScreen(),
       ),
       GoRoute(
-        path: '/cart',
-        name: 'cart',
-        builder: (context, state) => const CartScreen(),
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/change-password',
+        name: 'change-password',
+        builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      GoRoute(
+        path: '/privacy-policy',
+        name: 'privacy-policy',
+        builder: (context, state) => LegalScreen.privacyPolicy(),
+      ),
+      GoRoute(
+        path: '/terms-of-service',
+        name: 'terms-of-service',
+        builder: (context, state) => LegalScreen.termsOfService(),
+      ),
+      GoRoute(
+        path: '/project/:id',
+        name: 'project-detail',
+        builder: (context, state) => ClientProjectDetailScreen(
+          projectId: int.parse(state.pathParameters['id']!),
+          projectName: state.extra as String? ?? '',
+        ),
       ),
       ShellRoute(
         builder: (context, state, child) {
@@ -195,10 +220,12 @@ class MainDrawer extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
+                gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                  colors: isDarkMode
+                      ? [const Color(0xFF0D3B34), const Color(0xFF0A2E28)]
+                      : [const Color(0xFF1ABC9C), const Color(0xFF16A085)],
                 ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(24),
@@ -210,7 +237,9 @@ class MainDrawer extends ConsumerWidget {
                 children: [
                   CircleAvatar(
                     radius: 35,
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    backgroundColor: isDarkMode
+                        ? const Color(0xFF1ABC9C).withValues(alpha: 0.3)
+                        : Colors.white.withValues(alpha: 0.2),
                     child: Text(
                       user?.name.substring(0, 1).toUpperCase() ?? 'U',
                       style: const TextStyle(
@@ -242,14 +271,16 @@ class MainDrawer extends ConsumerWidget {
                       margin: const EdgeInsets.only(top: 8),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: isDarkMode
+                            ? const Color(0xFF1ABC9C).withValues(alpha: 0.2)
+                            : Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         user!.designation!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: Colors.white,
+                          color: isDarkMode ? const Color(0xFF1ABC9C) : Colors.white,
                           fontWeight: FontWeight.w500,
                         ),
                       ),

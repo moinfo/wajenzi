@@ -92,6 +92,43 @@ class AuthApi {
     return UserModel.fromJson(response.data['data']);
   }
 
+  Future<Map<String, dynamic>> getClientProfile() async {
+    final url = '${AppConfig.clientBaseUrl}/auth/me';
+    final response = await _apiClient.get(url);
+    return response.data['data'] as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> updateClientProfile({
+    required String firstName,
+    required String lastName,
+    required String email,
+    String? phoneNumber,
+    String? address,
+  }) async {
+    final url = '${AppConfig.clientBaseUrl}/auth/profile';
+    final response = await _apiClient.put(url, data: {
+      'first_name': firstName,
+      'last_name': lastName,
+      'email': email,
+      'phone_number': phoneNumber,
+      'address': address,
+    });
+    return response.data['data'] as Map<String, dynamic>;
+  }
+
+  Future<void> changeClientPassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    final url = '${AppConfig.clientBaseUrl}/auth/password';
+    await _apiClient.put(url, data: {
+      'current_password': currentPassword,
+      'new_password': newPassword,
+      'new_password_confirmation': newPasswordConfirmation,
+    });
+  }
+
   Future<void> registerDeviceToken({
     required String deviceId,
     required String fcmToken,

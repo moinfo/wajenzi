@@ -153,53 +153,6 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         const SizedBox(width: 8),
-        // Cart Icon Button
-        _buildTopBarButton(
-          context: context,
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(isSwahili ? 'Kikapu kitupu' : 'Cart is empty'),
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          },
-          child: Stack(
-            children: [
-              Center(
-                child: Icon(
-                  Icons.shopping_cart_outlined,
-                  size: 20,
-                  color: isDarkMode ? Colors.white : const Color(0xFF2C3E50),
-                ),
-              ),
-              // Cart badge
-              Positioned(
-                right: 2,
-                top: 2,
-                child: Container(
-                  width: 14,
-                  height: 14,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFE74C3C),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text(
-                      '0',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 8,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
         // Login Icon Button
         _buildTopBarButton(
           context: context,

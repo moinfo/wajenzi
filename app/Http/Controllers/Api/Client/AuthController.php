@@ -93,4 +93,65 @@ class AuthController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Update authenticated client profile.
+     */
+    public function updateProfile(Request $request): JsonResponse
+    {
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:project_clients,email,' . $request->user()->id,
+            'phone_number' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+        ]);
+
+        $client = $request->user();
+        $client->update($request->only(['first_name', 'last_name', 'email', 'phone_number', 'address']));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profile updated successfully',
+            'data' => [
+                'id' => $client->id,
+                'first_name' => $client->first_name,
+                'last_name' => $client->last_name,
+                'full_name' => $client->full_name,
+                'email' => $client->email,
+                'phone_number' => $client->phone_number,
+                'address' => $client->address,
+                'identification_number' => $client->identification_number,
+                'projects_count' => $client->projects()->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * Change authenticated client password.
+     */
+    public function changePassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $client = $request->user();
+
+        if (!Hash::check($request->current_password, $client->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['The current password is incorrect.'],
+            ]);
+        }
+
+        $client->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password changed successfully',
+        ]);
+    }
 }

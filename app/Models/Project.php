@@ -196,6 +196,13 @@ class Project extends Model implements ApprovableModel
         return $this->hasMany(ProjectInvoice::class);
     }
 
+    public function billingInvoices(): HasMany
+    {
+        return $this->hasMany(BillingDocument::class)
+            ->where('document_type', 'invoice')
+            ->whereNotIn('status', ['draft', 'cancelled', 'void']);
+    }
+
     public function expenses(): HasMany
     {
         return $this->hasMany(ProjectExpense::class);

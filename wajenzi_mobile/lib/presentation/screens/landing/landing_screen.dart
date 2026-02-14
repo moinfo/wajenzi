@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../providers/cart_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
@@ -268,51 +267,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                   color: _isDarkMode
                       ? const Color(0xFF1ABC9C)
                       : const Color(0xFFF39C12),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Cart Icon Button
-              _buildTopBarButton(
-                onTap: () => context.push('/cart'),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Icon(
-                        Icons.shopping_cart_outlined,
-                        size: 20,
-                        color: _isDarkMode ? Colors.white : const Color(0xFF2C3E50),
-                      ),
-                    ),
-                    // Cart badge
-                    Consumer(
-                      builder: (context, ref, child) {
-                        final cartCount = ref.watch(cartItemCountProvider);
-                        if (cartCount == 0) return const SizedBox.shrink();
-                        return Positioned(
-                          right: 2,
-                          top: 2,
-                          child: Container(
-                            width: 14,
-                            height: 14,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFE74C3C),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                cartCount > 9 ? '9+' : '$cartCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
                 ),
               ),
               const SizedBox(width: 8),
@@ -692,124 +646,36 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // Action Buttons Row
-                        Row(
-                          children: [
-                            // Add to Cart Button
-                            Expanded(
-                              child: Consumer(
-                                builder: (context, ref, child) {
-                                  final isInCart = ref.watch(cartProvider).containsItem(project.title);
-                                  return GestureDetector(
-                                    onTap: () {
-                                      final cartNotifier = ref.read(cartProvider.notifier);
-                                      if (isInCart) {
-                                        cartNotifier.removeItem(project.title);
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              _isSwahili ? 'Imeondolewa kwenye kikapu' : 'Removed from cart',
-                                            ),
-                                            duration: const Duration(seconds: 1),
-                                            backgroundColor: const Color(0xFFE74C3C),
-                                          ),
-                                        );
-                                      } else {
-                                        final priceTZS = double.tryParse(project.priceTZS.replaceAll(',', '')) ?? 0;
-                                        final priceUSD = double.tryParse(project.priceUSD.replaceAll(',', '')) ?? 0;
-                                        cartNotifier.addItem(CartItem(
-                                          id: project.title,
-                                          name: project.title,
-                                          image: project.image,
-                                          category: project.category,
-                                          priceTZS: priceTZS,
-                                          priceUSD: priceUSD,
-                                          description: project.description,
-                                        ));
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              _isSwahili ? 'Imeongezwa kwenye kikapu' : 'Added to cart',
-                                            ),
-                                            duration: const Duration(seconds: 1),
-                                            backgroundColor: const Color(0xFF1ABC9C),
-                                            action: SnackBarAction(
-                                              label: _isSwahili ? 'Tazama' : 'View',
-                                              textColor: Colors.white,
-                                              onPressed: () => context.push('/cart'),
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: isInCart
-                                            ? const Color(0xFFE74C3C)
-                                            : const Color(0xFF1ABC9C),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            isInCart ? Icons.remove_shopping_cart : Icons.add_shopping_cart,
-                                            color: Colors.white,
-                                            size: 16,
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            isInCart
-                                                ? (_isSwahili ? 'Ondoa' : 'Remove')
-                                                : (_isSwahili ? 'Ongeza' : 'Add'),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                        // Inquiry Button
+                        GestureDetector(
+                          onTap: () => _launchWhatsApp(project.title),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF25D366),
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                            const SizedBox(width: 8),
-                            // WhatsApp Inquiry Button
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => _launchWhatsApp(project.title),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF25D366),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(
-                                        Icons.chat_rounded,
-                                        color: Colors.white,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        _isSwahili ? 'WhatsApp' : 'Inquire',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.chat_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _isSwahili ? 'WhatsApp' : 'Inquire',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
