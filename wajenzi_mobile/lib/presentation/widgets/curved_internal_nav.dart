@@ -30,8 +30,8 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
           : ['Home', 'Billing', 'Settings'];
     }
     return isSwahili
-        ? ['Nyumbani', 'Mahudhurio', 'Ripoti', 'Idhini']
-        : ['Home', 'Attendance', 'Reports', 'Approvals'];
+        ? ['Miradi', 'Ankara', 'Nyumbani', 'Ununuzi', 'Mahudhurio']
+        : ['Projects', 'Billing', 'Home', 'Procurement', 'Attendance'];
   }
 
   List<IconData> get _menuIcons {
@@ -43,10 +43,11 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
       ];
     }
     return [
+      Icons.business_rounded,
+      Icons.receipt_long_rounded,
       Icons.dashboard_rounded,
+      Icons.inventory_2_rounded,
       Icons.access_time_rounded,
-      Icons.description_rounded,
-      Icons.check_circle_rounded,
     ];
   }
 
@@ -54,7 +55,7 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
     if (_isClient) {
       return ['/dashboard', '/billing', '/settings'];
     }
-    return ['/dashboard', '/attendance', '/reports', '/approvals'];
+    return ['/staff-projects', '/staff-billing', '/dashboard', '/procurement', '/attendance'];
   }
 
   @override

@@ -8,7 +8,6 @@ import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/dashboard/dashboard_screen.dart';
 import '../../presentation/screens/dashboard/client_dashboard_screen.dart';
 import '../../presentation/screens/attendance/attendance_screen.dart';
-import '../../presentation/screens/reports/site_daily_report_list_screen.dart';
 import '../../presentation/screens/expenses/expense_list_screen.dart';
 import '../../presentation/screens/approvals/approvals_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
@@ -24,6 +23,9 @@ import '../../presentation/screens/settings/legal_screen.dart';
 import '../../presentation/screens/dashboard/activities_screen.dart';
 import '../../presentation/screens/dashboard/followups_screen.dart';
 import '../../presentation/screens/dashboard/invoices_screen.dart';
+import '../../presentation/screens/projects/staff_projects_screen.dart';
+import '../../presentation/screens/billing/staff_billing_screen.dart';
+import '../../presentation/screens/procurement/procurement_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -146,14 +148,24 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/staff-projects',
+            name: 'staff-projects',
+            builder: (context, state) => const StaffProjectsScreen(),
+          ),
+          GoRoute(
+            path: '/staff-billing',
+            name: 'staff-billing',
+            builder: (context, state) => const StaffBillingScreen(),
+          ),
+          GoRoute(
+            path: '/procurement',
+            name: 'procurement',
+            builder: (context, state) => const ProcurementScreen(),
+          ),
+          GoRoute(
             path: '/attendance',
             name: 'attendance',
             builder: (context, state) => const AttendanceScreen(),
-          ),
-          GoRoute(
-            path: '/reports',
-            name: 'reports',
-            builder: (context, state) => const SiteDailyReportListScreen(),
           ),
           GoRoute(
             path: '/expenses',
@@ -198,10 +210,11 @@ class MainScaffold extends ConsumerWidget {
       if (location.startsWith('/billing')) currentIndex = 1;
       if (location.startsWith('/settings')) currentIndex = 2;
     } else {
-      if (location.startsWith('/dashboard')) currentIndex = 0;
-      if (location.startsWith('/attendance')) currentIndex = 1;
-      if (location.startsWith('/reports')) currentIndex = 2;
-      if (location.startsWith('/approvals')) currentIndex = 3;
+      if (location.startsWith('/staff-projects')) currentIndex = 0;
+      if (location.startsWith('/staff-billing')) currentIndex = 1;
+      if (location.startsWith('/dashboard')) currentIndex = 2;
+      if (location.startsWith('/procurement')) currentIndex = 3;
+      if (location.startsWith('/attendance')) currentIndex = 4;
     }
 
     return Scaffold(
