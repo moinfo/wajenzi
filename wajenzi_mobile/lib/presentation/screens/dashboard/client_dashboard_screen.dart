@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -138,46 +139,55 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
           ),
           const SizedBox(height: 20),
 
-          // Stat cards 2x2 grid
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.4,
+          // Stat cards 2x2
+          Row(
             children: [
-              _StatCard(
-                title: isSwahili ? 'Miradi Yote' : 'Total Projects',
-                value: '${data.totalProjects}',
-                icon: Icons.folder_rounded,
-                color: AppColors.secondary,
-                isDarkMode: isDarkMode,
+              Expanded(
+                child: _StatCard(
+                  title: isSwahili ? 'Miradi Yote' : 'Total Projects',
+                  value: '${data.totalProjects}',
+                  icon: Icons.folder_rounded,
+                  color: AppColors.secondary,
+                  isDarkMode: isDarkMode,
+                ),
               ),
-              _StatCard(
-                title: isSwahili ? 'Miradi Hai' : 'Active Projects',
-                value: '${data.activeProjects}',
-                icon: Icons.engineering_rounded,
-                color: AppColors.success,
-                isDarkMode: isDarkMode,
-              ),
-              _StatCard(
-                title: isSwahili ? 'Thamani ya Mkataba' : 'Contract Value',
-                value: _formatCurrency(data.totalContractValue),
-                icon: Icons.account_balance_rounded,
-                color: AppColors.info,
-                isDarkMode: isDarkMode,
-              ),
-              _StatCard(
-                title: isSwahili ? 'Jumla Ankara' : 'Total Invoiced',
-                value: _formatCurrency(data.totalInvoiced),
-                icon: Icons.receipt_long_rounded,
-                color: AppColors.warning,
-                isDarkMode: isDarkMode,
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  title: isSwahili ? 'Miradi Hai' : 'Active Projects',
+                  value: '${data.activeProjects}',
+                  icon: Icons.engineering_rounded,
+                  color: AppColors.success,
+                  isDarkMode: isDarkMode,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
+                  title: isSwahili ? 'Thamani ya Mkataba' : 'Contract Value',
+                  value: _formatCurrency(data.totalContractValue),
+                  icon: Icons.account_balance_rounded,
+                  color: AppColors.info,
+                  isDarkMode: isDarkMode,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _StatCard(
+                  title: isSwahili ? 'Jumla Ankara' : 'Total Invoiced',
+                  value: _formatCurrency(data.totalInvoiced),
+                  icon: Icons.receipt_long_rounded,
+                  color: AppColors.warning,
+                  isDarkMode: isDarkMode,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
 
           // Your Projects header with count badge
           Row(
@@ -210,7 +220,8 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
 
           // Project cards
           if (data.projects.isEmpty)
-            Card(
+            _GlassContainer(
+              isDarkMode: isDarkMode,
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Center(
@@ -237,6 +248,66 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
   }
 }
 
+// ─── Glass Container ─────────────────────────────
+
+class _GlassContainer extends StatelessWidget {
+  final Widget child;
+  final bool isDarkMode;
+  final EdgeInsetsGeometry? margin;
+
+  const _GlassContainer({
+    required this.child,
+    required this.isDarkMode,
+    this.margin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: margin,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDarkMode
+              ? Colors.white.withValues(alpha: 0.15)
+              : Colors.white.withValues(alpha: 0.6),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        Colors.white.withValues(alpha: 0.08),
+                        Colors.white.withValues(alpha: 0.04),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.75),
+                        Colors.white.withValues(alpha: 0.55),
+                      ],
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Stat Card ───────────────────────────────────
 
 class _StatCard extends StatelessWidget {
@@ -256,11 +327,13 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return _GlassContainer(
+      isDarkMode: isDarkMode,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -270,6 +343,7 @@ class _StatCard extends StatelessWidget {
                     title,
                     style: TextStyle(
                       fontSize: 12,
+                      fontWeight: FontWeight.w500,
                       color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
                     ),
                     maxLines: 1,
@@ -286,7 +360,7 @@ class _StatCard extends StatelessWidget {
                 ),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 10),
             Text(
               value,
               style: TextStyle(
@@ -358,7 +432,8 @@ class _ProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColor = _statusColor(project.status);
 
-    return Card(
+    return _GlassContainer(
+      isDarkMode: isDarkMode,
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),
