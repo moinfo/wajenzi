@@ -18,6 +18,8 @@ use App\Http\Controllers\Api\V1\PayrollController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\MenuController;
+use App\Http\Controllers\Api\V1\EmployeeProfileController;
+use App\Http\Controllers\Api\V1\VatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -195,6 +197,35 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('read-all', [NotificationController::class, 'markAllAsRead']);
         Route::get('unread-count', [NotificationController::class, 'unreadCount']);
     });
+
+    // VAT Module
+    Route::prefix('vat')->group(function () {
+        Route::get('reference-data', [VatController::class, 'referenceData']);
+
+        Route::get('sales', [VatController::class, 'sales']);
+        Route::post('sales', [VatController::class, 'storeSale']);
+        Route::get('sales/{id}', [VatController::class, 'showSale']);
+        Route::put('sales/{id}', [VatController::class, 'updateSale']);
+        Route::delete('sales/{id}', [VatController::class, 'destroySale']);
+
+        Route::get('purchases', [VatController::class, 'purchases']);
+        Route::post('purchases', [VatController::class, 'storePurchase']);
+        Route::get('purchases/{id}', [VatController::class, 'showPurchase']);
+        Route::put('purchases/{id}', [VatController::class, 'updatePurchase']);
+        Route::delete('purchases/{id}', [VatController::class, 'destroyPurchase']);
+
+        Route::get('auto-purchases', [VatController::class, 'autoPurchases']);
+
+        Route::get('payments', [VatController::class, 'payments']);
+        Route::post('payments', [VatController::class, 'storePayment']);
+        Route::get('payments/{id}', [VatController::class, 'showPayment']);
+        Route::put('payments/{id}', [VatController::class, 'updatePayment']);
+        Route::delete('payments/{id}', [VatController::class, 'destroyPayment']);
+    });
+
+    // Employee Profile
+    Route::get('employee-profile', [EmployeeProfileController::class, 'index']);
+    Route::get('employee-profile/staff-list', [EmployeeProfileController::class, 'staffList']);
 
     // Sync (Offline support)
     Route::prefix('sync')->group(function () {

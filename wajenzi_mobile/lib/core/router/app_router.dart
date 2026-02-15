@@ -27,6 +27,11 @@ import '../../presentation/screens/dashboard/invoices_screen.dart';
 import '../../presentation/screens/projects/staff_projects_screen.dart';
 import '../../presentation/screens/billing/staff_billing_screen.dart';
 import '../../presentation/screens/procurement/procurement_screen.dart';
+import '../../presentation/screens/employee_profile/employee_profile_screen.dart';
+import '../../presentation/screens/vat/vat_sales_screen.dart';
+import '../../presentation/screens/vat/vat_purchases_screen.dart';
+import '../../presentation/screens/vat/vat_auto_purchases_screen.dart';
+import '../../presentation/screens/vat/vat_payments_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -187,6 +192,31 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: '/employee-profile',
+            name: 'employee-profile',
+            builder: (context, state) => const EmployeeProfileScreen(),
+          ),
+          GoRoute(
+            path: '/vat-sales',
+            name: 'vat-sales',
+            builder: (context, state) => const VatSalesScreen(),
+          ),
+          GoRoute(
+            path: '/vat-purchases',
+            name: 'vat-purchases',
+            builder: (context, state) => const VatPurchasesScreen(),
+          ),
+          GoRoute(
+            path: '/vat-auto-purchases',
+            name: 'vat-auto-purchases',
+            builder: (context, state) => const VatAutoPurchasesScreen(),
+          ),
+          GoRoute(
+            path: '/vat-payments',
+            name: 'vat-payments',
+            builder: (context, state) => const VatPaymentsScreen(),
           ),
         ],
       ),
@@ -471,6 +501,7 @@ class MainDrawer extends ConsumerWidget {
           children: menus.map<Widget>((m) {
             final menu = m as Map<String, dynamic>;
             final name = menu['name'] as String? ?? '';
+            final route = menu['route'] as String? ?? '';
             final icon = _mapFaIcon(menu['icon'] as String? ?? '');
             final children = (menu['children'] as List?)?.cast<Map<String, dynamic>>() ?? [];
 
@@ -481,12 +512,17 @@ class MainDrawer extends ConsumerWidget {
                 isDarkMode: isDarkMode,
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('$name — coming soon'),
-                      duration: const Duration(seconds: 1),
-                    ),
-                  );
+                  final flutterRoute = _mapWebRoute(route);
+                  if (flutterRoute != null) {
+                    context.go(flutterRoute);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('$name — coming soon'),
+                        duration: const Duration(seconds: 1),
+                      ),
+                    );
+                  }
                 },
               );
             }
@@ -502,6 +538,21 @@ class MainDrawer extends ConsumerWidget {
       },
     );
   }
+}
+
+/// Maps web route names to Flutter routes (returns null if not yet implemented)
+String? _mapWebRoute(String webRoute) {
+  const map = <String, String>{
+    'employee_profile': '/employee-profile',
+    'dashboard': '/dashboard',
+    'attendance': '/attendance',
+    'settings': '/settings',
+    'sales': '/vat-sales',
+    'purchases': '/vat-purchases',
+    'auto_purchases': '/vat-auto-purchases',
+    'vat_payment': '/vat-payments',
+  };
+  return map[webRoute];
 }
 
 /// Maps FontAwesome class names to Material Icons
@@ -635,6 +686,7 @@ class _ExpandableDrawerItemState extends State<_ExpandableDrawerItem> {
             child: Column(
               children: widget.children.map((child) {
                 final childName = child['name'] as String? ?? '';
+                final childRoute = child['route'] as String? ?? '';
                 final childIcon = _mapFaIcon(child['icon'] as String? ?? '');
                 return ListTile(
                   leading: Icon(childIcon, size: 18, color: subTextColor),
@@ -648,12 +700,17 @@ class _ExpandableDrawerItemState extends State<_ExpandableDrawerItem> {
                   ),
                   onTap: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('$childName — coming soon'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
+                    final flutterRoute = _mapWebRoute(childRoute);
+                    if (flutterRoute != null) {
+                      GoRouter.of(context).go(flutterRoute);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('$childName — coming soon'),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    }
                   },
                   dense: true,
                   visualDensity: VisualDensity.compact,
