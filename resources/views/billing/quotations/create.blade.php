@@ -1,6 +1,11 @@
 @extends('layouts.backend')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<style>
+    .note-editor.note-frame { border: 1px solid #ddd; border-radius: 4px; }
+    .note-toolbar { background: #f8f9fa; border-bottom: 1px solid #ddd; padding: 5px; }
+</style>
 <div class="container-fluid">
     <div class="content">
         <div class="content-heading">
@@ -295,6 +300,11 @@
                         </div>
                         <div class="block-content">
                             <div class="form-group">
+                                <label>Service Description <small class="text-muted">(Shown as "Service Includes" on PDF)</small></label>
+                                <textarea name="service_description" id="service-description-editor" class="form-control">{!! old('service_description', \App\Models\InvoiceSetting::getDefaultServiceDescriptionHtml()) !!}</textarea>
+                            </div>
+
+                            <div class="form-group">
                                 <label>Internal Notes</label>
                                 <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
                             </div>
@@ -507,4 +517,22 @@ function selectProduct(selectElement, index) {
 </script>
 {{--@endpush--}}
 
+@endsection
+
+@section('js_after')
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#service-description-editor').summernote({
+        height: 200,
+        toolbar: [
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link']],
+            ['view', ['fullscreen', 'codeview']]
+        ],
+        placeholder: 'Enter service description...'
+    });
+});
+</script>
 @endsection

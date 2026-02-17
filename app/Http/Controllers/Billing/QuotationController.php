@@ -90,6 +90,7 @@ class QuotationController extends Controller
             $quotation->discount_value = $request->discount_value;
             $quotation->shipping_amount = $request->shipping_amount ?? 0;
             $quotation->notes = $request->notes;
+            $quotation->service_description = $request->service_description;
             $quotation->terms_conditions = $request->terms_conditions;
             $quotation->footer_text = $request->footer_text;
             $quotation->po_number = $request->po_number;
@@ -181,7 +182,7 @@ class QuotationController extends Controller
                 'client_id', 'project_id', 'issue_date', 'valid_until_date',
                 'payment_terms', 'currency_code', 'exchange_rate', 
                 'discount_type', 'discount_value', 'shipping_amount',
-                'notes', 'terms_conditions', 'footer_text', 'po_number', 'sales_person'
+                'notes', 'service_description', 'terms_conditions', 'footer_text', 'po_number', 'sales_person'
             ]));
             
             $quotation->items()->delete();

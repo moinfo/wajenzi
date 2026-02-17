@@ -16,6 +16,7 @@ class BillingDocument extends Model
         'document_type',
         'document_number',
         'title',
+        'service_description',
         'reference_number',
         'client_id',
         'project_id',

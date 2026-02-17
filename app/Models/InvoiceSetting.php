@@ -100,6 +100,25 @@ class InvoiceSetting extends Model
     }
 
     /**
+     * Get default service description HTML for new invoices
+     */
+    public static function getDefaultServiceDescriptionHtml(): string
+    {
+        return '<ol>'
+            . '<li>Identifying type of soil.</li>'
+            . '<li>Identifying Site condition.</li>'
+            . '<li>Identifying Topography of the land.</li>'
+            . '<li>Identifying Access and Transportation.</li>'
+            . '<li>Identify Safety and security level of site.</li>'
+            . '<li>Identify Utilities and infrastructural.</li>'
+            . '<li>Identify sun rise and sun set.</li>'
+            . '<li>Identify neighborhood context.</li>'
+            . '<li>Identifying zoning and regulations.</li>'
+            . '<li>Identifying environmental impact of the proposed area.</li>'
+            . '</ol>';
+    }
+
+    /**
      * Get settings by group
      */
     public static function getByGroup(string $group)

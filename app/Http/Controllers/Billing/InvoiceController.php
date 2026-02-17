@@ -113,6 +113,7 @@ class InvoiceController extends Controller
             $invoice->discount_value = $request->discount_value;
             $invoice->shipping_amount = $request->shipping_amount ?? 0;
             $invoice->notes = $request->notes;
+            $invoice->service_description = $request->service_description;
             $invoice->terms_conditions = $request->terms_conditions;
             $invoice->footer_text = $request->footer_text;
             $invoice->po_number = $request->po_number;
@@ -220,7 +221,7 @@ class InvoiceController extends Controller
         try {
             // Update invoice
             $invoice->update($request->only([
-                'title', 'client_id', 'project_id', 'issue_date', 'due_date',
+                'title', 'service_description', 'client_id', 'project_id', 'issue_date', 'due_date',
                 'payment_terms', 'custom_payment_days', 'currency_code',
                 'exchange_rate', 'discount_type', 'discount_value',
                 'shipping_amount', 'notes', 'terms_conditions',
