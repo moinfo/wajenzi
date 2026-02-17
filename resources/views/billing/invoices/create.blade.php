@@ -383,6 +383,11 @@
                         </div>
                         <div class="block-content">
                             <div class="form-group">
+                                <label>Service Description <small class="text-muted">(Shown as "Service Includes" on PDF)</small></label>
+                                <textarea name="service_description" id="service-description-editor" class="form-control">{!! old('service_description', \App\Models\InvoiceSetting::getDefaultServiceDescriptionHtml()) !!}</textarea>
+                            </div>
+
+                            <div class="form-group">
                                 <label>Internal Notes</label>
                                 <textarea name="notes" id="notes-editor" class="form-control">{{ old('notes') }}</textarea>
                             </div>
@@ -577,6 +582,17 @@ document.addEventListener('DOMContentLoaded', function() {
 <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
 <script>
 $(document).ready(function() {
+    $('#service-description-editor').summernote({
+        height: 200,
+        toolbar: [
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link']],
+            ['view', ['fullscreen', 'codeview']]
+        ],
+        placeholder: 'Enter service description...'
+    });
+
     $('#notes-editor').summernote({
         height: 200,
         toolbar: [

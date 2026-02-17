@@ -100,6 +100,7 @@ class ProformaController extends Controller
             $proforma->discount_value = $request->discount_value;
             $proforma->shipping_amount = $request->shipping_amount ?? 0;
             $proforma->notes = $request->notes;
+            $proforma->service_description = $request->service_description;
             $proforma->terms_conditions = $request->terms_conditions;
             $proforma->footer_text = $request->footer_text;
             $proforma->po_number = $request->po_number;
@@ -204,7 +205,7 @@ class ProformaController extends Controller
                 'client_id', 'project_id', 'issue_date', 'valid_until_date',
                 'payment_terms', 'currency_code', 'exchange_rate', 
                 'discount_type', 'discount_value', 'shipping_amount',
-                'notes', 'terms_conditions', 'footer_text', 'po_number', 'sales_person'
+                'notes', 'service_description', 'terms_conditions', 'footer_text', 'po_number', 'sales_person'
             ]));
             
             $proforma->items()->delete();

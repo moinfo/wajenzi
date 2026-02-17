@@ -1,6 +1,11 @@
 @extends('layouts.backend')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.css" rel="stylesheet">
+<style>
+    .note-editor.note-frame { border: 1px solid #ddd; border-radius: 4px; }
+    .note-toolbar { background: #f8f9fa; border-bottom: 1px solid #ddd; padding: 5px; }
+</style>
 <div class="container-fluid">
     <div class="content">
         <div class="content-heading">
@@ -208,9 +213,18 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
+                                        <label for="service_description">Service Description <small class="text-muted">(Shown as "Service Includes" on PDF)</small></label>
+                                        <textarea name="service_description" id="service-description-editor" class="form-control">{!! old('service_description', $proforma->service_description ?: \App\Models\InvoiceSetting::getDefaultServiceDescriptionHtml()) !!}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
                                         <label for="notes">Notes</label>
-                                        <textarea name="notes" id="notes" rows="3" 
-                                                  class="form-control @error('notes') is-invalid @enderror" 
+                                        <textarea name="notes" id="notes" rows="3"
+                                                  class="form-control @error('notes') is-invalid @enderror"
                                                   placeholder="Additional notes or comments...">{{ old('notes', $proforma->notes) }}</textarea>
                                         @error('notes')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -441,5 +455,23 @@ function selectProduct(selectElement, itemId) {
         calculateRow(itemId);
     }
 }
+</script>
+@endsection
+
+@section('js_after')
+<script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-lite.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#service-description-editor').summernote({
+        height: 200,
+        toolbar: [
+            ['font', ['bold', 'italic', 'underline', 'clear']],
+            ['para', ['ul', 'ol', 'paragraph']],
+            ['insert', ['link']],
+            ['view', ['fullscreen', 'codeview']]
+        ],
+        placeholder: 'Enter service description...'
+    });
+});
 </script>
 @endsection
