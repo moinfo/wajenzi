@@ -186,7 +186,7 @@
                 select.select2({ width: '100%' });
                 return;
             }
-            $.get('/ajax/get_construction_phases', { project_id: projectId }, function(data) {
+            $.get('{{ url("/ajax/get_construction_phases") }}', { project_id: projectId }, function(data) {
                 $.each(data, function(i, phase) {
                     select.append('<option value="' + phase.id + '"' + (phase.id == selectedId ? ' selected' : '') + '>' + phase.name + '</option>');
                 });

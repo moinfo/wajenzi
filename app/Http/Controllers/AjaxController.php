@@ -524,7 +524,6 @@ class AjaxController
                         ->whereNull('parent_id')
                         ->orderBy('name')
                         ->get(['id', 'name']);
-                    \Log::info('get_construction_phases', ['project_id' => $projectId, 'all_input' => $request->all(), 'query' => $request->query(), 'url' => $request->fullUrl(), 'boqIds' => $boqIds, 'phases_count' => $phases->count()]);
                     return response()->json($phases);
                     break;
 
