@@ -519,7 +519,6 @@ class AjaxController
                 // Labor Procurement AJAX Methods
                 case 'get_construction_phases':
                     $projectId = $request->input('project_id');
-                    \Log::info('construction_phases_debug_v2', ['project_id' => $projectId, 'full_url' => $request->fullUrl(), 'all_input' => $request->all(), 'GET' => $_GET, 'QUERY_STRING' => $_SERVER['QUERY_STRING'] ?? 'N/A']);
                     $boqIds = \App\Models\ProjectBoq::where('project_id', $projectId)->pluck('id');
                     $phases = \App\Models\ProjectBoqSection::whereIn('boq_id', $boqIds)
                         ->whereNull('parent_id')
