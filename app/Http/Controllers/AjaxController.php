@@ -524,7 +524,7 @@ class AjaxController
                         ->whereNull('parent_id')
                         ->orderBy('name')
                         ->get(['id', 'name']);
-                    return response()->json($phases);
+                    return response()->json(['debug' => 'v2_latest', 'boqIds' => $boqIds, 'project_id' => $projectId, 'phases' => $phases]);
                     break;
 
                 case 'get_artisans':
