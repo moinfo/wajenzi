@@ -19,9 +19,13 @@ class ProjectScheduleController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director']);
 
         $schedules = ProjectSchedule::with(['lead', 'assignedArchitect', 'client'])
-            ->when($user->hasRole('Architect'), fn($q) => $q->where('assigned_architect_id', $user->id))
+            ->when(!$isAdmin, fn($q) => $q->where(function ($q) use ($user) {
+                $q->where('assigned_architect_id', $user->id)
+                  ->orWhereHas('activities', fn($aq) => $aq->where('assigned_to', $user->id));
+            }))
             ->when($request->status, fn($q, $status) => $q->where('status', $status))
             ->when($request->architect_id, fn($q, $id) => $q->where('assigned_architect_id', $id))
             ->orderBy('created_at', 'desc')
@@ -35,10 +39,19 @@ class ProjectScheduleController extends Controller
      */
     public function show(ProjectSchedule $projectSchedule)
     {
-        $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'assignments.user']);
+        $user = auth()->user();
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director']);
+
+        $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'assignments.user']);
+
+        // Filter activities: non-admins only see their assigned activities
+        $activities = $projectSchedule->activities;
+        if (!$isAdmin) {
+            $activities = $activities->filter(fn($a) => $a->assigned_to === $user->id);
+        }
 
         // Group activities by phase
-        $activitiesByPhase = $projectSchedule->activities->groupBy('phase');
+        $activitiesByPhase = $activities->groupBy('phase');
 
         // Users available for assignment (with roles)
         $users = User::with('roles')->orderBy('name')->get();

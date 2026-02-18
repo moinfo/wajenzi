@@ -140,7 +140,7 @@ class ProjectScheduleService
             // Calculate end date based on duration (working days)
             $activityEndDate = self::addWorkingDays($activityStartDate, $template->duration_days);
 
-            // Create the activity
+            // Create the activity (auto-assign to schedule's architect)
             ProjectScheduleActivity::create([
                 'project_schedule_id' => $schedule->id,
                 'activity_code' => $template->activity_code,
@@ -153,6 +153,8 @@ class ProjectScheduleService
                 'predecessor_code' => $template->predecessor_code,
                 'status' => 'pending',
                 'sort_order' => $template->sort_order,
+                'assigned_to' => $schedule->assigned_architect_id,
+                'role_id' => $template->role_id,
             ]);
 
             // Store for predecessor reference

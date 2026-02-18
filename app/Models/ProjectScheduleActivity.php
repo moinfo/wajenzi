@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Role;
 
 class ProjectScheduleActivity extends Model
 {
@@ -20,6 +21,7 @@ class ProjectScheduleActivity extends Model
         'end_date',
         'predecessor_code',
         'assigned_to',
+        'role_id',
         'status',
         'started_at',
         'completed_at',
@@ -54,6 +56,14 @@ class ProjectScheduleActivity extends Model
     public function assignedUser()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Get the role responsible for this activity
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
     }
 
     /**

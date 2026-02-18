@@ -76,6 +76,7 @@ use App\Models\BoqTemplate;
 use App\Models\BoqTemplateStage;
 use App\Models\BoqTemplateActivity;
 use App\Models\BoqTemplateSubActivity;
+use App\Models\ProjectActivityTemplate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -148,6 +149,7 @@ class SettingsController extends Controller
             ['name'=>'Sub-Activities', 'route'=>'hr_settings_sub_activities', 'icon' => 'si si-puzzle', 'badge' => 0],
             ['name'=>'BOQ Items', 'route'=>'hr_settings_boq_items', 'icon' => 'si si-bag', 'badge' => 0],
             ['name'=>'BOQ Templates', 'route'=>'hr_settings_boq_templates', 'icon' => 'si si-docs', 'badge' => 0],
+            ['name'=>'Activity Templates', 'route'=>'hr_settings_activity_templates', 'icon' => 'si si-calendar', 'badge' => 0],
 //            ['name'=>'Beneficiaries', 'route'=>'beneficiaries', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Mawakala', 'route'=>'wakalas', 'icon' => 'si si-settings', 'badge' => 0],
         ];
@@ -1534,6 +1536,17 @@ class SettingsController extends Controller
         ];
 
         return view('pages.settings.boq_template_report')->with($data);
+    }
+
+    public function activity_templates_settings(Request $request)
+    {
+        if ($this->handleCrud($request, 'ProjectActivityTemplate')) {
+            return back();
+        }
+        $data = [
+            'objects' => ProjectActivityTemplate::with('role')->orderBy('sort_order')->get(),
+        ];
+        return view('pages.settings.settings_activity_templates')->with($data);
     }
 
 }
