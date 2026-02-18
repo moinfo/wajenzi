@@ -183,6 +183,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/lead_statuses', [App\Http\Controllers\SettingsController::class, 'lead_statuses'])->name('hr_settings_lead_statuses');
     Route::match(['get', 'post'], '/settings/lead_sources', [App\Http\Controllers\SettingsController::class, 'lead_sources'])->name('hr_settings_lead_sources');
     Route::match(['get', 'post'], '/settings/project_types_settings', [App\Http\Controllers\SettingsController::class, 'project_types_settings'])->name('hr_settings_project_types_settings');
+    Route::match(['get', 'post'], '/settings/activity_templates', [App\Http\Controllers\SettingsController::class, 'activity_templates_settings'])->name('hr_settings_activity_templates');
     Route::match(['get', 'post'], '/settings/service_types', [App\Http\Controllers\SettingsController::class, 'service_types'])->name('hr_settings_service_types');
     Route::match(['get', 'post'], '/settings/project_statuses', [App\Http\Controllers\SettingsController::class, 'project_statuses'])->name('hr_settings_project_statuses');
     Route::match(['get', 'post'], '/settings/cost_categories', [App\Http\Controllers\SettingsController::class, 'cost_categories'])->name('hr_settings_cost_categories');

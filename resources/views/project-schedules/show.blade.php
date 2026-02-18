@@ -241,14 +241,15 @@
                         <table class="table table-sm table-hover">
                             <thead>
                                 <tr>
-                                    <th width="7%">Code</th>
-                                    <th width="18%">Activity</th>
+                                    <th width="6%">Code</th>
+                                    <th width="16%">Activity</th>
                                     <th width="10%">Discipline</th>
+                                    <th width="8%">Role</th>
                                     <th width="12%">Assigned To</th>
-                                    <th width="9%">Start</th>
-                                    <th width="9%">End</th>
-                                    <th width="8%">Days</th>
-                                    <th width="10%">Status</th>
+                                    <th width="8%">Start</th>
+                                    <th width="8%">End</th>
+                                    <th width="6%">Days</th>
+                                    <th width="9%">Status</th>
                                     <th width="17%">Actions</th>
                                 </tr>
                             </thead>
@@ -263,6 +264,13 @@
                                             @endif
                                         </td>
                                         <td><small>{{ $activity->discipline }}</small></td>
+                                        <td>
+                                            @if($activity->role)
+                                                <span class="badge badge-outline-primary">{{ $activity->role->name }}</span>
+                                            @else
+                                                <small class="text-muted">-</small>
+                                            @endif
+                                        </td>
                                         <td>
                                             @if($activity->assignedUser)
                                                 @if($activity->assigned_to == $projectSchedule->assigned_architect_id)
@@ -402,6 +410,7 @@
                                 </div>
                                 <small class="text-muted">
                                     {{ $activity->phase }} | {{ $activity->duration_days }} working days
+                                    @if($activity->role) | <i class="fa fa-shield-alt"></i> {{ $activity->role->name }} @endif
                                     | <i class="fa fa-user"></i>
                                     {{ $activity->assignedUser ? $activity->assignedUser->name : ($projectSchedule->assignedArchitect->name ?? 'N/A') }}
                                 </small>

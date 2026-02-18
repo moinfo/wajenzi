@@ -86,11 +86,13 @@
                                         <a href="{{ route('project-schedules.show', $schedule) }}" class="btn btn-sm btn-primary">
                                             <i class="fa fa-eye"></i>
                                         </a>
-                                        @if(!$schedule->isConfirmed())
-                                            <a href="{{ route('project-schedules.edit', $schedule) }}" class="btn btn-sm btn-warning">
-                                                <i class="fa fa-edit"></i>
-                                            </a>
-                                        @endif
+                                        @can('Edit Project Schedule')
+                                            @if(!$schedule->isConfirmed())
+                                                <a href="{{ route('project-schedules.edit', $schedule) }}" class="btn btn-sm btn-warning">
+                                                    <i class="fa fa-edit"></i>
+                                                </a>
+                                            @endif
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty

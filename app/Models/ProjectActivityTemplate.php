@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Role;
 
 class ProjectActivityTemplate extends Model
 {
@@ -18,6 +19,7 @@ class ProjectActivityTemplate extends Model
         'predecessor_code',
         'sort_order',
         'is_active',
+        'role_id',
     ];
 
     protected $casts = [
@@ -40,6 +42,14 @@ class ProjectActivityTemplate extends Model
     public function dependents()
     {
         return $this->hasMany(ProjectActivityTemplate::class, 'predecessor_code', 'activity_code');
+    }
+
+    /**
+     * Get the role responsible for this activity type
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
     }
 
     /**

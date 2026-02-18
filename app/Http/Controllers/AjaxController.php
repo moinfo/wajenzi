@@ -260,6 +260,7 @@ class AjaxController
                     $charts_accounts = ChartAccount::all();
                     $charts_account_petty_cashs = ChartAccount::where('id',12)->get();
                     $roles = Role::all();
+                    $activity_templates = \App\Models\ProjectActivityTemplate::orderBy('sort_order')->get();
                     $process_approval_flows = ProcessApprovalFlow::all();
                     $process_approval_flow_steps = ProcessApprovalFlowStep::all();
 
@@ -349,6 +350,7 @@ class AjaxController
                             'priorities' => $priorities,
                             'quotation_statuses' => $quotation_statuses,
                             'overall_conditions' => $overall_conditions,
+                            'activity_templates' => $activity_templates,
                         ];
                     $object = $request->has('className') ? ucfirst($request->input('className')) : null;
                     $metadata = $request->has('metadata') ? $request->input('metadata') : [];

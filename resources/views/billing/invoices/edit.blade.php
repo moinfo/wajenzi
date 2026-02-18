@@ -197,9 +197,9 @@
                         </div>
                         <div class="block-content">
 
-                            <!-- Client & Basic Info -->
+                            <!-- Client, Lead & Basic Info -->
                             <div class="row">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Client <span class="text-danger">*</span></label>
                                         <select name="client_id" class="form-control" required>
@@ -218,7 +218,24 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Lead / Project</label>
+                                        <select name="lead_id" id="lead_id" class="form-control" onchange="onLeadSelected(this)">
+                                            <option value="">-- No Lead --</option>
+                                            @foreach($leads as $l)
+                                                <option value="{{ $l->id }}"
+                                                        data-client-id="{{ $l->client_id }}"
+                                                        {{ old('lead_id', $invoice->lead_id) == $l->id ? 'selected' : '' }}>
+                                                    {{ $l->lead_number ?? '' }} - {{ $l->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">Link this invoice to a lead</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
                                     <div class="form-group">
                                         <label>Reference Number</label>
                                         <input type="text" name="reference_number" class="form-control"
@@ -601,6 +618,15 @@ function calculateDueDate() {
 
 document.querySelector('[name="payment_terms"]').addEventListener('change', calculateDueDate);
 document.querySelector('[name="issue_date"]').addEventListener('change', calculateDueDate);
+
+function onLeadSelected(select) {
+    const option = select.selectedOptions[0];
+    const clientId = option.dataset.clientId;
+    if (clientId) {
+        const clientSelect = document.querySelector('[name="client_id"]');
+        clientSelect.value = clientId;
+    }
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     calculateTotals();
