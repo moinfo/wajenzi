@@ -335,7 +335,8 @@ function addItem() {
             <input type="number" name="items[${itemCount}][tax_percentage]" class="form-control form-control-sm" placeholder="Tax %" min="0" max="100" step="0.01" value="0" onchange="calculateRow(${itemCount})">
         </td>
         <td style="vertical-align: top;">
-            <input type="number" name="items[${itemCount}][line_total]" class="form-control form-control-sm" readonly>
+            <input type="number" name="items[${itemCount}][line_total]" class="form-control form-control-sm" step="0.01"
+                   onchange="calculateFromAmount(this)">
         </td>
         <td style="vertical-align: top;">
             <button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${itemCount})">
@@ -364,6 +365,21 @@ function calculateRow(itemId) {
     // line_total is pre-tax amount (tax is added at document level)
     document.querySelector(`input[name="items[${itemId}][line_total]"]`).value = subtotal.toFixed(2);
 
+    calculateTotals();
+}
+
+function calculateFromAmount(element) {
+    const match = element.name.match(/items\[(\d+)\]/);
+    if (!match) return;
+    const itemId = match[1];
+
+    const amount = parseFloat(element.value) || 0;
+    const quantity = parseFloat(document.querySelector(`input[name="items[${itemId}][quantity]"]`).value) || 0;
+
+    if (quantity > 0) {
+        const unitPrice = amount / quantity;
+        document.querySelector(`input[name="items[${itemId}][unit_price]"]`).value = unitPrice.toFixed(2);
+    }
     calculateTotals();
 }
 

@@ -113,7 +113,8 @@
                                         </td>
                                         <td style="vertical-align: top;">
                                             <input type="number" class="form-control form-control-sm line-total"
-                                                   value="0" readonly>
+                                                   value="0" step="0.01"
+                                                   onchange="calculateFromAmount(this)">
                                         </td>
                                         <td style="vertical-align: top;">
                                             <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
@@ -397,7 +398,8 @@ function addLineItem() {
                        value="{{ $settings['default_tax_rate'] ?? 18 }}" step="0.01" min="0" max="100" onchange="calculateLineTotal(this)">
             </td>
             <td style="vertical-align: top;">
-                <input type="number" class="form-control form-control-sm line-total" value="0" readonly>
+                <input type="number" class="form-control form-control-sm line-total" value="0" step="0.01"
+                       onchange="calculateFromAmount(this)">
             </td>
             <td style="vertical-align: top;">
                 <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
@@ -428,6 +430,19 @@ function calculateLineTotal(element) {
     const total = subtotal + taxAmount;
 
     row.querySelector('.line-total').value = total.toFixed(2);
+    calculateTotals();
+}
+
+function calculateFromAmount(element) {
+    const row = element.closest('tr');
+    const amount = parseFloat(row.querySelector('.line-total').value) || 0;
+    const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+    const taxPercentage = parseFloat(row.querySelector('.tax-percentage').value) || 0;
+
+    if (quantity > 0) {
+        const unitPrice = amount / (quantity * (1 + taxPercentage / 100));
+        row.querySelector('.unit-price').value = unitPrice.toFixed(2);
+    }
     calculateTotals();
 }
 

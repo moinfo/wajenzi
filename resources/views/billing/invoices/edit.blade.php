@@ -108,7 +108,8 @@
                                                 </td>
                                                 <td>
                                                     <input type="number" class="form-control form-control-sm line-total"
-                                                           value="{{ $item->line_total }}" readonly>
+                                                           value="{{ $item->line_total }}" step="0.01"
+                                                           onchange="calculateFromAmount(this)">
                                                 </td>
                                                 <td>
                                                     <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
@@ -169,7 +170,8 @@
                                             </td>
                                             <td>
                                                 <input type="number" class="form-control form-control-sm line-total"
-                                                       value="0" readonly>
+                                                       value="0" step="0.01"
+                                                       onchange="calculateFromAmount(this)">
                                             </td>
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
@@ -276,16 +278,8 @@
                                 </div>
                             </div>
 
-                            <!-- PO Number & Sales Person -->
+                            <!-- Sales Person -->
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>PO Number</label>
-                                        <input type="text" name="po_number" class="form-control"
-                                               value="{{ old('po_number', $invoice->po_number) }}">
-                                    </div>
-                                </div>
-
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label>Sales Person</label>
@@ -478,7 +472,8 @@ function addLineItem() {
             </td>
             <td style="vertical-align: top;">
                 <input type="number" class="form-control form-control-sm line-total"
-                       value="0" readonly>
+                       value="0" step="0.01"
+                       onchange="calculateFromAmount(this)">
             </td>
             <td style="vertical-align: top;">
                 <button type="button" class="btn btn-sm btn-danger" onclick="removeLineItem(this)">
@@ -509,6 +504,19 @@ function calculateLineTotal(element) {
     const total = subtotal + taxAmount;
 
     row.querySelector('.line-total').value = total.toFixed(2);
+    calculateTotals();
+}
+
+function calculateFromAmount(element) {
+    const row = element.closest('tr');
+    const amount = parseFloat(row.querySelector('.line-total').value) || 0;
+    const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+    const taxPercentage = parseFloat(row.querySelector('.tax-percentage').value) || 0;
+
+    if (quantity > 0) {
+        const unitPrice = amount / (quantity * (1 + taxPercentage / 100));
+        row.querySelector('.unit-price').value = unitPrice.toFixed(2);
+    }
     calculateTotals();
 }
 
@@ -563,6 +571,36 @@ function selectProduct(selectElement, index) {
         calculateLineTotal(row.querySelector('.quantity'));
     }
 }
+
+// Auto-calculate due date from issue date + payment terms
+function calculateDueDate() {
+    const issueDateInput = document.querySelector('[name="issue_date"]');
+    const paymentTerms = document.querySelector('[name="payment_terms"]').value;
+    const dueDateInput = document.querySelector('[name="due_date"]');
+
+    if (!issueDateInput.value || paymentTerms === 'custom') return;
+
+    const issueDate = new Date(issueDateInput.value);
+    if (isNaN(issueDate.getTime())) return;
+
+    let dueDate = new Date(issueDate);
+
+    switch(paymentTerms) {
+        case 'immediate': break;
+        case 'net_7':  dueDate.setDate(dueDate.getDate() + 7);  break;
+        case 'net_15': dueDate.setDate(dueDate.getDate() + 15); break;
+        case 'net_30': dueDate.setDate(dueDate.getDate() + 30); break;
+        case 'net_45': dueDate.setDate(dueDate.getDate() + 45); break;
+        case 'net_60': dueDate.setDate(dueDate.getDate() + 60); break;
+        case 'net_90': dueDate.setDate(dueDate.getDate() + 90); break;
+        default: return;
+    }
+
+    dueDateInput.value = dueDate.toISOString().split('T')[0];
+}
+
+document.querySelector('[name="payment_terms"]').addEventListener('change', calculateDueDate);
+document.querySelector('[name="issue_date"]').addEventListener('change', calculateDueDate);
 
 document.addEventListener('DOMContentLoaded', function() {
     calculateTotals();

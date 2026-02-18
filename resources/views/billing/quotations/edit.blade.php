@@ -169,7 +169,7 @@
                                                                step="0.01" min="0" max="100" value="{{ old('items.' . $index . '.tax_percentage', $item->tax_percentage) }}">
                                                     </td>
                                                     <td>
-                                                        <input type="text" class="form-control item-amount" readonly>
+                                                        <input type="number" class="form-control item-amount" step="0.01">
                                                     </td>
                                                     <td>
                                                         <button type="button" class="btn btn-sm btn-danger remove-item">
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="number" name="items[${itemIndex}][tax_percentage]" class="form-control item-tax" step="0.01" min="0" max="100" value="{{ $settings['default_tax_rate'] ?? 18 }}">
             </td>
             <td>
-                <input type="text" class="form-control item-amount" readonly>
+                <input type="number" class="form-control item-amount" step="0.01">
             </td>
             <td>
                 <button type="button" class="btn btn-sm btn-danger remove-item">
@@ -334,23 +334,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const quantity = row.querySelector('.item-quantity');
         const price = row.querySelector('.item-price');
         const tax = row.querySelector('.item-tax');
-        
+        const amount = row.querySelector('.item-amount');
+
         [quantity, price, tax].forEach(input => {
             input.addEventListener('input', calculateRowTotal);
         });
+        amount.addEventListener('input', calculateFromAmount);
     }
-    
+
     function calculateRowTotal(e) {
         const row = e.target.closest('tr');
         const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
         const price = parseFloat(row.querySelector('.item-price').value) || 0;
         const taxRate = parseFloat(row.querySelector('.item-tax').value) || 0;
-        
+
         const subtotal = quantity * price;
         const taxAmount = subtotal * (taxRate / 100);
         const total = subtotal + taxAmount;
-        
+
         row.querySelector('.item-amount').value = total.toFixed(2);
+        calculateTotals();
+    }
+
+    function calculateFromAmount(e) {
+        const row = e.target.closest('tr');
+        const amount = parseFloat(row.querySelector('.item-amount').value) || 0;
+        const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+        const taxRate = parseFloat(row.querySelector('.item-tax').value) || 0;
+
+        if (quantity > 0) {
+            const unitPrice = amount / (quantity * (1 + taxRate / 100));
+            row.querySelector('.item-price').value = unitPrice.toFixed(2);
+        }
         calculateTotals();
     }
     
