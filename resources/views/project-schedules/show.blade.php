@@ -224,7 +224,7 @@
         @endif
 
         <!-- Activities by Phase -->
-        @foreach($activitiesByPhase as $phase => $activities)
+        @forelse($activitiesByPhase as $phase => $activities)
             <div class="block block-themed mb-4">
                 <div class="block-header bg-primary">
                     <h3 class="block-title">{{ $phase }}</h3>
@@ -369,7 +369,15 @@
                     </div>
                 </div>
             </div>
-        @endforeach
+        @empty
+            <div class="block block-themed mb-4">
+                <div class="block-content text-center py-4">
+                    <i class="fa fa-tasks fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">No activities have been generated for this schedule.<br>
+                    Please ensure activity templates are configured in the system.</p>
+                </div>
+            </div>
+        @endforelse
 
         <!-- Timeline View -->
         <div class="block block-themed">

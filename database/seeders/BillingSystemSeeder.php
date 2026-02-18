@@ -113,7 +113,7 @@ class BillingSystemSeeder extends Seeder
         // Create Sample Invoice
         $client = BillingClient::first();
         $product = BillingProduct::first();
-        
+
         $invoice = BillingDocument::firstOrCreate(['document_number' => 'INV-2025-00001'], [
             'document_type' => 'invoice',
             'document_number' => 'INV-2025-00001',
@@ -126,7 +126,7 @@ class BillingSystemSeeder extends Seeder
             'exchange_rate' => 1.0000,
             'notes' => 'Sample construction invoice',
             'terms_conditions' => 'Payment due within 15 days',
-            'footer_text' => 'Thank you for your business!',
+            'footer_text' => 'Thank you for choosing us',
             'sales_person' => 'Engineer Mwalimu',
             'created_by' => 1,
             'sent_at' => now()->subDays(29),

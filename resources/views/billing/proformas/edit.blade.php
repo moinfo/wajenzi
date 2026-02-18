@@ -188,8 +188,9 @@
                                                            value="{{ $item->tax_percentage }}" min="0" max="100" step="0.01" onchange="calculateRow({{ $loop->index + 1 }})">
                                                 </td>
                                                 <td>
-                                                    <input type="number" name="items[{{ $loop->index + 1 }}][line_total]" class="form-control form-control-sm" 
-                                                           value="{{ $item->line_total }}" readonly>
+                                                    <input type="number" name="items[{{ $loop->index + 1 }}][line_total]" class="form-control form-control-sm"
+                                                           value="{{ $item->line_total }}" step="0.01"
+                                                           onchange="calculateFromAmount(this)">
                                                 </td>
                                                 <td>
                                                     <button type="button" class="btn btn-sm btn-danger" onclick="removeItem({{ $loop->index + 1 }})">
@@ -375,7 +376,8 @@ function addItem() {
             <input type="number" name="items[${itemCount}][tax_percentage]" class="form-control form-control-sm" placeholder="Tax %" min="0" max="100" step="0.01" value="0" onchange="calculateRow(${itemCount})">
         </td>
         <td>
-            <input type="number" name="items[${itemCount}][line_total]" class="form-control form-control-sm" readonly>
+            <input type="number" name="items[${itemCount}][line_total]" class="form-control form-control-sm" step="0.01"
+                   onchange="calculateFromAmount(this)">
         </td>
         <td>
             <button type="button" class="btn btn-sm btn-danger" onclick="removeItem(${itemCount})">
@@ -396,13 +398,28 @@ function calculateRow(itemId) {
     const quantity = parseFloat(document.querySelector(`input[name="items[${itemId}][quantity]"]`).value) || 0;
     const unitPrice = parseFloat(document.querySelector(`input[name="items[${itemId}][unit_price]"]`).value) || 0;
     const taxPercentage = parseFloat(document.querySelector(`input[name="items[${itemId}][tax_percentage]"]`).value) || 0;
-    
+
     const subtotal = quantity * unitPrice;
     const taxAmount = subtotal * (taxPercentage / 100);
 
     // line_total is pre-tax amount (tax is added at document level)
     document.querySelector(`input[name="items[${itemId}][line_total]"]`).value = subtotal.toFixed(2);
-    
+
+    calculateTotals();
+}
+
+function calculateFromAmount(element) {
+    const match = element.name.match(/items\[(\d+)\]/);
+    if (!match) return;
+    const itemId = match[1];
+
+    const amount = parseFloat(element.value) || 0;
+    const quantity = parseFloat(document.querySelector(`input[name="items[${itemId}][quantity]"]`).value) || 0;
+
+    if (quantity > 0) {
+        const unitPrice = amount / quantity;
+        document.querySelector(`input[name="items[${itemId}][unit_price]"]`).value = unitPrice.toFixed(2);
+    }
     calculateTotals();
 }
 

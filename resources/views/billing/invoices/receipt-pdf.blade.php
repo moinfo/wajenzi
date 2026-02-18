@@ -409,7 +409,7 @@
 
     <!-- Footer -->
     <div class="footer">
-        <strong>Thank you for your business!</strong><br>
+        <strong>Thank you for choosing us</strong><br>
         Receipt generated on {{ now()->format('d/m/Y H:i:s') }}<br>
         This is an official receipt for Invoice {{ $invoice->document_number }}.
     </div>

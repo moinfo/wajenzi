@@ -32,6 +32,17 @@
         </div>
     @endif
 
+    @php
+        // Pre-load data for summary cards
+        $linkedProject = $lead->project;
+        $projectSchedule = \App\Models\ProjectSchedule::where('lead_id', $lead->id)->first();
+        $invoices = $lead->invoices;
+        $totalInvoiced = $invoices->sum('total_amount');
+        $totalPaid = $invoices->sum('paid_amount');
+        $totalBalance = $invoices->sum('balance_amount');
+        $currency = $invoices->first()?->currency_code ?? 'TZS';
+    @endphp
+
     <!-- Lead Status Summary -->
     <div class="row">
         <div class="col-md-3">
@@ -99,6 +110,83 @@
             </div>
         </div>
     </div>
+
+    <!-- Payment, Schedule & Project Summary Cards -->
+    @if($totalInvoiced > 0 || $projectSchedule || $linkedProject)
+    <div class="row">
+        <div class="col-md-4">
+            <div class="block block-rounded text-center">
+                <div class="block-content block-content-full">
+                    <div class="py-3">
+                        @if($totalInvoiced > 0)
+                            <p class="h4 {{ $totalBalance <= 0 ? 'text-success' : 'text-danger' }} mb-1">
+                                {{ $currency }} {{ number_format($totalPaid) }}
+                                <small class="text-muted">/ {{ number_format($totalInvoiced) }}</small>
+                            </p>
+                            <div class="progress mb-2" style="height: 6px;">
+                                <div class="progress-bar bg-success" style="width: {{ $totalInvoiced > 0 ? round(($totalPaid / $totalInvoiced) * 100) : 0 }}%"></div>
+                            </div>
+                            @if($totalBalance > 0)
+                                <small class="text-danger">Balance: {{ $currency }} {{ number_format($totalBalance) }}</small>
+                            @else
+                                <small class="text-success"><i class="fa fa-check-circle"></i> Fully Paid</small>
+                            @endif
+                        @else
+                            <p class="h4 text-muted mb-0">No Invoices</p>
+                        @endif
+                        <p class="text-muted mb-0 mt-1"><i class="fa fa-file-invoice-dollar mr-1"></i>Invoice Payments</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="block block-rounded text-center">
+                <div class="block-content block-content-full">
+                    <div class="py-3">
+                        @if($projectSchedule)
+                            @php
+                                $schedColors = ['draft' => 'secondary', 'pending_confirmation' => 'warning', 'confirmed' => 'info', 'in_progress' => 'primary', 'completed' => 'success', 'cancelled' => 'danger'];
+                            @endphp
+                            <p class="h4 mb-1">
+                                <span class="badge badge-{{ $schedColors[$projectSchedule->status] ?? 'secondary' }}">
+                                    {{ ucwords(str_replace('_', ' ', $projectSchedule->status)) }}
+                                </span>
+                            </p>
+                            <div class="progress mb-2" style="height: 6px;">
+                                <div class="progress-bar bg-info" style="width: {{ $projectSchedule->progress }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ $projectSchedule->progress }}% Complete</small>
+                        @else
+                            <p class="h4 text-muted mb-0">Not Created</p>
+                        @endif
+                        <p class="text-muted mb-0 mt-1"><i class="fa fa-calendar-alt mr-1"></i>Project Schedule</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="block block-rounded text-center">
+                <div class="block-content block-content-full">
+                    <div class="py-3">
+                        @if($linkedProject)
+                            @php
+                                $pStatus = $linkedProject->approvalStatus?->status ?? $linkedProject->status ?? 'pending';
+                                $pColors = ['pending' => 'warning', 'APPROVED' => 'success', 'in_progress' => 'primary', 'COMPLETED' => 'success', 'Completed' => 'success', 'Rejected' => 'danger'];
+                            @endphp
+                            <p class="h5 mb-1">{{ Str::limit($linkedProject->project_name, 25) }}</p>
+                            <span class="badge badge-{{ $pColors[$pStatus] ?? 'secondary' }}">
+                                {{ ucwords(str_replace('_', ' ', $pStatus)) }}
+                            </span>
+                        @else
+                            <p class="h4 text-muted mb-0">Not Linked</p>
+                        @endif
+                        <p class="text-muted mb-0 mt-1"><i class="fa fa-building mr-1"></i>Linked Project</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Lead Information -->
     <div class="block block-rounded">
@@ -255,7 +343,6 @@
 
     <!-- Project Link Section -->
     @php
-        $linkedProject = $lead->project;
         $availableProjects = \App\Models\Project::whereDoesntHave('leads')
             ->orWhere('id', $lead->project_id)
             ->orderBy('created_at', 'desc')
@@ -263,89 +350,74 @@
         $projectTypes = \App\Models\ProjectType::all();
         $serviceTypes = \App\Models\ServiceType::all();
     @endphp
+    @if($linkedProject)
     <div class="block block-rounded">
         <div class="block-header block-header-default">
             <h3 class="block-title"><i class="fa fa-building text-primary mr-2"></i>Linked Project</h3>
             <div class="block-options">
-                @if($linkedProject)
-                    <a href="{{ route('individual_projects', [$linkedProject->id, 10]) }}" class="btn btn-sm btn-success mr-1">
-                        <i class="fa fa-eye"></i> View Project
-                    </a>
-                    <form action="{{ route('leads.unlink-project', $lead->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Unlink this project?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                            <i class="fa fa-unlink"></i> Unlink
-                        </button>
-                    </form>
-                @else
-                    <button type="button" class="btn btn-sm btn-primary mr-1" data-toggle="modal" data-target="#linkProjectModal">
-                        <i class="fa fa-link"></i> Link Existing
+                <a href="{{ route('individual_projects', [$linkedProject->id, 10]) }}" class="btn btn-sm btn-success mr-1">
+                    <i class="fa fa-eye"></i> View Project
+                </a>
+                <form action="{{ route('leads.unlink-project', $lead->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Unlink this project?')">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                        <i class="fa fa-unlink"></i> Unlink
                     </button>
-                    <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#createProjectModal">
-                        <i class="fa fa-plus"></i> Create New
-                    </button>
-                @endif
+                </form>
             </div>
         </div>
         <div class="block-content">
-            @if($linkedProject)
-                <div class="row">
-                    <div class="col-md-3">
-                        <strong>Project ID:</strong>
-                        <p class="mb-1"><span class="badge badge-light">{{ $linkedProject->document_number }}</span></p>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Project Name:</strong>
-                        <p class="mb-1">{{ $linkedProject->project_name }}</p>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Type:</strong>
-                        <p class="mb-1">{{ $linkedProject->projectType->name ?? '-' }}</p>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Status:</strong>
-                        @php
-                            $projStatus = $linkedProject->approvalStatus?->status ?? $linkedProject->status ?? 'pending';
-                            $projStatusColors = [
-                                'pending' => 'warning', 'APPROVED' => 'success', 'in_progress' => 'primary',
-                                'COMPLETED' => 'success', 'Completed' => 'success', 'Rejected' => 'danger',
-                            ];
-                        @endphp
-                        <p class="mb-1">
-                            <span class="badge badge-{{ $projStatusColors[$projStatus] ?? 'secondary' }}">
-                                {{ ucwords(str_replace('_', ' ', $projStatus)) }}
-                            </span>
-                        </p>
-                    </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Project ID:</strong>
+                    <p class="mb-1"><span class="badge badge-light">{{ $linkedProject->document_number }}</span></p>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-md-3">
-                        <strong>Start Date:</strong>
-                        <p class="mb-1">{{ $linkedProject->start_date ? $linkedProject->start_date->format('d/m/Y') : '-' }}</p>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Expected End:</strong>
-                        <p class="mb-1">{{ $linkedProject->expected_end_date ? $linkedProject->expected_end_date->format('d/m/Y') : '-' }}</p>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Contract Value:</strong>
-                        <p class="mb-1">{{ $linkedProject->contract_value ? 'TZS ' . number_format($linkedProject->contract_value) : '-' }}</p>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Duration:</strong>
-                        <p class="mb-1">{{ $linkedProject->planned_duration ? $linkedProject->planned_duration . ' days' : '-' }}</p>
-                    </div>
+                <div class="col-md-3">
+                    <strong>Project Name:</strong>
+                    <p class="mb-1">{{ $linkedProject->project_name }}</p>
                 </div>
-            @else
-                <div class="text-center py-4">
-                    <i class="fa fa-building fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">No project linked to this lead yet.</p>
-                    <p class="text-muted small">Link an existing project or create a new one to track project details.</p>
+                <div class="col-md-3">
+                    <strong>Type:</strong>
+                    <p class="mb-1">{{ $linkedProject->projectType->name ?? '-' }}</p>
                 </div>
-            @endif
+                <div class="col-md-3">
+                    <strong>Status:</strong>
+                    @php
+                        $projStatus = $linkedProject->approvalStatus?->status ?? $linkedProject->status ?? 'pending';
+                        $projStatusColors = [
+                            'pending' => 'warning', 'APPROVED' => 'success', 'in_progress' => 'primary',
+                            'COMPLETED' => 'success', 'Completed' => 'success', 'Rejected' => 'danger',
+                        ];
+                    @endphp
+                    <p class="mb-1">
+                        <span class="badge badge-{{ $projStatusColors[$projStatus] ?? 'secondary' }}">
+                            {{ ucwords(str_replace('_', ' ', $projStatus)) }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-md-3">
+                    <strong>Start Date:</strong>
+                    <p class="mb-1">{{ $linkedProject->start_date ? $linkedProject->start_date->format('d/m/Y') : '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <strong>Expected End:</strong>
+                    <p class="mb-1">{{ $linkedProject->expected_end_date ? $linkedProject->expected_end_date->format('d/m/Y') : '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <strong>Contract Value:</strong>
+                    <p class="mb-1">{{ $linkedProject->contract_value ? 'TZS ' . number_format($linkedProject->contract_value) : '-' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <strong>Duration:</strong>
+                    <p class="mb-1">{{ $linkedProject->planned_duration ? $linkedProject->planned_duration . ' days' : '-' }}</p>
+                </div>
+            </div>
         </div>
     </div>
+    @endif
 
     <!-- Project Costs Section (only shown when project is linked) -->
     @if($linkedProject)
@@ -706,84 +778,69 @@
     @endif
 
     <!-- Project Schedule Section -->
-    @php
-        $projectSchedule = \App\Models\ProjectSchedule::where('lead_id', $lead->id)->first();
-    @endphp
+    @if($projectSchedule)
     <div class="block block-rounded">
         <div class="block-header block-header-default">
             <h3 class="block-title"><i class="fa fa-calendar-alt text-info mr-2"></i>Project Schedule</h3>
             <div class="block-options">
-                @if($projectSchedule)
-                    <a href="{{ route('project-schedules.show', $projectSchedule) }}" class="btn btn-sm btn-info">
-                        <i class="fa fa-eye"></i> View Schedule
-                    </a>
-                @else
-                    <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#createScheduleModal">
-                        <i class="fa fa-plus"></i> Create Schedule
-                    </button>
-                @endif
+                <a href="{{ route('project-schedules.show', $projectSchedule) }}" class="btn btn-sm btn-info">
+                    <i class="fa fa-eye"></i> View Schedule
+                </a>
             </div>
         </div>
         <div class="block-content">
-            @if($projectSchedule)
-                <div class="row">
-                    <div class="col-md-3">
-                        <strong>Status:</strong>
-                        @php
-                            $scheduleStatusColors = [
-                                'draft' => 'secondary',
-                                'pending_confirmation' => 'warning',
-                                'confirmed' => 'info',
-                                'in_progress' => 'primary',
-                                'completed' => 'success',
-                                'cancelled' => 'danger',
-                            ];
-                        @endphp
-                        <span class="badge badge-{{ $scheduleStatusColors[$projectSchedule->status] ?? 'secondary' }}">
-                            {{ ucwords(str_replace('_', ' ', $projectSchedule->status)) }}
-                        </span>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Architect:</strong>
-                        {{ $projectSchedule->assignedArchitect->name ?? 'Unassigned' }}
-                        <button type="button" class="btn btn-sm btn-outline-primary ml-2" data-toggle="modal" data-target="#changeArchitectModal" title="Change Architect">
-                            <i class="fa fa-exchange-alt"></i>
-                        </button>
-                    </div>
-                    <div class="col-md-3">
-                        <strong>Start:</strong>
-                        {{ $projectSchedule->start_date->format('d/m/Y') }}
-                    </div>
-                    <div class="col-md-3">
-                        <strong>End:</strong>
-                        {{ $projectSchedule->end_date ? $projectSchedule->end_date->format('d/m/Y') : 'N/A' }}
-                    </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <strong>Status:</strong>
+                    @php
+                        $scheduleStatusColors = [
+                            'draft' => 'secondary',
+                            'pending_confirmation' => 'warning',
+                            'confirmed' => 'info',
+                            'in_progress' => 'primary',
+                            'completed' => 'success',
+                            'cancelled' => 'danger',
+                        ];
+                    @endphp
+                    <span class="badge badge-{{ $scheduleStatusColors[$projectSchedule->status] ?? 'secondary' }}">
+                        {{ ucwords(str_replace('_', ' ', $projectSchedule->status)) }}
+                    </span>
                 </div>
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <strong>Progress:</strong>
-                        <div class="progress mt-1" style="height: 25px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ $projectSchedule->progress }}%">
-                                {{ $projectSchedule->progress }}% Complete
-                            </div>
+                <div class="col-md-3">
+                    <strong>Architect:</strong>
+                    {{ $projectSchedule->assignedArchitect->name ?? 'Unassigned' }}
+                    <button type="button" class="btn btn-sm btn-outline-primary ml-2" data-toggle="modal" data-target="#changeArchitectModal" title="Change Architect">
+                        <i class="fa fa-exchange-alt"></i>
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <strong>Start:</strong>
+                    {{ $projectSchedule->start_date->format('d/m/Y') }}
+                </div>
+                <div class="col-md-3">
+                    <strong>End:</strong>
+                    {{ $projectSchedule->end_date ? $projectSchedule->end_date->format('d/m/Y') : 'N/A' }}
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <strong>Progress:</strong>
+                    <div class="progress mt-1" style="height: 25px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ $projectSchedule->progress }}%">
+                            {{ $projectSchedule->progress }}% Complete
                         </div>
                     </div>
                 </div>
-                @if($projectSchedule->status === 'draft' || $projectSchedule->status === 'pending_confirmation')
-                    <div class="alert alert-warning mt-3 mb-0">
-                        <i class="fa fa-exclamation-triangle mr-2"></i>
-                        Schedule is not yet confirmed. <a href="{{ route('project-schedules.show', $projectSchedule) }}">Review and confirm</a> to activate activities.
-                    </div>
-                @endif
-            @else
-                <div class="text-center py-4">
-                    <i class="fa fa-calendar-times fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">No project schedule created yet.</p>
-                    <p class="text-muted small">A schedule will be automatically created when the first payment is received, or you can create one manually.</p>
+            </div>
+            @if($projectSchedule->status === 'draft' || $projectSchedule->status === 'pending_confirmation')
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="fa fa-exclamation-triangle mr-2"></i>
+                    Schedule is not yet confirmed. <a href="{{ route('project-schedules.show', $projectSchedule) }}">Review and confirm</a> to activate activities.
                 </div>
             @endif
         </div>
     </div>
+    @endif
 
     <!-- Create Schedule Modal -->
     @if(!$projectSchedule)
@@ -860,6 +917,12 @@
     @endif
 
     <!-- Billing Documents Section -->
+    @php
+        $quotations = $lead->quotations;
+        $proformas = $lead->proformas;
+        $hasDocs = $quotations->count() > 0 || $proformas->count() > 0 || $invoices->count() > 0;
+    @endphp
+    @if($hasDocs)
     <div class="block block-rounded">
         <div class="block-header block-header-default">
             <h3 class="block-title"><i class="fa fa-file-invoice text-primary mr-2"></i>Billing Documents</h3>
@@ -876,20 +939,6 @@
             </div>
         </div>
         <div class="block-content">
-            @php
-                $quotations = $lead->quotations;
-                $proformas = $lead->proformas;
-                $invoices = $lead->invoices;
-                $hasDocs = $quotations->count() > 0 || $proformas->count() > 0 || $invoices->count() > 0;
-
-                // Calculate invoice totals
-                $totalInvoiced = $invoices->sum('total_amount');
-                $totalPaid = $invoices->sum('paid_amount');
-                $totalBalance = $invoices->sum('balance_amount');
-                $currency = $invoices->first()?->currency_code ?? 'TZS';
-            @endphp
-
-            @if($hasDocs)
                 {{-- Invoice Payment Summary --}}
                 @if($invoices->count() > 0)
                 <div class="row mb-4">
@@ -1030,14 +1079,9 @@
                         @endforelse
                     </div>
                 </div>
-            @else
-                <div class="alert alert-info mb-0">
-                    <i class="fa fa-info-circle mr-2"></i>
-                    No billing documents linked to this lead yet. Use the buttons above to create a quotation, proforma invoice, or invoice.
-                </div>
-            @endif
         </div>
     </div>
+    @endif
 
     <!-- Add New Follow-up -->
     <div class="block block-rounded">
@@ -1213,12 +1257,33 @@
     <div class="block block-rounded">
         <div class="block-content">
             <div class="row">
-                <div class="col-12">
-                    <a href="{{ route('leads.edit', $lead->id) }}" class="btn btn-primary">
+                <div class="col-12 d-flex flex-wrap align-items-center">
+                    <a href="{{ route('leads.edit', $lead->id) }}" class="btn btn-primary mr-1 mb-1">
                         <i class="fa fa-edit"></i> Edit Lead
                     </a>
+                    @if(!$linkedProject)
+                        <button type="button" class="btn btn-outline-primary mr-1 mb-1" data-toggle="modal" data-target="#linkProjectModal">
+                            <i class="fa fa-link"></i> Link Project
+                        </button>
+                        <button type="button" class="btn btn-outline-success mr-1 mb-1" data-toggle="modal" data-target="#createProjectModal">
+                            <i class="fa fa-building"></i> Create Project
+                        </button>
+                    @endif
+                    @if(!$projectSchedule)
+                        <button type="button" class="btn btn-outline-info mr-1 mb-1" data-toggle="modal" data-target="#createScheduleModal">
+                            <i class="fa fa-calendar-alt"></i> Create Schedule
+                        </button>
+                    @endif
+                    @if(!$hasDocs)
+                        <a href="{{ route('billing.quotations.create', ['lead_id' => $lead->id]) }}" class="btn btn-outline-primary mr-1 mb-1">
+                            <i class="fa fa-plus"></i> Quotation
+                        </a>
+                        <a href="{{ route('billing.invoices.create', ['lead_id' => $lead->id]) }}" class="btn btn-outline-success mr-1 mb-1">
+                            <i class="fa fa-plus"></i> Invoice
+                        </a>
+                    @endif
 
-                    <form method="POST" action="{{ route('leads.destroy', $lead->id) }}" class="d-inline">
+                    <form method="POST" action="{{ route('leads.destroy', $lead->id) }}" class="d-inline mr-1 mb-1">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this lead?')">
@@ -1226,7 +1291,7 @@
                         </button>
                     </form>
 
-                    <a href="{{ route('leads.index') }}" class="btn btn-secondary">
+                    <a href="{{ route('leads.index') }}" class="btn btn-secondary mb-1">
                         <i class="fa fa-arrow-left"></i> Back to Leads
                     </a>
                 </div>

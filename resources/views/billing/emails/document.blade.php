@@ -145,7 +145,7 @@
         <div class="footer">
             <p><strong>{{ config('app.name') }}</strong></p>
             <p>Email: billing@wajenziprofessional.co.tz | Phone: +255 793 444 400</p>
-            <p>Thank you for your business!</p>
+            <p>Thank you for choosing us</p>
         </div>
     </div>
 </body>

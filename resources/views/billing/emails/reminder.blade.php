@@ -191,7 +191,7 @@
 
     <p><strong>If you have any questions regarding this invoice or need to discuss payment arrangements, please don't hesitate to contact us.</strong></p>
 
-    <p><strong>Thank you for your business!</strong></p>
+    <p><strong>Thank you for choosing us</strong></p>
 
     <p><strong>Best regards,<br>
     {{ config('app.name') }} Accounts Team</strong></p>

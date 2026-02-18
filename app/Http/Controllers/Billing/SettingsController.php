@@ -11,14 +11,14 @@ class SettingsController extends Controller
     public function index()
     {
         $settings = BillingDocumentSetting::orderBy('setting_key')->get()->groupBy('setting_type');
-        
+
         return view('billing.settings.index', compact('settings'));
     }
 
     public function edit()
     {
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
-        
+
         return view('billing.settings.edit', compact('settings'));
     }
 
@@ -80,7 +80,7 @@ class SettingsController extends Controller
             'default_currency' => 'TZS',
             'default_tax_rate' => '18',
             'invoice_terms' => 'Payment is due within the specified payment terms. Late payments may incur additional charges.',
-            'invoice_footer' => 'Thank you for your business!'
+            'invoice_footer' => 'Thank you for choosing us'
         ];
 
         foreach ($defaultSettings as $key => $value) {
@@ -199,7 +199,7 @@ class SettingsController extends Controller
     public function getSetting($key)
     {
         $setting = BillingDocumentSetting::where('setting_key', $key)->first();
-        
+
         return $setting ? $setting->setting_value : null;
     }
 }
