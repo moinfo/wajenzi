@@ -10,20 +10,24 @@ class ProjectScheduleMenuSeeder extends Seeder
 {
     public function run()
     {
-        // Create permission (match existing guard_name pattern)
-        $permission = Permission::firstOrCreate(
-            ['name' => 'Project Schedules', 'guard_name' => 'web']
-        );
-
-        // Assign to key roles via DB to avoid guard mismatch
+        // Create permissions (match existing guard_name pattern)
+        $permissionNames = ['Project Schedules', 'Edit Project Schedule', 'Assign Project Activities'];
         $roles = ['System Administrator', 'Managing Director', 'Architect', 'Project Manager'];
-        foreach ($roles as $roleName) {
-            $role = DB::table('roles')->where('name', $roleName)->first();
-            if ($role) {
-                DB::table('role_has_permissions')->insertOrIgnore([
-                    'permission_id' => $permission->id,
-                    'role_id' => $role->id,
-                ]);
+
+        foreach ($permissionNames as $permName) {
+            $permission = Permission::firstOrCreate(
+                ['name' => $permName, 'guard_name' => 'web']
+            );
+
+            // Assign to key roles via DB to avoid guard mismatch
+            foreach ($roles as $roleName) {
+                $role = DB::table('roles')->where('name', $roleName)->first();
+                if ($role) {
+                    DB::table('role_has_permissions')->insertOrIgnore([
+                        'permission_id' => $permission->id,
+                        'role_id' => $role->id,
+                    ]);
+                }
             }
         }
 

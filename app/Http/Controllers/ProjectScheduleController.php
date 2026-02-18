@@ -18,7 +18,10 @@ class ProjectScheduleController extends Controller
      */
     public function index(Request $request)
     {
+        $user = auth()->user();
+
         $schedules = ProjectSchedule::with(['lead', 'assignedArchitect', 'client'])
+            ->when($user->hasRole('Architect'), fn($q) => $q->where('assigned_architect_id', $user->id))
             ->when($request->status, fn($q, $status) => $q->where('status', $status))
             ->when($request->architect_id, fn($q, $id) => $q->where('assigned_architect_id', $id))
             ->orderBy('created_at', 'desc')
