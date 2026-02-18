@@ -21,7 +21,7 @@ class CreateBillingDocumentSettingsTable extends Migration
             $table->text('description')->nullable();
             $table->timestamps();
         });
-        
+
         // Insert default settings
         \DB::table('billing_document_settings')->insert([
             [
@@ -114,7 +114,7 @@ class CreateBillingDocumentSettingsTable extends Migration
             ],
             [
                 'setting_key' => 'invoice_footer',
-                'setting_value' => 'Thank you for your business!',
+                'setting_value' => 'Thank you for choosing us',
                 'setting_type' => 'textarea',
                 'description' => 'Default footer text for invoices',
                 'created_at' => now(),

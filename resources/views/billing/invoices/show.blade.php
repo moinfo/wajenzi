@@ -279,7 +279,7 @@
 
                         <!-- Thank You & Contact -->
                         <div class="mt-3 text-center" style="padding: 15px; border-top: 2px solid #dee2e6;">
-                            <p><strong style="font-size: 14px;">Thank you for your business!</strong></p>
+                            <p><strong style="font-size: 14px;">Thank you for choosing us</strong></p>
                             <p><strong>Best regards,<br>{{ config('app.name') }} Accounts Team</strong></p>
                         </div>
 
@@ -459,7 +459,7 @@ Please find attached invoice {{ $invoice->document_number }} for {{ $invoice->cu
 Payment is due by {{ $invoice->due_date->format('d/m/Y') }}.
 @endif
 
-Thank you for your business!
+Thank you for choosing us
 
 Best regards</textarea>
                     </div>
@@ -537,7 +537,7 @@ Best regards</textarea>
                 <div class="modal-body">
                     <div class="form-group">
                         <label>To Email</label>
-                        <input type="email" name="email" class="form-control" 
+                        <input type="email" name="email" class="form-control"
                                value="{{ $invoice->client->email }}" required>
                     </div>
                     <div class="form-group">
@@ -570,7 +570,7 @@ Outstanding Amount: {{ $invoice->currency_code ?? 'TZS' }} {{ number_format($inv
 
 Please arrange payment at your earliest convenience. If you have already made this payment, please disregard this reminder.
 
-Thank you for your business!
+Thank you for choosing us
 
 Best regards,
 {{ config('app.name') }} Team</textarea>
@@ -605,8 +605,8 @@ Best regards,
                     <div class="form-group">
                         <label>Late Fee Percentage</label>
                         <div class="input-group">
-                            <input type="number" name="late_fee_percentage" class="form-control" 
-                                   value="10" min="0" max="100" step="0.01" id="lateFeePercentage" 
+                            <input type="number" name="late_fee_percentage" class="form-control"
+                                   value="10" min="0" max="100" step="0.01" id="lateFeePercentage"
                                    onchange="calculateLateFee()" required>
                             <div class="input-group-append">
                                 <span class="input-group-text">%</span>
@@ -678,7 +678,7 @@ Please find your invoice details below:
 
 📥 Download PDF: {{ $publicPdfUrl }}
 
-Thank you for your business!
+Thank you for choosing us
 
 Wajenzi Professional Co. Ltd</textarea>
                 </div>
@@ -809,7 +809,7 @@ function updateReminderSubject() {
     const subjectField = document.getElementById('reminderSubject');
     const messageField = document.getElementById('reminderMessage');
     const invoiceNumber = '{{ $invoice->document_number }}';
-    
+
     switch(reminderType) {
         case 'before_due':
             subjectField.value = `Payment Reminder - Invoice ${invoiceNumber} (Due Soon)`;
@@ -829,7 +829,7 @@ function calculateLateFee() {
     const percentage = parseFloat(document.getElementById('lateFeePercentage').value) || 0;
     const originalAmount = {{ $invoice->total_amount - $invoice->late_fee_amount }};
     const lateFeeAmount = (originalAmount * percentage) / 100;
-    
+
     document.getElementById('lateFeeAmount').value = lateFeeAmount.toFixed(2);
 }
 </script>
