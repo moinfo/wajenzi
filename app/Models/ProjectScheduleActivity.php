@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Permission\Models\Role;
 
 class ProjectScheduleActivity extends Model
 {
@@ -60,10 +59,11 @@ class ProjectScheduleActivity extends Model
 
     /**
      * Get the role responsible for this activity
+     * Uses base Model to avoid Spatie guard mismatch issues
      */
     public function role()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(\App\Models\Role::class);
     }
 
     /**

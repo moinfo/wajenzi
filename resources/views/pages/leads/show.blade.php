@@ -35,7 +35,7 @@
     @php
         // Pre-load data for summary cards
         $linkedProject = $lead->project;
-        $projectSchedule = \App\Models\ProjectSchedule::where('lead_id', $lead->id)->first();
+        $projectSchedule = \App\Models\ProjectSchedule::with(['assignedArchitect', 'activities.assignedUser'])->where('lead_id', $lead->id)->first();
         $invoices = $lead->invoices;
         $totalInvoiced = $invoices->sum('total_amount');
         $totalPaid = $invoices->sum('paid_amount');
@@ -807,9 +807,22 @@
                     </span>
                 </div>
                 <div class="col-md-3">
-                    <strong>Architect:</strong>
-                    {{ $projectSchedule->assignedArchitect->name ?? 'Unassigned' }}
-                    <button type="button" class="btn btn-sm btn-outline-primary ml-2" data-toggle="modal" data-target="#changeArchitectModal" title="Change Architect">
+                    <strong>Assigned Team:</strong>
+                    @php
+                        $assignedUsers = $projectSchedule->activities
+                            ->pluck('assignedUser')
+                            ->filter()
+                            ->unique('id');
+                        if ($assignedUsers->isEmpty() && $projectSchedule->assignedArchitect) {
+                            $assignedUsers = collect([$projectSchedule->assignedArchitect]);
+                        }
+                    @endphp
+                    @foreach($assignedUsers as $user)
+                        <span class="badge badge-{{ $user->id == $projectSchedule->assigned_architect_id ? 'primary' : 'info' }} mr-1">
+                            <i class="fa fa-{{ $user->id == $projectSchedule->assigned_architect_id ? 'user-tie' : 'user' }} mr-1"></i>{{ $user->name }}
+                        </span>
+                    @endforeach
+                    <button type="button" class="btn btn-sm btn-outline-primary ml-1" data-toggle="modal" data-target="#changeArchitectModal" title="Change Architect">
                         <i class="fa fa-exchange-alt"></i>
                     </button>
                 </div>
