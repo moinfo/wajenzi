@@ -58,6 +58,7 @@ class InvoiceController extends Controller
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
+        $leads = Lead::with('client')->orderBy('id', 'desc')->get();
 
         // If converting from quote or proforma
         $parentDocument = null;
@@ -71,7 +72,7 @@ class InvoiceController extends Controller
             $lead = Lead::with('client')->find($request->lead_id);
         }
 
-        return view('billing.invoices.create', compact('clients', 'products', 'taxRates', 'settings', 'parentDocument', 'lead'));
+        return view('billing.invoices.create', compact('clients', 'products', 'taxRates', 'settings', 'parentDocument', 'lead', 'leads'));
     }
 
     /**
@@ -194,8 +195,9 @@ class InvoiceController extends Controller
         $products = BillingProduct::with('taxRate')->where('is_active', true)->orderBy('name')->get();
         $taxRates = BillingTaxRate::where('is_active', true)->get();
         $settings = BillingDocumentSetting::pluck('setting_value', 'setting_key');
-        
-        return view('billing.invoices.edit', compact('invoice', 'clients', 'products', 'taxRates', 'settings'));
+        $leads = Lead::with('client')->orderBy('id', 'desc')->get();
+
+        return view('billing.invoices.edit', compact('invoice', 'clients', 'products', 'taxRates', 'settings', 'leads'));
     }
 
     /**
@@ -221,7 +223,7 @@ class InvoiceController extends Controller
         try {
             // Update invoice
             $invoice->update($request->only([
-                'title', 'service_description', 'client_id', 'project_id', 'issue_date', 'due_date',
+                'title', 'service_description', 'client_id', 'project_id', 'lead_id', 'issue_date', 'due_date',
                 'payment_terms', 'custom_payment_days', 'currency_code',
                 'exchange_rate', 'discount_type', 'discount_value',
                 'shipping_amount', 'notes', 'terms_conditions',
