@@ -15,3 +15,5 @@ yarn-error.log
 metadata
 .DS_Store
 storage/debugbar/.gitignore
+.playwright-mcp/
+docs/screenshots/
