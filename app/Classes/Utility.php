@@ -131,9 +131,9 @@ class Utility
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS =>'{"from":"LERUMA ENT", "to":"'.$phone.'",  "text": "'.$message.'", "senderID": "LERUMA ENT"}',
+            CURLOPT_POSTFIELDS =>'{"from":"Moinfo", "to":"'.$phone.'",  "text": "'.$message.'", "senderID": "Moinfo"}',
             CURLOPT_HTTPHEADER => array(
-                'Authorization: Basic TXVoaWRpbmk6MDc1NDg2MzgwMg==',
+                'Authorization: Basic d2FqZW56aTpXYWplbnppQDEyMw==',
                 'Content-Type: application/json',
                 'Accept: application/json'
             ),
@@ -154,9 +154,9 @@ class Utility
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS =>'{"from":"LERUMA ENT", "to":["'.$phones.'"],  "text": "'.$message.'", "senderID": "LERUMA ENT"}',
+            CURLOPT_POSTFIELDS =>'{"from":"Moinfo", "to":["'.$phones.'"],  "text": "'.$message.'", "senderID": "Moinfo"}',
             CURLOPT_HTTPHEADER => array(
-                'Authorization: Basic TXVoaWRpbmk6MDc1NDg2MzgwMg==',
+                'Authorization: Basic d2FqZW56aTpXYWplbnppQDEyMw==',
                 'Content-Type: application/json',
                 'Accept: application/json'
             ),
@@ -166,6 +166,31 @@ class Utility
         return $response;
     }
 
+
+    public static function getSmsBalance(): ?int
+    {
+        return \Illuminate\Support\Facades\Cache::remember('sms_balance', 300, function () {
+            try {
+                $curl = curl_init();
+                curl_setopt_array($curl, [
+                    CURLOPT_URL => 'https://messaging-service.co.tz/api/sms/v1/balance',
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_TIMEOUT => 10,
+                    CURLOPT_HTTPHEADER => [
+                        'Authorization: Basic d2FqZW56aTpXYWplbnppQDEyMw==',
+                        'Content-Type: application/json',
+                        'Accept: application/json',
+                    ],
+                ]);
+                $response = curl_exec($curl);
+                curl_close($curl);
+                $data = json_decode($response, true);
+                return $data['sms_balance'] ?? null;
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+    }
 
     public static function userGroupsArray($id)
     {

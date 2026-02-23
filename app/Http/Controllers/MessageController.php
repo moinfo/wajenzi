@@ -6,7 +6,10 @@ use App\Classes\Utility;
 use App\Models\FinancialCharge;
 use App\Models\Message;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redirect;
+use App\Models\User;
+use Carbon\Carbon;
 
 class MessageController extends Controller
 {
@@ -18,6 +21,10 @@ class MessageController extends Controller
     public function index(Request $request)
     {
         if($this->handleCrud($request, 'Message')) {
+            $balance = Utility::getSmsBalance();
+            if ($balance === null || $balance <= 0) {
+                return back()->with('error', 'Cannot send SMS. Insufficient SMS balance.');
+            }
             $phone = $request->input('phone');
             $message = $request->input('message');
             if ($phone[0] == 0){
@@ -32,13 +39,29 @@ class MessageController extends Controller
         }
         $messages = Message::latest()->get();
 
+        $smsBalance = $this->getSmsBalance();
+        $totalMessages = Message::count();
+        $todayMessages = Message::whereDate('created_at', today())->count();
+        $thisWeekMessages = Message::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->count();
+        $thisMonthMessages = Message::whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)->count();
+
         $data = [
-            'messages' => $messages
+            'messages' => $messages,
+            'smsBalance' => $smsBalance,
+            'totalMessages' => $totalMessages,
+            'todayMessages' => $todayMessages,
+            'thisWeekMessages' => $thisWeekMessages,
+            'thisMonthMessages' => $thisMonthMessages,
         ];
         return view('pages.messages.messages_index')->with($data);
     }
     public function bulk_sms(Request $request)
     {
+        $balance = Utility::getSmsBalance();
+        if ($balance === null || $balance <= 0) {
+            return back()->with('error', 'Cannot send SMS. Insufficient SMS balance.');
+        }
 
         $message = $request->input('message');
         $department_id = $request->input('department_id');
@@ -76,6 +99,34 @@ class MessageController extends Controller
             }
         }
         return Redirect::back();
+    }
+
+    public function birthdays()
+    {
+        $today = Carbon::today();
+
+        $users = User::where('status', 'ACTIVE')
+            ->whereNotNull('dob')
+            ->get();
+
+        $results = $users->map(function ($user) use ($today) {
+            $dob = Carbon::parse($user->dob);
+            $birthday = $dob->copy()->year($today->year);
+            if ($birthday->lt($today)) {
+                $birthday->addYear();
+            }
+            $daysUntil = $today->diffInDays($birthday, false);
+
+            return [
+                'name' => $user->name,
+                'phone_number' => $user->phone_number,
+                'dob_formatted' => $dob->format('d M'),
+                'is_today' => $daysUntil === 0,
+                'days_until' => $daysUntil,
+            ];
+        })->sortBy('days_until')->values();
+
+        return response()->json($results);
     }
 
     /**
@@ -142,5 +193,10 @@ class MessageController extends Controller
     public function destroy(Message $message)
     {
         //
+    }
+
+    private function getSmsBalance(): ?int
+    {
+        return Utility::getSmsBalance();
     }
 }

@@ -28,6 +28,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('billing:send-reminders')->dailyAt('00:00'); // Run daily at midnight
         $schedule->command('followup:send-reminders')->dailyAt('08:00'); // Send follow-up reminders at 8 AM
         $schedule->command('invoices:remind-accountants')->dailyAt('08:30'); // Send invoice due reminders to accountants at 8:30 AM
+        $schedule->command('sms:send-birthdays')->dailyAt('08:00'); // Send birthday SMS to employees at 8 AM
     }
 
 

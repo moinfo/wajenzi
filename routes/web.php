@@ -156,6 +156,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::match(['get', 'post'], '/eSMS', [App\Http\Controllers\MessageController::class, 'index'])->name('eSMS');
     Route::match(['get', 'post'], '/bulk_sms', [App\Http\Controllers\MessageController::class, 'bulk_sms'])->name('bulk_sms');
+    Route::get('/eSMS/birthdays', [App\Http\Controllers\MessageController::class, 'birthdays'])->name('eSMS.birthdays');
 
 
 

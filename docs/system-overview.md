@@ -6448,8 +6448,8 @@ Main page showing all sent messages in a DataTable with two action buttons for c
 | API Host | `https://messaging-service.co.tz` |
 | API Key | Hardcoded in source |
 | Secret Key | Hardcoded in source |
-| Sender ID | `LERUMA ENT` |
-| Source Address | `LERUMA ENT` |
+| Sender ID | `Moinfo` |
+| Source Address | `Moinfo` |
 
 **Phone Number Normalization:**
 Before sending, phone numbers are normalized with the following logic:
@@ -6460,7 +6460,7 @@ Before sending, phone numbers are normalized with the following logic:
 **Request Payload (Single):**
 ```json
 {
-  "from": "LERUMA ENT",
+  "from": "Moinfo",
   "to": "255XXXXXXXXX",
   "text": "Message content"
 }
@@ -6469,7 +6469,7 @@ Before sending, phone numbers are normalized with the following logic:
 **Request Payload (Multi):**
 ```json
 {
-  "from": "LERUMA ENT",
+  "from": "Moinfo",
   "to": ["255XXXXXXXXX", "255YYYYYYYYY"],
   "text": "Message content"
 }
@@ -6483,7 +6483,7 @@ Before sending, phone numbers are normalized with the following logic:
 - No character count / SMS segment calculation
 - No retry logic on gateway failure
 - Credentials hardcoded (not in `.env`)
-- Sender ID is company-specific ("LERUMA ENT"), not configurable
+- Sender ID is company-specific ("Moinfo"), not configurable
 
 ---
 
@@ -7783,7 +7783,7 @@ These pages appear under the **Finance sidebar section**, not the Settings hub:
 | DEFAULT_TAX_RATE | Default VAT rate | 18 |
 | ATTENDANCE_LATE_THRESHOLD | Late check-in time | 09:00:00 |
 | SMS_API_KEY | SMS gateway API key | (encrypted) |
-| SMS_SENDER_ID | SMS sender name | LERUMA ENT |
+| SMS_SENDER_ID | SMS sender name | Moinfo |
 | COMPANY_NAME | Company legal name | WAJENZI PROFESSIONAL COMPANY LIMITED |
 | COMPANY_ADDRESS | Company address | Dar es Salaam, Tanzania |
 | COMPANY_PHONE | Company phone | +255... |

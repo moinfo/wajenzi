@@ -19,6 +19,12 @@
             </div>
             <div class="col-sm-6">
                 <div class="form-group">
+                    <label for="input-user-phone_number">Phone Number</label>
+                    <input type="text" class="form-control" id="input-user-phone_number" name="phone_number" value="{{ $object->phone_number ?? '' }}" placeholder="e.g. 0754863802">
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-group">
                     <label for="example-nf-gender"  class="control-label required">Gender</label>
                     <select name="gender" id="input-gender" class="form-control"  required="required">
 {{--                        <option value="">Select Gender</option>--}}

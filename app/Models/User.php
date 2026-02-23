@@ -18,6 +18,7 @@ class User extends Authenticatable
     public $fillable = [
         'name',
         'email',
+        'phone_number',
         'gender',
         'password',
         'employee_number',
