@@ -198,6 +198,26 @@
             margin: 3px 0 8px 0;
             text-align: justify;
         }
+        .service-desc ol, .service-desc ul {
+            margin: 2px 0 2px 0;
+            padding-left: 20px;
+            list-style-position: outside;
+        }
+        .service-desc ol { list-style-type: decimal; }
+        .service-desc ul { list-style-type: disc; }
+        .service-desc li {
+            margin-bottom: 1px;
+            padding-left: 2px;
+            line-height: 1.4;
+            font-size: 10px;
+        }
+        .service-desc li ol, .service-desc li ul {
+            margin: 1px 0 1px 0;
+            padding-left: 16px;
+        }
+        .service-desc p {
+            margin: 2px 0;
+        }
         .tc-page ol {
             margin: 3px 0 8px 0;
             padding-left: 18px;
@@ -303,8 +323,8 @@
                 @if($quotation->service_description)
                     <div style="margin-top: 6px; font-size: 10px;">
                         <strong style="font-size: 11px;">Service Includes:</strong>
-                        <div style="padding: 4px 0 0 8px; font-size: 10px;">
-                            {!! $quotation->service_description !!}
+                        <div class="service-desc" style="padding: 2px 0 0 4px; font-size: 10px;">
+                            {!! str_replace(['&nbsp;', "\xC2\xA0"], ' ', $quotation->service_description) !!}
                         </div>
                     </div>
                 @endif
