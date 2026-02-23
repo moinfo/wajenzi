@@ -9,7 +9,7 @@ class Receipt extends Model
 {
     use HasFactory;
     use TANESCOReceiptTrait;
-    public $timestamps = false;
+    public $timestamps = true;
     protected $fillable = [
         'company_name', 'p_o_box', 'mobile', 'tin', 'vrn', 'serial_no', 'uin',
         'tax_office', 'customer_name', 'customer_id_type', 'customer_id',
