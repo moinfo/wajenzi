@@ -123,8 +123,7 @@ class ApiController extends Controller
 
             // For listing all receipts, paginate them
             $receipts = $query
-                ->orderBy('receipt_date', 'desc')
-                ->orderBy('receipt_time', 'desc')
+                ->orderBy('created_at', 'desc')
                 ->paginate(20);
 
             // Add summary data
@@ -222,7 +221,8 @@ class ApiController extends Controller
             $startDate = $request->input('start_date', now()->startOfMonth()->format('Y-m-d'));
             $endDate = $request->input('end_date', now()->format('Y-m-d'));
 
-            $query = Receipt::whereBetween('receipt_date', [$startDate, $endDate]);
+            $query = Receipt::whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate);
             $totalReceipts = $query->count();
             $totalAmount = (float) $query->sum('receipt_total_incl_of_tax');
             $totalTax = (float) $query->sum('receipt_total_tax');
@@ -231,7 +231,8 @@ class ApiController extends Controller
             $todayScans = Receipt::whereDate('created_at', now()->toDateString())->count();
 
             $recentReceipts = Receipt::with(['items', 'adjustments', 'payments'])
-                ->whereBetween('receipt_date', [$startDate, $endDate])
+                ->whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate)
                 ->orderBy('created_at', 'desc')
                 ->take(3)
                 ->get();
