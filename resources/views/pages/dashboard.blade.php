@@ -19,15 +19,33 @@
 
     // Financial data
     $sales = \App\Models\Sale::getTotalTax($start_date, $end_date);
+    $last_month_sales = \App\Models\Sale::getTotalTax($last_month_first_date, $last_month_last_date);
     $purchases = \App\Models\Purchase::getTotalPurchasesWithVAT($end_date, null, null, $start_date);
     $vat_analysis = new \App\Models\VatAnalysis();
     $this_month_tax_payable = $vat_analysis->getTaxPayable($end_date);
     $last_month_tax_payable = \App\Models\VatPayment::getTotalPaymentOfLastMonth($last_month_first_date, $last_month_last_date);
 
+    // Revenue trend (month-over-month)
+    $revenueTrend = ($last_month_sales > 0) ? round((($sales - $last_month_sales) / $last_month_sales) * 100, 1) : null;
+
+    // Project counts
+    $activeProjectCount = \App\Models\Project::where('status', 'APPROVED')->count();
+    $totalProjectCount = \App\Models\Project::count();
+
+    // Budget: total project expenses vs total contract values
+    $totalProjectExpenses = \Illuminate\Support\Facades\DB::table('project_expenses')->sum('amount') + \App\Models\Expense::sum('amount');
+    $totalContractValue = \App\Models\Project::sum('contract_value');
+    $budgetPercent = ($totalContractValue > 0) ? round(($totalProjectExpenses / $totalContractValue) * 100) : 0;
+
     // Approval counts
     $advance_salary_counting = AdvanceSalary::countUnapproved();
     $staff_loan_counting = Loan::countUnapproved();
     $payroll_counting = Payroll::countUnapproved();
+    $material_request_counting = \App\Models\ProjectMaterialRequest::whereDoesntHave('approvalStatus', function($q) {
+        $q->where('status', 'approved');
+    })->count();
+    $boq_pending_counting = \Illuminate\Support\Facades\DB::table('project_boqs')->where('status', 'draft')->count();
+    $purchase_pending_counting = \App\Models\Purchase::where('status', 'PENDING')->count();
 
     // Links
     $advance_salary_link = "settings/advance_salaries";
@@ -39,10 +57,9 @@
         ['name' => 'Payroll', 'count' => $payroll_counting, 'icon' => 'fa fa-money-bill-wave', 'link' => $payroll_link, 'color' => 'blue'],
         ['name' => 'Advance Salary', 'count' => $advance_salary_counting, 'icon' => 'fa fa-hand-holding-usd', 'link' => $advance_salary_link, 'color' => 'green'],
         ['name' => 'Staff Loan', 'count' => $staff_loan_counting, 'icon' => 'fa fa-credit-card', 'link' => $staff_loan_link, 'color' => 'orange'],
-        ['name' => 'Material Request', 'count' => 2, 'icon' => 'fa fa-boxes', 'link' => '#', 'color' => 'purple'],
-        ['name' => 'Project BOQ', 'count' => 3, 'icon' => 'fa fa-file-invoice', 'link' => '#', 'color' => 'indigo'],
-        ['name' => 'Project Expense', 'count' => 1, 'icon' => 'fa fa-receipt', 'link' => '#', 'color' => 'red'],
-        ['name' => 'Site Visit', 'count' => 4, 'icon' => 'fa fa-map-marker-alt', 'link' => '#', 'color' => 'teal'],
+        ['name' => 'Material Request', 'count' => $material_request_counting, 'icon' => 'fa fa-boxes', 'link' => '#', 'color' => 'purple'],
+        ['name' => 'Project BOQ', 'count' => $boq_pending_counting, 'icon' => 'fa fa-file-invoice', 'link' => '#', 'color' => 'indigo'],
+        ['name' => 'Purchases', 'count' => $purchase_pending_counting, 'icon' => 'fa fa-shopping-cart', 'link' => '#', 'color' => 'red'],
     ];
 
     // User and department data
@@ -118,14 +135,14 @@
                 <p class="welcome-subtitle">Here's what's happening with your construction projects today</p>
             </div>
             <div class="welcome-actions">
-                <button class="action-btn primary">
-                    <i class="fa fa-plus"></i>
-                    New Project
-                </button>
-                <button class="action-btn secondary">
-                    <i class="fa fa-chart-line"></i>
-                    View Reports
-                </button>
+                <a href="{{ route('projects') }}" class="action-btn primary">
+                    <i class="fa fa-building"></i>
+                    Projects
+                </a>
+                <a href="{{ route('eSMS') }}" class="action-btn secondary">
+                    <i class="fa fa-envelope"></i>
+                    eSMS
+                </a>
             </div>
         </div>
 
@@ -137,10 +154,12 @@
                     <div class="metric-icon">
                         <i class="fa fa-chart-line"></i>
                     </div>
-                    <div class="metric-trend up">
-                        <i class="fa fa-arrow-up"></i>
-                        <span>+12.5%</span>
-                    </div>
+                    @if($revenueTrend !== null)
+                        <div class="metric-trend {{ $revenueTrend >= 0 ? 'up' : 'down' }}">
+                            <i class="fa fa-arrow-{{ $revenueTrend >= 0 ? 'up' : 'down' }}"></i>
+                            <span>{{ ($revenueTrend >= 0 ? '+' : '') . $revenueTrend }}%</span>
+                        </div>
+                    @endif
                 </div>
                 <div class="metric-content">
                     <h3>Total Revenue</h3>
@@ -155,15 +174,14 @@
                     <div class="metric-icon">
                         <i class="fa fa-building"></i>
                     </div>
-                    <div class="metric-trend up">
-                        <i class="fa fa-arrow-up"></i>
-                        <span>+3</span>
+                    <div class="metric-badge">
+                        <span>{{ $totalProjectCount }}</span>
                     </div>
                 </div>
                 <div class="metric-content">
                     <h3>Active Projects</h3>
-                    <div class="metric-value">24</div>
-                    <p class="metric-period">Currently running</p>
+                    <div class="metric-value">{{ $activeProjectCount }}</div>
+                    <p class="metric-period">{{ $totalProjectCount }} total</p>
                 </div>
             </div>
 
@@ -199,15 +217,15 @@
                         <i class="fa fa-wallet"></i>
                     </div>
                     <div class="metric-progress">
-                        <span>68%</span>
+                        <span>{{ $budgetPercent }}%</span>
                     </div>
                 </div>
                 <div class="metric-content">
                     <h3>Budget Utilization</h3>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 68%"></div>
+                        <div class="progress-fill" style="width: {{ min($budgetPercent, 100) }}%"></div>
                     </div>
-                    <p class="metric-period">TZS 2.4M of 3.5M used</p>
+                    <p class="metric-period">TZS {{ number_format($totalProjectExpenses / 1000000, 1) }}M of {{ number_format($totalContractValue / 1000000, 1) }}M used</p>
                 </div>
             </div>
         </div>
@@ -435,37 +453,29 @@
                         <i class="fa-brands fa-google"></i> Export
                     </a>
                 </div>
-                <div class="followup-stats-row">
-                    <div class="followup-stat-card overdue">
-                        <div class="stat-icon"><i class="fa fa-exclamation-triangle"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-number">{{ $overdueInvoicesCount ?? 0 }}</span>
-                            <span class="stat-label">OVERDUE</span>
-                        </div>
+                <div class="inv-stats-grid">
+                    <div class="inv-stat overdue">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <span class="inv-stat-num">{{ $overdueInvoicesCount ?? 0 }}</span>
+                        <span class="inv-stat-lbl">Overdue</span>
                     </div>
-                    <div class="followup-stat-card today">
-                        <div class="stat-icon"><i class="fa fa-clock"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-number">{{ $todayInvoicesCount ?? 0 }}</span>
-                            <span class="stat-label">DUE TODAY</span>
-                        </div>
+                    <div class="inv-stat today">
+                        <i class="fa fa-clock"></i>
+                        <span class="inv-stat-num">{{ $todayInvoicesCount ?? 0 }}</span>
+                        <span class="inv-stat-lbl">Due Today</span>
                     </div>
-                    <div class="followup-stat-card upcoming">
-                        <div class="stat-icon"><i class="fa fa-calendar-alt"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-number">{{ $upcomingInvoicesCount ?? 0 }}</span>
-                            <span class="stat-label">UPCOMING</span>
-                        </div>
+                    <div class="inv-stat upcoming">
+                        <i class="fa fa-calendar-alt"></i>
+                        <span class="inv-stat-num">{{ $upcomingInvoicesCount ?? 0 }}</span>
+                        <span class="inv-stat-lbl">Upcoming</span>
                     </div>
-                    <div class="followup-stat-card completed">
-                        <div class="stat-icon"><i class="fa fa-check-circle"></i></div>
-                        <div class="stat-info">
-                            <span class="stat-number">{{ $paidThisMonthCount }}</span>
-                            <span class="stat-label">PAID</span>
-                        </div>
+                    <div class="inv-stat paid">
+                        <i class="fa fa-check-circle"></i>
+                        <span class="inv-stat-num">{{ $paidThisMonthCount }}</span>
+                        <span class="inv-stat-lbl">Paid</span>
                     </div>
                 </div>
-                <div class="followup-list invoice-list">
+                <div class="inv-list">
                     @forelse($invoiceDueDates ?? collect() as $invoice)
                         @php
                             $isOverdue = $invoice->is_overdue;
@@ -474,48 +484,42 @@
                             $isPartialPaid = $invoice->status === 'partial_paid';
                             $daysUntilDue = now()->startOfDay()->diffInDays($invoice->due_date->startOfDay(), false);
                         @endphp
-                        <div class="invoice-card-wrapper {{ $isOverdue ? 'overdue' : ($isToday ? 'today' : '') }}">
-                            <a href="{{ route('billing.invoices.show', $invoice->id) }}" class="invoice-card-main">
-                                <div class="invoice-date-badge {{ $isOverdue ? 'overdue' : ($isPartialPaid ? 'partial' : '') }}">
-                                    <span class="day">{{ $invoice->due_date->format('d') }}</span>
-                                    <span class="month">{{ strtoupper($invoice->due_date->format('M')) }}</span>
-                                </div>
-                                <div class="invoice-card-content">
-                                    <span class="invoice-number">{{ $invoice->document_number }}</span>
-                                    <span class="invoice-client">
-                                        {{ $invoice->client->name ?? ($invoice->lead->name ?? 'No Client') }}
-                                        @if($invoice->project)
-                                            - {{ Str::limit($invoice->project->name, 20) }}
-                                        @endif
-                                    </span>
-                                    <span class="invoice-amount">
-                                        <i class="fa fa-money-bill-wave"></i> TZS {{ number_format($invoice->balance_amount, 0) }}
-                                        @if($isPartialPaid)
-                                            <span class="partial-badge">Partial</span>
-                                        @endif
-                                    </span>
-                                </div>
-                                <div class="invoice-status-badge">
-                                    @if($isOverdue)
-                                        <span class="badge overdue"><i class="fa fa-exclamation-circle"></i> {{ abs($daysUntilDue) }}d overdue</span>
-                                    @elseif($isToday)
-                                        <span class="badge today"><i class="fa fa-clock"></i> Due Today</span>
-                                    @elseif($isTomorrow)
-                                        <span class="badge tomorrow"><i class="fa fa-calendar"></i> Tomorrow</span>
-                                    @elseif($daysUntilDue <= 7)
-                                        <span class="badge upcoming"><i class="fa fa-hourglass-half"></i> {{ $daysUntilDue }}d left</span>
-                                    @else
-                                        <span class="badge">{{ $invoice->due_date->format('d M') }}</span>
-                                    @endif
-                                </div>
-                            </a>
-                            <div class="invoice-card-actions">
-                                <button type="button" class="btn-attend-invoice" onclick="openAttendModal({{ $invoice->id }})" title="Mark as Paid / Reschedule">
-                                    <i class="fa fa-check-circle"></i> Attend
-                                </button>
-                                <a href="{{ $invoice->google_calendar_link }}" target="_blank" class="btn-calendar" title="Add to Google Calendar">
-                                    <i class="fa-solid fa-calendar-plus"></i>
+                        <div class="inv-card {{ $isOverdue ? 'is-overdue' : ($isToday ? 'is-today' : '') }}">
+                            <div class="inv-card-row">
+                                <a href="{{ route('billing.invoices.show', $invoice->id) }}" class="inv-card-link">
+                                    <div class="inv-date {{ $isOverdue ? 'overdue' : ($isPartialPaid ? 'partial' : '') }}">
+                                        <span class="inv-day">{{ $invoice->due_date->format('d') }}</span>
+                                        <span class="inv-mon">{{ strtoupper($invoice->due_date->format('M')) }}</span>
+                                    </div>
+                                    <div class="inv-info">
+                                        <div class="inv-top-row">
+                                            <span class="inv-num">{{ $invoice->document_number }}</span>
+                                            <span class="inv-badge {{ $isOverdue ? 'overdue' : ($isToday ? 'today' : ($isTomorrow ? 'tomorrow' : ($daysUntilDue <= 7 ? 'upcoming' : ''))) }}">
+                                                @if($isOverdue)
+                                                    {{ abs($daysUntilDue) }}d overdue
+                                                @elseif($isToday)
+                                                    Due Today
+                                                @elseif($isTomorrow)
+                                                    Tomorrow
+                                                @elseif($daysUntilDue <= 7)
+                                                    {{ $daysUntilDue }}d left
+                                                @else
+                                                    {{ $invoice->due_date->format('d M') }}
+                                                @endif
+                                            </span>
+                                        </div>
+                                        <span class="inv-client">{{ $invoice->client->name ?? ($invoice->lead->name ?? 'No Client') }}@if($invoice->project) - {{ Str::limit($invoice->project->name, 20) }}@endif</span>
+                                        <span class="inv-amt">TZS {{ number_format($invoice->balance_amount, 0) }}@if($isPartialPaid) <span class="inv-partial">Partial</span>@endif</span>
+                                    </div>
                                 </a>
+                                <div class="inv-actions">
+                                    <button type="button" class="inv-btn-attend" onclick="openAttendModal({{ $invoice->id }})" title="Mark as Paid / Reschedule">
+                                        <i class="fa fa-check-circle"></i>
+                                    </button>
+                                    <a href="{{ $invoice->google_calendar_link }}" target="_blank" class="inv-btn-cal" title="Add to Google Calendar">
+                                        <i class="fa-solid fa-calendar-plus"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     @empty
@@ -1262,15 +1266,15 @@
         /* Metrics Grid */
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .metric-card {
             background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
+            border-radius: 12px;
+            padding: 1rem 1.15rem;
             box-shadow: var(--shadow-sm);
             border: 1px solid var(--wajenzi-gray-200);
             transition: all 0.3s ease;
@@ -1285,17 +1289,17 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 0.6rem;
         }
 
         .metric-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 14px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             color: white;
         }
 
@@ -1338,21 +1342,21 @@
         }
 
         .metric-content h3 {
-            font-size: 1rem;
+            font-size: 0.8rem;
             color: var(--wajenzi-gray-600);
-            margin: 0 0 0.5rem 0;
+            margin: 0 0 0.2rem 0;
             font-weight: 500;
         }
 
         .metric-value {
-            font-size: 1.75rem;
+            font-size: 1.3rem;
             font-weight: 700;
             color: var(--wajenzi-gray-900);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.15rem;
         }
 
         .metric-period {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             color: var(--wajenzi-gray-600);
             margin: 0;
         }
@@ -2991,285 +2995,216 @@
             background: #3498db;
         }
 
-        /* Invoice Due Dates Section - Distinct Gold/Orange Theme */
+        /* ===== Invoice Due Dates Section ===== */
         .invoice-due-todo {
             border-left: 4px solid #f39c12;
         }
-
         .invoice-due-todo .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .invoice-due-todo .section-header h2 {
-            color: #e67e22;
-        }
-
-        .invoice-due-todo .section-header h2 i {
-            color: #f39c12;
-        }
-
+        .invoice-due-todo .section-header h2 { color: #e67e22; }
+        .invoice-due-todo .section-header h2 i { color: #f39c12; }
         .invoice-due-todo .section-header .gcal-export-btn {
             font-size: 0.75rem;
             padding: 0.35rem 0.75rem;
             background: linear-gradient(135deg, #f39c12, #e67e22);
         }
-
         .invoice-due-todo .section-header .gcal-export-btn:hover {
             background: linear-gradient(135deg, #e67e22, #d35400);
         }
 
-        /* Invoice stat cards with orange accent */
-        .invoice-due-todo .followup-stat-card.overdue {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        /* Stat grid - always 4 columns */
+        .inv-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1rem;
         }
-
-        .invoice-due-todo .followup-stat-card.today {
-            background: linear-gradient(135deg, #f39c12, #e67e22);
-        }
-
-        .invoice-due-todo .followup-stat-card.upcoming {
-            background: linear-gradient(135deg, #3498db, #2980b9);
-        }
-
-        .invoice-due-todo .followup-stat-card.completed {
-            background: linear-gradient(135deg, #27ae60, #229954);
-        }
-
-        /* Ensure white text on stat cards */
-        .invoice-due-todo .followup-stat-card .stat-icon,
-        .invoice-due-todo .followup-stat-card .stat-icon i,
-        .invoice-due-todo .followup-stat-card .stat-number,
-        .invoice-due-todo .followup-stat-card .stat-label {
-            color: white !important;
-        }
-
-        .invoice-due-todo .followup-stat-card .stat-icon {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Invoice list - card style */
-        .invoice-list {
+        .inv-stat {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            align-items: center;
+            padding: 0.6rem 0.25rem;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            transition: transform 0.15s ease;
         }
+        .inv-stat:hover { transform: translateY(-1px); }
+        .inv-stat i { font-size: 0.9rem; margin-bottom: 2px; opacity: 0.85; }
+        .inv-stat-num { font-size: 1.3rem; font-weight: 700; line-height: 1.2; }
+        .inv-stat-lbl { font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; }
+        .inv-stat.overdue { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .inv-stat.today { background: linear-gradient(135deg, #f39c12, #e67e22); }
+        .inv-stat.upcoming { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .inv-stat.paid { background: linear-gradient(135deg, #27ae60, #229954); }
 
-        .invoice-card-wrapper {
+        /* Invoice list - scrollable */
+        .inv-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+        .inv-list::-webkit-scrollbar { width: 4px; }
+        .inv-list::-webkit-scrollbar-track { background: transparent; }
+        .inv-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+        .inv-list::-webkit-scrollbar-thumb:hover { background: #ccc; }
+
+        /* Invoice card - single row */
+        .inv-card {
             background: white;
-            border-radius: 12px;
-            border: 1px solid rgba(243, 156, 18, 0.2);
-            overflow: hidden;
-            transition: all 0.2s ease;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            transition: all 0.15s ease;
         }
-
-        .invoice-card-wrapper:hover {
-            border-color: rgba(243, 156, 18, 0.4);
-            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.15);
+        .inv-card:hover {
+            border-color: rgba(243, 156, 18, 0.35);
+            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.1);
         }
+        .inv-card.is-overdue { border-left: 3px solid #e74c3c; }
+        .inv-card.is-today { border-left: 3px solid #f39c12; }
 
-        .invoice-card-wrapper.overdue {
-            border-color: rgba(231, 76, 60, 0.3);
-            background: rgba(231, 76, 60, 0.02);
-        }
-
-        .invoice-card-wrapper.overdue:hover {
-            border-color: rgba(231, 76, 60, 0.5);
-            box-shadow: 0 4px 12px rgba(231, 76, 60, 0.15);
-        }
-
-        .invoice-card-wrapper.today {
-            border-color: rgba(243, 156, 18, 0.4);
-            background: rgba(243, 156, 18, 0.03);
-        }
-
-        .invoice-card-main {
+        .inv-card-row {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 1rem;
+        }
+
+        .inv-card-link {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0.6rem;
             text-decoration: none;
-            transition: all 0.2s ease;
+            color: inherit;
+            flex: 1;
+            min-width: 0;
         }
+        .inv-card-link:hover { background: rgba(0,0,0,0.01); border-radius: 8px 0 0 8px; }
 
-        .invoice-card-main:hover {
-            background: rgba(243, 156, 18, 0.05);
-        }
-
-        .invoice-card-wrapper.overdue .invoice-card-main:hover {
-            background: rgba(231, 76, 60, 0.05);
-        }
-
-        .invoice-date-badge {
+        /* Date badge - compact */
+        .inv-date {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
             background: linear-gradient(135deg, #f39c12, #e67e22);
-            min-width: 58px;
-            height: 58px;
-            border-radius: 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
             flex-shrink: 0;
-            box-shadow: 0 3px 8px rgba(243, 156, 18, 0.3);
         }
+        .inv-date.overdue { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+        .inv-date.partial { background: linear-gradient(135deg, #f39c12, #e74c3c); }
+        .inv-day { font-size: 1.05rem; font-weight: 700; line-height: 1; }
+        .inv-mon { font-size: 0.5rem; font-weight: 600; opacity: 0.9; margin-top: 1px; }
 
-        .invoice-date-badge .day {
-            font-size: 1.4rem;
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .invoice-date-badge .month {
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            opacity: 0.9;
-            margin-top: 2px;
-        }
-
-        .invoice-date-badge.overdue {
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            box-shadow: 0 3px 8px rgba(231, 76, 60, 0.3);
-        }
-
-        .invoice-date-badge.partial {
-            background: linear-gradient(135deg, #f39c12, #e74c3c);
-        }
-
-        .invoice-card-content {
+        /* Info area */
+        .inv-info {
             flex: 1;
             min-width: 0;
+            overflow: hidden;
         }
-
-        .invoice-number {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 3px;
-        }
-
-        .invoice-client {
-            font-size: 0.8rem;
-            color: #7f8c8d;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .invoice-amount {
-            font-size: 0.9rem;
-            color: #27ae60;
-            font-weight: 600;
+        .inv-top-row {
             display: flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.4rem;
+            margin-bottom: 1px;
         }
-
-        .invoice-amount i {
-            color: #27ae60;
+        .inv-num {
+            font-weight: 700;
             font-size: 0.8rem;
+            color: #2c3e50;
+            white-space: nowrap;
         }
+        .inv-badge {
+            font-size: 0.55rem;
+            padding: 0.1rem 0.35rem;
+            border-radius: 8px;
+            font-weight: 600;
+            white-space: nowrap;
+            background: #eee;
+            color: #666;
+            flex-shrink: 0;
+        }
+        .inv-badge.overdue { background: #e74c3c; color: white; }
+        .inv-badge.today { background: #f39c12; color: white; }
+        .inv-badge.tomorrow { background: #3498db; color: white; }
+        .inv-badge.upcoming { background: #95a5a6; color: white; }
 
-        .invoice-amount .partial-badge {
-            font-size: 0.6rem;
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        .inv-client {
+            display: block;
+            font-size: 0.68rem;
+            color: #95a5a6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .inv-amt {
+            display: block;
+            font-size: 0.75rem;
+            color: #27ae60;
+            font-weight: 600;
+        }
+        .inv-partial {
+            font-size: 0.5rem;
+            background: #e74c3c;
             color: white;
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
-            margin-left: 0.5rem;
+            padding: 0.1rem 0.25rem;
+            border-radius: 3px;
+            margin-left: 0.25rem;
             font-weight: 500;
         }
 
-        .invoice-status-badge {
-            flex-shrink: 0;
-        }
-
-        .invoice-status-badge .badge {
-            font-size: 0.7rem;
-            padding: 0.4rem 0.7rem;
-            border-radius: 20px;
-            font-weight: 600;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-
-        .invoice-status-badge .badge.overdue {
-            background: #e74c3c;
-            color: white;
-        }
-
-        .invoice-status-badge .badge.today {
-            background: #f39c12;
-            color: white;
-        }
-
-        .invoice-status-badge .badge.tomorrow {
-            background: #3498db;
-            color: white;
-        }
-
-        .invoice-status-badge .badge.upcoming {
-            background: #95a5a6;
-            color: white;
-        }
-
-        /* Invoice action buttons */
-        .invoice-card-actions {
+        /* Actions - inline right side */
+        .inv-actions {
             display: flex;
-            gap: 0.5rem;
-            justify-content: flex-end;
-            padding: 0 1rem 0.75rem;
-            border-top: 1px dashed rgba(0,0,0,0.06);
-            padding-top: 0.75rem;
-            margin-top: -0.25rem;
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 0.4rem 0.5rem;
+            flex-shrink: 0;
+            border-left: 1px dashed rgba(0,0,0,0.06);
         }
-
-        .btn-attend-invoice {
-            padding: 0.45rem 1rem;
+        .inv-btn-attend {
+            width: 28px;
+            height: 28px;
             border-radius: 6px;
             border: none;
-            background: linear-gradient(135deg, #27ae60, #229954);
+            background: #27ae60;
             color: white;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 0.4rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            transition: all 0.2s ease;
+            justify-content: center;
+            font-size: 0.7rem;
+            transition: all 0.15s ease;
         }
-
-        .btn-attend-invoice:hover {
-            background: linear-gradient(135deg, #229954, #1e8449);
-            transform: translateY(-2px);
-            box-shadow: 0 3px 10px rgba(39, 174, 96, 0.3);
+        .inv-btn-attend:hover {
+            background: #219a52;
+            transform: scale(1.05);
         }
-
-        .btn-attend-invoice i {
-            font-size: 0.85rem;
-        }
-
-        .btn-calendar {
-            width: 34px;
-            height: 34px;
+        .inv-btn-cal {
+            width: 28px;
+            height: 28px;
             border-radius: 6px;
-            background: linear-gradient(135deg, #4285f4, #3367d6);
+            background: #4285f4;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             text-decoration: none;
-            transition: all 0.2s ease;
+            font-size: 0.7rem;
+            transition: all 0.15s ease;
         }
-
-        .btn-calendar:hover {
-            background: linear-gradient(135deg, #3367d6, #2851a3);
-            transform: translateY(-2px);
-            box-shadow: 0 3px 10px rgba(66, 133, 244, 0.3);
+        .inv-btn-cal:hover {
+            background: #3367d6;
+            color: white;
+            transform: scale(1.05);
             color: white;
         }
 
@@ -3659,7 +3594,7 @@
             }
 
             .metrics-grid {
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .welcome-actions {
