@@ -440,6 +440,10 @@
     </div>
 
     {{-- ==================== PAGE 2: TERMS & CONDITIONS ==================== --}}
+    @php
+        $hasTerms = !empty(trim(strip_tags($proforma->terms_conditions ?? '')));
+    @endphp
+    @if($hasTerms)
     <div class="page-break"></div>
     <div class="tc-page">
         <!-- Header repeated for page 2 -->
@@ -521,5 +525,6 @@
             </table>
         </div>
     </div>
+    @endif
 </body>
 </html>
