@@ -552,6 +552,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'showForLead'])->name('leads.schedule');
     Route::post('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForLead'])->name('leads.schedule.create');
 
+// Architect Bonus Scheme
+    Route::get('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'index'])->name('architect-bonus.index');
+    Route::get('architect-bonus/create', [App\Http\Controllers\ArchitectBonusController::class, 'create'])->name('architect-bonus.create');
+    Route::post('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'store'])->name('architect-bonus.store');
+    Route::get('architect-bonus/report', [App\Http\Controllers\ArchitectBonusController::class, 'report'])->name('architect-bonus.report');
+    Route::get('architect-bonus/weights', [App\Http\Controllers\ArchitectBonusController::class, 'weights'])->name('architect-bonus.weights');
+    Route::post('architect-bonus/weights', [App\Http\Controllers\ArchitectBonusController::class, 'updateWeights'])->name('architect-bonus.weights.update');
+    Route::put('architect-bonus/tier/{id}', [App\Http\Controllers\ArchitectBonusController::class, 'updateTier'])->name('architect-bonus.tier.update');
+    Route::get('architect-bonus/{id}', [App\Http\Controllers\ArchitectBonusController::class, 'show'])->name('architect-bonus.show');
+    Route::get('architect-bonus/{id}/score', [App\Http\Controllers\ArchitectBonusController::class, 'score'])->name('architect-bonus.score');
+    Route::post('architect-bonus/{id}/score', [App\Http\Controllers\ArchitectBonusController::class, 'updateScore'])->name('architect-bonus.score.update');
+    Route::post('architect-bonus/{id}/start', [App\Http\Controllers\ArchitectBonusController::class, 'start'])->name('architect-bonus.start');
+    Route::post('architect-bonus/{id}/paid', [App\Http\Controllers\ArchitectBonusController::class, 'markPaid'])->name('architect-bonus.paid');
+    Route::post('architect-bonus/max-units', [App\Http\Controllers\ArchitectBonusController::class, 'getMaxUnits'])->name('architect-bonus.max-units');
+
 // Project Invoice Routes
     Route::match(['get', 'post'], '/project_invoices', [App\Http\Controllers\ProjectInvoiceController::class, 'index'])->name('project_invoices');
     Route::match(['get', 'post'], '/project_invoice/create', [App\Http\Controllers\ProjectInvoiceController::class, 'create'])->name('project_invoice.create');
