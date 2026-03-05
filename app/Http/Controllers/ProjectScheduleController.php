@@ -45,8 +45,9 @@ class ProjectScheduleController extends Controller
         $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'assignments.user']);
 
         // Filter activities: non-admins only see their assigned activities
+        // The assigned architect of the schedule can see all activities
         $activities = $projectSchedule->activities;
-        if (!$isAdmin) {
+        if (!$isAdmin && $projectSchedule->assigned_architect_id !== $user->id) {
             $activities = $activities->filter(fn($a) => $a->assigned_to === $user->id);
         }
 

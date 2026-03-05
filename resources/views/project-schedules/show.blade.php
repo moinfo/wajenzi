@@ -10,13 +10,17 @@
                 <small class="text-muted">{{ $projectSchedule->lead->lead_number ?? 'Lead' }} - {{ $projectSchedule->lead->name ?? '' }}</small>
             </div>
             <div>
-                <a href="{{ route('leads.show', $projectSchedule->lead_id) }}" class="btn btn-secondary">
-                    <i class="fa fa-arrow-left"></i> Back to Lead
-                </a>
-                @if(!$projectSchedule->isConfirmed())
-                    <a href="{{ route('project-schedules.edit', $projectSchedule) }}" class="btn btn-warning">
-                        <i class="fa fa-edit"></i> Edit Schedule
+                @if(auth()->user()->hasAnyRole(['System Administrator', 'Managing Director']))
+                    <a href="{{ route('leads.show', $projectSchedule->lead_id) }}" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left"></i> Back to Lead
                     </a>
+                    @if(!$projectSchedule->isConfirmed())
+                        <a href="{{ route('project-schedules.edit', $projectSchedule) }}" class="btn btn-warning">
+                            <i class="fa fa-edit"></i> Edit Schedule
+                        </a>
+                    @endif
+                @endif
+                @if(!$projectSchedule->isConfirmed())
                     <form action="{{ route('project-schedules.confirm', $projectSchedule) }}" method="POST" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to confirm this schedule? This will make activities visible on dashboard and calendar.')">

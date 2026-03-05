@@ -38,7 +38,7 @@ class AdminComposer {
     public function compose(View $view)
     {
         $data = [
-            'page_title' => 'Financial Analysis',
+            'page_title' => 'Wajenzi Construction ERP',
             'user' => $this->user,
             'ui_notifications' => $this->getNotifications($view),
             'user_notifications' => $this->user_notifications,

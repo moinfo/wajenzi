@@ -29,25 +29,39 @@
         </div>
     @endif
 
-    <!-- Filters -->
+    <!-- Leads List -->
     <div class="block block-rounded">
         <div class="block-header block-header-default">
-            <h3 class="block-title">Filters</h3>
+            <h3 class="block-title">Leads <small class="text-muted">({{ $leads->total() }} total)</small></h3>
+            <div class="block-options">
+                <a href="{{ route('leads.create') }}" class="btn btn-success btn-sm">
+                    <i class="fa fa-plus mr-1"></i> New Lead
+                </a>
+            </div>
         </div>
-        <div class="block-content">
-            <form method="GET" class="row">
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>Search</label>
-                        <input type="text" name="search" class="form-control"
-                               value="{{ request('search') }}"
-                               placeholder="Name, ID, Phone, City">
+        <div class="block-content block-content-full">
+            <!-- Search & Filters -->
+            <form method="GET" id="filterForm">
+                <div class="row mb-3">
+                    <div class="col-md-4 col-lg-3 mb-2">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fa fa-search"></i></span>
+                            </div>
+                            <input type="text" name="search" class="form-control" id="searchInput"
+                                   value="{{ request('search') }}"
+                                   placeholder="Search name, phone, city...">
+                            @if(request('search'))
+                            <div class="input-group-append">
+                                <a href="{{ route('leads.index', request()->except('search', 'page')) }}" class="btn btn-secondary" title="Clear search">
+                                    <i class="fa fa-times"></i>
+                                </a>
+                            </div>
+                            @endif
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>Lead Status</label>
-                        <select name="lead_status_id" class="form-control">
+                    <div class="col-md-2 mb-2">
+                        <select name="lead_status_id" class="form-control" onchange="document.getElementById('filterForm').submit()">
                             <option value="">All Statuses</option>
                             @foreach($leadStatuses as $status)
                                 <option value="{{ $status->id }}" {{ request('lead_status_id') == $status->id ? 'selected' : '' }}>
@@ -56,11 +70,8 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>Lead Source</label>
-                        <select name="lead_source_id" class="form-control">
+                    <div class="col-md-2 mb-2">
+                        <select name="lead_source_id" class="form-control" onchange="document.getElementById('filterForm').submit()">
                             <option value="">All Sources</option>
                             @foreach($leadSources as $source)
                                 <option value="{{ $source->id }}" {{ request('lead_source_id') == $source->id ? 'selected' : '' }}>
@@ -69,11 +80,8 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>Salesperson</label>
-                        <select name="salesperson_id" class="form-control">
+                    <div class="col-md-2 mb-2">
+                        <select name="salesperson_id" class="form-control" onchange="document.getElementById('filterForm').submit()">
                             <option value="">All Salespeople</option>
                             @foreach($salespeople as $person)
                                 <option value="{{ $person->id }}" {{ request('salesperson_id') == $person->id ? 'selected' : '' }}>
@@ -82,33 +90,18 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-                <div class="col-md-2">
-                    <div class="form-group">
-                        <label>&nbsp;</label>
-                        <div>
-                            <button type="submit" class="btn btn-primary">Filter</button>
-                            <a href="{{ route('leads.index') }}" class="btn btn-secondary">Clear</a>
-                        </div>
+                    <div class="col-md-2 col-lg-1 mb-2">
+                        @if(request()->hasAny(['search', 'lead_status_id', 'lead_source_id', 'salesperson_id']))
+                            <a href="{{ route('leads.index') }}" class="btn btn-alt-secondary btn-block" title="Clear all filters">
+                                <i class="fa fa-undo mr-1"></i> Reset
+                            </a>
+                        @endif
                     </div>
                 </div>
             </form>
-        </div>
-    </div>
 
-    <!-- Leads List -->
-    <div class="block block-rounded">
-        <div class="block-header block-header-default">
-            <h3 class="block-title">Leads List</h3>
-            <div class="block-options">
-                <a href="{{ route('leads.create') }}" class="btn btn-success btn-sm">
-                    <i class="fa fa-plus"></i> New Lead
-                </a>
-            </div>
-        </div>
-        <div class="block-content block-content-full">
             <div class="table-responsive">
-                <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
+                <table class="table table-bordered table-striped table-vcenter">
                     <thead>
                         <tr>
                             <th>Lead ID</th>
@@ -188,7 +181,15 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="13" class="text-center">No leads found</td>
+                                <td colspan="13" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="fa fa-inbox fa-2x mb-2 d-block"></i>
+                                        No leads found
+                                        @if(request()->hasAny(['search', 'lead_status_id', 'lead_source_id', 'salesperson_id']))
+                                            — <a href="{{ route('leads.index') }}">clear filters</a>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -197,12 +198,37 @@
 
             <!-- Pagination -->
             @if($leads->hasPages())
-            <div class="d-flex justify-content-center mt-3">
-                {{ $leads->appends(request()->query())->links() }}
+            <div class="row align-items-center mt-3">
+                <div class="col-sm-5 text-muted">
+                    Showing {{ $leads->firstItem() }}–{{ $leads->lastItem() }} of {{ $leads->total() }} leads
+                </div>
+                <div class="col-sm-7">
+                    <nav class="d-flex justify-content-end">
+                        {{ $leads->appends(request()->query())->links() }}
+                    </nav>
+                </div>
             </div>
             @endif
         </div>
     </div>
 </div>
+@endsection
 
+@section('js_after')
+<script>
+    // Debounced search: submit form after user stops typing for 500ms
+    (function() {
+        let timer;
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            clearTimeout(timer);
+            if (e.key === 'Enter') {
+                document.getElementById('filterForm').submit();
+                return;
+            }
+            timer = setTimeout(function() {
+                document.getElementById('filterForm').submit();
+            }, 500);
+        });
+    })();
+</script>
 @endsection
