@@ -32,9 +32,22 @@
     </form>
 </div>
 <script>
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
-    });
+    (function() {
+        var textarea = document.getElementById('input-message');
+        if (!textarea) return;
+        var counter = document.createElement('div');
+        counter.style.cssText = 'margin-top:4px;font-size:0.85rem;font-weight:600;';
+        textarea.parentNode.appendChild(counter);
+
+        function update() {
+            var len = textarea.value.length;
+            var sms = len <= 160 ? 1 : Math.ceil((len - 160) / 153) + 1;
+            counter.textContent = len + ' / 160 characters (' + sms + ' SMS)';
+            counter.style.color = sms <= 1 ? '#16A34A' : sms <= 3 ? '#EA580C' : '#DC2626';
+        }
+        textarea.addEventListener('input', update);
+        update();
+    })();
 </script>
 
 
