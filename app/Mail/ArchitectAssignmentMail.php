@@ -28,11 +28,10 @@ class ArchitectAssignmentMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        $leadNumber = $this->schedule->lead->lead_number ?? 'New Project';
-        $clientName = $this->schedule->lead->name ?? 'Client';
+        $projectName = $this->schedule->display_name;
 
         return new Envelope(
-            subject: "New Project Assignment: {$leadNumber} - {$clientName}",
+            subject: "New Project Assignment: {$projectName}",
         );
     }
 

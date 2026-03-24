@@ -38,7 +38,7 @@
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>Lead</th>
+                                <th>Project / Lead</th>
                                 <th>Client</th>
                                 <th>Architect</th>
                                 <th>Start Date</th>
@@ -52,9 +52,17 @@
                             @forelse($schedules as $schedule)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('leads.show', $schedule->lead_id) }}">
-                                            {{ $schedule->lead->lead_number ?? 'N/A' }}
-                                        </a>
+                                        @if($schedule->project)
+                                            <i class="fa fa-building text-primary mr-1"></i>
+                                            {{ $schedule->project->project_name }}
+                                        @elseif($schedule->lead)
+                                            <a href="{{ route('leads.show', $schedule->lead_id) }}">
+                                                <i class="fa fa-bullseye text-info mr-1"></i>
+                                                {{ $schedule->lead->lead_number ?? $schedule->lead->name ?? 'N/A' }}
+                                            </a>
+                                        @else
+                                            N/A
+                                        @endif
                                     </td>
                                     <td>{{ $schedule->client ? $schedule->client->first_name . ' ' . $schedule->client->last_name : 'N/A' }}</td>
                                     <td>{{ $schedule->assignedArchitect->name ?? 'Unassigned' }}</td>

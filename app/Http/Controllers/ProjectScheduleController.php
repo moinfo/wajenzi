@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lead;
+use App\Models\Project;
 use App\Models\ProjectSchedule;
 use App\Models\ProjectScheduleActivity;
 use App\Models\User;
@@ -21,7 +22,7 @@ class ProjectScheduleController extends Controller
         $user = auth()->user();
         $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director']);
 
-        $schedules = ProjectSchedule::with(['lead', 'assignedArchitect', 'client'])
+        $schedules = ProjectSchedule::with(['lead', 'project', 'assignedArchitect', 'client'])
             ->when(!$isAdmin, fn($q) => $q->where(function ($q) use ($user) {
                 $q->where('assigned_architect_id', $user->id)
                   ->orWhereHas('activities', fn($aq) => $aq->where('assigned_to', $user->id));
@@ -42,7 +43,7 @@ class ProjectScheduleController extends Controller
         $user = auth()->user();
         $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director']);
 
-        $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'assignments.user']);
+        $projectSchedule->load(['lead.client', 'project', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'assignments.user']);
 
         // Filter activities: non-admins only see their assigned activities
         // The assigned architect of the schedule can see all activities
@@ -71,7 +72,7 @@ class ProjectScheduleController extends Controller
                 ->with('error', 'Confirmed schedules cannot be edited.');
         }
 
-        $projectSchedule->load(['lead.client', 'activities']);
+        $projectSchedule->load(['lead.client', 'project', 'activities']);
 
         return view('project-schedules.edit', compact('projectSchedule'));
     }
@@ -122,11 +123,11 @@ class ProjectScheduleController extends Controller
         $projectSchedule->update(['status' => 'confirmed']);
 
         // Notify the assigned architect
-        $projectSchedule->load('lead');
+        $projectSchedule->load(['lead', 'project']);
         if ($projectSchedule->assigned_architect_id && $projectSchedule->assigned_architect_id !== auth()->id()) {
             $architect = User::find($projectSchedule->assigned_architect_id);
             if ($architect) {
-                $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
+                $leadNumber = $projectSchedule->display_name;
                 $this->sendScheduleNotification(
                     $architect,
                     'Schedule Confirmed',
@@ -268,7 +269,7 @@ class ProjectScheduleController extends Controller
         // Send notification to newly assigned user
         if ($request->assigned_to) {
             $assignedUser = User::find($request->assigned_to);
-            $activity->load('schedule.lead');
+            $activity->load(['schedule.lead', 'schedule.project']);
 
             $notification = new ActivityReassignedNotification($activity, auth()->user());
 
@@ -337,6 +338,55 @@ class ProjectScheduleController extends Controller
             return redirect()
                 ->route('project-schedules.show', $schedule)
                 ->with('success', 'Schedule created successfully.');
+        }
+
+        return back()->with('error', 'Failed to create schedule.');
+    }
+
+    /**
+     * Create schedule for a project (after approval)
+     */
+    public function createForProject(Request $request, Project $project)
+    {
+        if ($project->status !== 'APPROVED') {
+            return back()->with('error', 'Schedule can only be created for approved projects.');
+        }
+
+        // Check for existing schedule (directly or via linked leads)
+        $existingSchedule = ProjectSchedule::where('project_id', $project->id)->first();
+        if (!$existingSchedule) {
+            $linkedLeadIds = Lead::where('project_id', $project->id)->pluck('id');
+            if ($linkedLeadIds->isNotEmpty()) {
+                $existingSchedule = ProjectSchedule::whereIn('lead_id', $linkedLeadIds)->first();
+                // Link existing lead-based schedule to this project
+                if ($existingSchedule) {
+                    $existingSchedule->update(['project_id' => $project->id]);
+                }
+            }
+        }
+        if ($existingSchedule) {
+            return redirect()
+                ->route('project-schedules.show', $existingSchedule)
+                ->with('info', 'Schedule already exists for this project.');
+        }
+
+        $request->validate([
+            'start_date' => 'required|date',
+            'assigned_architect_id' => 'nullable|exists:users,id',
+        ]);
+
+        $startDate = Carbon::parse($request->start_date);
+        $schedule = ProjectScheduleService::createScheduleForProject(
+            $project->id,
+            $startDate,
+            $request->assigned_architect_id,
+            auth()->id()
+        );
+
+        if ($schedule) {
+            return redirect()
+                ->route('project-schedules.show', $schedule)
+                ->with('success', 'Project schedule created successfully.');
         }
 
         return back()->with('error', 'Failed to create schedule.');
@@ -421,8 +471,8 @@ class ProjectScheduleController extends Controller
 
         // Notify the new architect
         if ($newArchitect && $newArchitectId !== auth()->id()) {
-            $projectSchedule->load('lead');
-            $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
+            $projectSchedule->load(['lead', 'project']);
+            $leadNumber = $projectSchedule->display_name;
             $this->sendScheduleNotification(
                 $newArchitect,
                 'Schedule Assigned',
@@ -434,8 +484,8 @@ class ProjectScheduleController extends Controller
 
         // Notify the old architect (if different from new and current user)
         if ($oldArchitect && $oldArchitect->id !== $newArchitectId && $oldArchitect->id !== auth()->id()) {
-            $projectSchedule->load('lead');
-            $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
+            $projectSchedule->load(['lead', 'project']);
+            $leadNumber = $projectSchedule->display_name;
             $this->sendScheduleNotification(
                 $oldArchitect,
                 'Schedule Reassigned',

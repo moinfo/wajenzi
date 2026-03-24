@@ -39,7 +39,7 @@ class DashboardController extends Controller
         $canViewAllActivities = $user->can('View All Project Activities');
 
         // Build activity query: user sees own activities, or all if permitted
-        $activityQuery = ProjectScheduleActivity::with(['schedule.lead', 'assignedUser'])
+        $activityQuery = ProjectScheduleActivity::with(['schedule.lead', 'schedule.project', 'assignedUser'])
             ->whereHas('schedule', function($query) {
                 $query->whereIn('status', ['confirmed', 'in_progress']);
             })
@@ -64,7 +64,7 @@ class DashboardController extends Controller
         $calMonth = $request->input('cal_month', now()->month);
         $calYear = $request->input('cal_year', now()->year);
 
-        $calendarQuery = ProjectScheduleActivity::with(['schedule.lead', 'assignedUser'])
+        $calendarQuery = ProjectScheduleActivity::with(['schedule.lead', 'schedule.project', 'assignedUser'])
             ->whereHas('schedule', function($query) {
                 $query->whereIn('status', ['confirmed', 'in_progress']);
             })
@@ -95,7 +95,7 @@ class DashboardController extends Controller
         $inProgressActivitiesCount = $projectActivities->where('status', 'in_progress')->count();
 
         // Get active project schedules with progress
-        $scheduleQuery = ProjectSchedule::with(['lead', 'activities'])
+        $scheduleQuery = ProjectSchedule::with(['lead', 'project', 'client', 'activities'])
             ->whereIn('status', ['confirmed', 'in_progress'])
             ->orderBy('start_date', 'asc');
 

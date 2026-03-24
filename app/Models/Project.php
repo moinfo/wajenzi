@@ -208,6 +208,11 @@ class Project extends Model implements ApprovableModel
         return $this->hasMany(ProjectExpense::class);
     }
 
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(ProjectSchedule::class);
+    }
+
     public function progressImages(): HasMany
     {
         return $this->hasMany(ProjectProgressImage::class);

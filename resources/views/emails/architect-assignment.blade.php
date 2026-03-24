@@ -135,36 +135,47 @@
         <div class="project-info">
             <h3>Project Information</h3>
             <div class="info-row">
-                <span class="info-label">Lead Number:</span>
-                {{ $schedule->lead->lead_number ?? 'N/A' }}
+                <span class="info-label">Project:</span>
+                {{ $schedule->display_name }}
             </div>
-            <div class="info-row">
-                <span class="info-label">Client Name:</span>
-                {{ $schedule->lead->name ?? 'N/A' }}
-            </div>
-            @if($schedule->lead->phone)
-            <div class="info-row">
-                <span class="info-label">Phone:</span>
-                {{ $schedule->lead->phone }}
-            </div>
-            @endif
-            @if($schedule->lead->email)
-            <div class="info-row">
-                <span class="info-label">Email:</span>
-                {{ $schedule->lead->email }}
-            </div>
-            @endif
-            @if($schedule->lead->serviceInterested)
-            <div class="info-row">
-                <span class="info-label">Service:</span>
-                {{ $schedule->lead->serviceInterested->name }}
-            </div>
-            @endif
-            @if($schedule->lead->location)
-            <div class="info-row">
-                <span class="info-label">Location:</span>
-                {{ $schedule->lead->location }}
-            </div>
+            @if($schedule->project)
+                <div class="info-row">
+                    <span class="info-label">Client:</span>
+                    {{ $schedule->project->client ? $schedule->project->client->first_name . ' ' . $schedule->project->client->last_name : 'N/A' }}
+                </div>
+            @elseif($schedule->lead)
+                <div class="info-row">
+                    <span class="info-label">Lead Number:</span>
+                    {{ $schedule->lead->lead_number ?? 'N/A' }}
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Client Name:</span>
+                    {{ $schedule->lead->name ?? 'N/A' }}
+                </div>
+                @if($schedule->lead->phone)
+                <div class="info-row">
+                    <span class="info-label">Phone:</span>
+                    {{ $schedule->lead->phone }}
+                </div>
+                @endif
+                @if($schedule->lead->email)
+                <div class="info-row">
+                    <span class="info-label">Email:</span>
+                    {{ $schedule->lead->email }}
+                </div>
+                @endif
+                @if($schedule->lead->serviceInterested)
+                <div class="info-row">
+                    <span class="info-label">Service:</span>
+                    {{ $schedule->lead->serviceInterested->name }}
+                </div>
+                @endif
+                @if($schedule->lead->location)
+                <div class="info-row">
+                    <span class="info-label">Location:</span>
+                    {{ $schedule->lead->location }}
+                </div>
+                @endif
             @endif
         </div>
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\ArchitectAssignmentMail;
 use App\Models\Lead;
+use App\Models\Project;
 use App\Models\ProjectActivityTemplate;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectHoliday;
@@ -90,6 +91,85 @@ class ProjectScheduleService
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Failed to create project schedule: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Create a project schedule from a project (after approval)
+     */
+    public static function createScheduleForProject(
+        int $projectId,
+        Carbon $startDate,
+        ?int $architectId = null,
+        ?int $createdBy = null
+    ): ?ProjectSchedule {
+        try {
+            DB::beginTransaction();
+
+            $project = Project::with('client')->findOrFail($projectId);
+
+            // Auto-assign architect if not provided
+            if (!$architectId) {
+                $architect = ProjectAssignment::findArchitectWithLeastWorkload();
+                $architectId = $architect?->id;
+            }
+
+            // Check if a lead is linked to this project
+            $lead = Lead::where('project_id', $projectId)->first();
+
+            // Create the schedule
+            $schedule = ProjectSchedule::create([
+                'project_id' => $projectId,
+                'lead_id' => $lead?->id,
+                'client_id' => $project->client_id,
+                'start_date' => $startDate,
+                'status' => 'draft',
+                'assigned_architect_id' => $architectId,
+                'created_by' => $createdBy ?? auth()->id(),
+            ]);
+
+            // Generate activities from template
+            self::generateActivitiesFromTemplate($schedule, $startDate);
+
+            // Calculate end date
+            $lastActivity = ProjectScheduleActivity::where('project_schedule_id', $schedule->id)
+                ->orderBy('end_date', 'desc')
+                ->first();
+            if ($lastActivity) {
+                $schedule->end_date = $lastActivity->end_date;
+                $schedule->save();
+            }
+
+            // Create assignment record
+            if ($architectId) {
+                $architectRole = Role::where('name', 'Architect')->first();
+                if ($architectRole) {
+                    ProjectAssignment::create([
+                        'lead_id' => $lead?->id,
+                        'project_schedule_id' => $schedule->id,
+                        'user_id' => $architectId,
+                        'role_id' => $architectRole->id,
+                        'status' => 'active',
+                        'assigned_by' => $createdBy ?? auth()->id(),
+                        'assigned_at' => now(),
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            Log::info("Project schedule created for project #{$projectId} with architect #{$architectId}");
+
+            if ($architectId) {
+                self::notifyArchitect($schedule);
+            }
+
+            return $schedule;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to create project schedule for project #{$projectId}: " . $e->getMessage());
             return null;
         }
     }

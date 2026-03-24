@@ -149,18 +149,25 @@
         <div class="project-info">
             <h3>Project Information</h3>
             <div class="info-row">
-                <span class="info-label">Lead Number:</span>
-                {{ $schedule->lead->lead_number ?? 'N/A' }}
+                <span class="info-label">Project:</span>
+                {{ $schedule->display_name }}
             </div>
-            <div class="info-row">
-                <span class="info-label">Client Name:</span>
-                {{ $schedule->lead->name ?? 'N/A' }}
-            </div>
-            @if($schedule->lead->phone ?? null)
-            <div class="info-row">
-                <span class="info-label">Phone:</span>
-                {{ $schedule->lead->phone }}
-            </div>
+            @if($schedule->lead)
+                <div class="info-row">
+                    <span class="info-label">Client Name:</span>
+                    {{ $schedule->lead->name ?? 'N/A' }}
+                </div>
+                @if($schedule->lead->phone ?? null)
+                <div class="info-row">
+                    <span class="info-label">Phone:</span>
+                    {{ $schedule->lead->phone }}
+                </div>
+                @endif
+            @elseif($schedule->project && $schedule->project->client)
+                <div class="info-row">
+                    <span class="info-label">Client:</span>
+                    {{ $schedule->project->client->first_name . ' ' . $schedule->project->client->last_name }}
+                </div>
             @endif
             <div class="info-row">
                 <span class="info-label">Assigned By:</span>

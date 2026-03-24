@@ -7,13 +7,25 @@
         <div class="content-heading d-flex justify-content-between align-items-center mb-3">
             <div>
                 <h2><i class="fa fa-calendar-alt text-primary mr-2"></i> Project Schedule</h2>
-                <small class="text-muted">{{ $projectSchedule->lead->lead_number ?? 'Lead' }} - {{ $projectSchedule->lead->name ?? '' }}</small>
+                <small class="text-muted">
+                    @if($projectSchedule->project)
+                        {{ $projectSchedule->project->project_name }}
+                    @elseif($projectSchedule->lead)
+                        {{ $projectSchedule->lead->lead_number ?? 'Lead' }} - {{ $projectSchedule->lead->name ?? '' }}
+                    @endif
+                </small>
             </div>
             <div>
                 @if(auth()->user()->hasAnyRole(['System Administrator', 'Managing Director']))
-                    <a href="{{ route('leads.show', $projectSchedule->lead_id) }}" class="btn btn-secondary">
-                        <i class="fa fa-arrow-left"></i> Back to Lead
-                    </a>
+                    @if($projectSchedule->project)
+                        <a href="{{ route('individual_projects', [$projectSchedule->project_id, 10]) }}" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"></i> Back to Project
+                        </a>
+                    @elseif($projectSchedule->lead_id)
+                        <a href="{{ route('leads.show', $projectSchedule->lead_id) }}" class="btn btn-secondary">
+                            <i class="fa fa-arrow-left"></i> Back to Lead
+                        </a>
+                    @endif
                     @if(!$projectSchedule->isConfirmed())
                         <a href="{{ route('project-schedules.edit', $projectSchedule) }}" class="btn btn-warning">
                             <i class="fa fa-edit"></i> Edit Schedule

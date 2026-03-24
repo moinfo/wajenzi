@@ -7,7 +7,7 @@
         <div class="content-heading d-flex justify-content-between align-items-center mb-3">
             <div>
                 <h2><i class="fa fa-edit text-warning mr-2"></i> Edit Project Schedule</h2>
-                <small class="text-muted">{{ $projectSchedule->lead->lead_number ?? 'Lead' }} - {{ $projectSchedule->lead->name ?? '' }}</small>
+                <small class="text-muted">{{ $projectSchedule->display_name }}</small>
             </div>
             <div>
                 <a href="{{ route('project-schedules.show', $projectSchedule) }}" class="btn btn-secondary">

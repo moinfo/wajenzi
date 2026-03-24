@@ -11,6 +11,7 @@ class ProjectSchedule extends Model
 
     protected $fillable = [
         'lead_id',
+        'project_id',
         'client_id',
         'start_date',
         'end_date',
@@ -34,6 +35,28 @@ class ProjectSchedule extends Model
     public function lead()
     {
         return $this->belongsTo(Lead::class);
+    }
+
+    /**
+     * Get the project
+     */
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Get display name (project name or lead name)
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        if ($this->project) {
+            return $this->project->project_name;
+        }
+        if ($this->lead) {
+            return $this->lead->lead_number ?? $this->lead->name ?? 'N/A';
+        }
+        return 'N/A';
     }
 
     /**
