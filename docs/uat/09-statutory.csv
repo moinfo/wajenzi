@@ -1,0 +1,35 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+STAT-PAY-001,Statutory,Statutory Payments,Verify statutory payments page loads,Payments exist,"1. Navigate to Statutory > Statutory Payments","Payments list: Payment #, Category (PAYE/NSSF/NHIF), Sub-Category, Amount, Due Date, Payment Date, Status",,,,
+STAT-PAY-002,Statutory,Statutory Payments,Create statutory payment,User has permission,"1. Click 'Create Payment'
+2. Fill: Category (PAYE/NSSF/NHIF/SDL), Sub-Category, Control Number, Description, Amount, Issue Date, Due Date, Bank
+3. Submit","Payment created in Draft status",,,,
+STAT-PAY-003,Statutory,Statutory Payments,Edit statutory payment,Payment in Draft status,"1. Click Edit
+2. Modify amount
+3. Submit","Payment updated",,,,
+STAT-PAY-004,Statutory,Statutory Payments,Delete statutory payment,Payment in Draft status,"1. Click Delete
+2. Confirm","Payment removed",,,,
+STAT-PAY-005,Statutory,Statutory Payments,Submit for approval,Payment in Draft status,"1. Open payment
+2. Click Submit for Approval","Status changes to Submitted",,,,
+STAT-PAY-006,Statutory,Statutory Payments,Approve statutory payment,Payment Submitted; user is approver,"1. Open payment approval page
+2. Click Approve","Status changes to Approved",,,,
+STAT-PAY-007,Statutory,Statutory Payments,Reject statutory payment,Payment Submitted,"1. Click Reject
+2. Enter reason","Status changes to Rejected with reason",,,,
+STAT-PAY-008,Statutory,Statutory Payments,Mark as paid,Payment Approved,"1. Click 'Mark as Paid'
+2. Enter payment date and reference","Status changes to Paid",,,,
+STAT-PAY-009,Statutory,Statutory Payments,Upload supporting document,Payment exists,"1. Edit payment
+2. Upload supporting document
+3. Submit","Document attached and viewable",,,,
+STAT-PAY-010,Statutory,Statutory Payments,Filter by category,Multiple categories exist,"1. Filter by PAYE","Only PAYE payments displayed",,,,
+STAT-PAY-011,Statutory,Statutory Payments,Filter by status,Various statuses exist,"1. Filter by Overdue","Only overdue payments displayed",,,,
+STAT-CR-001,Statutory,Statutory Category Report,Verify category report loads,Statutory payments exist,"1. Navigate to Statutory > Statutory Category Report","Report displays all categories with Total Payments, Outstanding, Paid amounts",,,,
+STAT-CR-002,Statutory,Statutory Category Report,Filter by date range,Data spans multiple periods,"1. Set start and end date
+2. Apply filter","Report shows only data within selected period",,,,
+STAT-CR-003,Statutory,Statutory Category Report,Export to PDF,Report displayed,"1. Click Export PDF","PDF downloads with category report data",,,,
+STAT-CR-004,Statutory,Statutory Category Report,Export to Excel,Report displayed,"1. Click Export Excel","Excel file downloads with report data",,,,
+STAT-SR-001,Statutory,Statutory Sub Category Report,Verify sub-category report loads,Statutory payments exist,"1. Navigate to Statutory > Statutory Sub Category Report","Detailed breakdown by parent category and sub-category",,,,
+STAT-SR-002,Statutory,Statutory Sub Category Report,Filter by parent category,Multiple categories exist,"1. Select parent category filter","Report filters to show sub-categories of selected parent",,,,
+STAT-SR-003,Statutory,Statutory Sub Category Report,Export to PDF/Excel,Report displayed,"1. Click Export","File downloads with report data",,,,
+STAT-SCH-001,Statutory,Statutory Schedules Report,Verify schedules report loads,Statutory payments with due dates exist,"1. Navigate to Statutory > Statutory Schedules Report","Payment schedule displays with upcoming due dates",,,,
+STAT-SCH-002,Statutory,Statutory Schedules Report,Filter by date range,Scheduled payments exist,"1. Set date range
+2. Apply","Report shows only payments within range",,,,
+STAT-SCH-003,Statutory,Statutory Schedules Report,Export to PDF/Excel,Report displayed,"1. Click Export","File downloads",,,,

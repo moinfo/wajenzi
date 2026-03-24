@@ -1,0 +1,114 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+PROC-DB-001,Procurement,Procurement Dashboard,Verify dashboard loads,Procurement data exists,"1. Navigate to Procurement > Procurement Dashboard","Statistics display: Total Material Requests, Quotations, Purchases, Comparisons, Inspections, Receivings",,,,
+PROC-DB-002,Procurement,Procurement Dashboard,Verify pending actions,Items pending at various stages,"1. Check Pending Actions section","Correct counts for: Requests pending approval, Needing quotations, Ready for comparison, Comparisons pending, Deliveries pending inspection, Inspections pending",,,,
+PROC-DB-003,Procurement,Procurement Dashboard,Verify recent activity,Recent procurement activity exists,"1. Check Recent Material Requests, Quotation Comparisons, Material Inspections sections","5 most recent items displayed in each section",,,,
+PROC-DB-004,Procurement,Procurement Dashboard,Filter by project,Multiple projects with procurement data,"1. Select project filter","Dashboard data filters to show only selected project's procurement",,,,
+PROC-DB-005,Procurement,Procurement Dashboard,Verify low stock alerts,Items below reorder level,"1. Check Low Stock Alerts section","Items below reorder level listed with current qty and reorder level",,,,
+PROC-MR-001,Procurement,Material Requests,Verify requests page loads,Material requests exist,"1. Navigate to Procurement > Material Requests","Requests table: Request #, Project, Description, Qty Requested, Qty Approved, Requested By, Date, Status",,,,
+PROC-MR-002,Procurement,Material Requests,Create manual material request,Project exists,"1. Click 'Create Request'
+2. Fill: Project, Items (Description, Qty, Unit, Phase), Priority, Notes
+3. Submit","Material request created in Draft status",,,,
+PROC-MR-003,Procurement,Material Requests,Bulk create from BOQ,BOQ with material items exists,"1. Navigate to BOQ detail
+2. Check material item checkboxes
+3. Click 'Request Selected Materials'
+4. Set quantities in modal
+5. Submit","Material request created with selected BOQ items as line items",,,,
+PROC-MR-004,Procurement,Material Requests,Edit material request,Request in Draft status,"1. Click Edit
+2. Modify quantities
+3. Submit","Request updated",,,,
+PROC-MR-005,Procurement,Material Requests,Delete material request,Request in Draft status,"1. Click Delete
+2. Confirm","Request removed",,,,
+PROC-MR-006,Procurement,Material Requests,Submit request for approval,Request in Draft status,"1. Open request
+2. Click Submit for Approval","Status changes to Submitted; approval workflow starts",,,,
+PROC-MR-007,Procurement,Material Requests,Approve material request,Request Submitted; user is approver,"1. Open approval page
+2. Click Approve","Status changes to Approved; approved quantities set",,,,
+PROC-MR-008,Procurement,Material Requests,Reject material request,Request Submitted,"1. Click Reject
+2. Enter reason","Status changes to Rejected",,,,
+PROC-MR-009,Procurement,Material Requests,Verify BOQ quantity update on approval,Approved request linked to BOQ items,"1. Approve material request
+2. Check BOQ item quantities","BOQ quantities updated to reflect approved material request",,,,
+PROC-MR-010,Procurement,Material Requests,Filter by project,Requests from multiple projects,"1. Select project filter","Only requests for selected project shown",,,,
+PROC-MR-011,Procurement,Material Requests,Filter by status,Various statuses exist,"1. Select status filter","Only requests with selected status shown",,,,
+PROC-SQ-001,Procurement,Supplier Quotations,Verify quotations page loads,Quotations exist,"1. Navigate to Procurement > Supplier Quotations","Quotations table: Quote #, Material Request, Supplier, Unit Price, Total, Valid Until, Status",,,,
+PROC-SQ-002,Procurement,Supplier Quotations,Create quotation from material request,Approved material request exists,"1. Click 'Create by Request'
+2. Select material request
+3. Select supplier
+4. Fill: Qty, Unit Price, Delivery Date, Valid Until, Payment Terms
+5. Submit","Quotation created linked to material request",,,,
+PROC-SQ-003,Procurement,Supplier Quotations,Create manual quotation,Supplier exists,"1. Click 'Create Quotation'
+2. Fill all fields manually
+3. Submit","Quotation created",,,,
+PROC-SQ-004,Procurement,Supplier Quotations,Edit quotation,Quotation exists,"1. Click Edit
+2. Modify price
+3. Submit","Quotation updated",,,,
+PROC-SQ-005,Procurement,Supplier Quotations,Delete quotation,Quotation exists,"1. Click Delete
+2. Confirm","Quotation removed",,,,
+PROC-SQ-006,Procurement,Supplier Quotations,Attach quote document,Quotation exists,"1. Edit quotation
+2. Upload supplier quote document
+3. Submit","Document attached and viewable",,,,
+PROC-SQ-007,Procurement,Supplier Quotations,Compare quotations for same request,Multiple quotations for one request,"1. Click 'Compare' for a material request","Side-by-side comparison of all supplier quotes for the request",,,,
+PROC-QC-001,Procurement,Quotation Comparisons,Verify comparisons page loads,Comparisons exist,"1. Navigate to Procurement > Quotation Comparisons","Comparisons table: #, Material Request, Selected Supplier, Price, Date, Status",,,,
+PROC-QC-002,Procurement,Quotation Comparisons,Create comparison,Multiple quotations for a request exist,"1. Click 'Create Comparison'
+2. Select material request
+3. Review comparison table (suppliers, prices, delivery, terms)
+4. Select best supplier
+5. Enter justification if not lowest
+6. Submit","Comparison created showing all quotes side-by-side; selected supplier recorded",,,,
+PROC-QC-003,Procurement,Quotation Comparisons,Submit comparison for approval,Comparison in Pending status,"1. Click Submit for Approval","Status changes to Submitted",,,,
+PROC-QC-004,Procurement,Quotation Comparisons,Approve comparison,Comparison Submitted; user is approver,"1. Review comparison
+2. Click Approve","Status changes to Approved; ready for purchase order",,,,
+PROC-QC-005,Procurement,Quotation Comparisons,Reject comparison,Comparison Submitted,"1. Click Reject
+2. Enter reason","Status changes to Rejected; requires re-evaluation",,,,
+PROC-QC-006,Procurement,Quotation Comparisons,Create PO from approved comparison,Comparison Approved,"1. Click 'Create Purchase Order'","Purchase order created with comparison data pre-populated",,,,
+PROC-PO-001,Procurement,Purchase Orders,Verify PO page loads,Purchase orders exist,"1. Navigate to Procurement > Purchase Orders","PO table: PO #, Supplier, Description, Qty, Price, Total, Delivery Date, Status",,,,
+PROC-PO-002,Procurement,Purchase Orders,Create PO from comparison,Approved comparison exists,"1. Click 'Create PO' from comparison
+2. Verify pre-populated data
+3. Add delivery date, address, notes
+4. Submit","PO created with comparison data",,,,
+PROC-PO-003,Procurement,Purchase Orders,Edit PO,PO in Draft status,"1. Click Edit
+2. Modify
+3. Submit","PO updated",,,,
+PROC-PO-004,Procurement,Purchase Orders,Submit PO for approval,PO in Draft,"1. Click Submit","Status changes to Submitted",,,,
+PROC-PO-005,Procurement,Purchase Orders,Approve PO,PO Submitted; user is approver,"1. Click Approve","PO Approved; ready to send to supplier",,,,
+PROC-RD-001,Procurement,Record Deliveries,Verify deliveries page loads,Pending deliveries exist,"1. Navigate to Procurement > Record Deliveries","Pending deliveries table: PO #, Supplier, Description, Qty Ordered, Qty Received, Date, Status",,,,
+PROC-RD-002,Procurement,Record Deliveries,Record delivery for PO,Approved PO exists,"1. Click 'Record Delivery'
+2. Fill: Delivery Date, Qty Received, Received By, Delivery Note #, Condition
+3. Submit","Delivery recorded; PO status updates (Partially/Fully Received)",,,,
+PROC-RD-003,Procurement,Record Deliveries,Record partial delivery,PO with qty > received,"1. Record delivery with qty less than ordered","PO status changes to Partially Received; remaining quantity tracked",,,,
+PROC-RD-004,Procurement,Record Deliveries,Attach delivery note,Recording delivery,"1. Upload delivery note document during recording","Document attached to receiving record",,,,
+PROC-SR-001,Procurement,Supplier Receivings,Verify receivings page loads,Receiving records exist,"1. Navigate to Procurement > Supplier Receivings","Receivings table: Receiving #, PO #, Supplier, Description, Qty, Date, Status",,,,
+PROC-SR-002,Procurement,Supplier Receivings,View receiving details,Receiving exists,"1. Click on a receiving record","Detail view with full delivery and PO information",,,,
+PROC-SR-003,Procurement,Supplier Receivings,Link receiving to inspection,Receiving pending inspection,"1. Click 'Create Inspection'","Redirected to inspection form with receiving data pre-populated",,,,
+PROC-MI-001,Procurement,Material Inspections,Verify inspections page loads,Inspections exist,"1. Navigate to Procurement > Material Inspections","Inspections table: #, Receiving #, Description, Qty Received, Qty Accepted, Inspector, Date, Status",,,,
+PROC-MI-002,Procurement,Material Inspections,Create inspection from receiving,Receiving exists,"1. Click 'Create Inspection' from receiving
+2. Fill: Qty Accepted, Qty Rejected, Inspector, Findings, Condition, Issues
+3. Submit","Inspection created in Draft status; pre-populated from receiving",,,,
+PROC-MI-003,Procurement,Material Inspections,Submit inspection for approval,Inspection in Draft,"1. Click Submit","Status changes to Submitted",,,,
+PROC-MI-004,Procurement,Material Inspections,Approve inspection,Inspection Submitted; user is approver,"1. Click Approve","Status Approved; stock automatically updated with accepted qty",,,,
+PROC-MI-005,Procurement,Material Inspections,Reject inspection,Inspection Submitted,"1. Click Reject","Status Rejected; materials returned/flagged",,,,
+PROC-MI-006,Procurement,Material Inspections,Verify stock update on approval,Inspection Approved,"1. Approve inspection
+2. Check material inventory","Inventory quantity increased by accepted quantity from inspection",,,,
+PROC-MI-007,Procurement,Material Inspections,Upload inspection certificate,Inspection exists,"1. Edit inspection
+2. Upload certificate
+3. Submit","Certificate attached and viewable",,,,
+PROC-SS-001,Procurement,Site Stock Register,Verify project selection page,Projects exist,"1. Navigate to Procurement > Site Stock Register","Project selection page displays",,,,
+PROC-SS-002,Procurement,Site Stock Register,View stock register for project,Project with inventory exists,"1. Select a project","Stock register displays: Material, Location, Qty on Hand, Unit, Reorder Level, Status",,,,
+PROC-SS-003,Procurement,Site Stock Register,Issue stock,Material with stock exists,"1. Click 'Issue Stock'
+2. Fill: Material, Quantity, Destination, Issued To, Date
+3. Submit","Stock issued; on-hand quantity reduced; movement recorded",,,,
+PROC-SS-004,Procurement,Site Stock Register,Adjust stock,Material exists,"1. Click 'Adjust Stock'
+2. Fill: Current Qty (shown), Adjusted Qty, Reason, Approved By
+3. Submit","Stock adjusted; movement recorded with reason",,,,
+PROC-SS-005,Procurement,Site Stock Register,View stock movements,Movements exist,"1. Click 'Movements' for a project","Movement history displays: Date, Material, Type (Receipt/Issue/Adjustment), Qty, Reference, Verified",,,,
+PROC-SS-006,Procurement,Site Stock Register,Verify stock movement,Movement exists; user is verifier,"1. Click 'Verify' on a movement","Movement marked as verified (signed)",,,,
+PROC-SS-007,Procurement,Site Stock Register,Print stock register PDF,Stock data exists,"1. Click 'Print Stock Register'","PDF downloads with project stock data",,,,
+PROC-SS-008,Procurement,Site Stock Register,Verify low stock indicators,Items below reorder level,"1. View stock register","Low stock items highlighted with warning indicators",,,,
+PROC-E2E-001,Procurement,End-to-End Workflow,Full procurement chain test,"Project with BOQ exists; supplier exists","1. Create material request from BOQ
+2. Get it approved
+3. Create supplier quotations (multiple suppliers)
+4. Create quotation comparison
+5. Approve comparison
+6. Create purchase order
+7. Record delivery
+8. Create inspection
+9. Approve inspection
+10. Verify stock updated","Complete procurement chain executes without errors; stock reflects received materials",,,,

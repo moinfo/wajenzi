@@ -1,0 +1,82 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+BIL-DB-001,Billing,Dashboard,Verify billing dashboard loads,Billing data exists,"1. Navigate to Billing > Dashboard","Metric cards display: Total Invoices, Total Clients, Total Revenue, Total Emails Sent",,,,
+BIL-DB-002,Billing,Dashboard,Verify recent activity sections,Recent billing activity exists,"1. Navigate to Billing Dashboard
+2. Check Recent Invoices, Overdue Invoices, Recent Payments sections","Each section shows 5 most recent items with correct data",,,,
+BIL-DB-003,Billing,Dashboard,Verify monthly revenue chart,12 months of billing data,"1. Navigate to Billing Dashboard
+2. Check revenue chart","Chart displays last 12 months of revenue data",,,,
+BIL-DB-004,Billing,Dashboard,Verify invoice status breakdown,Invoices with various statuses exist,"1. Check Invoice Status Breakdown section","Count and amount by status (Draft, Pending, Paid, Overdue, Cancelled) displayed",,,,
+BIL-QT-001,Billing,Quotations,Verify quotations page loads,Quotations exist,"1. Navigate to Billing > Quotations","Quotations table: Document #, Client, Issue Date, Valid Until, Amount, Status",,,,
+BIL-QT-002,Billing,Quotations,Create new quotation,Client exists,"1. Click 'Create Quotation'
+2. Fill: Client, Issue Date, Valid Until, Items (Name, Qty, Unit Price, Tax Rate), Discount, Notes, Terms
+3. Submit","Quotation created; line totals and grand total auto-calculated",,,,
+BIL-QT-003,Billing,Quotations,Edit quotation,Quotation in Draft status,"1. Click Edit
+2. Modify items and amounts
+3. Submit","Quotation updated; totals recalculated",,,,
+BIL-QT-004,Billing,Quotations,Delete quotation,Quotation in Draft status,"1. Click Delete
+2. Confirm","Quotation removed",,,,
+BIL-QT-005,Billing,Quotations,Convert quotation to proforma,Quotation in Sent/Accepted status,"1. Open quotation
+2. Click 'Convert to Proforma'","Proforma created with quotation items copied; quotation status changes to Converted",,,,
+BIL-QT-006,Billing,Quotations,Convert quotation to invoice,Quotation in Accepted status,"1. Open quotation
+2. Click 'Convert to Invoice'","Invoice created with quotation items; quotation marked as Converted",,,,
+BIL-QT-007,Billing,Quotations,Generate quotation PDF,Quotation exists,"1. Click 'Generate PDF'","PDF downloads with professional quotation layout",,,,
+BIL-QT-008,Billing,Quotations,Send quotation via email,Quotation exists; client has email,"1. Click 'Send Email'
+2. Confirm recipient and template","Email sent to client; status changes to Sent",,,,
+BIL-QT-009,Billing,Quotations,Duplicate quotation,Quotation exists,"1. Click 'Duplicate'","New quotation created as copy with Draft status",,,,
+BIL-QT-010,Billing,Quotations,Filter quotations by status,Various statuses exist,"1. Select status filter","Only quotations with selected status shown",,,,
+BIL-PF-001,Billing,Proformas,Verify proformas page loads,Proformas exist,"1. Navigate to Billing > Proformas","Proformas table displays correctly",,,,
+BIL-PF-002,Billing,Proformas,Create proforma,Client exists,"1. Click 'Create Proforma'
+2. Fill details and items
+3. Submit","Proforma created",,,,
+BIL-PF-003,Billing,Proformas,Convert proforma to invoice,Proforma Accepted,"1. Open proforma
+2. Click 'Convert to Invoice'","Invoice created from proforma items; proforma status Converted",,,,
+BIL-PF-004,Billing,Proformas,Generate proforma PDF,Proforma exists,"1. Click 'Generate PDF'","PDF downloads",,,,
+BIL-PF-005,Billing,Proformas,Send proforma via email,Proforma exists,"1. Click 'Send Email'","Email sent; status updated",,,,
+BIL-INV-001,Billing,Invoices,Verify invoices page loads,Invoices exist,"1. Navigate to Billing > Invoices","Invoices table: Invoice #, Client, Issue Date, Due Date, Amount, Paid, Balance, Status",,,,
+BIL-INV-002,Billing,Invoices,Create invoice from scratch,Client exists,"1. Click 'Create Invoice'
+2. Fill: Client, Issue Date, Due Date, Payment Terms, Currency, Items, Discount, Notes, Service Description
+3. Submit","Invoice created with auto-calculated totals",,,,
+BIL-INV-003,Billing,Invoices,Create invoice from quotation,Quotation Accepted,"1. Create invoice
+2. Select 'From Quotation'
+3. Choose quotation","Invoice pre-populated with quotation items",,,,
+BIL-INV-004,Billing,Invoices,Edit draft invoice,Invoice in Draft status,"1. Click Edit
+2. Modify items
+3. Submit","Invoice updated; totals recalculated",,,,
+BIL-INV-005,Billing,Invoices,Record full payment on invoice,Invoice Pending with balance,"1. Open invoice
+2. Click 'Record Payment'
+3. Enter full amount, method, reference
+4. Submit","Payment recorded; invoice status changes to Paid; balance becomes 0",,,,
+BIL-INV-006,Billing,Invoices,Record partial payment,Invoice Pending with balance,"1. Open invoice
+2. Click 'Record Payment'
+3. Enter partial amount
+4. Submit","Partial payment recorded; invoice status changes to Partial; balance reduced",,,,
+BIL-INV-007,Billing,Invoices,Generate invoice PDF,Invoice exists,"1. Click 'Generate PDF'","PDF downloads with professional invoice layout including company logo",,,,
+BIL-INV-008,Billing,Invoices,Generate payment receipt,Payment recorded on invoice,"1. Click 'Generate Receipt'","Receipt PDF downloads with payment details",,,,
+BIL-INV-009,Billing,Invoices,Send invoice via email,Invoice exists; client has email,"1. Click 'Send Email'","Invoice emailed to client; email logged",,,,
+BIL-INV-010,Billing,Invoices,Send payment reminder,Invoice Overdue,"1. Click 'Send Reminder'","Reminder email sent to client",,,,
+BIL-INV-011,Billing,Invoices,Apply late fee,Invoice Overdue,"1. Click 'Apply Late Fee'","Late fee added to invoice; total updated",,,,
+BIL-INV-012,Billing,Invoices,Void invoice,Invoice exists,"1. Click 'Void Invoice'
+2. Confirm","Invoice status changes to Cancelled",,,,
+BIL-INV-013,Billing,Invoices,Duplicate invoice,Invoice exists,"1. Click 'Duplicate'","New invoice created as copy in Draft status",,,,
+BIL-INV-014,Billing,Invoices,Filter by status quick links,Invoices with various statuses,"1. Click 'Paid' quick filter
+2. Click 'Overdue' quick filter","Table filters correctly for each status",,,,
+BIL-INV-015,Billing,Invoices,Verify payment terms auto-set due date,Creating new invoice,"1. Create invoice
+2. Select Payment Terms 'Net 30'","Due Date auto-set to Issue Date + 30 days",,,,
+BIL-PAY-001,Billing,Payments,Verify payments page loads,Payments exist,"1. Navigate to Billing > Payments","Payments table: Payment #, Invoice, Client, Date, Amount, Method, Status",,,,
+BIL-PAY-002,Billing,Payments,View payment details,Payment exists,"1. Click on a payment","Payment detail view shows all information",,,,
+BIL-PAY-003,Billing,Payments,Generate receipt PDF,Payment exists,"1. Click 'Generate Receipt'","Receipt PDF downloads",,,,
+BIL-PAY-004,Billing,Payments,Void payment,Payment exists,"1. Click 'Void Payment'
+2. Confirm","Payment voided; invoice balance restored",,,,
+BIL-PAY-005,Billing,Payments,Verify payment validation,Invoice with small balance,"1. Try to record payment exceeding invoice balance","System prevents overpayment or warns user",,,,
+BIL-EM-001,Billing,Email Management,Verify email log page loads,Emails sent,"1. Navigate to Billing > Email Management","Email log: Recipient, Document Type, Document #, Sent Date, Status",,,,
+BIL-EM-002,Billing,Email Management,View email details,Email logged,"1. Click on an email entry","Email detail shows recipient, subject, content preview, status",,,,
+BIL-EM-003,Billing,Email Management,Resend email,Email exists in log,"1. Click 'Resend' on an email","Email resent to recipient",,,,
+BIL-PR-001,Billing,Products,Verify products page loads,Products exist,"1. Navigate to Billing > Products","Products table: Code, Name, Description, Price, Tax Rate, Status",,,,
+BIL-PR-002,Billing,Products,Create product,User has permission,"1. Click 'Create Product'
+2. Fill: Code, Name, Description, Unit Price, Cost Price, Tax Rate, SKU
+3. Submit","Product created",,,,
+BIL-PR-003,Billing,Products,Edit product,Product exists,"1. Click Edit
+2. Modify price
+3. Submit","Product updated",,,,
+BIL-PR-004,Billing,Products,Deactivate product,Product is Active,"1. Click 'Deactivate'","Product status changes to Inactive; not available for new invoices",,,,
+BIL-PR-005,Billing,Products,Activate product,Product is Inactive,"1. Click 'Activate'","Product status changes to Active",,,,
+BIL-PR-006,Billing,Products,Search products,Products exist,"1. Type in search box","Products filtered by search term",,,,

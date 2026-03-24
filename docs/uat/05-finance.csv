@@ -1,0 +1,59 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+FIN-AT-001,Finance,Account Types,Verify account types page loads,Account types exist,"1. Navigate to Finance > Account Types","Account types table: Code, Name, Type (Asset/Liability/Equity/Income/Expense), Status",,,,
+FIN-AT-002,Finance,Account Types,Add new account type,User has permission,"1. Click 'Add New Account Type'
+2. Fill: Code, Name, Type, Description, Status
+3. Submit","Account type created",,,,
+FIN-AT-003,Finance,Account Types,Edit account type,Account type exists,"1. Click Edit
+2. Modify
+3. Submit","Account type updated",,,,
+FIN-AT-004,Finance,Account Types,Delete account type,Account type exists with no linked accounts,"1. Click Delete
+2. Confirm","Account type removed",,,,
+FIN-COA-001,Finance,Charts of Accounts,Verify charts of accounts page loads,Accounts exist,"1. Navigate to Finance > Charts of Accounts","Accounts table: Code, Name, Type, Account Type, Balance, Status",,,,
+FIN-COA-002,Finance,Charts of Accounts,Add new chart of account,Account types exist,"1. Click 'Add New Account'
+2. Fill: Code, Name, Account Type, Currency, Opening Balance, Status
+3. Submit","Account created with correct opening balance",,,,
+FIN-COA-003,Finance,Charts of Accounts,Edit account,Account exists,"1. Click Edit
+2. Modify
+3. Submit","Account updated",,,,
+FIN-COA-004,Finance,Charts of Accounts,Filter accounts by type,Multiple account types exist,"1. Filter by type (e.g. Asset)","Only accounts of selected type displayed",,,,
+FIN-COA-005,Finance,Charts of Accounts,View account transaction history,Account with transactions exists,"1. Click on account
+2. View history","Transaction list displays with dates and amounts",,,,
+FIN-CAU-001,Finance,Chart of Account Usage,Verify usage mapping page loads,Usages configured,"1. Navigate to Finance > Chart of Account Usage","Account usage mapping table displayed",,,,
+FIN-CAU-002,Finance,Chart of Account Usage,Configure account usage,Accounts exist,"1. Click Configure
+2. Map account to module (Sales/Purchases/Expense)
+3. Submit","Account usage configured",,,,
+FIN-PCR-001,Finance,Petty Cash Refill,Verify petty cash refill page loads,Requests exist,"1. Navigate to Finance > Petty Cash Refill Request","Requests list: Request #, Employee, Amount, Date, Status",,,,
+FIN-PCR-002,Finance,Petty Cash Refill,Create new refill request,User has permission,"1. Click 'Create New Request'
+2. Fill: Employee, Amount, Description, Receipts upload, Categories
+3. Submit","Request created in Draft status",,,,
+FIN-PCR-003,Finance,Petty Cash Refill,Submit request for approval,Request in Draft status,"1. Open request
+2. Click Submit for Approval","Status changes to Submitted",,,,
+FIN-PCR-004,Finance,Petty Cash Refill,Approve request,Request Submitted; user is approver,"1. Open request
+2. Click Approve","Status changes to Approved",,,,
+FIN-PCR-005,Finance,Petty Cash Refill,Mark as paid,Request Approved,"1. Open request
+2. Click Mark as Paid","Status changes to Paid",,,,
+FIN-IMP-001,Finance,Imprest Request,Verify imprest requests page loads,Requests exist,"1. Navigate to Finance > Imprest Request","Requests list: Imprest #, Employee, Amount, Date, Status",,,,
+FIN-IMP-002,Finance,Imprest Request,Create imprest request,User has permission,"1. Click 'Create Imprest Request'
+2. Fill: Employee, Amount, Purpose, Project, Expected Return Date
+3. Submit","Request created in Draft status",,,,
+FIN-IMP-003,Finance,Imprest Request,Submit for approval,Request in Draft,"1. Open request
+2. Click Submit","Status changes to Submitted",,,,
+FIN-IMP-004,Finance,Imprest Request,Approve and disburse,Request Submitted; user is approver,"1. Approve request
+2. Click Disburse Funds","Status progresses through Approved to Disbursed",,,,
+FIN-IMP-005,Finance,Imprest Request,Reconcile imprest,Imprest Disbursed; employee returns,"1. Open imprest request
+2. Click Reconcile
+3. Enter actual expenses and return amount","Imprest reconciled; differences recorded",,,,
+FIN-ER-001,Finance,Exchange Rates,Verify exchange rates page loads,Rates exist,"1. Navigate to Finance > Exchange Rates","Rates table: From Currency, To Currency, Rate, Last Updated, Status",,,,
+FIN-ER-002,Finance,Exchange Rates,Add exchange rate,User has permission,"1. Click 'Add Exchange Rate'
+2. Fill: From Currency, To Currency, Rate, Effective Date
+3. Submit","Exchange rate created",,,,
+FIN-ER-003,Finance,Exchange Rates,Update rate,Rate exists,"1. Click Update
+2. Enter new rate
+3. Submit","Rate updated with new effective date",,,,
+FIN-CAV-001,Finance,Chart of Account Variables,Verify variables page loads,Variables configured,"1. Navigate to Finance > Chart of Account Variables","Variables table: Name, Type, Values",,,,
+FIN-CAV-002,Finance,Chart of Account Variables,Add variable type,User has permission,"1. Click 'Add Variable Type'
+2. Fill: Name, Type
+3. Submit","Variable type created",,,,
+FIN-CAV-003,Finance,Chart of Account Variables,Add variable value,Variable type exists,"1. Click 'Add Value'
+2. Enter value
+3. Submit","Value added to variable type",,,,

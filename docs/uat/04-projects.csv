@@ -1,0 +1,206 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+PROJ-CLI-001,Projects,Project Clients,Verify clients list page loads,Clients exist,"1. Navigate to Projects > Project Clients
+2. Observe page","Clients table displays: Name, Contact, Email, Phone, Address, Status",,,,
+PROJ-CLI-002,Projects,Project Clients,Add new client,User has create permission,"1. Click 'Add New Client'
+2. Fill: First Name, Last Name, Email, Phone, Address, City, Country, Company Name, Client Type
+3. Submit","New client created and appears in table",,,,
+PROJ-CLI-003,Projects,Project Clients,Edit client,Client exists,"1. Click Edit on a client
+2. Modify fields
+3. Submit","Client record updated successfully",,,,
+PROJ-CLI-004,Projects,Project Clients,Delete client,Client exists with no linked projects,"1. Click Delete on a client
+2. Confirm deletion","Client removed from table",,,,
+PROJ-CLI-005,Projects,Project Clients,Toggle client active/inactive,Client exists,"1. Click toggle status on a client","Client status changes between Active and Inactive",,,,
+PROJ-CLI-006,Projects,Project Clients,Filter clients by status,Active and inactive clients exist,"1. Filter by Active status","Only active clients displayed",,,,
+PROJ-LST-001,Projects,Project List,Verify project list page loads,Projects exist,"1. Navigate to Projects > Project List
+2. Observe page","Statistics cards (Total, Active, Completed, Delayed, Contract Value) and projects table display correctly",,,,
+PROJ-LST-002,Projects,Project List,Create new project,User has create permission,"1. Click 'Create New Project'
+2. Fill all required fields
+3. Submit","New project created; appears in table with correct status",,,,
+PROJ-LST-003,Projects,Project List,Edit project,Project exists,"1. Click Edit on a project
+2. Modify fields
+3. Submit","Project updated successfully",,,,
+PROJ-LST-004,Projects,Project List,View project details,Project exists,"1. Click on a project name or View button","Project detail page loads with full information",,,,
+PROJ-LST-005,Projects,Project List,Filter projects by status,Projects with different statuses exist,"1. Select status filter (e.g. In Progress)
+2. Apply","Only projects with selected status displayed",,,,
+PROJ-LST-006,Projects,Project List,Search projects,Projects exist,"1. Type project name in search box","Table filters to show matching projects",,,,
+PROJ-LST-007,Projects,Project List,Delete project,Project exists with no dependencies,"1. Click Delete on a project
+2. Confirm","Project removed from list",,,,
+PROJ-SV-001,Projects,Site Visits,Verify site visits page loads,Site visit records exist,"1. Navigate to Projects > Site Visits","Site visits table displays: Date, Project, Supervisor, Findings, Status",,,,
+PROJ-SV-002,Projects,Site Visits,Add new site visit,Project exists,"1. Click 'Add New Site Visit'
+2. Fill: Date, Project, Supervisor, Personnel Present, Findings, Issues, Corrective Actions
+3. Submit","Site visit created successfully",,,,
+PROJ-SV-003,Projects,Site Visits,Edit site visit,Site visit exists,"1. Click Edit
+2. Modify findings
+3. Submit","Site visit updated",,,,
+PROJ-SV-004,Projects,Site Visits,Attach photos to site visit,Site visit exists,"1. Edit site visit
+2. Upload photo attachments
+3. Submit","Photos attached and viewable on site visit detail",,,,
+PROJ-SV-005,Projects,Site Visits,Export site visit to PDF,Site visit exists,"1. Click Export PDF on a site visit","PDF downloads with visit details and photos",,,,
+PROJ-BOQ-001,Projects,BOQ Management,Verify BOQ list page loads,BOQs exist,"1. Navigate to Projects > BOQ Management","BOQ list displays: Project, Version, Type, Item Count, Total Amount, Status",,,,
+PROJ-BOQ-002,Projects,BOQ Management,Create new BOQ,Project exists,"1. Click 'Create New BOQ'
+2. Select project and type
+3. Submit","New BOQ created in Draft status",,,,
+PROJ-BOQ-003,Projects,BOQ Management,Add BOQ section (hierarchical),BOQ exists,"1. Open BOQ detail
+2. Click 'Add Section'
+3. Enter section name
+4. Add a child section under it","Parent and child sections created with correct hierarchy",,,,
+PROJ-BOQ-004,Projects,BOQ Management,Add BOQ item to section,BOQ with sections exists,"1. Open BOQ detail
+2. Select a section
+3. Click 'Add Item'
+4. Fill: Description, Item Type (Material/Labour), Unit, Quantity, Unit Price
+5. Submit","Item added under correct section; line total auto-calculated",,,,
+PROJ-BOQ-005,Projects,BOQ Management,Edit BOQ item,BOQ item exists,"1. Click Edit on a BOQ item
+2. Change quantity and unit price
+3. Submit","Item updated; total recalculated; BOQ grand total updated",,,,
+PROJ-BOQ-006,Projects,BOQ Management,Delete BOQ item,BOQ item exists,"1. Click Delete on a BOQ item
+2. Confirm","Item removed; BOQ totals recalculated",,,,
+PROJ-BOQ-007,Projects,BOQ Management,Verify auto-calculation of totals,BOQ with multiple items exists,"1. Open BOQ detail
+2. Check section subtotals and grand total","All subtotals and grand total match sum of line items (Qty × Unit Price)",,,,
+PROJ-BOQ-008,Projects,BOQ Management,Bulk material request from BOQ,BOQ with material items exists,"1. Open BOQ detail
+2. Check checkboxes on material items
+3. Click floating 'Request Selected Materials' button
+4. Set quantities in modal
+5. Submit","Material request created with all selected items as line items",,,,
+PROJ-BOQ-009,Projects,BOQ Management,Export BOQ to PDF,BOQ exists,"1. Open BOQ detail
+2. Click 'Export PDF'","PDF downloads with hierarchical sections and items correctly formatted",,,,
+PROJ-BOQ-010,Projects,BOQ Management,Export BOQ to CSV,BOQ exists,"1. Open BOQ detail
+2. Click 'Export CSV'","CSV downloads with correct data; opens properly in Excel (UTF-8 BOM)",,,,
+PROJ-BOQ-011,Projects,BOQ Management,Import BOQ from CSV,Empty BOQ exists; valid CSV file prepared,"1. Open BOQ detail
+2. Click 'Import CSV'
+3. Upload CSV file","Items imported correctly from CSV into BOQ",,,,
+PROJ-BOQ-012,Projects,BOQ Management,Apply template to BOQ,BOQ template exists,"1. Open BOQ detail
+2. Click 'Apply Template'
+3. Select template","BOQ populated with template sections and items",,,,
+PROJ-BOQ-013,Projects,BOQ Management,Submit BOQ for approval,BOQ in Draft status,"1. Open BOQ detail
+2. Click 'Submit for Approval'","BOQ status changes to Submitted; approval workflow starts",,,,
+PROJ-BOQ-014,Projects,BOQ Management,Approve BOQ,BOQ in Submitted status; user is approver,"1. Open BOQ approval page
+2. Click Approve","BOQ status changes to Approved",,,,
+PROJ-BOQ-015,Projects,BOQ Management,Sort/reorder BOQ items,BOQ with multiple items,"1. Drag items to reorder
+2. Save","Items display in new sort order",,,,
+PROJ-EXP-001,Projects,Project Expenses,Verify expenses page loads,Project expenses exist,"1. Navigate to Projects > Project Expenses","Expenses table displays: Date, Description, Category, Amount, Charged By, Status",,,,
+PROJ-EXP-002,Projects,Project Expenses,Record new expense,Project exists,"1. Click 'Record New Expense'
+2. Fill: Date, Project, Category, Description, Amount, Receipt upload
+3. Submit","Expense created and appears in table",,,,
+PROJ-EXP-003,Projects,Project Expenses,Edit expense,Expense in Draft status,"1. Click Edit on expense
+2. Modify fields
+3. Submit","Expense updated",,,,
+PROJ-EXP-004,Projects,Project Expenses,Delete expense,Expense in Draft status,"1. Click Delete
+2. Confirm","Expense removed",,,,
+PROJ-EXP-005,Projects,Project Expenses,Approve expense,Expense in Submitted status,"1. Navigate to expense detail
+2. Click Approve","Expense approved; status updated",,,,
+PROJ-MAT-001,Projects,Materials,Verify materials master list loads,Materials exist,"1. Navigate to Projects > Materials","Materials table displays: Code, Description, Unit, Category, Status",,,,
+PROJ-MAT-002,Projects,Materials,Add new material,User has permission,"1. Click 'Add New Material'
+2. Fill: Code, Description, Unit, Category, Reorder Level, Standard Cost
+3. Submit","Material created in master list",,,,
+PROJ-MAT-003,Projects,Materials,Edit material,Material exists,"1. Click Edit
+2. Modify fields
+3. Submit","Material updated",,,,
+PROJ-MAT-004,Projects,Materials,Delete material,Material exists with no linked records,"1. Click Delete
+2. Confirm","Material removed from master list",,,,
+PROJ-INV-001,Projects,Material Inventory,Verify inventory page loads,Inventory records exist,"1. Navigate to Projects > Material Inventory","Inventory table displays: Material, Location, Quantity on Hand, Reorder Level, Status",,,,
+PROJ-INV-002,Projects,Material Inventory,Verify low stock alerts,Items below reorder level exist,"1. Navigate to Material Inventory","Low stock items highlighted with alert indicators",,,,
+PROJ-DR-001,Projects,Daily Reports,Verify daily reports page loads,Daily reports exist,"1. Navigate to Projects > Daily Reports","Reports table displays: Date, Project, Weather, Labor, Progress, Status",,,,
+PROJ-DR-002,Projects,Daily Reports,Create daily report,Project exists,"1. Click 'Create Daily Report'
+2. Fill: Date, Project, Weather, Labor Count, Labor Rate, Work Completed, Materials, Notes
+3. Submit","Daily report created in Draft status",,,,
+PROJ-DR-003,Projects,Daily Reports,Edit daily report,Report in Draft status,"1. Click Edit
+2. Modify fields
+3. Submit","Report updated",,,,
+PROJ-DR-004,Projects,Daily Reports,Submit daily report for approval,Report in Draft status,"1. Open report
+2. Click Submit","Status changes to Submitted",,,,
+PROJ-DR-005,Projects,Daily Reports,Export daily report to PDF,Report exists,"1. Click Export PDF","PDF downloads with report details",,,,
+PROJ-TYP-001,Projects,Project Types,Verify project types page loads,Project types exist,"1. Navigate to Projects > Project Types","Types table displays: Name, Description, Status",,,,
+PROJ-TYP-002,Projects,Project Types,Add new project type,User has permission,"1. Click Add
+2. Fill: Name, Description
+3. Submit","New project type created",,,,
+PROJ-TYP-003,Projects,Project Types,Edit project type,Type exists,"1. Click Edit
+2. Modify
+3. Submit","Type updated",,,,
+PROJ-TYP-004,Projects,Project Types,Delete project type,Type exists with no linked projects,"1. Click Delete
+2. Confirm","Type removed",,,,
+PROJ-DOC-001,Projects,Project Documents,Verify documents page loads,Documents exist,"1. Navigate to Projects > Project Documents","Documents list displays: Type, Description, Date, Status",,,,
+PROJ-DOC-002,Projects,Project Documents,Upload document,Project exists,"1. Click 'Upload Document'
+2. Select file, fill metadata
+3. Submit","Document uploaded and appears in list",,,,
+PROJ-DOC-003,Projects,Project Documents,Download document,Document exists,"1. Click Download on a document","File downloads correctly",,,,
+PROJ-DOC-004,Projects,Project Documents,Delete document,Document exists,"1. Click Delete
+2. Confirm","Document removed",,,,
+PROJ-RPT-001,Projects,Project Reports,Verify project reports page,Reports available,"1. Navigate to Projects > Project Reports","Report options display: Progress, Budget vs Actual, Expense Summary, Resource Utilization, Material Consumption",,,,
+PROJ-RPT-002,Projects,Project Reports,Generate project progress report,Project with data exists,"1. Select Project Progress Report
+2. Select project and date range
+3. Generate","Report displays with % complete and timeline data",,,,
+PROJ-RPT-003,Projects,Project Reports,Export project report to PDF,Report generated,"1. Generate a report
+2. Click Export PDF","PDF downloads with report data",,,,
+PROJ-SDR-001,Projects,Sales Daily Report,Verify sales daily report loads,Sales data exists,"1. Navigate to Projects > Sales Daily Report","Daily sales totals display with breakdowns by salesperson and project",,,,
+PROJ-LED-001,Projects,Lead Management,Verify leads page loads,Leads exist,"1. Navigate to Projects > Lead Management","Leads table displays: Lead #, Client, Phone, Source, Service, Status, Salesperson, Value, Latest Followup",,,,
+PROJ-LED-002,Projects,Lead Management,Create new lead,User has permission,"1. Click 'Create Lead'
+2. Fill: Client, Lead Name, Email, Phone, Source, Service, Status, Salesperson, Date, Location, Value
+3. Submit","Lead created and appears in table",,,,
+PROJ-LED-003,Projects,Lead Management,Edit lead,Lead exists,"1. Click Edit on a lead
+2. Modify fields
+3. Submit","Lead updated",,,,
+PROJ-LED-004,Projects,Lead Management,Delete lead,Lead exists,"1. Click Delete
+2. Confirm","Lead removed",,,,
+PROJ-LED-005,Projects,Lead Management,Add followup to lead,Lead exists,"1. Open lead detail
+2. Click 'Add Followup'
+3. Fill: Date, Time, Notes
+4. Submit","Followup added and appears in lead's followup history",,,,
+PROJ-LED-006,Projects,Lead Management,Attend (complete) followup,Followup exists,"1. Open lead detail
+2. Click 'Attend' on a pending followup","Followup marked as complete",,,,
+PROJ-LED-007,Projects,Lead Management,Link lead to existing project,Lead and project exist,"1. Open lead detail
+2. Click 'Link to Project'
+3. Select project","Lead linked to project; project reference visible on lead",,,,
+PROJ-LED-008,Projects,Lead Management,Create project from lead,Lead exists,"1. Open lead detail
+2. Click 'Create Project from Lead'","New project created with client auto-populated from lead",,,,
+PROJ-LED-009,Projects,Lead Management,Add project cost to lead,Lead exists,"1. Open lead detail
+2. Click 'Add Project Cost'
+3. Fill: Name, Amount, Category
+4. Submit","Cost item added; total estimated cost updated",,,,
+PROJ-LED-010,Projects,Lead Management,Export leads to PDF,Leads exist,"1. Click 'Export to PDF'","PDF downloads with leads data",,,,
+PROJ-LED-011,Projects,Lead Management,Filter leads by status,Leads with various statuses,"1. Select status filter
+2. Apply","Only leads with selected status displayed",,,,
+PROJ-SCH-001,Projects,Project Schedules,Verify schedules page loads,Schedules exist,"1. Navigate to Projects > Project Schedules","Schedules list: Lead/Project, Architect, Start Date, Status, Progress %",,,,
+PROJ-SCH-002,Projects,Project Schedules,View schedule detail,Schedule exists,"1. Click on a schedule","Detail view shows activities with dates, durations, and status",,,,
+PROJ-SCH-003,Projects,Project Schedules,Add activity to schedule,Schedule exists (not confirmed),"1. Open schedule
+2. Click 'Add Activity'
+3. Fill: Name, Phase, Duration (days), Assigned To, Role
+4. Submit","Activity added; start/end dates auto-calculated from schedule start",,,,
+PROJ-SCH-004,Projects,Project Schedules,Start activity,Activity in pending status,"1. Click 'Start' on an activity","Activity status changes to In Progress",,,,
+PROJ-SCH-005,Projects,Project Schedules,Complete activity,Activity in progress,"1. Click 'Complete' on an activity","Activity status changes to Completed; schedule progress % updates",,,,
+PROJ-SCH-006,Projects,Project Schedules,Confirm schedule (lock edits),Schedule in Draft status,"1. Click 'Confirm Schedule'","Schedule locked; no further date changes allowed",,,,
+PROJ-SCH-007,Projects,Project Schedules,Change architect,Schedule exists,"1. Click 'Change Architect'
+2. Select new architect
+3. Submit","Architect updated on schedule",,,,
+PROJ-SCH-008,Projects,Project Schedules,Non-admin sees only assigned schedules,Logged in as non-admin,"1. Navigate to Schedules as non-admin","Only schedules where user is architect or assigned to activities are shown",,,,
+PROJ-SIT-001,Projects,Sites,Verify sites page loads,Sites exist,"1. Navigate to Projects > Sites","Sites list: Name, Project, Address, Status",,,,
+PROJ-SIT-002,Projects,Sites,Create site,Project exists,"1. Click 'Create Site'
+2. Fill: Name, Project, Address, GPS, Supervisor, Status
+3. Submit","Site created",,,,
+PROJ-SIT-003,Projects,Sites,Edit site,Site exists,"1. Click Edit
+2. Modify
+3. Submit","Site updated",,,,
+PROJ-SIT-004,Projects,Sites,Delete site,Site exists,"1. Click Delete
+2. Confirm","Site removed",,,,
+PROJ-SPA-001,Projects,Supervisor Assignments,Verify assignments page loads,Assignments exist,"1. Navigate to Projects > Supervisor Assignments","Assignments table: Site, Supervisor, Date, Status",,,,
+PROJ-SPA-002,Projects,Supervisor Assignments,Create assignment,Site and supervisor exist,"1. Click 'Create Assignment'
+2. Select Site, Supervisor, Start Date
+3. Submit","Assignment created",,,,
+PROJ-SPA-003,Projects,Supervisor Assignments,Edit assignment,Assignment exists,"1. Click Edit
+2. Modify
+3. Submit","Assignment updated",,,,
+PROJ-SPA-004,Projects,Supervisor Assignments,View assignment history,History exists for a site,"1. Click 'View History' on a site","Historical assignments for the site displayed",,,,
+PROJ-SDR2-001,Projects,Site Daily Reports,Verify site daily reports page loads,Reports exist,"1. Navigate to Projects > Site Daily Reports","Reports list: Date, Site, Supervisor, Status",,,,
+PROJ-SDR2-002,Projects,Site Daily Reports,Create site daily report,Site exists; user is supervisor,"1. Click 'Create Report'
+2. Fill: Date, Site, Weather, Workers, Description, Materials, Progress %, Issues, Photos
+3. Submit","Report created in Draft status",,,,
+PROJ-SDR2-003,Projects,Site Daily Reports,Submit site daily report,Report in Draft status,"1. Open report
+2. Click Submit","Status changes to Submitted; approvers notified",,,,
+PROJ-SDR2-004,Projects,Site Daily Reports,Approve site daily report,Report Submitted; user is manager,"1. Open report
+2. Click Approve","Status changes to Approved; report available in client portal",,,,
+PROJ-SDR2-005,Projects,Site Daily Reports,Reject site daily report,Report Submitted; user is manager,"1. Open report
+2. Click Reject
+3. Enter rejection reason","Status changes to Rejected with reason displayed",,,,
+PROJ-SDR2-006,Projects,Site Daily Reports,View My Reports only,Logged in as supervisor,"1. Click 'My Reports' filter","Only reports created by current user displayed",,,,
+PROJ-SDR2-007,Projects,Site Daily Reports,Export site daily report,Report exists,"1. Click Export on a report","PDF/Excel file downloads with report data",,,,
+PROJ-SDR2-008,Projects,Site Daily Reports,Share report via link,Report is Approved,"1. Click Share
+2. Copy generated link","Share link generated; accessible by client",,,,

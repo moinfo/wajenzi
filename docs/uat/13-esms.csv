@@ -1,0 +1,20 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+SMS-001,eSMS,SMS List,Verify eSMS page loads,SMS records exist,"1. Navigate to eSMS","SMS inbox/outbox displays: messages, delivery status, recipients, date",,,,
+SMS-002,eSMS,Send SMS,Send individual SMS,User has permission,"1. Click 'Send SMS'
+2. Fill: Recipient phone number, Message text
+3. Submit","SMS sent; appears in outbox with Sent status",,,,
+SMS-003,eSMS,Send Bulk SMS,Send bulk SMS to group,Multiple employees/contacts exist,"1. Click 'Send Bulk SMS'
+2. Select Recipient Group (department/project team)
+3. Enter message or select template
+4. Submit","SMS sent to all group members; delivery tracking shows per-recipient status",,,,
+SMS-004,eSMS,Message Status,Verify delivery status tracking,SMS sent,"1. Check SMS list
+2. Observe Status column","Each SMS shows: Sent, Pending, or Failed status",,,,
+SMS-005,eSMS,Resend SMS,Resend failed SMS,Failed SMS exists,"1. Click 'Resend' on a failed SMS","SMS resent; status updates",,,,
+SMS-006,eSMS,View Details,View message details,SMS exists,"1. Click on a message","Full message detail: recipient, content, timestamp, delivery status",,,,
+SMS-007,eSMS,Birthdays,View birthday notifications,Employees with upcoming birthdays,"1. Navigate to eSMS > Birthdays","Upcoming employee birthdays listed",,,,
+SMS-008,eSMS,Birthdays,Send birthday greeting,Employee birthday listed,"1. Click 'Send Greeting' for an employee","Birthday SMS sent to employee",,,,
+SMS-009,eSMS,Scheduled SMS,Schedule SMS for future send,User has permission,"1. Compose SMS
+2. Set scheduled send date/time
+3. Submit","SMS scheduled; appears in outbox with scheduled timestamp",,,,
+SMS-010,eSMS,Templates,Use message template,Templates configured,"1. Compose SMS
+2. Select message template from dropdown","Message text pre-populated from template",,,,

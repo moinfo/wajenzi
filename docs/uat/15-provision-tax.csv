@@ -1,0 +1,17 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+PTAX-001,Provision Tax,Provision List,Verify provision tax page loads,Provisions exist,"1. Navigate to Provision Tax","Provisions table: Provision #, Tax Type, Period, Amount Provisioned, Amount Paid, Balance, Status",,,,
+PTAX-002,Provision Tax,Create Provision,Create new provision,User has permission,"1. Click 'Create Provision'
+2. Fill: Tax Type (Income Tax/VAT Payable), Period (Month/Year), Estimated Amount, Reference
+3. Submit","Provision created with status Provisioned",,,,
+PTAX-003,Provision Tax,Edit Provision,Edit provision,Provision exists,"1. Click Edit
+2. Modify amount
+3. Submit","Provision updated",,,,
+PTAX-004,Provision Tax,Delete Provision,Delete provision,Provision exists,"1. Click Delete
+2. Confirm","Provision removed",,,,
+PTAX-005,Provision Tax,Record Payment,Record payment against provision,Provision exists with balance,"1. Click 'Record Payment'
+2. Enter payment amount
+3. Submit","Payment recorded; balance reduced; status updates (Partially Settled or Settled)",,,,
+PTAX-006,Provision Tax,Settlement,Verify full settlement,Provision fully paid,"1. Record payment equal to remaining balance","Status changes to Settled; Balance shows 0",,,,
+PTAX-007,Provision Tax,Adjustment,View adjustment history,Provision with adjustments,"1. Click 'View History'","Adjustment history displays with dates and amounts",,,,
+PTAX-008,Provision Tax,Filter,Filter by period,Provisions across periods,"1. Filter by specific period","Only provisions for selected period shown",,,,
+PTAX-009,Provision Tax,Filter,Filter by status,Various statuses exist,"1. Filter by Provisioned/Settled","Only matching provisions displayed",,,,

@@ -1,0 +1,30 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+EXP-001,Expenses,Expenses List,Verify expenses page loads,Expenses exist,"1. Navigate to Expenses","Expenses table: Expense #, Date, Category, Description, Amount, Charged By, Status",,,,
+EXP-002,Expenses,Create Expense,Create new expense,User has permission,"1. Click 'Create Expense'
+2. Fill: Date, Category, Description, Amount, Payment Method, Reference, Employee, Receipt upload, Project
+3. Submit","Expense created in Draft status",,,,
+EXP-003,Expenses,Edit Expense,Edit draft expense,Expense in Draft status,"1. Click Edit
+2. Modify description and amount
+3. Submit","Expense updated",,,,
+EXP-004,Expenses,Delete Expense,Delete draft expense,Expense in Draft status,"1. Click Delete
+2. Confirm","Expense removed",,,,
+EXP-005,Expenses,Approval Workflow,Submit expense for approval,Expense in Draft status,"1. Open expense
+2. Click Submit for Approval","Status changes to Submitted",,,,
+EXP-006,Expenses,Approval Workflow,Approve expense,Expense Submitted; user is approver,"1. Open expense detail/approval page
+2. Click Approve","Status changes to Approved",,,,
+EXP-007,Expenses,Approval Workflow,Reject expense,Expense Submitted; user is approver,"1. Click Reject
+2. Enter reason","Status changes to Rejected with reason",,,,
+EXP-008,Expenses,Payment,Mark expense as paid,Expense Approved,"1. Open expense
+2. Click Mark as Paid","Status changes to Paid",,,,
+EXP-009,Expenses,Filters,Filter by category,Expenses with different categories,"1. Select category filter","Only expenses of selected category displayed",,,,
+EXP-010,Expenses,Filters,Filter by date range,Expenses across dates,"1. Set start and end date
+2. Apply filter","Only expenses within range displayed",,,,
+EXP-011,Expenses,Filters,Filter by status,Various statuses exist,"1. Select status filter","Only expenses with selected status displayed",,,,
+EXP-012,Expenses,Filters,Filter by employee,Expenses from different employees,"1. Select Charged By filter","Only expenses from selected employee displayed",,,,
+EXP-013,Expenses,Search,Search expenses,Expenses exist,"1. Type in search box","Expenses filtered by description/category/employee",,,,
+EXP-014,Expenses,Receipt,Verify receipt attachment,Expense with receipt uploaded,"1. Open expense detail
+2. Check attached receipt","Receipt image/document viewable",,,,
+EXP-015,Expenses,Cost Allocation,Link expense to project,Project exists,"1. Create expense
+2. Select Project
+3. Submit","Expense linked to project; visible in project expense reports",,,,
+EXP-016,Expenses,Export,Export expenses list,Expenses exist,"1. Click Export","File downloads with expense data",,,,

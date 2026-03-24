@@ -1,0 +1,65 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+RPT-001,Reports,Reports Page,Verify reports page loads,User has permission,"1. Navigate to Reports","Reports page loads with all report type options",,,,
+RPT-VAT-001,Reports,VAT Analysis Report,Generate VAT analysis report,Sales and purchase data exists,"1. Navigate to Reports
+2. Select VAT Analysis Report
+3. Set date range
+4. Generate","Report displays: Sales VAT, Purchase VAT, Net VAT by period and category",,,,
+RPT-VAT-002,Reports,VAT Analysis Report,Export VAT report to PDF,Report generated,"1. Click Export PDF","PDF downloads with VAT analysis data",,,,
+RPT-EXM-001,Reports,Exempt Analysis Report,Generate exempt analysis report,VAT-exempt transactions exist,"1. Select Exempt Analysis Report
+2. Set filters
+3. Generate","Exempt transactions and impact analysis displayed",,,,
+RPT-VPAY-001,Reports,VAT Payments Report,Generate VAT payments report,VAT payments exist,"1. Select VAT Payments Report
+2. Set date range
+3. Generate","Report shows: Payments made vs payable, Outstanding balance",,,,
+RPT-INC-001,Reports,Statement of Comprehensive Income,Generate income statement,Revenue and expense data exists,"1. Select Statement of Comprehensive Income
+2. Set period
+3. Generate","Report displays: Revenue, Expenses, Net Income with multi-period comparison",,,,
+RPT-INC-002,Reports,Statement of Comprehensive Income,Export to PDF,Report generated,"1. Click Export PDF","PDF downloads with income statement",,,,
+RPT-EXP-001,Reports,Detailed Expenditure Statement,Generate expenditure report,Expense data exists,"1. Select Detailed Expenditure Statement
+2. Set date range
+3. Generate","Expense breakdown by category with comparison periods",,,,
+RPT-FIN-001,Reports,Statement of Financial Position,Generate balance sheet,Financial data exists,"1. Select Statement of Financial Position
+2. Set date
+3. Generate","Balance sheet displays: Assets, Liabilities, Equity",,,,
+RPT-BNK-001,Reports,Bank Report,Generate bank report,Bank transactions exist,"1. Select Bank Report
+2. Set date range and account
+3. Generate","Bank reconciliation and cash flow analysis displayed",,,,
+RPT-ALL-001,Reports,Allowance Subscriptions Report,Generate allowance report,Employee allowances exist,"1. Select Allowance Subscriptions Report
+2. Set period
+3. Generate","Employee allowances by period with total payroll allowances",,,,
+RPT-GEN-001,Reports,General Report,Generate custom report,Data exists,"1. Select General Report
+2. Set custom criteria
+3. Generate","Custom report generates based on selected criteria",,,,
+RPT-SUP-001,Reports,Supervisor Report,Generate supervisor report,Supervisor data exists,"1. Select Supervisor Report
+2. Select supervisor/project
+3. Generate","Report shows: staff, expenses, timelines by supervisor",,,,
+RPT-DED-001,Reports,Deduction Report,Generate deduction report,Deductions exist,"1. Select Deduction Report
+2. Set period and type
+3. Generate","Employee deductions summary by type displayed",,,,
+RPT-SPR-001,Reports,Supplier Report,Generate supplier report,Supplier transactions exist,"1. Select Supplier Report
+2. Set filters
+3. Generate","Supplier transactions, payment status, outstanding balances displayed",,,,
+RPT-SPR-002,Reports,Supplier Report,Search supplier report,Report generated,"1. Use search functionality on supplier report","Report filters by search criteria",,,,
+RPT-SRR-001,Reports,Supplier Receiving Report,Generate receiving report,Receiving records exist,"1. Select Supplier Receiving Report
+2. Set date range
+3. Generate","Receiving transactions, delivery history, supplier performance shown",,,,
+RPT-STR-001,Reports,Supplier Transaction Report,Generate transaction report,Supplier transactions exist,"1. Select Supplier Transaction Report
+2. Set filters
+3. Generate","All supplier transactions with payment terms and aging analysis",,,,
+RPT-TMR-001,Reports,Transaction Movement Report,Generate movement report,Fund movements exist,"1. Select Transaction Movement Report
+2. Set date range
+3. Generate","Internal fund movements and transfer tracking displayed",,,,
+RPT-COL-001,Reports,Collection Report,Generate collection report,Cash collections exist,"1. Select Collection Report
+2. Set date range
+3. Generate","Cash collections by date and project displayed",,,,
+RPT-CPS-001,Reports,Collection Per System Report,Generate per-system report,Multi-system collection data exists,"1. Select Collection Per System Report
+2. Set filters
+3. Generate","Collections by business unit with comparative analysis",,,,
+RPT-PDF-001,Reports,PDF Export,Verify PDF export works for all reports,Any report generated,"1. Generate any report
+2. Click Export PDF","PDF downloads correctly formatted",,,,
+RPT-XLS-001,Reports,Excel Export,Verify Excel export works for all reports,Any report generated,"1. Generate any report
+2. Click Export Excel/CSV","CSV/Excel file downloads with correct data",,,,
+RPT-PRT-001,Reports,Print,Verify print functionality,Any report generated,"1. Generate any report
+2. Click Print","Browser print dialog opens with report",,,,
+RPT-DRL-001,Reports,Drill-down,Verify drill-down on reports,Report with drill-down capability,"1. Generate report
+2. Click on a summary figure","Detail view shows breakdown of the clicked figure",,,,

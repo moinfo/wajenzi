@@ -1,0 +1,120 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+SET-USR-001,Settings,User Management,Verify users page loads,Users exist,"1. Navigate to Settings > User Management","Users list displays with name, email, role, status",,,,
+SET-USR-002,Settings,User Management,Toggle user active/inactive,User exists,"1. Click toggle on a user","User status changes between Active and Inactive",,,,
+SET-USR-003,Settings,User Management,Verify inactive user cannot login,User deactivated,"1. Deactivate a user
+2. Attempt login as that user","Login rejected; appropriate error message shown",,,,
+SET-ROL-001,Settings,Roles & Permissions,Verify roles page loads,Roles exist,"1. Navigate to Settings > Roles & Permissions","Roles list with associated permissions displayed",,,,
+SET-ROL-002,Settings,Roles & Permissions,Create new role,User is admin,"1. Click 'Create Role'
+2. Enter role name
+3. Select permissions
+4. Submit","Role created with assigned permissions",,,,
+SET-ROL-003,Settings,Roles & Permissions,Edit role permissions,Role exists,"1. Click Edit on a role
+2. Add/remove permissions
+3. Submit","Role permissions updated",,,,
+SET-ROL-004,Settings,Roles & Permissions,Verify permission enforcement,User with limited role,"1. Log in as user with restricted role
+2. Try to access a restricted page","Access denied; redirected or error message shown",,,,
+SET-DEP-001,Settings,Departments,Verify departments page loads,Departments exist,"1. Navigate to Settings > Departments","Departments table displayed",,,,
+SET-DEP-002,Settings,Departments,Add department,User has permission,"1. Click Add
+2. Fill name
+3. Submit","Department created",,,,
+SET-DEP-003,Settings,Departments,Edit department,Department exists,"1. Click Edit
+2. Modify
+3. Submit","Department updated",,,,
+SET-DEP-004,Settings,Departments,Delete department,Department with no employees,"1. Click Delete
+2. Confirm","Department removed",,,,
+SET-POS-001,Settings,Positions,Verify positions page loads,Positions exist,"1. Navigate to Settings > Positions","Positions table displayed",,,,
+SET-POS-002,Settings,Positions,Add position,User has permission,"1. Click Add
+2. Fill details
+3. Submit","Position created",,,,
+SET-SUP-001,Settings,Suppliers,Verify suppliers page loads,Suppliers exist,"1. Navigate to Settings > Suppliers","Suppliers table with name, contact, status displayed",,,,
+SET-SUP-002,Settings,Suppliers,Add supplier,User has permission,"1. Click Add
+2. Fill: Name, Contact, Email, Phone, Address, Tax ID
+3. Submit","Supplier created",,,,
+SET-SUP-003,Settings,Suppliers,Edit supplier,Supplier exists,"1. Click Edit
+2. Modify
+3. Submit","Supplier updated",,,,
+SET-SUP-004,Settings,Suppliers,Delete supplier,Supplier with no linked records,"1. Click Delete
+2. Confirm","Supplier removed",,,,
+SET-ITM-001,Settings,Items/Products,Verify items page loads,Items exist,"1. Navigate to Settings > Items","Items catalog displayed",,,,
+SET-ITM-002,Settings,Items/Products,Add item,User has permission,"1. Click Add
+2. Fill details
+3. Submit","Item created",,,,
+SET-EXC-001,Settings,Expense Categories,Verify categories page loads,Categories exist,"1. Navigate to Settings > Expense Categories","Expense categories displayed",,,,
+SET-EXC-002,Settings,Expense Categories,Add expense category,User has permission,"1. Click Add
+2. Fill name
+3. Submit","Category created",,,,
+SET-ESC-001,Settings,Expense Sub-Categories,Verify sub-categories page loads,Sub-categories exist,"1. Navigate to Settings > Expense Sub-Categories","Sub-categories with parent category displayed",,,,
+SET-ESC-002,Settings,Expense Sub-Categories,Add sub-category,Parent category exists,"1. Click Add
+2. Select parent, fill name
+3. Submit","Sub-category created",,,,
+SET-APR-001,Settings,Approval Settings,Verify approvals config page loads,Approval config exists,"1. Navigate to Settings > Approval Settings","Approval configuration displayed",,,,
+SET-APR-002,Settings,Approval Settings,Configure approval workflow,User is admin,"1. Select document type
+2. Set approval levels
+3. Assign approvers
+4. Submit","Approval workflow configured for document type",,,,
+SET-ADT-001,Settings,Approval Document Types,Verify document types page loads,Document types exist,"1. Navigate to Settings > Approval Document Types","Document types requiring approval listed",,,,
+SET-ADT-002,Settings,Approval Document Types,Add document type for approval,User is admin,"1. Click Add
+2. Select document type
+3. Submit","Document type added to approval system",,,,
+SET-ALV-001,Settings,Approval Levels,Verify approval levels page loads,Levels configured,"1. Navigate to Settings > Approval Levels","Approval hierarchy levels displayed",,,,
+SET-ALV-002,Settings,Approval Levels,Add approval level,User is admin,"1. Click Add
+2. Set level number, approver
+3. Submit","Approval level created",,,,
+SET-UG-001,Settings,User Groups,Verify user groups page loads,Groups exist,"1. Navigate to Settings > User Groups","User groups displayed",,,,
+SET-UG-002,Settings,User Groups,Create user group,User is admin,"1. Click Create
+2. Fill group name
+3. Submit","Group created",,,,
+SET-AUG-001,Settings,Assign User Groups,Assign users to group,Group and users exist,"1. Navigate to Assign User Groups
+2. Select group
+3. Add users
+4. Submit","Users assigned to group",,,,
+SET-PAF-001,Settings,Process Approval Flows,Verify flows page loads,Flows configured,"1. Navigate to Settings > Process Approval Flows","Custom approval flows displayed",,,,
+SET-PAF-002,Settings,Process Approval Flows,Create approval flow,User is admin,"1. Click Create
+2. Define flow steps
+3. Submit","Approval flow created with steps",,,,
+SET-CAT-001,Settings,Categories,Verify categories page loads,Categories exist,"1. Navigate to Settings > Categories","General categories displayed",,,,
+SET-CAT-002,Settings,Categories,Add category,User has permission,"1. Click Add
+2. Fill name
+3. Submit","Category created",,,,
+SET-LS-001,Settings,Lead Statuses,Verify lead statuses page loads,Statuses exist,"1. Navigate to Settings > Lead Statuses","Lead status types displayed",,,,
+SET-LS-002,Settings,Lead Statuses,Add lead status,User has permission,"1. Click Add
+2. Fill status name
+3. Submit","Lead status created",,,,
+SET-LSO-001,Settings,Lead Sources,Verify lead sources page loads,Sources exist,"1. Navigate to Settings > Lead Sources","Lead source types displayed",,,,
+SET-LSO-002,Settings,Lead Sources,Add lead source,User has permission,"1. Click Add
+2. Fill source name
+3. Submit","Lead source created",,,,
+SET-SI-001,Settings,Service Interested,Verify services page loads,Services exist,"1. Navigate to Settings > Service Interested","Service types displayed",,,,
+SET-SI-002,Settings,Service Interested,Add service type,User has permission,"1. Click Add
+2. Fill name
+3. Submit","Service type created",,,,
+SET-BNK-001,Settings,Banks,Verify banks page loads,Banks exist,"1. Navigate to Settings > Banks","Banks list displayed",,,,
+SET-BNK-002,Settings,Banks,Add bank,User has permission,"1. Click Add
+2. Fill: Name, Branch, SWIFT
+3. Submit","Bank created",,,,
+SET-PS-001,Settings,Project Settings,Verify project statuses page loads,Statuses exist,"1. Navigate to Settings > Project Statuses","Project status types displayed",,,,
+SET-PS-002,Settings,Project Settings,Add project status,User has permission,"1. Click Add
+2. Fill name
+3. Submit","Project status created",,,,
+SET-AST-001,Settings,Assets,Verify assets page loads,Assets exist,"1. Navigate to Settings > Assets","Assets master data displayed",,,,
+SET-AST-002,Settings,Assets,Add asset,User has permission,"1. Click Add
+2. Fill details
+3. Submit","Asset created",,,,
+SET-AP-001,Settings,Asset Properties,Verify asset properties page loads,Properties exist,"1. Navigate to Settings > Asset Properties","Asset attributes displayed",,,,
+SET-SYS-001,Settings,Systems,Verify systems page loads,Systems exist,"1. Navigate to Settings > Systems","Business systems/cost centers displayed",,,,
+SET-SYS-002,Settings,Systems,Add system,User has permission,"1. Click Add
+2. Fill name
+3. Submit","System created",,,,
+SET-STK-001,Settings,Stock Settings,Verify stock settings page loads,Settings exist,"1. Navigate to Settings > Stock Settings","Inventory configuration displayed",,,,
+SET-CS-001,Settings,Client Sources,Verify client sources page loads,Sources exist,"1. Navigate to Settings > Client Sources","Client acquisition sources displayed",,,,
+SET-AT-001,Settings,Activity Templates,Verify templates page loads,Templates exist,"1. Navigate to Settings > Activity Templates","Project activity templates displayed",,,,
+SET-AT-002,Settings,Activity Templates,Add activity template,User has permission,"1. Click Add
+2. Fill details
+3. Submit","Template created",,,,
+SET-CC-001,Settings,Cost Categories,Verify cost categories page loads,Categories exist,"1. Navigate to Settings > Cost Categories","Project cost classifications displayed",,,,
+SET-EFD-001,Settings,EFD Settings,Verify EFD settings page loads,EFD configured,"1. Navigate to Settings > EFD Settings","POS/EFD configuration displayed",,,,
+SET-GST-001,Settings,System Settings,Verify general settings page loads,Settings exist,"1. Navigate to Settings > System Settings","General system configuration displayed",,,,
+SET-GST-002,Settings,System Settings,Update system settings,User is admin,"1. Modify settings
+2. Submit","Settings updated; changes take effect",,,,
+SET-SPV-001,Settings,Supervisor Management,Verify supervisors page loads,Supervisors exist,"1. Navigate to Settings > Supervisor Management","Supervisor master data displayed",,,,
+SET-WKL-001,Settings,Wakalas,Verify wakalas page loads,Wakalas exist,"1. Navigate to Settings > Wakalas","Agent/distributor configuration displayed",,,,

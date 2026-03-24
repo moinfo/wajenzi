@@ -1,0 +1,76 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+LAB-DB-001,Labor Procurement,Labor Dashboard,Verify dashboard loads,Labor data exists,"1. Navigate to Labor Procurement > Labor Dashboard","Statistics: Active Contracts, Completed, Pending Requests, Pending Inspections, Pending Payments, Paid Amount",,,,
+LAB-DB-002,Labor Procurement,Labor Dashboard,Verify recent activity,Recent labor activity exists,"1. Check Recent Labor Requests, Contracts, Inspections sections","5 most recent items in each section",,,,
+LAB-DB-003,Labor Procurement,Labor Dashboard,Verify alerts,Contracts nearing end date exist,"1. Check Alerts section","Contracts within 7 days of end and overdue contracts shown",,,,
+LAB-DB-004,Labor Procurement,Labor Dashboard,Filter by project,Multiple projects with labor data,"1. Select project filter","Dashboard shows only selected project's labor data",,,,
+LAB-RQ-001,Labor Procurement,Labor Requests,Verify requests page loads,Labor requests exist,"1. Navigate to Labor Procurement > Labor Requests","Requests table: Request #, Project, Artisan, Trade, Days, Rate, Total, Start Date, Status",,,,
+LAB-RQ-002,Labor Procurement,Labor Requests,Create labor request,Project exists,"1. Click 'Create Request'
+2. Fill: Project, Artisan, Trade, Description, Days Required, Start Date, Daily Rate
+3. Submit","Request created; Total Amount auto-calculated (Days × Rate)",,,,
+LAB-RQ-003,Labor Procurement,Labor Requests,Edit labor request,Request in Draft status,"1. Click Edit
+2. Modify days and rate
+3. Submit","Request updated; total recalculated",,,,
+LAB-RQ-004,Labor Procurement,Labor Requests,Delete labor request,Request in Draft status,"1. Click Delete
+2. Confirm","Request removed",,,,
+LAB-RQ-005,Labor Procurement,Labor Requests,Submit for approval,Request in Draft,"1. Click Submit for Approval","Status changes to Submitted",,,,
+LAB-RQ-006,Labor Procurement,Labor Requests,Approve labor request,Request Submitted; user is approver,"1. Click Approve","Status changes to Approved; ready for contract creation",,,,
+LAB-RQ-007,Labor Procurement,Labor Requests,Negotiate rate,Request Submitted; user is manager,"1. Click 'Update Negotiation'
+2. Adjust rate/terms
+3. Submit","Negotiated terms updated on request",,,,
+LAB-RQ-008,Labor Procurement,Labor Requests,Record assessment after completion,Contract completed from this request,"1. Click 'Record Assessment'
+2. Fill assessment details
+3. Submit","Assessment recorded for artisan",,,,
+LAB-CT-001,Labor Procurement,Labor Contracts,Verify contracts page loads,Contracts exist,"1. Navigate to Labor Procurement > Labor Contracts","Contracts table: Contract #, Project, Artisan, Start, End, Amount, Status",,,,
+LAB-CT-002,Labor Procurement,Labor Contracts,Create contract from approved request,Approved labor request exists,"1. Click 'Create Contract' from approved request
+2. Verify pre-populated fields
+3. Fill: End Date, Payment Terms, Scope, Safety Requirements
+4. Submit","Contract created in Draft status with request data",,,,
+LAB-CT-003,Labor Procurement,Labor Contracts,Edit contract,Contract in Draft status,"1. Click Edit
+2. Modify scope
+3. Submit","Contract updated",,,,
+LAB-CT-004,Labor Procurement,Labor Contracts,Sign contract,Contract in Draft status,"1. Click 'Sign Contract'","Contract status changes to Active",,,,
+LAB-CT-005,Labor Procurement,Labor Contracts,Generate contract PDF,Contract exists,"1. Click 'Generate PDF'","PDF downloads with contract details",,,,
+LAB-CT-006,Labor Procurement,Labor Contracts,Put contract on hold,Contract is Active,"1. Click 'Put on Hold'","Status changes to On Hold",,,,
+LAB-CT-007,Labor Procurement,Labor Contracts,Resume contract from hold,Contract On Hold,"1. Click 'Resume'","Status changes back to Active",,,,
+LAB-CT-008,Labor Procurement,Labor Contracts,Terminate contract early,Contract is Active,"1. Click 'Terminate'
+2. Confirm with reason","Status changes to Terminated; final payment calculated",,,,
+LAB-WL-001,Labor Procurement,Work Logs,Verify work logs page loads,Work logs exist,"1. Navigate to Labor Procurement > Work Logs","Work logs table: Log #, Contract, Project, Artisan, Date, Hours/Days, Task, Status",,,,
+LAB-WL-002,Labor Procurement,Work Logs,Create work log,Active contract exists,"1. Click 'Create Work Log' from contract
+2. Fill: Date, Hours, Task Description, Progress %, Materials Used
+3. Submit","Work log created; linked to contract",,,,
+LAB-WL-003,Labor Procurement,Work Logs,Edit work log,Work log exists,"1. Click Edit
+2. Modify hours
+3. Submit","Work log updated",,,,
+LAB-WL-004,Labor Procurement,Work Logs,Delete work log,Work log exists,"1. Click Delete
+2. Confirm","Work log removed",,,,
+LAB-WL-005,Labor Procurement,Work Logs,View all logs for contract,Contract with multiple logs,"1. Click 'View Contract Logs'","All work logs for the contract displayed",,,,
+LAB-IN-001,Labor Procurement,Labor Inspections,Verify inspections page loads,Inspections exist,"1. Navigate to Labor Procurement > Labor Inspections","Inspections table: #, Contract, Artisan, Date, Quality Rating, Status",,,,
+LAB-IN-002,Labor Procurement,Labor Inspections,Create inspection,Active contract exists,"1. Click 'Create Inspection' from contract
+2. Fill: Date, Quality Rating, Qty Completed, Progress, Issues, Safety Compliance, Photos
+3. Submit","Inspection created in Draft status",,,,
+LAB-IN-003,Labor Procurement,Labor Inspections,Submit inspection,Inspection in Draft,"1. Click Submit","Status changes to Submitted",,,,
+LAB-IN-004,Labor Procurement,Labor Inspections,Approve inspection,Inspection Submitted; user is approver,"1. Click Approve","Status Approved; work accepted; payment can proceed",,,,
+LAB-IN-005,Labor Procurement,Labor Inspections,Reject inspection,Inspection Submitted,"1. Click Reject","Status Rejected; work needs rework",,,,
+LAB-IN-006,Labor Procurement,Labor Inspections,Upload inspection photos,Inspection exists,"1. Edit inspection
+2. Upload photos
+3. Submit","Photos attached as evidence",,,,
+LAB-PM-001,Labor Procurement,Labor Payments,Verify payments page loads,Payment phases exist,"1. Navigate to Labor Procurement > Labor Payments","Payments table: Phase #, Contract, Artisan, Amount, Date, Status",,,,
+LAB-PM-002,Labor Procurement,Labor Payments,View payment details,Payment phase exists,"1. Click on a payment phase","Detail view with contract and payment information",,,,
+LAB-PM-003,Labor Procurement,Labor Payments,Approve payment,Payment Due; user has permission,"1. Click Approve","Payment status changes to Approved",,,,
+LAB-PM-004,Labor Procurement,Labor Payments,Process payment,Payment Approved,"1. Click 'Process Payment'
+2. Fill: Amount, Payment Date, Method, Reference
+3. Submit","Payment processed; status changes to Paid",,,,
+LAB-PM-005,Labor Procurement,Labor Payments,Hold payment,Payment Due or Approved,"1. Click 'Hold Payment'","Payment status changes to Held",,,,
+LAB-PM-006,Labor Procurement,Labor Payments,Release held payment,Payment Held,"1. Click 'Release'","Payment status returns to previous state",,,,
+LAB-PM-007,Labor Procurement,Labor Payments,Bulk approve payments,Multiple payments Due,"1. Select multiple payments
+2. Click 'Bulk Approve'","All selected payments approved",,,,
+LAB-PM-008,Labor Procurement,Labor Payments,View payment report,Payments exist,"1. Click 'Payment Report'","Summary report of all labor payments displayed",,,,
+LAB-PM-009,Labor Procurement,Labor Payments,View contract payments,Contract with payments exists,"1. Click 'Contract Payments' for a contract","All payment phases for the contract displayed",,,,
+LAB-E2E-001,Labor Procurement,End-to-End Workflow,Full labor procurement chain,"Project exists; artisan exists","1. Create labor request
+2. Approve request
+3. Create contract from request
+4. Sign contract
+5. Create work logs
+6. Create inspection
+7. Approve inspection
+8. Process payment","Complete labor chain executes; all statuses update correctly",,,,

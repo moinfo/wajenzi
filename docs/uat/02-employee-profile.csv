@@ -1,0 +1,27 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+EMPF-001,Employee Profile,Staff Selection,Verify employee profile page loads,User is logged in; employees exist,"1. Navigate to Employee Profile
+2. Observe page load","Page loads with staff dropdown and current user's profile displayed",,,,
+EMPF-002,Employee Profile,Staff Selection,Switch between employees,Multiple employees exist,"1. Navigate to Employee Profile
+2. Select a different employee from the dropdown","Profile updates to show selected employee's financial summary, deductions, loans, etc.",,,,
+EMPF-003,Employee Profile,Financial Summary,Verify financial summary displays correctly,Employee has salary configured,"1. Navigate to Employee Profile
+2. Select an employee with active salary","Basic Salary, Gross Pay, Allowances, Bank Account Number display correctly",,,,
+EMPF-004,Employee Profile,Deductions,Verify deduction breakdown,Employee has deduction subscriptions (NSSF/NHIF/Loan),"1. Navigate to Employee Profile
+2. Check Deductions section","Pension (NSSF), Health (NHIF), Loan Deduction, Advance Salary Deduction, Taxable Income, Total Deduction, Net Pay all display with correct amounts and percentages",,,,
+EMPF-005,Employee Profile,Deductions,Verify Net Pay calculation,Employee has salary and deductions configured,"1. Navigate to Employee Profile
+2. Calculate: Gross Pay - Total Deductions","Net Pay displayed matches manual calculation",,,,
+EMPF-006,Employee Profile,Loan Information,Verify loan information display,Employee has an active loan,"1. Navigate to Employee Profile
+2. Check Loan Information section","Current Loan Balance, Loan Status (APPROVED/PENDING), Loan Deduction Amount display correctly",,,,
+EMPF-007,Employee Profile,Loan Information,Filter loan history by date range,Employee has loan history,"1. Navigate to Employee Profile
+2. Set start_date and end_date in Loan History section
+3. Submit filter","Loan history table updates to show only records within the selected date range",,,,
+EMPF-008,Employee Profile,Advance Salary,Verify advance salary history,Employee has advance salary records,"1. Navigate to Employee Profile
+2. Check Advance Salary History section","Advance salary records display with correct amounts and dates",,,,
+EMPF-009,Employee Profile,Advance Salary,Filter advance salary by date range,Advance salary records exist,"1. Navigate to Employee Profile
+2. Set date range filter for Advance Salary section
+3. Submit filter","Only advance salary records within selected range are displayed",,,,
+EMPF-010,Employee Profile,Leave Summary,Verify leave request summary,Employee has leave records,"1. Navigate to Employee Profile
+2. Check Leave Request Summary section","Leave balance, used days, and pending requests display correctly",,,,
+EMPF-011,Employee Profile,Assets,Verify asset property assignments,Employee has assigned assets,"1. Navigate to Employee Profile
+2. Check Asset Property Assignments section","Assigned assets list with details displays correctly",,,,
+EMPF-012,Employee Profile,Disciplinary,Verify warning/disciplinary records,Employee has disciplinary records,"1. Navigate to Employee Profile
+2. Check Warning/Disciplinary Records section","Disciplinary records display with dates and details",,,,

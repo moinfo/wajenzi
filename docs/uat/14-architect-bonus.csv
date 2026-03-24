@@ -1,0 +1,26 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+ARCH-BT-001,Architect Bonus,Bonus Tasks,Verify bonus tasks page loads,Bonus tasks exist,"1. Navigate to Architect Bonus > Bonus Tasks","Tasks table: Task #, Project, Architect, Budget, Max Units, Units Scored, Bonus Amount, Status; Summary stats shown",,,,
+ARCH-BT-002,Architect Bonus,Bonus Tasks,Create bonus task (admin),User is admin,"1. Click 'Create Task'
+2. Fill: Project, Architect, Project Budget, Lead (optional), Start Date, Scheduled Completion
+3. Submit","Task created; Max Units auto-calculated from budget via tier system",,,,
+ARCH-BT-003,Architect Bonus,Bonus Tasks,Verify max units calculation,Creating task with known budget,"1. Create task with specific budget amount
+2. Check Max Units","Max Units matches the tier configuration for that budget range",,,,
+ARCH-BT-004,Architect Bonus,Bonus Tasks,Start task,Task in Pending status,"1. Click 'Start' on a task","Status changes to In Progress",,,,
+ARCH-BT-005,Architect Bonus,Bonus Tasks,Score task,Task In Progress,"1. Click 'Score'
+2. Enter: Units Scored (0 to max), Quality Assessment, Notes
+3. Submit","Units scored recorded; Bonus Amount calculated (Units × Unit Value)",,,,
+ARCH-BT-006,Architect Bonus,Bonus Tasks,Verify bonus calculation,Task scored,"1. Check Bonus Amount on task","Bonus = Units Scored × Unit Value from tier configuration",,,,
+ARCH-BT-007,Architect Bonus,Bonus Tasks,Mark task as paid,Task scored,"1. Click 'Mark as Paid'","Status changes to Paid",,,,
+ARCH-BT-008,Architect Bonus,Bonus Tasks,Admin sees all architects,User is admin,"1. Navigate to Bonus Tasks as admin","All architects' tasks visible; architect filter available",,,,
+ARCH-BT-009,Architect Bonus,Bonus Tasks,Architect sees only own tasks,User is architect (non-admin),"1. Navigate to Bonus Tasks as architect","Only own tasks displayed",,,,
+ARCH-BT-010,Architect Bonus,Bonus Tasks,Filter by status,Tasks with various statuses,"1. Filter by status (e.g. In Progress)","Only tasks with selected status shown",,,,
+ARCH-BT-011,Architect Bonus,Bonus Tasks,Search tasks,Tasks exist,"1. Search by project name or task","Matching tasks displayed",,,,
+ARCH-BR-001,Architect Bonus,Bonus Report,Verify bonus report loads,Bonus data exists,"1. Navigate to Architect Bonus > Bonus Report","Report displays: per-architect summary, total bonuses, status breakdown",,,,
+ARCH-BR-002,Architect Bonus,Bonus Report,Filter report by architect,Multiple architects with tasks,"1. Select architect filter","Report shows only selected architect's data",,,,
+ARCH-BS-001,Architect Bonus,Bonus Settings,Verify weights page loads,Weights configured,"1. Navigate to Architect Bonus > Bonus Settings","Current weight configurations displayed",,,,
+ARCH-BS-002,Architect Bonus,Bonus Settings,Update scoring weights,User is admin,"1. Modify weight values
+2. Submit","Weights updated; future scoring uses new weights",,,,
+ARCH-BS-003,Architect Bonus,Bonus Settings,Update bonus tier,Tiers exist,"1. Select a tier
+2. Modify budget range or unit value
+3. Submit","Tier updated",,,,
+ARCH-BS-004,Architect Bonus,Bonus Settings,Verify tier auto-selection,Tiers configured,"1. Create task with budget in a specific tier range","Correct tier auto-selected; Max Units set accordingly",,,,

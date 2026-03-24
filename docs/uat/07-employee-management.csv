@@ -1,0 +1,108 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+EMP-BD-001,Employee Management,Staff Bank Details,Verify bank details page loads,Bank details exist,"1. Navigate to Employee Management > Staff Bank Details","Bank details table: Employee, Bank, Account #, Account Name, Status",,,,
+EMP-BD-002,Employee Management,Staff Bank Details,Add bank detail,Employee and bank exist,"1. Click 'Add Bank Detail'
+2. Fill: Employee, Bank, Account Number, Account Name, Account Type, Branch, SWIFT
+3. Submit","Bank detail created",,,,
+EMP-BD-003,Employee Management,Staff Bank Details,Edit bank detail,Bank detail exists,"1. Click Edit
+2. Modify account number
+3. Submit","Bank detail updated",,,,
+EMP-BD-004,Employee Management,Staff Bank Details,Delete bank detail,Bank detail exists,"1. Click Delete
+2. Confirm","Bank detail removed",,,,
+EMP-PA-001,Employee Management,Payroll Administration,Verify payroll page loads,Payroll data exists,"1. Navigate to Employee Management > Payroll Administration","Payroll summary with month/year selector, Total Employees, Gross Pay, Deductions, Net Pay",,,,
+EMP-PA-002,Employee Management,Payroll Administration,Create new payroll,Employees with salaries configured,"1. Click 'Create New Payroll'
+2. Select month/year
+3. Submit","Payroll generated with employee salary breakdowns",,,,
+EMP-PA-003,Employee Management,Payroll Administration,Verify payroll calculations,Payroll created,"1. Open payroll detail
+2. Check individual employee: Gross = Basic + Allowances; Deductions = NSSF + NHIF + Tax + Loans; Net = Gross - Deductions","All calculations match expected values",,,,
+EMP-PA-004,Employee Management,Payroll Administration,Submit payroll for approval,Payroll in Draft status,"1. Click Submit Payroll","Status changes to Submitted; approval workflow starts",,,,
+EMP-PA-005,Employee Management,Payroll Administration,Approve payroll,Payroll Submitted; user is approver,"1. Click Approve","Payroll approved",,,,
+EMP-PA-006,Employee Management,Payroll Administration,Generate salary slips from payroll,Payroll Approved,"1. Click 'Generate Salary Slips'","Individual salary slips generated for all employees in payroll",,,,
+EMP-PA-007,Employee Management,Payroll Administration,Export payroll to CSV,Payroll exists,"1. Click Export CSV","CSV downloads with payroll data",,,,
+EMP-DED-001,Employee Management,Deductions,Verify deductions page loads,Deductions exist,"1. Navigate to Employee Management > Deductions","Deductions table: Code, Name, Type, Percentage/Amount, Status",,,,
+EMP-DED-002,Employee Management,Deductions,Add deduction type,User has permission,"1. Click 'Add Deduction'
+2. Fill: Code, Name, Type (Pension/Health/Tax/Loan), Nature, Employee %, Employer %
+3. Submit","Deduction type created",,,,
+EMP-DED-003,Employee Management,Deductions,Edit deduction,Deduction exists,"1. Click Edit
+2. Modify percentage
+3. Submit","Deduction updated",,,,
+EMP-DED-004,Employee Management,Deductions,Delete deduction,Deduction with no subscriptions,"1. Click Delete
+2. Confirm","Deduction removed",,,,
+EMP-DS-001,Employee Management,Deduction Subscriptions,Verify subscriptions page loads,Subscriptions exist,"1. Navigate to Employee Management > Deduction Subscriptions","Subscriptions table: Employee, Deduction Type, Amount/%, Start Date, Status",,,,
+EMP-DS-002,Employee Management,Deduction Subscriptions,Add subscription,Employee and deduction exist,"1. Click 'Add Subscription'
+2. Select Employee, Deduction Type, Amount
+3. Submit","Subscription created; employee will have this deduction in next payroll",,,,
+EMP-DS-003,Employee Management,Deduction Subscriptions,Deactivate subscription,Subscription is active,"1. Click Deactivate on subscription","Subscription deactivated; excluded from future payrolls",,,,
+EMP-SS-001,Employee Management,Salary Slips,Verify salary slips page loads,Salary slips exist,"1. Navigate to Employee Management > Salary Slips","Salary slip options with month/year selector",,,,
+EMP-SS-002,Employee Management,Salary Slips,Generate individual salary slip PDF,Payroll exists for period,"1. Select employee and month/year
+2. Click Generate PDF","PDF downloads with: Employee Name, Basic Salary, Allowances, Gross, Deductions (itemized), Net Pay, Bank Account",,,,
+EMP-SS-003,Employee Management,Salary Slips,Email salary slip to employee,Salary slip generated; employee has email,"1. Click 'Email Slip'","Salary slip emailed to employee",,,,
+EMP-AL-001,Employee Management,Employee Allowances,Verify allowances page loads,Allowances exist,"1. Navigate to Employee Management > Employee Allowances","Allowances table: Code, Name, Type (Fixed/Percentage), Amount, Status",,,,
+EMP-AL-002,Employee Management,Employee Allowances,Add allowance type,User has permission,"1. Click 'Add Allowance'
+2. Fill: Code, Name, Type, Amount/Percentage
+3. Submit","Allowance type created",,,,
+EMP-AL-003,Employee Management,Employee Allowances,Edit allowance,Allowance exists,"1. Click Edit
+2. Modify
+3. Submit","Allowance updated",,,,
+EMP-AS-001,Employee Management,Advance Salary,Verify advance salary page loads,Advance requests exist,"1. Navigate to Employee Management > Advance Salary","Advances list: Employee, Amount, Reason, Date, Status",,,,
+EMP-AS-002,Employee Management,Advance Salary,Request advance salary,Employee exists,"1. Click 'Request Advance'
+2. Fill: Employee, Amount, Reason, Date Needed, Repayment Months
+3. Submit","Advance request created in Draft status",,,,
+EMP-AS-003,Employee Management,Advance Salary,Submit advance for approval,Advance in Draft,"1. Click Submit for Approval","Status changes to Submitted",,,,
+EMP-AS-004,Employee Management,Advance Salary,Approve advance salary,Advance Submitted; user is approver,"1. Click Approve","Status changes to Approved; deduction starts in next payroll",,,,
+EMP-AS-005,Employee Management,Advance Salary,Reject advance salary,Advance Submitted; user is approver,"1. Click Reject
+2. Enter reason","Status changes to Rejected with reason",,,,
+EMP-AS-006,Employee Management,Advance Salary,Verify advance deduction in payroll,Advance Approved; next payroll created,"1. Create payroll for next month
+2. Check employee's deductions","Advance salary deduction appears in payroll deductions",,,,
+EMP-SAL-001,Employee Management,Salaries & Salary Arrears,Verify salaries page loads,Salaries configured,"1. Navigate to Employee Management > Salaries & Salary Arrears","Salaries table: Employee, Basic Salary, Effective From, Grade, Status",,,,
+EMP-SAL-002,Employee Management,Salaries & Salary Arrears,Set employee salary,Employee exists,"1. Click 'Set Salary'
+2. Fill: Employee, Basic Salary, Effective Date, Currency
+3. Submit","Salary configured for employee",,,,
+EMP-SAL-003,Employee Management,Salaries & Salary Arrears,Apply salary increase,Employee has existing salary,"1. Click Edit
+2. Increase basic salary
+3. Set new effective date
+4. Submit","New salary recorded; history preserved",,,,
+EMP-LN-001,Employee Management,Loan Details,Verify loans page loads,Loans exist,"1. Navigate to Employee Management > Loan Details","Loans list: Employee, Amount, Date, Status",,,,
+EMP-LN-002,Employee Management,Loan Details,Apply for loan,Employee exists,"1. Click 'Apply for Loan'
+2. Fill: Employee, Amount, Purpose, Start Date, Duration, Monthly Deduction
+3. Submit","Loan application created in Pending status",,,,
+EMP-LN-003,Employee Management,Loan Details,Submit loan for approval,Loan in Pending status,"1. Click Submit for Approval","Status changes to Submitted",,,,
+EMP-LN-004,Employee Management,Loan Details,Approve loan,Loan Submitted; user is approver,"1. Click Approve","Loan Approved; deductions start in next payroll",,,,
+EMP-LN-005,Employee Management,Loan Details,View loan deduction schedule,Loan Approved,"1. Open loan detail
+2. View deduction schedule","Schedule shows monthly deductions with balance after each payment",,,,
+EMP-LN-006,Employee Management,Loan Details,Track loan payment progress,Loan with partial payments,"1. Open loan detail","Payment tracker shows amount paid vs remaining balance",,,,
+EMP-LD-001,Employee Management,Leave Dashboard,Verify leave dashboard loads,Leave data exists,"1. Navigate to Employee Management > Leave Dashboard","Dashboard shows leave balances and status for all employees",,,,
+EMP-LR-001,Employee Management,Leave Request,Create leave request,Employee with leave balance,"1. Navigate to Leave Request
+2. Click 'Create Leave Request'
+3. Fill: Leave Type, Start Date, End Date, Reason
+4. Submit","Leave request created; days auto-calculated",,,,
+EMP-LR-002,Employee Management,Leave Request,Approve leave request,Leave request Submitted; user is approver,"1. Open request
+2. Click Approve","Leave approved; balance deducted",,,,
+EMP-LR-003,Employee Management,Leave Request,Reject leave request,Leave request Submitted,"1. Click Reject
+2. Enter reason","Leave rejected; balance unchanged",,,,
+EMP-LR-004,Employee Management,Leave Request,View leave balance,Employee has leave allocations,"1. Open leave request page
+2. Check balance section","Remaining days per leave type displayed correctly",,,,
+EMP-LM-001,Employee Management,Leave Managements,Verify leave management page loads,Leave types exist,"1. Navigate to Employee Management > Leave Managements","Leave management table with employee leave records",,,,
+EMP-LT-001,Employee Management,Leave Types,Verify leave types page loads,Leave types exist,"1. Navigate to Employee Management > Leave Types","Leave types table: Code, Name, Days Per Year, Carryover %, Status",,,,
+EMP-LT-002,Employee Management,Leave Types,Add leave type,User has permission,"1. Click 'Add Leave Type'
+2. Fill: Code, Name, Days Per Year, Carryover %
+3. Submit","Leave type created",,,,
+EMP-LT-003,Employee Management,Leave Types,Edit leave type,Leave type exists,"1. Click Edit
+2. Modify days per year
+3. Submit","Leave type updated",,,,
+EMP-CB-001,Employee Management,CRDB Bank File,Verify CRDB bank file page loads,Payroll exists,"1. Navigate to Employee Management > CRDB Bank File","Bank file generator with month/year selector",,,,
+EMP-CB-002,Employee Management,CRDB Bank File,Generate CRDB bank file,Approved payroll exists for month,"1. Select month/year
+2. Click 'Preview'
+3. Verify employee list and amounts
+4. Click 'Generate File'","Bank file downloads in CRDB format with correct employee data",,,,
+EMP-CB-003,Employee Management,CRDB Bank File,Exclude employee from bank file,Payroll exists; employee should be excluded,"1. Preview payroll
+2. Uncheck employee to exclude
+3. Generate file","File generated without excluded employee",,,,
+EMP-ATT-001,Employee Management,Attendance Types,Verify attendance types page loads,Attendance types exist,"1. Navigate to Employee Management > Attendance Types","Attendance types table: Code, Name, Description, Status",,,,
+EMP-ATT-002,Employee Management,Attendance Types,Add attendance type,User has permission,"1. Click 'Add Attendance Type'
+2. Fill: Code, Name, Description
+3. Submit","Attendance type created",,,,
+EMP-ATT-003,Employee Management,Attendance Types,Edit attendance type,Type exists,"1. Click Edit
+2. Modify
+3. Submit","Type updated",,,,
+EMP-ATT-004,Employee Management,Attendance Types,Delete attendance type,Type exists with no linked records,"1. Click Delete
+2. Confirm","Type removed",,,,

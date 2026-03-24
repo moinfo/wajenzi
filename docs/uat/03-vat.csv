@@ -1,0 +1,61 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+VAT-SAL-001,VAT,Sales,Verify sales list page loads,User has permission; sales records exist,"1. Navigate to VAT > Sales
+2. Observe page load","Sales transactions table displays with columns: Date, Reference, Description, Amount, VAT, Status",,,,
+VAT-SAL-002,VAT,Sales,Add new sale,User has create permission,"1. Navigate to Sales
+2. Click 'Add New Sale'
+3. Fill form: Date, Reference Number, Description, Amount
+4. Submit","New sale record created; VAT amount auto-calculated; record appears in table",,,,
+VAT-SAL-003,VAT,Sales,Edit existing sale,Sale record exists in Draft status,"1. Navigate to Sales
+2. Click Edit on a draft sale
+3. Modify Description and Amount
+4. Submit","Sale record updated with new values; VAT recalculated",,,,
+VAT-SAL-004,VAT,Sales,Delete sale,Sale record exists in Draft status,"1. Navigate to Sales
+2. Click Delete on a draft sale
+3. Confirm deletion","Sale record removed from the table",,,,
+VAT-SAL-005,VAT,Sales,Filter sales by date range,Multiple sales exist across dates,"1. Navigate to Sales
+2. Set start date and end date filters
+3. Apply filter","Only sales within the selected date range are displayed",,,,
+VAT-SAL-006,VAT,Sales,Submit sale for approval,Sale exists in Draft status,"1. Navigate to Sales
+2. Click on a draft sale
+3. Click Submit for Approval","Sale status changes to Submitted; approval workflow initiated",,,,
+VAT-SAL-007,VAT,Sales,Approve sale,Sale is in Submitted status; user is approver,"1. Navigate to sale detail page
+2. Click Approve","Sale status changes to Approved",,,,
+VAT-SAL-008,VAT,Sales,Export sales to PDF/CSV,Sales records exist,"1. Navigate to Sales
+2. Click Export PDF or Export CSV","File downloads with correct sales data",,,,
+VAT-PUR-001,VAT,Purchases,Verify purchases list page loads,User has permission; purchase records exist,"1. Navigate to VAT > Purchases
+2. Observe page load","Purchases table displays with correct columns and data",,,,
+VAT-PUR-002,VAT,Purchases,Add new purchase,User has create permission,"1. Navigate to Purchases
+2. Click 'Add New Purchase'
+3. Fill form: Date, Supplier, Reference, Description, Amount
+4. Submit","New purchase created; VAT calculated; record appears in table",,,,
+VAT-PUR-003,VAT,Purchases,Edit purchase,Purchase exists in Draft status,"1. Navigate to Purchases
+2. Click Edit on draft purchase
+3. Modify fields
+4. Submit","Purchase updated successfully",,,,
+VAT-PUR-004,VAT,Purchases,Delete purchase,Purchase exists in Draft status,"1. Click Delete on draft purchase
+2. Confirm deletion","Purchase removed from table",,,,
+VAT-PUR-005,VAT,Purchases,Multi-step approval workflow,Purchase in Submitted status,"1. Navigate to purchase detail
+2. Approve at level 1
+3. Approve at level 2 (if configured)","Purchase progresses through approval levels and reaches Approved status",,,,
+VAT-PUR-006,VAT,Purchases,Filter purchases by supplier,Multiple purchases from different suppliers,"1. Navigate to Purchases
+2. Filter by specific supplier","Only purchases from selected supplier displayed",,,,
+VAT-AUTO-001,VAT,Auto Purchases,Verify auto purchases display,Auto-generated purchases exist,"1. Navigate to VAT > Auto Purchases
+2. Observe page","Auto-generated purchases list displays with AUTO status indicator",,,,
+VAT-AUTO-002,VAT,Auto Purchases,Edit auto purchase,Auto purchase exists,"1. Navigate to Auto Purchases
+2. Click Edit on a record
+3. Modify fields
+4. Submit","Auto purchase record updated",,,,
+VAT-AUTO-003,VAT,Auto Purchases,Approve auto purchase,Auto purchase in submitted status,"1. Navigate to auto purchase detail
+2. Click Approve","Auto purchase status changes to Approved",,,,
+VAT-PAY-001,VAT,VAT Payments,Verify VAT payments page loads,VAT payment records exist,"1. Navigate to VAT > VAT Payments
+2. Observe page","VAT payments list displays; monthly VAT summary shows Sales VAT vs Purchase VAT",,,,
+VAT-PAY-002,VAT,VAT Payments,Record new VAT payment,Net VAT payable exists,"1. Navigate to VAT Payments
+2. Click 'Record New VAT Payment'
+3. Fill: Payment Date, Period, Sales VAT Total, Purchase VAT Total, Amount Paid, Payment Method, Reference
+4. Submit","VAT payment recorded; Net VAT Payable auto-calculated correctly",,,,
+VAT-PAY-003,VAT,VAT Payments,Verify Net VAT calculation,Sales and purchase records exist for period,"1. Navigate to VAT Payments
+2. Check monthly summary","Net VAT Payable = Sales VAT Total - Purchase VAT Total; displayed correctly",,,,
+VAT-PAY-004,VAT,VAT Payments,Submit VAT payment for approval,VAT payment in Draft status,"1. Navigate to VAT payment detail
+2. Click Submit for Approval","Status changes to Submitted; approval process starts",,,,
+VAT-PAY-005,VAT,VAT Payments,Export VAT payment report,VAT payments exist,"1. Navigate to VAT Payments
+2. Click Export/Print","Report generates with correct payment data",,,,

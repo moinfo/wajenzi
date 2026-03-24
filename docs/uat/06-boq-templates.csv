@@ -1,0 +1,73 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+BOQT-BT-001,BOQ Templates,Building Types,Verify building types page loads,Building types exist,"1. Navigate to BOQ Templates > Building Types","Building types table: Name, Description, Status",,,,
+BOQT-BT-002,BOQ Templates,Building Types,Add new building type,User has permission,"1. Click 'Add New Building Type'
+2. Fill: Name, Description
+3. Submit","Building type created",,,,
+BOQT-BT-003,BOQ Templates,Building Types,Edit building type,Building type exists,"1. Click Edit
+2. Modify
+3. Submit","Building type updated",,,,
+BOQT-BT-004,BOQ Templates,Building Types,Delete building type,Building type exists with no linked templates,"1. Click Delete
+2. Confirm","Building type removed",,,,
+BOQT-IC-001,BOQ Templates,BOQ Item Categories,Verify categories page loads,Categories exist,"1. Navigate to BOQ Templates > BOQ Item Categories","Categories table: Code, Name, Description, Status",,,,
+BOQT-IC-002,BOQ Templates,BOQ Item Categories,Add category,User has permission,"1. Click 'Add Category'
+2. Fill: Code, Name, Description
+3. Submit","Category created",,,,
+BOQT-IC-003,BOQ Templates,BOQ Item Categories,Edit category,Category exists,"1. Click Edit
+2. Modify
+3. Submit","Category updated",,,,
+BOQT-IC-004,BOQ Templates,BOQ Item Categories,Delete category,Category exists with no linked items,"1. Click Delete
+2. Confirm","Category removed",,,,
+BOQT-CS-001,BOQ Templates,Construction Stages,Verify stages page loads,Stages exist,"1. Navigate to BOQ Templates > Construction Stages","Stages table: Code, Name, Sequence Order, Status",,,,
+BOQT-CS-002,BOQ Templates,Construction Stages,Add stage,User has permission,"1. Click 'Add Stage'
+2. Fill: Code, Name, Sequence
+3. Submit","Stage created with correct sequence",,,,
+BOQT-CS-003,BOQ Templates,Construction Stages,Edit stage,Stage exists,"1. Click Edit
+2. Modify
+3. Submit","Stage updated",,,,
+BOQT-CS-004,BOQ Templates,Construction Stages,Delete stage,Stage exists with no linked activities,"1. Click Delete
+2. Confirm","Stage removed",,,,
+BOQT-AC-001,BOQ Templates,Activities,Verify activities page loads,Activities exist,"1. Navigate to BOQ Templates > Activities","Activities table: Code, Name, Stage, Description, Status",,,,
+BOQT-AC-002,BOQ Templates,Activities,Add activity,Stage exists,"1. Click 'Add Activity'
+2. Fill: Code, Name, Stage, Description
+3. Submit","Activity created under selected stage",,,,
+BOQT-AC-003,BOQ Templates,Activities,Edit activity,Activity exists,"1. Click Edit
+2. Modify
+3. Submit","Activity updated",,,,
+BOQT-AC-004,BOQ Templates,Activities,Delete activity,Activity exists with no linked sub-activities,"1. Click Delete
+2. Confirm","Activity removed",,,,
+BOQT-SA-001,BOQ Templates,Sub-Activities,Verify sub-activities page loads,Sub-activities exist,"1. Navigate to BOQ Templates > Sub-Activities","Sub-activities table: Code, Name, Activity, Description, Status",,,,
+BOQT-SA-002,BOQ Templates,Sub-Activities,Add sub-activity,Activity exists,"1. Click 'Add Sub-Activity'
+2. Fill: Code, Name, Activity, Description
+3. Submit","Sub-activity created under selected activity",,,,
+BOQT-SA-003,BOQ Templates,Sub-Activities,Edit sub-activity,Sub-activity exists,"1. Click Edit
+2. Modify
+3. Submit","Sub-activity updated",,,,
+BOQT-SA-004,BOQ Templates,Sub-Activities,Delete sub-activity,Sub-activity exists with no linked items,"1. Click Delete
+2. Confirm","Sub-activity removed",,,,
+BOQT-BI-001,BOQ Templates,BOQ Items,Verify BOQ items page loads,BOQ items exist,"1. Navigate to BOQ Templates > BOQ Items","BOQ items table: Code, Description, Unit, Category, Standard Price, Status",,,,
+BOQT-BI-002,BOQ Templates,BOQ Items,Add BOQ item,Categories exist,"1. Click 'Add BOQ Item'
+2. Fill: Code, Description, Unit, Category, Standard Price, Estimated Quantity
+3. Submit","BOQ item created",,,,
+BOQT-BI-003,BOQ Templates,BOQ Items,Edit BOQ item,Item exists,"1. Click Edit
+2. Modify
+3. Submit","Item updated",,,,
+BOQT-BI-004,BOQ Templates,BOQ Items,Delete BOQ item,Item exists with no linked templates,"1. Click Delete
+2. Confirm","Item removed",,,,
+BOQT-TD-001,BOQ Templates,BOQ Templates Design,Verify template designer loads,Templates exist,"1. Navigate to BOQ Templates > BOQ Templates Design","Template list and designer interface load",,,,
+BOQT-TD-002,BOQ Templates,BOQ Templates Design,Create new template,Building type and stages exist,"1. Click 'Create Template'
+2. Select building type
+3. Add stages
+4. Add activities to stages
+5. Add sub-activities
+6. Attach BOQ items with quantities
+7. Save","Template created with full hierarchy: Building Type > Stages > Activities > Sub-Activities > Items",,,,
+BOQT-TD-003,BOQ Templates,BOQ Templates Design,Edit template,Template exists,"1. Click Edit
+2. Add/remove stages or items
+3. Save","Template updated with changes",,,,
+BOQT-TD-004,BOQ Templates,BOQ Templates Design,Duplicate template,Template exists,"1. Click Duplicate on a template","Copy created with same structure",,,,
+BOQT-TD-005,BOQ Templates,BOQ Templates Design,Delete template,Template exists,"1. Click Delete
+2. Confirm","Template removed",,,,
+BOQT-TD-006,BOQ Templates,BOQ Templates Design,Export template to CSV,Template exists,"1. Click 'Export CSV'","CSV file downloads with template structure",,,,
+BOQT-TD-007,BOQ Templates,BOQ Templates Design,Import template from CSV,Valid CSV file prepared,"1. Click 'Import CSV'
+2. Upload file","Template created from CSV data",,,,
+BOQT-TD-008,BOQ Templates,BOQ Templates Design,View template report,Template exists,"1. Click on template name","Template summary report displays with full hierarchy and totals",,,,

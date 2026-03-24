@@ -1,0 +1,25 @@
+Test ID,Module,Sub-Module,Test Case,Pre-condition,Test Steps,Expected Result,Actual Result,Status (Pass/Fail),Tester,Date,Notes
+DASH-001,Dashboard,Financial Metrics,Verify dashboard loads with correct financial metrics,User is logged in,"1. Navigate to Dashboard (/)
+2. Observe the financial metric cards","Total Sales, Total Purchases, VAT Payable, Collections, Expenses cards display with correct month-to-date figures",,,,
+DASH-002,Dashboard,Financial Metrics,Verify month-over-month trend percentage,At least 2 months of sales data exist,"1. Navigate to Dashboard
+2. Check Total Sales card trend indicator","Trend percentage shows correct increase/decrease compared to previous month",,,,
+DASH-003,Dashboard,Project Summary,Verify project summary counts,At least one project exists,"1. Navigate to Dashboard
+2. Check project summary section","Active Projects count, Total Projects count, Budget vs Expenses % display correctly",,,,
+DASH-004,Dashboard,Approval Queue,Verify approval queue cards show correct pending counts,Pending approvals exist for various document types,"1. Navigate to Dashboard
+2. Check each approval queue card (Payroll, Advance Salary, Staff Loans, Material Requests, Project BOQ, Purchases)","Each card shows correct pending count matching actual pending approvals",,,,
+DASH-005,Dashboard,Approval Queue,Verify approval queue card navigation,Pending approvals exist,"1. Navigate to Dashboard
+2. Click on an approval queue card (e.g. Material Requests)","User is redirected to the corresponding approval list page",,,,
+DASH-006,Dashboard,Follow-ups,Verify follow-ups section displays correctly,Follow-ups exist in the system,"1. Navigate to Dashboard
+2. Scroll to Follow-ups section","Today's, Overdue, and Upcoming follow-up counts display correctly; list shows 20 most recent",,,,
+DASH-007,Dashboard,Follow-ups,Export follow-ups to calendar,Follow-ups exist,"1. Navigate to Dashboard
+2. Click 'Export Follow-ups to Calendar' button","Calendar file (.ics) downloads with correct follow-up events",,,,
+DASH-008,Dashboard,Activities Calendar,Verify project activities calendar displays,Project schedule activities exist,"1. Navigate to Dashboard
+2. Scroll to Project Activities Calendar section","Current month calendar displays with activities grouped by date; counts for Overdue, Today, Pending, In Progress shown",,,,
+DASH-009,Dashboard,Activities Calendar,Navigate calendar months,Activities exist across months,"1. Navigate to Dashboard
+2. Click next/previous month arrows on calendar","Calendar updates to show selected month's activities",,,,
+DASH-010,Dashboard,Activities Calendar,Verify admin vs non-admin view,Logged in as non-admin user,"1. Navigate to Dashboard as non-admin
+2. Check activities calendar","Only activities assigned to current user are shown (not all activities)",,,,
+DASH-011,Dashboard,Active Schedules,Verify active project schedules display,Active project schedules exist,"1. Navigate to Dashboard
+2. Check Active Project Schedules section","Schedules display with project name, progress bar, and status",,,,
+DASH-012,Dashboard,Permissions,Verify dashboard respects user permissions,User with limited permissions is logged in,"1. Log in as user with restricted role
+2. Navigate to Dashboard","Only metric cards and sections the user has permission to view are displayed",,,,
