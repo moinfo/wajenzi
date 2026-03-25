@@ -20,9 +20,11 @@ class AutoPurchaseController extends Controller
         if($this->handleCrud($request, 'Receipt')) {
             return back();
         }
-        $start_date = $request->input('start_date') ?? date('Y-06-01');
+        $start_date = $request->input('start_date') ?? date('Y-01-01');
         $end_date = $request->input('end_date') ?? date('Y-m-d');
-        $purchases = Receipt::whereBetween('receipt_date',[$start_date,$end_date])->orderBy('receipt_date','DESC')->get();
+        $purchases = Receipt::whereBetween('receipt_date', [$start_date, $end_date])
+            ->orderBy('receipt_date', 'DESC')
+            ->get();
         $data = [
             'purchases' => $purchases
         ];

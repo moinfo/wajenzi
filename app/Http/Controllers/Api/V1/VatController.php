@@ -295,7 +295,8 @@ class VatController extends Controller
             ->get()
             ->map(fn($r) => [
                 'id' => $r->id,
-                'date' => $r->receipt_date,
+                'inserted_date' => $r->date,
+                'created_at' => $r->created_at?->toIso8601String(),
                 'supplier_name' => $r->company_name,
                 'supplier_vrn' => $r->vrn,
                 'receipt_number' => $r->receipt_number,

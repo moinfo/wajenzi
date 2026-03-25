@@ -173,8 +173,12 @@ class _ReceiptCard extends StatelessWidget {
           Row(
             children: [
               VatInfoCol(
-                  label: 'Date',
-                  value: receipt['date'] ?? '-',
+                  label: 'Inserted',
+                  value: receipt['inserted_date'] ?? '-',
+                  isDark: isDark),
+              VatInfoCol(
+                  label: 'Invoice Date',
+                  value: receipt['invoice_date'] ?? '-',
                   isDark: isDark),
               VatInfoCol(
                   label: 'Total',
