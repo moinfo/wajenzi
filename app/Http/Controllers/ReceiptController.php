@@ -59,13 +59,13 @@ class ReceiptController extends Controller
             $receipt->customer_mobile = $request->customer_mobile;
             $receipt->receipt_number = $request->receipt_number;
             $receipt->receipt_z_number = $request->receipt_z_number;
-            $receipt->receipt_date = $request->receipt_date;
+            $receipt->receipt_date = self::normalizeDate($request->receipt_date);
             $receipt->receipt_time = $request->receipt_time;
             $receipt->receipt_verification_code = $request->receipt_verification_code;
             $receipt->receipt_total_excl_of_tax = $request->receipt_total_excl_of_tax ?? 0;
             $receipt->receipt_total_tax = $request->receipt_total_tax ?? 0;
             $receipt->receipt_total_incl_of_tax = $request->receipt_total_incl_of_tax ?? 0;
-            $receipt->date = $request->receipt_date;
+            $receipt->date = self::normalizeDate($request->receipt_date);
 
             // TANESCO specific fields
             $receipt->kwh_charge = $request->kwh_charge ?? null;
@@ -199,5 +199,26 @@ class ReceiptController extends Controller
     public function destroy(Receipt $receipt)
     {
         //
+    }
+
+    /**
+     * Normalize date to YYYY-MM-DD format.
+     * Handles DD/MM/YYYY and YYYY-MM-DD inputs.
+     */
+    private static function normalizeDate($date)
+    {
+        if (!$date) return $date;
+
+        // Already YYYY-MM-DD
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return $date;
+        }
+
+        // DD/MM/YYYY → YYYY-MM-DD
+        if (preg_match('#^(\d{2})/(\d{2})/(\d{4})$#', $date, $m)) {
+            return "{$m[3]}-{$m[2]}-{$m[1]}";
+        }
+
+        return $date;
     }
 }
