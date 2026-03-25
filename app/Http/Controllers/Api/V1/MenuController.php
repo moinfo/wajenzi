@@ -9,6 +9,19 @@ use Illuminate\Http\Request;
 
 class MenuController extends Controller
 {
+    private function resolveMenuUrl(?string $route): ?string
+    {
+        if (blank($route)) {
+            return null;
+        }
+
+        try {
+            return route($route);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -29,6 +42,7 @@ class MenuController extends Controller
                         'name' => $child->name,
                         'icon' => $child->icon,
                         'route' => $child->route,
+                        'url' => $this->resolveMenuUrl($child->route),
                     ]);
 
                 return [
@@ -36,6 +50,7 @@ class MenuController extends Controller
                     'name' => $menu->name,
                     'icon' => $menu->icon,
                     'route' => $menu->route,
+                    'url' => $this->resolveMenuUrl($menu->route),
                     'children' => $children,
                 ];
             })

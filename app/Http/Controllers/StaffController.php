@@ -94,7 +94,7 @@ class StaffController extends Controller
             return back();
         }
         $data = [
-            'staff_bank_details' => StaffBankDetail::all()
+            'staff_bank_details' => StaffBankDetail::with(['staff', 'bank'])->get()
         ];
         return view('pages.staff.staff_bank_details')->with($data);
     }

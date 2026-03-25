@@ -1,15 +1,21 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/network/api_client.dart';
 import '../../core/services/storage_service.dart';
 import '../../data/datasources/remote/auth_api.dart';
 import '../../data/models/user_model.dart';
 
-final authStateProvider = StateNotifierProvider<AuthNotifier, AsyncValue<AuthState>>((ref) {
-  final authApi = ref.watch(authApiProvider);
-  final storageService = ref.watch(storageServiceProvider);
-  return AuthNotifier(authApi, storageService);
-});
+final authStateProvider =
+    StateNotifierProvider<AuthNotifier, AsyncValue<AuthState>>((ref) {
+      final authApi = ref.watch(authApiProvider);
+      final storageService = ref.watch(storageServiceProvider);
+      final notifier = AuthNotifier(authApi, storageService);
+      ref.listen<int>(authInvalidationProvider, (previous, next) {
+        notifier.handleSessionInvalidated();
+      });
+      return notifier;
+    });
 
 final userTypeProvider = Provider<String?>((ref) {
   return ref.watch(authStateProvider.notifier).userType;
@@ -22,7 +28,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
 
   String? get userType => _userType;
 
-  AuthNotifier(this._authApi, this._storageService) : super(const AsyncValue.loading()) {
+  AuthNotifier(this._authApi, this._storageService)
+    : super(const AsyncValue.loading()) {
     _init();
   }
 
@@ -48,7 +55,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
 
     try {
       final deviceId = await _storageService.getDeviceId();
-      final deviceName = Platform.isIOS ? 'iOS Device' : 'Android Device';
+      final deviceName = kIsWeb
+          ? 'Web Browser'
+          : switch (defaultTargetPlatform) {
+              TargetPlatform.iOS => 'iOS Device',
+              TargetPlatform.android => 'Android Device',
+              _ => 'Mobile Device',
+            };
 
       // Try staff login first
       LoginResponse? response;
@@ -82,13 +95,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
         await _storageService.saveUser(response.data.user.toJson());
         await _storageService.saveUserType(resolvedUserType);
 
-        state = AsyncValue.data(AuthState(
-          user: response.data.user,
-          token: response.data.token,
-        ));
+        state = AsyncValue.data(
+          AuthState(user: response.data.user, token: response.data.token),
+        );
         return true;
       } else {
-        state = AsyncValue.data(AuthState(error: response.message ?? 'Login failed'));
+        state = AsyncValue.data(
+          AuthState(error: response.message ?? 'Login failed'),
+        );
         return false;
       }
     } catch (e) {
@@ -122,7 +136,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
 
   Future<void> refreshUser() async {
     try {
-      final user = await _authApi.getUser();
+      final user = _userType == 'client'
+          ? await _authApi.getClientUser()
+          : await _authApi.getUser();
       await _storageService.saveUser(user.toJson());
 
       final token = await _storageService.getToken();
@@ -136,7 +152,33 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
     return await _authApi.getClientProfile();
   }
 
-  Future<bool> updateClientProfile({
+  String _extractDioErrorMessage(
+    DioException error, {
+    String fallback = 'Request failed',
+  }) {
+    final data = error.response?.data;
+    if (data is Map<String, dynamic>) {
+      final errors = data['errors'];
+      if (errors is Map<String, dynamic> && errors.isNotEmpty) {
+        final first = errors.values.first;
+        if (first is List && first.isNotEmpty) {
+          return first.first as String;
+        }
+        if (first is String && first.isNotEmpty) {
+          return first;
+        }
+      }
+
+      final message = data['message'];
+      if (message is String && message.isNotEmpty) {
+        return message;
+      }
+    }
+
+    return fallback;
+  }
+
+  Future<String?> updateClientProfile({
     required String firstName,
     required String lastName,
     required String email,
@@ -162,11 +204,16 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
           email: email,
         );
         await _storageService.saveUser(updatedUser.toJson());
-        state = AsyncValue.data(AuthState(user: updatedUser, token: currentState.token));
+        state = AsyncValue.data(
+          AuthState(user: updatedUser, token: currentState.token),
+        );
       }
-      return true;
+      return null;
     } catch (e) {
-      return false;
+      if (e is DioException) {
+        return _extractDioErrorMessage(e, fallback: 'Failed to update profile');
+      }
+      return 'Failed to update profile';
     }
   }
 
@@ -184,15 +231,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
       return null; // success
     } catch (e) {
       if (e is DioException) {
-        final data = e.response?.data;
-        if (data is Map<String, dynamic>) {
-          if (data['errors'] != null) {
-            final errors = data['errors'] as Map<String, dynamic>;
-            final first = errors.values.first;
-            if (first is List && first.isNotEmpty) return first.first as String;
-          }
-          if (data['message'] != null) return data['message'] as String;
-        }
+        return _extractDioErrorMessage(
+          e,
+          fallback: 'Failed to change password',
+        );
       }
       return 'Failed to change password';
     }
@@ -201,10 +243,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
   void clearError() {
     final currentState = state.valueOrNull;
     if (currentState != null) {
-      state = AsyncValue.data(AuthState(
-        user: currentState.user,
-        token: currentState.token,
-      ));
+      state = AsyncValue.data(
+        AuthState(user: currentState.user, token: currentState.token),
+      );
     }
+  }
+
+  void handleSessionInvalidated() {
+    _userType = null;
+    state = const AsyncValue.data(AuthState());
   }
 }

@@ -31,13 +31,22 @@ class ProjectMaterialController extends Controller
         return view('pages.projects.project_materials')->with($data);
     }
 
-    public function material($id){
-        $material = ProjectMaterial::with(['inventory', 'requests'])->findOrFail($id);
+    public function show($id) {
+        $material = ProjectMaterial::with(['inventory'])->findOrFail($id);
 
         $data = [
             'material' => $material,
             'totalQuantity' => $material->inventory->sum('quantity'),
-            'pendingRequests' => $material->requests->where('status', 'pending')->count()
+        ];
+        return view('pages.projects.project_material')->with($data);
+    }
+
+    public function material($id){
+        $material = ProjectMaterial::with(['inventory'])->findOrFail($id);
+
+        $data = [
+            'material' => $material,
+            'totalQuantity' => $material->inventory->sum('quantity'),
         ];
         return view('pages.projects.project_material')->with($data);
     }

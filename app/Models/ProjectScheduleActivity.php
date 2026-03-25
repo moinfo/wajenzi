@@ -133,7 +133,9 @@ class ProjectScheduleActivity extends Model
      */
     public function isOverdue(): bool
     {
-        return $this->status !== 'completed' && $this->end_date->isPast();
+        return $this->status !== 'completed'
+            && $this->end_date !== null
+            && $this->end_date->isPast();
     }
 
     /**

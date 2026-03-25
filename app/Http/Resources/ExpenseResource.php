@@ -10,36 +10,59 @@ class ExpenseResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        return [
-            'id' => $this->id,
-            'project_id' => $this->project_id,
-            'expense_category_id' => $this->expense_category_id,
-            'description' => $this->description,
-            'amount' => $this->amount,
-            'expense_date' => $this->expense_date?->toDateString(),
-            'receipt_path' => $this->receipt ? Storage::disk('public')->url($this->receipt) : null,
-            'status' => $this->status,
-            'notes' => $this->notes,
-            'project' => $this->whenLoaded('project', function () {
-                return [
+        try {
+            $receiptUrl = null;
+            if ($this->receipt) {
+                try {
+                    $receiptUrl = Storage::disk('public')->url($this->receipt);
+                } catch (\Throwable $e) {
+                    $receiptUrl = null;
+                }
+            }
+
+            $data = [
+                'id' => $this->id,
+                'project_id' => $this->project_id,
+                'cost_category_id' => $this->cost_category_id,
+                'description' => $this->description,
+                'amount' => $this->amount,
+                'expense_date' => $this->expense_date ? ($this->expense_date instanceof \Carbon\Carbon ? $this->expense_date->toDateString() : $this->expense_date) : null,
+                'receipt_path' => $receiptUrl,
+                'status' => $this->status ?? 'draft',
+                'remarks' => $this->remarks ?? null,
+                'created_at' => $this->created_at?->toISOString(),
+                'updated_at' => $this->updated_at?->toISOString(),
+            ];
+
+            if ($this->relationLoaded('project')) {
+                $data['project'] = [
                     'id' => $this->project->id,
-                    'project_name' => $this->project->project_name,
+                    'project_name' => $this->project->project_name ?? $this->project->name ?? null,
+                    'document_number' => $this->project->document_number ?? null,
                 ];
-            }),
-            'category' => $this->whenLoaded('category', function () {
-                return [
-                    'id' => $this->category->id,
-                    'name' => $this->category->name,
+            }
+
+            if ($this->relationLoaded('costCategory') && $this->costCategory) {
+                $data['cost_category'] = [
+                    'id' => $this->costCategory->id,
+                    'name' => $this->costCategory->name,
                 ];
-            }),
-            'created_by' => $this->whenLoaded('creator', function () {
-                return [
+            }
+
+            if ($this->relationLoaded('creator') && $this->creator) {
+                $data['creator'] = [
                     'id' => $this->creator->id,
                     'name' => $this->creator->name,
                 ];
-            }),
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
-        ];
+            }
+
+            return $data;
+        } catch (\Throwable $e) {
+            return [
+                'id' => $this->id ?? null,
+                'description' => $this->description ?? 'Error loading expense',
+                'error' => 'Failed to format expense',
+            ];
+        }
     }
 }

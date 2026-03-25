@@ -78,9 +78,9 @@
                                         <td class="text-right">{{ number_format($material->total_inventory, 2) }} {{ $material->unit }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
-{{--                                                <a class="btn btn-sm btn-success" href="{{route('project_material',['id' => $material->id])}}">--}}
-{{--                                                    <i class="fa fa-eye"></i>--}}
-{{--                                                </a>--}}
+                                                <a class="btn btn-sm btn-success" href="{{route('project_material.show', ['id' => $material->id])}}">
+                                                    <i class="fa fa-eye"></i>
+                                                </a>
                                                 @can('Edit Material')
                                                     <button type="button"
                                                             onclick="loadFormModal('project_material_form', {className: 'ProjectMaterial', id: {{$material->id}}}, 'Edit Material', 'modal-md');"

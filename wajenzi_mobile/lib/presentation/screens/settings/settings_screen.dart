@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/config/theme_config.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -12,8 +13,12 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull?.user;
+    final userInitial = (user?.name.isNotEmpty ?? false)
+        ? user!.name.substring(0, 1).toUpperCase()
+        : 'U';
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final notificationsEnabled = ref.watch(notificationsEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -31,7 +36,7 @@ class SettingsScreen extends ConsumerWidget {
                   radius: 36,
                   backgroundColor: AppColors.primary,
                   child: Text(
-                    user?.name.substring(0, 1).toUpperCase() ?? 'U',
+                    userInitial,
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -119,8 +124,10 @@ class SettingsScreen extends ConsumerWidget {
                 icon: Icons.notifications_outlined,
                 title: isSwahili ? 'Arifa' : 'Notifications',
                 trailing: Switch(
-                  value: true,
-                  onChanged: (value) {},
+                  value: notificationsEnabled,
+                  onChanged: (value) => ref
+                      .read(settingsProvider.notifier)
+                      .setNotificationsEnabled(value),
                   activeTrackColor: AppColors.primary,
                 ),
               ),
@@ -137,7 +144,7 @@ class SettingsScreen extends ConsumerWidget {
                   showAboutDialog(
                     context: context,
                     applicationName: 'Wajenzi',
-                    applicationVersion: '1.0.0',
+                    applicationVersion: AppConfig.appVersion,
                     applicationIcon: Image.asset('assets/images/logo.png', height: 48),
                     applicationLegalese: '\u00a9 2026 Wajenzi Professional Co. Ltd',
                     children: [
@@ -214,7 +221,9 @@ class SettingsScreen extends ConsumerWidget {
           // Version Info
           Center(
             child: Text(
-              isSwahili ? 'Toleo 1.0.0' : 'Version 1.0.0',
+              isSwahili
+                  ? 'Toleo ${AppConfig.appVersion}'
+                  : 'Version ${AppConfig.appVersion}',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textHint,
                   ),

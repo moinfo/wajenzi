@@ -37,7 +37,7 @@ class AuthApi {
     required String password,
     required String deviceName,
   }) async {
-    final url = '${AppConfig.clientBaseUrl}/auth/login';
+    final url = AppConfig.clientUrl('/auth/login');
     final response = await _apiClient.post(
       url,
       data: {
@@ -69,13 +69,28 @@ class AuthApi {
   }
 
   Future<void> clientLogout() async {
-    final url = '${AppConfig.clientBaseUrl}/auth/logout';
+    final url = AppConfig.clientUrl('/auth/logout');
     await _apiClient.post(url);
   }
 
   Future<UserModel> getUser() async {
     final response = await _apiClient.get('/auth/user');
     return UserModel.fromJson(response.data['data']);
+  }
+
+  Future<UserModel> getClientUser() async {
+    final data = await getClientProfile();
+
+    final firstName = data['first_name'] as String? ?? '';
+    final lastName = data['last_name'] as String? ?? '';
+    final fullName = data['full_name'] as String? ??
+        '$firstName $lastName'.trim();
+
+    return UserModel(
+      id: data['id'] as int? ?? 0,
+      name: fullName.isNotEmpty ? fullName : 'Client',
+      email: data['email'] as String? ?? '',
+    );
   }
 
   Future<UserModel> updateProfile({
@@ -85,15 +100,15 @@ class AuthApi {
     final response = await _apiClient.put(
       '/auth/profile',
       data: {
-        if (name != null) 'name': name,
-        if (address != null) 'address': address,
+        'name': ?name,
+        'address': ?address,
       },
     );
     return UserModel.fromJson(response.data['data']);
   }
 
   Future<Map<String, dynamic>> getClientProfile() async {
-    final url = '${AppConfig.clientBaseUrl}/auth/me';
+    final url = AppConfig.clientUrl('/auth/me');
     final response = await _apiClient.get(url);
     return response.data['data'] as Map<String, dynamic>;
   }
@@ -105,7 +120,7 @@ class AuthApi {
     String? phoneNumber,
     String? address,
   }) async {
-    final url = '${AppConfig.clientBaseUrl}/auth/profile';
+    final url = AppConfig.clientUrl('/auth/profile');
     final response = await _apiClient.put(url, data: {
       'first_name': firstName,
       'last_name': lastName,
@@ -121,7 +136,7 @@ class AuthApi {
     required String newPassword,
     required String newPasswordConfirmation,
   }) async {
-    final url = '${AppConfig.clientBaseUrl}/auth/password';
+    final url = AppConfig.clientUrl('/auth/password');
     await _apiClient.put(url, data: {
       'current_password': currentPassword,
       'new_password': newPassword,

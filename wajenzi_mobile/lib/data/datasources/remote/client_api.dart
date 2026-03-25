@@ -13,33 +13,33 @@ class ClientApi {
   ClientApi(this._apiClient);
 
   Future<ClientDashboardData> fetchDashboard() async {
-    final url = '${AppConfig.clientBaseUrl}/dashboard';
+    final url = AppConfig.clientUrl('/dashboard');
     final response = await _apiClient.get(url);
     final data = response.data['data'] as Map<String, dynamic>;
     return ClientDashboardData.fromJson(data);
   }
 
   Future<ClientBillingData> fetchBilling() async {
-    final url = '${AppConfig.clientBaseUrl}/billing';
+    final url = AppConfig.clientUrl('/billing');
     final response = await _apiClient.get(url);
     final data = response.data['data'] as Map<String, dynamic>;
     return ClientBillingData.fromJson(data);
   }
 
   String billingPdfUrl(int documentId) =>
-      '${AppConfig.clientBaseUrl}/billing/$documentId/pdf';
+      AppConfig.clientUrl('/billing/$documentId/pdf');
 
   // ─── Project Detail API ──────────────────────────
 
   Future<ProjectOverviewData> fetchProjectDetail(int id) async {
-    final url = '${AppConfig.clientBaseUrl}/projects/$id';
+    final url = AppConfig.clientUrl('/projects/$id');
     final response = await _apiClient.get(url);
     final data = response.data['data'] as Map<String, dynamic>;
     return ProjectOverviewData.fromJson(data);
   }
 
   Future<List<ProjectBoq>> fetchProjectBoq(int id) async {
-    final url = '${AppConfig.clientBaseUrl}/projects/$id/boq';
+    final url = AppConfig.clientUrl('/projects/$id/boq');
     final response = await _apiClient.get(url);
     final data = response.data['data'];
     final list = data is List
@@ -51,45 +51,45 @@ class ClientApi {
   }
 
   Future<ProjectScheduleData> fetchProjectSchedule(int id) async {
-    final url = '${AppConfig.clientBaseUrl}/projects/$id/schedule';
+    final url = AppConfig.clientUrl('/projects/$id/schedule');
     final response = await _apiClient.get(url);
     final data = response.data['data'] as Map<String, dynamic>;
     return ProjectScheduleData.fromJson(data);
   }
 
   Future<ProjectFinancials> fetchProjectFinancials(int id) async {
-    final url = '${AppConfig.clientBaseUrl}/projects/$id/financials';
+    final url = AppConfig.clientUrl('/projects/$id/financials');
     final response = await _apiClient.get(url);
     final data = response.data['data'] as Map<String, dynamic>;
     return ProjectFinancials.fromJson(data);
   }
 
   Future<List<ProjectDesign>> fetchProjectDocuments(int id) async {
-    final url = '${AppConfig.clientBaseUrl}/projects/$id/documents';
+    final url = AppConfig.clientUrl('/projects/$id/documents');
     final response = await _apiClient.get(url);
     final data = response.data['data'];
     return _parseList(data, ProjectDesign.fromJson);
   }
 
   Future<ProjectReportsData> fetchProjectReports(int id) async {
-    final url = '${AppConfig.clientBaseUrl}/projects/$id/reports';
+    final url = AppConfig.clientUrl('/projects/$id/reports');
     final response = await _apiClient.get(url);
     final data = response.data['data'] as Map<String, dynamic>;
     return ProjectReportsData.fromJson(data);
   }
 
   Future<ProjectGalleryData> fetchProjectGallery(int id) async {
-    final url = '${AppConfig.clientBaseUrl}/projects/$id/gallery';
+    final url = AppConfig.clientUrl('/projects/$id/gallery');
     final response = await _apiClient.get(url);
     final data = response.data['data'] as Map<String, dynamic>;
     return ProjectGalleryData.fromJson(data);
   }
 
   String projectBillingPdfUrl(int projectId, int documentId) =>
-      '${AppConfig.clientBaseUrl}/projects/$projectId/billing/$documentId/pdf';
+      AppConfig.clientUrl('/projects/$projectId/billing/$documentId/pdf');
 
   String siteVisitPdfUrl(int projectId, int visitId) =>
-      '${AppConfig.clientBaseUrl}/projects/$projectId/site-visits/$visitId/pdf';
+      AppConfig.clientUrl('/projects/$projectId/site-visits/$visitId/pdf');
 }
 
 // Safely parse a value that may be num or String to double.

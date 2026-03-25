@@ -9,7 +9,11 @@ use App\Http\Controllers\Api\V1\ExpenseController;
 use App\Http\Controllers\Api\V1\ApprovalController;
 use App\Http\Controllers\Api\V1\SyncController;
 use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\ProjectClientController;
 use App\Http\Controllers\Api\V1\ProjectSiteVisitController;
+use App\Http\Controllers\Api\V1\BoqController;
+use App\Http\Controllers\Api\V1\ProjectMaterialApiController;
+use App\Http\Controllers\Api\V1\SaleApiController;
 use App\Http\Controllers\Api\V1\MaterialRequestController;
 use App\Http\Controllers\Api\V1\BillingDocumentController;
 use App\Http\Controllers\Api\V1\BillingPaymentController;
@@ -20,11 +24,29 @@ use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\MenuController;
 use App\Http\Controllers\Api\V1\EmployeeProfileController;
 use App\Http\Controllers\Api\V1\VatController;
+use App\Http\Controllers\Api\V1\StaffBankDetailController;
+use App\Http\Controllers\Api\V1\AdjustmentController;
+use App\Http\Controllers\Api\V1\ProcurementController;
+use App\Http\Controllers\Api\V1\SupplierQuotationController;
+use App\Http\Controllers\Api\V1\PurchaseApiController;
+use App\Http\Controllers\Api\V1\MaterialInspectionController;
+use App\Http\Controllers\Api\V1\MaterialInventoryApiController;
+use App\Http\Controllers\Api\V1\AccountingController;
+use App\Http\Controllers\Api\V1\ProjectDailyReportApiController;
+use App\Http\Controllers\Api\V1\ProjectTypeApiController;
+use App\Http\Controllers\Api\V1\ProjectDocumentApiController;
+use App\Http\Controllers\Api\V1\ProjectReportApiController;
+use App\Http\Controllers\Api\V1\ProjectScheduleApiController;
+use App\Http\Controllers\Api\V1\LeadApiController;
 
 /*
 |--------------------------------------------------------------------------
 | API V1 Routes - Mobile App
 |--------------------------------------------------------------------------
+|
+| These routes are for the Wajenzi mobile application with offline-first
+| architecture. All routes use Sanctum authentication except login.
+|
 |
 | These routes are for the Wajenzi mobile application with offline-first
 | architecture. All routes use Sanctum authentication except login.
@@ -93,6 +115,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{id}/reject', [SalesDailyReportController::class, 'reject']);
     });
 
+    // Project Daily Reports
+    Route::prefix('project-daily-reports')->group(function () {
+        Route::get('projects', [ProjectDailyReportApiController::class, 'projects']);
+        Route::get('/', [ProjectDailyReportApiController::class, 'index']);
+        Route::post('/', [ProjectDailyReportApiController::class, 'store']);
+        Route::get('{id}', [ProjectDailyReportApiController::class, 'show']);
+        Route::put('{id}', [ProjectDailyReportApiController::class, 'update']);
+        Route::delete('{id}', [ProjectDailyReportApiController::class, 'destroy']);
+    });
+
     // Expenses (Offline-Critical)
     Route::prefix('expenses')->group(function () {
         Route::get('/', [ExpenseController::class, 'index']);
@@ -116,16 +148,118 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Projects
     Route::prefix('projects')->group(function () {
+        Route::get('stats', [ProjectController::class, 'stats']);
         Route::get('/', [ProjectController::class, 'index']);
+        Route::post('/', [ProjectController::class, 'store']);
         Route::get('{id}', [ProjectController::class, 'show']);
+        Route::put('{id}', [ProjectController::class, 'update']);
+        Route::delete('{id}', [ProjectController::class, 'destroy']);
         Route::get('{id}/boq', [ProjectController::class, 'boq']);
         Route::get('{id}/materials', [ProjectController::class, 'materials']);
         Route::get('{id}/sites', [ProjectController::class, 'sites']);
         Route::get('{id}/team', [ProjectController::class, 'team']);
     });
 
+    // Leads
+    Route::prefix('leads')->group(function () {
+        Route::get('reference-data', [LeadApiController::class, 'referenceData']);
+        Route::get('/', [LeadApiController::class, 'index']);
+        Route::post('/', [LeadApiController::class, 'store']);
+        Route::get('{id}', [LeadApiController::class, 'show']);
+        Route::put('{id}', [LeadApiController::class, 'update']);
+        Route::delete('{id}', [LeadApiController::class, 'destroy']);
+    });
+
+    // Project Types
+    Route::prefix('project-types')->group(function () {
+        Route::get('/', [ProjectTypeApiController::class, 'index']);
+        Route::post('/', [ProjectTypeApiController::class, 'store']);
+        Route::get('{id}', [ProjectTypeApiController::class, 'show']);
+        Route::put('{id}', [ProjectTypeApiController::class, 'update']);
+        Route::delete('{id}', [ProjectTypeApiController::class, 'destroy']);
+    });
+
+    // Project Clients
+    Route::prefix('project-clients')->group(function () {
+        Route::get('/', [ProjectClientController::class, 'index']);
+        Route::post('/', [ProjectClientController::class, 'store']);
+        Route::get('{id}', [ProjectClientController::class, 'show']);
+        Route::put('{id}', [ProjectClientController::class, 'update']);
+        Route::delete('{id}', [ProjectClientController::class, 'destroy']);
+    });
+
+    // BOQ Management
+    Route::prefix('boqs')->group(function () {
+        Route::get('projects', [BoqController::class, 'projects']);
+        Route::get('/', [BoqController::class, 'index']);
+        Route::post('/', [BoqController::class, 'store']);
+        Route::get('{id}', [BoqController::class, 'show']);
+        Route::put('{id}', [BoqController::class, 'update']);
+        Route::delete('{id}', [BoqController::class, 'destroy']);
+        Route::get('next-version', [BoqController::class, 'nextVersion']);
+    });
+
+    // Project Materials
+    Route::prefix('project-materials')->group(function () {
+        Route::get('/', [ProjectMaterialApiController::class, 'index']);
+        Route::post('/', [ProjectMaterialApiController::class, 'store']);
+        Route::get('{id}', [ProjectMaterialApiController::class, 'show']);
+        Route::put('{id}', [ProjectMaterialApiController::class, 'update']);
+        Route::delete('{id}', [ProjectMaterialApiController::class, 'destroy']);
+    });
+
+    // Project Documents
+    Route::prefix('project-documents')->group(function () {
+        Route::get('/', [ProjectDocumentApiController::class, 'index']);
+        Route::get('{id}', [ProjectDocumentApiController::class, 'show']);
+    });
+
+    // Project Reports
+    Route::prefix('project-reports')->group(function () {
+        Route::get('projects', [ProjectReportApiController::class, 'projects']);
+        Route::get('/', [ProjectReportApiController::class, 'index']);
+    });
+
+    // Project Schedules
+    Route::prefix('project-schedules')->group(function () {
+        Route::get('/', [ProjectScheduleApiController::class, 'index']);
+        Route::get('{id}', [ProjectScheduleApiController::class, 'show']);
+    });
+
+    // Material Inventory
+    Route::prefix('material-inventory')->group(function () {
+        Route::get('projects', [MaterialInventoryApiController::class, 'projects']);
+        Route::get('materials', [MaterialInventoryApiController::class, 'materials']);
+        Route::get('/', [MaterialInventoryApiController::class, 'index']);
+        Route::post('/', [MaterialInventoryApiController::class, 'store']);
+        Route::get('{id}', [MaterialInventoryApiController::class, 'show']);
+        Route::put('{id}', [MaterialInventoryApiController::class, 'update']);
+        Route::delete('{id}', [MaterialInventoryApiController::class, 'destroy']);
+    });
+
+    // Sales
+    Route::prefix('sales')->group(function () {
+        Route::get('efds', [SaleApiController::class, 'efds']);
+        Route::get('/', [SaleApiController::class, 'index']);
+        Route::post('/', [SaleApiController::class, 'store']);
+        Route::get('{id}', [SaleApiController::class, 'show']);
+        Route::put('{id}', [SaleApiController::class, 'update']);
+        Route::delete('{id}', [SaleApiController::class, 'destroy']);
+    });
+
+    // Purchases (Procurement)
+    Route::prefix('purchases')->group(function () {
+        Route::get('suppliers', [PurchaseApiController::class, 'suppliers']);
+        Route::get('/', [PurchaseApiController::class, 'index']);
+        Route::post('/', [PurchaseApiController::class, 'store']);
+        Route::get('{id}', [PurchaseApiController::class, 'show']);
+        Route::put('{id}', [PurchaseApiController::class, 'update']);
+        Route::delete('{id}', [PurchaseApiController::class, 'destroy']);
+    });
+
     // Site Visits
     Route::prefix('site-visits')->group(function () {
+        Route::get('/projects', [ProjectSiteVisitController::class, 'projects']);
         Route::get('/', [ProjectSiteVisitController::class, 'index']);
         Route::post('/', [ProjectSiteVisitController::class, 'store']);
         Route::get('{id}', [ProjectSiteVisitController::class, 'show']);
@@ -232,5 +366,27 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('push', [SyncController::class, 'push']);
         Route::get('pull', [SyncController::class, 'pull']);
         Route::get('reference-data', [SyncController::class, 'referenceData']);
+    });
+
+    // Staff Bank Details
+    Route::get('staff-bank-details', [StaffBankDetailController::class, 'index']);
+    Route::get('staff-bank-details/{id}', [StaffBankDetailController::class, 'show']);
+
+    // Adjustments
+    Route::get('adjustments', [AdjustmentController::class, 'index']);
+    Route::get('adjustments/{id}', [AdjustmentController::class, 'show']);
+
+    // Accounting
+    Route::get('accounting', [AccountingController::class, 'index']);
+
+    // Procurement
+    Route::prefix('procurement')->group(function () {
+        Route::get('dashboard', [ProcurementController::class, 'dashboard']);
+        Route::get('supplier-quotations', [SupplierQuotationController::class, 'index']);
+        Route::get('supplier-quotations/{id}', [SupplierQuotationController::class, 'show']);
+        Route::get('purchases', [PurchaseApiController::class, 'index']);
+        Route::get('purchases/{id}', [PurchaseApiController::class, 'show']);
+        Route::get('inspections', [MaterialInspectionController::class, 'index']);
+        Route::get('inspections/{id}', [MaterialInspectionController::class, 'show']);
     });
 });

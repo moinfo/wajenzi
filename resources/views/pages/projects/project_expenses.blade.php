@@ -87,7 +87,7 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="block block-rounded bg-success text-white text-center p-3">
-                                    <div class="font-size-h4 font-w600">TZS {{ number_format($total_amount, 2) }}</div>
+                                    <div class="font-size-h4 font-w600">TZS {{ number_format($total_amount ?? 0, 2) }}</div>
                                     <div class="font-size-sm">Total Cost Amount</div>
                                 </div>
                             </div>
@@ -119,8 +119,8 @@
                                 @forelse($expenses as $expense)
                                     <tr id="expense-tr-{{ $expense->id }}">
                                         <td class="text-center">{{ $expense->id }}</td>
-                                        <td>{{ $expense->project->document_number ?? '-' }}</td>
-                                        <td>{{ $expense->project->project_name ?? '-' }}</td>
+                                        <td>{{ $expense->project?->document_number ?? '-' }}</td>
+                                        <td>{{ $expense->project?->project_name ?? '-' }}</td>
                                         <td>
                                             @if($expense->costCategory)
                                                 <span class="badge badge-info">{{ $expense->costCategory->name }}</span>
@@ -128,10 +128,10 @@
                                                 <span class="text-muted">-</span>
                                             @endif
                                         </td>
-                                        <td>{{ Str::limit($expense->description, 50) }}</td>
-                                        <td>{{ $expense->expense_date->format('d/m/Y') }}</td>
-                                        <td class="text-right font-w600">{{ number_format($expense->amount, 2) }}</td>
-                                        <td>{{ Str::limit($expense->remarks, 30) ?? '-' }}</td>
+                                        <td>{{ Str::limit($expense->description ?? '', 50) }}</td>
+                                        <td>{{ $expense->expense_date ? $expense->expense_date->format('d/m/Y') : '-' }}</td>
+                                        <td class="text-right font-w600">{{ number_format($expense->amount ?? 0, 2) }}</td>
+                                        <td>{{ Str::limit($expense->remarks ?? '', 30) }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 @can('Edit Project Cost')
@@ -160,7 +160,7 @@
                                 <tfoot>
                                 <tr class="table-active">
                                     <td colspan="6" class="text-right"><strong>Total:</strong></td>
-                                    <td class="text-right"><strong>TZS {{ number_format($expenses->sum('amount'), 2) }}</strong></td>
+                                    <td class="text-right"><strong>TZS {{ number_format($expenses->sum('amount') ?? 0, 2) }}</strong></td>
                                     <td colspan="2"></td>
                                 </tr>
                                 </tfoot>

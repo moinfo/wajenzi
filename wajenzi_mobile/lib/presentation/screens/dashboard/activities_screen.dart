@@ -481,7 +481,9 @@ class _ErrorBody extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          error.toString(),
+          isSwahili
+              ? 'Hatukuweza kupakia shughuli kwa sasa.'
+              : 'We could not load activities right now.',
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),

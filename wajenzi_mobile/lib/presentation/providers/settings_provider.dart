@@ -4,24 +4,29 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Keys for SharedPreferences
 const String _darkModeKey = 'isDarkMode';
 const String _languageKey = 'isSwahili';
+const String _notificationsKey = 'enableNotifications';
 
 // Settings state
 class SettingsState {
   final bool isDarkMode;
   final bool isSwahili;
+  final bool enableNotifications;
 
   const SettingsState({
     this.isDarkMode = false,
     this.isSwahili = false,
+    this.enableNotifications = true,
   });
 
   SettingsState copyWith({
     bool? isDarkMode,
     bool? isSwahili,
+    bool? enableNotifications,
   }) {
     return SettingsState(
       isDarkMode: isDarkMode ?? this.isDarkMode,
       isSwahili: isSwahili ?? this.isSwahili,
+      enableNotifications: enableNotifications ?? this.enableNotifications,
     );
   }
 }
@@ -37,7 +42,12 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   void _loadSettings() {
     final isDarkMode = _prefs.getBool(_darkModeKey) ?? false;
     final isSwahili = _prefs.getBool(_languageKey) ?? false;
-    state = SettingsState(isDarkMode: isDarkMode, isSwahili: isSwahili);
+    final enableNotifications = _prefs.getBool(_notificationsKey) ?? true;
+    state = SettingsState(
+      isDarkMode: isDarkMode,
+      isSwahili: isSwahili,
+      enableNotifications: enableNotifications,
+    );
   }
 
   Future<void> toggleDarkMode() async {
@@ -61,6 +71,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     await _prefs.setBool(_languageKey, isSwahili);
     state = state.copyWith(isSwahili: isSwahili);
   }
+
+  Future<void> setNotificationsEnabled(bool value) async {
+    await _prefs.setBool(_notificationsKey, value);
+    state = state.copyWith(enableNotifications: value);
+  }
 }
 
 // SharedPreferences provider
@@ -81,4 +96,8 @@ final isDarkModeProvider = Provider<bool>((ref) {
 
 final isSwahiliProvider = Provider<bool>((ref) {
   return ref.watch(settingsProvider).isSwahili;
+});
+
+final notificationsEnabledProvider = Provider<bool>((ref) {
+  return ref.watch(settingsProvider).enableNotifications;
 });

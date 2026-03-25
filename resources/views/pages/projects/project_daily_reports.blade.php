@@ -79,11 +79,11 @@
                                 @foreach($reports as $report)
                                     <tr id="report-tr-{{$report->id}}">
                                         <td class="text-center">{{$loop->index + 1}}</td>
-                                        <td>{{ $report->project->project_name }}</td>
+                                        <td>{{ $report->project?->project_name ?? '-' }}</td>
                                         <td>{{ $report->report_date }}</td>
-                                        <td>{{ $report->supervisor->name }}</td>
-                                        <td>{{ $report->weather_conditions }}</td>
-                                        <td class="text-right">{{ $report->labor_hours }}</td>
+                                        <td>{{ $report->supervisor?->name ?? '-' }}</td>
+                                        <td>{{ $report->weather_conditions ?? '-' }}</td>
+                                        <td class="text-right">{{ $report->labor_hours ?? 0 }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 <a class="btn btn-sm btn-success" href="{{route('project_daily_report',['id' => $report->id])}}">

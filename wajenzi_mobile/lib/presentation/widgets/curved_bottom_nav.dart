@@ -36,7 +36,7 @@ class _CurvedBottomNavState extends State<CurvedBottomNav> {
   ];
 
   // Route paths for each menu item
-  final List<String?> _menuRoutes = [
+  final List<String> _menuRoutes = [
     '/',          // Home - Landing
     '/projects',  // Projects
     '/services',  // Services
@@ -67,23 +67,7 @@ class _CurvedBottomNavState extends State<CurvedBottomNav> {
 
     // Navigate to the route if defined
     final route = _menuRoutes[index];
-    if (route != null) {
-      if (route == '/') {
-        context.go(route);
-      } else {
-        context.push(route);
-      }
-    } else {
-      // Show coming soon message for unimplemented routes
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.isSwahili ? 'Inakuja hivi karibuni!' : 'Coming soon!',
-          ),
-          duration: const Duration(seconds: 1),
-        ),
-      );
-    }
+    context.go(route);
   }
 
   @override

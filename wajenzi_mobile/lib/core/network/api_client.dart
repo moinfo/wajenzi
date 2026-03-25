@@ -1,18 +1,22 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
 import '../services/storage_service.dart';
 
+final authInvalidationProvider = StateProvider<int>((ref) => 0);
+
 final apiClientProvider = Provider<ApiClient>((ref) {
   final storageService = ref.watch(storageServiceProvider);
-  return ApiClient(storageService);
+  return ApiClient(storageService, ref);
 });
 
 class ApiClient {
   late final Dio _dio;
   final StorageService _storageService;
+  final Ref _ref;
 
-  ApiClient(this._storageService) {
+  ApiClient(this._storageService, this._ref) {
     _dio = Dio(
       BaseOptions(
         baseUrl: AppConfig.baseUrl,
@@ -26,7 +30,7 @@ class ApiClient {
     );
 
     _dio.interceptors.addAll([
-      _AuthInterceptor(_storageService),
+      _AuthInterceptor(_storageService, _ref),
       _LoggingInterceptor(),
     ]);
   }
@@ -109,8 +113,9 @@ class ApiClient {
 
 class _AuthInterceptor extends Interceptor {
   final StorageService _storageService;
+  final Ref _ref;
 
-  _AuthInterceptor(this._storageService);
+  _AuthInterceptor(this._storageService, this._ref);
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
@@ -126,20 +131,61 @@ class _AuthInterceptor extends Interceptor {
     if (err.response?.statusCode == 401) {
       // Token expired or invalid - clear storage and redirect to login
       await _storageService.clearAll();
-      // Navigation to login will be handled by the auth state listener
+      _ref.read(authInvalidationProvider.notifier).state++;
     }
     handler.next(err);
   }
 }
 
 class _LoggingInterceptor extends Interceptor {
+  static const Set<String> _sensitiveKeys = {
+    'authorization',
+    'password',
+    'current_password',
+    'new_password',
+    'new_password_confirmation',
+    'token',
+    'auth_token',
+    'access_token',
+    'refresh_token',
+    'device_id',
+  };
+
+  Map<String, dynamic> _redactHeaders(Map<String, dynamic> headers) {
+    final sanitized = Map<String, dynamic>.from(headers);
+    for (final key in sanitized.keys.toList()) {
+      if (_sensitiveKeys.contains(key.toLowerCase())) {
+        sanitized[key] = '[REDACTED]';
+      }
+    }
+    return sanitized;
+  }
+
+  dynamic _redactData(dynamic data) {
+    if (data is Map) {
+      return data.map((key, value) {
+        final normalizedKey = key.toString().toLowerCase();
+        if (_sensitiveKeys.contains(normalizedKey)) {
+          return MapEntry(key, '[REDACTED]');
+        }
+        return MapEntry(key, _redactData(value));
+      });
+    }
+
+    if (data is List) {
+      return data.map(_redactData).toList();
+    }
+
+    return data;
+  }
+
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (!AppConfig.isRelease) {
-      print('REQUEST[${options.method}] => PATH: ${options.path}');
-      print('Headers: ${options.headers}');
+      debugPrint('REQUEST[${options.method}] => PATH: ${options.path}');
+      debugPrint('Headers: ${_redactHeaders(options.headers)}');
       if (options.data != null) {
-        print('Data: ${options.data}');
+        debugPrint('Data: ${_redactData(options.data)}');
       }
     }
     handler.next(options);
@@ -148,7 +194,9 @@ class _LoggingInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (!AppConfig.isRelease) {
-      print('RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}');
+      debugPrint(
+        'RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}',
+      );
     }
     handler.next(response);
   }
@@ -156,8 +204,10 @@ class _LoggingInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (!AppConfig.isRelease) {
-      print('ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}');
-      print('Message: ${err.message}');
+      debugPrint(
+        'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}',
+      );
+      debugPrint('Message: ${err.message}');
     }
     handler.next(err);
   }

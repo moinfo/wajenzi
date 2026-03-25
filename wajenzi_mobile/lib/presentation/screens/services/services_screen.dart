@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
@@ -17,10 +18,49 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   bool get _isSwahili => ref.watch(isSwahiliProvider);
 
   // Dark mode colors
-  Color get _bgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
-  Color get _cardBgColor => _isDarkMode ? const Color(0xFF16213E) : Colors.white;
-  Color get _textPrimaryColor => _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
-  Color get _textSecondaryColor => _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+  Color get _bgColor =>
+      _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+  Color get _cardBgColor =>
+      _isDarkMode ? const Color(0xFF16213E) : Colors.white;
+  Color get _textPrimaryColor =>
+      _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
+  Color get _textSecondaryColor =>
+      _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+
+  Future<void> _launchPhone() async {
+    final opened = await ExternalLauncherService.callCompany();
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isSwahili
+                ? 'Imeshindwa kufungua simu'
+                : 'Could not open the phone app',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _launchWhatsApp([String? topic]) async {
+    final message = _isSwahili
+        ? 'Habari! Nahitaji msaada kuhusu ${topic ?? "huduma zenu"}.'
+        : 'Hello! I would like help with ${topic ?? "your services"}.';
+    final opened = await ExternalLauncherService.openWhatsApp(message);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isSwahili
+                ? 'Imeshindwa kufungua WhatsApp'
+                : 'Could not open WhatsApp',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   List<_ServiceItem> get _services => [
     _ServiceItem(
@@ -36,8 +76,18 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       icon: Icons.construction_rounded,
       color: const Color(0xFF3498DB),
       features: _isSwahili
-          ? ['Ujenzi wa Makazi', 'Majengo ya Biashara', 'Ukarabati & Upanuzi', 'Usimamizi wa Mradi']
-          : ['Residential Construction', 'Commercial Buildings', 'Renovations & Extensions', 'Project Management'],
+          ? [
+              'Ujenzi wa Makazi',
+              'Majengo ya Biashara',
+              'Ukarabati & Upanuzi',
+              'Usimamizi wa Mradi',
+            ]
+          : [
+              'Residential Construction',
+              'Commercial Buildings',
+              'Renovations & Extensions',
+              'Project Management',
+            ],
     ),
     _ServiceItem(
       id: 'architectural',
@@ -52,8 +102,18 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       icon: Icons.architecture_rounded,
       color: const Color(0xFF9B59B6),
       features: _isSwahili
-          ? ['Miundo ya 2D & 3D', 'Upangaji wa Mambo ya Ndani', 'Usanifu wa Mazingira', 'Muundo Endelevu']
-          : ['2D & 3D Designs', 'Interior Planning', 'Landscape Design', 'Sustainable Design'],
+          ? [
+              'Miundo ya 2D & 3D',
+              'Upangaji wa Mambo ya Ndani',
+              'Usanifu wa Mazingira',
+              'Muundo Endelevu',
+            ]
+          : [
+              '2D & 3D Designs',
+              'Interior Planning',
+              'Landscape Design',
+              'Sustainable Design',
+            ],
     ),
     _ServiceItem(
       id: 'boq',
@@ -68,8 +128,18 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       icon: Icons.calculate_rounded,
       color: const Color(0xFFF39C12),
       features: _isSwahili
-          ? ['Makadirio ya Gharama', 'Orodha ya Vifaa', 'Uchambuzi wa Kazi', 'Upangaji wa Bajeti']
-          : ['Cost Estimation', 'Material Listing', 'Labor Analysis', 'Budget Planning'],
+          ? [
+              'Makadirio ya Gharama',
+              'Orodha ya Vifaa',
+              'Uchambuzi wa Kazi',
+              'Upangaji wa Bajeti',
+            ]
+          : [
+              'Cost Estimation',
+              'Material Listing',
+              'Labor Analysis',
+              'Budget Planning',
+            ],
     ),
     _ServiceItem(
       id: 'structural',
@@ -84,8 +154,18 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       icon: Icons.account_balance_rounded,
       color: const Color(0xFF1ABC9C),
       features: _isSwahili
-          ? ['Uchambuzi wa Miundo', 'Muundo wa Msingi', 'Hesabu za Mizigo', 'Tathmini ya Usalama']
-          : ['Structural Analysis', 'Foundation Design', 'Load Calculations', 'Safety Assessment'],
+          ? [
+              'Uchambuzi wa Miundo',
+              'Muundo wa Msingi',
+              'Hesabu za Mizigo',
+              'Tathmini ya Usalama',
+            ]
+          : [
+              'Structural Analysis',
+              'Foundation Design',
+              'Load Calculations',
+              'Safety Assessment',
+            ],
     ),
     _ServiceItem(
       id: 'interior',
@@ -100,8 +180,18 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       icon: Icons.chair_rounded,
       color: const Color(0xFFE74C3C),
       features: _isSwahili
-          ? ['Mpangilio wa Nafasi', 'Uchaguzi wa Fanicha', 'Muundo wa Taa', 'Uchaguzi wa Rangi']
-          : ['Space Planning', 'Furniture Selection', 'Lighting Design', 'Color Consultation'],
+          ? [
+              'Mpangilio wa Nafasi',
+              'Uchaguzi wa Fanicha',
+              'Muundo wa Taa',
+              'Uchaguzi wa Rangi',
+            ]
+          : [
+              'Space Planning',
+              'Furniture Selection',
+              'Lighting Design',
+              'Color Consultation',
+            ],
     ),
     _ServiceItem(
       id: 'consultation',
@@ -116,8 +206,18 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       icon: Icons.support_agent_rounded,
       color: const Color(0xFF2C3E50),
       features: _isSwahili
-          ? ['Tathmini ya Mradi', 'Ushauri wa Bajeti', 'Ukaguzi wa Ubora', 'Usimamizi wa Hatari']
-          : ['Project Assessment', 'Budget Advisory', 'Quality Inspection', 'Risk Management'],
+          ? [
+              'Tathmini ya Mradi',
+              'Ushauri wa Bajeti',
+              'Ukaguzi wa Ubora',
+              'Usimamizi wa Hatari',
+            ]
+          : [
+              'Project Assessment',
+              'Budget Advisory',
+              'Quality Inspection',
+              'Risk Management',
+            ],
     ),
   ];
 
@@ -129,21 +229,19 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
-        onDarkModeToggle: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
-        onLanguageToggle: () => ref.read(settingsProvider.notifier).toggleLanguage(),
+        onDarkModeToggle: () =>
+            ref.read(settingsProvider.notifier).toggleDarkMode(),
+        onLanguageToggle: () =>
+            ref.read(settingsProvider.notifier).toggleLanguage(),
         flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
       ),
       body: CustomScrollView(
         slivers: [
           // Hero Section
-          SliverToBoxAdapter(
-            child: _buildHeroSection(),
-          ),
+          SliverToBoxAdapter(child: _buildHeroSection()),
 
           // Services Grid Header
-          SliverToBoxAdapter(
-            child: _buildSectionHeader(),
-          ),
+          SliverToBoxAdapter(child: _buildSectionHeader()),
 
           // Services Grid
           SliverPadding(
@@ -163,19 +261,13 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           ),
 
           // Why Choose Us Section
-          SliverToBoxAdapter(
-            child: _buildWhyChooseUsSection(),
-          ),
+          SliverToBoxAdapter(child: _buildWhyChooseUsSection()),
 
           // CTA Section
-          SliverToBoxAdapter(
-            child: _buildCTASection(),
-          ),
+          SliverToBoxAdapter(child: _buildCTASection()),
 
           // Footer spacing
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 120),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
       bottomNavigationBar: CurvedBottomNav(
@@ -196,7 +288,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           child: Image.asset(
             'assets/images/construction_01.png',
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -237,7 +329,10 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1ABC9C),
                   borderRadius: BorderRadius.circular(20),
@@ -361,14 +456,16 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
             Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: SizedBox(
                     height: 120,
                     width: double.infinity,
                     child: Image.asset(
                       service.image,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
@@ -394,7 +491,10 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   left: 0,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -464,7 +564,10 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                     // Learn More button
                     const SizedBox(height: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         border: Border.all(color: service.color),
                         borderRadius: BorderRadius.circular(6),
@@ -528,10 +631,13 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                         child: Image.asset(
                           service.image,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, _, _) => Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [service.color.withValues(alpha: 0.7), service.color],
+                                colors: [
+                                  service.color.withValues(alpha: 0.7),
+                                  service.color,
+                                ],
                               ),
                             ),
                             child: Icon(
@@ -611,49 +717,43 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ...service.features.map((feature) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: service.color.withValues(alpha: 0.15),
-                              shape: BoxShape.circle,
+                    ...service.features.map(
+                      (feature) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: service.color.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.check_rounded,
+                                color: service.color,
+                                size: 14,
+                              ),
                             ),
-                            child: Icon(
-                              Icons.check_rounded,
-                              color: service.color,
-                              size: 14,
+                            const SizedBox(width: 12),
+                            Text(
+                              feature,
+                              style: TextStyle(
+                                color: _textSecondaryColor,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            feature,
-                            style: TextStyle(
-                              color: _textSecondaryColor,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    )),
+                    ),
                     const SizedBox(height: 24),
 
                     // CTA Button
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              _isSwahili
-                                  ? 'Wasiliana nasi kwa ${service.title}'
-                                  : 'Contact us for ${service.title}',
-                            ),
-                          ),
-                        );
+                        _launchWhatsApp(service.title);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: service.color,
@@ -738,52 +838,54 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          ...reasons.map((reason) => Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
+          ...reasons.map(
+            (reason) => Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      reason['icon'] as IconData,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
-                  child: Icon(
-                    reason['icon'] as IconData,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        reason['title'] as String,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          reason['title'] as String,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        reason['description'] as String,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 13,
-                          height: 1.4,
+                        const SizedBox(height: 4),
+                        Text(
+                          reason['description'] as String,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -816,9 +918,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _isSwahili
-                ? 'Una mradi akilini?'
-                : 'Have a project in mind?',
+            _isSwahili ? 'Una mradi akilini?' : 'Have a project in mind?',
             style: TextStyle(
               color: _textPrimaryColor,
               fontSize: 20,
@@ -843,13 +943,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(_isSwahili ? 'Inapiga simu...' : 'Calling...'),
-                      ),
-                    );
-                  },
+                  onPressed: _launchPhone,
                   icon: const Icon(Icons.phone_rounded, size: 18),
                   label: Text(_isSwahili ? 'Piga Simu' : 'Call Us'),
                   style: OutlinedButton.styleFrom(
@@ -865,13 +959,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(_isSwahili ? 'Inafungua WhatsApp...' : 'Opening WhatsApp...'),
-                      ),
-                    );
-                  },
+                  onPressed: _launchWhatsApp,
                   icon: const Icon(Icons.message_rounded, size: 18),
                   label: const Text('WhatsApp'),
                   style: ElevatedButton.styleFrom(

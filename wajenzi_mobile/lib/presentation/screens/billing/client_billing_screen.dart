@@ -1,13 +1,15 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../core/config/app_config.dart';
 import '../../../core/config/theme_config.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/services/storage_service.dart';
 import '../../providers/client_billing_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -17,7 +19,8 @@ class ClientBillingScreen extends ConsumerStatefulWidget {
   const ClientBillingScreen({super.key});
 
   @override
-  ConsumerState<ClientBillingScreen> createState() => _ClientBillingScreenState();
+  ConsumerState<ClientBillingScreen> createState() =>
+      _ClientBillingScreenState();
 }
 
 class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
@@ -42,12 +45,28 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
   }
 
   String _formatDate(String? date) {
-    if (date == null) return '—';
+    if (date == null) return '-';
     try {
       return DateFormat('dd MMM yyyy').format(DateTime.parse(date));
     } catch (_) {
       return date;
     }
+  }
+
+  String _downloadErrorMessage(Object error, bool isSwahili) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        final message = data['message'];
+        if (message is String && message.isNotEmpty) {
+          return message;
+        }
+      }
+    }
+
+    return isSwahili
+        ? 'Imeshindwa kupakua faili. Jaribu tena.'
+        : 'Could not download the file. Please try again.';
   }
 
   // ─── PDF Download ──────────────────────────────
@@ -56,19 +75,45 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final isSwahili = ref.read(isSwahiliProvider);
 
-    messenger.showSnackBar(SnackBar(
-      content: Text(isSwahili ? 'Inapakua...' : 'Downloading...'),
-      duration: const Duration(seconds: 1),
-    ));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(isSwahili ? 'Inapakua...' : 'Downloading...'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
 
     try {
       final token = await ref.read(storageServiceProvider).getToken();
-      final url = '${AppConfig.clientBaseUrl}/billing/${doc.id}/pdf';
+      final url = ref.read(clientApiProvider).billingPdfUrl(doc.id);
+      final fileName =
+          '${doc.documentType}-${doc.documentNumber ?? doc.id}.pdf';
+      final dio = Dio();
+      if (kIsWeb) {
+        final response = await dio.get<List<int>>(
+          url,
+          options: Options(
+            responseType: ResponseType.bytes,
+            headers: {'Authorization': 'Bearer $token'},
+          ),
+        );
+        final bytes = response.data;
+        if (bytes == null || bytes.isEmpty) {
+          throw StateError('Empty PDF response');
+        }
+        final uri = Uri.parse(
+          'data:application/pdf;base64,${base64Encode(bytes)}',
+        );
+        final opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
+        if (!opened) {
+          throw StateError('Could not open generated PDF');
+        }
+        return;
+      }
+
       final dir = await getTemporaryDirectory();
-      final fileName = '${doc.documentType}-${doc.documentNumber ?? doc.id}.pdf';
       final filePath = '${dir.path}/$fileName';
 
-      await Dio().download(
+      await dio.download(
         url,
         filePath,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -77,34 +122,46 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
       final file = File(filePath);
       if (await file.exists()) {
         final uri = Uri.file(filePath);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri);
-        } else {
-          messenger.showSnackBar(SnackBar(
-            content: Text(isSwahili
-                ? 'Imehifadhiwa: $fileName'
-                : 'Saved: $fileName'),
-          ));
+        final opened = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!opened) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                isSwahili ? 'Imehifadhiwa: $fileName' : 'Saved: $fileName',
+              ),
+            ),
+          );
         }
       }
     } catch (e) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(isSwahili ? 'Imeshindwa kupakua' : 'Download failed'),
-        backgroundColor: AppColors.error,
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_downloadErrorMessage(e, isSwahili)),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
   // ─── Detail Bottom Sheet ───────────────────────
 
-  void _showDocumentDetail(BillingDocument doc, bool isSwahili, bool isDarkMode) {
+  void _showDocumentDetail(
+    BillingDocument doc,
+    bool isSwahili,
+    bool isDarkMode,
+  ) {
     final isInvoice = doc.documentType == 'invoice';
-    final typeLabel = {
-      'invoice': isSwahili ? 'Ankara' : 'Invoice',
-      'quote': isSwahili ? 'Nukuu' : 'Quotation',
-      'proforma': isSwahili ? 'Ankara ya Awali' : 'Proforma Invoice',
-      'credit_note': isSwahili ? 'Noti ya Mkopo' : 'Credit Note',
-    }[doc.documentType] ?? doc.documentType;
+    final typeLabel =
+        {
+          'invoice': isSwahili ? 'Ankara' : 'Invoice',
+          'quote': isSwahili ? 'Nukuu' : 'Quotation',
+          'proforma': isSwahili ? 'Ankara ya Awali' : 'Proforma Invoice',
+          'credit_note': isSwahili ? 'Noti ya Mkopo' : 'Credit Note',
+        }[doc.documentType] ??
+        doc.documentType;
 
     showModalBottomSheet(
       context: context,
@@ -147,23 +204,29 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
                                 typeLabel,
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                                  color: isDarkMode
+                                      ? Colors.white54
+                                      : AppColors.textSecondary,
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                doc.documentNumber ?? '—',
+                                doc.documentNumber ?? '-',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                             ],
                           ),
                         ),
                         _buildStatusBadge(
-                          doc.isOverdue && doc.status != 'paid' ? 'overdue' : doc.status,
+                          doc.isOverdue && doc.status != 'paid'
+                              ? 'overdue'
+                              : doc.status,
                         ),
                       ],
                     ),
@@ -172,7 +235,7 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
                     // Info rows
                     _DetailRow(
                       label: isSwahili ? 'Mradi' : 'Project',
-                      value: doc.projectName ?? '—',
+                      value: doc.projectName ?? '-',
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
@@ -215,7 +278,9 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
                           _AmountRow(
                             label: isSwahili ? 'Jumla' : 'Total Amount',
                             value: _formatCurrency(doc.totalAmount),
-                            color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                            color: isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
                             isBold: true,
                           ),
                           if (isInvoice) ...[
@@ -227,7 +292,9 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
                             ),
                             const SizedBox(height: 8),
                             Divider(
-                              color: isDarkMode ? Colors.white12 : Colors.grey[200],
+                              color: isDarkMode
+                                  ? Colors.white12
+                                  : Colors.grey[200],
                             ),
                             const SizedBox(height: 8),
                             _AmountRow(
@@ -251,63 +318,69 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                          color: isDarkMode
+                              ? Colors.white
+                              : AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 10),
-                      ...doc.payments.map((p) => Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: isDarkMode
-                                  ? Colors.white.withValues(alpha: 0.05)
-                                  : AppColors.background,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        p.paymentNumber ?? '—',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                                        ),
+                      ...doc.payments.map(
+                        (p) => Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : AppColors.background,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      p.paymentNumber ?? '-',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
                                       ),
-                                      const SizedBox(height: 2),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${_formatDate(p.paymentDate)} - ${p.paymentMethod ?? "-"}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    if (p.referenceNumber != null)
                                       Text(
-                                        '${_formatDate(p.paymentDate)} • ${p.paymentMethod ?? "—"}',
+                                        p.referenceNumber!,
                                         style: const TextStyle(
                                           fontSize: 11,
                                           color: AppColors.textSecondary,
                                         ),
                                       ),
-                                      if (p.referenceNumber != null)
-                                        Text(
-                                          p.referenceNumber!,
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
+                                  ],
                                 ),
-                                Text(
-                                  _formatCurrency(p.amount),
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.success,
-                                  ),
+                              ),
+                              Text(
+                                _formatCurrency(p.amount),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.success,
                                 ),
-                              ],
-                            ),
-                          )),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
 
                     const SizedBox(height: 24),
@@ -341,7 +414,11 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
     );
   }
 
-  void _showPaymentDetail(BillingPayment payment, bool isSwahili, bool isDarkMode) {
+  void _showPaymentDetail(
+    BillingPayment payment,
+    bool isSwahili,
+    bool isDarkMode,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -374,7 +451,7 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
             const SizedBox(height: 16),
             _DetailRow(
               label: isSwahili ? 'Nambari' : 'Payment No.',
-              value: payment.paymentNumber ?? '—',
+              value: payment.paymentNumber ?? '-',
               isDarkMode: isDarkMode,
             ),
             if (payment.invoiceNumber != null)
@@ -390,7 +467,7 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
             ),
             _DetailRow(
               label: isSwahili ? 'Njia' : 'Method',
-              value: payment.paymentMethod ?? '—',
+              value: payment.paymentMethod ?? '-',
               isDarkMode: isDarkMode,
             ),
             if (payment.referenceNumber != null)
@@ -442,17 +519,19 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
     final billingState = ref.watch(clientBillingProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Ankara' : 'Billing & Invoices'),
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(clientBillingProvider.notifier).fetchBilling(),
+        onRefresh: () =>
+            ref.read(clientBillingProvider.notifier).fetchBilling(),
         child: billingState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _buildErrorView(error, isSwahili),
@@ -505,9 +584,9 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
             isSwahili
                 ? 'Ankara, nukuu na malipo yako yote'
                 : 'All your invoices, quotations, and payments',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 16),
 
@@ -570,15 +649,18 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
             initiallyExpanded: true,
             isDarkMode: isDarkMode,
             children: data.invoices
-                .map((doc) => _InvoiceCard(
-                      doc: doc,
-                      isSwahili: isSwahili,
-                      isDarkMode: isDarkMode,
-                      formatCurrency: _formatCurrency,
-                      formatDate: _formatDate,
-                      onTap: () => _showDocumentDetail(doc, isSwahili, isDarkMode),
-                      onDownload: () => _downloadPdf(doc),
-                    ))
+                .map(
+                  (doc) => _InvoiceCard(
+                    doc: doc,
+                    isSwahili: isSwahili,
+                    isDarkMode: isDarkMode,
+                    formatCurrency: _formatCurrency,
+                    formatDate: _formatDate,
+                    onTap: () =>
+                        _showDocumentDetail(doc, isSwahili, isDarkMode),
+                    onDownload: () => _downloadPdf(doc),
+                  ),
+                )
                 .toList(),
           ),
 
@@ -591,17 +673,20 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
               count: data.quotes.length,
               isDarkMode: isDarkMode,
               children: data.quotes
-                  .map((doc) => _DocumentCard(
-                        doc: doc,
-                        dateLabel: isSwahili ? 'Halali hadi' : 'Valid until',
-                        dateValue: _formatDate(doc.validUntilDate),
-                        isSwahili: isSwahili,
-                        isDarkMode: isDarkMode,
-                        formatCurrency: _formatCurrency,
-                        formatDate: _formatDate,
-                        onTap: () => _showDocumentDetail(doc, isSwahili, isDarkMode),
-                        onDownload: () => _downloadPdf(doc),
-                      ))
+                  .map(
+                    (doc) => _DocumentCard(
+                      doc: doc,
+                      dateLabel: isSwahili ? 'Halali hadi' : 'Valid until',
+                      dateValue: _formatDate(doc.validUntilDate),
+                      isSwahili: isSwahili,
+                      isDarkMode: isDarkMode,
+                      formatCurrency: _formatCurrency,
+                      formatDate: _formatDate,
+                      onTap: () =>
+                          _showDocumentDetail(doc, isSwahili, isDarkMode),
+                      onDownload: () => _downloadPdf(doc),
+                    ),
+                  )
                   .toList(),
             ),
           ],
@@ -615,17 +700,20 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
               count: data.proformas.length,
               isDarkMode: isDarkMode,
               children: data.proformas
-                  .map((doc) => _DocumentCard(
-                        doc: doc,
-                        dateLabel: isSwahili ? 'Halali hadi' : 'Valid until',
-                        dateValue: _formatDate(doc.validUntilDate),
-                        isSwahili: isSwahili,
-                        isDarkMode: isDarkMode,
-                        formatCurrency: _formatCurrency,
-                        formatDate: _formatDate,
-                        onTap: () => _showDocumentDetail(doc, isSwahili, isDarkMode),
-                        onDownload: () => _downloadPdf(doc),
-                      ))
+                  .map(
+                    (doc) => _DocumentCard(
+                      doc: doc,
+                      dateLabel: isSwahili ? 'Halali hadi' : 'Valid until',
+                      dateValue: _formatDate(doc.validUntilDate),
+                      isSwahili: isSwahili,
+                      isDarkMode: isDarkMode,
+                      formatCurrency: _formatCurrency,
+                      formatDate: _formatDate,
+                      onTap: () =>
+                          _showDocumentDetail(doc, isSwahili, isDarkMode),
+                      onDownload: () => _downloadPdf(doc),
+                    ),
+                  )
                   .toList(),
             ),
           ],
@@ -639,17 +727,20 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
               count: data.creditNotes.length,
               isDarkMode: isDarkMode,
               children: data.creditNotes
-                  .map((doc) => _DocumentCard(
-                        doc: doc,
-                        dateLabel: isSwahili ? 'Tarehe' : 'Date',
-                        dateValue: _formatDate(doc.issueDate),
-                        isSwahili: isSwahili,
-                        isDarkMode: isDarkMode,
-                        formatCurrency: _formatCurrency,
-                        formatDate: _formatDate,
-                        onTap: () => _showDocumentDetail(doc, isSwahili, isDarkMode),
-                        onDownload: () => _downloadPdf(doc),
-                      ))
+                  .map(
+                    (doc) => _DocumentCard(
+                      doc: doc,
+                      dateLabel: isSwahili ? 'Tarehe' : 'Date',
+                      dateValue: _formatDate(doc.issueDate),
+                      isSwahili: isSwahili,
+                      isDarkMode: isDarkMode,
+                      formatCurrency: _formatCurrency,
+                      formatDate: _formatDate,
+                      onTap: () =>
+                          _showDocumentDetail(doc, isSwahili, isDarkMode),
+                      onDownload: () => _downloadPdf(doc),
+                    ),
+                  )
                   .toList(),
             ),
           ],
@@ -663,14 +754,16 @@ class _ClientBillingScreenState extends ConsumerState<ClientBillingScreen> {
               count: payments.length,
               isDarkMode: isDarkMode,
               children: payments
-                  .map((p) => _PaymentCard(
-                        payment: p,
-                        isSwahili: isSwahili,
-                        isDarkMode: isDarkMode,
-                        formatCurrency: _formatCurrency,
-                        formatDate: _formatDate,
-                        onTap: () => _showPaymentDetail(p, isSwahili, isDarkMode),
-                      ))
+                  .map(
+                    (p) => _PaymentCard(
+                      payment: p,
+                      isSwahili: isSwahili,
+                      isDarkMode: isDarkMode,
+                      formatCurrency: _formatCurrency,
+                      formatDate: _formatDate,
+                      onTap: () => _showPaymentDetail(p, isSwahili, isDarkMode),
+                    ),
+                  )
                   .toList(),
             ),
           ],
@@ -785,7 +878,9 @@ class _SummaryCard extends StatelessWidget {
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
-                      color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                      color: isDarkMode
+                          ? Colors.white54
+                          : AppColors.textSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -870,7 +965,9 @@ class _BillingSectionState extends State<_BillingSection> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: widget.isDarkMode ? Colors.white : AppColors.textPrimary,
+                  color: widget.isDarkMode
+                      ? Colors.white
+                      : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(width: 8),
@@ -895,7 +992,9 @@ class _BillingSectionState extends State<_BillingSection> {
                 duration: const Duration(milliseconds: 200),
                 child: Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: widget.isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                  color: widget.isDarkMode
+                      ? Colors.white54
+                      : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -909,7 +1008,9 @@ class _BillingSectionState extends State<_BillingSection> {
               child: Text(
                 'No items',
                 style: TextStyle(
-                  color: widget.isDarkMode ? Colors.white38 : AppColors.textHint,
+                  color: widget.isDarkMode
+                      ? Colors.white38
+                      : AppColors.textHint,
                 ),
               ),
             )
@@ -1012,11 +1113,13 @@ class _InvoiceCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          doc.documentNumber ?? '—',
+                          doc.documentNumber ?? '-',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                            color: isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                         if (doc.projectName != null)
@@ -1031,7 +1134,9 @@ class _InvoiceCard extends StatelessWidget {
                     ),
                   ),
                   _buildStatusBadge(
-                    doc.isOverdue && doc.status != 'paid' ? 'overdue' : doc.status,
+                    doc.isOverdue && doc.status != 'paid'
+                        ? 'overdue'
+                        : doc.status,
                   ),
                   const SizedBox(width: 8),
                   _DownloadButton(onPressed: onDownload),
@@ -1048,7 +1153,8 @@ class _InvoiceCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   _InfoChip(
                     icon: Icons.event_rounded,
-                    label: '${isSwahili ? "Hadi" : "Due"} ${formatDate(doc.dueDate)}',
+                    label:
+                        '${isSwahili ? "Hadi" : "Due"} ${formatDate(doc.dueDate)}',
                     isDarkMode: isDarkMode,
                     isWarning: doc.isOverdue,
                   ),
@@ -1069,7 +1175,9 @@ class _InvoiceCard extends StatelessWidget {
                       child: _AmountColumn(
                         label: isSwahili ? 'Kiasi' : 'Amount',
                         value: formatCurrency(doc.totalAmount),
-                        color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppColors.textPrimary,
                       ),
                     ),
                     Expanded(
@@ -1083,7 +1191,9 @@ class _InvoiceCard extends StatelessWidget {
                       child: _AmountColumn(
                         label: isSwahili ? 'Deni' : 'Balance',
                         value: formatCurrency(doc.balanceAmount),
-                        color: doc.balanceAmount > 0 ? AppColors.error : AppColors.success,
+                        color: doc.balanceAmount > 0
+                            ? AppColors.error
+                            : AppColors.success,
                       ),
                     ),
                   ],
@@ -1141,11 +1251,13 @@ class _DocumentCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          doc.documentNumber ?? '—',
+                          doc.documentNumber ?? '-',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                            color: isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                         if (doc.projectName != null)
@@ -1232,11 +1344,13 @@ class _PaymentCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      payment.paymentNumber ?? '—',
+                      payment.paymentNumber ?? '-',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -1280,7 +1394,9 @@ class _PaymentCard extends StatelessWidget {
                   'Ref: ${payment.referenceNumber}',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDarkMode ? Colors.white38 : AppColors.textSecondary,
+                    color: isDarkMode
+                        ? Colors.white38
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -1421,7 +1537,9 @@ class _DetailRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: valueColor ?? (isDarkMode ? Colors.white : AppColors.textPrimary),
+                color:
+                    valueColor ??
+                    (isDarkMode ? Colors.white : AppColors.textPrimary),
               ),
             ),
           ),

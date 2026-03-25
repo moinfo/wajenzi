@@ -119,8 +119,10 @@ Future<void> _showPaymentForm(BuildContext context, WidgetRef ref, bool isDark,
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading form data: $e'),
-            backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(vatErrorMessage(e, isSwahili: isSwahili)),
+          backgroundColor: Colors.red,
+        ),
       );
     }
     return;
@@ -273,8 +275,11 @@ Future<void> _showPaymentForm(BuildContext context, WidgetRef ref, bool isDark,
                           if (ctx.mounted) {
                             ScaffoldMessenger.of(ctx).showSnackBar(
                               SnackBar(
-                                  content: Text('Error: $e'),
-                                  backgroundColor: Colors.red),
+                                content: Text(
+                                  vatErrorMessage(e, isSwahili: isSwahili),
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
                             );
                           }
                         }

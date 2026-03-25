@@ -51,7 +51,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     setState(() => _isSaving = true);
 
-    final success = await ref.read(authStateProvider.notifier).updateClientProfile(
+    final error = await ref.read(authStateProvider.notifier).updateClientProfile(
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       email: _emailController.text.trim(),
@@ -61,20 +61,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     setState(() {
       _isSaving = false;
-      if (success) _isEditing = false;
+      if (error == null) _isEditing = false;
     });
 
     if (mounted) {
       final isSwahili = ref.read(isSwahiliProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success
-              ? (isSwahili ? 'Wasifu umesasishwa' : 'Profile updated successfully')
-              : (isSwahili ? 'Imeshindikana kusasisha wasifu' : 'Failed to update profile')),
-          backgroundColor: success ? AppColors.success : AppColors.error,
+          content: Text(
+            error ?? (isSwahili ? 'Wasifu umesasishwa' : 'Profile updated successfully'),
+          ),
+          backgroundColor: error == null ? AppColors.success : AppColors.error,
         ),
       );
-      if (success) {
+      if (error == null) {
         ref.invalidate(clientProfileProvider);
       }
     }

@@ -174,7 +174,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           child: Image.asset(
             'assets/images/about_us.jpg',
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -988,7 +988,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               child: Image.asset(
                 leader.image,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: const Color(0xFF1ABC9C).withValues(alpha: 0.2),
                   child: const Icon(
                     Icons.person,

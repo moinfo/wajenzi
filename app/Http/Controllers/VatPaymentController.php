@@ -28,10 +28,16 @@ class VatPaymentController extends Controller
         if($this->handleCrud($request, 'VatPayment')) {
             return back();
         }
-        $start_date = $request->input('start_date') ?? date('Y-m-d');
-        $end_date = $request->input('end_date') ?? date('Y-m-d');
-        $vat_payments =  VatPayment::where('date','>=',$start_date)->where('date','<=',$end_date)->get();
-
+        $start_date = $request->input('start_date');
+        $end_date = $request->input('end_date');
+        
+        $query = VatPayment::query();
+        
+        if ($start_date && $end_date) {
+            $query->where('date','>=',$start_date)->where('date','<=',$end_date);
+        }
+        
+        $vat_payments = $query->orderBy('date', 'desc')->get();
 
         $data = [
             'vat_payments' => $vat_payments

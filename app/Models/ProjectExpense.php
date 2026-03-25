@@ -19,7 +19,11 @@ class ProjectExpense extends Model
         'description',
         'remarks',
         'expense_date',
-        'created_by'
+        'created_by',
+        'status',
+        'approved_by',
+        'approved_at',
+        'rejection_reason'
     ];
 
     protected $casts = [

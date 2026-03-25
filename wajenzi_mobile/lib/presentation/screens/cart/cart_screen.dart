@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../core/services/external_launcher_service.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
-
-// WhatsApp contact number (Tanzania format)
-const String _wajenziWhatsApp = '+255123456789'; // Replace with actual number
 
 // Format large numbers to abbreviated form
 String _formatNumber(double number) {
@@ -35,10 +32,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   bool get _isSwahili => ref.watch(isSwahiliProvider);
 
   // Dark mode colors
-  Color get _bgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
-  Color get _cardBgColor => _isDarkMode ? const Color(0xFF16213E) : Colors.white;
-  Color get _textPrimaryColor => _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
-  Color get _textSecondaryColor => _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+  Color get _bgColor =>
+      _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+  Color get _cardBgColor =>
+      _isDarkMode ? const Color(0xFF16213E) : Colors.white;
+  Color get _textPrimaryColor =>
+      _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
+  Color get _textSecondaryColor =>
+      _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
 
   // Get formatted price based on language
   String _getFormattedPrice(double priceTZS, double priceUSD) {
@@ -60,17 +61,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         ? 'Habari! Napenda kupata taarifa zaidi kuhusu miradi ifuatayo:\n\n$itemsList\n\nJumla: $totalPrice'
         : 'Hello! I am interested in learning more about the following projects:\n\n$itemsList\n\nTotal Value: $totalPrice';
 
-    final encodedMessage = Uri.encodeComponent(message);
-    final whatsappUrl = Uri.parse('https://wa.me/$_wajenziWhatsApp?text=$encodedMessage');
+    final opened = await ExternalLauncherService.openWhatsApp(message);
 
-    if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-    } else {
+    if (!opened) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isSwahili ? 'Imeshindwa kufungua WhatsApp' : 'Could not open WhatsApp',
+              _isSwahili
+                  ? 'Imeshindwa kufungua WhatsApp'
+                  : 'Could not open WhatsApp',
             ),
             backgroundColor: Colors.red,
           ),
@@ -90,8 +90,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
-        onDarkModeToggle: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
-        onLanguageToggle: () => ref.read(settingsProvider.notifier).toggleLanguage(),
+        onDarkModeToggle: () =>
+            ref.read(settingsProvider.notifier).toggleDarkMode(),
+        onLanguageToggle: () =>
+            ref.read(settingsProvider.notifier).toggleLanguage(),
         flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
       ),
       body: cartState.items.isEmpty
@@ -137,10 +139,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             _isSwahili
                 ? 'Ongeza miradi unayopenda kwenye kikapu chako'
                 : 'Add projects you\'re interested in to your cart',
-            style: TextStyle(
-              color: _textSecondaryColor,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: _textSecondaryColor, fontSize: 14),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
@@ -194,10 +193,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     _isSwahili
                         ? '${cartState.itemCount} ${cartState.itemCount == 1 ? 'mradi' : 'miradi'}'
                         : '${cartState.itemCount} ${cartState.itemCount == 1 ? 'project' : 'projects'}',
-                    style: TextStyle(
-                      color: _textSecondaryColor,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: _textSecondaryColor, fontSize: 14),
                   ),
                 ],
               ),
@@ -241,10 +237,17 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.delete_outline, color: Color(0xFFE74C3C), size: 20),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFE74C3C),
+                    size: 20,
+                  ),
                   label: Text(
                     _isSwahili ? 'Futa Yote' : 'Clear All',
-                    style: const TextStyle(color: Color(0xFFE74C3C), fontSize: 12),
+                    style: const TextStyle(
+                      color: Color(0xFFE74C3C),
+                      fontSize: 12,
+                    ),
                   ),
                 ),
             ],
@@ -278,62 +281,61 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             ],
           ),
           child: Column(
-              children: [
-                // Total
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _isSwahili ? 'Jumla ya Thamani' : 'Total Value',
-                      style: TextStyle(
-                        color: _textSecondaryColor,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      _isSwahili
-                          ? 'TZS ${_formatNumber(cartState.totalTZS)}'
-                          : 'USD ${_formatNumber(cartState.totalUSD)}',
-                      style: TextStyle(
-                        color: _textPrimaryColor,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // WhatsApp Inquiry Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _launchWhatsAppWithCart(cartState.items),
-                    icon: const Icon(Icons.chat_rounded, size: 22),
-                    label: Text(
-                      _isSwahili ? 'Uliza Yote kupitia WhatsApp' : 'Inquire All via WhatsApp',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF25D366),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 4,
-                      shadowColor: const Color(0xFF25D366).withValues(alpha: 0.5),
+            children: [
+              // Total
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _isSwahili ? 'Jumla ya Thamani' : 'Total Value',
+                    style: TextStyle(color: _textSecondaryColor, fontSize: 14),
+                  ),
+                  Text(
+                    _isSwahili
+                        ? 'TZS ${_formatNumber(cartState.totalTZS)}'
+                        : 'USD ${_formatNumber(cartState.totalUSD)}',
+                    style: TextStyle(
+                      color: _textPrimaryColor,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // WhatsApp Inquiry Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _launchWhatsAppWithCart(cartState.items),
+                  icon: const Icon(Icons.chat_rounded, size: 22),
+                  label: Text(
+                    _isSwahili
+                        ? 'Uliza Yote kupitia WhatsApp'
+                        : 'Inquire All via WhatsApp',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 4,
+                    shadowColor: const Color(0xFF25D366).withValues(alpha: 0.5),
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      );
-    }
+        ),
+      ],
+    );
+  }
 
   Widget _buildCartItem(CartItem item, CartNotifier cartNotifier) {
     return Container(
@@ -356,14 +358,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         children: [
           // Image
           ClipRRect(
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(16),
+            ),
             child: SizedBox(
               width: 100,
               height: 100,
               child: Image.asset(
                 item.image,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
@@ -406,7 +410,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1ABC9C).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),

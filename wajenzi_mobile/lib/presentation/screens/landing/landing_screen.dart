@@ -2,13 +2,10 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
-
-// WhatsApp contact number (Tanzania format)
-const String _wajenziWhatsApp = '+255123456789'; // Replace with actual number
 
 class LandingScreen extends ConsumerStatefulWidget {
   const LandingScreen({super.key});
@@ -34,7 +31,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       category: '3D DESIGN',
       likes: 156,
       timeAgo: '2 days ago',
-      description: 'Luxury hotel project featuring modern architecture with premium amenities.',
+      description:
+          'Luxury hotel project featuring modern architecture with premium amenities.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.20.png',
@@ -45,7 +43,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       category: 'COMPLETED',
       likes: 243,
       timeAgo: '1 week ago',
-      description: 'Beautiful modern villa in Dar es Salaam with stunning views.',
+      description:
+          'Beautiful modern villa in Dar es Salaam with stunning views.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.28.png',
@@ -56,7 +55,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       category: 'IN PROGRESS',
       likes: 89,
       timeAgo: '3 days ago',
-      description: 'State-of-the-art commercial office building in the business district.',
+      description:
+          'State-of-the-art commercial office building in the business district.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.31.png',
@@ -94,27 +94,28 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   ];
 
   // Dark mode colors
-  Color get _bgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
-  Color get _textSecondaryColor => _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
-  Color get _appBarBgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+  Color get _bgColor =>
+      _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+  Color get _textSecondaryColor =>
+      _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+  Color get _appBarBgColor =>
+      _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
 
   // Launch WhatsApp with pre-filled message about a project
   Future<void> _launchWhatsApp(String projectName) async {
     final message = _isSwahili
         ? 'Habari! Napenda kupata taarifa zaidi kuhusu mradi: $projectName'
         : 'Hello! I am interested in learning more about the project: $projectName';
+    final opened = await ExternalLauncherService.openWhatsApp(message);
 
-    final encodedMessage = Uri.encodeComponent(message);
-    final whatsappUrl = Uri.parse('https://wa.me/$_wajenziWhatsApp?text=$encodedMessage');
-
-    if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-    } else {
+    if (!opened) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isSwahili ? 'Imeshindwa kufungua WhatsApp' : 'Could not open WhatsApp',
+              _isSwahili
+                  ? 'Imeshindwa kufungua WhatsApp'
+                  : 'Could not open WhatsApp',
             ),
             backgroundColor: Colors.red,
           ),
@@ -229,7 +230,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             actions: [
               // Language Toggle with National Flags
               _buildTopBarButton(
-                onTap: () => ref.read(settingsProvider.notifier).toggleLanguage(),
+                onTap: () =>
+                    ref.read(settingsProvider.notifier).toggleLanguage(),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -239,7 +241,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       child: SizedBox(
                         width: 20,
                         height: 13,
-                        child: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
+                        child: _isSwahili
+                            ? const TanzaniaFlag()
+                            : const UKFlag(),
                       ),
                     ),
                     const SizedBox(width: 3),
@@ -248,7 +252,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: _isDarkMode ? Colors.white : const Color(0xFF2C3E50),
+                        color: _isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF2C3E50),
                       ),
                     ),
                   ],
@@ -258,7 +264,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               const SizedBox(width: 8),
               // Dark Mode Toggle
               _buildTopBarButton(
-                onTap: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
+                onTap: () =>
+                    ref.read(settingsProvider.notifier).toggleDarkMode(),
                 child: Icon(
                   _isDarkMode ? Icons.dark_mode : Icons.light_mode,
                   size: 20,
@@ -304,7 +311,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: _isDarkMode
-                    ? Border.all(color: const Color(0xFF1ABC9C).withValues(alpha: 0.3))
+                    ? Border.all(
+                        color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+                      )
                     : null,
               ),
               child: Column(
@@ -326,20 +335,26 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         ? 'Jiunge na Wajenzi upate huduma za ujenzi za kitaalamu'
                         : 'Join Wajenzi and get access to professional construction services',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildStatBadge('120+', _isSwahili ? 'Miradi' : 'Projects'),
+                      _buildStatBadge(
+                        '120+',
+                        _isSwahili ? 'Miradi' : 'Projects',
+                      ),
                       const SizedBox(width: 16),
-                      _buildStatBadge('50+', _isSwahili ? 'Wataalamu' : 'Experts'),
+                      _buildStatBadge(
+                        '50+',
+                        _isSwahili ? 'Wataalamu' : 'Experts',
+                      ),
                       const SizedBox(width: 16),
-                      _buildStatBadge('200+', _isSwahili ? 'Imekamilika' : 'Completed'),
+                      _buildStatBadge(
+                        '200+',
+                        _isSwahili ? 'Imekamilika' : 'Completed',
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -441,7 +456,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
           children: [
             // Background Image (tappable)
             GestureDetector(
-              onTap: () => _showImageModal(context, project.image, project.title),
+              onTap: () =>
+                  _showImageModal(context, project.image, project.title),
               child: AspectRatio(
                 aspectRatio: 0.75,
                 child: Image.asset(
@@ -480,7 +496,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(14),
@@ -527,7 +546,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: _getCategoryColor(project.category),
                             borderRadius: BorderRadius.circular(10),
@@ -573,10 +595,16 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                                  colors: [
+                                    Color(0xFF1ABC9C),
+                                    Color(0xFF16A085),
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(20),
                               ),
@@ -594,7 +622,11 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                             const Spacer(),
                             Row(
                               children: [
-                                const Icon(Icons.favorite, color: Color(0xFFE74C3C), size: 20),
+                                const Icon(
+                                  Icons.favorite,
+                                  color: Color(0xFFE74C3C),
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${project.likes}',
@@ -621,17 +653,28 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         const SizedBox(height: 10),
                         // Features
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+                            color: const Color(
+                              0xFFD4AF37,
+                            ).withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+                              color: const Color(
+                                0xFFD4AF37,
+                              ).withValues(alpha: 0.5),
                             ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.check_circle, size: 14, color: Color(0xFFD4AF37)),
+                              const Icon(
+                                Icons.check_circle,
+                                size: 14,
+                                color: Color(0xFFD4AF37),
+                              ),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -748,7 +791,11 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       height: 300,
                       color: const Color(0xFF2C3E50),
                       child: const Center(
-                        child: Icon(Icons.broken_image, color: Colors.white54, size: 48),
+                        child: Icon(
+                          Icons.broken_image,
+                          color: Colors.white54,
+                          size: 48,
+                        ),
                       ),
                     ),
                   ),
@@ -777,14 +824,23 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black54,
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
                 ),
                 child: Text(
                   title,
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -864,7 +920,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
         return Icons.business;
     }
   }
-
 }
 
 class ProjectShowcase {

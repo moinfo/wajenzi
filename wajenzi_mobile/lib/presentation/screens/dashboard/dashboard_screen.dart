@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
+import '../../../core/router/app_router.dart';
 import '../../../data/datasources/remote/staff_dashboard_api.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -44,18 +45,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final user = authState.valueOrNull?.user;
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Dashibodi' : 'Dashboard'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            onPressed: () => context.push('/notifications'),
           ),
         ],
       ),
@@ -66,7 +68,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _buildErrorView(error, isSwahili),
           data: (data) => _buildContent(
-            context, data, user?.name ?? 'User', isSwahili, isDarkMode,
+            context,
+            data,
+            user?.name ?? 'User',
+            isSwahili,
+            isDarkMode,
           ),
         ),
       ),
@@ -87,7 +93,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          error.toString(),
+          isSwahili
+              ? 'Hatukuweza kupakia dashibodi yako kwa sasa.'
+              : 'We could not load your dashboard right now.',
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),
@@ -122,18 +130,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           // Welcome header
           Text(
             isSwahili ? 'Karibu tena, $firstName' : 'Welcome back, $firstName',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             isSwahili
                 ? 'Hapa kuna muhtasari wa biashara yako'
                 : "Here's your business overview",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
 
@@ -213,11 +221,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Column(
                   children: data.pendingApprovals.items
                       .where((item) => item.count > 0)
-                      .map((item) => _ApprovalRow(
-                            item: item,
-                            isDarkMode: isDarkMode,
-                            isSwahili: isSwahili,
-                          ))
+                      .map(
+                        (item) => _ApprovalRow(
+                          item: item,
+                          isDarkMode: isDarkMode,
+                          isSwahili: isSwahili,
+                        ),
+                      )
                       .toList(),
                 ),
               ),
@@ -290,9 +300,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 24),
 
           // ─── Follow-ups Summary ───────────────────────
-          _SectionHeader(
-            title: isSwahili ? 'Ufuatiliaji' : 'Follow-ups',
-          ),
+          _SectionHeader(title: isSwahili ? 'Ufuatiliaji' : 'Follow-ups'),
           const SizedBox(height: 12),
           GestureDetector(
             onTap: () => context.push('/dashboard/followups'),
@@ -333,7 +341,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           if (data.projectProgress.projects.isNotEmpty) ...[
             _SectionHeader(
               title: isSwahili ? 'Maendeleo ya Miradi' : 'Project Progress',
-              badge: '${data.projectProgress.projects.length} ${isSwahili ? 'Hai' : 'Active'}',
+              badge:
+                  '${data.projectProgress.projects.length} ${isSwahili ? 'Hai' : 'Active'}',
             ),
             const SizedBox(height: 12),
             // Overall ring + status counts
@@ -349,7 +358,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       height: 110,
                       child: CustomPaint(
                         painter: _RingPainter(
-                          percentage: data.projectProgress.overallPercentage / 100,
+                          percentage:
+                              data.projectProgress.overallPercentage / 100,
                           isDarkMode: isDarkMode,
                         ),
                         child: Center(
@@ -358,7 +368,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -374,7 +386,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               Expanded(
                                 child: _StatusCountBox(
                                   count: data.projectProgress.completed,
-                                  label: isSwahili ? 'Zimekamilika' : 'Completed',
+                                  label: isSwahili
+                                      ? 'Zimekamilika'
+                                      : 'Completed',
                                   color: const Color(0xFF27AE60),
                                   isDarkMode: isDarkMode,
                                 ),
@@ -383,7 +397,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               Expanded(
                                 child: _StatusCountBox(
                                   count: data.projectProgress.inProgress,
-                                  label: isSwahili ? 'Zinaendelea' : 'In Progress',
+                                  label: isSwahili
+                                      ? 'Zinaendelea'
+                                      : 'In Progress',
                                   color: const Color(0xFF3B82F6),
                                   isDarkMode: isDarkMode,
                                 ),
@@ -405,7 +421,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               Expanded(
                                 child: _StatusCountBox(
                                   count: data.projectProgress.overdue,
-                                  label: isSwahili ? 'Zilizochelewa' : 'Overdue',
+                                  label: isSwahili
+                                      ? 'Zilizochelewa'
+                                      : 'Overdue',
                                   color: const Color(0xFFEF4444),
                                   isDarkMode: isDarkMode,
                                 ),
@@ -422,18 +440,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             const SizedBox(height: 12),
             // Per-project cards
             ...data.projectProgress.projects.map(
-              (p) => _ProjectProgressCard(
-                project: p,
-                isDarkMode: isDarkMode,
-              ),
+              (p) => _ProjectProgressCard(project: p, isDarkMode: isDarkMode),
             ),
             const SizedBox(height: 24),
           ],
 
           // ─── Calendar ─────────────────────────────────
-          _SectionHeader(
-            title: isSwahili ? 'Kalenda' : 'Calendar',
-          ),
+          _SectionHeader(title: isSwahili ? 'Kalenda' : 'Calendar'),
           const SizedBox(height: 12),
           _CalendarWidget(isDarkMode: isDarkMode, isSwahili: isSwahili),
           const SizedBox(height: 24),
@@ -451,18 +464,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 class _GlassContainer extends StatelessWidget {
   final Widget child;
   final bool isDarkMode;
-  final EdgeInsetsGeometry? margin;
 
-  const _GlassContainer({
-    required this.child,
-    required this.isDarkMode,
-    this.margin,
-  });
+  const _GlassContainer({required this.child, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: margin,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
@@ -472,8 +479,7 @@ class _GlassContainer extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color:
-                Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.06),
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.06),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -584,10 +590,13 @@ class _StatCard extends StatelessWidget {
                   const SizedBox(width: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: (badgeColor ?? AppColors.success)
-                          .withValues(alpha: 0.15),
+                      color: (badgeColor ?? AppColors.success).withValues(
+                        alpha: 0.15,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -623,15 +632,14 @@ class _SectionHeader extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         if (badge != null) ...[
           const SizedBox(width: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
@@ -727,11 +735,7 @@ class _ApprovalRow extends StatelessWidget {
                 color: color.withValues(alpha: isDarkMode ? 0.2 : 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                _iconForType(item.icon),
-                size: 22,
-                color: color,
-              ),
+              child: Icon(_iconForType(item.icon), size: 22, color: color),
             ),
             const SizedBox(width: 12),
             // Label + subtitle
@@ -749,7 +753,9 @@ class _ApprovalRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isSwahili ? 'Inahitaji umakini wako' : 'Requires your attention',
+                    isSwahili
+                        ? 'Inahitaji umakini wako'
+                        : 'Requires your attention',
                     style: TextStyle(
                       fontSize: 12,
                       color: isDarkMode
@@ -835,43 +841,47 @@ class _MiniSummaryCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            ...rows.map((row) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        row.label,
+            ...rows.map(
+              (row) => Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      row.label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDarkMode
+                            ? Colors.white60
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: row.count > 0
+                            ? row.color.withValues(alpha: 0.12)
+                            : (isDarkMode ? Colors.white10 : Colors.grey[100]),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${row.count}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDarkMode
-                              ? Colors.white60
+                          fontWeight: FontWeight.w600,
+                          color: row.count > 0
+                              ? row.color
                               : AppColors.textSecondary,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: row.count > 0
-                              ? row.color.withValues(alpha: 0.12)
-                              : (isDarkMode ? Colors.white10 : Colors.grey[100]),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          '${row.count}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: row.count > 0
-                                ? row.color
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -976,7 +986,8 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingPainter oldDelegate) =>
-      oldDelegate.percentage != percentage || oldDelegate.isDarkMode != isDarkMode;
+      oldDelegate.percentage != percentage ||
+      oldDelegate.isDarkMode != isDarkMode;
 }
 
 // ─── Status Count Box ────────────────────────────
@@ -1039,14 +1050,15 @@ class _ProjectProgressCard extends StatelessWidget {
   final ProjectProgressItem project;
   final bool isDarkMode;
 
-  const _ProjectProgressCard({
-    required this.project,
-    required this.isDarkMode,
-  });
+  const _ProjectProgressCard({required this.project, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
-    final total = project.completed + project.inProgress + project.pending + project.overdue;
+    final total =
+        project.completed +
+        project.inProgress +
+        project.pending +
+        project.overdue;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -1094,7 +1106,9 @@ class _ProjectProgressCard extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF27AE60).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
@@ -1122,12 +1136,16 @@ class _ProjectProgressCard extends StatelessWidget {
                             if (project.completed > 0)
                               Expanded(
                                 flex: project.completed,
-                                child: Container(color: const Color(0xFF27AE60)),
+                                child: Container(
+                                  color: const Color(0xFF27AE60),
+                                ),
                               ),
                             if (project.inProgress > 0)
                               Expanded(
                                 flex: project.inProgress,
-                                child: Container(color: const Color(0xFF3B82F6)),
+                                child: Container(
+                                  color: const Color(0xFF3B82F6),
+                                ),
                               ),
                             if (project.pending > 0)
                               Expanded(
@@ -1141,7 +1159,9 @@ class _ProjectProgressCard extends StatelessWidget {
                             if (project.overdue > 0)
                               Expanded(
                                 flex: project.overdue,
-                                child: Container(color: const Color(0xFFEF4444)),
+                                child: Container(
+                                  color: const Color(0xFFEF4444),
+                                ),
                               ),
                           ],
                         )
@@ -1171,7 +1191,9 @@ class _ProjectProgressCard extends StatelessWidget {
                   _StatusIconCount(
                     icon: Icons.radio_button_unchecked,
                     count: project.pending,
-                    color: isDarkMode ? Colors.white38 : const Color(0xFF9CA3AF),
+                    color: isDarkMode
+                        ? Colors.white38
+                        : const Color(0xFF9CA3AF),
                   ),
                   if (project.overdue > 0) ...[
                     const SizedBox(width: 12),
@@ -1228,10 +1250,7 @@ class _CalendarWidget extends ConsumerStatefulWidget {
   final bool isDarkMode;
   final bool isSwahili;
 
-  const _CalendarWidget({
-    required this.isDarkMode,
-    required this.isSwahili,
-  });
+  const _CalendarWidget({required this.isDarkMode, required this.isSwahili});
 
   @override
   ConsumerState<_CalendarWidget> createState() => _CalendarWidgetState();
@@ -1257,16 +1276,26 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
     try {
       final api = ref.read(staffDashboardApiProvider);
       final data = await api.fetchCalendar(month: _month, year: _year);
-      if (mounted) setState(() { _calendarData = data; _loading = false; });
+      if (mounted) {
+        setState(() {
+          _calendarData = data;
+          _loading = false;
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
   void _prevMonth() {
     setState(() {
       _month--;
-      if (_month < 1) { _month = 12; _year--; }
+      if (_month < 1) {
+        _month = 12;
+        _year--;
+      }
     });
     _fetchCalendar();
   }
@@ -1274,7 +1303,10 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
   void _nextMonth() {
     setState(() {
       _month++;
-      if (_month > 12) { _month = 1; _year++; }
+      if (_month > 12) {
+        _month = 1;
+        _year++;
+      }
     });
     _fetchCalendar();
   }
@@ -1309,15 +1341,19 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                       color: isDark ? Colors.white10 : Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.chevron_left_rounded,
-                        size: 20,
-                        color: isDark ? Colors.white70 : AppColors.textPrimary),
+                    child: Icon(
+                      Icons.chevron_left_rounded,
+                      size: 20,
+                      color: isDark ? Colors.white70 : AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF3B82F6),
                     borderRadius: BorderRadius.circular(20),
@@ -1341,9 +1377,11 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                       color: isDark ? Colors.white10 : Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.chevron_right_rounded,
-                        size: 20,
-                        color: isDark ? Colors.white70 : AppColors.textPrimary),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 20,
+                      color: isDark ? Colors.white70 : AppColors.textPrimary,
+                    ),
                   ),
                 ),
               ],
@@ -1353,19 +1391,21 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
             // ── Day headers ──
             Row(
               children: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
-                  .map((d) => Expanded(
-                        child: Center(
-                          child: Text(
-                            d,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white38 : AppColors.textHint,
-                              letterSpacing: 0.5,
-                            ),
+                  .map(
+                    (d) => Expanded(
+                      child: Center(
+                        child: Text(
+                          d,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white38 : AppColors.textHint,
+                            letterSpacing: 0.5,
                           ),
                         ),
-                      ))
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: 8),
@@ -1375,11 +1415,12 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 40),
                 child: Center(
-                    child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
               )
             else
               _buildGrid(isDark, now, startWeekday, daysInMonth),
@@ -1392,20 +1433,25 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
               alignment: WrapAlignment.center,
               children: [
                 _LegendDot(
-                    color: const Color(0xFF3B82F6),
-                    label: isSw ? 'Leo' : 'Today'),
+                  color: const Color(0xFF3B82F6),
+                  label: isSw ? 'Leo' : 'Today',
+                ),
                 _LegendDot(
-                    color: const Color(0xFF10B981),
-                    label: isSw ? 'Ufuatiliaji' : 'Follow-up'),
+                  color: const Color(0xFF10B981),
+                  label: isSw ? 'Ufuatiliaji' : 'Follow-up',
+                ),
                 _LegendDot(
-                    color: const Color(0xFF60A5FA),
-                    label: isSw ? 'Shughuli' : 'Activity'),
+                  color: const Color(0xFF60A5FA),
+                  label: isSw ? 'Shughuli' : 'Activity',
+                ),
                 _LegendDot(
-                    color: const Color(0xFFF59E0B),
-                    label: isSw ? 'Ankara' : 'Invoice'),
+                  color: const Color(0xFFF59E0B),
+                  label: isSw ? 'Ankara' : 'Invoice',
+                ),
                 _LegendDot(
-                    color: const Color(0xFFEF4444),
-                    label: isSw ? 'Zilizochelewa' : 'Overdue'),
+                  color: const Color(0xFFEF4444),
+                  label: isSw ? 'Zilizochelewa' : 'Overdue',
+                ),
               ],
             ),
           ],
@@ -1458,7 +1504,9 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF2C3E50),
                       borderRadius: BorderRadius.circular(10),
@@ -1475,7 +1523,9 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                   const SizedBox(width: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF27AE60),
                       borderRadius: BorderRadius.circular(10),
@@ -1506,11 +1556,13 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                       color: const Color(0xFF10B981),
                       isDarkMode: isDark,
                     ),
-                    ...dayEvents.followups.map((e) => _EventRow(
-                          event: e,
-                          color: const Color(0xFF10B981),
-                          isDarkMode: isDark,
-                        )),
+                    ...dayEvents.followups.map(
+                      (e) => _EventRow(
+                        event: e,
+                        color: const Color(0xFF10B981),
+                        isDarkMode: isDark,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                   ],
                   if (dayEvents.activities.isNotEmpty) ...[
@@ -1520,11 +1572,13 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                       color: const Color(0xFF60A5FA),
                       isDarkMode: isDark,
                     ),
-                    ...dayEvents.activities.map((e) => _EventRow(
-                          event: e,
-                          color: const Color(0xFF60A5FA),
-                          isDarkMode: isDark,
-                        )),
+                    ...dayEvents.activities.map(
+                      (e) => _EventRow(
+                        event: e,
+                        color: const Color(0xFF60A5FA),
+                        isDarkMode: isDark,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                   ],
                   if (dayEvents.invoices.isNotEmpty) ...[
@@ -1534,11 +1588,13 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                       color: const Color(0xFFF59E0B),
                       isDarkMode: isDark,
                     ),
-                    ...dayEvents.invoices.map((e) => _EventRow(
-                          event: e,
-                          color: const Color(0xFFF59E0B),
-                          isDarkMode: isDark,
-                        )),
+                    ...dayEvents.invoices.map(
+                      (e) => _EventRow(
+                        event: e,
+                        color: const Color(0xFFF59E0B),
+                        isDarkMode: isDark,
+                      ),
+                    ),
                   ],
                 ],
               ),
@@ -1549,7 +1605,12 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
     );
   }
 
-  Widget _buildGrid(bool isDark, DateTime now, int startWeekday, int daysInMonth) {
+  Widget _buildGrid(
+    bool isDark,
+    DateTime now,
+    int startWeekday,
+    int daysInMonth,
+  ) {
     final events = _calendarData?.events ?? {};
     final rows = <Widget>[];
     int day = 1 - startWeekday;
@@ -1567,25 +1628,27 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
               day == now.day && _month == now.month && _year == now.year;
 
           final capturedDay = day;
-          cells.add(Expanded(
-            child: GestureDetector(
-              onTap: (dayEvents != null && !dayEvents.isEmpty)
-                  ? () => _showDayEvents(
+          cells.add(
+            Expanded(
+              child: GestureDetector(
+                onTap: (dayEvents != null && !dayEvents.isEmpty)
+                    ? () => _showDayEvents(
                         context,
                         dateStr,
                         DateTime(_year, _month, capturedDay),
                         dayEvents,
                         isDark,
                       )
-                  : null,
-              child: _CalendarDay(
-                day: capturedDay,
-                isToday: isToday,
-                events: dayEvents,
-                isDarkMode: isDark,
+                    : null,
+                child: _CalendarDay(
+                  day: capturedDay,
+                  isToday: isToday,
+                  events: dayEvents,
+                  isDarkMode: isDark,
+                ),
               ),
             ),
-          ));
+          );
         }
         day++;
       }
@@ -1645,8 +1708,8 @@ class _CalendarDay extends StatelessWidget {
         color: isToday
             ? const Color(0xFF3B82F6)
             : isDarkMode
-                ? Colors.transparent
-                : Colors.transparent,
+            ? Colors.transparent
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         border: !isToday && border != null
             ? Border.all(color: border, width: 1.5)
@@ -1663,8 +1726,8 @@ class _CalendarDay extends StatelessWidget {
               color: isToday
                   ? Colors.white
                   : isDarkMode
-                      ? Colors.white70
-                      : AppColors.textPrimary,
+                  ? Colors.white70
+                  : AppColors.textPrimary,
             ),
           ),
           if (dots.isNotEmpty && !isToday)
@@ -1674,15 +1737,17 @@ class _CalendarDay extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: dots
                     .take(3)
-                    .map((c) => Container(
-                          width: 5,
-                          height: 5,
-                          margin: const EdgeInsets.symmetric(horizontal: 1),
-                          decoration: BoxDecoration(
-                            color: c,
-                            shape: BoxShape.circle,
-                          ),
-                        ))
+                    .map(
+                      (c) => Container(
+                        width: 5,
+                        height: 5,
+                        margin: const EdgeInsets.symmetric(horizontal: 1),
+                        decoration: BoxDecoration(
+                          color: c,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -1739,7 +1804,11 @@ class _EventGroupHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: isDarkMode ? Colors.white54 : Colors.grey),
+          Icon(
+            icon,
+            size: 16,
+            color: isDarkMode ? Colors.white54 : Colors.grey,
+          ),
           const SizedBox(width: 6),
           Text(
             label,
@@ -1787,10 +1856,7 @@ class _EventRow extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: _dotColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: _dotColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1827,4 +1893,3 @@ class _EventRow extends StatelessWidget {
     );
   }
 }
-

@@ -507,6 +507,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/project_daily_report/create', [App\Http\Controllers\ProjectDailyReportController::class, 'create'])->name('project_daily_report.create');
     Route::match(['get', 'post'], '/project_daily_report/edit/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'edit'])->name('project_daily_report.edit');
     Route::match(['get', 'post'], '/project_daily_report/show/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'show'])->name('project_daily_report.show');
+    Route::match(['get', 'post'], '/project_daily_report/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'report'])->name('project_daily_report');
     Route::post('/project_daily_report/store', [App\Http\Controllers\ProjectDailyReportController::class, 'store'])->name('project_daily_report.store');
     Route::post('/project_daily_report/update/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'update'])->name('project_daily_report.update');
     Route::post('/project_daily_report/delete/{id}', [App\Http\Controllers\ProjectDailyReportController::class, 'destroy'])->name('project_daily_report.delete');

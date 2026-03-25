@@ -37,6 +37,10 @@ class ProjectDailyReportController extends Controller
         return view('pages.projects.project_daily_reports')->with($data);
     }
 
+    public function show($id) {
+        return $this->report($id);
+    }
+
     public function report($id) {
         $report = ProjectDailyReport::with(['project', 'supervisor'])->findOrFail($id);
 

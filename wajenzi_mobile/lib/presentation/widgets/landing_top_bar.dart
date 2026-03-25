@@ -65,7 +65,7 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
                 child: Image.asset(
                   'assets/images/logo.png',
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (_, _, _) => const Icon(
                     Icons.business,
                     color: Color(0xFF1ABC9C),
                     size: 24,

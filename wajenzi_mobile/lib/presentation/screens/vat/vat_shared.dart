@@ -22,6 +22,25 @@ String vatMoney(dynamic v) {
 
 String vatDateFmt(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
+String vatErrorMessage(Object error, {bool isSwahili = false}) {
+  if (error is DioException) {
+    final data = error.response?.data;
+    if (data is Map<String, dynamic>) {
+      final message = data['message'];
+      if (message is String && message.isNotEmpty) return message;
+      final errors = data['errors'];
+      if (errors is Map && errors.isNotEmpty) {
+        final first = errors.values.first;
+        if (first is List && first.isNotEmpty) {
+          return '${first.first}';
+        }
+        if (first != null) return '$first';
+      }
+    }
+  }
+  return isSwahili ? 'Hitilafu imetokea. Jaribu tena.' : 'Something went wrong. Please try again.';
+}
+
 BoxDecoration vatCardDeco(bool isDark) => BoxDecoration(
       color: isDark ? vatDarkCard : Colors.white,
       borderRadius: BorderRadius.circular(12),
@@ -358,7 +377,10 @@ Future<bool> vatDelete(
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(vatErrorMessage(e, isSwahili: isSwahili)),
+          backgroundColor: Colors.red,
+        ),
       );
     }
     return false;
@@ -619,12 +641,16 @@ class VatStatusBadge extends StatelessWidget {
     switch (status.toUpperCase()) {
       case 'APPROVED':
         color = const Color(0xFF27AE60);
+        break;
       case 'PENDING':
         color = const Color(0xFFF59E0B);
+        break;
       case 'REJECTED':
         color = const Color(0xFFEF4444);
+        break;
       default:
         color = const Color(0xFF3B82F6);
+        break;
     }
 
     return Container(

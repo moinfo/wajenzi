@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
@@ -49,15 +50,40 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
   }
 
   // Dark mode colors
-  Color get _bgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
-  Color get _cardBgColor => _isDarkMode ? const Color(0xFF16213E) : Colors.white;
-  Color get _textPrimaryColor => _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
-  Color get _textSecondaryColor => _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+  Color get _bgColor =>
+      _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+  Color get _cardBgColor =>
+      _isDarkMode ? const Color(0xFF16213E) : Colors.white;
+  Color get _textPrimaryColor =>
+      _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
+  Color get _textSecondaryColor =>
+      _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+
+  Future<void> _launchWhatsApp([String? topic]) async {
+    final message = _isSwahili
+        ? 'Habari! Nahitaji taarifa zaidi kuhusu ${topic ?? "tuzo zenu"}.'
+        : 'Hello! I would like to learn more about ${topic ?? "your awards"}.';
+    final opened = await ExternalLauncherService.openWhatsApp(message);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isSwahili
+                ? 'Imeshindwa kufungua WhatsApp'
+                : 'Could not open WhatsApp',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   List<_Award> get _awards => [
     _Award(
       year: '2024',
-      title: _isSwahili ? 'Mkandarasi Bora wa Nyumba' : 'Outstanding Residential Contractor',
+      title: _isSwahili
+          ? 'Mkandarasi Bora wa Nyumba'
+          : 'Outstanding Residential Contractor',
       subtitle: _isSwahili
           ? 'Mkandarasi Bora wa Nyumba wa Mwaka'
           : 'Outstanding Residential Contractor of the Year',
@@ -129,52 +155,45 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
-        onDarkModeToggle: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
-        onLanguageToggle: () => ref.read(settingsProvider.notifier).toggleLanguage(),
+        onDarkModeToggle: () =>
+            ref.read(settingsProvider.notifier).toggleDarkMode(),
+        onLanguageToggle: () =>
+            ref.read(settingsProvider.notifier).toggleLanguage(),
         flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
       ),
       body: CustomScrollView(
         slivers: [
           // Hero Section
-          SliverToBoxAdapter(
-            child: _buildHeroSection(),
-          ),
+          SliverToBoxAdapter(child: _buildHeroSection()),
 
           // Stats Section
-          SliverToBoxAdapter(
-            child: _buildStatsSection(),
-          ),
+          SliverToBoxAdapter(child: _buildStatsSection()),
 
           // Featured Awards Carousel
-          SliverToBoxAdapter(
-            child: _buildFeaturedAwardsSection(),
-          ),
+          SliverToBoxAdapter(child: _buildFeaturedAwardsSection()),
 
           // All Awards Section Header
-          SliverToBoxAdapter(
-            child: _buildAwardsSectionHeader(),
-          ),
+          SliverToBoxAdapter(child: _buildAwardsSectionHeader()),
 
           // Awards Timeline
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
-                (context, index) => _buildAwardTimelineItem(_awards[index], index == _awards.length - 1),
+                (context, index) => _buildAwardTimelineItem(
+                  _awards[index],
+                  index == _awards.length - 1,
+                ),
                 childCount: _awards.length,
               ),
             ),
           ),
 
           // Recognition Section
-          SliverToBoxAdapter(
-            child: _buildRecognitionSection(),
-          ),
+          SliverToBoxAdapter(child: _buildRecognitionSection()),
 
           // Footer spacing
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 120),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
       bottomNavigationBar: CurvedBottomNav(
@@ -194,7 +213,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
           child: Image.asset(
             'assets/images/awards/Wins_Contractor.jpeg',
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -203,7 +222,11 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 ),
               ),
               child: const Center(
-                child: Icon(Icons.emoji_events_rounded, size: 80, color: Colors.white24),
+                child: Icon(
+                  Icons.emoji_events_rounded,
+                  size: 80,
+                  color: Colors.white24,
+                ),
               ),
             ),
           ),
@@ -229,7 +252,10 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1ABC9C),
                   borderRadius: BorderRadius.circular(20),
@@ -237,7 +263,11 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 14),
+                    const Icon(
+                      Icons.emoji_events_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       _isSwahili ? 'Kutambuliwa' : 'Recognition',
@@ -252,7 +282,9 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                _isSwahili ? 'Tuzo na Kutambuliwa Kwetu' : 'Our Awards & Recognition',
+                _isSwahili
+                    ? 'Tuzo na Kutambuliwa Kwetu'
+                    : 'Our Awards & Recognition',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -450,20 +482,29 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
             child: Stack(
               children: [
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
                   child: SizedBox(
                     height: 140,
                     width: double.infinity,
                     child: Image.asset(
                       award.image,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [award.color.withValues(alpha: 0.7), award.color],
+                            colors: [
+                              award.color.withValues(alpha: 0.7),
+                              award.color,
+                            ],
                           ),
                         ),
-                        child: Icon(award.icon, size: 60, color: Colors.white38),
+                        child: Icon(
+                          award.icon,
+                          size: 60,
+                          color: Colors.white38,
+                        ),
                       ),
                     ),
                   ),
@@ -473,7 +514,10 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                   top: 12,
                   left: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: award.color,
                       borderRadius: BorderRadius.circular(8),
@@ -507,7 +551,10 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                   bottom: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(6),
@@ -515,7 +562,11 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.zoom_in_rounded, color: Colors.white, size: 14),
+                        Icon(
+                          Icons.zoom_in_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
                         SizedBox(width: 4),
                         Text(
                           'View',
@@ -625,7 +676,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 child: Image.asset(
                   imagePath,
                   fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(
+                  errorBuilder: (_, _, _) => const Icon(
                     Icons.broken_image_rounded,
                     color: Colors.white54,
                     size: 80,
@@ -660,7 +711,10 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
               left: 20,
               right: 20,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(12),
@@ -679,7 +733,9 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _isSwahili ? 'Bana ili kukuza • Gusa kutoka' : 'Pinch to zoom • Tap to close',
+                      _isSwahili
+                          ? 'Bana ili kukuza - Gusa kutoka'
+                          : 'Pinch to zoom - Tap to close',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 12,
@@ -768,10 +824,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      award.color,
-                      award.color.withValues(alpha: 0.2),
-                    ],
+                    colors: [award.color, award.color.withValues(alpha: 0.2)],
                   ),
                 ),
               ),
@@ -804,7 +857,10 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 children: [
                   // Year badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: award.color.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
@@ -918,13 +974,20 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                         child: Image.asset(
                           award.image,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, _, _) => Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [award.color.withValues(alpha: 0.7), award.color],
+                                colors: [
+                                  award.color.withValues(alpha: 0.7),
+                                  award.color,
+                                ],
                               ),
                             ),
-                            child: Icon(award.icon, size: 80, color: Colors.white38),
+                            child: Icon(
+                              award.icon,
+                              size: 80,
+                              color: Colors.white38,
+                            ),
                           ),
                         ),
                       ),
@@ -949,7 +1012,10 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
                                 decoration: BoxDecoration(
                                   color: award.color,
                                   borderRadius: BorderRadius.circular(8),
@@ -1072,16 +1138,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                     ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              _isSwahili ? 'Inashiriki tuzo...' : 'Sharing award...',
-                            ),
-                          ),
-                        );
+                        _launchWhatsApp(award.title);
                       },
                       icon: const Icon(Icons.share_rounded, size: 20),
-                      label: Text(_isSwahili ? 'Shiriki Tuzo Hii' : 'Share This Award'),
+                      label: Text(
+                        _isSwahili ? 'Shiriki Tuzo Hii' : 'Share This Award',
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: award.color,
                         foregroundColor: Colors.white,
@@ -1124,16 +1186,10 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.verified_rounded,
-            color: Colors.white,
-            size: 48,
-          ),
+          const Icon(Icons.verified_rounded, color: Colors.white, size: 48),
           const SizedBox(height: 16),
           Text(
-            _isSwahili
-                ? 'Kujitolea kwa Ubora'
-                : 'Commitment to Excellence',
+            _isSwahili ? 'Kujitolea kwa Ubora' : 'Commitment to Excellence',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -1155,15 +1211,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
           ),
           const SizedBox(height: 20),
           OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    _isSwahili ? 'Wasiliana nasi...' : 'Contacting us...',
-                  ),
-                ),
-              );
-            },
+            onPressed: _launchWhatsApp,
             icon: const Icon(Icons.handshake_rounded, size: 18),
             label: Text(_isSwahili ? 'Fanya Kazi Nasi' : 'Work With Us'),
             style: OutlinedButton.styleFrom(

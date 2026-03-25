@@ -463,7 +463,9 @@ class _ErrorBody extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          error.toString(),
+          isSwahili
+              ? 'Hatukuweza kupakia ufuatiliaji kwa sasa.'
+              : 'We could not load follow-ups right now.',
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),

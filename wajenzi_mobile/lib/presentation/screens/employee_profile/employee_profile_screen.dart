@@ -167,7 +167,7 @@ class _FiltersBar extends ConsumerWidget {
                       ...staffList.map((s) => DropdownMenuItem<int?>(
                             value: s['id'] as int,
                             child: Text(
-                              '${s['name']} — ${s['department'] ?? ''}',
+                              '${s['name']} - ${s['department'] ?? ''}',
                               style: const TextStyle(fontSize: 13),
                               overflow: TextOverflow.ellipsis,
                             ),

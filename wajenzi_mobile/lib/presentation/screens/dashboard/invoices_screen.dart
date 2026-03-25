@@ -488,7 +488,9 @@ class _ErrorBody extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          error.toString(),
+          isSwahili
+              ? 'Hatukuweza kupakia ankara kwa sasa.'
+              : 'We could not load invoices right now.',
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),

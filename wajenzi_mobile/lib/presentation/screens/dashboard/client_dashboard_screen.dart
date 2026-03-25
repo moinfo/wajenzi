@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/client_dashboard_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -13,7 +14,8 @@ class ClientDashboardScreen extends ConsumerStatefulWidget {
   const ClientDashboardScreen({super.key});
 
   @override
-  ConsumerState<ClientDashboardScreen> createState() => _ClientDashboardScreenState();
+  ConsumerState<ClientDashboardScreen> createState() =>
+      _ClientDashboardScreenState();
 }
 
 class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
@@ -48,6 +50,7 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
     final user = authState.valueOrNull?.user;
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
 
     final firstName = user?.name.split(' ').first ?? 'User';
 
@@ -55,23 +58,28 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Dashibodi' : 'Dashboard'),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            onPressed: () => context.push('/notifications'),
           ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(clientDashboardProvider.notifier).fetchDashboard(),
+        onRefresh: () =>
+            ref.read(clientDashboardProvider.notifier).fetchDashboard(),
         child: dashboardState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _buildErrorView(error, isSwahili),
           data: (data) => _buildDashboardContent(
-            context, data, firstName, isSwahili, isDarkMode,
+            context,
+            data,
+            firstName,
+            isSwahili,
+            isDarkMode,
           ),
         ),
       ),
@@ -92,7 +100,9 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          error.toString(),
+          isSwahili
+              ? 'Hatukuweza kupakia dashibodi yako kwa sasa.'
+              : 'We could not load your dashboard right now.',
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),
@@ -125,18 +135,18 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
           // Welcome header
           Text(
             isSwahili ? 'Karibu tena, $firstName' : 'Welcome back, $firstName',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             isSwahili
                 ? 'Hapa kuna muhtasari wa miradi yako ya ujenzi'
                 : "Here's an overview of your construction projects",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
           ),
           const SizedBox(height: 20),
 
@@ -195,13 +205,16 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
             children: [
               Text(
                 isSwahili ? 'Miradi Yako' : 'Your Projects',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
@@ -234,18 +247,20 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
               ),
             )
           else
-            ...data.projects.map((project) => GestureDetector(
-                  onTap: () => context.push(
-                    '/project/${project.id}',
-                    extra: project.projectName,
-                  ),
-                  child: _ProjectCard(
-                    project: project,
-                    isSwahili: isSwahili,
-                    isDarkMode: isDarkMode,
-                    formatCurrency: _formatFullCurrency,
-                  ),
-                )),
+            ...data.projects.map(
+              (project) => GestureDetector(
+                onTap: () => context.push(
+                  '/project/${project.id}',
+                  extra: project.projectName,
+                ),
+                child: _ProjectCard(
+                  project: project,
+                  isSwahili: isSwahili,
+                  isDarkMode: isDarkMode,
+                  formatCurrency: _formatFullCurrency,
+                ),
+              ),
+            ),
 
           // Bottom spacing for nav bar
           const SizedBox(height: 100),
@@ -351,7 +366,9 @@ class _StatCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
+                      color: isDarkMode
+                          ? Colors.white70
+                          : AppColors.textSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -419,14 +436,18 @@ class _ProjectCard extends StatelessWidget {
 
   String _statusLabel(String? status) {
     if (status == null) return '';
-    return status.replaceAll('_', ' ').split(' ').map((w) {
-      if (w.isEmpty) return w;
-      return '${w[0].toUpperCase()}${w.substring(1)}';
-    }).join(' ');
+    return status
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) {
+          if (w.isEmpty) return w;
+          return '${w[0].toUpperCase()}${w.substring(1)}';
+        })
+        .join(' ');
   }
 
   String _formatDate(String? date) {
-    if (date == null) return '—';
+    if (date == null) return '-';
     try {
       final parsed = DateTime.parse(date);
       return DateFormat('dd MMM yyyy').format(parsed);
@@ -460,7 +481,9 @@ class _ProjectCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                          color: isDarkMode
+                              ? Colors.white
+                              : AppColors.textPrimary,
                         ),
                       ),
                       if (project.documentNumber != null) ...[
@@ -477,7 +500,10 @@ class _ProjectCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
@@ -498,11 +524,14 @@ class _ProjectCard extends StatelessWidget {
             // Date range
             Row(
               children: [
-                Icon(Icons.calendar_today_rounded,
-                    size: 14, color: AppColors.textSecondary),
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 14,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 6),
                 Text(
-                  '${_formatDate(project.startDate)} — ${_formatDate(project.expectedEndDate)}',
+                  '${_formatDate(project.startDate)} - ${_formatDate(project.expectedEndDate)}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
@@ -515,8 +544,11 @@ class _ProjectCard extends StatelessWidget {
             // Contract value
             Row(
               children: [
-                Icon(Icons.payments_rounded,
-                    size: 14, color: AppColors.textSecondary),
+                Icon(
+                  Icons.payments_rounded,
+                  size: 14,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   formatCurrency(project.contractValue),

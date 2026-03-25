@@ -11,6 +11,13 @@ final _billingProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   return response.data['data'] as List? ?? [];
 });
 
+final _billingDetailProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>, int>((ref, id) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/billing/documents/$id');
+  return response.data['data'] as Map<String, dynamic>? ?? const {};
+});
+
 class StaffBillingScreen extends ConsumerWidget {
   const StaffBillingScreen({super.key});
 
@@ -59,7 +66,12 @@ class StaffBillingScreen extends ConsumerWidget {
               itemBuilder: (context, index) {
                 if (index == docs.length) return const SizedBox(height: 80);
                 final doc = docs[index] as Map<String, dynamic>;
-                return _BillingCard(doc: doc, isDarkMode: isDarkMode);
+                return _BillingCard(
+                  doc: doc,
+                  isDarkMode: isDarkMode,
+                  onTap: () =>
+                      _showBillingDetailSheet(context, ref, doc['id'] as int?),
+                );
               },
             );
           },
@@ -72,8 +84,13 @@ class StaffBillingScreen extends ConsumerWidget {
 class _BillingCard extends StatelessWidget {
   final Map<String, dynamic> doc;
   final bool isDarkMode;
+  final VoidCallback onTap;
 
-  const _BillingCard({required this.doc, required this.isDarkMode});
+  const _BillingCard({
+    required this.doc,
+    required this.isDarkMode,
+    required this.onTap,
+  });
 
   String _formatAmount(dynamic amount) {
     if (amount == null) return 'TZS 0';
@@ -105,112 +122,292 @@ class _BillingCard extends StatelessWidget {
         statusColor = const Color(0xFF3B82F6);
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1E1E30) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDarkMode
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.grey.withValues(alpha: 0.12),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1E1E30) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.grey.withValues(alpha: 0.12),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child:
-                Icon(Icons.receipt_long_rounded, color: statusColor, size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  docNumber,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  clientName,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDarkMode
-                        ? Colors.white54
-                        : AppColors.textSecondary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.monetization_on_rounded,
-                        size: 12, color: const Color(0xFFE67E22)),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatAmount(totalAmount),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFFE67E22),
-                      ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.receipt_long_rounded, color: statusColor, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    docNumber,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode ? Colors.white : AppColors.textPrimary,
                     ),
-                    if (dueDate != null) ...[
-                      const SizedBox(width: 8),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    clientName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDarkMode
+                          ? Colors.white54
+                          : AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.monetization_on_rounded,
+                          size: 12, color: const Color(0xFFE67E22)),
+                      const SizedBox(width: 4),
                       Text(
-                        dueDate,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: isDarkMode
-                              ? Colors.white38
-                              : AppColors.textHint,
+                        _formatAmount(totalAmount),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFE67E22),
+                        ),
+                      ),
+                      if (dueDate != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          dueDate,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDarkMode
+                                ? Colors.white38
+                                : AppColors.textHint,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    status.replaceAll('_', ' '),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: isDarkMode ? Colors.white38 : AppColors.textHint,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void _showBillingDetailSheet(BuildContext context, WidgetRef ref, int? id) {
+  if (id == null) return;
+
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    builder: (context) => Consumer(
+      builder: (context, ref, _) {
+        final detailAsync = ref.watch(_billingDetailProvider(id));
+        return SafeArea(
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.75,
+            child: detailAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => _ErrorView(
+                error: error,
+                isSwahili: false,
+                onRetry: () => ref.invalidate(_billingDetailProvider(id)),
+              ),
+              data: (detail) {
+                final items =
+                    (detail['items'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+                final payments =
+                    (detail['payments'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+                final client = detail['client'] as Map<String, dynamic>?;
+                final project = detail['project'] as Map<String, dynamic>?;
+
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                  children: [
+                    Text(
+                      detail['document_number'] as String? ?? 'Billing Document',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 18),
+                    _BillingDetailRow('Type', detail['document_type'] as String? ?? 'N/A'),
+                    _BillingDetailRow('Client', client?['name'] as String? ?? 'N/A'),
+                    _BillingDetailRow(
+                      'Project',
+                      project?['project_name'] as String? ?? 'N/A',
+                    ),
+                    _BillingDetailRow('Status', detail['status'] as String? ?? 'N/A'),
+                    _BillingDetailRow('Issue Date', detail['issue_date'] as String? ?? '-'),
+                    _BillingDetailRow('Due Date', detail['due_date'] as String? ?? '-'),
+                    _BillingDetailRow(
+                      'Total Amount',
+                      'TZS ${_formatAmountStatic(detail['total_amount'])}',
+                    ),
+                    _BillingDetailRow(
+                      'Paid Amount',
+                      'TZS ${_formatAmountStatic(detail['paid_amount'])}',
+                    ),
+                    _BillingDetailRow(
+                      'Balance',
+                      'TZS ${_formatAmountStatic(detail['balance_amount'])}',
+                    ),
+                    if ((detail['notes'] as String? ?? '').isNotEmpty)
+                      _BillingDetailRow('Notes', detail['notes'] as String),
+                    if (items.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Items',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 10),
+                      ...items.map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item['description'] as String? ?? 'Item',
+                                  style: const TextStyle(fontWeight: FontWeight.w600),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${item['quantity'] ?? 0} ${item['unit'] ?? ''} - TZS ${_formatAmountStatic(item['total_amount'])}',
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (payments.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Payments',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 10),
+                      ...payments.map(
+                        (payment) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _BillingDetailRow(
+                            payment['payment_method'] as String? ?? 'Payment',
+                            'TZS ${_formatAmountStatic(payment['amount'])}',
+                          ),
                         ),
                       ),
                     ],
                   ],
-                ),
-              ],
+                );
+              },
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
+        );
+      },
+    ),
+  );
+}
+
+class _BillingDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _BillingDetailRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
             child: Text(
-              status.replaceAll('_', ' '),
-              style: TextStyle(
-                fontSize: 10,
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,
-                color: statusColor,
               ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? 'N/A' : value,
+              style: const TextStyle(fontSize: 14),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+String _formatAmountStatic(dynamic amount) {
+  if (amount == null) return '0';
+  final val = amount is num ? amount.toDouble() : double.tryParse('$amount') ?? 0;
+  final formatter = NumberFormat('#,##0.##', 'en');
+  return formatter.format(val);
 }
 
 class _ErrorView extends StatelessWidget {

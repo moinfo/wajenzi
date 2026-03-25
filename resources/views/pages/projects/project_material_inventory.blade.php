@@ -76,11 +76,11 @@
                                 @foreach($inventories as $inventory)
                                     <tr id="inventory-tr-{{$inventory->id}}">
                                         <td class="text-center">{{$loop->index + 1}}</td>
-                                        <td>{{ $inventory->project->project_name }}</td>
-                                        <td>{{ $inventory->material->name }}</td>
-                                        <td class="text-right">{{ number_format($inventory->quantity, 2) }}</td>
-                                        <td>{{ $inventory->material->unit }}</td>
-                                        <td>{{ $inventory->last_updated }}</td>
+                                        <td>{{ $inventory->project?->project_name ?? '-' }}</td>
+                                        <td>{{ $inventory->material?->name ?? '-' }}</td>
+                                        <td class="text-right">{{ number_format($inventory->quantity ?? 0, 2) }}</td>
+                                        <td>{{ $inventory->material?->unit ?? '-' }}</td>
+                                        <td>{{ $inventory->last_updated_at ? $inventory->last_updated_at->format('Y-m-d') : ($inventory->updated_at ? $inventory->updated_at->format('Y-m-d') : '-') }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 @can('Edit Inventory')

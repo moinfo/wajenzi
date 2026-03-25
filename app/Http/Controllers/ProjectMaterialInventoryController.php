@@ -11,6 +11,45 @@ use Illuminate\Support\Facades\DB;
 class ProjectMaterialInventoryController extends Controller
 {
     /**
+     * Display all material inventory.
+     */
+    public function index(Request $request)
+    {
+        //handle crud operations
+        if($this->handleCrud($request, 'ProjectMaterialInventory')) {
+            return back();
+        }
+
+        $query = ProjectMaterialInventory::with(['project', 'material']);
+
+        if ($request->project_id) {
+            $query->where('project_id', $request->project_id);
+        }
+
+        if ($request->material_id) {
+            $query->where('material_id', $request->material_id);
+        }
+
+        $inventories = $query->get();
+        $projects = Project::orderBy('project_name')->get();
+        
+        $materials = [];
+        try {
+            $materials = \App\Models\ProjectMaterial::orderBy('name')->get();
+        } catch (\Throwable $e) {
+            // Ignore if table doesn't exist
+        }
+
+        $data = [
+            'inventories' => $inventories,
+            'projects' => $projects,
+            'materials' => $materials,
+        ];
+
+        return view('pages.projects.project_material_inventory')->with($data);
+    }
+
+    /**
      * Project selector page — menu entry point.
      */
     public function selectProject()

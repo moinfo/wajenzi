@@ -1,13 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
-
-// WhatsApp contact number (Tanzania format)
-const String _wajenziWhatsApp = '+255123456789'; // Replace with actual number
 
 // Format large numbers to abbreviated form (e.g., 6.9B, 2.8M)
 String _formatNumber(double number) {
@@ -69,18 +66,16 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     final message = _isSwahili
         ? 'Habari! Napenda kupata taarifa zaidi kuhusu mradi: $projectName'
         : 'Hello! I am interested in learning more about the project: $projectName';
+    final opened = await ExternalLauncherService.openWhatsApp(message);
 
-    final encodedMessage = Uri.encodeComponent(message);
-    final whatsappUrl = Uri.parse('https://wa.me/$_wajenziWhatsApp?text=$encodedMessage');
-
-    if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-    } else {
+    if (!opened) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isSwahili ? 'Imeshindwa kufungua WhatsApp' : 'Could not open WhatsApp',
+              _isSwahili
+                  ? 'Imeshindwa kufungua WhatsApp'
+                  : 'Could not open WhatsApp',
             ),
             backgroundColor: Colors.red,
           ),
@@ -90,14 +85,20 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   }
 
   // Dark mode colors
-  Color get _bgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
-  Color get _cardBgColor => _isDarkMode ? const Color(0xFF16213E) : Colors.white;
-  Color get _textPrimaryColor => _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
-  Color get _textSecondaryColor => _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+  Color get _bgColor =>
+      _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+  Color get _cardBgColor =>
+      _isDarkMode ? const Color(0xFF16213E) : Colors.white;
+  Color get _textPrimaryColor =>
+      _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
+  Color get _textSecondaryColor =>
+      _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
 
   List<_Project> get _projects => [
     _Project(
-      name: _isSwahili ? 'Villa ya Kifahari Dar es Salaam' : 'Luxury Villa in Dar es Salaam',
+      name: _isSwahili
+          ? 'Villa ya Kifahari Dar es Salaam'
+          : 'Luxury Villa in Dar es Salaam',
       status: _isSwahili ? 'Inaendelea' : 'In Progress',
       type: _isSwahili ? 'Makazi' : 'Residential',
       category: _isSwahili ? 'Makazi ya Kisasa' : 'Modern Residential',
@@ -109,7 +110,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.10.png',
       isCompleted: false,
       priceTZS: 850000000, // 850M TZS
-      priceUSD: 340000,    // 340K USD
+      priceUSD: 340000, // 340K USD
       likes: 89,
     ),
     _Project(
@@ -125,7 +126,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.20.png',
       isCompleted: false,
       priceTZS: 1200000000, // 1.2B TZS
-      priceUSD: 480000,     // 480K USD
+      priceUSD: 480000, // 480K USD
       likes: 124,
     ),
     _Project(
@@ -141,7 +142,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.28.png',
       isCompleted: true,
       priceTZS: 650000000, // 650M TZS
-      priceUSD: 260000,    // 260K USD
+      priceUSD: 260000, // 260K USD
       likes: 78,
     ),
     _Project(
@@ -157,7 +158,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.31.png',
       isCompleted: false,
       priceTZS: 6900000000, // 6.9B TZS
-      priceUSD: 2764000,    // 2.8M USD
+      priceUSD: 2764000, // 2.8M USD
       likes: 156,
     ),
     _Project(
@@ -173,7 +174,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.40.png',
       isCompleted: true,
       priceTZS: 2500000000, // 2.5B TZS
-      priceUSD: 1000000,    // 1M USD
+      priceUSD: 1000000, // 1M USD
       likes: 203,
     ),
     _Project(
@@ -189,7 +190,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.51.07.png',
       isCompleted: true,
       priceTZS: 3200000000, // 3.2B TZS
-      priceUSD: 1280000,    // 1.3M USD
+      priceUSD: 1280000, // 1.3M USD
       likes: 167,
     ),
     _Project(
@@ -205,14 +206,18 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       image: 'assets/images/construction_01.png',
       isCompleted: true,
       priceTZS: 1800000000, // 1.8B TZS
-      priceUSD: 720000,     // 720K USD
+      priceUSD: 720000, // 720K USD
       likes: 95,
     ),
     _Project(
-      name: _isSwahili ? 'Ukarabati wa Jengo la Urithi' : 'Heritage Building Restoration',
+      name: _isSwahili
+          ? 'Ukarabati wa Jengo la Urithi'
+          : 'Heritage Building Restoration',
       status: _isSwahili ? 'Imekamilika' : 'Completed',
       type: _isSwahili ? 'Ukarabati' : 'Renovation',
-      category: _isSwahili ? 'Ukarabati wa Jengo la Urithi' : 'Heritage Building Restoration',
+      category: _isSwahili
+          ? 'Ukarabati wa Jengo la Urithi'
+          : 'Heritage Building Restoration',
       description: _isSwahili
           ? 'Ukarabati makini wa jengo la karne ya 19 la kikoloni, kuchanganya uhifadhi wa kihistoria na utendaji wa kisasa na viwango vya usalama.'
           : 'Careful restoration of a 19th century colonial-era building, combining historical preservation with modern functionality and safety standards.',
@@ -221,15 +226,19 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       image: 'assets/images/structure_01.jpg',
       isCompleted: true,
       priceTZS: 450000000, // 450M TZS
-      priceUSD: 180000,    // 180K USD
+      priceUSD: 180000, // 180K USD
       likes: 142,
     ),
   ];
 
   List<_FeaturedProject> get _featuredProjects => [
     _FeaturedProject(
-      name: _isSwahili ? 'Makazi ya Kifahari ya Pwani' : 'Oceanfront Luxury Residences',
-      tagline: _isSwahili ? 'Maisha ya Kifahari na Mandhari ya Bahari' : 'Premium Living with Stunning Ocean Views',
+      name: _isSwahili
+          ? 'Makazi ya Kifahari ya Pwani'
+          : 'Oceanfront Luxury Residences',
+      tagline: _isSwahili
+          ? 'Maisha ya Kifahari na Mandhari ya Bahari'
+          : 'Premium Living with Stunning Ocean Views',
       type: _isSwahili ? 'Makazi' : 'Residential',
       location: 'Dar es Salaam',
       size: '8,500 sq.m',
@@ -243,16 +252,27 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           ? 'Mradi huu wa kipekee unajumuisha mbinu za ujenzi za kisasa, vifaa vya hali ya juu, na teknolojia ya nyumba smart kutoa uzoefu wa kuishi usio na kifani unaooana na mazingira ya asili.'
           : 'This signature project incorporates advanced construction techniques, premium materials, and smart home technology to deliver an unparalleled living experience that harmonizes with the natural surroundings.',
       features: [
-        {'icon': Icons.solar_power_rounded, 'label': _isSwahili ? 'Nguvu za Jua' : 'Solar Power'},
-        {'icon': Icons.water_drop_rounded, 'label': _isSwahili ? 'Uvunaji Mvua' : 'Rain Harvest'},
-        {'icon': Icons.park_rounded, 'label': _isSwahili ? 'Bustani' : 'Gardens'},
+        {
+          'icon': Icons.solar_power_rounded,
+          'label': _isSwahili ? 'Nguvu za Jua' : 'Solar Power',
+        },
+        {
+          'icon': Icons.water_drop_rounded,
+          'label': _isSwahili ? 'Uvunaji Mvua' : 'Rain Harvest',
+        },
+        {
+          'icon': Icons.park_rounded,
+          'label': _isSwahili ? 'Bustani' : 'Gardens',
+        },
         {'icon': Icons.pool_rounded, 'label': _isSwahili ? 'Bwawa' : 'Pool'},
       ],
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.10.png',
     ),
     _FeaturedProject(
       name: 'Palm Gardens Residences',
-      tagline: _isSwahili ? 'Uzuri wa Asili katika Moyo wa Jiji' : 'Natural Beauty in the Heart of the City',
+      tagline: _isSwahili
+          ? 'Uzuri wa Asili katika Moyo wa Jiji'
+          : 'Natural Beauty in the Heart of the City',
       type: _isSwahili ? 'Makazi' : 'Residential',
       location: 'Dar es Salaam',
       size: '6,200 sq.m',
@@ -267,8 +287,14 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           : 'Each home features spacious living rooms, modern kitchen, dining area, laundry, guest toilet, study room, saloon and gym.',
       features: [
         {'icon': Icons.fitness_center_rounded, 'label': 'Gym'},
-        {'icon': Icons.local_parking_rounded, 'label': _isSwahili ? 'Maegesho' : 'Parking'},
-        {'icon': Icons.security_rounded, 'label': _isSwahili ? 'Ulinzi 24/7' : '24/7 Security'},
+        {
+          'icon': Icons.local_parking_rounded,
+          'label': _isSwahili ? 'Maegesho' : 'Parking',
+        },
+        {
+          'icon': Icons.security_rounded,
+          'label': _isSwahili ? 'Ulinzi 24/7' : '24/7 Security',
+        },
         {'icon': Icons.wifi_rounded, 'label': 'Smart Home'},
       ],
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.20.png',
@@ -283,26 +309,22 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
-        onDarkModeToggle: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
-        onLanguageToggle: () => ref.read(settingsProvider.notifier).toggleLanguage(),
+        onDarkModeToggle: () =>
+            ref.read(settingsProvider.notifier).toggleDarkMode(),
+        onLanguageToggle: () =>
+            ref.read(settingsProvider.notifier).toggleLanguage(),
         flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
       ),
       body: CustomScrollView(
         slivers: [
           // Hero Section
-          SliverToBoxAdapter(
-            child: _buildHeroSection(),
-          ),
+          SliverToBoxAdapter(child: _buildHeroSection()),
 
           // Featured Project Section
-          SliverToBoxAdapter(
-            child: _buildFeaturedProjectSection(),
-          ),
+          SliverToBoxAdapter(child: _buildFeaturedProjectSection()),
 
           // Projects Section Header
-          SliverToBoxAdapter(
-            child: _buildProjectsSectionHeader(),
-          ),
+          SliverToBoxAdapter(child: _buildProjectsSectionHeader()),
 
           // Projects List
           SliverPadding(
@@ -319,14 +341,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           ),
 
           // Service Delivery Process
-          SliverToBoxAdapter(
-            child: _buildServiceDeliveryProcess(),
-          ),
+          SliverToBoxAdapter(child: _buildServiceDeliveryProcess()),
 
           // Footer spacing
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 120),
-          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
       bottomNavigationBar: CurvedBottomNav(
@@ -346,7 +364,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           child: Image.asset(
             'assets/images/post/Screenshot 2026-01-21 at 14.50.40.png',
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
+            errorBuilder: (_, _, _) => Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
@@ -355,7 +373,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 ),
               ),
               child: const Center(
-                child: Icon(Icons.business_rounded, size: 80, color: Colors.white24),
+                child: Icon(
+                  Icons.business_rounded,
+                  size: 80,
+                  color: Colors.white24,
+                ),
               ),
             ),
           ),
@@ -381,7 +403,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1ABC9C),
                   borderRadius: BorderRadius.circular(20),
@@ -468,10 +493,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             _isSwahili
                 ? 'Angalia mradi wetu unaoonyesha kujitolea kwetu kwa ubora, ubunifu, na mazoea endelevu ya ujenzi.'
                 : 'Explore our flagship project that showcases our commitment to excellence, innovation, and sustainable construction practices.',
-            style: TextStyle(
-              color: _textSecondaryColor,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: _textSecondaryColor, fontSize: 13),
           ),
           const SizedBox(height: 20),
 
@@ -539,20 +561,26 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
                 child: SizedBox(
                   height: 160,
                   width: double.infinity,
                   child: Image.asset(
                     project.image,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           colors: [Color(0xFFD4AF37), Color(0xFFF39C12)],
                         ),
                       ),
-                      child: const Icon(Icons.villa_rounded, size: 60, color: Colors.white38),
+                      child: const Icon(
+                        Icons.villa_rounded,
+                        size: 60,
+                        color: Colors.white38,
+                      ),
                     ),
                   ),
                 ),
@@ -561,7 +589,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 top: 12,
                 left: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFD4AF37),
                     borderRadius: BorderRadius.circular(8),
@@ -612,7 +643,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     children: [
                       _buildDetailChip(Icons.category_rounded, project.type),
                       const SizedBox(width: 8),
-                      _buildDetailChip(Icons.location_on_rounded, project.location),
+                      _buildDetailChip(
+                        Icons.location_on_rounded,
+                        project.location,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -646,44 +680,56 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       Expanded(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: project.features.take(3).map((f) => Column(
-                            children: [
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1ABC9C).withValues(alpha: 0.15),
-                                  shape: BoxShape.circle,
+                          children: project.features
+                              .take(3)
+                              .map(
+                                (f) => Column(
+                                  children: [
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        color: const Color(
+                                          0xFF1ABC9C,
+                                        ).withValues(alpha: 0.15),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        f['icon'] as IconData,
+                                        color: const Color(0xFF1ABC9C),
+                                        size: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      f['label'] as String,
+                                      style: TextStyle(
+                                        color: _textSecondaryColor,
+                                        fontSize: 8,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: Icon(
-                                  f['icon'] as IconData,
-                                  color: const Color(0xFF1ABC9C),
-                                  size: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                f['label'] as String,
-                                style: TextStyle(
-                                  color: _textSecondaryColor,
-                                  fontSize: 8,
-                                ),
-                              ),
-                            ],
-                          )).toList(),
+                              )
+                              .toList(),
                         ),
                       ),
                       // WhatsApp Button
                       GestureDetector(
                         onTap: () => _launchWhatsApp(project.name),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF25D366),
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF25D366).withValues(alpha: 0.4),
+                                color: const Color(
+                                  0xFF25D366,
+                                ).withValues(alpha: 0.4),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -726,7 +772,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: _isDarkMode ? Colors.white.withValues(alpha: 0.1) : Colors.grey.shade100,
+          color: _isDarkMode
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -737,10 +785,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             Flexible(
               child: Text(
                 label,
-                style: TextStyle(
-                  color: _textSecondaryColor,
-                  fontSize: 10,
-                ),
+                style: TextStyle(color: _textSecondaryColor, fontSize: 10),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -829,7 +874,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           children: [
             // Image
             ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(16),
+              ),
               child: SizedBox(
                 width: 120,
                 height: 160,
@@ -839,10 +886,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     Image.asset(
                       project.image,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [statusColor.withValues(alpha: 0.7), statusColor],
+                            colors: [
+                              statusColor.withValues(alpha: 0.7),
+                              statusColor,
+                            ],
                           ),
                         ),
                         child: Icon(
@@ -857,7 +907,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       top: 8,
                       left: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: statusColor,
                           borderRadius: BorderRadius.circular(6),
@@ -894,7 +947,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF1ABC9C),
                                   borderRadius: BorderRadius.circular(4),
@@ -1024,7 +1080,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF25D366).withValues(alpha: 0.4),
+                              color: const Color(
+                                0xFF25D366,
+                              ).withValues(alpha: 0.4),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -1040,7 +1098,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              _isSwahili ? 'Uliza WhatsApp' : 'Inquire WhatsApp',
+                              _isSwahili
+                                  ? 'Uliza WhatsApp'
+                                  : 'Inquire WhatsApp',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
@@ -1104,13 +1164,20 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         child: Image.asset(
                           project.image,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (_, _, _) => Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [statusColor.withValues(alpha: 0.7), statusColor],
+                                colors: [
+                                  statusColor.withValues(alpha: 0.7),
+                                  statusColor,
+                                ],
                               ),
                             ),
-                            child: const Icon(Icons.business_rounded, size: 80, color: Colors.white38),
+                            child: const Icon(
+                              Icons.business_rounded,
+                              size: 80,
+                              color: Colors.white38,
+                            ),
                           ),
                         ),
                       ),
@@ -1121,7 +1188,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor,
                             borderRadius: BorderRadius.circular(8),
@@ -1137,9 +1207,14 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF3498DB).withValues(alpha: 0.15),
+                            color: const Color(
+                              0xFF3498DB,
+                            ).withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -1178,9 +1253,15 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     // Location & Year
                     Row(
                       children: [
-                        _buildInfoItem(Icons.location_on_rounded, project.location),
+                        _buildInfoItem(
+                          Icons.location_on_rounded,
+                          project.location,
+                        ),
                         const SizedBox(width: 16),
-                        _buildInfoItem(Icons.calendar_today_rounded, project.year),
+                        _buildInfoItem(
+                          Icons.calendar_today_rounded,
+                          project.year,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -1199,7 +1280,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+                              color: const Color(
+                                0xFF1ABC9C,
+                              ).withValues(alpha: 0.3),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -1250,7 +1333,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                   Text(
                                     _isSwahili ? 'wanapenda' : 'interested',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.9),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.9,
+                                      ),
                                       fontSize: 12,
                                     ),
                                   ),
@@ -1289,7 +1374,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       },
                       icon: const Icon(Icons.chat_rounded, size: 20),
                       label: Text(
-                        _isSwahili ? 'Uliza kupitia WhatsApp' : 'Inquire via WhatsApp',
+                        _isSwahili
+                            ? 'Uliza kupitia WhatsApp'
+                            : 'Inquire via WhatsApp',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -1303,7 +1390,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 4,
-                        shadowColor: const Color(0xFF25D366).withValues(alpha: 0.5),
+                        shadowColor: const Color(
+                          0xFF25D366,
+                        ).withValues(alpha: 0.5),
                       ),
                     ),
                   ],
@@ -1321,13 +1410,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       children: [
         Icon(icon, size: 18, color: const Color(0xFF1ABC9C)),
         const SizedBox(width: 6),
-        Text(
-          text,
-          style: TextStyle(
-            color: _textSecondaryColor,
-            fontSize: 14,
-          ),
-        ),
+        Text(text, style: TextStyle(color: _textSecondaryColor, fontSize: 14)),
       ],
     );
   }
@@ -1363,8 +1446,16 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             ? 'Tunatekeleza mipango kwa umakini, udhibiti wa ubora, na usimamizi wa ratiba.'
             : 'We implement the plans with attention to detail, quality control, and timeline management.',
         'items': _isSwahili
-            ? ['Uhamasishaji wa Rasilimali', 'Udhibiti wa Ubora', 'Ripoti za Maendeleo']
-            : ['Resource Mobilization', 'Quality Control', 'Progress Reporting'],
+            ? [
+                'Uhamasishaji wa Rasilimali',
+                'Udhibiti wa Ubora',
+                'Ripoti za Maendeleo',
+              ]
+            : [
+                'Resource Mobilization',
+                'Quality Control',
+                'Progress Reporting',
+              ],
         'color': const Color(0xFFF39C12),
       },
       {
@@ -1374,7 +1465,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             ? 'Ukaguzi wa mwisho unahakikisha kila kitu kinakidhi viwango vyetu vya juu kabla ya kukabidhiwa mradi.'
             : 'Final inspections ensure everything meets our high standards before project handover.',
         'items': _isSwahili
-            ? ['Ukaguzi wa Mwisho', 'Mchakato wa Kukabidhiwa', 'Msaada Unaoendelea']
+            ? [
+                'Ukaguzi wa Mwisho',
+                'Mchakato wa Kukabidhiwa',
+                'Msaada Unaoendelea',
+              ]
             : ['Final Inspection', 'Handover Process', 'Ongoing Support'],
         'color': const Color(0xFF1ABC9C),
       },
@@ -1401,7 +1496,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isSwahili ? 'Mchakato Wetu' : 'Our Service Delivery Process',
+                    _isSwahili
+                        ? 'Mchakato Wetu'
+                        : 'Our Service Delivery Process',
                     style: const TextStyle(
                       color: Color(0xFF1ABC9C),
                       fontSize: 12,
@@ -1426,10 +1523,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             _isSwahili
                 ? 'Tunafuata mbinu ya kimfumo kuhakikisha ubora, ufanisi, na kuridhika kwa mteja katika kila hatua.'
                 : 'We follow a systematic approach to ensure quality, efficiency, and client satisfaction at every stage.',
-            style: TextStyle(
-              color: _textSecondaryColor,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: _textSecondaryColor, fontSize: 13),
           ),
           const SizedBox(height: 24),
 
@@ -1500,21 +1594,30 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         Wrap(
                           spacing: 8,
                           runSpacing: 6,
-                          children: (step['items'] as List<String>).map((item) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: (step['color'] as Color).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              item,
-                              style: TextStyle(
-                                color: step['color'] as Color,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          )).toList(),
+                          children: (step['items'] as List<String>)
+                              .map(
+                                (item) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: (step['color'] as Color).withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    item,
+                                    style: TextStyle(
+                                      color: step['color'] as Color,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
                         ),
                       ],
                     ),

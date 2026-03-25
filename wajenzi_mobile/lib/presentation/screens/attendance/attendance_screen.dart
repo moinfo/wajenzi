@@ -6,22 +6,53 @@ import '../../../core/network/api_client.dart';
 import '../../providers/settings_provider.dart';
 
 final _selectedDateProvider = StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
+final _searchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
 final _dailyReportProvider =
-    FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, date) async {
+    FutureProvider.autoDispose.family<Map<String, dynamic>, String>((ref, params) async {
+  final parts = params.split('|');
+  final date = parts.isNotEmpty ? parts[0] : '';
+  final search = parts.length > 1 ? parts[1] : '';
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/attendance/daily-report', queryParameters: {'date': date});
+  final response = await api.get(
+    '/attendance/daily-report',
+    queryParameters: {
+      'date': date,
+      if (search.trim().isNotEmpty) 'search': search,
+    },
+  );
   return response.data['data'] as Map<String, dynamic>;
 });
 
-class AttendanceScreen extends ConsumerWidget {
+class AttendanceScreen extends ConsumerStatefulWidget {
   const AttendanceScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AttendanceScreen> createState() => _AttendanceScreenState();
+}
+
+class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedDate = ref.watch(_selectedDateProvider);
+    final searchQuery = ref.watch(_searchQueryProvider);
     final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
-    final reportAsync = ref.watch(_dailyReportProvider(dateStr));
+    final reportParams = '$dateStr|$searchQuery';
+    final reportAsync = ref.watch(_dailyReportProvider(reportParams));
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
@@ -30,19 +61,20 @@ class AttendanceScreen extends ConsumerWidget {
         title: Text(isSwahili ? 'Mahudhurio' : 'Attendance'),
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.refresh(_dailyReportProvider(dateStr).future),
+        onRefresh: () => ref.refresh(_dailyReportProvider(reportParams).future),
         child: reportAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _ErrorView(
             error: e,
             isSwahili: isSwahili,
-            onRetry: () => ref.invalidate(_dailyReportProvider(dateStr)),
+            onRetry: () => ref.invalidate(_dailyReportProvider(reportParams)),
           ),
           data: (data) => _ReportBody(
             data: data,
             selectedDate: selectedDate,
             isDarkMode: isDarkMode,
             isSwahili: isSwahili,
+            searchController: _searchController,
           ),
         ),
       ),
@@ -55,19 +87,20 @@ class _ReportBody extends ConsumerWidget {
   final DateTime selectedDate;
   final bool isDarkMode;
   final bool isSwahili;
+  final TextEditingController searchController;
 
   const _ReportBody({
     required this.data,
     required this.selectedDate,
     required this.isDarkMode,
     required this.isSwahili,
+    required this.searchController,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = data['stats'] as Map<String, dynamic>? ?? {};
     final staff = (data['staff'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    final searchController = TextEditingController();
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -92,6 +125,12 @@ class _ReportBody extends ConsumerWidget {
           controller: searchController,
           isDarkMode: isDarkMode,
           isSwahili: isSwahili,
+          onChanged: (value) =>
+              ref.read(_searchQueryProvider.notifier).state = value.trim(),
+          onClear: () {
+            searchController.clear();
+            ref.read(_searchQueryProvider.notifier).state = '';
+          },
         ),
         const SizedBox(height: 12),
 
@@ -318,11 +357,15 @@ class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final bool isDarkMode;
   final bool isSwahili;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
 
   const _SearchBar({
     required this.controller,
     required this.isDarkMode,
     required this.isSwahili,
+    required this.onChanged,
+    required this.onClear,
   });
 
   @override
@@ -335,6 +378,7 @@ class _SearchBar extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
+        onChanged: onChanged,
         style: TextStyle(
           fontSize: 13,
           color: isDarkMode ? Colors.white : AppColors.textPrimary,
@@ -350,6 +394,16 @@ class _SearchBar extends StatelessWidget {
             size: 18,
             color: isDarkMode ? Colors.white38 : AppColors.textHint,
           ),
+          suffixIcon: controller.text.isEmpty
+              ? null
+              : IconButton(
+                  onPressed: onClear,
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 18,
+                    color: isDarkMode ? Colors.white38 : AppColors.textHint,
+                  ),
+                ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),

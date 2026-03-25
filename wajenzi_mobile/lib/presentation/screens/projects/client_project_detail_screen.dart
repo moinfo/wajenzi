@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -56,21 +58,62 @@ class _ClientProjectDetailScreenState
     super.dispose();
   }
 
+  String _downloadErrorMessage(Object error, bool isSwahili) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        final message = data['message'];
+        if (message is String && message.isNotEmpty) {
+          return message;
+        }
+      }
+    }
+
+    return isSwahili
+        ? 'Imeshindwa kupakua faili. Jaribu tena.'
+        : 'Could not download the file. Please try again.';
+  }
+
   Future<void> _downloadPdf(String url, String fileName) async {
     final messenger = ScaffoldMessenger.of(context);
     final isSwahili = ref.read(isSwahiliProvider);
 
-    messenger.showSnackBar(SnackBar(
-      content: Text(isSwahili ? 'Inapakua...' : 'Downloading...'),
-      duration: const Duration(seconds: 1),
-    ));
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(isSwahili ? 'Inapakua...' : 'Downloading...'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
 
     try {
       final token = await ref.read(storageServiceProvider).getToken();
+      final dio = Dio();
+      if (kIsWeb) {
+        final response = await dio.get<List<int>>(
+          url,
+          options: Options(
+            responseType: ResponseType.bytes,
+            headers: {'Authorization': 'Bearer $token'},
+          ),
+        );
+        final bytes = response.data;
+        if (bytes == null || bytes.isEmpty) {
+          throw StateError('Empty PDF response');
+        }
+        final uri = Uri.parse(
+          'data:application/pdf;base64,${base64Encode(bytes)}',
+        );
+        final opened = await launchUrl(uri, mode: LaunchMode.platformDefault);
+        if (!opened) {
+          throw StateError('Could not open generated PDF');
+        }
+        return;
+      }
+
       final dir = await getTemporaryDirectory();
       final filePath = '${dir.path}/$fileName';
 
-      await Dio().download(
+      await dio.download(
         url,
         filePath,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -79,19 +122,27 @@ class _ClientProjectDetailScreenState
       final file = File(filePath);
       if (await file.exists()) {
         final uri = Uri.file(filePath);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri);
-        } else {
-          messenger.showSnackBar(SnackBar(
-            content: Text(isSwahili ? 'Imehifadhiwa: $fileName' : 'Saved: $fileName'),
-          ));
+        final opened = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+        if (!opened) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                isSwahili ? 'Imehifadhiwa: $fileName' : 'Saved: $fileName',
+              ),
+            ),
+          );
         }
       }
     } catch (e) {
-      messenger.showSnackBar(SnackBar(
-        content: Text(isSwahili ? 'Imeshindwa kupakua' : 'Download failed'),
-        backgroundColor: AppColors.error,
-      ));
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(_downloadErrorMessage(e, isSwahili)),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -100,9 +151,8 @@ class _ClientProjectDetailScreenState
     final isSwahili = ref.watch(isSwahiliProvider);
     final overviewAsync = ref.watch(projectOverviewProvider(widget.projectId));
 
-    final projectName = overviewAsync.whenOrNull(
-          data: (data) => data.project.projectName,
-        ) ??
+    final projectName =
+        overviewAsync.whenOrNull(data: (data) => data.project.projectName) ??
         widget.projectName;
 
     final status = overviewAsync.whenOrNull(
@@ -135,7 +185,10 @@ class _ClientProjectDetailScreenState
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white70,
-          labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          labelStyle: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           tabAlignment: TabAlignment.start,
           tabs: [
@@ -189,10 +242,14 @@ class _ClientProjectDetailScreenState
 
 String _statusLabel(String? status) {
   if (status == null) return '';
-  return status.replaceAll('_', ' ').split(' ').map((w) {
-    if (w.isEmpty) return w;
-    return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
-  }).join(' ');
+  return status
+      .replaceAll('_', ' ')
+      .split(' ')
+      .map((w) {
+        if (w.isEmpty) return w;
+        return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+      })
+      .join(' ');
 }
 
 Color _statusColor(String? status) {
@@ -235,7 +292,7 @@ Widget _buildStatusBadge(String? status) {
 }
 
 String _formatDate(String? date) {
-  if (date == null) return '—';
+  if (date == null) return '-';
   try {
     return DateFormat('dd MMM yyyy').format(DateTime.parse(date));
   } catch (_) {
@@ -327,7 +384,9 @@ Widget _buildTabError(Object error, bool isSwahili, VoidCallback onRetry) {
       ),
       const SizedBox(height: 8),
       Text(
-        error.toString(),
+        isSwahili
+            ? 'Hatukuweza kupakia sehemu hii kwa sasa.'
+            : 'We could not load this section right now.',
         textAlign: TextAlign.center,
         style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
       ),
@@ -451,8 +510,10 @@ class _OverviewTab extends ConsumerWidget {
                           color: AppColors.success.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.account_balance_wallet_rounded,
-                            color: AppColors.success),
+                        child: const Icon(
+                          Icons.account_balance_wallet_rounded,
+                          color: AppColors.success,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -460,7 +521,9 @@ class _OverviewTab extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isSwahili ? 'Thamani ya Mkataba' : 'Contract Value',
+                              isSwahili
+                                  ? 'Thamani ya Mkataba'
+                                  : 'Contract Value',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: isDarkMode
@@ -543,7 +606,9 @@ class _ProgressSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                          color: isDarkMode
+                              ? Colors.white
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -614,7 +679,10 @@ class _ProgressStat extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
         Text(
@@ -727,7 +795,9 @@ class _ProgressByPhaseSection extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: isDarkMode ? Colors.white70 : AppColors.textPrimary,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : AppColors.textPrimary,
                             ),
                           ),
                         ),
@@ -736,7 +806,9 @@ class _ProgressByPhaseSection extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                            color: isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ],
@@ -754,8 +826,8 @@ class _ProgressByPhaseSection extends StatelessWidget {
                           pct >= 100
                               ? AppColors.success
                               : pct >= 50
-                                  ? AppColors.info
-                                  : AppColors.warning,
+                              ? AppColors.info
+                              : AppColors.warning,
                         ),
                       ),
                     ),
@@ -813,17 +885,17 @@ class _ProjectDetailsCard extends StatelessWidget {
             ],
             _DetailRow(
               label: isSwahili ? 'Aina ya Mradi' : 'Project Type',
-              value: project.projectType ?? '—',
+              value: project.projectType ?? '-',
               isDarkMode: isDarkMode,
             ),
             _DetailRow(
               label: isSwahili ? 'Huduma' : 'Service Type',
-              value: project.serviceType ?? '—',
+              value: project.serviceType ?? '-',
               isDarkMode: isDarkMode,
             ),
             _DetailRow(
               label: isSwahili ? 'Msimamizi' : 'Project Manager',
-              value: project.projectManager ?? '—',
+              value: project.projectManager ?? '-',
               isDarkMode: isDarkMode,
             ),
             _DetailRow(
@@ -853,7 +925,7 @@ class _TimelineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String duration = '—';
+    String duration = '-';
     if (project.startDate != null && project.expectedEndDate != null) {
       try {
         final start = DateTime.parse(project.startDate!);
@@ -942,36 +1014,40 @@ class _PhasesCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            ...phases.map((phase) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              phase.phaseName,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                              ),
+            ...phases.map(
+              (phase) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            phase.phaseName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
                             ),
-                            Text(
-                              '${_formatDate(phase.startDate)} — ${_formatDate(phase.endDate)}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                              ),
+                          ),
+                          Text(
+                            '${_formatDate(phase.startDate)} - ${_formatDate(phase.endDate)}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      _buildStatusBadge(phase.status),
-                    ],
-                  ),
-                )),
+                    ),
+                    _buildStatusBadge(phase.status),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -1011,11 +1087,15 @@ class _BoqTab extends ConsumerWidget {
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
-            children: boqs.map((boq) => _BoqCard(
-              boq: boq,
-              isDarkMode: isDarkMode,
-              isSwahili: isSwahili,
-            )).toList(),
+            children: boqs
+                .map(
+                  (boq) => _BoqCard(
+                    boq: boq,
+                    isDarkMode: isDarkMode,
+                    isSwahili: isSwahili,
+                  ),
+                )
+                .toList(),
           ),
         );
       },
@@ -1056,7 +1136,9 @@ class _BoqCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                          color: isDarkMode
+                              ? Colors.white
+                              : AppColors.textPrimary,
                         ),
                       ),
                       if (boq.type != null)
@@ -1085,20 +1167,21 @@ class _BoqCard extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Sections (recursive)
-            ...boq.sections.map((section) => _BoqSectionWidget(
-              section: section,
-              isDarkMode: isDarkMode,
-              isSwahili: isSwahili,
-              depth: 0,
-            )),
+            ...boq.sections.map(
+              (section) => _BoqSectionWidget(
+                section: section,
+                isDarkMode: isDarkMode,
+                isSwahili: isSwahili,
+                depth: 0,
+              ),
+            ),
 
             // Unsectioned items
             if (boq.items.isNotEmpty) ...[
               const Divider(),
-              ...boq.items.map((item) => _BoqItemRow(
-                item: item,
-                isDarkMode: isDarkMode,
-              )),
+              ...boq.items.map(
+                (item) => _BoqItemRow(item: item, isDarkMode: isDarkMode),
+              ),
             ],
           ],
         ),
@@ -1173,17 +1256,18 @@ class _BoqSectionWidgetState extends State<_BoqSectionWidget> {
           if (_expanded) ...[
             const SizedBox(height: 4),
             // Items in this section
-            ...widget.section.items.map((item) => _BoqItemRow(
-              item: item,
-              isDarkMode: widget.isDarkMode,
-            )),
+            ...widget.section.items.map(
+              (item) => _BoqItemRow(item: item, isDarkMode: widget.isDarkMode),
+            ),
             // Child sections (recursive)
-            ...widget.section.children.map((child) => _BoqSectionWidget(
-              section: child,
-              isDarkMode: widget.isDarkMode,
-              isSwahili: widget.isSwahili,
-              depth: widget.depth + 1,
-            )),
+            ...widget.section.children.map(
+              (child) => _BoqSectionWidget(
+                section: child,
+                isDarkMode: widget.isDarkMode,
+                isSwahili: widget.isSwahili,
+                depth: widget.depth + 1,
+              ),
+            ),
           ],
           const SizedBox(height: 4),
         ],
@@ -1200,8 +1284,9 @@ class _BoqItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final typeColor =
-        item.itemType?.toLowerCase() == 'labour' ? AppColors.info : AppColors.warning;
+    final typeColor = item.itemType?.toLowerCase() == 'labour'
+        ? AppColors.info
+        : AppColors.warning;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: Column(
@@ -1212,7 +1297,10 @@ class _BoqItemRow extends StatelessWidget {
             children: [
               if (item.itemCode != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
                     color: isDarkMode
@@ -1222,12 +1310,15 @@ class _BoqItemRow extends StatelessWidget {
                   ),
                   child: Text(
                     item.itemCode!,
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               Expanded(
                 child: Text(
-                  item.description ?? '—',
+                  item.description ?? '-',
                   style: TextStyle(
                     fontSize: 12,
                     color: isDarkMode ? Colors.white70 : AppColors.textPrimary,
@@ -1236,7 +1327,10 @@ class _BoqItemRow extends StatelessWidget {
               ),
               if (item.itemType != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: typeColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
@@ -1257,12 +1351,21 @@ class _BoqItemRow extends StatelessWidget {
             children: [
               Text(
                 '${NumberFormat('#,##0.##').format(item.quantity)} ${item.unit ?? ""}',
-                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                ),
               ),
-              const Text(' × ', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              const Text(
+                ' × ',
+                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              ),
               Text(
                 _formatCurrency(item.unitPrice),
-                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                ),
               ),
               const Spacer(),
               Text(
@@ -1276,7 +1379,9 @@ class _BoqItemRow extends StatelessWidget {
             ],
           ),
           Divider(
-            color: isDarkMode ? Colors.white12 : Colors.grey.withValues(alpha: 0.2),
+            color: isDarkMode
+                ? Colors.white12
+                : Colors.grey.withValues(alpha: 0.2),
             height: 16,
           ),
         ],
@@ -1330,41 +1435,45 @@ class _ScheduleTab extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...data.phases.map((phase) => _GlassContainer(
-                  isDarkMode: isDarkMode,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                phase.phaseName,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                ...data.phases.map(
+                  (phase) => _GlassContainer(
+                    isDarkMode: isDarkMode,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  phase.phaseName,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                '${_formatDate(phase.startDate)} — ${_formatDate(phase.endDate)}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_formatDate(phase.startDate)} - ${_formatDate(phase.endDate)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        _buildStatusBadge(phase.status),
-                      ],
+                          _buildStatusBadge(phase.status),
+                        ],
+                      ),
                     ),
                   ),
-                )),
+                ),
               ],
 
               // Activities
@@ -1379,80 +1488,97 @@ class _ScheduleTab extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...data.activities.map((a) => _GlassContainer(
-                  isDarkMode: isDarkMode,
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            if (a.activityCode != null) ...[
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(4),
+                ...data.activities.map(
+                  (a) => _GlassContainer(
+                    isDarkMode: isDarkMode,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (a.activityCode != null) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    a.activityCode!,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
                                 ),
+                                const SizedBox(width: 8),
+                              ],
+                              Expanded(
                                 child: Text(
-                                  a.activityCode!,
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
+                                  a.name,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              _buildStatusBadge(a.status),
                             ],
-                            Expanded(
-                              child: Text(
-                                a.name,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 4,
+                            children: [
+                              if (a.phase != null)
+                                _InfoChip(
+                                  icon: Icons.layers_rounded,
+                                  label: a.phase!,
+                                  isDarkMode: isDarkMode,
                                 ),
+                              _InfoChip(
+                                icon: Icons.calendar_today_rounded,
+                                label:
+                                    '${_formatDate(a.startDate)} - ${_formatDate(a.endDate)}',
+                                isDarkMode: isDarkMode,
+                              ),
+                              _InfoChip(
+                                icon: Icons.timer_rounded,
+                                label:
+                                    '${a.durationDays} ${isSwahili ? "siku" : "days"}',
+                                isDarkMode: isDarkMode,
+                              ),
+                            ],
+                          ),
+                          if (a.notes != null && a.notes!.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              a.notes!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDarkMode
+                                    ? Colors.white54
+                                    : AppColors.textSecondary,
                               ),
                             ),
-                            _buildStatusBadge(a.status),
                           ],
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 4,
-                          children: [
-                            if (a.phase != null)
-                              _InfoChip(icon: Icons.layers_rounded, label: a.phase!, isDarkMode: isDarkMode),
-                            _InfoChip(
-                              icon: Icons.calendar_today_rounded,
-                              label: '${_formatDate(a.startDate)} — ${_formatDate(a.endDate)}',
-                              isDarkMode: isDarkMode,
-                            ),
-                            _InfoChip(
-                              icon: Icons.timer_rounded,
-                              label: '${a.durationDays} ${isSwahili ? "siku" : "days"}',
-                              isDarkMode: isDarkMode,
-                            ),
-                          ],
-                        ),
-                        if (a.notes != null && a.notes!.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            a.notes!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
-                            ),
-                          ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                )),
+                ),
               ],
 
               const SizedBox(height: 32),
@@ -1472,10 +1598,7 @@ class _FinancialsTab extends ConsumerWidget {
   final int projectId;
   final Future<void> Function(String url, String fileName) downloadPdf;
 
-  const _FinancialsTab({
-    required this.projectId,
-    required this.downloadPdf,
-  });
+  const _FinancialsTab({required this.projectId, required this.downloadPdf});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1533,7 +1656,9 @@ class _FinancialsTab extends ConsumerWidget {
                   child: _SummaryStatCard(
                     label: isSwahili ? 'Deni' : 'Balance Due',
                     value: _formatCurrencyShort(data.balanceDue),
-                    color: data.balanceDue > 0 ? AppColors.error : AppColors.success,
+                    color: data.balanceDue > 0
+                        ? AppColors.error
+                        : AppColors.success,
                     isDarkMode: isDarkMode,
                   ),
                 ),
@@ -1549,13 +1674,17 @@ class _FinancialsTab extends ConsumerWidget {
                 count: data.billingInvoices.length,
                 isDarkMode: isDarkMode,
                 initiallyExpanded: true,
-                children: data.billingInvoices.map((doc) => _FinancialDocCard(
-                  doc: doc,
-                  projectId: projectId,
-                  isSwahili: isSwahili,
-                  isDarkMode: isDarkMode,
-                  downloadPdf: downloadPdf,
-                )).toList(),
+                children: data.billingInvoices
+                    .map(
+                      (doc) => _FinancialDocCard(
+                        doc: doc,
+                        projectId: projectId,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        downloadPdf: downloadPdf,
+                      ),
+                    )
+                    .toList(),
               ),
             ],
 
@@ -1567,13 +1696,17 @@ class _FinancialsTab extends ConsumerWidget {
                 icon: Icons.request_quote_rounded,
                 count: data.billingQuotes.length,
                 isDarkMode: isDarkMode,
-                children: data.billingQuotes.map((doc) => _FinancialDocCard(
-                  doc: doc,
-                  projectId: projectId,
-                  isSwahili: isSwahili,
-                  isDarkMode: isDarkMode,
-                  downloadPdf: downloadPdf,
-                )).toList(),
+                children: data.billingQuotes
+                    .map(
+                      (doc) => _FinancialDocCard(
+                        doc: doc,
+                        projectId: projectId,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        downloadPdf: downloadPdf,
+                      ),
+                    )
+                    .toList(),
               ),
             ],
 
@@ -1585,13 +1718,17 @@ class _FinancialsTab extends ConsumerWidget {
                 icon: Icons.description_rounded,
                 count: data.billingProformas.length,
                 isDarkMode: isDarkMode,
-                children: data.billingProformas.map((doc) => _FinancialDocCard(
-                  doc: doc,
-                  projectId: projectId,
-                  isSwahili: isSwahili,
-                  isDarkMode: isDarkMode,
-                  downloadPdf: downloadPdf,
-                )).toList(),
+                children: data.billingProformas
+                    .map(
+                      (doc) => _FinancialDocCard(
+                        doc: doc,
+                        projectId: projectId,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        downloadPdf: downloadPdf,
+                      ),
+                    )
+                    .toList(),
               ),
             ],
 
@@ -1712,7 +1849,9 @@ class _FinancialSectionState extends State<_FinancialSection> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: widget.isDarkMode ? Colors.white : AppColors.textPrimary,
+                  color: widget.isDarkMode
+                      ? Colors.white
+                      : AppColors.textPrimary,
                 ),
               ),
               const SizedBox(width: 8),
@@ -1737,16 +1876,15 @@ class _FinancialSectionState extends State<_FinancialSection> {
                 duration: const Duration(milliseconds: 200),
                 child: Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  color: widget.isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                  color: widget.isDarkMode
+                      ? Colors.white54
+                      : AppColors.textSecondary,
                 ),
               ),
             ],
           ),
         ),
-        if (_expanded) ...[
-          const SizedBox(height: 12),
-          ...widget.children,
-        ],
+        if (_expanded) ...[const SizedBox(height: 12), ...widget.children],
       ],
     );
   }
@@ -1782,7 +1920,7 @@ class _FinancialDocCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    doc.documentNumber ?? '—',
+                    doc.documentNumber ?? '-',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -1791,13 +1929,16 @@ class _FinancialDocCard extends StatelessWidget {
                   ),
                 ),
                 _buildStatusBadge(
-                  doc.isOverdue && doc.status != 'paid' ? 'overdue' : doc.status,
+                  doc.isOverdue && doc.status != 'paid'
+                      ? 'overdue'
+                      : doc.status,
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
-                    final url =
-                        '${AppConfig.clientBaseUrl}/projects/$projectId/billing/${doc.id}/pdf';
+                    final url = AppConfig.clientUrl(
+                      '/projects/$projectId/billing/${doc.id}/pdf',
+                    );
                     final name =
                         '${doc.documentType}-${doc.documentNumber ?? doc.id}.pdf';
                     downloadPdf(url, name);
@@ -1808,8 +1949,11 @@ class _FinancialDocCard extends StatelessWidget {
                       color: AppColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.picture_as_pdf_rounded,
-                        size: 18, color: AppColors.error),
+                    child: const Icon(
+                      Icons.picture_as_pdf_rounded,
+                      size: 18,
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
               ],
@@ -1826,7 +1970,8 @@ class _FinancialDocCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   _InfoChip(
                     icon: Icons.event_rounded,
-                    label: '${isSwahili ? "Hadi" : "Due"} ${_formatDate(doc.dueDate)}',
+                    label:
+                        '${isSwahili ? "Hadi" : "Due"} ${_formatDate(doc.dueDate)}',
                     isDarkMode: isDarkMode,
                     isWarning: doc.isOverdue,
                   ),
@@ -1855,7 +2000,9 @@ class _FinancialDocCard extends StatelessWidget {
                     child: _AmountCol(
                       label: isSwahili ? 'Deni' : 'Balance',
                       value: _formatCurrency(doc.balanceAmount),
-                      color: doc.balanceAmount > 0 ? AppColors.error : AppColors.success,
+                      color: doc.balanceAmount > 0
+                          ? AppColors.error
+                          : AppColors.success,
                     ),
                   ),
                 ],
@@ -1891,11 +2038,18 @@ class _AmountCol extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+        ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -1948,8 +2102,11 @@ class _DocumentsTab extends ConsumerWidget {
                     color: AppColors.info.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.insert_drive_file_rounded,
-                      color: AppColors.info, size: 24),
+                  child: const Icon(
+                    Icons.insert_drive_file_rounded,
+                    color: AppColors.info,
+                    size: 24,
+                  ),
                 ),
                 title: Text(
                   d.designType ?? (isSwahili ? 'Nyaraka' : 'Document'),
@@ -1964,7 +2121,10 @@ class _DocumentsTab extends ConsumerWidget {
                     if (d.version != null) ...[
                       Text(
                         'v${d.version}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(width: 8),
                     ],
@@ -1973,11 +2133,28 @@ class _DocumentsTab extends ConsumerWidget {
                 ),
                 trailing: d.fileUrl != null
                     ? IconButton(
-                        icon: const Icon(Icons.download_rounded, color: AppColors.primary),
+                        icon: const Icon(
+                          Icons.download_rounded,
+                          color: AppColors.primary,
+                        ),
                         onPressed: () async {
                           final uri = Uri.parse(d.fileUrl!);
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri, mode: LaunchMode.externalApplication);
+                          final opened = await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                          if (!opened && context.mounted) {
+                            final isSwahili = ref.read(isSwahiliProvider);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  isSwahili
+                                      ? 'Imeshindwa kufungua faili la mradi.'
+                                      : 'Could not open the project file.',
+                                ),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
                           }
                         },
                       )
@@ -2040,39 +2217,51 @@ class _GalleryTabState extends ConsumerState<_GalleryTab> {
                 height: 50,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
                         label: Text(isSwahili ? 'Zote' : 'All'),
                         selected: _selectedPhase == null,
-                        onSelected: (_) => setState(() => _selectedPhase = null),
+                        onSelected: (_) =>
+                            setState(() => _selectedPhase = null),
                         selectedColor: AppColors.primary.withValues(alpha: 0.2),
                         labelStyle: TextStyle(
                           fontSize: 12,
                           color: _selectedPhase == null
                               ? AppColors.primary
-                              : (isDarkMode ? Colors.white70 : AppColors.textSecondary),
+                              : (isDarkMode
+                                    ? Colors.white70
+                                    : AppColors.textSecondary),
                         ),
                       ),
                     ),
-                    ...data.phases.map((phase) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(phase.phaseName),
-                        selected: _selectedPhase == phase.phaseName,
-                        onSelected: (_) =>
-                            setState(() => _selectedPhase = phase.phaseName),
-                        selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                        labelStyle: TextStyle(
-                          fontSize: 12,
-                          color: _selectedPhase == phase.phaseName
-                              ? AppColors.primary
-                              : (isDarkMode ? Colors.white70 : AppColors.textSecondary),
+                    ...data.phases.map(
+                      (phase) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: ChoiceChip(
+                          label: Text(phase.phaseName),
+                          selected: _selectedPhase == phase.phaseName,
+                          onSelected: (_) =>
+                              setState(() => _selectedPhase = phase.phaseName),
+                          selectedColor: AppColors.primary.withValues(
+                            alpha: 0.2,
+                          ),
+                          labelStyle: TextStyle(
+                            fontSize: 12,
+                            color: _selectedPhase == phase.phaseName
+                                ? AppColors.primary
+                                : (isDarkMode
+                                      ? Colors.white70
+                                      : AppColors.textSecondary),
+                          ),
                         ),
                       ),
-                    )),
+                    ),
                   ],
                 ),
               ),
@@ -2099,23 +2288,27 @@ class _GalleryTabState extends ConsumerState<_GalleryTab> {
                           Expanded(
                             child: ClipRRect(
                               borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(16)),
+                                top: Radius.circular(16),
+                              ),
                               child: img.imageUrl != null
                                   ? Image.network(
                                       img.imageUrl!,
                                       width: double.infinity,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, e, s) =>
-                                          const Center(
-                                        child: Icon(Icons.broken_image_rounded,
-                                            size: 40,
-                                            color: AppColors.textHint),
+                                      errorBuilder: (_, e, s) => const Center(
+                                        child: Icon(
+                                          Icons.broken_image_rounded,
+                                          size: 40,
+                                          color: AppColors.textHint,
+                                        ),
                                       ),
                                     )
                                   : const Center(
-                                      child: Icon(Icons.image_rounded,
-                                          size: 40,
-                                          color: AppColors.textHint),
+                                      child: Icon(
+                                        Icons.image_rounded,
+                                        size: 40,
+                                        color: AppColors.textHint,
+                                      ),
                                     ),
                             ),
                           ),
@@ -2161,7 +2354,10 @@ class _GalleryTabState extends ConsumerState<_GalleryTab> {
   }
 
   void _showFullImage(
-      BuildContext context, ProgressImage img, bool isDarkMode) {
+    BuildContext context,
+    ProgressImage img,
+    bool isDarkMode,
+  ) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => Scaffold(
@@ -2204,10 +2400,7 @@ class _ReportsTab extends ConsumerWidget {
   final int projectId;
   final Future<void> Function(String url, String fileName) downloadPdf;
 
-  const _ReportsTab({
-    required this.projectId,
-    required this.downloadPdf,
-  });
+  const _ReportsTab({required this.projectId, required this.downloadPdf});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -2245,11 +2438,13 @@ class _ReportsTab extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...data.dailyReports.map((r) => _DailyReportCard(
-                  report: r,
-                  isDarkMode: isDarkMode,
-                  isSwahili: isSwahili,
-                )),
+                ...data.dailyReports.map(
+                  (r) => _DailyReportCard(
+                    report: r,
+                    isDarkMode: isDarkMode,
+                    isSwahili: isSwahili,
+                  ),
+                ),
               ],
 
               // Site Visits
@@ -2264,13 +2459,15 @@ class _ReportsTab extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...data.siteVisits.map((v) => _SiteVisitCard(
-                  visit: v,
-                  projectId: projectId,
-                  isDarkMode: isDarkMode,
-                  isSwahili: isSwahili,
-                  downloadPdf: downloadPdf,
-                )),
+                ...data.siteVisits.map(
+                  (v) => _SiteVisitCard(
+                    visit: v,
+                    projectId: projectId,
+                    isDarkMode: isDarkMode,
+                    isSwahili: isSwahili,
+                    downloadPdf: downloadPdf,
+                  ),
+                ),
               ],
 
               const SizedBox(height: 32),
@@ -2320,8 +2517,11 @@ class _DailyReportCardState extends State<_DailyReportCard> {
                       color: AppColors.info.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.description_rounded,
-                        color: AppColors.info, size: 20),
+                    child: const Icon(
+                      Icons.description_rounded,
+                      color: AppColors.info,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -2333,7 +2533,9 @@ class _DailyReportCardState extends State<_DailyReportCard> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: widget.isDarkMode ? Colors.white : AppColors.textPrimary,
+                            color: widget.isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                         if (r.supervisor != null)
@@ -2360,8 +2562,10 @@ class _DailyReportCardState extends State<_DailyReportCard> {
                   AnimatedRotation(
                     turns: _expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary),
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -2376,7 +2580,9 @@ class _DailyReportCardState extends State<_DailyReportCard> {
                   const Divider(),
                   if (r.workCompleted != null)
                     _ReportField(
-                      label: widget.isSwahili ? 'Kazi Iliyofanywa' : 'Work Completed',
+                      label: widget.isSwahili
+                          ? 'Kazi Iliyofanywa'
+                          : 'Work Completed',
                       value: r.workCompleted!,
                       isDarkMode: widget.isDarkMode,
                     ),
@@ -2482,11 +2688,14 @@ class _SiteVisitCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        visit.documentNumber ?? (isSwahili ? 'Ziara' : 'Site Visit'),
+                        visit.documentNumber ??
+                            (isSwahili ? 'Ziara' : 'Site Visit'),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                          color: isDarkMode
+                              ? Colors.white
+                              : AppColors.textPrimary,
                         ),
                       ),
                       Text(
@@ -2503,10 +2712,13 @@ class _SiteVisitCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
-                    final url =
-                        '${AppConfig.clientBaseUrl}/projects/$projectId/site-visits/${visit.id}/pdf';
+                    final url = AppConfig.clientUrl(
+                      '/projects/$projectId/site-visits/${visit.id}/pdf',
+                    );
                     downloadPdf(
-                        url, 'site-visit-${visit.documentNumber ?? visit.id}.pdf');
+                      url,
+                      'site-visit-${visit.documentNumber ?? visit.id}.pdf',
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.all(6),
@@ -2514,8 +2726,11 @@ class _SiteVisitCard extends StatelessWidget {
                       color: AppColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.picture_as_pdf_rounded,
-                        size: 18, color: AppColors.error),
+                    child: const Icon(
+                      Icons.picture_as_pdf_rounded,
+                      size: 18,
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
               ],
