@@ -22,7 +22,7 @@ class QuotationController extends Controller
     public function index(Request $request)
     {
         $quotations = BillingDocument::with(['client', 'creator'])
-            ->where('document_type', 'quote')
+            ->whereIn('document_type', ['quote', 'quotation'])
             ->when($request->status, function ($query, $status) {
                 return $query->where('status', $status);
             })

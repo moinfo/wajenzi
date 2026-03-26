@@ -36,8 +36,9 @@ class SiteSupervisorAssignmentController extends Controller
         $assignments = $query->orderBy('assigned_from', 'desc')->paginate(15);
         
         // Get sites without active supervisors
+        $assignedSiteIds = SiteSupervisorAssignment::where('is_active', true)->pluck('site_id');
         $unassignedSites = Site::active()
-            ->whereDoesntHave('currentSupervisorAssignment')
+            ->whereNotIn('id', $assignedSiteIds)
             ->get();
 
         $sites = Site::active()->get();
@@ -49,8 +50,9 @@ class SiteSupervisorAssignmentController extends Controller
     public function create()
     {
         // Get only sites without active supervisors
+        $assignedSiteIds = SiteSupervisorAssignment::where('is_active', true)->pluck('site_id');
         $availableSites = Site::active()
-            ->whereDoesntHave('currentSupervisorAssignment')
+            ->whereNotIn('id', $assignedSiteIds)
             ->get();
 
         $supervisors = $this->getSupervisors();

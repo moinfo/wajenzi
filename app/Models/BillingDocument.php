@@ -234,7 +234,7 @@ class BillingDocument extends Model
 
     public function convertToProforma()
     {
-        if ($this->document_type !== 'quote') {
+        if (!in_array($this->document_type, ['quote', 'quotation'])) {
             throw new \Exception('Only quotes can be converted to proforma invoices.');
         }
         
@@ -265,7 +265,7 @@ class BillingDocument extends Model
 
     public function convertToInvoice()
     {
-        if (!in_array($this->document_type, ['quote', 'proforma'])) {
+        if (!in_array($this->document_type, ['quote', 'quotation', 'proforma'])) {
             throw new \Exception('Only quotes and proforma invoices can be converted to invoices.');
         }
         

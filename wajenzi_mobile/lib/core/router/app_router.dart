@@ -32,6 +32,8 @@ import '../../presentation/screens/projects/leads_screen.dart';
 import '../../presentation/screens/projects/project_reports_screen.dart';
 import '../../presentation/screens/projects/project_schedules_screen.dart';
 import '../../presentation/screens/projects/project_types_screen.dart';
+import '../../presentation/screens/projects/sites_screen.dart';
+import '../../presentation/screens/projects/site_supervisor_assignments_screen.dart';
 import '../../presentation/screens/projects/boq_list_screen.dart';
 import '../../presentation/screens/materials/project_materials_screen.dart';
 import '../../presentation/screens/materials/material_inventory_screen.dart';
@@ -39,6 +41,12 @@ import '../../presentation/screens/sales/sales_screen.dart';
 import '../../presentation/screens/purchases/purchases_screen.dart';
 import '../../presentation/screens/attendance/site_visits_screen.dart';
 import '../../presentation/screens/billing/staff_billing_screen.dart';
+import '../../presentation/screens/billing/billing_quotations_screen.dart';
+import '../../presentation/screens/billing/billing_proformas_screen.dart';
+import '../../presentation/screens/billing/billing_invoices_screen.dart';
+import '../../presentation/screens/billing/billing_payments_screen.dart';
+import '../../presentation/screens/billing/billing_emails_screen.dart';
+import '../../presentation/screens/billing/billing_products_screen.dart';
 import '../../presentation/screens/procurement/procurement_screen.dart';
 import '../../presentation/screens/employee_profile/employee_profile_screen.dart';
 import '../../presentation/screens/reports/site_daily_report_list_screen.dart';
@@ -46,13 +54,41 @@ import '../../presentation/screens/reports/project_daily_report_list_screen.dart
 import '../../presentation/screens/reports/sales_daily_report_list_screen.dart';
 import '../../presentation/screens/vat/vat_sales_screen.dart';
 import '../../presentation/screens/vat/vat_purchases_screen.dart';
-import '../../presentation/screens/vat/vat_auto_purchases_screen.dart';
 import '../../presentation/screens/vat/vat_payments_screen.dart';
 import '../../presentation/screens/accounting/accounting_screen.dart';
+import '../../presentation/screens/accounting/account_types_screen.dart';
+import '../../presentation/screens/accounting/chart_account_usages_screen.dart';
+import '../../presentation/screens/accounting/charts_of_accounts_screen.dart';
+import '../../presentation/screens/accounting/imprest_requests_screen.dart';
+import '../../presentation/screens/accounting/exchange_rates_screen.dart';
+import '../../presentation/screens/accounting/statutory_payments_screen.dart';
+import '../../presentation/screens/accounting/statutory_category_report_screen.dart';
+import '../../presentation/screens/accounting/statutory_payment_report_screen.dart';
+import '../../presentation/screens/accounting/statutory_schedules_report_screen.dart';
+import '../../presentation/screens/accounting/chart_account_variables_screen.dart';
+import '../../presentation/screens/accounting/building_types_screen.dart';
+import '../../presentation/screens/accounting/boq_item_categories_screen.dart';
+import '../../presentation/screens/accounting/boq_items_screen.dart';
+import '../../presentation/screens/accounting/boq_templates_screen.dart';
+import '../../presentation/screens/accounting/construction_stages_screen.dart';
+import '../../presentation/screens/accounting/settings_activities_screen.dart';
+import '../../presentation/screens/accounting/settings_sub_activities_screen.dart';
+import '../../presentation/screens/accounting/petty_cash_refill_requests_screen.dart';
 import '../../presentation/screens/staff/staff_bank_details_screen.dart';
 import '../../presentation/screens/staff/adjustments_screen.dart';
 import '../../presentation/screens/staff/payroll_screen.dart';
+import '../../presentation/screens/staff/payroll_administration_screen.dart';
+import '../../presentation/screens/staff/allowances_screen.dart';
+import '../../presentation/screens/staff/advance_salaries_screen.dart';
+import '../../presentation/screens/staff/attendance_types_screen.dart';
+import '../../presentation/screens/staff/crdb_bank_file_screen.dart';
+import '../../presentation/screens/staff/staff_salaries_screen.dart';
+import '../../presentation/screens/staff/staff_loans_screen.dart';
+import '../../presentation/screens/staff/deductions_screen.dart';
+import '../../presentation/screens/staff/deduction_subscriptions_screen.dart';
+import '../../presentation/screens/staff/leave_managements_screen.dart';
 import '../../presentation/screens/staff/leave_requests_screen.dart';
+import '../../presentation/screens/staff/leave_types_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
@@ -256,6 +292,36 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const StaffBillingScreen(),
           ),
           GoRoute(
+            path: '/billing-quotations',
+            name: 'billing-quotations',
+            builder: (context, state) => const BillingQuotationsScreen(),
+          ),
+          GoRoute(
+            path: '/billing-proformas',
+            name: 'billing-proformas',
+            builder: (context, state) => const BillingProformasScreen(),
+          ),
+          GoRoute(
+            path: '/billing-invoices',
+            name: 'billing-invoices',
+            builder: (context, state) => const BillingInvoicesScreen(),
+          ),
+          GoRoute(
+            path: '/billing-payments',
+            name: 'billing-payments',
+            builder: (context, state) => const BillingPaymentsScreen(),
+          ),
+          GoRoute(
+            path: '/billing-emails',
+            name: 'billing-emails',
+            builder: (context, state) => const BillingEmailsScreen(),
+          ),
+          GoRoute(
+            path: '/billing-products',
+            name: 'billing-products',
+            builder: (context, state) => const BillingProductsScreen(),
+          ),
+          GoRoute(
             path: '/procurement',
             name: 'procurement',
             builder: (context, state) => const ProcurementScreen(),
@@ -279,6 +345,17 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/project-daily-reports',
             name: 'project-daily-reports',
             builder: (context, state) => const ProjectDailyReportListScreen(),
+          ),
+          GoRoute(
+            path: '/sites',
+            name: 'sites',
+            builder: (context, state) => const SitesScreen(),
+          ),
+          GoRoute(
+            path: '/site-supervisor-assignments',
+            name: 'site-supervisor-assignments',
+            builder: (context, state) =>
+                const SiteSupervisorAssignmentsScreen(),
           ),
           GoRoute(
             path: '/expenses',
@@ -323,7 +400,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/vat-auto-purchases',
             name: 'vat-auto-purchases',
-            builder: (context, state) => const VatAutoPurchasesScreen(),
+            builder: (context, state) => const VatPurchasesScreen(),
           ),
           GoRoute(
             path: '/vat-payments',
@@ -341,9 +418,54 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const AdjustmentsScreen(),
           ),
           GoRoute(
+            path: '/attendance-types',
+            name: 'attendance-types',
+            builder: (context, state) => const AttendanceTypesScreen(),
+          ),
+          GoRoute(
             path: '/payroll',
             name: 'payroll',
             builder: (context, state) => const PayrollScreen(),
+          ),
+          GoRoute(
+            path: '/payroll-crdb-bank-file',
+            name: 'payroll-crdb-bank-file',
+            builder: (context, state) => const CrdbBankFileScreen(),
+          ),
+          GoRoute(
+            path: '/payroll-administration',
+            name: 'payroll-administration',
+            builder: (context, state) => const PayrollAdministrationScreen(),
+          ),
+          GoRoute(
+            path: '/allowances',
+            name: 'allowances',
+            builder: (context, state) => const AllowancesScreen(),
+          ),
+          GoRoute(
+            path: '/advance-salaries',
+            name: 'advance-salaries',
+            builder: (context, state) => const AdvanceSalariesScreen(),
+          ),
+          GoRoute(
+            path: '/staff-salaries',
+            name: 'staff-salaries',
+            builder: (context, state) => const StaffSalariesScreen(),
+          ),
+          GoRoute(
+            path: '/staff-loans',
+            name: 'staff-loans',
+            builder: (context, state) => const StaffLoansScreen(),
+          ),
+          GoRoute(
+            path: '/deductions',
+            name: 'deductions',
+            builder: (context, state) => const DeductionsScreen(),
+          ),
+          GoRoute(
+            path: '/deduction-subscriptions',
+            name: 'deduction-subscriptions',
+            builder: (context, state) => const DeductionSubscriptionsScreen(),
           ),
           GoRoute(
             path: '/leave-requests',
@@ -351,9 +473,114 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const LeaveRequestsScreen(),
           ),
           GoRoute(
+            path: '/leave-managements',
+            name: 'leave-managements',
+            builder: (context, state) => const LeaveManagementsScreen(),
+          ),
+          GoRoute(
+            path: '/leave-types',
+            name: 'leave-types',
+            builder: (context, state) => const LeaveTypesScreen(),
+          ),
+          GoRoute(
+            path: '/leave-dashboard',
+            name: 'leave-dashboard',
+            builder: (context, state) => const LeaveRequestsScreen(),
+          ),
+          GoRoute(
             path: '/accounting',
             name: 'accounting',
             builder: (context, state) => const AccountingScreen(),
+          ),
+          GoRoute(
+            path: '/charts-of-accounts',
+            name: 'charts-of-accounts',
+            builder: (context, state) => const ChartsOfAccountsScreen(),
+          ),
+          GoRoute(
+            path: '/account-types',
+            name: 'account-types',
+            builder: (context, state) => const AccountTypesScreen(),
+          ),
+          GoRoute(
+            path: '/chart-account-usages',
+            name: 'chart-account-usages',
+            builder: (context, state) => const ChartAccountUsagesScreen(),
+          ),
+          GoRoute(
+            path: '/petty-cash-refill-requests',
+            name: 'petty-cash-refill-requests',
+            builder: (context, state) => const PettyCashRefillRequestsScreen(),
+          ),
+          GoRoute(
+            path: '/imprest-requests',
+            name: 'imprest-requests',
+            builder: (context, state) => const ImprestRequestsScreen(),
+          ),
+          GoRoute(
+            path: '/exchange-rates',
+            name: 'exchange-rates',
+            builder: (context, state) => const ExchangeRatesScreen(),
+          ),
+          GoRoute(
+            path: '/statutory-payments',
+            name: 'statutory-payments',
+            builder: (context, state) => const StatutoryPaymentsScreen(),
+          ),
+          GoRoute(
+            path: '/reports-statutory-category-report',
+            name: 'reports-statutory-category-report',
+            builder: (context, state) => const StatutoryCategoryReportScreen(),
+          ),
+          GoRoute(
+            path: '/reports-statutory-payment-report',
+            name: 'reports-statutory-payment-report',
+            builder: (context, state) => const StatutoryPaymentReportScreen(),
+          ),
+          GoRoute(
+            path: '/reports-statutory-schedules-report',
+            name: 'reports-statutory-schedules-report',
+            builder: (context, state) => const StatutorySchedulesReportScreen(),
+          ),
+          GoRoute(
+            path: '/chart-account-variables',
+            name: 'chart-account-variables',
+            builder: (context, state) => const ChartAccountVariablesScreen(),
+          ),
+          GoRoute(
+            path: '/building-types',
+            name: 'building-types',
+            builder: (context, state) => const BuildingTypesScreen(),
+          ),
+          GoRoute(
+            path: '/boq-item-categories',
+            name: 'boq-item-categories',
+            builder: (context, state) => const BoqItemCategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/boq-items',
+            name: 'boq-items',
+            builder: (context, state) => const BoqItemsScreen(),
+          ),
+          GoRoute(
+            path: '/boq-templates',
+            name: 'boq-templates',
+            builder: (context, state) => const BoqTemplatesScreen(),
+          ),
+          GoRoute(
+            path: '/construction-stages',
+            name: 'construction-stages',
+            builder: (context, state) => const ConstructionStagesScreen(),
+          ),
+          GoRoute(
+            path: '/settings-activities',
+            name: 'settings-activities',
+            builder: (context, state) => const SettingsActivitiesScreen(),
+          ),
+          GoRoute(
+            path: '/settings-sub-activities',
+            name: 'settings-sub-activities',
+            builder: (context, state) => const SettingsSubActivitiesScreen(),
           ),
         ],
       ),
@@ -385,7 +612,14 @@ class MainScaffold extends ConsumerWidget {
     }
 
     if (location.startsWith('/staff-billing') ||
+        location.startsWith('/billing-quotations') ||
+        location.startsWith('/billing-proformas') ||
+        location.startsWith('/billing-invoices') ||
+        location.startsWith('/billing-payments') ||
+        location.startsWith('/billing-products') ||
+        location.startsWith('/billing-emails') ||
         location.startsWith('/payroll') ||
+        location.startsWith('/statutory-payments') ||
         location.startsWith('/accounting') ||
         location.startsWith('/vat-')) {
       return 1;
@@ -809,13 +1043,33 @@ String? _mapWebRoute(String webRoute) {
     'quotation_comparisons': '/procurement',
     'collection': '/staff-billing',
     'collections': '/staff-billing',
+    'billing': '/staff-billing',
+    'billing.index': '/staff-billing',
     'billing.dashboard': '/staff-billing',
-    'billing.quotations.index': '/staff-billing',
-    'billing.proformas.index': '/staff-billing',
-    'billing.invoices.index': '/staff-billing',
-    'billing.payments.index': '/staff-billing',
-    'billing.emails.index': '/staff-billing',
-    'billing.products.index': '/staff-billing',
+    'billing.quotations.index': '/billing-quotations',
+    'billing_quotations': '/billing-quotations',
+    'billing-quotations': '/billing-quotations',
+    'billing/quotations': '/billing-quotations',
+    'billing.proformas.index': '/billing-proformas',
+    'billing_proformas': '/billing-proformas',
+    'billing-proformas': '/billing-proformas',
+    'billing/proformas': '/billing-proformas',
+    'billing.invoices.index': '/billing-invoices',
+    'billing_invoices': '/billing-invoices',
+    'billing-invoices': '/billing-invoices',
+    'billing/invoices': '/billing-invoices',
+    'billing.payments.index': '/billing-payments',
+    'billing_payments': '/billing-payments',
+    'billing-payments': '/billing-payments',
+    'billing/payments': '/billing-payments',
+    'billing.emails.index': '/billing-emails',
+    'billing_emails': '/billing-emails',
+    'billing-emails': '/billing-emails',
+    'billing/emails': '/billing-emails',
+    'billing.products.index': '/billing-products',
+    'billing_products': '/billing-products',
+    'billing-products': '/billing-products',
+    'billing/products': '/billing-products',
     'billing.clients.index': '/staff-billing',
     'transaction_movement': '/accounting',
     'transaction_movements': '/accounting',
@@ -836,8 +1090,10 @@ String? _mapWebRoute(String webRoute) {
     'transfer_reports': '/accounting',
     'financial_charges': '/accounting',
     'provision_tax': '/accounting',
-    'statutory_payments': '/accounting',
-    'hr_settings_statutory_payments': '/accounting',
+    'statutory_payments': '/statutory-payments',
+    'statutory-payments': '/statutory-payments',
+    'settings/statutory_payments': '/statutory-payments',
+    'hr_settings_statutory_payments': '/statutory-payments',
     'auto_purchases': '/vat-auto-purchases',
     'vat_payment': '/vat-payments',
     'individual_vat_payment': '/vat-payments',
@@ -870,9 +1126,12 @@ String? _mapWebRoute(String webRoute) {
     'reports_total_credit_suppliers_report': '/accounting',
     'reports_total_current_credit_suppliers_report': '/accounting',
     'reports_provision_report': '/accounting',
-    'reports_statutory_payment_report': '/accounting',
-    'reports_statutory_category_report': '/accounting',
-    'reports_statutory_schedules_report': '/accounting',
+    'reports_statutory_payment_report': '/reports-statutory-payment-report',
+    'reports/statutory_payment_report': '/reports-statutory-payment-report',
+    'reports_statutory_category_report': '/reports-statutory-category-report',
+    'reports/statutory_category_report': '/reports-statutory-category-report',
+    'reports_statutory_schedules_report': '/reports-statutory-schedules-report',
+    'reports/statutory_schedules_report': '/reports-statutory-schedules-report',
     'reports_deduction_report': '/employee-profile',
     'reports_allowance_subscriptions_report': '/employee-profile',
     'reports_annually_sales_summary_report': '/vat-sales',
@@ -912,9 +1171,10 @@ String? _mapWebRoute(String webRoute) {
     'project_materials': '/project-materials',
     'project_material_inventory': '/material-inventory',
     'project_site_visits': '/site-visits',
-    'sites.index': '/attendance',
-    'sites.create': '/attendance',
-    'site-supervisor-assignments.index': '/attendance',
+    'sites.index': '/sites',
+    'sites.create': '/sites',
+    'site-supervisor-assignments.index': '/site-supervisor-assignments',
+    'site-supervisor-assignments.create': '/site-supervisor-assignments',
     'site-daily-reports.index': '/site-daily-reports',
     'site-daily-reports.create': '/site-daily-reports',
     'site-daily-reports.my-reports': '/site-daily-reports',
@@ -923,18 +1183,99 @@ String? _mapWebRoute(String webRoute) {
     'project-schedules': '/project-schedules',
     'project-schedules.index': '/project-schedules',
     'leaves_leave_request': '/leave-requests',
+    'leaves/leave_request': '/leave-requests',
     'leave_request': '/leave-requests',
-    'leave_dashboard': '/dashboard',
+    'leave_managements': '/leave-managements',
+    'leave-managements': '/leave-managements',
+    'leaves_leave_managements': '/leave-managements',
+    'leaves/leave_managements': '/leave-managements',
+    'leave_types': '/leave-types',
+    'leave-types': '/leave-types',
+    'settings_leave_types': '/leave-types',
+    'hr_settings_leave_types': '/leave-types',
+    'settings/leave_types': '/leave-types',
+    'leave_dashboard': '/leave-dashboard',
+    'leave-dashboard': '/leave-dashboard',
+    'leaves_leave_dashboard': '/leave-dashboard',
+    'leaves/leave_dashboard': '/leave-dashboard',
     'salary_slips': '/payroll',
+    'salary-slips': '/payroll',
+    'payroll_salary_slips': '/payroll',
+    'payroll/salary_slips': '/payroll',
+    'employee_salary_slip': '/payroll',
+    'payroll_employee_salary_slip': '/payroll',
+    'crdb_bank_file': '/payroll-crdb-bank-file',
+    'crdb-bank-file': '/payroll-crdb-bank-file',
+    'payroll_crdb_bank_file': '/payroll-crdb-bank-file',
+    'payroll/crdb_bank_file': '/payroll-crdb-bank-file',
+    'attendance_types': '/attendance-types',
+    'attendance-types': '/attendance-types',
+    'settings_attendance_types': '/attendance-types',
+    'hr_settings_attendance_types': '/attendance-types',
+    'settings/attendance_types': '/attendance-types',
     'approvals': '/approvals',
     'hr_settings_approvals': '/approvals',
     'payroll': '/payroll',
+    'payroll_administration': '/payroll-administration',
+    'payroll-administration': '/payroll-administration',
+    'allowances': '/allowances',
+    'settings_allowances': '/allowances',
+    'hr_settings_allowances': '/allowances',
+    'deductions': '/deductions',
+    'settings_deductions': '/deductions',
+    'hr_settings_deductions': '/deductions',
+    'deduction_subscriptions': '/deduction-subscriptions',
+    'deduction-subscriptions': '/deduction-subscriptions',
+    'settings_deduction_subscriptions': '/deduction-subscriptions',
+    'hr_settings_deduction_subscriptions': '/deduction-subscriptions',
     'payroll_staff_bank_details': '/staff-bank-details',
     'staff_bank_details': '/staff-bank-details',
     'adjustment': '/adjustments',
     'adjustments': '/adjustments',
     'expenses': '/expenses',
     'accounting': '/accounting',
+    'account_types': '/account-types',
+    'account-types': '/account-types',
+    'finance_financial_settings_account_types': '/account-types',
+    'charts_of_accounts': '/charts-of-accounts',
+    'charts-of-accounts': '/charts-of-accounts',
+    'finance_financial_settings_charts_of_accounts': '/charts-of-accounts',
+    'charts_of_account_usages': '/chart-account-usages',
+    'charts-of-account-usages': '/chart-account-usages',
+    'finance_financial_settings_charts_of_account_usages': '/chart-account-usages',
+    'exchange_rates': '/exchange-rates',
+    'exchange-rates': '/exchange-rates',
+    'finance_financial_settings_exchange_rates': '/exchange-rates',
+    'chart_of_account_variables': '/chart-account-variables',
+    'chart-account-variables': '/chart-account-variables',
+    'finance_financial_settings_chart_of_account_variables': '/chart-account-variables',
+    'building_types': '/building-types',
+    'building-types': '/building-types',
+    'settings_building_types': '/building-types',
+    'hr_settings_building_types': '/building-types',
+    'boq_item_categories': '/boq-item-categories',
+    'boq-item-categories': '/boq-item-categories',
+    'settings_boq_item_categories': '/boq-item-categories',
+    'hr_settings_boq_item_categories': '/boq-item-categories',
+    'boq_items': '/boq-items',
+    'boq-items': '/boq-items',
+    'settings_boq_items': '/boq-items',
+    'hr_settings_boq_items': '/boq-items',
+    'boq_templates': '/boq-templates',
+    'boq-templates': '/boq-templates',
+    'settings_boq_templates': '/boq-templates',
+    'hr_settings_boq_templates': '/boq-templates',
+    'construction_stages': '/construction-stages',
+    'construction-stages': '/construction-stages',
+    'settings_construction_stages': '/construction-stages',
+    'hr_settings_construction_stages': '/construction-stages',
+    'activities': '/settings-activities',
+    'settings_activities': '/settings-activities',
+    'hr_settings_activities': '/settings-activities',
+    'sub_activities': '/settings-sub-activities',
+    'sub-activities': '/settings-sub-activities',
+    'settings_sub_activities': '/settings-sub-activities',
+    'hr_settings_sub_activities': '/settings-sub-activities',
     'procurement_dashboard': '/procurement',
     'site_daily_reports_my_reports': '/site-daily-reports',
     'site_daily_reports': '/site-daily-reports',
@@ -974,12 +1315,29 @@ String? _mapWebRoute(String webRoute) {
     'site_management': '/attendance',
     'site_supervisor_assignments': '/attendance',
     'allowance_subscriptions': '/employee-profile',
-    'advance_salaries': '/employee-profile',
-    'staff_loans': '/employee-profile',
-    'petty_cash_refill_requests': '/expenses',
-    'petty_cash_refill_request': '/expenses',
-    'imprest_requests': '/expenses',
-    'imprest_request': '/expenses',
+    'staff_salaries': '/staff-salaries',
+    'staff-salaries': '/staff-salaries',
+    'settings_staff_salaries': '/staff-salaries',
+    'hr_settings_staff_salary': '/staff-salaries',
+    'advance_salaries': '/advance-salaries',
+    'advance-salaries': '/advance-salaries',
+    'settings_advance_salaries': '/advance-salaries',
+    'hr_settings_advance_salary': '/advance-salaries',
+    'advance_salary': '/advance-salaries',
+    'settings_advance_salaries_6': '/advance-salaries',
+    'staff_loans': '/staff-loans',
+    'staff-loans': '/staff-loans',
+    'settings_staff_loans': '/staff-loans',
+    'hr_settings_staff_loan': '/staff-loans',
+    'staff_loan': '/staff-loans',
+    'petty_cash_refill_requests': '/petty-cash-refill-requests',
+    'petty_cash_refill_request': '/petty-cash-refill-requests',
+    'petty-cash-refill-requests': '/petty-cash-refill-requests',
+    'finance_petty_cash_management_petty_cash_refill_requests': '/petty-cash-refill-requests',
+    'imprest_requests': '/imprest-requests',
+    'imprest_request': '/imprest-requests',
+    'imprest-requests': '/imprest-requests',
+    'finance_imprest_management_imprest_requests': '/imprest-requests',
     'statutory_payment': '/accounting',
     'hr_settings_statutory_payment': '/accounting',
     'client_sources': '/settings',
@@ -1021,6 +1379,52 @@ String? _resolveWebRoute(String webRoute) {
   if (normalizedDirect != null) return normalizedDirect;
 
   if (route == '#' || route.isEmpty) return '/dashboard';
+  if (route.contains('billing/quotation') ||
+      route.contains('billing_quotation') ||
+      route.contains('billing-quotation')) {
+    return '/billing-quotations';
+  }
+  if (route.contains('billing/proforma') ||
+      route.contains('billing_proforma') ||
+      route.contains('billing-proforma')) {
+    return '/billing-proformas';
+  }
+  if (route.contains('billing/invoice') ||
+      route.contains('billing_invoice') ||
+      route.contains('billing-invoice')) {
+    return '/billing-invoices';
+  }
+  if (route.contains('billing/payment') ||
+      route.contains('billing_payment') ||
+      route.contains('billing-payment')) {
+    return '/billing-payments';
+  }
+  if (route.contains('billing/product') ||
+      route.contains('billing_product') ||
+      route.contains('billing-product')) {
+    return '/billing-products';
+  }
+  if (route.contains('billing/email') ||
+      route.contains('billing_email') ||
+      route.contains('billing-email')) {
+    return '/billing-emails';
+  }
+  if (route.contains('statutory_category_report') ||
+      route.contains('statutory-category-report')) {
+    return '/reports-statutory-category-report';
+  }
+  if (route.contains('statutory_payment_report') ||
+      route.contains('statutory-payment-report')) {
+    return '/reports-statutory-payment-report';
+  }
+  if (route.contains('statutory_schedules_report') ||
+      route.contains('statutory-schedules-report')) {
+    return '/reports-statutory-schedules-report';
+  }
+  if (route.contains('statutory_payment') ||
+      route.contains('statutory-payment')) {
+    return '/statutory-payments';
+  }
   if (route.contains('expense')) return '/expenses';
   if (route.contains('approval')) return '/approvals';
   if (route.contains('procurement') ||
@@ -1065,8 +1469,20 @@ String? _resolveWebRoute(String webRoute) {
   if (route.contains('efd')) return '/vat-sales';
   if (route.contains('bank_detail')) return '/staff-bank-details';
   if (route.contains('adjust')) return '/adjustments';
+  if (route.contains('attendance_types') || route.contains('attendance-types')) {
+    return '/attendance-types';
+  }
   if (route.contains('leave_request') || route.contains('leave-request')) {
     return '/leave-requests';
+  }
+  if (route.contains('leave_management') || route.contains('leave-management')) {
+    return '/leave-managements';
+  }
+  if (route.contains('leave_types') || route.contains('leave-types')) {
+    return '/leave-types';
+  }
+  if (route.contains('crdb_bank_file') || route.contains('crdb-bank-file')) {
+    return '/payroll-crdb-bank-file';
   }
   if (route.contains('payroll')) return '/payroll';
   if (route.contains('site_daily_report') ||

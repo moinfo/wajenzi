@@ -8,19 +8,33 @@ use App\Http\Resources\ProjectClientResource;
 use App\Models\BillingDocument;
 use App\Models\BillingDocumentItem;
 use App\Models\ProjectClient;
+use App\Models\Project;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class BillingDocumentController extends Controller
 {
+    private function normalizeDocumentType(?string $type): ?string
+    {
+        return match ($type) {
+            'quotation' => 'quote',
+            default => $type,
+        };
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = BillingDocument::with(['client', 'project'])
             ->orderBy('issue_date', 'desc');
 
         if ($request->document_type) {
-            $query->where('document_type', $request->document_type);
+            $documentType = $this->normalizeDocumentType($request->document_type);
+            if ($documentType === 'quote') {
+                $query->whereIn('document_type', ['quote', 'quotation']);
+            } else {
+                $query->where('document_type', $documentType);
+            }
         }
 
         if ($request->status) {
@@ -52,7 +66,7 @@ class BillingDocumentController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'document_type' => 'required|in:invoice,quotation,proforma',
+            'document_type' => 'required|in:invoice,quote,quotation,proforma',
             'client_id' => 'required|exists:project_clients,id',
             'project_id' => 'nullable|exists:projects,id',
             'issue_date' => 'required|date',
@@ -72,8 +86,10 @@ class BillingDocumentController extends Controller
 
         DB::beginTransaction();
         try {
+            $documentType = $this->normalizeDocumentType($validated['document_type']);
             $document = BillingDocument::create([
-                'document_type' => $validated['document_type'],
+                'document_type' => $documentType,
+                'document_number' => (new BillingDocument())->generateDocumentNumber($documentType),
                 'client_id' => $validated['client_id'],
                 'project_id' => $validated['project_id'] ?? null,
                 'issue_date' => $validated['issue_date'],
@@ -291,6 +307,36 @@ class BillingDocumentController extends Controller
         return response()->json([
             'success' => true,
             'data' => ProjectClientResource::collection($clients),
+        ]);
+    }
+
+    public function referenceData(Request $request): JsonResponse
+    {
+        $clients = ProjectClient::orderBy('first_name')
+            ->get()
+            ->map(fn (ProjectClient $client) => [
+                'id' => $client->id,
+                'name' => trim(($client->first_name ?? '') . ' ' . ($client->last_name ?? '')),
+            ]);
+
+        $projects = Project::orderBy('project_name')
+            ->get()
+            ->map(fn (Project $project) => [
+                'id' => $project->id,
+                'name' => $project->project_name,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'clients' => $clients,
+                'projects' => $projects,
+                'document_types' => [
+                    ['id' => 'invoice', 'name' => 'Invoice'],
+                    ['id' => 'quote', 'name' => 'Quotation'],
+                    ['id' => 'proforma', 'name' => 'Proforma'],
+                ],
+            ],
         ]);
     }
 }

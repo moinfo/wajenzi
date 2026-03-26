@@ -284,9 +284,11 @@
                     $this_employee = $_POST['staff_id'] ?? 11;
                     $staff_id = $this_employee;
                     $payroll = \App\Models\Payroll::getThisPayrollApproved($this_month,$this_year);
-                    $payroll_id = $payroll['id'];
-                    $employee = \App\Models\User::find($this_employee);
-                    $employee_bank_details = \App\Models\StaffBankDetail::where('staff_id',$this_employee)->get()->first();
+                    $hasApprovedPayroll = !empty($payroll);
+                    $payroll_id = $payroll->id ?? 0;
+                    $payroll = $payroll ?? (object) ['id' => 0, 'payroll_number' => 'N/A', 'month' => $this_month, 'year' => $this_year];
+                    $employee = \App\Models\User::find($this_employee) ?? new \App\Models\User(['name' => 'N/A', 'designation' => 'N/A', 'employee_number' => 'N/A']);
+                    $employee_bank_details = \App\Models\StaffBankDetail::with('bank')->where('staff_id',$this_employee)->first() ?? (object) ['account_number' => 'N/A', 'bank' => (object) ['name' => 'N/A']];
                     $basic_salary = \App\Models\Staff::getStaffSalaryPaid($this_employee,$payroll_id);
                     $total_deduction = 0;
                     $gross_salary = \App\Models\Staff::getStaffGrossPayPaid($this_employee,$payroll_id) ?? 0;
@@ -358,6 +360,11 @@
 
                 </div>
             </div>
+            @if(!$hasApprovedPayroll)
+                <div class="alert alert-warning">
+                    No approved payroll was found for {{ date('F', strtotime($this_year.'-'.$this_month.'-01')) }} {{ $this_year }}.
+                </div>
+            @endif
             <div>
                 <div class="block block-themed">
                     <div class="block-content">
@@ -492,7 +499,7 @@
                     </div>
                 </div>
             </div>
-            @if($payroll)
+            @if($hasApprovedPayroll)
                 <div>
                     <div class="block block-themed">
                         <div class="block-content">
@@ -534,7 +541,7 @@
                                                     <table class="employee-details-table">
                                                         <tr>
                                                             <td class="detail-label">Payroll Number:</td>
-                                                            <td class="detail-value">{{$payroll['payroll_number']}}</td>
+                                                            <td class="detail-value">{{$payroll->payroll_number}}</td>
                                                             <td class="detail-label">Payroll Month:</td>
                                                             <td class="detail-value">{{date('F',strtotime($payroll->year.'-'.$payroll->month.'-'.'01')).' - '.$payroll->year}}</td>
                                                         </tr>

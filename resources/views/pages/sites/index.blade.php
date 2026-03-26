@@ -120,7 +120,7 @@
                                 </td>
                                 <td>
                                     {{ $site->created_at->format('M d, Y') }}
-                                    <br><small class="text-muted">by {{ $site->createdBy->name }}</small>
+                                    <br><small class="text-muted">by {{ $site->createdBy?->name ?? 'N/A' }}</small>
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group">

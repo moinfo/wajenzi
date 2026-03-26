@@ -4,10 +4,11 @@
 <div class="container-fluid">
     <div class="content">
         <div class="content-heading d-flex justify-content-between align-items-center mb-3">
-            <h2 class="flex-grow-1"><i class="fa fa-calendar-alt text-primary mr-2"></i> Project Schedules</h2>
+            <h2 class="flex-grow-1">
+                <i class="fa fa-calendar-alt text-primary mr-2"></i> Project Schedules
+            </h2>
         </div>
 
-        <!-- Filters -->
         <div class="block block-themed">
             <div class="block-content">
                 <form method="GET" class="row">
@@ -28,7 +29,6 @@
             </div>
         </div>
 
-        <!-- Schedules List -->
         <div class="block block-themed">
             <div class="block-header bg-primary">
                 <h3 class="block-title">All Schedules</h3>
@@ -53,13 +53,13 @@
                                 <tr>
                                     <td>
                                         <a href="{{ route('leads.show', $schedule->lead_id) }}">
-                                            {{ $schedule->lead->lead_number ?? 'N/A' }}
+                                            {{ $schedule->lead->lead_number ?? $schedule->lead->name ?? 'N/A' }}
                                         </a>
                                     </td>
-                                    <td>{{ $schedule->client ? $schedule->client->first_name . ' ' . $schedule->client->last_name : 'N/A' }}</td>
+                                    <td>{{ $schedule->client ? trim(($schedule->client->first_name ?? '') . ' ' . ($schedule->client->last_name ?? '')) : 'N/A' }}</td>
                                     <td>{{ $schedule->assignedArchitect->name ?? 'Unassigned' }}</td>
-                                    <td>{{ $schedule->start_date->format('d/m/Y') }}</td>
-                                    <td>{{ $schedule->end_date ? $schedule->end_date->format('d/m/Y') : 'N/A' }}</td>
+                                    <td>{{ optional($schedule->start_date)->format('d/m/Y') ?? 'N/A' }}</td>
+                                    <td>{{ optional($schedule->end_date)->format('d/m/Y') ?? 'N/A' }}</td>
                                     <td>
                                         <div class="progress" style="height: 20px;">
                                             <div class="progress-bar bg-success" role="progressbar" style="width: {{ $schedule->progress }}%">

@@ -43,7 +43,7 @@ class Site extends Model
     {
         return $this->hasOne(SiteSupervisorAssignment::class)
             ->where('is_active', true)
-            ->latest();
+            ->orderByDesc('assigned_from');
     }
 
     public function currentSupervisor()

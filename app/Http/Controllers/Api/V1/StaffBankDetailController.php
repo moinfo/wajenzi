@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bank;
 use App\Models\StaffBankDetail;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,8 +13,6 @@ class StaffBankDetailController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
-
         $query = StaffBankDetail::with(['staff', 'bank'])
             ->orderBy('created_at', 'desc');
 
@@ -20,21 +20,32 @@ class StaffBankDetailController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $staffBankDetails->map(fn($d) => [
-                'id' => $d->id,
-                'staff_id' => $d->staff_id,
-                'staff_name' => $d->staff?->name ?? null,
-                'bank_id' => $d->bank_id,
-                'bank_name' => $d->bank?->name ?? null,
-                'account_number' => $d->account_number,
-                'branch' => $d->branch,
-                'created_at' => $d->created_at?->toISOString(),
-            ]),
+            'data' => $staffBankDetails->getCollection()->map(fn (StaffBankDetail $detail) => $this->transformDetail($detail))->values(),
             'meta' => [
                 'current_page' => $staffBankDetails->currentPage(),
                 'last_page' => $staffBankDetails->lastPage(),
                 'per_page' => $staffBankDetails->perPage(),
                 'total' => $staffBankDetails->total(),
+            ],
+        ]);
+    }
+
+    public function referenceData(): JsonResponse
+    {
+        $staffs = User::onlyStaffs()->sortBy('name')->values();
+        $banks = Bank::orderBy('name')->get(['id', 'name']);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'staffs' => $staffs->map(fn (User $staff) => [
+                    'id' => $staff->id,
+                    'name' => $staff->name,
+                ])->values(),
+                'banks' => $banks->map(fn (Bank $bank) => [
+                    'id' => $bank->id,
+                    'name' => $bank->name,
+                ])->values(),
             ],
         ]);
     }
@@ -45,16 +56,73 @@ class StaffBankDetailController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $detail->id,
-                'staff_id' => $detail->staff_id,
-                'staff_name' => $detail->staff?->name ?? null,
-                'bank_id' => $detail->bank_id,
-                'bank_name' => $detail->bank?->name ?? null,
-                'account_number' => $detail->account_number,
-                'branch' => $detail->branch,
-                'created_at' => $detail->created_at?->toISOString(),
-            ],
+            'data' => $this->transformDetail($detail),
         ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'staff_id' => 'required|exists:users,id|unique:staff_bank_details,staff_id',
+            'bank_id' => 'required|exists:banks,id',
+            'account_number' => 'required|string|max:255',
+            'branch' => 'required|string',
+        ]);
+
+        $detail = StaffBankDetail::create($validated);
+        $detail->load(['staff', 'bank']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Staff bank detail created successfully',
+            'data' => $this->transformDetail($detail),
+        ], 201);
+    }
+
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $detail = StaffBankDetail::with(['staff', 'bank'])->findOrFail($id);
+
+        $validated = $request->validate([
+            'staff_id' => 'required|exists:users,id|unique:staff_bank_details,staff_id,' . $id,
+            'bank_id' => 'required|exists:banks,id',
+            'account_number' => 'required|string|max:255',
+            'branch' => 'required|string',
+        ]);
+
+        $detail->update($validated);
+        $detail->load(['staff', 'bank']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Staff bank detail updated successfully',
+            'data' => $this->transformDetail($detail),
+        ]);
+    }
+
+    public function destroy(int $id): JsonResponse
+    {
+        $detail = StaffBankDetail::findOrFail($id);
+        $detail->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Staff bank detail deleted successfully',
+        ]);
+    }
+
+    private function transformDetail(StaffBankDetail $detail): array
+    {
+        return [
+            'id' => $detail->id,
+            'staff_id' => $detail->staff_id,
+            'staff_name' => $detail->staff?->name,
+            'bank_id' => $detail->bank_id,
+            'bank_name' => $detail->bank?->name,
+            'account_number' => $detail->account_number,
+            'branch' => $detail->branch,
+            'created_at' => $detail->created_at?->toISOString(),
+            'updated_at' => $detail->updated_at?->toISOString(),
+        ];
     }
 }

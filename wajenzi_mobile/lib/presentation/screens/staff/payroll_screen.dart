@@ -37,7 +37,7 @@ class PayrollScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Mishahara' : 'Payroll'),
+        title: Text(isSwahili ? 'Slip za Mishahara' : 'Salary Slips'),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(_payslipsProvider.future),

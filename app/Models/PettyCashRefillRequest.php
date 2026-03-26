@@ -11,10 +11,15 @@ class PettyCashRefillRequest extends Model
 
     protected $table = 'petty_cash_refill_requests';
 
-    protected $fillable = ['document_number','balance','refill_amount','status','create_by_id','file','date'];
+    protected $fillable = ['document_number','balance','refill_amount','status','create_by_id','file','date', 'charts_account_id'];
 
     public function user(){
         return $this->belongsTo(User::class,'create_by_id');
+    }
+
+    public function chartAccount()
+    {
+        return $this->belongsTo(ChartAccount::class, 'charts_account_id');
     }
 
     public function getTotalRefillAmountFromBeginning(){

@@ -19,7 +19,8 @@ class LeaveRequest extends Model implements ApprovableModel
         'total_days',
         'reason',
         'status',
-        'admin_remarks','document_number'
+        'admin_remarks',
+        'document_number',
     ];
 
     protected $casts = [

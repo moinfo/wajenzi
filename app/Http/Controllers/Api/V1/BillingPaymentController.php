@@ -4,12 +4,46 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BillingPaymentResource;
+use App\Models\BillingDocument;
 use App\Models\BillingPayment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class BillingPaymentController extends Controller
 {
+    public function referenceData(): JsonResponse
+    {
+        $documents = BillingDocument::with('client')
+            ->orderByDesc('issue_date')
+            ->limit(200)
+            ->get()
+            ->map(function (BillingDocument $document) {
+                return [
+                    'id' => $document->id,
+                    'document_number' => $document->document_number,
+                    'document_type' => $document->document_type,
+                    'client_id' => $document->client_id,
+                    'client_name' => trim(($document->client->first_name ?? '') . ' ' . ($document->client->last_name ?? '')),
+                    'balance_amount' => $document->balance_amount,
+                    'total_amount' => $document->total_amount,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'documents' => $documents,
+                'payment_methods' => [
+                    ['id' => 'cash', 'name' => 'Cash'],
+                    ['id' => 'bank_transfer', 'name' => 'Bank Transfer'],
+                    ['id' => 'mobile_money', 'name' => 'Mobile Money'],
+                    ['id' => 'cheque', 'name' => 'Cheque'],
+                    ['id' => 'card', 'name' => 'Card'],
+                ],
+            ],
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $query = BillingPayment::with(['document', 'client', 'receiver'])
@@ -57,6 +91,7 @@ class BillingPaymentController extends Controller
 
         $validated['received_by'] = $request->user()->id;
         $validated['status'] = 'completed';
+        $validated['client_id'] = BillingDocument::find($validated['document_id'])?->client_id;
 
         $payment = BillingPayment::create($validated);
         $payment->load(['document', 'client', 'receiver']);
@@ -83,6 +118,7 @@ class BillingPaymentController extends Controller
         $payment = BillingPayment::findOrFail($id);
 
         $validated = $request->validate([
+            'document_id' => 'sometimes|exists:billing_documents,id',
             'payment_date' => 'sometimes|date',
             'amount' => 'sometimes|numeric|min:0.01',
             'payment_method' => 'sometimes|string',
@@ -92,6 +128,10 @@ class BillingPaymentController extends Controller
             'transaction_id' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
+
+        if (array_key_exists('document_id', $validated)) {
+            $validated['client_id'] = BillingDocument::find($validated['document_id'])?->client_id;
+        }
 
         $payment->update($validated);
 
