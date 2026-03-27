@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AttendanceController;
@@ -7,6 +8,14 @@ use App\Http\Controllers\Api\V1\AttendanceTypeApiController;
 use App\Http\Controllers\Api\V1\SiteDailyReportController;
 use App\Http\Controllers\Api\V1\SalesDailyReportController;
 use App\Http\Controllers\Api\V1\ExpenseController;
+use App\Http\Controllers\Api\V1\LaborDashboardApiController;
+use App\Http\Controllers\Api\V1\LaborContractApiController;
+use App\Http\Controllers\Api\V1\LaborRequestApiController;
+use App\Http\Controllers\Api\V1\LaborWorkLogApiController;
+use App\Http\Controllers\Api\V1\LaborInspectionApiController;
+use App\Http\Controllers\Api\V1\LaborPaymentApiController;
+use App\Http\Controllers\Api\V1\ArchitectBonusApiController;
+use App\Http\Controllers\Api\V1\ProvisionTaxApiController;
 use App\Http\Controllers\Api\V1\ApprovalController;
 use App\Http\Controllers\Api\V1\SyncController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -32,6 +41,19 @@ use App\Http\Controllers\Api\V1\PayrollController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\MenuController;
+use App\Http\Controllers\Api\V1\MessageApiController;
+use App\Http\Controllers\Api\V1\ReportsApiController;
+use App\Http\Controllers\Api\V1\SettingsCatalogApiController;
+use App\Http\Controllers\Api\V1\ProcessApprovalFlowApiController;
+use App\Http\Controllers\Api\V1\ProcessApprovalFlowStepApiController;
+use App\Http\Controllers\Api\V1\AllowanceSubscriptionApiController;
+use App\Http\Controllers\Api\V1\DeductionSettingApiController;
+use App\Http\Controllers\Api\V1\DepartmentApiController;
+use App\Http\Controllers\Api\V1\ServiceInterestedApiController;
+use App\Http\Controllers\Api\V1\LeadStatusApiController;
+use App\Http\Controllers\Api\V1\LeadSourceApiController;
+use App\Http\Controllers\Api\V1\ServiceTypeApiController;
+use App\Http\Controllers\Api\V1\ProjectStatusApiController;
 use App\Http\Controllers\Api\V1\EmployeeProfileController;
 use App\Http\Controllers\Api\V1\VatController;
 use App\Http\Controllers\Api\V1\StaffBankDetailController;
@@ -94,13 +116,100 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Menus (permission-filtered sidebar)
     Route::get('menus', [MenuController::class, 'index']);
+    Route::get('reports', [ReportsApiController::class, 'index']);
+    Route::get('settings/catalog', [SettingsCatalogApiController::class, 'index']);
+    Route::prefix('process-approval-flows')->group(function () {
+        Route::get('/', [ProcessApprovalFlowApiController::class, 'index']);
+        Route::post('/', [ProcessApprovalFlowApiController::class, 'store']);
+        Route::get('{id}', [ProcessApprovalFlowApiController::class, 'show']);
+        Route::put('{id}', [ProcessApprovalFlowApiController::class, 'update']);
+        Route::delete('{id}', [ProcessApprovalFlowApiController::class, 'destroy']);
+    });
+    Route::prefix('process-approval-flow-steps')->group(function () {
+        Route::get('reference-data', [ProcessApprovalFlowStepApiController::class, 'referenceData']);
+        Route::get('/', [ProcessApprovalFlowStepApiController::class, 'index']);
+        Route::post('/', [ProcessApprovalFlowStepApiController::class, 'store']);
+        Route::get('{id}', [ProcessApprovalFlowStepApiController::class, 'show']);
+        Route::put('{id}', [ProcessApprovalFlowStepApiController::class, 'update']);
+        Route::delete('{id}', [ProcessApprovalFlowStepApiController::class, 'destroy']);
+    });
+    Route::prefix('allowance-subscriptions')->group(function () {
+        Route::get('reference-data', [AllowanceSubscriptionApiController::class, 'referenceData']);
+        Route::get('/', [AllowanceSubscriptionApiController::class, 'index']);
+        Route::post('/', [AllowanceSubscriptionApiController::class, 'store']);
+        Route::get('{id}', [AllowanceSubscriptionApiController::class, 'show']);
+        Route::put('{id}', [AllowanceSubscriptionApiController::class, 'update']);
+        Route::delete('{id}', [AllowanceSubscriptionApiController::class, 'destroy']);
+    });
+    Route::prefix('deduction-settings')->group(function () {
+        Route::get('reference-data', [DeductionSettingApiController::class, 'referenceData']);
+        Route::get('/', [DeductionSettingApiController::class, 'index']);
+        Route::post('/', [DeductionSettingApiController::class, 'store']);
+        Route::get('{id}', [DeductionSettingApiController::class, 'show']);
+        Route::put('{id}', [DeductionSettingApiController::class, 'update']);
+        Route::delete('{id}', [DeductionSettingApiController::class, 'destroy']);
+    });
+    Route::prefix('departments')->group(function () {
+        Route::get('/', [DepartmentApiController::class, 'index']);
+        Route::post('/', [DepartmentApiController::class, 'store']);
+        Route::get('{id}', [DepartmentApiController::class, 'show']);
+        Route::put('{id}', [DepartmentApiController::class, 'update']);
+        Route::delete('{id}', [DepartmentApiController::class, 'destroy']);
+    });
+    Route::prefix('service-interesteds')->group(function () {
+        Route::get('/', [ServiceInterestedApiController::class, 'index']);
+        Route::post('/', [ServiceInterestedApiController::class, 'store']);
+        Route::get('{id}', [ServiceInterestedApiController::class, 'show']);
+        Route::put('{id}', [ServiceInterestedApiController::class, 'update']);
+        Route::delete('{id}', [ServiceInterestedApiController::class, 'destroy']);
+    });
+    Route::prefix('lead-statuses')->group(function () {
+        Route::get('/', [LeadStatusApiController::class, 'index']);
+        Route::post('/', [LeadStatusApiController::class, 'store']);
+        Route::get('{id}', [LeadStatusApiController::class, 'show']);
+        Route::put('{id}', [LeadStatusApiController::class, 'update']);
+        Route::delete('{id}', [LeadStatusApiController::class, 'destroy']);
+    });
+    Route::prefix('lead-sources')->group(function () {
+        Route::get('/', [LeadSourceApiController::class, 'index']);
+        Route::post('/', [LeadSourceApiController::class, 'store']);
+        Route::get('{id}', [LeadSourceApiController::class, 'show']);
+        Route::put('{id}', [LeadSourceApiController::class, 'update']);
+        Route::delete('{id}', [LeadSourceApiController::class, 'destroy']);
+    });
+    Route::prefix('service-types')->group(function () {
+        Route::get('/', [ServiceTypeApiController::class, 'index']);
+        Route::post('/', [ServiceTypeApiController::class, 'store']);
+        Route::get('{id}', [ServiceTypeApiController::class, 'show']);
+        Route::put('{id}', [ServiceTypeApiController::class, 'update']);
+        Route::delete('{id}', [ServiceTypeApiController::class, 'destroy']);
+    });
+    Route::prefix('project-statuses')->group(function () {
+        Route::get('/', [ProjectStatusApiController::class, 'index']);
+        Route::post('/', [ProjectStatusApiController::class, 'store']);
+        Route::get('{id}', [ProjectStatusApiController::class, 'show']);
+        Route::put('{id}', [ProjectStatusApiController::class, 'update']);
+        Route::delete('{id}', [ProjectStatusApiController::class, 'destroy']);
+    });
+
+    Route::prefix('messages')->group(function () {
+        Route::get('/', [MessageApiController::class, 'index']);
+        Route::get('reference-data', [MessageApiController::class, 'referenceData']);
+        Route::get('birthdays', [MessageApiController::class, 'birthdays']);
+        Route::post('/', [MessageApiController::class, 'store']);
+        Route::post('bulk', [MessageApiController::class, 'bulkStore']);
+        Route::get('{id}', [MessageApiController::class, 'show']);
+        Route::put('{id}', [MessageApiController::class, 'update']);
+        Route::delete('{id}', [MessageApiController::class, 'destroy']);
+    });
 
     // Dashboard
     Route::prefix('dashboard')->group(function () {
         Route::get('/', [DashboardController::class, 'index']);
+        
         Route::get('/activities', [DashboardController::class, 'activities']);
-        Route::get('/invoices', [DashboardController::class, 'invoices']);
         Route::get('/followups', [DashboardController::class, 'followups']);
+        Route::get('/invoices', [DashboardController::class, 'invoices']);
         Route::get('/calendar', [DashboardController::class, 'calendar']);
         Route::get('/project-status', [DashboardController::class, 'projectStatus']);
         Route::get('/recent-activities', [DashboardController::class, 'recentActivities']);
@@ -200,6 +309,88 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{id}/approve', [ExpenseController::class, 'approve']);
         Route::post('{id}/reject', [ExpenseController::class, 'reject']);
     });
+
+    Route::prefix('labor')->group(function () {
+        Route::get('dashboard', [LaborDashboardApiController::class, 'index']);
+        
+        // Labor Requests CRUD
+        Route::get('requests/reference-data', [LaborRequestApiController::class, 'referenceData']);
+        Route::get('requests/construction-phases/{projectId}', [LaborRequestApiController::class, 'getConstructionPhases']);
+        Route::get('requests/dashboard', [LaborRequestApiController::class, 'dashboard']);
+        Route::get('requests', [LaborRequestApiController::class, 'index']);
+        Route::post('requests', [LaborRequestApiController::class, 'store']);
+        Route::get('requests/{id}', [LaborRequestApiController::class, 'show']);
+        Route::put('requests/{id}', [LaborRequestApiController::class, 'update']);
+        Route::delete('requests/{id}', [LaborRequestApiController::class, 'destroy']);
+        Route::post('requests/{id}/submit', [LaborRequestApiController::class, 'submit']);
+        Route::post('requests/{id}/approve', [LaborRequestApiController::class, 'approve']);
+        Route::post('requests/{id}/reject', [LaborRequestApiController::class, 'reject']);
+        Route::post('requests/{id}/negotiation', [LaborRequestApiController::class, 'updateNegotiation']);
+        Route::post('requests/{id}/assessment', [LaborRequestApiController::class, 'recordAssessment']);
+
+        // Labor Contracts CRUD
+        Route::get('contracts/reference-data', [LaborContractApiController::class, 'referenceData']);
+        Route::get('contracts/dashboard', [LaborContractApiController::class, 'dashboard']);
+        Route::get('contracts', [LaborContractApiController::class, 'index']);
+        Route::post('contracts', [LaborContractApiController::class, 'store']);
+        Route::get('contracts/{id}', [LaborContractApiController::class, 'show']);
+        Route::put('contracts/{id}', [LaborContractApiController::class, 'update']);
+        Route::post('contracts/{id}/hold', [LaborContractApiController::class, 'putOnHold']);
+        Route::post('contracts/{id}/resume', [LaborContractApiController::class, 'resume']);
+        Route::post('contracts/{id}/terminate', [LaborContractApiController::class, 'terminate']);
+        Route::post('contracts/{id}/sign', [LaborContractApiController::class, 'sign']);
+
+        // Labor Work Logs CRUD
+        Route::get('logs/reference-data', [LaborWorkLogApiController::class, 'referenceData']);
+        Route::get('logs/dashboard', [LaborWorkLogApiController::class, 'dashboard']);
+        Route::get('logs', [LaborWorkLogApiController::class, 'index']);
+        Route::post('logs', [LaborWorkLogApiController::class, 'store']);
+        Route::get('logs/{id}', [LaborWorkLogApiController::class, 'show']);
+        Route::put('logs/{id}', [LaborWorkLogApiController::class, 'update']);
+        Route::delete('logs/{id}', [LaborWorkLogApiController::class, 'destroy']);
+        Route::get('logs/contract/{contractId}', [LaborWorkLogApiController::class, 'contractLogs']);
+
+        // Labor Inspections CRUD
+        Route::get('inspections/reference-data', [LaborInspectionApiController::class, 'referenceData']);
+        Route::get('inspections/dashboard', [LaborInspectionApiController::class, 'dashboard']);
+        Route::get('inspections', [LaborInspectionApiController::class, 'index']);
+        Route::post('inspections', [LaborInspectionApiController::class, 'store']);
+        Route::get('inspections/{id}', [LaborInspectionApiController::class, 'show']);
+        Route::put('inspections/{id}', [LaborInspectionApiController::class, 'update']);
+        Route::delete('inspections/{id}', [LaborInspectionApiController::class, 'destroy']);
+        Route::post('inspections/{id}/submit', [LaborInspectionApiController::class, 'submit']);
+        Route::get('inspections/contract/{contractId}', [LaborInspectionApiController::class, 'contractInspections']);
+
+        // Labor Payments CRUD
+        Route::get('payments/reference-data', [LaborPaymentApiController::class, 'referenceData']);
+        Route::get('payments/dashboard', [LaborPaymentApiController::class, 'dashboard']);
+        Route::get('payments', [LaborPaymentApiController::class, 'index']);
+        Route::post('payments', [LaborPaymentApiController::class, 'store']);
+        Route::get('payments/{id}', [LaborPaymentApiController::class, 'show']);
+        Route::put('payments/{id}', [LaborPaymentApiController::class, 'update']);
+        Route::delete('payments/{id}', [LaborPaymentApiController::class, 'destroy']);
+        Route::post('payments/{id}/approve', [LaborPaymentApiController::class, 'approve']);
+        Route::post('payments/{id}/process', [LaborPaymentApiController::class, 'processPayment']);
+    });
+
+    // Architect Bonus CRUD
+    Route::get('architect-bonus/reference-data', [ArchitectBonusApiController::class, 'referenceData']);
+    Route::get('architect-bonus', [ArchitectBonusApiController::class, 'index']);
+    Route::get('architect-bonus/report', [ArchitectBonusApiController::class, 'report']);
+    Route::get('architect-bonus/weights', [ArchitectBonusApiController::class, 'weights']);
+    Route::post('architect-bonus', [ArchitectBonusApiController::class, 'store']);
+    Route::put('architect-bonus/weights', [ArchitectBonusApiController::class, 'updateWeights']);
+    Route::get('architect-bonus/{id}', [ArchitectBonusApiController::class, 'show']);
+    Route::put('architect-bonus/{id}', [ArchitectBonusApiController::class, 'update']);
+    Route::delete('architect-bonus/{id}', [ArchitectBonusApiController::class, 'destroy']);
+
+    // Provision Tax CRUD
+    Route::get('provision-tax/reference-data', [ProvisionTaxApiController::class, 'referenceData']);
+    Route::get('provision-tax', [ProvisionTaxApiController::class, 'index']);
+    Route::post('provision-tax', [ProvisionTaxApiController::class, 'store']);
+    Route::get('provision-tax/{id}', [ProvisionTaxApiController::class, 'show']);
+    Route::put('provision-tax/{id}', [ProvisionTaxApiController::class, 'update']);
+    Route::delete('provision-tax/{id}', [ProvisionTaxApiController::class, 'destroy']);
 
     Route::prefix('petty-cash-refill-requests')->group(function () {
         Route::get('reference-data', [PettyCashRefillRequestApiController::class, 'referenceData']);
@@ -488,6 +679,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('material-inventory')->group(function () {
         Route::get('projects', [MaterialInventoryApiController::class, 'projects']);
         Route::get('materials', [MaterialInventoryApiController::class, 'materials']);
+        Route::get('movements', [MaterialInventoryApiController::class, 'movements']);
+        Route::post('issue', [MaterialInventoryApiController::class, 'issue']);
+        Route::post('adjust', [MaterialInventoryApiController::class, 'adjust']);
+        Route::post('movements/{id}/verify', [MaterialInventoryApiController::class, 'verifyMovement']);
         Route::get('/', [MaterialInventoryApiController::class, 'index']);
         Route::post('/', [MaterialInventoryApiController::class, 'store']);
         Route::get('{id}', [MaterialInventoryApiController::class, 'show']);
@@ -649,6 +844,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('purchases/{id}', [VatController::class, 'destroyPurchase']);
 
         Route::get('auto-purchases', [VatController::class, 'autoPurchases']);
+        Route::post('auto-purchases', [VatController::class, 'storeAutoPurchase']);
+        Route::get('auto-purchases/{id}', [VatController::class, 'showAutoPurchase']);
+        Route::put('auto-purchases/{id}', [VatController::class, 'updateAutoPurchase']);
+        Route::delete('auto-purchases/{id}', [VatController::class, 'destroyAutoPurchase']);
 
         Route::get('payments', [VatController::class, 'payments']);
         Route::post('payments', [VatController::class, 'storePayment']);
@@ -688,10 +887,20 @@ Route::middleware('auth:sanctum')->group(function () {
     // Procurement
     Route::prefix('procurement')->group(function () {
         Route::get('dashboard', [ProcurementController::class, 'dashboard']);
+        Route::get('quotation-comparisons', [ProcurementController::class, 'quotationComparisons']);
+        Route::get('quotation-comparisons/{id}', [ProcurementController::class, 'showQuotationComparison']);
+        Route::get('pending-deliveries', [PurchaseApiController::class, 'pendingDeliveries']);
+        Route::get('receivings', [PurchaseApiController::class, 'receivings']);
+        Route::get('receivings/{id}', [PurchaseApiController::class, 'showReceiving']);
+        Route::get('supplier-quotations/reference-data', [SupplierQuotationController::class, 'referenceData']);
         Route::get('supplier-quotations', [SupplierQuotationController::class, 'index']);
+        Route::post('supplier-quotations', [SupplierQuotationController::class, 'store']);
         Route::get('supplier-quotations/{id}', [SupplierQuotationController::class, 'show']);
+        Route::put('supplier-quotations/{id}', [SupplierQuotationController::class, 'update']);
+        Route::delete('supplier-quotations/{id}', [SupplierQuotationController::class, 'destroy']);
         Route::get('purchases', [PurchaseApiController::class, 'index']);
         Route::get('purchases/{id}', [PurchaseApiController::class, 'show']);
+        Route::post('purchases/{id}/deliveries', [PurchaseApiController::class, 'storeDelivery']);
         Route::get('inspections', [MaterialInspectionController::class, 'index']);
         Route::get('inspections/{id}', [MaterialInspectionController::class, 'show']);
     });

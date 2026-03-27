@@ -89,7 +89,7 @@ Route::middleware('apiToken')->post('/logout', function (Request $request) {
 
 // ── Protected Scanner/Receipt Routes ─────────────────────────────
 Route::middleware('apiToken')->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\ApiController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\ApiController::class, 'dashboard'])->name('api.dashboard');
     Route::match(['get', 'post'], '/add_receipt', [App\Http\Controllers\ReceiptController::class, 'store'])->name('add_receipt');
     Route::match(['get', 'post'], '/add_receipt_item', [App\Http\Controllers\ReceiptItemController::class, 'store'])->name('add_receipt_item');
     Route::match(['get', 'post'], '/receipts/{id?}', [App\Http\Controllers\ApiController::class, 'receipts'])->name('receipts');

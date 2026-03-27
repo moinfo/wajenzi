@@ -18,6 +18,7 @@ class ProjectExpense extends Model
         'amount',
         'description',
         'remarks',
+        'receipt',
         'expense_date',
         'created_by',
         'status',

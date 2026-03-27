@@ -17,6 +17,116 @@ use Illuminate\Support\Facades\DB;
 
 class ProcurementController extends Controller
 {
+    public function quotationComparisons(Request $request): JsonResponse
+    {
+        $perPage = min((int) $request->integer('per_page', 100), 200);
+
+        $comparisons = QuotationComparison::with([
+                'materialRequest.project',
+                'selectedQuotation.supplier',
+                'preparedBy',
+            ])
+            ->orderByDesc('comparison_date')
+            ->orderByDesc('created_at')
+            ->paginate($perPage)
+            ->through(fn ($comparison) => [
+                'id' => $comparison->id,
+                'comparison_number' => $comparison->comparison_number,
+                'comparison_date' => $comparison->comparison_date?->toDateString(),
+                'status' => $comparison->status,
+                'material_request_id' => $comparison->material_request_id,
+                'material_request_number' => $comparison->materialRequest?->request_number,
+                'project_name' => $comparison->materialRequest?->project?->project_name
+                    ?? $comparison->materialRequest?->project?->name,
+                'selected_supplier_name' => $comparison->selectedQuotation?->supplier?->name,
+                'selected_amount' => $comparison->selectedQuotation?->grand_total ?? 0,
+                'quotation_count' => $comparison->quotation_count,
+                'prepared_by_name' => $comparison->preparedBy?->name,
+                'created_at' => $comparison->created_at?->toISOString(),
+                'can_create_purchase' => $comparison->isApproved() && !$comparison->purchases()->exists(),
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $comparisons,
+        ]);
+    }
+
+    public function showQuotationComparison(int $id): JsonResponse
+    {
+        $comparison = QuotationComparison::with([
+            'materialRequest.project',
+            'materialRequest.items.boqItem',
+            'selectedQuotation.supplier',
+            'preparedBy',
+            'approvedBy',
+        ])->findOrFail($id);
+
+        $quotations = SupplierQuotation::with(['supplier', 'items'])
+            ->where('material_request_id', $comparison->material_request_id)
+            ->orderBy('total_amount')
+            ->orderBy('created_at')
+            ->get()
+            ->map(fn ($quotation) => [
+                'id' => $quotation->id,
+                'quotation_number' => $quotation->quotation_number,
+                'supplier_name' => $quotation->supplier?->name,
+                'status' => $quotation->status,
+                'quotation_date' => $quotation->quotation_date?->toDateString(),
+                'grand_total' => $quotation->grand_total,
+                'is_selected' => (int) $quotation->id === (int) $comparison->selected_quotation_id,
+                'items' => $quotation->items->map(fn ($item) => [
+                    'id' => $item->id,
+                    'description' => $item->description,
+                    'quantity' => $item->quantity,
+                    'unit' => $item->unit,
+                    'unit_price' => $item->unit_price,
+                    'total_price' => $item->total_price,
+                    'material_request_item_id' => $item->material_request_item_id,
+                ])->values(),
+            ])->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $comparison->id,
+                'comparison_number' => $comparison->comparison_number,
+                'comparison_date' => $comparison->comparison_date?->toDateString(),
+                'status' => $comparison->status,
+                'recommendation_reason' => $comparison->recommendation_reason,
+                'quotation_count' => $comparison->quotation_count,
+                'average_quotation_price' => $comparison->average_quotation_price,
+                'price_variance' => $comparison->price_variance,
+                'savings' => $comparison->savings,
+                'material_request' => [
+                    'id' => $comparison->materialRequest?->id,
+                    'request_number' => $comparison->materialRequest?->request_number,
+                    'project_name' => $comparison->materialRequest?->project?->project_name
+                        ?? $comparison->materialRequest?->project?->name,
+                    'status' => $comparison->materialRequest?->status,
+                ],
+                'selected_quotation' => $comparison->selectedQuotation ? [
+                    'id' => $comparison->selectedQuotation->id,
+                    'quotation_number' => $comparison->selectedQuotation->quotation_number,
+                    'supplier_name' => $comparison->selectedQuotation->supplier?->name,
+                    'grand_total' => $comparison->selectedQuotation->grand_total,
+                    'quotation_date' => $comparison->selectedQuotation->quotation_date?->toDateString(),
+                ] : null,
+                'prepared_by' => [
+                    'id' => $comparison->preparedBy?->id,
+                    'name' => $comparison->preparedBy?->name,
+                ],
+                'approved_by' => [
+                    'id' => $comparison->approvedBy?->id,
+                    'name' => $comparison->approvedBy?->name,
+                ],
+                'approved_date' => $comparison->approved_date?->toISOString(),
+                'can_create_purchase' => $comparison->isApproved() && !$comparison->purchases()->exists(),
+                'quotations' => $quotations,
+            ],
+        ]);
+    }
+
     public function dashboard(Request $request): JsonResponse
     {
         $materialRequests = ProjectMaterialRequest::select('status', DB::raw('count(*) as count'))

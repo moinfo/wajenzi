@@ -11,6 +11,15 @@ import '../../presentation/screens/dashboard/dashboard_screen.dart';
 import '../../presentation/screens/dashboard/client_dashboard_screen.dart';
 import '../../presentation/screens/attendance/attendance_screen.dart';
 import '../../presentation/screens/expenses/expense_list_screen.dart';
+import '../../presentation/screens/labor/labor_dashboard_screen.dart';
+import '../../presentation/screens/labor/labor_requests_screen.dart';
+import '../../presentation/screens/labor/labor_contracts_screen.dart';
+import '../../presentation/screens/labor/labor_logs_screen.dart';
+import '../../presentation/screens/labor/labor_inspections_screen.dart';
+import '../../presentation/screens/labor/labor_payments_screen.dart';
+import '../../presentation/screens/architect_bonus_screen.dart';
+import '../../presentation/screens/architect_bonus_weights_screen.dart';
+import '../../presentation/screens/provision_tax_screen.dart';
 import '../../presentation/screens/approvals/approvals_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
 import '../../presentation/screens/about/about_screen.dart';
@@ -22,6 +31,16 @@ import '../../presentation/screens/projects/client_project_detail_screen.dart';
 import '../../presentation/screens/settings/profile_screen.dart';
 import '../../presentation/screens/settings/change_password_screen.dart';
 import '../../presentation/screens/settings/legal_screen.dart';
+import '../../presentation/screens/settings/process_approval_flows_screen.dart';
+import '../../presentation/screens/settings/process_approval_flow_steps_screen.dart';
+import '../../presentation/screens/settings/allowance_subscriptions_screen.dart';
+import '../../presentation/screens/settings/deduction_settings_screen.dart';
+import '../../presentation/screens/settings/departments_screen.dart';
+import '../../presentation/screens/settings/service_interesteds_screen.dart';
+import '../../presentation/screens/settings/lead_statuses_screen.dart';
+import '../../presentation/screens/settings/lead_sources_screen.dart';
+import '../../presentation/screens/settings/service_types_screen.dart';
+import '../../presentation/screens/settings/project_statuses_screen.dart';
 import '../../presentation/screens/dashboard/activities_screen.dart';
 import '../../presentation/screens/dashboard/followups_screen.dart';
 import '../../presentation/screens/dashboard/invoices_screen.dart';
@@ -52,8 +71,11 @@ import '../../presentation/screens/employee_profile/employee_profile_screen.dart
 import '../../presentation/screens/reports/site_daily_report_list_screen.dart';
 import '../../presentation/screens/reports/project_daily_report_list_screen.dart';
 import '../../presentation/screens/reports/sales_daily_report_list_screen.dart';
+import '../../presentation/screens/reports/architect_bonus_report_screen.dart';
+import '../../presentation/screens/reports/reports_hub_screen.dart';
 import '../../presentation/screens/vat/vat_sales_screen.dart';
 import '../../presentation/screens/vat/vat_purchases_screen.dart';
+import '../../presentation/screens/vat/vat_auto_purchases_screen.dart';
 import '../../presentation/screens/vat/vat_payments_screen.dart';
 import '../../presentation/screens/accounting/accounting_screen.dart';
 import '../../presentation/screens/accounting/account_types_screen.dart';
@@ -90,6 +112,8 @@ import '../../presentation/screens/staff/leave_managements_screen.dart';
 import '../../presentation/screens/staff/leave_requests_screen.dart';
 import '../../presentation/screens/staff/leave_types_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
+import '../../presentation/screens/messages/messages_screen.dart';
+import '../../presentation/screens/web/portal_webview_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final rootScaffoldKeyProvider = Provider<GlobalKey<ScaffoldState>>((ref) {
@@ -247,6 +271,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ProjectReportsScreen(),
           ),
           GoRoute(
+            path: '/reports',
+            name: 'reports',
+            builder: (context, state) => const ReportsHubScreen(),
+          ),
+          GoRoute(
             path: '/project-schedules',
             name: 'project-schedules',
             builder: (context, state) => const ProjectSchedulesScreen(),
@@ -270,6 +299,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/material-inventory',
             name: 'material-inventory',
             builder: (context, state) => const MaterialInventoryScreen(),
+          ),
+          GoRoute(
+            path: '/stock-register',
+            name: 'stock-register',
+            builder: (context, state) =>
+                const MaterialInventoryScreen(stockRegisterMode: true),
           ),
           GoRoute(
             path: '/sales',
@@ -327,9 +362,101 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ProcurementScreen(),
           ),
           GoRoute(
+            path: '/material-requests',
+            name: 'material-requests',
+            builder: (context, state) =>
+                const ProcurementScreen(materialRequestsOnly: true),
+          ),
+          GoRoute(
+            path: '/supplier-quotations',
+            name: 'supplier-quotations',
+            builder: (context, state) =>
+                const ProcurementScreen(supplierQuotationsOnly: true),
+          ),
+          GoRoute(
+            path: '/quotation-comparisons',
+            name: 'quotation-comparisons',
+            builder: (context, state) =>
+                const ProcurementScreen(quotationComparisonsOnly: true),
+          ),
+          GoRoute(
+            path: '/purchase-orders',
+            name: 'purchase-orders',
+            builder: (context, state) =>
+                const ProcurementScreen(purchaseOrdersOnly: true),
+          ),
+          GoRoute(
+            path: '/record-deliveries',
+            name: 'record-deliveries',
+            builder: (context, state) =>
+                const ProcurementScreen(recordDeliveriesOnly: true),
+          ),
+          GoRoute(
+            path: '/supplier-receivings',
+            name: 'supplier-receivings',
+            builder: (context, state) =>
+                const ProcurementScreen(supplierReceivingsOnly: true),
+          ),
+          GoRoute(
+            path: '/material-inspections',
+            name: 'material-inspections',
+            builder: (context, state) =>
+                const ProcurementScreen(materialInspectionsOnly: true),
+          ),
+          GoRoute(
             path: '/attendance',
             name: 'attendance',
             builder: (context, state) => const AttendanceScreen(),
+          ),
+          GoRoute(
+            path: '/labor-dashboard',
+            name: 'labor-dashboard',
+            builder: (context, state) => const LaborDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/labor-requests',
+            name: 'labor-requests',
+            builder: (context, state) => const LaborRequestsScreen(),
+          ),
+          GoRoute(
+            path: '/labor-contracts',
+            name: 'labor-contracts',
+            builder: (context, state) => const LaborContractsScreen(),
+          ),
+          GoRoute(
+            path: '/labor-logs',
+            name: 'labor-logs',
+            builder: (context, state) => const LaborLogsScreen(),
+          ),
+          GoRoute(
+            path: '/labor-inspections',
+            name: 'labor-inspections',
+            builder: (context, state) => const LaborInspectionsScreen(),
+          ),
+          GoRoute(
+            path: '/labor-payments',
+            name: 'labor-payments',
+            builder: (context, state) => const LaborPaymentsScreen(),
+          ),
+          GoRoute(
+            path: '/architect-bonus',
+            name: 'architect-bonus',
+            builder: (context, state) => const ArchitectBonusScreen(),
+          ),
+          GoRoute(
+            path: '/architect-bonus/weights',
+            name: 'architect-bonus-weights',
+            builder: (context, state) => const ArchitectBonusWeightsScreen(),
+          ),
+          GoRoute(
+            path: '/provision-tax',
+            name: 'provision-tax',
+            builder: (context, state) => const ProvisionTaxScreen(),
+          ),
+          GoRoute(
+            path: '/architect-bonus/report',
+            name: 'architect-bonus-report',
+            builder: (context, state) => const ArchitectBonusReportScreen(),
           ),
           GoRoute(
             path: '/site-daily-reports',
@@ -373,6 +500,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const NotificationsScreen(),
           ),
           GoRoute(
+            path: '/messages',
+            name: 'messages',
+            builder: (context, state) => const MessagesScreen(),
+          ),
+          GoRoute(
             path: '/billing',
             name: 'billing',
             builder: (context, state) => const ClientBillingScreen(),
@@ -381,6 +513,67 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/process-approval-flows',
+            name: 'settings-process-approval-flows',
+            builder: (context, state) => const ProcessApprovalFlowsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/process-approval-flow-steps',
+            name: 'settings-process-approval-flow-steps',
+            builder: (context, state) => const ProcessApprovalFlowStepsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/allowance-subscriptions',
+            name: 'settings-allowance-subscriptions',
+            builder: (context, state) => const AllowanceSubscriptionsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/deduction-settings',
+            name: 'settings-deduction-settings',
+            builder: (context, state) => const DeductionSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/departments',
+            name: 'settings-departments',
+            builder: (context, state) => const DepartmentsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/service-interesteds',
+            name: 'settings-service-interesteds',
+            builder: (context, state) => const ServiceInterestedsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/lead-statuses',
+            name: 'settings-lead-statuses',
+            builder: (context, state) => const LeadStatusesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/lead-sources',
+            name: 'settings-lead-sources',
+            builder: (context, state) => const LeadSourcesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/service-types',
+            name: 'settings-service-types',
+            builder: (context, state) => const ServiceTypesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/project-statuses',
+            name: 'settings-project-statuses',
+            builder: (context, state) => const ProjectStatusesScreen(),
+          ),
+          GoRoute(
+            path: '/portal-webview',
+            name: 'portal-webview',
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>? ?? const {};
+              return PortalWebViewScreen(
+                title: (extra['title'] ?? 'Portal').toString(),
+                url: (extra['url'] ?? '').toString(),
+              );
+            },
           ),
           GoRoute(
             path: '/employee-profile',
@@ -400,7 +593,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/vat-auto-purchases',
             name: 'vat-auto-purchases',
-            builder: (context, state) => const VatPurchasesScreen(),
+            builder: (context, state) => const VatAutoPurchasesScreen(),
           ),
           GoRoute(
             path: '/vat-payments',
@@ -697,7 +890,7 @@ class MainDrawer extends ConsumerWidget {
   }) async {
     final router = GoRouter.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    final flutterRoute = _resolveMenuDestination(route: route, url: url);
+    final flutterRoute = resolveMobileMenuDestination(route: route, url: url);
 
     Navigator.pop(context);
 
@@ -1016,7 +1209,7 @@ String? _mapWebRoute(String webRoute) {
     'employee_profile': '/employee-profile',
     'home': '/dashboard',
     'dashboard': '/dashboard',
-    'reports': '/dashboard',
+    'reports': '/reports',
     'attendance': '/attendance',
     'reports_daily_attendances_report': '/attendance',
     'reports_attendances_report': '/attendance',
@@ -1024,6 +1217,35 @@ String? _mapWebRoute(String webRoute) {
     'hr_settings': '/settings',
     'system_settings': '/settings',
     'user_settings': '/settings',
+    'hr_settings_process_approval_flows': '/settings/process-approval-flows',
+    'settings/process_approval_flows': '/settings/process-approval-flows',
+    'settings/process-approval-flows': '/settings/process-approval-flows',
+    'hr_settings_process_approval_flow_steps': '/settings/process-approval-flow-steps',
+    'settings/process_approval_flow_steps': '/settings/process-approval-flow-steps',
+    'settings/process-approval-flow-steps': '/settings/process-approval-flow-steps',
+    'allowance_subscriptions': '/settings/allowance-subscriptions',
+    'settings/allowance_subscriptions': '/settings/allowance-subscriptions',
+    'settings/allowance-subscriptions': '/settings/allowance-subscriptions',
+    'hr_settings_deduction_settings': '/settings/deduction-settings',
+    'settings/deduction_settings': '/settings/deduction-settings',
+    'settings/deduction-settings': '/settings/deduction-settings',
+    'hr_settings_departments': '/settings/departments',
+    'settings/departments': '/settings/departments',
+    'hr_settings_service_interesteds': '/settings/service-interesteds',
+    'settings/service_interesteds': '/settings/service-interesteds',
+    'settings/service-interesteds': '/settings/service-interesteds',
+    'hr_settings_lead_statuses': '/settings/lead-statuses',
+    'settings/lead_statuses': '/settings/lead-statuses',
+    'settings/lead-statuses': '/settings/lead-statuses',
+    'hr_settings_lead_sources': '/settings/lead-sources',
+    'settings/lead_sources': '/settings/lead-sources',
+    'settings/lead-sources': '/settings/lead-sources',
+    'hr_settings_service_types': '/settings/service-types',
+    'settings/service_types': '/settings/service-types',
+    'settings/service-types': '/settings/service-types',
+    'hr_settings_project_statuses': '/settings/project-statuses',
+    'settings/project_statuses': '/settings/project-statuses',
+    'settings/project-statuses': '/settings/project-statuses',
     'user_profile': '/profile',
     'user_inbox': '/dashboard',
     'user_notifications': '/notifications',
@@ -1031,16 +1253,23 @@ String? _mapWebRoute(String webRoute) {
     'sale': '/sales',
     'purchases': '/purchases',
     'purchase': '/purchases',
-    'purchase_order': '/procurement',
-    'supplier_receiving': '/procurement',
-    'supplier_receivings': '/procurement',
+    'purchase_order': '/purchase-orders',
+    'purchase_orders': '/purchase-orders',
+    'purchase-orders': '/purchase-orders',
+    'record_deliveries': '/record-deliveries',
+    'record-deliveries': '/record-deliveries',
+    'supplier_receiving': '/supplier-receivings',
+    'supplier_receivings': '/supplier-receivings',
+    'supplier_receivings_procurement': '/supplier-receivings',
+    'supplier-receivings-procurement': '/supplier-receivings',
+    'supplier-receivings': '/supplier-receivings',
     'receiving': '/procurement',
-    'project_material_request': '/procurement',
-    'project_material_requests': '/procurement',
-    'material_inspection': '/procurement',
-    'material_inspections': '/procurement',
-    'quotation_comparison': '/procurement',
-    'quotation_comparisons': '/procurement',
+    'project_material_request': '/material-requests',
+    'project_material_requests': '/material-requests',
+    'material_inspection': '/material-inspections',
+    'material_inspections': '/material-inspections',
+    'quotation_comparisons': '/quotation-comparisons',
+    'quotation_comparison': '/quotation-comparisons',
     'collection': '/staff-billing',
     'collections': '/staff-billing',
     'billing': '/staff-billing',
@@ -1089,7 +1318,8 @@ String? _mapWebRoute(String webRoute) {
     'transfer': '/accounting',
     'transfer_reports': '/accounting',
     'financial_charges': '/accounting',
-    'provision_tax': '/accounting',
+    'provision_tax': '/provision-tax',
+    'provision-tax': '/provision-tax',
     'statutory_payments': '/statutory-payments',
     'statutory-payments': '/statutory-payments',
     'settings/statutory_payments': '/statutory-payments',
@@ -1126,6 +1356,9 @@ String? _mapWebRoute(String webRoute) {
     'reports_total_credit_suppliers_report': '/accounting',
     'reports_total_current_credit_suppliers_report': '/accounting',
     'reports_provision_report': '/accounting',
+    'report': '/reports',
+    'reports_index': '/reports',
+    'reports.index': '/reports',
     'reports_statutory_payment_report': '/reports-statutory-payment-report',
     'reports/statutory_payment_report': '/reports-statutory-payment-report',
     'reports_statutory_category_report': '/reports-statutory-category-report',
@@ -1170,6 +1403,11 @@ String? _mapWebRoute(String webRoute) {
     'project_boqs': '/boqs',
     'project_materials': '/project-materials',
     'project_material_inventory': '/material-inventory',
+    'stock_register_select': '/stock-register',
+    'stock_register': '/stock-register',
+    'stock_register.movements': '/stock-register',
+    'stock_register.issue': '/stock-register',
+    'stock_register.adjust': '/stock-register',
     'project_site_visits': '/site-visits',
     'sites.index': '/sites',
     'sites.create': '/sites',
@@ -1242,13 +1480,15 @@ String? _mapWebRoute(String webRoute) {
     'finance_financial_settings_charts_of_accounts': '/charts-of-accounts',
     'charts_of_account_usages': '/chart-account-usages',
     'charts-of-account-usages': '/chart-account-usages',
-    'finance_financial_settings_charts_of_account_usages': '/chart-account-usages',
+    'finance_financial_settings_charts_of_account_usages':
+        '/chart-account-usages',
     'exchange_rates': '/exchange-rates',
     'exchange-rates': '/exchange-rates',
     'finance_financial_settings_exchange_rates': '/exchange-rates',
     'chart_of_account_variables': '/chart-account-variables',
     'chart-account-variables': '/chart-account-variables',
-    'finance_financial_settings_chart_of_account_variables': '/chart-account-variables',
+    'finance_financial_settings_chart_of_account_variables':
+        '/chart-account-variables',
     'building_types': '/building-types',
     'building-types': '/building-types',
     'settings_building_types': '/building-types',
@@ -1291,9 +1531,10 @@ String? _mapWebRoute(String webRoute) {
     'sales_daily_report': '/sales-daily-reports',
     'sales-daily-reports': '/sales-daily-reports',
     'site_visits': '/site-visits',
-    'material_requests': '/procurement',
-    'supplier_quotations': '/procurement',
-    'inspections': '/procurement',
+    'material_requests': '/material-requests',
+    'supplier_quotation': '/supplier-quotations',
+    'supplier_quotations': '/supplier-quotations',
+    'inspections': '/material-inspections',
     'bank_report': '/accounting',
     'bank_deposit_report': '/accounting',
     'bank_deposit_reports': '/accounting',
@@ -1314,7 +1555,6 @@ String? _mapWebRoute(String webRoute) {
     'expense_adjustable': '/adjustments',
     'site_management': '/attendance',
     'site_supervisor_assignments': '/attendance',
-    'allowance_subscriptions': '/employee-profile',
     'staff_salaries': '/staff-salaries',
     'staff-salaries': '/staff-salaries',
     'settings_staff_salaries': '/staff-salaries',
@@ -1333,7 +1573,8 @@ String? _mapWebRoute(String webRoute) {
     'petty_cash_refill_requests': '/petty-cash-refill-requests',
     'petty_cash_refill_request': '/petty-cash-refill-requests',
     'petty-cash-refill-requests': '/petty-cash-refill-requests',
-    'finance_petty_cash_management_petty_cash_refill_requests': '/petty-cash-refill-requests',
+    'finance_petty_cash_management_petty_cash_refill_requests':
+        '/petty-cash-refill-requests',
     'imprest_requests': '/imprest-requests',
     'imprest_request': '/imprest-requests',
     'imprest-requests': '/imprest-requests',
@@ -1353,12 +1594,32 @@ String? _mapWebRoute(String webRoute) {
     'individual_project_clients': '/project-clients',
     'individual_project_site_visits': '/site-visits',
     'site_daily_report': '/site-daily-reports',
-    'labor.dashboard': '/attendance',
-    'labor.requests.index': '/attendance',
-    'labor.contracts.index': '/attendance',
-    'labor.logs.index': '/attendance',
-    'labor.inspections.index': '/attendance',
-    'labor.payments.index': '/attendance',
+    'labor.dashboard': '/labor-dashboard',
+    'labor.requests.index': '/labor-requests',
+    'labor.requests': '/labor-requests',
+    'labor_requests': '/labor-requests',
+    'labor/requests': '/labor-requests',
+    'labor.contracts.index': '/labor-contracts',
+    'labor.contracts': '/labor-contracts',
+    'labor_contracts': '/labor-contracts',
+    'labor/contracts': '/labor-contracts',
+    'labor.logs.index': '/labor-logs',
+    'labor.logs': '/labor-logs',
+    'labor_logs': '/labor-logs',
+    'labor/logs': '/labor-logs',
+    'labor.inspections.index': '/labor-inspections',
+    'labor.payments.index': '/labor-payments',
+    'architect.bonus.index': '/architect-bonus',
+    'architect.bonus.report': '/architect-bonus/report',
+    'architect.bonus.weights': '/architect-bonus/weights',
+    'architect-bonus': '/architect-bonus',
+    'architect_bonus': '/architect-bonus',
+    'architect-bonus/report': '/architect-bonus/report',
+    'architect_bonus_report': '/architect-bonus/report',
+    'eSMS': '/messages',
+    'esms': '/messages',
+    'bulk_sms': '/messages',
+    'messages': '/messages',
     'requests.approval': '/attendance',
     'inspections.approval': '/attendance',
   };
@@ -1379,6 +1640,7 @@ String? _resolveWebRoute(String webRoute) {
   if (normalizedDirect != null) return normalizedDirect;
 
   if (route == '#' || route.isEmpty) return '/dashboard';
+  if (route == 'reports' || route == 'report') return '/reports';
   if (route.contains('billing/quotation') ||
       route.contains('billing_quotation') ||
       route.contains('billing-quotation')) {
@@ -1409,6 +1671,24 @@ String? _resolveWebRoute(String webRoute) {
       route.contains('billing-email')) {
     return '/billing-emails';
   }
+  if (route.contains('billing.') || route.contains('billing_')) {
+    return '/staff-billing';
+  }
+  if (route == 'reports' || route == 'report') return '/reports';
+  if ((route.contains('architect') && route.contains('bonus')) &&
+      route.contains('report')) {
+    return '/architect-bonus/report';
+  }
+  if ((route.contains('architect') && route.contains('bonus')) &&
+      route.contains('weights')) {
+    return '/architect-bonus/weights';
+  }
+  if (route.contains('architect') && route.contains('bonus')) {
+    return '/architect-bonus';
+  }
+  if (route.contains('sms') || route.contains('message')) {
+    return '/messages';
+  }
   if (route.contains('statutory_category_report') ||
       route.contains('statutory-category-report')) {
     return '/reports-statutory-category-report';
@@ -1433,9 +1713,16 @@ String? _resolveWebRoute(String webRoute) {
       route.contains('inspection') ||
       route.contains('receiving') ||
       route.contains('material_request')) {
-    return '/procurement';
+    return route.contains('material_request')
+        ? '/material-requests'
+        : '/procurement';
   }
-  if (route.contains('labor')) return '/attendance';
+  if (route.contains('labor') && route.contains('request'))
+    return '/labor-requests';
+  if (route.contains('labor') && route.contains('contract'))
+    return '/labor-contracts';
+  if (route.contains('labor') && route.contains('log')) return '/labor-logs';
+  if (route.contains('labor')) return '/labor-dashboard';
   if (route.contains('allowance') ||
       route.contains('salary') ||
       route.contains('loan') ||
@@ -1461,7 +1748,6 @@ String? _resolveWebRoute(String webRoute) {
       route.contains('transaction_') ||
       route.contains('statutory') ||
       route.contains('financial_charge') ||
-      route.contains('provision_tax') ||
       route.contains('transfer')) {
     return '/accounting';
   }
@@ -1469,13 +1755,15 @@ String? _resolveWebRoute(String webRoute) {
   if (route.contains('efd')) return '/vat-sales';
   if (route.contains('bank_detail')) return '/staff-bank-details';
   if (route.contains('adjust')) return '/adjustments';
-  if (route.contains('attendance_types') || route.contains('attendance-types')) {
+  if (route.contains('attendance_types') ||
+      route.contains('attendance-types')) {
     return '/attendance-types';
   }
   if (route.contains('leave_request') || route.contains('leave-request')) {
     return '/leave-requests';
   }
-  if (route.contains('leave_management') || route.contains('leave-management')) {
+  if (route.contains('leave_management') ||
+      route.contains('leave-management')) {
     return '/leave-managements';
   }
   if (route.contains('leave_types') || route.contains('leave-types')) {
@@ -1509,6 +1797,10 @@ String? _resolveWebRoute(String webRoute) {
   if (route.contains('vat')) return '/vat-sales';
 
   return null;
+}
+
+String? resolveMobileMenuDestination({String? route, String? url}) {
+  return _resolveMenuDestination(route: route, url: url);
 }
 
 String? _resolveMenuDestination({String? route, String? url}) {

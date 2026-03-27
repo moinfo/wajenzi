@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ExpenseResource;
-use App\Models\CostCategory;
-use App\Models\ProjectExpense;
+use App\Models\Expense;
+use App\Models\ExpensesCategory;
+use App\Models\ExpensesSubCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class ExpenseController extends Controller
@@ -18,56 +17,42 @@ class ExpenseController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $hasStatusColumn = Schema::hasColumn('project_expenses', 'status');
-            $hasCostCategoryColumn = Schema::hasColumn(
-                'project_expenses',
-                'cost_category_id'
-            );
+            $query = Expense::with([
+                'expensesSubCategory.expensesCategory',
+                'approvalStatus',
+            ])->orderByDesc('date')->orderByDesc('id');
 
-            $relations = ['project', 'creator'];
-            if ($hasCostCategoryColumn && Schema::hasTable('cost_categories')) {
-                $relations[] = 'costCategory';
+            if ($request->filled('expenses_category_id')) {
+                $categoryId = (int) $request->input('expenses_category_id');
+                $query->whereHas('expensesSubCategory', function ($subQuery) use ($categoryId) {
+                    $subQuery->where('expenses_category_id', $categoryId);
+                });
             }
 
-            $query = ProjectExpense::query();
-            
-            $query->orderBy('expense_date', 'desc');
-
-            if ($request->project_id) {
-                $query->where('project_id', $request->project_id);
+            if ($request->filled('expenses_sub_category_id')) {
+                $query->where('expenses_sub_category_id', (int) $request->input('expenses_sub_category_id'));
             }
 
-            if ($hasStatusColumn && $request->status) {
-                $query->where('status', $request->status);
+            if ($request->filled('start_date')) {
+                $query->whereDate('date', '>=', Carbon::parse($request->input('start_date'))->toDateString());
             }
 
-            if ($request->cost_category_id) {
-                $query->where('cost_category_id', $request->cost_category_id);
+            if ($request->filled('end_date')) {
+                $query->whereDate('date', '<=', Carbon::parse($request->input('end_date'))->toDateString());
             }
 
-            if ($request->start_date) {
-                $query->where('expense_date', '>=', Carbon::parse($request->start_date));
-            }
-
-            if ($request->end_date) {
-                $query->where('expense_date', '<=', Carbon::parse($request->end_date));
-            }
-
-            // Filter by my_expenses=1 to show only user's expenses
-            if ($request->my_expenses == '1') {
-                $query->where('created_by', $request->user()->id);
-            }
-
-            $expenses = $query->with($relations)->paginate($request->per_page ?? 20);
+            $items = $query->paginate((int) $request->input('per_page', 100));
 
             return response()->json([
                 'success' => true,
-                'data' => ExpenseResource::collection($expenses),
-                'meta' => [
-                    'current_page' => $expenses->currentPage(),
-                    'last_page' => $expenses->lastPage(),
-                    'per_page' => $expenses->perPage(),
-                    'total' => $expenses->total(),
+                'data' => [
+                    'data' => $items->getCollection()->map(fn (Expense $expense) => $this->transform($expense))->values(),
+                    'meta' => [
+                        'current_page' => $items->currentPage(),
+                        'last_page' => $items->lastPage(),
+                        'per_page' => $items->perPage(),
+                        'total' => $items->total(),
+                    ],
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -79,33 +64,59 @@ class ExpenseController extends Controller
         }
     }
 
+    public function show(int $id): JsonResponse
+    {
+        try {
+            $expense = Expense::with([
+                'expensesSubCategory.expensesCategory',
+                'approvalStatus',
+            ])->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $this->transform($expense),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Expense show error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch expense: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function store(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
-                'project_id' => 'required|exists:projects,id',
-                'cost_category_id' => 'required|exists:cost_categories,id',
+                'expenses_sub_category_id' => 'required|exists:expenses_sub_categories,id',
                 'description' => 'required|string|max:500',
                 'amount' => 'required|numeric|min:0',
-                'expense_date' => 'required|date',
-                'receipt' => 'nullable|image|max:5120',
-                'notes' => 'nullable|string',
+                'date' => 'required|date',
+                'receipt' => 'nullable|file|max:5120',
             ]);
 
+            $nextId = ((int) Expense::max('id')) + 1;
+            $expense = new Expense();
+            $expense->expenses_sub_category_id = (int) $validated['expenses_sub_category_id'];
+            $expense->description = $validated['description'];
+            $expense->amount = $validated['amount'];
+            $expense->date = $validated['date'];
+            $expense->status = 'PENDING';
+            $expense->document_number = sprintf('EXPS/%d/%s', $nextId, date('Y'));
+
             if ($request->hasFile('receipt')) {
-                $validated['receipt'] = $request->file('receipt')->store('expense-receipts', 'public');
+                $path = $request->file('receipt')->store('expense-files', 'public');
+                $expense->file = Storage::disk('public')->url($path);
             }
 
-            $validated['created_by'] = $request->user()->id;
-            $validated['status'] = 'draft';
-
-            $expense = ProjectExpense::create($validated);
-            $expense->load(['project', 'category', 'creator']);
+            $expense->save();
+            $expense->load(['expensesSubCategory.expensesCategory', 'approvalStatus']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Expense created successfully.',
-                'data' => new ExpenseResource($expense),
+                'data' => $this->transform($expense),
             ], 201);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -122,73 +133,36 @@ class ExpenseController extends Controller
         }
     }
 
-    public function show(int $id): JsonResponse
-    {
-        try {
-            $relations = ['project', 'creator'];
-            if (
-                Schema::hasColumn('project_expenses', 'cost_category_id') &&
-                Schema::hasTable('cost_categories')
-            ) {
-                $relations[] = 'category';
-            }
-
-            $expense = ProjectExpense::with($relations)->findOrFail($id);
-
-            return response()->json([
-                'success' => true,
-                'data' => new ExpenseResource($expense),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Expense show error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch expense: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
     public function update(Request $request, int $id): JsonResponse
     {
         try {
-            $expense = ProjectExpense::findOrFail($id);
-            $hasStatusColumn = Schema::hasColumn('project_expenses', 'status');
-
-            if ($hasStatusColumn && $expense->status !== 'draft') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only draft expenses can be edited.',
-                ], 403);
-            }
+            $expense = Expense::with(['expensesSubCategory.expensesCategory', 'approvalStatus'])->findOrFail($id);
 
             $validated = $request->validate([
-                'project_id' => 'sometimes|exists:projects,id',
-                'cost_category_id' => 'sometimes|exists:cost_categories,id',
-                'description' => 'sometimes|string|max:500',
-                'amount' => 'sometimes|numeric|min:0',
-                'expense_date' => 'sometimes|date',
-                'receipt' => 'nullable|image|max:5120',
-                'notes' => 'nullable|string',
+                'expenses_sub_category_id' => 'required|exists:expenses_sub_categories,id',
+                'description' => 'required|string|max:500',
+                'amount' => 'required|numeric|min:0',
+                'date' => 'required|date',
+                'receipt' => 'nullable|file|max:5120',
             ]);
 
+            $expense->expenses_sub_category_id = (int) $validated['expenses_sub_category_id'];
+            $expense->description = $validated['description'];
+            $expense->amount = $validated['amount'];
+            $expense->date = $validated['date'];
+
             if ($request->hasFile('receipt')) {
-                if ($expense->receipt) {
-                    try {
-                        Storage::disk('public')->delete($expense->receipt);
-                    } catch (\Throwable $e) {
-                        // Ignore storage errors
-                    }
-                }
-                $validated['receipt'] = $request->file('receipt')->store('expense-receipts', 'public');
+                $path = $request->file('receipt')->store('expense-files', 'public');
+                $expense->file = Storage::disk('public')->url($path);
             }
 
-            $expense->update($validated);
-            $expense->load(['project', 'category', 'creator']);
+            $expense->save();
+            $expense->load(['expensesSubCategory.expensesCategory', 'approvalStatus']);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Expense updated successfully.',
-                'data' => new ExpenseResource($expense),
+                'data' => $this->transform($expense),
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -208,24 +182,7 @@ class ExpenseController extends Controller
     public function destroy(int $id): JsonResponse
     {
         try {
-            $expense = ProjectExpense::findOrFail($id);
-            $hasStatusColumn = Schema::hasColumn('project_expenses', 'status');
-
-            if ($hasStatusColumn && $expense->status !== 'draft') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only draft expenses can be deleted.',
-                ], 403);
-            }
-
-            if ($expense->receipt) {
-                try {
-                    Storage::disk('public')->delete($expense->receipt);
-                } catch (\Throwable $e) {
-                    // Ignore storage errors
-                }
-            }
-
+            $expense = Expense::findOrFail($id);
             $expense->delete();
 
             return response()->json([
@@ -241,30 +198,50 @@ class ExpenseController extends Controller
         }
     }
 
+    public function categories(): JsonResponse
+    {
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'categories' => ExpensesCategory::orderBy('name')->get(['id', 'name'])->values(),
+                    'sub_categories' => ExpensesSubCategory::with('expensesCategory:id,name')
+                        ->orderBy('name')
+                        ->get()
+                        ->map(fn (ExpensesSubCategory $item) => [
+                            'id' => $item->id,
+                            'name' => $item->name,
+                            'expenses_category_id' => $item->expenses_category_id,
+                            'category_name' => $item->expensesCategory?->name,
+                        ])->values(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Expense categories error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch categories: ' . $e->getMessage(),
+                'data' => [
+                    'categories' => [],
+                    'sub_categories' => [],
+                ],
+            ], 500);
+        }
+    }
+
     public function submit(int $id): JsonResponse
     {
         try {
-            $expense = ProjectExpense::findOrFail($id);
-            if (!Schema::hasColumn('project_expenses', 'status')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Expense approvals are not available until migrations are up to date.',
-                ], 409);
+            $expense = Expense::with('approvalStatus')->findOrFail($id);
+            if (method_exists($expense, 'submit')) {
+                $expense->submit(auth()->user());
+                $expense->refresh();
             }
-
-            if ($expense->status !== 'draft') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only draft expenses can be submitted.',
-                ], 403);
-            }
-
-            $expense->update(['status' => 'pending']);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Expense submitted for approval.',
-                'data' => new ExpenseResource($expense->fresh()),
+                'message' => 'Expense submitted successfully.',
+                'data' => $this->transform($expense->load(['expensesSubCategory.expensesCategory', 'approvalStatus'])),
             ]);
         } catch (\Throwable $e) {
             Log::error('Expense submit error: ' . $e->getMessage());
@@ -277,114 +254,46 @@ class ExpenseController extends Controller
 
     public function approve(Request $request, int $id): JsonResponse
     {
-        try {
-            if (!Schema::hasColumn('project_expenses', 'status')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Expense approvals are not available until migrations are up to date.',
-                ], 409);
-            }
-
-            $expense = ProjectExpense::findOrFail($id);
-
-            if ($expense->status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only pending expenses can be approved.',
-                ], 403);
-            }
-
-            $expense->update([
-                'status' => 'approved',
-                'approved_by' => $request->user()->id,
-                'approved_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Expense approved successfully.',
-                'data' => new ExpenseResource($expense->fresh()),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Expense approve error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to approve expense: ' . $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Approving expenses from mobile is not available here.',
+        ], 409);
     }
 
     public function reject(Request $request, int $id): JsonResponse
     {
-        try {
-            $request->validate([
-                'reason' => 'required|string|max:500',
-            ]);
-
-            if (!Schema::hasColumn('project_expenses', 'status')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Expense approvals are not available until migrations are up to date.',
-                ], 409);
-            }
-
-            $expense = ProjectExpense::findOrFail($id);
-
-            if ($expense->status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only pending expenses can be rejected.',
-                ], 403);
-            }
-
-            $expense->update([
-                'status' => 'rejected',
-                'rejection_reason' => $request->reason,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Expense rejected.',
-                'data' => new ExpenseResource($expense->fresh()),
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Throwable $e) {
-            Log::error('Expense reject error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to reject expense: ' . $e->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Rejecting expenses from mobile is not available here.',
+        ], 409);
     }
 
-    public function categories(): JsonResponse
+    private function transform(Expense $expense): array
     {
-        try {
-            $categories = [];
-            if (Schema::hasTable('cost_categories')) {
-                $categories = CostCategory::all()->map(fn($c) => [
-                    'id' => $c->id,
-                    'name' => $c->name,
-                    'description' => $c->description ?? null,
-                ])->toArray();
-            }
+        $status = strtoupper((string) ($expense->approvalStatus?->status ?? $expense->status ?? 'PENDING'));
 
-            return response()->json([
-                'success' => true,
-                'data' => $categories,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Expense categories error: ' . $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch categories: ' . $e->getMessage(),
-                'data' => [],
-            ], 500);
-        }
+        return [
+            'id' => $expense->id,
+            'document_number' => $expense->document_number,
+            'description' => $expense->description,
+            'amount' => $expense->amount,
+            'expense_date' => $expense->date,
+            'date' => $expense->date,
+            'status' => $status,
+            'receipt_path' => $expense->file,
+            'file' => $expense->file,
+            'expenses_sub_category_id' => $expense->expenses_sub_category_id,
+            'expenses_sub_category' => [
+                'id' => $expense->expensesSubCategory?->id,
+                'name' => $expense->expensesSubCategory?->name,
+            ],
+            'expenses_category' => [
+                'id' => $expense->expensesSubCategory?->expensesCategory?->id,
+                'name' => $expense->expensesSubCategory?->expensesCategory?->name,
+            ],
+            'approval_status' => $expense->approvalStatus?->status,
+            'created_at' => $expense->created_at?->toISOString(),
+            'updated_at' => $expense->updated_at?->toISOString(),
+        ];
     }
 }

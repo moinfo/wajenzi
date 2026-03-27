@@ -30,6 +30,7 @@ class ExpenseResource extends JsonResource
                 'receipt_path' => $receiptUrl,
                 'status' => $this->status ?? 'draft',
                 'remarks' => $this->remarks ?? null,
+                'rejection_reason' => $this->rejection_reason ?? null,
                 'created_at' => $this->created_at?->toISOString(),
                 'updated_at' => $this->updated_at?->toISOString(),
             ];

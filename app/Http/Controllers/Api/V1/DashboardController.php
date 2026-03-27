@@ -27,19 +27,32 @@ class DashboardController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'stats' => $this->getStats(),
-                'pending_approvals' => $this->getPendingApprovals(),
-                'followup_summary' => $this->getFollowupSummary($user),
-                'activities_summary' => $this->getActivitiesSummary($user),
-                'invoices_summary' => $this->getInvoicesSummary($user),
-                'project_progress' => $this->getProjectProgress($user),
-            ],
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'stats' => $this->getStats(),
+                    'pending_approvals' => $this->getPendingApprovals(),
+                    'followup_summary' => $this->getFollowupSummary($user),
+                    'activities_summary' => $this->getActivitiesSummary($user),
+                    'invoices_summary' => $this->getInvoicesSummary($user),
+                    'project_progress' => $this->getProjectProgress($user),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Dashboard API Error: ' . $e->getMessage(), [
+                'user_id' => $request->user()?->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Dashboard data temporarily unavailable',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 
     /**
@@ -393,7 +406,16 @@ class DashboardController extends Controller
             ->count();
 
         // Team members
-        $userCounts = User::getUserCounts();
+        try {
+            $userCounts = User::getUserCounts();
+        } catch (\Exception $e) {
+            // Fallback if getUserCounts fails
+            $userCounts = (object) [
+                'total' => User::count(),
+                'total_male' => User::where('gender', 'MALE')->count(),
+                'total_female' => User::where('gender', 'FEMALE')->count(),
+            ];
+        }
 
         // Budget utilization
         $totalBudget = Project::where('status', 'APPROVED')->sum('contract_value');

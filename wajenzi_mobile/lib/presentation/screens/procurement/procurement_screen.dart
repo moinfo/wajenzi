@@ -8,7 +8,10 @@ import '../../providers/settings_provider.dart';
 final _materialRequestsProvider =
     FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/material-requests');
+  final response = await api.get(
+    '/material-requests',
+    queryParameters: {'per_page': 100},
+  );
   return _extractListPayload(response.data);
 });
 
@@ -29,7 +32,10 @@ final _procurementDashboardProvider =
 final _supplierQuotationsProvider =
     FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/procurement/supplier-quotations');
+  final response = await api.get(
+    '/procurement/supplier-quotations',
+    queryParameters: {'per_page': 100},
+  );
   return _extractListPayload(response.data);
 });
 
@@ -40,10 +46,58 @@ final _supplierQuotationDetailProvider =
   return response.data['data'] as Map<String, dynamic>? ?? {};
 });
 
+final _quotationComparisonsProvider =
+    FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get(
+    '/procurement/quotation-comparisons',
+    queryParameters: {'per_page': 100},
+  );
+  return _extractListPayload(response.data);
+});
+
+final _quotationComparisonDetailProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>, int>((ref, id) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/procurement/quotation-comparisons/$id');
+  return response.data['data'] as Map<String, dynamic>? ?? {};
+});
+
 final _purchasesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/procurement/purchases');
-  return response.data['data'] as List? ?? [];
+  final response = await api.get(
+    '/procurement/purchases',
+    queryParameters: {'per_page': 100},
+  );
+  return _extractListPayload(response.data);
+});
+
+final _purchaseOrdersProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get(
+    '/procurement/purchases',
+    queryParameters: {'per_page': 100, 'procurement_only': true},
+  );
+  return _extractListPayload(response.data);
+});
+
+final _pendingDeliveriesProvider =
+    FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get(
+    '/procurement/pending-deliveries',
+    queryParameters: {'per_page': 100},
+  );
+  return _extractListPayload(response.data);
+});
+
+final _receivingsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get(
+    '/procurement/receivings',
+    queryParameters: {'per_page': 100},
+  );
+  return _extractListPayload(response.data);
 });
 
 final _purchaseDetailProvider =
@@ -53,10 +107,34 @@ final _purchaseDetailProvider =
   return response.data['data'] as Map<String, dynamic>? ?? {};
 });
 
+final _receivingDetailProvider =
+    FutureProvider.autoDispose.family<Map<String, dynamic>, int>((ref, id) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/procurement/receivings/$id');
+  return response.data['data'] as Map<String, dynamic>? ?? {};
+});
+
 final _inspectionsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/procurement/inspections');
-  return response.data['data'] as List? ?? [];
+  final response = await api.get(
+    '/procurement/inspections',
+    queryParameters: {'per_page': 100},
+  );
+  return _extractListPayload(response.data);
+});
+
+final _inspectionPendingReceivingsProvider =
+    FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get(
+    '/procurement/inspections',
+    queryParameters: {'per_page': 100},
+  );
+  final data = response.data['data'];
+  if (data is Map && data['pending_receivings'] is List) {
+    return data['pending_receivings'] as List;
+  }
+  return const [];
 });
 
 final _inspectionDetailProvider =
@@ -65,6 +143,18 @@ final _inspectionDetailProvider =
   final response = await api.get('/procurement/inspections/$id');
   return response.data['data'] as Map<String, dynamic>? ?? {};
 });
+
+final _projectsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>(
+  (ref) async {
+    final api = ref.watch(apiClientProvider);
+    final response = await api.get('/projects', queryParameters: {'per_page': 100});
+    final items = _extractListPayload(response.data);
+    return items
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
+  },
+);
 
 List<dynamic> _extractListPayload(dynamic responseData) {
   if (responseData is List) return responseData;
@@ -82,38 +172,131 @@ List<dynamic> _extractListPayload(dynamic responseData) {
 }
 
 class ProcurementScreen extends ConsumerWidget {
-  const ProcurementScreen({super.key});
+  final bool materialRequestsOnly;
+  final bool supplierQuotationsOnly;
+  final bool quotationComparisonsOnly;
+  final bool purchaseOrdersOnly;
+  final bool recordDeliveriesOnly;
+  final bool supplierReceivingsOnly;
+  final bool materialInspectionsOnly;
+
+  const ProcurementScreen({
+    super.key,
+    this.materialRequestsOnly = false,
+    this.supplierQuotationsOnly = false,
+    this.quotationComparisonsOnly = false,
+    this.purchaseOrdersOnly = false,
+    this.recordDeliveriesOnly = false,
+    this.supplierReceivingsOnly = false,
+    this.materialInspectionsOnly = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final requestsAsync = ref.watch(_materialRequestsProvider);
     final dashboardAsync = ref.watch(_procurementDashboardProvider);
     final quotationsAsync = ref.watch(_supplierQuotationsProvider);
+    final comparisonsAsync = ref.watch(_quotationComparisonsProvider);
+    final purchaseOrdersAsync = ref.watch(_purchaseOrdersProvider);
+    final pendingDeliveriesAsync = ref.watch(_pendingDeliveriesProvider);
+    final receivingsAsync = ref.watch(_receivingsProvider);
+    final pendingInspectionReceivingsAsync =
+        ref.watch(_inspectionPendingReceivingsProvider);
     final purchasesAsync = ref.watch(_purchasesProvider);
     final inspectionsAsync = ref.watch(_inspectionsProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final primaryAsync = quotationComparisonsOnly
+        ? comparisonsAsync
+        : materialInspectionsOnly
+            ? inspectionsAsync
+        : supplierReceivingsOnly
+            ? receivingsAsync
+        : recordDeliveriesOnly
+            ? pendingDeliveriesAsync
+        : purchaseOrdersOnly
+            ? purchaseOrdersAsync
+        : supplierQuotationsOnly
+            ? quotationsAsync
+            : requestsAsync;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Ununuzi' : 'Procurement'),
+        title: Text(
+          materialRequestsOnly
+              ? (isSwahili ? 'Maombi ya Vifaa' : 'Material Requests')
+              : supplierQuotationsOnly
+                  ? (isSwahili ? 'Nukuu za Wasambazaji' : 'Supplier Quotations')
+              : quotationComparisonsOnly
+                  ? (isSwahili
+                      ? 'Mlinganisho wa Nukuu'
+                      : 'Quotation Comparisons')
+              : purchaseOrdersOnly
+                  ? (isSwahili ? 'Maagizo ya Ununuzi' : 'Purchase Orders')
+              : recordDeliveriesOnly
+                  ? (isSwahili ? 'Rekodi Uwasilishaji' : 'Record Deliveries')
+              : supplierReceivingsOnly
+                  ? (isSwahili ? 'Supplier Receivings' : 'Supplier Receivings')
+              : materialInspectionsOnly
+                  ? (isSwahili ? 'Ukaguzi wa Vifaa' : 'Material Inspections')
+              : (isSwahili ? 'Ununuzi' : 'Procurement'),
+        ),
       ),
+      floatingActionButton:
+          quotationComparisonsOnly ||
+              purchaseOrdersOnly ||
+              recordDeliveriesOnly ||
+              supplierReceivingsOnly ||
+              materialInspectionsOnly
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 80),
+              child: FloatingActionButton.extended(
+                onPressed: () => supplierQuotationsOnly
+                    ? _showSupplierQuotationForm(
+                        context,
+                        ref,
+                        isSwahili: isSwahili,
+                      )
+                    : _showMaterialRequestForm(
+                        context,
+                        ref,
+                        isSwahili: isSwahili,
+                      ),
+                icon: const Icon(Icons.add_rounded),
+                label: Text(
+                  supplierQuotationsOnly
+                      ? (isSwahili ? 'Nukuu' : 'Quotation')
+                      : (isSwahili ? 'Ombi' : 'Request'),
+                ),
+              ),
+            ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_materialRequestsProvider);
           ref.invalidate(_procurementDashboardProvider);
           ref.invalidate(_supplierQuotationsProvider);
+          ref.invalidate(_quotationComparisonsProvider);
+          ref.invalidate(_purchaseOrdersProvider);
+          ref.invalidate(_pendingDeliveriesProvider);
+          ref.invalidate(_receivingsProvider);
+          ref.invalidate(_inspectionPendingReceivingsProvider);
           ref.invalidate(_purchasesProvider);
           ref.invalidate(_inspectionsProvider);
           await Future.wait([
             ref.refresh(_materialRequestsProvider.future),
             ref.refresh(_procurementDashboardProvider.future),
             ref.refresh(_supplierQuotationsProvider.future),
+            ref.refresh(_quotationComparisonsProvider.future),
+            ref.refresh(_purchaseOrdersProvider.future),
+            ref.refresh(_pendingDeliveriesProvider.future),
+            ref.refresh(_receivingsProvider.future),
+            ref.refresh(_inspectionPendingReceivingsProvider.future),
             ref.refresh(_purchasesProvider.future),
             ref.refresh(_inspectionsProvider.future),
           ]);
         },
-        child: requestsAsync.when(
+        child: primaryAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _ErrorView(
             error: e,
@@ -122,6 +305,11 @@ class ProcurementScreen extends ConsumerWidget {
               ref.invalidate(_materialRequestsProvider);
               ref.invalidate(_procurementDashboardProvider);
               ref.invalidate(_supplierQuotationsProvider);
+              ref.invalidate(_quotationComparisonsProvider);
+              ref.invalidate(_purchaseOrdersProvider);
+              ref.invalidate(_pendingDeliveriesProvider);
+              ref.invalidate(_receivingsProvider);
+              ref.invalidate(_inspectionPendingReceivingsProvider);
               ref.invalidate(_purchasesProvider);
               ref.invalidate(_inspectionsProvider);
             },
@@ -130,6 +318,21 @@ class ProcurementScreen extends ConsumerWidget {
             final dashboard = dashboardAsync.valueOrNull ?? const <String, dynamic>{};
             final quotations =
                 (quotationsAsync.valueOrNull ?? const <dynamic>[])
+                    .cast<Map<String, dynamic>>();
+            final comparisons =
+                (comparisonsAsync.valueOrNull ?? const <dynamic>[])
+                    .cast<Map<String, dynamic>>();
+            final purchaseOrders =
+                (purchaseOrdersAsync.valueOrNull ?? const <dynamic>[])
+                    .cast<Map<String, dynamic>>();
+            final pendingDeliveries =
+                (pendingDeliveriesAsync.valueOrNull ?? const <dynamic>[])
+                    .cast<Map<String, dynamic>>();
+            final receivings =
+                (receivingsAsync.valueOrNull ?? const <dynamic>[])
+                    .cast<Map<String, dynamic>>();
+            final pendingInspectionReceivings =
+                (pendingInspectionReceivingsAsync.valueOrNull ?? const <dynamic>[])
                     .cast<Map<String, dynamic>>();
             final purchases =
                 (purchasesAsync.valueOrNull ?? const <dynamic>[])
@@ -159,6 +362,11 @@ class ProcurementScreen extends ConsumerWidget {
                 dashboard['pending_actions'] as Map<String, dynamic>? ?? const {};
 
             if (requests.isEmpty &&
+                comparisons.isEmpty &&
+                purchaseOrders.isEmpty &&
+                pendingDeliveries.isEmpty &&
+                receivings.isEmpty &&
+                pendingInspectionReceivings.isEmpty &&
                 quotations.isEmpty &&
                 purchases.isEmpty &&
                 inspections.isEmpty &&
@@ -177,7 +385,29 @@ class ProcurementScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   Center(
                     child: Text(
-                      isSwahili ? 'Hakuna data ya ununuzi' : 'No procurement data',
+                      quotationComparisonsOnly
+                          ? (isSwahili
+                              ? 'Hakuna mlinganisho wa nukuu'
+                              : 'No quotation comparisons')
+                          : purchaseOrdersOnly
+                              ? (isSwahili
+                                  ? 'Hakuna maagizo ya ununuzi'
+                                  : 'No purchase orders')
+                          : recordDeliveriesOnly
+                              ? (isSwahili
+                                  ? 'Hakuna deliveries zinazosubiri'
+                                  : 'No deliveries pending')
+                          : supplierReceivingsOnly
+                              ? (isSwahili
+                                  ? 'Hakuna supplier receivings'
+                                  : 'No supplier receivings')
+                          : materialInspectionsOnly
+                              ? (isSwahili
+                                  ? 'Hakuna ukaguzi wa vifaa'
+                                  : 'No material inspections')
+                          : isSwahili
+                              ? 'Hakuna data ya ununuzi'
+                              : 'No procurement data',
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
@@ -189,13 +419,27 @@ class ProcurementScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
-                if (dashboard.isNotEmpty)
+                if (!materialRequestsOnly &&
+                    !supplierQuotationsOnly &&
+                    !quotationComparisonsOnly &&
+                    !purchaseOrdersOnly &&
+                    !recordDeliveriesOnly &&
+                    !supplierReceivingsOnly &&
+                    !materialInspectionsOnly &&
+                    dashboard.isNotEmpty)
                   _DashboardSummary(
                     dashboard: dashboard,
                     isDarkMode: isDarkMode,
                     isSwahili: isSwahili,
                   ),
-                if (pendingActions.isNotEmpty) ...[
+                if (!materialRequestsOnly &&
+                    !supplierQuotationsOnly &&
+                    !quotationComparisonsOnly &&
+                    !purchaseOrdersOnly &&
+                    !recordDeliveriesOnly &&
+                    !supplierReceivingsOnly &&
+                    !materialInspectionsOnly &&
+                    pendingActions.isNotEmpty) ...[
                   _SectionHeader(
                     title: isSwahili ? 'Hatua Zinazohitajika' : 'Actions Required',
                   ),
@@ -205,7 +449,14 @@ class ProcurementScreen extends ConsumerWidget {
                     isSwahili: isSwahili,
                   ),
                 ],
-                if (activeProjects.isNotEmpty) ...[
+                if (!materialRequestsOnly &&
+                    !supplierQuotationsOnly &&
+                    !quotationComparisonsOnly &&
+                    !purchaseOrdersOnly &&
+                    !recordDeliveriesOnly &&
+                    !supplierReceivingsOnly &&
+                    !materialInspectionsOnly &&
+                    activeProjects.isNotEmpty) ...[
                   _SectionHeader(
                     title: isSwahili ? 'Miradi Inayoendelea' : 'Active Projects',
                   ),
@@ -221,7 +472,14 @@ class ProcurementScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
-                if (lowStockItems.isNotEmpty) ...[
+                if (!materialRequestsOnly &&
+                    !supplierQuotationsOnly &&
+                    !quotationComparisonsOnly &&
+                    !purchaseOrdersOnly &&
+                    !recordDeliveriesOnly &&
+                    !supplierReceivingsOnly &&
+                    !materialInspectionsOnly &&
+                    lowStockItems.isNotEmpty) ...[
                   _SectionHeader(
                     title: isSwahili ? 'Tahadhari ya Stock Ndogo' : 'Low Stock Alerts',
                   ),
@@ -235,83 +493,219 @@ class ProcurementScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
-                if (pendingDashboardRequests.isNotEmpty || requests.isNotEmpty) ...[
+                if (!supplierQuotationsOnly &&
+                    !quotationComparisonsOnly &&
+                    !purchaseOrdersOnly &&
+                    !recordDeliveriesOnly &&
+                    !supplierReceivingsOnly &&
+                    !materialInspectionsOnly &&
+                    (pendingDashboardRequests.isNotEmpty || requests.isNotEmpty)) ...[
                   _SectionHeader(
                     title: isSwahili ? 'Maombi ya Vifaa' : 'Material Requests',
                   ),
-                  ...(pendingDashboardRequests.isNotEmpty
-                          ? pendingDashboardRequests
-                          : requests.cast<Map<String, dynamic>>())
-                      .take(8)
-                      .map(
+                  ...((materialRequestsOnly
+                              ? requests.cast<Map<String, dynamic>>()
+                              : (pendingDashboardRequests.isNotEmpty
+                                  ? pendingDashboardRequests
+                                  : requests.cast<Map<String, dynamic>>()))
+                          .map(
                         (req) => _RequestCard(
                           request: req,
                           isDarkMode: isDarkMode,
+                          isSwahili: isSwahili,
+                          onEdit: () => _showMaterialRequestForm(
+                            context,
+                            ref,
+                            request: req,
+                            isSwahili: isSwahili,
+                          ),
+                          onDelete: () => _deleteMaterialRequest(
+                            context,
+                            ref,
+                            req['id'] as int?,
+                            isSwahili: isSwahili,
+                          ),
+                          onSubmit: () => _submitMaterialRequest(
+                            context,
+                            ref,
+                            req['id'] as int?,
+                            isSwahili: isSwahili,
+                          ),
                           onTap: () => _showMaterialRequestDetails(
                             context,
                             ref,
                             req['id'] as int?,
                           ),
                         ),
-                      ),
+                      )),
                 ],
-                if (recentComparisons.isNotEmpty || quotations.isNotEmpty) ...[
+                if (quotationComparisonsOnly ||
+                    (!purchaseOrdersOnly &&
+                        !recordDeliveriesOnly &&
+                        !supplierReceivingsOnly &&
+                        !materialInspectionsOnly &&
+                        (recentComparisons.isNotEmpty || quotations.isNotEmpty))) ...[
                   _SectionHeader(
-                    title: isSwahili ? 'Mlinganisho wa Hivi Karibuni' : 'Recent Comparisons',
+                    title: quotationComparisonsOnly
+                        ? (isSwahili
+                            ? 'Milinganisho ya Nukuu'
+                            : 'Quotation Comparisons')
+                        : supplierQuotationsOnly
+                        ? (isSwahili ? 'Nukuu za Wasambazaji' : 'Supplier Quotations')
+                        : (isSwahili ? 'Mlinganisho wa Hivi Karibuni' : 'Recent Comparisons'),
                   ),
-                  ...(recentComparisons.isNotEmpty ? recentComparisons : quotations).take(5).map(
-                    (quotation) => _CompactRecordCard(
-                      title: quotation['comparison_number'] as String? ??
-                          quotation['quotation_number'] as String? ??
+                  ...(quotationComparisonsOnly
+                          ? comparisons
+                          : ((supplierQuotationsOnly
+                                      ? quotations
+                                      : (recentComparisons.isNotEmpty
+                                          ? recentComparisons
+                                          : quotations))
+                                  .take(supplierQuotationsOnly ? quotations.length : 5)))
+                      .map(
+                    (record) => _CompactRecordCard(
+                      title: record['comparison_number'] as String? ??
+                          record['quotation_number'] as String? ??
                           'Comparison',
-                      subtitle: quotation['supplier_name'] as String? ??
-                          quotation['supplier']?['name'] as String? ??
-                          quotation['project_name'] as String? ??
-                          quotation['material_request']?['project_name'] as String? ??
-                          '',
-                      status: quotation['status'] as String? ?? '',
-                      meta: [
-                        _metaLabel(
-                          Icons.calendar_today_rounded,
-                          _formatDate(
-                            quotation['created_at'] as String? ??
-                                quotation['delivery_date'] as String?,
-                          ),
-                        ),
-                      ],
+                      subtitle: quotationComparisonsOnly
+                          ? [
+                              record['material_request_number'] as String?,
+                              record['project_name'] as String?,
+                              record['selected_supplier_name'] as String?,
+                            ].whereType<String>().where((value) => value.isNotEmpty).join(' • ')
+                          : record['supplier_name'] as String? ??
+                              record['supplier']?['name'] as String? ??
+                              record['project_name'] as String? ??
+                              record['material_request']?['project_name'] as String? ??
+                              '',
+                      status: record['status'] as String? ?? '',
+                      meta: quotationComparisonsOnly
+                          ? [
+                              _metaLabel(
+                                Icons.calendar_today_rounded,
+                                _formatDate(
+                                  record['comparison_date'] as String? ??
+                                      record['created_at'] as String?,
+                                ),
+                              ),
+                              _metaLabel(
+                                Icons.attach_money_rounded,
+                                _formatCurrency(record['selected_amount']),
+                              ),
+                              _metaLabel(
+                                Icons.format_list_numbered_rounded,
+                                '${record['quotation_count'] ?? 0} quotes',
+                              ),
+                            ]
+                          : [
+                              _metaLabel(
+                                Icons.calendar_today_rounded,
+                                _formatDate(
+                                  record['created_at'] as String? ??
+                                      record['delivery_date'] as String?,
+                                ),
+                              ),
+                            ],
                       color: const Color(0xFF3B82F6),
                       isDarkMode: isDarkMode,
-                      onTap: () => _showSupplierQuotationDetails(
-                        context,
-                        ref,
-                        quotation['id'] as int?,
-                      ),
+                      menuActions: supplierQuotationsOnly
+                          ? _supplierQuotationActions(
+                              record,
+                              isSwahili: isSwahili,
+                              onEdit: () => _showSupplierQuotationForm(
+                                context,
+                                ref,
+                                quotation: record,
+                                isSwahili: isSwahili,
+                              ),
+                              onDelete: () => _deleteSupplierQuotation(
+                                context,
+                                ref,
+                                record['id'] as int?,
+                                isSwahili: isSwahili,
+                              ),
+                            )
+                          : null,
+                      onTap: () => quotationComparisonsOnly
+                          ? _showQuotationComparisonDetails(
+                              context,
+                              ref,
+                              record['id'] as int?,
+                            )
+                          : _showSupplierQuotationDetails(
+                              context,
+                              ref,
+                              record['id'] as int?,
+                            ),
                     ),
                   ),
                 ],
-                if (recentPurchases.isNotEmpty || purchases.isNotEmpty) ...[
+                if (purchaseOrdersOnly ||
+                    (!materialRequestsOnly &&
+                        !supplierQuotationsOnly &&
+                        !quotationComparisonsOnly &&
+                        !recordDeliveriesOnly &&
+                        !supplierReceivingsOnly &&
+                        !materialInspectionsOnly &&
+                        (recentPurchases.isNotEmpty || purchases.isNotEmpty))) ...[
                   _SectionHeader(
-                    title: isSwahili ? 'Manunuzi ya Hivi Karibuni' : 'Recent Purchases',
+                    title: purchaseOrdersOnly
+                        ? (isSwahili ? 'Maagizo ya Ununuzi' : 'Purchase Orders')
+                        : (isSwahili ? 'Manunuzi ya Hivi Karibuni' : 'Recent Purchases'),
                   ),
-                  ...(recentPurchases.isNotEmpty ? recentPurchases : purchases).take(5).map(
+                  ...((purchaseOrdersOnly
+                              ? purchaseOrders
+                              : (recentPurchases.isNotEmpty
+                                  ? recentPurchases
+                                  : purchases))
+                          .take(purchaseOrdersOnly ? purchaseOrders.length : 5))
+                      .map(
                     (purchase) => _CompactRecordCard(
-                      title: purchase['purchase_number'] as String? ?? 'Purchase',
-                      subtitle: purchase['supplier_name'] as String? ??
-                          purchase['supplier']?['name'] as String? ??
-                          purchase['project']?['project_name'] as String? ??
-                          purchase['project_name'] as String? ??
-                          '',
+                      title: purchase['document_number'] as String? ??
+                          purchase['purchase_number'] as String? ??
+                          'Purchase',
+                      subtitle: purchaseOrdersOnly
+                          ? [
+                              purchase['project']?['name'] as String?,
+                              purchase['supplier']?['name'] as String?,
+                              purchase['material_request']?['request_number']
+                                  as String?,
+                            ]
+                                .whereType<String>()
+                                .where((value) => value.isNotEmpty)
+                                .join(' • ')
+                          : purchase['supplier_name'] as String? ??
+                              purchase['supplier']?['name'] as String? ??
+                              purchase['project']?['project_name'] as String? ??
+                              purchase['project_name'] as String? ??
+                              purchase['project']?['name'] as String? ??
+                              '',
                       status: purchase['status'] as String? ?? '',
-                      meta: [
-                        _metaLabel(
-                          Icons.attach_money_rounded,
-                          _formatCurrency(purchase['total_amount']),
-                        ),
-                        _metaLabel(
-                          Icons.local_shipping_rounded,
-                          _formatDate(purchase['delivery_date'] as String?),
-                        ),
-                      ],
+                      meta: purchaseOrdersOnly
+                          ? [
+                              _metaLabel(
+                                Icons.attach_money_rounded,
+                                _formatCurrency(purchase['total_amount']),
+                              ),
+                              _metaLabel(
+                                Icons.receipt_long_rounded,
+                                '${purchase['purchase_items_count'] ?? 0} items',
+                              ),
+                              _metaLabel(
+                                Icons.event_rounded,
+                                _formatDate(purchase['date'] as String?),
+                              ),
+                            ]
+                          : [
+                              _metaLabel(
+                                Icons.attach_money_rounded,
+                                _formatCurrency(purchase['total_amount']),
+                              ),
+                              _metaLabel(
+                                Icons.local_shipping_rounded,
+                                _formatDate(purchase['delivery_date'] as String?),
+                              ),
+                            ],
                       color: const Color(0xFF27AE60),
                       isDarkMode: isDarkMode,
                       onTap: () => _showPurchaseDetails(
@@ -322,7 +716,14 @@ class ProcurementScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
-                if (recentInspections.isNotEmpty || inspections.isNotEmpty) ...[
+                if (!materialRequestsOnly &&
+                    !supplierQuotationsOnly &&
+                    !quotationComparisonsOnly &&
+                    !purchaseOrdersOnly &&
+                    !recordDeliveriesOnly &&
+                    !supplierReceivingsOnly &&
+                    !materialInspectionsOnly &&
+                    (recentInspections.isNotEmpty || inspections.isNotEmpty)) ...[
                   _SectionHeader(
                     title: isSwahili ? 'Ukaguzi wa Vifaa' : 'Material Inspections',
                   ),
@@ -358,6 +759,163 @@ class ProcurementScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+                if (recordDeliveriesOnly) ...[
+                  _SectionHeader(
+                    title: isSwahili
+                        ? 'Manunuzi Yanayosubiri Delivery'
+                        : 'Purchase Orders Awaiting Delivery',
+                  ),
+                  ...pendingDeliveries.map(
+                    (delivery) => _CompactRecordCard(
+                      title: delivery['document_number'] as String? ?? 'Purchase Order',
+                      subtitle: [
+                        delivery['project']?['name'] as String?,
+                        delivery['supplier']?['name'] as String?,
+                        delivery['material_request']?['request_number'] as String?,
+                      ].whereType<String>().where((value) => value.isNotEmpty).join(' - '),
+                      status: delivery['status'] as String? ?? '',
+                      meta: [
+                        _metaLabel(
+                          Icons.receipt_long_rounded,
+                          '${delivery['purchase_items_count'] ?? 0} items',
+                        ),
+                        _metaLabel(
+                          Icons.check_circle_outline_rounded,
+                          '${delivery['fully_received_count'] ?? 0} received',
+                        ),
+                        _metaLabel(
+                          Icons.pending_actions_rounded,
+                          '${delivery['pending_count'] ?? 0} pending',
+                        ),
+                      ],
+                      color: const Color(0xFF0EA5E9),
+                      isDarkMode: isDarkMode,
+                      onTap: () => _showRecordDeliveryForm(
+                        context,
+                        ref,
+                        delivery['id'] as int?,
+                        isSwahili: isSwahili,
+                      ),
+                    ),
+                  ),
+                ],
+                if (supplierReceivingsOnly) ...[
+                  _SectionHeader(
+                    title: isSwahili ? 'Supplier Receivings' : 'Supplier Receivings',
+                  ),
+                  ...receivings.map(
+                    (receiving) => _CompactRecordCard(
+                      title:
+                          receiving['receiving_number'] as String? ?? 'Receiving',
+                      subtitle: [
+                        receiving['purchase']?['document_number'] as String?,
+                        receiving['project']?['name'] as String?,
+                        receiving['supplier']?['name'] as String?,
+                      ].whereType<String>().where((value) => value.isNotEmpty).join(' - '),
+                      status: receiving['status'] as String? ?? '',
+                      meta: [
+                        _metaLabel(
+                          Icons.event_rounded,
+                          _formatDate(receiving['date'] as String?),
+                        ),
+                        _metaLabel(
+                          Icons.local_shipping_rounded,
+                          receiving['delivery_note_number'] as String? ?? '-',
+                        ),
+                        _metaLabel(
+                          Icons.inventory_2_rounded,
+                          _formatNumber(receiving['quantity_delivered']),
+                        ),
+                      ],
+                      color: const Color(0xFFF59E0B),
+                      isDarkMode: isDarkMode,
+                      onTap: () => _showReceivingDetails(
+                        context,
+                        ref,
+                        receiving['id'] as int?,
+                      ),
+                    ),
+                  ),
+                ],
+                if (materialInspectionsOnly &&
+                    pendingInspectionReceivings.isNotEmpty) ...[
+                  _SectionHeader(
+                    title: isSwahili
+                        ? 'Deliveries Zinasubiri Ukaguzi'
+                        : 'Deliveries Pending Inspection',
+                  ),
+                  ...pendingInspectionReceivings.map(
+                    (receiving) => _CompactRecordCard(
+                      title:
+                          receiving['receiving_number'] as String? ?? 'Receiving',
+                      subtitle: [
+                        receiving['supplier_name'] as String?,
+                        receiving['project_name'] as String?,
+                        receiving['purchase_number'] as String?,
+                      ].whereType<String>().where((value) => value.isNotEmpty).join(' - '),
+                      status: 'pending',
+                      meta: [
+                        _metaLabel(
+                          Icons.event_rounded,
+                          _formatDate(receiving['delivery_date'] as String?),
+                        ),
+                        _metaLabel(
+                          Icons.inventory_2_rounded,
+                          _formatNumber(receiving['quantity_delivered']),
+                        ),
+                        _metaLabel(
+                          Icons.fact_check_rounded,
+                          _titleCase(receiving['condition'] as String?),
+                        ),
+                      ],
+                      color: const Color(0xFFF59E0B),
+                      isDarkMode: isDarkMode,
+                      onTap: () => _showReceivingDetails(
+                        context,
+                        ref,
+                        receiving['id'] as int?,
+                      ),
+                    ),
+                  ),
+                ],
+                if (materialInspectionsOnly) ...[
+                  _SectionHeader(
+                    title: isSwahili ? 'Ukaguzi Wote' : 'All Inspections',
+                  ),
+                  ...inspections.map(
+                    (inspection) => _CompactRecordCard(
+                      title:
+                          inspection['inspection_number'] as String? ?? 'Inspection',
+                      subtitle: [
+                        inspection['project_name'] as String?,
+                        inspection['boq_item']?['description'] as String?,
+                        inspection['supplier_receiving']?['supplier_name'] as String?,
+                      ].whereType<String>().where((value) => value.isNotEmpty).join(' - '),
+                      status: inspection['status'] as String? ?? '',
+                      meta: [
+                        _metaLabel(
+                          Icons.event_rounded,
+                          _formatDate(inspection['inspection_date'] as String?),
+                        ),
+                        _metaLabel(
+                          Icons.check_circle_outline_rounded,
+                          '${_formatNumber(inspection['quantity_accepted'])} accepted',
+                        ),
+                        _metaLabel(
+                          Icons.percent_rounded,
+                          '${_formatNumber(inspection['acceptance_rate'])}%',
+                        ),
+                      ],
+                      color: const Color(0xFF8B5CF6),
+                      isDarkMode: isDarkMode,
+                      onTap: () => _showInspectionDetails(
+                        context,
+                        ref,
+                        inspection['id'] as int?,
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 80),
               ],
             );
@@ -371,12 +929,20 @@ class ProcurementScreen extends ConsumerWidget {
 class _RequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
   final bool isDarkMode;
+  final bool isSwahili;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final VoidCallback? onSubmit;
 
   const _RequestCard({
     required this.request,
     required this.isDarkMode,
+    required this.isSwahili,
     this.onTap,
+    this.onEdit,
+    this.onDelete,
+    this.onSubmit,
   });
 
   @override
@@ -388,6 +954,11 @@ class _RequestCard extends StatelessWidget {
     final status = request['status'] as String? ?? '';
     final createdAt = request['created_at'] as String?;
     final itemCount = request['items_count'] ?? request['items']?.length ?? 0;
+    final purpose = request['purpose'] as String? ?? '';
+    final priority = _titleCase(request['priority'] as String?);
+    final canEdit = ['draft', 'rejected'].contains(status.toLowerCase());
+    final canDelete = status.toLowerCase() == 'draft';
+    final canSubmit = ['draft', 'rejected'].contains(status.toLowerCase());
 
     String? dateStr;
     if (createdAt != null) {
@@ -438,6 +1009,7 @@ class _RequestCard extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 44,
@@ -478,48 +1050,96 @@ class _RequestCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      const SizedBox(height: 4),
-                      Row(
+                      if (purpose.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          purpose,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDarkMode
+                                ? Colors.white54
+                                : AppColors.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 6,
                         children: [
                           if (itemCount > 0) ...[
-                            Icon(
-                              Icons.list_rounded,
-                              size: 12,
-                              color: isDarkMode
-                                  ? Colors.white38
-                                  : AppColors.textHint,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$itemCount items',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDarkMode
-                                    ? Colors.white38
-                                    : AppColors.textHint,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.list_rounded,
+                                  size: 12,
+                                  color: isDarkMode
+                                      ? Colors.white38
+                                      : AppColors.textHint,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$itemCount items',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDarkMode
+                                        ? Colors.white38
+                                        : AppColors.textHint,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                           if (dateStr != null) ...[
-                            if (itemCount > 0) const SizedBox(width: 10),
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 11,
-                              color: isDarkMode
-                                  ? Colors.white38
-                                  : AppColors.textHint,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              dateStr,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDarkMode
-                                    ? Colors.white38
-                                    : AppColors.textHint,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 11,
+                                  color: isDarkMode
+                                      ? Colors.white38
+                                      : AppColors.textHint,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  dateStr,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDarkMode
+                                        ? Colors.white38
+                                        : AppColors.textHint,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
+                          if (priority.isNotEmpty)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.flag_rounded,
+                                  size: 11,
+                                  color: isDarkMode
+                                      ? Colors.white38
+                                      : AppColors.textHint,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  priority,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDarkMode
+                                        ? Colors.white38
+                                        : AppColors.textHint,
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     ],
@@ -545,11 +1165,42 @@ class _RequestCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 14,
-                      color: isDarkMode ? Colors.white38 : AppColors.textHint,
-                    ),
+                    if (canEdit || canDelete || canSubmit)
+                      PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_vert_rounded,
+                          size: 18,
+                          color: isDarkMode ? Colors.white38 : AppColors.textHint,
+                        ),
+                        onSelected: (value) {
+                          if (value == 'edit') onEdit?.call();
+                          if (value == 'delete') onDelete?.call();
+                          if (value == 'submit') onSubmit?.call();
+                        },
+                        itemBuilder: (context) => [
+                          if (canEdit)
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Text(isSwahili ? 'Hariri' : 'Edit'),
+                            ),
+                          if (canSubmit)
+                            PopupMenuItem(
+                              value: 'submit',
+                              child: Text(isSwahili ? 'Wasilisha' : 'Submit'),
+                            ),
+                          if (canDelete)
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text(isSwahili ? 'Futa' : 'Delete'),
+                            ),
+                        ],
+                      )
+                    else
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: isDarkMode ? Colors.white38 : AppColors.textHint,
+                      ),
                   ],
                 ),
               ],
@@ -953,6 +1604,7 @@ class _CompactRecordCard extends StatelessWidget {
   final Color color;
   final bool isDarkMode;
   final VoidCallback? onTap;
+  final List<_CardMenuAction>? menuActions;
 
   const _CompactRecordCard({
     required this.title,
@@ -962,6 +1614,7 @@ class _CompactRecordCard extends StatelessWidget {
     required this.color,
     required this.isDarkMode,
     this.onTap,
+    this.menuActions,
   });
 
   @override
@@ -1001,6 +1654,8 @@ class _CompactRecordCard extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                               color: isDarkMode ? Colors.white : AppColors.textPrimary,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           if (subtitle.isNotEmpty) ...[
                             const SizedBox(height: 2),
@@ -1012,6 +1667,8 @@ class _CompactRecordCard extends StatelessWidget {
                                     ? Colors.white54
                                     : AppColors.textSecondary,
                               ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ],
@@ -1040,11 +1697,38 @@ class _CompactRecordCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Icon(
-                          Icons.arrow_forward_ios_rounded,
-                          size: 14,
-                          color: isDarkMode ? Colors.white38 : AppColors.textHint,
-                        ),
+                        if (menuActions != null && menuActions!.isNotEmpty)
+                          PopupMenuButton<String>(
+                            icon: Icon(
+                              Icons.more_vert_rounded,
+                              size: 18,
+                              color:
+                                  isDarkMode ? Colors.white38 : AppColors.textHint,
+                            ),
+                            onSelected: (value) {
+                              for (final action in menuActions!) {
+                                if (action.value == value) {
+                                  action.onSelected();
+                                  return;
+                                }
+                              }
+                            },
+                            itemBuilder: (context) => menuActions!
+                                .map(
+                                  (action) => PopupMenuItem<String>(
+                                    value: action.value,
+                                    child: Text(action.label),
+                                  ),
+                                )
+                                .toList(),
+                          )
+                        else
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 14,
+                            color:
+                                isDarkMode ? Colors.white38 : AppColors.textHint,
+                          ),
                       ],
                     ),
                   ],
@@ -1062,6 +1746,18 @@ class _CompactRecordCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CardMenuAction {
+  final String value;
+  final String label;
+  final VoidCallback onSelected;
+
+  const _CardMenuAction({
+    required this.value,
+    required this.label,
+    required this.onSelected,
+  });
 }
 
 Widget _metaLabel(IconData icon, String value) {
@@ -1139,6 +1835,703 @@ String _formatDays(dynamic value) {
   return '$value days';
 }
 
+Future<void> _deleteMaterialRequest(
+  BuildContext context,
+  WidgetRef ref,
+  int? requestId, {
+  required bool isSwahili,
+}) async {
+  if (requestId == null) return;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(isSwahili ? 'Thibitisha' : 'Confirm'),
+      content: Text(
+        isSwahili
+            ? 'Unataka kufuta ombi hili la vifaa?'
+            : 'Do you want to delete this material request?',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(isSwahili ? 'Hapana' : 'Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(isSwahili ? 'Futa' : 'Delete'),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true) return;
+
+  try {
+    final api = ref.read(apiClientProvider);
+    await api.delete('/material-requests/$requestId');
+    ref.invalidate(_materialRequestsProvider);
+    ref.invalidate(_procurementDashboardProvider);
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+}
+
+Future<void> _submitMaterialRequest(
+  BuildContext context,
+  WidgetRef ref,
+  int? requestId, {
+  required bool isSwahili,
+}) async {
+  if (requestId == null) return;
+
+  try {
+    final api = ref.read(apiClientProvider);
+    await api.post('/material-requests/$requestId/submit');
+    ref.invalidate(_materialRequestsProvider);
+    ref.invalidate(_procurementDashboardProvider);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isSwahili
+                ? 'Ombi limewasilishwa kwa idhini.'
+                : 'Request submitted for approval.',
+          ),
+        ),
+      );
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+}
+
+Future<void> _showMaterialRequestForm(
+  BuildContext context,
+  WidgetRef ref, {
+  Map<String, dynamic>? request,
+  required bool isSwahili,
+}) async {
+  final projects = await ref.read(_projectsProvider.future);
+  if (!context.mounted) return;
+
+  final isEdit = request != null;
+  final projectMap = request?['project'] is Map<String, dynamic>
+      ? request!['project'] as Map<String, dynamic>
+      : null;
+  int? selectedProjectId =
+      request?['project_id'] as int? ?? projectMap?['id'] as int?;
+  final purposeCtrl = TextEditingController(
+    text: request?['purpose'] as String? ?? request?['description'] as String? ?? '',
+  );
+  final requiredDateCtrl = TextEditingController(
+    text: request?['required_date'] as String? ??
+        request?['needed_by_date'] as String? ??
+        '',
+  );
+  String priority = (request?['priority'] as String? ?? 'medium').toLowerCase();
+  final items = ((request?['items'] as List?) ?? [])
+      .map((item) => Map<String, TextEditingController>.from({
+            'material_name': TextEditingController(
+              text: (item as Map<String, dynamic>)['description'] as String? ??
+                  item['material_name'] as String? ??
+                  '',
+            ),
+            'quantity': TextEditingController(
+              text: item['quantity_requested']?.toString() ??
+                  item['quantity']?.toString() ??
+                  '',
+            ),
+            'unit': TextEditingController(text: item['unit'] as String? ?? ''),
+          }))
+      .toList();
+  final itemControllers =
+      items.isEmpty ? [_newMaterialItemControllers()] : items;
+  final formKey = GlobalKey<FormState>();
+
+  await showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          16,
+          20,
+          MediaQuery.of(ctx).viewInsets.bottom + 100,
+        ),
+        child: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isEdit
+                      ? (isSwahili ? 'Hariri Ombi' : 'Edit Request')
+                      : (isSwahili ? 'Ombi Jipya' : 'New Request'),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  value: selectedProjectId,
+                  items: projects
+                      .map(
+                        (project) => DropdownMenuItem<int>(
+                          value: project['id'] as int,
+                          child: Text(
+                            project['project_name'] as String? ??
+                                project['name'] as String? ??
+                                'Project',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) => setState(() => selectedProjectId = value),
+                  decoration: const InputDecoration(labelText: 'Project *'),
+                  validator: (value) => value == null ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: purposeCtrl,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Madhumuni *' : 'Purpose *',
+                  ),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: requiredDateCtrl,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Tarehe Inayohitajika' : 'Required Date',
+                  ),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate:
+                          DateTime.tryParse(requiredDateCtrl.text) ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2035),
+                    );
+                    if (picked != null) {
+                      requiredDateCtrl.text =
+                          DateFormat('yyyy-MM-dd').format(picked);
+                    }
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: priority,
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Kipaumbele' : 'Priority',
+                  ),
+                  items: const ['low', 'medium', 'high', 'urgent']
+                      .map(
+                        (value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(_titleCase(value)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) => setState(() => priority = value ?? 'medium'),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isSwahili ? 'Vitu vinavyohitajika' : 'Requested Items',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 10),
+                ...List.generate(itemControllers.length, (index) {
+                  final item = itemControllers[index];
+                  return _MaterialItemEditor(
+                    index: index,
+                    controllers: item,
+                    canRemove: itemControllers.length > 1,
+                    isSwahili: isSwahili,
+                    onRemove: () => setState(() => itemControllers.removeAt(index)),
+                  );
+                }),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      setState(() => itemControllers.add(_newMaterialItemControllers())),
+                  icon: const Icon(Icons.add_rounded),
+                  label: Text(isSwahili ? 'Ongeza Kitu' : 'Add Item'),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (!formKey.currentState!.validate()) return;
+                      final payload = {
+                        if (selectedProjectId != null) 'project_id': selectedProjectId,
+                        'purpose': purposeCtrl.text.trim(),
+                        'required_date': requiredDateCtrl.text.trim().isEmpty
+                            ? null
+                            : requiredDateCtrl.text.trim(),
+                        'priority': priority,
+                        'items': itemControllers
+                            .map(
+                              (item) => {
+                                'material_name':
+                                    item['material_name']!.text.trim(),
+                                'quantity': double.tryParse(
+                                      item['quantity']!.text.trim(),
+                                    ) ??
+                                    0,
+                                'unit': item['unit']!.text.trim(),
+                              },
+                            )
+                            .where((item) => (item['material_name'] as String).isNotEmpty)
+                            .toList(),
+                      };
+
+                      try {
+                        final api = ref.read(apiClientProvider);
+                        if (isEdit) {
+                          await api.put(
+                            '/material-requests/${request['id']}',
+                            data: payload,
+                          );
+                        } else {
+                          await api.post('/material-requests', data: payload);
+                        }
+                        ref.invalidate(_materialRequestsProvider);
+                        ref.invalidate(_procurementDashboardProvider);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      } catch (e) {
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(content: Text('$e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    },
+                    child: Text(isSwahili ? 'Hifadhi' : 'Save'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+Map<String, TextEditingController> _newMaterialItemControllers() => {
+      'material_name': TextEditingController(),
+      'quantity': TextEditingController(),
+      'unit': TextEditingController(),
+    };
+
+List<_CardMenuAction> _supplierQuotationActions(
+  Map<String, dynamic> quotation, {
+  required bool isSwahili,
+  required VoidCallback onEdit,
+  required VoidCallback onDelete,
+}) {
+  final status = (quotation['status'] as String? ?? '').toLowerCase();
+  final canEdit = status != 'selected';
+  final canDelete = status != 'selected';
+  return [
+    if (canEdit)
+      _CardMenuAction(
+        value: 'edit',
+        label: isSwahili ? 'Hariri' : 'Edit',
+        onSelected: onEdit,
+      ),
+    if (canDelete)
+      _CardMenuAction(
+        value: 'delete',
+        label: isSwahili ? 'Futa' : 'Delete',
+        onSelected: onDelete,
+      ),
+  ];
+}
+
+Future<void> _deleteSupplierQuotation(
+  BuildContext context,
+  WidgetRef ref,
+  int? quotationId, {
+  required bool isSwahili,
+}) async {
+  if (quotationId == null) return;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(isSwahili ? 'Thibitisha' : 'Confirm'),
+      content: Text(
+        isSwahili
+            ? 'Unataka kufuta nukuu hii?'
+            : 'Do you want to delete this quotation?',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: Text(isSwahili ? 'Hapana' : 'Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(isSwahili ? 'Futa' : 'Delete'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+
+  try {
+    final api = ref.read(apiClientProvider);
+    await api.delete('/procurement/supplier-quotations/$quotationId');
+    ref.invalidate(_supplierQuotationsProvider);
+    ref.invalidate(_procurementDashboardProvider);
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+}
+
+Future<void> _showSupplierQuotationForm(
+  BuildContext context,
+  WidgetRef ref, {
+  Map<String, dynamic>? quotation,
+  required bool isSwahili,
+}) async {
+  final api = ref.read(apiClientProvider);
+  final response = await api.get('/procurement/supplier-quotations/reference-data');
+  final data = response.data['data'] as Map<String, dynamic>? ?? {};
+  final suppliers =
+      (data['suppliers'] as List? ?? const <dynamic>[]).cast<Map<String, dynamic>>();
+  final materialRequests = (data['material_requests'] as List? ?? const <dynamic>[])
+      .cast<Map<String, dynamic>>();
+  if (!context.mounted) return;
+
+  final isEdit = quotation != null;
+  int? selectedSupplierId = quotation?['supplier_id'] as int?;
+  int? selectedRequestId = quotation?['material_request_id'] as int?;
+  final quotationDateCtrl = TextEditingController(
+    text: quotation?['quotation_date'] as String? ?? DateFormat('yyyy-MM-dd').format(DateTime.now()),
+  );
+  final validUntilCtrl = TextEditingController(
+    text: quotation?['valid_until'] as String? ?? '',
+  );
+  final deliveryDaysCtrl = TextEditingController(
+    text: quotation?['delivery_time_days']?.toString() ?? '',
+  );
+  final paymentTermsCtrl = TextEditingController(
+    text: quotation?['payment_terms'] as String? ?? '',
+  );
+  final vatCtrl = TextEditingController(
+    text: quotation?['vat_amount']?.toString() ?? '',
+  );
+  final notesCtrl = TextEditingController(
+    text: quotation?['notes'] as String? ?? '',
+  );
+  final formKey = GlobalKey<FormState>();
+
+  List<Map<String, TextEditingController>> buildItemControllers(int? requestId) {
+    final selectedRequest = materialRequests.firstWhere(
+      (item) => item['id'] == requestId,
+      orElse: () => <String, dynamic>{},
+    );
+    final requestItems =
+        (selectedRequest['items'] as List? ?? const <dynamic>[]).cast<Map<String, dynamic>>();
+    final quotationItems =
+        (quotation?['items'] as List? ?? const <dynamic>[]).cast<Map<String, dynamic>>();
+
+    return requestItems.map((requestItem) {
+      final matched = quotationItems.cast<Map<String, dynamic>?>().firstWhere(
+            (item) => item?['material_request_item_id'] == requestItem['id'],
+            orElse: () => null,
+          );
+      return {
+        'material_request_item_id': TextEditingController(
+          text: '${requestItem['id']}',
+        ),
+        'description': TextEditingController(
+          text: matched?['description'] as String? ??
+              requestItem['description'] as String? ??
+              '',
+        ),
+        'quantity': TextEditingController(
+          text: matched?['quantity']?.toString() ??
+              requestItem['quantity_requested']?.toString() ??
+              '',
+        ),
+        'unit': TextEditingController(
+          text: matched?['unit'] as String? ?? requestItem['unit'] as String? ?? '',
+        ),
+        'unit_price': TextEditingController(
+          text: matched?['unit_price']?.toString() ?? '',
+        ),
+        'boq_item_id': TextEditingController(
+          text: '${requestItem['boq_item_id'] ?? ''}',
+        ),
+      };
+    }).toList();
+  }
+
+  var itemControllers = buildItemControllers(selectedRequestId);
+
+  await showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          16,
+          20,
+          MediaQuery.of(ctx).viewInsets.bottom + 100,
+        ),
+        child: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isEdit
+                      ? (isSwahili ? 'Hariri Nukuu' : 'Edit Quotation')
+                      : (isSwahili ? 'Nukuu Mpya' : 'New Quotation'),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  value: selectedRequestId,
+                  items: materialRequests
+                      .map(
+                        (item) => DropdownMenuItem<int>(
+                          value: item['id'] as int,
+                          child: Text(
+                            '${item['request_number'] ?? ''} ${item['project_name'] ?? ''}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedRequestId = value;
+                      itemControllers = buildItemControllers(value);
+                    });
+                  },
+                  decoration: const InputDecoration(labelText: 'Material Request *'),
+                  validator: (value) => value == null ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<int>(
+                  value: selectedSupplierId,
+                  items: suppliers
+                      .map(
+                        (supplier) => DropdownMenuItem<int>(
+                          value: supplier['id'] as int,
+                          child: Text(
+                            supplier['name'] as String? ?? 'Supplier',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) => setState(() => selectedSupplierId = value),
+                  decoration: const InputDecoration(labelText: 'Supplier *'),
+                  validator: (value) => value == null ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: quotationDateCtrl,
+                  readOnly: true,
+                  decoration: const InputDecoration(labelText: 'Quotation Date *'),
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: DateTime.tryParse(quotationDateCtrl.text) ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2035),
+                    );
+                    if (picked != null) {
+                      quotationDateCtrl.text = DateFormat('yyyy-MM-dd').format(picked);
+                    }
+                  },
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: validUntilCtrl,
+                        readOnly: true,
+                        decoration: const InputDecoration(labelText: 'Valid Until'),
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: ctx,
+                            initialDate: DateTime.tryParse(validUntilCtrl.text) ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2035),
+                          );
+                          if (picked != null) {
+                            validUntilCtrl.text =
+                                DateFormat('yyyy-MM-dd').format(picked);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: deliveryDaysCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration:
+                            const InputDecoration(labelText: 'Delivery Days'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: paymentTermsCtrl,
+                  decoration: const InputDecoration(labelText: 'Payment Terms'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: vatCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'VAT Amount'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: notesCtrl,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(labelText: 'Notes'),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  isSwahili ? 'Vipengee vya Nukuu' : 'Quotation Items',
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 10),
+                ...List.generate(itemControllers.length, (index) {
+                  final item = itemControllers[index];
+                  return _QuotationItemEditor(
+                    index: index,
+                    controllers: item,
+                    isSwahili: isSwahili,
+                  );
+                }),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (!formKey.currentState!.validate()) return;
+                      final payload = {
+                        'material_request_id': selectedRequestId,
+                        'supplier_id': selectedSupplierId,
+                        'quotation_date': quotationDateCtrl.text.trim(),
+                        'valid_until': validUntilCtrl.text.trim().isEmpty
+                            ? null
+                            : validUntilCtrl.text.trim(),
+                        'delivery_time_days':
+                            int.tryParse(deliveryDaysCtrl.text.trim()),
+                        'payment_terms': paymentTermsCtrl.text.trim(),
+                        'vat_amount': double.tryParse(vatCtrl.text.trim()) ?? 0,
+                        'notes': notesCtrl.text.trim(),
+                        'items': itemControllers.map((item) {
+                          return {
+                            'material_request_item_id': int.tryParse(
+                              item['material_request_item_id']!.text.trim(),
+                            ),
+                            'description': item['description']!.text.trim(),
+                            'quantity': double.tryParse(
+                                  item['quantity']!.text.trim(),
+                                ) ??
+                                0,
+                            'unit': item['unit']!.text.trim(),
+                            'unit_price': double.tryParse(
+                                  item['unit_price']!.text.trim(),
+                                ) ??
+                                0,
+                            'boq_item_id': int.tryParse(
+                              item['boq_item_id']!.text.trim(),
+                            ),
+                          };
+                        }).toList(),
+                      };
+
+                      try {
+                        if (isEdit) {
+                          await api.put(
+                            '/procurement/supplier-quotations/${quotation['id']}',
+                            data: payload,
+                          );
+                        } else {
+                          await api.post('/procurement/supplier-quotations', data: payload);
+                        }
+                        ref.invalidate(_supplierQuotationsProvider);
+                        ref.invalidate(_procurementDashboardProvider);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      } catch (e) {
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(content: Text('$e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    },
+                    child: Text(isSwahili ? 'Hifadhi' : 'Save'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 Color _stockColor(String? status) {
   switch ((status ?? '').toLowerCase()) {
     case 'out_of_stock':
@@ -1180,12 +2573,12 @@ void _showMaterialRequestDetails(
               _DetailRow(label: 'Status', value: _titleCase(detail['status'] as String?)),
               _DetailRow(label: 'Priority', value: _titleCase(detail['priority'] as String?)),
               _DetailRow(label: 'Requested By', value: requesterName.isEmpty ? '-' : requesterName),
-              _DetailRow(label: 'Needed By', value: _formatDate(detail['needed_by_date'] as String?)),
+              _DetailRow(label: 'Needed By', value: _formatDate(detail['required_date'] as String? ?? detail['needed_by_date'] as String?)),
               _DetailRow(label: 'Created', value: _formatDate(detail['created_at'] as String?)),
-              if ((detail['description'] as String?)?.isNotEmpty ?? false)
+              if ((detail['purpose'] as String?)?.isNotEmpty ?? false)
                 _DetailSection(
-                  title: 'Description',
-                  child: Text(detail['description'] as String),
+                  title: 'Purpose',
+                  child: Text(detail['purpose'] as String),
                 ),
               if ((detail['notes'] as String?)?.isNotEmpty ?? false)
                 _DetailSection(
@@ -1198,8 +2591,12 @@ void _showMaterialRequestDetails(
                   child: Column(
                     children: items.map<Widget>((item) {
                       final map = item as Map<String, dynamic>;
-                      final materialName = map['material_name'] as String? ?? 'Material';
-                      final quantity = map['quantity']?.toString() ?? '-';
+                      final materialName = map['description'] as String? ??
+                          map['material_name'] as String? ??
+                          'Material';
+                      final quantity = map['quantity_requested']?.toString() ??
+                          map['quantity']?.toString() ??
+                          '-';
                       final unit = map['unit'] as String? ?? '';
                       return _DetailRow(
                         label: materialName,
@@ -1250,9 +2647,20 @@ void _showSupplierQuotationDetails(
                 value: detail['material_request']?['project_name'] as String? ?? '-',
               ),
               _DetailRow(label: 'Status', value: _titleCase(detail['status'] as String?)),
-              _DetailRow(label: 'Delivery Date', value: _formatDate(detail['delivery_date'] as String?)),
-              _DetailRow(label: 'Validity', value: _formatDays(detail['validity_days'])),
+              _DetailRow(
+                label: 'Quotation Date',
+                value: _formatDate(detail['quotation_date'] as String?),
+              ),
+              _DetailRow(
+                label: 'Valid Until',
+                value: _formatDate(detail['valid_until'] as String?),
+              ),
+              _DetailRow(
+                label: 'Delivery Days',
+                value: _formatDays(detail['delivery_time_days']),
+              ),
               _DetailRow(label: 'Total Amount', value: _formatCurrency(detail['total_amount'])),
+              _DetailRow(label: 'VAT Amount', value: _formatCurrency(detail['vat_amount'])),
               if ((detail['notes'] as String?)?.isNotEmpty ?? false)
                 _DetailSection(
                   title: 'Notes',
@@ -1269,12 +2677,490 @@ void _showSupplierQuotationDetails(
                           'Item';
                       final quantity = map['quantity']?.toString() ?? '-';
                       final unitPrice = _formatCurrency(
-                        map['unit_price'] ?? map['price'],
+                        map['unit_price'] ?? map['price'] ?? map['total_price'],
                       );
                       return _DetailRow(
                         label: itemName,
                         value: '$quantity ${map['unit'] ?? ''}'.trim(),
                         trailing: unitPrice,
+                      );
+                    }).toList(),
+                  ),
+                ),
+            ];
+          },
+        );
+      },
+    ),
+  );
+}
+
+void _showQuotationComparisonDetails(
+  BuildContext context,
+  WidgetRef ref,
+  int? comparisonId,
+) {
+  if (comparisonId == null) return;
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Consumer(
+      builder: (context, ref, _) {
+        final detailAsync = ref.watch(
+          _quotationComparisonDetailProvider(comparisonId),
+        );
+        return _ProcurementDetailSheet(
+          title: 'Quotation Comparison',
+          detailAsync: detailAsync,
+          builder: (detail) {
+            final quotations = (detail['quotations'] as List? ?? const <dynamic>[]);
+            final selectedQuotation =
+                detail['selected_quotation'] as Map<String, dynamic>?;
+            return [
+              _DetailRow(
+                label: 'Comparison Number',
+                value: '${detail['comparison_number'] ?? '-'}',
+              ),
+              _DetailRow(
+                label: 'Material Request',
+                value: detail['material_request']?['request_number'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Project',
+                value: detail['material_request']?['project_name'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Status',
+                value: _titleCase(detail['status'] as String?),
+              ),
+              _DetailRow(
+                label: 'Comparison Date',
+                value: _formatDate(detail['comparison_date'] as String?),
+              ),
+              _DetailRow(
+                label: 'Prepared By',
+                value: detail['prepared_by']?['name'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Approved By',
+                value: detail['approved_by']?['name'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Approved Date',
+                value: _formatDate(detail['approved_date'] as String?),
+              ),
+              _DetailRow(
+                label: 'Selected Supplier',
+                value: selectedQuotation?['supplier_name'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Selected Quote',
+                value: selectedQuotation?['quotation_number'] as String? ?? '-',
+                trailing: _formatCurrency(selectedQuotation?['grand_total']),
+              ),
+              _DetailRow(
+                label: 'Quotation Count',
+                value: '${detail['quotation_count'] ?? 0}',
+              ),
+              _DetailRow(
+                label: 'Average Price',
+                value: _formatCurrency(detail['average_quotation_price']),
+              ),
+              _DetailRow(
+                label: 'Price Variance',
+                value: _formatCurrency(detail['price_variance']),
+              ),
+              _DetailRow(
+                label: 'Savings',
+                value: _formatCurrency(detail['savings']),
+              ),
+              if ((detail['recommendation_reason'] as String?)?.isNotEmpty ?? false)
+                _DetailSection(
+                  title: 'Recommendation Reason',
+                  child: Text(detail['recommendation_reason'] as String),
+                ),
+              if (quotations.isNotEmpty)
+                _DetailSection(
+                  title: 'Compared Quotations',
+                  child: Column(
+                    children: quotations.map<Widget>((quotation) {
+                      final map = quotation as Map<String, dynamic>;
+                      final label =
+                          '${map['quotation_number'] ?? 'Quotation'}${(map['is_selected'] == true) ? ' (Selected)' : ''}';
+                      final value = [
+                        map['supplier_name'] as String?,
+                        _formatDate(map['quotation_date'] as String?),
+                      ].whereType<String>().where((part) => part.isNotEmpty).join(' • ');
+                      return _DetailRow(
+                        label: label,
+                        value: value.isEmpty ? '-' : value,
+                        trailing: _formatCurrency(map['grand_total']),
+                      );
+                    }).toList(),
+                  ),
+                ),
+            ];
+          },
+        );
+      },
+    ),
+  );
+}
+
+Future<void> _showRecordDeliveryForm(
+  BuildContext context,
+  WidgetRef ref,
+  int? purchaseId, {
+  required bool isSwahili,
+}) async {
+  if (purchaseId == null) return;
+  final api = ref.read(apiClientProvider);
+  final purchaseDetail = await ref.read(_purchaseDetailProvider(purchaseId).future);
+  final items = (purchaseDetail['purchase_items'] as List? ?? const <dynamic>[])
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList();
+
+  if (!context.mounted) return;
+
+  final formKey = GlobalKey<FormState>();
+  final deliveryNoteCtrl = TextEditingController();
+  final dateCtrl = TextEditingController(
+    text: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+  );
+  final descriptionCtrl = TextEditingController();
+  String condition = 'good';
+  final quantityControllers = <int, TextEditingController>{};
+
+  for (final item in items) {
+    final itemId = item['id'] as int?;
+    if (itemId == null) continue;
+    final quantity = ((item['quantity'] as num?) ?? 0).toDouble();
+    final received = ((item['quantity_received'] as num?) ?? 0).toDouble();
+    final pending = (quantity - received).clamp(0, quantity);
+    quantityControllers[itemId] = TextEditingController(
+      text: pending > 0 ? pending.toStringAsFixed(pending == pending.roundToDouble() ? 0 : 2) : '0',
+    );
+  }
+
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setState) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(ctx).size.height * 0.92,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                12,
+                20,
+                24 + MediaQuery.of(ctx).viewInsets.bottom,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SheetHandle(isDarkMode: false),
+                  const SizedBox(height: 12),
+                  Text(
+                    isSwahili ? 'Rekodi Delivery' : 'Record Delivery',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    purchaseDetail['document_number'] as String? ??
+                        'PO-${purchaseDetail['id'] ?? purchaseId}',
+                    style: const TextStyle(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: deliveryNoteCtrl,
+                    decoration: InputDecoration(
+                      labelText: isSwahili
+                          ? 'Namba ya Delivery Note *'
+                          : 'Delivery Note Number *',
+                    ),
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: dateCtrl,
+                    decoration: InputDecoration(
+                      labelText: isSwahili ? 'Tarehe ya Delivery *' : 'Delivery Date *',
+                    ),
+                    validator: (value) =>
+                        value == null || value.trim().isEmpty ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: condition,
+                    decoration: InputDecoration(
+                      labelText: isSwahili ? 'Hali *' : 'Condition *',
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'good', child: Text('Good')),
+                      DropdownMenuItem(
+                        value: 'partial_damage',
+                        child: Text('Partial Damage'),
+                      ),
+                      DropdownMenuItem(value: 'damaged', child: Text('Damaged')),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => condition = value ?? 'good'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: descriptionCtrl,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: isSwahili ? 'Maelezo' : 'Notes / Description',
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    isSwahili ? 'Vipengee vya Delivery' : 'Delivery Items',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 10),
+                  ...items.map((item) {
+                    final itemId = item['id'] as int?;
+                    final quantity = ((item['quantity'] as num?) ?? 0).toDouble();
+                    final received =
+                        ((item['quantity_received'] as num?) ?? 0).toDouble();
+                    final pending = (quantity - received).clamp(0, quantity);
+                    final controller = quantityControllers[itemId]!;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item['description'] as String? ??
+                                item['material_name'] as String? ??
+                                'Item',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 8,
+                            children: [
+                              _metaLabel(
+                                Icons.shopping_bag_rounded,
+                                '${_formatNumber(quantity)} ${item['unit'] ?? ''}'.trim(),
+                              ),
+                              _metaLabel(
+                                Icons.check_circle_rounded,
+                                '${_formatNumber(received)} received',
+                              ),
+                              _metaLabel(
+                                Icons.pending_rounded,
+                                '${_formatNumber(pending)} pending',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: controller,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: InputDecoration(
+                              labelText:
+                                  isSwahili ? 'Kiasi kinachowasili' : 'Qty Delivering',
+                            ),
+                            validator: (value) {
+                              final parsed = double.tryParse(value ?? '');
+                              if (parsed == null || parsed < 0) return 'Invalid quantity';
+                              if (parsed > pending) {
+                                return 'Cannot exceed pending qty';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        if (!formKey.currentState!.validate()) return;
+
+                        final payloadItems = items
+                            .map((item) {
+                              final itemId = item['id'] as int?;
+                              if (itemId == null) return null;
+                              return {
+                                'purchase_item_id': itemId,
+                                'quantity':
+                                    double.tryParse(quantityControllers[itemId]!.text.trim()) ??
+                                        0,
+                              };
+                            })
+                            .whereType<Map<String, dynamic>>()
+                            .toList();
+
+                        try {
+                          await api.post(
+                            '/procurement/purchases/$purchaseId/deliveries',
+                            data: {
+                              'delivery_note_number': deliveryNoteCtrl.text.trim(),
+                              'date': dateCtrl.text.trim(),
+                              'condition': condition,
+                              'description': descriptionCtrl.text.trim(),
+                              'items': payloadItems,
+                            },
+                          );
+                          ref.invalidate(_pendingDeliveriesProvider);
+                          ref.invalidate(_purchaseOrdersProvider);
+                          ref.invalidate(_purchasesProvider);
+                          ref.invalidate(_purchaseDetailProvider(purchaseId));
+                          if (ctx.mounted) Navigator.pop(ctx);
+                        } catch (e) {
+                          if (ctx.mounted) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: Text('$e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.local_shipping_rounded),
+                      label: Text(isSwahili ? 'Hifadhi Delivery' : 'Record Delivery'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+void _showReceivingDetails(
+  BuildContext context,
+  WidgetRef ref,
+  int? receivingId,
+) {
+  if (receivingId == null) return;
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => Consumer(
+      builder: (context, ref, _) {
+        final detailAsync = ref.watch(_receivingDetailProvider(receivingId));
+        return _ProcurementDetailSheet(
+          title: 'Supplier Receiving',
+          detailAsync: detailAsync,
+          builder: (detail) {
+            final items = (detail['purchase_items'] as List? ?? const <dynamic>[]);
+            final inspections = (detail['inspections'] as List? ?? const <dynamic>[]);
+            return [
+              _DetailRow(
+                label: 'Receiving Number',
+                value: detail['receiving_number'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Purchase Order',
+                value: detail['purchase']?['document_number'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Project',
+                value: detail['project']?['name'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Supplier',
+                value: detail['supplier']?['name'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Delivery Date',
+                value: _formatDate(detail['date'] as String?),
+              ),
+              _DetailRow(
+                label: 'Delivery Note',
+                value: detail['delivery_note_number'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Condition',
+                value: _titleCase(
+                  (detail['condition'] as String?)?.replaceAll('_', ' '),
+                ),
+              ),
+              _DetailRow(
+                label: 'Status',
+                value: _titleCase(detail['status'] as String?),
+              ),
+              _DetailRow(
+                label: 'Qty Ordered',
+                value: _formatNumber(detail['quantity_ordered']),
+              ),
+              _DetailRow(
+                label: 'Qty Delivered',
+                value: _formatNumber(detail['quantity_delivered']),
+              ),
+              _DetailRow(
+                label: 'Received By',
+                value: detail['received_by']?['name'] as String? ?? '-',
+              ),
+              if ((detail['description'] as String?)?.isNotEmpty ?? false)
+                _DetailSection(
+                  title: 'Notes',
+                  child: Text(detail['description'] as String),
+                ),
+              if (items.isNotEmpty)
+                _DetailSection(
+                  title: 'Purchase Order Items',
+                  child: Column(
+                    children: items.map<Widget>((item) {
+                      final map = item as Map<String, dynamic>;
+                      return _DetailRow(
+                        label: map['description'] as String? ??
+                            map['boq_item']?['description'] as String? ??
+                            'Item',
+                        value:
+                            '${_formatNumber(map['quantity'])} ${map['unit'] ?? ''}'.trim(),
+                        trailing:
+                            '${_formatNumber(map['quantity_received'])} received - ${_titleCase(map['status'] as String?)}',
+                      );
+                    }).toList(),
+                  ),
+                ),
+              if (inspections.isNotEmpty)
+                _DetailSection(
+                  title: 'Inspections',
+                  child: Column(
+                    children: inspections.map<Widget>((inspection) {
+                      final map = inspection as Map<String, dynamic>;
+                      return _DetailRow(
+                        label: map['inspection_number'] as String? ?? 'Inspection',
+                        value: _formatDate(map['inspection_date'] as String?),
+                        trailing:
+                            '${_formatNumber(map['quantity_accepted'])} accepted - ${_titleCase(map['overall_result'] as String?)}',
                       );
                     }).toList(),
                   ),
@@ -1306,22 +3192,61 @@ void _showPurchaseDetails(
           builder: (detail) {
             final items = (detail['purchase_items'] as List? ?? const <dynamic>[]);
             return [
-              _DetailRow(label: 'Purchase Number', value: '${detail['purchase_number'] ?? '-'}'),
+              _DetailRow(
+                label: 'Purchase Number',
+                value:
+                    '${detail['document_number'] ?? detail['purchase_number'] ?? 'PO-${detail['id'] ?? '-'}'}',
+              ),
               _DetailRow(
                 label: 'Supplier',
                 value: detail['supplier']?['name'] as String? ?? '-',
               ),
               _DetailRow(
                 label: 'Project',
-                value: detail['project']?['project_name'] as String? ?? '-',
+                value: detail['project']?['name'] as String? ??
+                    detail['project']?['project_name'] as String? ??
+                    '-',
+              ),
+              _DetailRow(
+                label: 'Material Request',
+                value: detail['material_request']?['request_number'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Comparison',
+                value: detail['quotation_comparison']?['comparison_number'] as String? ?? '-',
               ),
               _DetailRow(label: 'Status', value: _titleCase(detail['status'] as String?)),
-              _DetailRow(label: 'Delivery Date', value: _formatDate(detail['delivery_date'] as String?)),
+              _DetailRow(label: 'Date', value: _formatDate(detail['date'] as String?)),
+              _DetailRow(
+                label: 'Expected Delivery',
+                value: _formatDate(detail['expected_delivery_date'] as String?),
+              ),
+              _DetailRow(
+                label: 'Payment Terms',
+                value: detail['payment_terms'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Created By',
+                value: detail['user']?['name'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Subtotal',
+                value: _formatCurrency(detail['amount_vat_exc']),
+              ),
+              _DetailRow(
+                label: 'VAT Amount',
+                value: _formatCurrency(detail['vat_amount']),
+              ),
               _DetailRow(label: 'Total Amount', value: _formatCurrency(detail['total_amount'])),
               if ((detail['notes'] as String?)?.isNotEmpty ?? false)
                 _DetailSection(
                   title: 'Notes',
                   child: Text(detail['notes'] as String),
+                ),
+              if ((detail['delivery_address'] as String?)?.isNotEmpty ?? false)
+                _DetailSection(
+                  title: 'Delivery Address',
+                  child: Text(detail['delivery_address'] as String),
                 ),
               if (items.isNotEmpty)
                 _DetailSection(
@@ -1329,7 +3254,9 @@ void _showPurchaseDetails(
                   child: Column(
                     children: items.map<Widget>((item) {
                       final map = item as Map<String, dynamic>;
-                      final materialName = map['material']?['name'] as String? ??
+                      final materialName = map['description'] as String? ??
+                          map['boq_item']?['description'] as String? ??
+                          map['material']?['name'] as String? ??
                           map['material_name'] as String? ??
                           'Item';
                       final quantity = map['quantity']?.toString() ?? '-';
@@ -1389,10 +3316,27 @@ void _showInspectionDetails(
               _DetailRow(label: 'Inspection Number', value: '${detail['inspection_number'] ?? '-'}'),
               _DetailRow(label: 'Project', value: detail['project_name'] as String? ?? '-'),
               _DetailRow(
+                label: 'BOQ Item',
+                value: detail['boq_item']?['description'] as String? ?? '-',
+              ),
+              _DetailRow(
                 label: 'Supplier',
                 value: detail['supplier_receiving']?['supplier_name'] as String? ?? '-',
               ),
+              _DetailRow(
+                label: 'Receiving Number',
+                value: detail['supplier_receiving']?['receiving_number'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Purchase Order',
+                value: detail['supplier_receiving']?['purchase_number'] as String? ?? '-',
+              ),
+              _DetailRow(
+                label: 'Delivery Note',
+                value: detail['supplier_receiving']?['delivery_note_number'] as String? ?? '-',
+              ),
               _DetailRow(label: 'Inspector', value: detail['inspector_name'] as String? ?? '-'),
+              _DetailRow(label: 'Verifier', value: detail['verifier_name'] as String? ?? '-'),
               _DetailRow(label: 'Status', value: _titleCase(detail['status'] as String?)),
               _DetailRow(label: 'Inspection Date', value: _formatDate(detail['inspection_date'] as String?)),
               _DetailRow(label: 'Result', value: _titleCase(detail['overall_result'] as String?)),
@@ -1412,6 +3356,19 @@ void _showInspectionDetails(
                 label: 'Rejected Qty',
                 value: '${detail['quantity_rejected'] ?? '-'}',
               ),
+              _DetailRow(
+                label: 'Acceptance Rate',
+                value: '${_formatNumber(detail['acceptance_rate'])}%',
+              ),
+              _DetailRow(
+                label: 'Stock Updated',
+                value: (detail['stock_updated'] == true) ? 'Yes' : 'No',
+              ),
+              if ((detail['rejection_reason'] as String?)?.isNotEmpty ?? false)
+                _DetailSection(
+                  title: 'Rejection Reason',
+                  child: Text(detail['rejection_reason'] as String),
+                ),
               if ((detail['notes'] as String?)?.isNotEmpty ?? false)
                 _DetailSection(
                   title: 'Inspection Notes',
@@ -1508,6 +3465,160 @@ class _ProcurementDetailSheet extends ConsumerWidget {
   }
 }
 
+class _MaterialItemEditor extends StatelessWidget {
+  final int index;
+  final Map<String, TextEditingController> controllers;
+  final bool canRemove;
+  final bool isSwahili;
+  final VoidCallback onRemove;
+
+  const _MaterialItemEditor({
+    required this.index,
+    required this.controllers,
+    required this.canRemove,
+    required this.isSwahili,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${isSwahili ? 'Kitu' : 'Item'} ${index + 1}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              if (canRemove)
+                IconButton(
+                  onPressed: onRemove,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+            ],
+          ),
+          TextFormField(
+            controller: controllers['material_name'],
+            decoration: InputDecoration(
+              labelText: isSwahili ? 'Jina la Kitu *' : 'Material Name *',
+            ),
+            validator: (value) =>
+                value == null || value.trim().isEmpty ? 'Required' : null,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: controllers['quantity'],
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Kiasi *' : 'Quantity *',
+                  ),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Required' : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: controllers['unit'],
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Kipimo' : 'Unit',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuotationItemEditor extends StatelessWidget {
+  final int index;
+  final Map<String, TextEditingController> controllers;
+  final bool isSwahili;
+
+  const _QuotationItemEditor({
+    required this.index,
+    required this.controllers,
+    required this.isSwahili,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${isSwahili ? 'Kipengee' : 'Item'} ${index + 1}',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: controllers['description'],
+            decoration: const InputDecoration(labelText: 'Description'),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  controller: controllers['quantity'],
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Kiasi *' : 'Quantity *',
+                  ),
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? 'Required' : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: TextFormField(
+                  controller: controllers['unit'],
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Kipimo' : 'Unit',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            controller: controllers['unit_price'],
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: isSwahili ? 'Bei kwa Kipimo *' : 'Unit Price *',
+            ),
+            validator: (value) =>
+                value == null || value.trim().isEmpty ? 'Required' : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SheetHandle extends StatelessWidget {
   final bool isDarkMode;
 
@@ -1575,42 +3686,32 @@ class _DetailRow extends ConsumerWidget {
     final isDarkMode = ref.watch(isDarkModeProvider);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            flex: 5,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: isDarkMode ? Colors.white60 : AppColors.textSecondary,
-              ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDarkMode ? Colors.white60 : AppColors.textSecondary,
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 7,
-            child: Text(
-              value.isEmpty ? '-' : value,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white : AppColors.textPrimary,
-              ),
+          const SizedBox(height: 4),
+          Text(
+            value.isEmpty ? '-' : value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: isDarkMode ? Colors.white : AppColors.textPrimary,
             ),
           ),
           if (trailing != null && trailing!.isNotEmpty) ...[
-            const SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                trailing!,
-                textAlign: TextAlign.right,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDarkMode ? Colors.white70 : AppColors.textHint,
-                ),
+            const SizedBox(height: 2),
+            Text(
+              trailing!,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDarkMode ? Colors.white70 : AppColors.textHint,
               ),
             ),
           ],

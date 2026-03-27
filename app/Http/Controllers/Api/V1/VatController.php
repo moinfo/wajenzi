@@ -9,6 +9,7 @@ use App\Models\Efd;
 use App\Models\Item;
 use App\Models\Purchase;
 use App\Models\Receipt;
+use App\Models\ReceiptItem;
 use App\Models\Sale;
 use App\Models\Supplier;
 use App\Models\VatPayment;
@@ -290,29 +291,19 @@ class VatController extends Controller
         $startDate = $request->input('start_date', date('Y-01-01'));
         $endDate = $request->input('end_date', date('Y-m-d'));
 
-        $receipts = Receipt::whereBetween('receipt_date', [$startDate, $endDate])
+        $receipts = Receipt::with('items')
+            ->whereBetween('receipt_date', [$startDate, $endDate])
             ->orderBy('receipt_date', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get()
-            ->map(fn($r) => [
-                'id' => $r->id,
-                'date' => $r->receipt_date,
-                'supplier_name' => $r->company_name,
-                'supplier_vrn' => $r->vrn,
-                'receipt_number' => $r->receipt_number,
-                'invoice_date' => $r->receipt_date,
-                'amount_vat_exc' => (float) $r->receipt_total_excl_of_tax,
-                'vat_amount' => (float) $r->receipt_total_tax,
-                'total_amount' => (float) $r->receipt_total_incl_of_tax,
-                'discount' => (float) $r->receipt_total_discount,
-                'verification_code' => $r->receipt_verification_code,
-                'is_expense' => $r->is_expense,
-            ]);
+            ->map(fn($r) => $this->formatAutoPurchase($r));
 
         $totals = [
-            'amount_vat_exc' => $receipts->sum('amount_vat_exc'),
-            'vat_amount' => $receipts->sum('vat_amount'),
-            'total_amount' => $receipts->sum('total_amount'),
-            'discount' => $receipts->sum('discount'),
+            'count' => $receipts->count(),
+            'amount_vat_exc' => round($receipts->sum('amount_vat_exc'), 2),
+            'vat_amount' => round($receipts->sum('vat_amount'), 2),
+            'total_amount' => round($receipts->sum('total_amount'), 2),
+            'discount' => round($receipts->sum('discount'), 2),
         ];
 
         return response()->json([
@@ -320,8 +311,176 @@ class VatController extends Controller
             'data' => [
                 'receipts' => $receipts->values(),
                 'totals' => $totals,
+                'date_range' => [
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                ],
             ],
         ]);
+    }
+
+    public function storeAutoPurchase(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'company_name' => 'required|string|max:255',
+            'vrn' => 'nullable|string|max:50',
+            'receipt_number' => 'required|string|max:100',
+            'receipt_date' => 'required|date',
+            'receipt_time' => 'nullable|string|max:20',
+            'receipt_verification_code' => 'nullable|string|max:100',
+            'receipt_total_excl_of_tax' => 'required|numeric|min:0',
+            'receipt_total_tax' => 'nullable|numeric|min:0',
+            'receipt_total_incl_of_tax' => 'required|numeric|min:0',
+            'receipt_total_discount' => 'nullable|numeric|min:0',
+            'is_expense' => 'nullable|string|in:YES,NO',
+            'items' => 'nullable|array',
+            'items.*.description' => 'required_with:items|string|max:255',
+            'items.*.qty' => 'nullable|integer|min:1',
+            'items.*.amount' => 'nullable|numeric|min:0',
+        ]);
+
+        $receipt = Receipt::create([
+            'company_name' => $validated['company_name'],
+            'vrn' => $validated['vrn'] ?? null,
+            'receipt_number' => $validated['receipt_number'],
+            'receipt_date' => $validated['receipt_date'],
+            'receipt_time' => $validated['receipt_time'] ?? date('H:i:s'),
+            'receipt_verification_code' => $validated['receipt_verification_code'] ?? null,
+            'receipt_total_excl_of_tax' => $validated['receipt_total_excl_of_tax'],
+            'receipt_total_tax' => $validated['receipt_total_tax'] ?? 0,
+            'receipt_total_incl_of_tax' => $validated['receipt_total_incl_of_tax'],
+            'receipt_total_discount' => $validated['receipt_total_discount'] ?? 0,
+            'is_expense' => $validated['is_expense'] ?? 'NO',
+            'date' => $validated['receipt_date'],
+            'create_by_id' => $request->user()->id,
+        ]);
+
+        if (!empty($validated['items'])) {
+            foreach ($validated['items'] as $item) {
+                $receipt->items()->create([
+                    'description' => $item['description'],
+                    'qty' => $item['qty'] ?? 1,
+                    'amount' => $item['amount'] ?? 0,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Auto purchase created successfully.',
+            'data' => $this->formatAutoPurchase($receipt->load('items')),
+        ], 201);
+    }
+
+    public function showAutoPurchase(int $id): JsonResponse
+    {
+        $receipt = Receipt::with('items')->findOrFail($id);
+        return response()->json([
+            'success' => true,
+            'data' => $this->formatAutoPurchase($receipt, true),
+        ]);
+    }
+
+    public function updateAutoPurchase(Request $request, int $id): JsonResponse
+    {
+        $receipt = Receipt::findOrFail($id);
+
+        $validated = $request->validate([
+            'company_name' => 'sometimes|required|string|max:255',
+            'vrn' => 'nullable|string|max:50',
+            'receipt_number' => 'sometimes|required|string|max:100',
+            'receipt_date' => 'sometimes|required|date',
+            'receipt_time' => 'nullable|string|max:20',
+            'receipt_verification_code' => 'nullable|string|max:100',
+            'receipt_total_excl_of_tax' => 'sometimes|required|numeric|min:0',
+            'receipt_total_tax' => 'nullable|numeric|min:0',
+            'receipt_total_incl_of_tax' => 'sometimes|required|numeric|min:0',
+            'receipt_total_discount' => 'nullable|numeric|min:0',
+            'is_expense' => 'nullable|string|in:YES,NO',
+            'items' => 'nullable|array',
+            'items.*.description' => 'required_with:items|string|max:255',
+            'items.*.qty' => 'nullable|integer|min:1',
+            'items.*.amount' => 'nullable|numeric|min:0',
+        ]);
+
+        $receipt->update($validated);
+
+        if (isset($validated['items'])) {
+            $receipt->items()->delete();
+            foreach ($validated['items'] as $item) {
+                $receipt->items()->create([
+                    'description' => $item['description'],
+                    'qty' => $item['qty'] ?? 1,
+                    'amount' => $item['amount'] ?? 0,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Auto purchase updated successfully.',
+            'data' => $this->formatAutoPurchase($receipt->load('items')),
+        ]);
+    }
+
+    public function destroyAutoPurchase(int $id): JsonResponse
+    {
+        $receipt = Receipt::findOrFail($id);
+        $receipt->items()->delete();
+        $receipt->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Auto purchase deleted successfully.',
+        ]);
+    }
+
+    private function formatAutoPurchase($r, bool $detailed = false): array
+    {
+        $data = [
+            'id' => $r->id,
+            'date' => $r->date,
+            'receipt_date' => $r->receipt_date,
+            'receipt_time' => $r->receipt_time,
+            'company_name' => $r->company_name,
+            'vrn' => $r->vrn,
+            'receipt_number' => $r->receipt_number,
+            'receipt_verification_code' => $r->receipt_verification_code,
+            'amount_vat_exc' => round((float) $r->receipt_total_excl_of_tax, 2),
+            'vat_amount' => round((float) $r->receipt_total_tax, 2),
+            'total_amount' => round((float) $r->receipt_total_incl_of_tax, 2),
+            'discount' => round((float) ($r->receipt_total_discount ?? 0), 2),
+            'is_expense' => $r->is_expense ?? 'NO',
+            'created_at' => $r->created_at?->toISOString(),
+        ];
+
+        if ($detailed) {
+            $data['p_o_box'] = $r->p_o_box;
+            $data['mobile'] = $r->mobile;
+            $data['tin'] = $r->tin;
+            $data['tax_office'] = $r->tax_office;
+            $data['customer_name'] = $r->customer_name;
+            $data['receipt_z_number'] = $r->receipt_z_number;
+            $data['receipt_ewura'] = $r->receipt_ewura;
+            $data['receipt_property_tax'] = $r->receipt_property_tax;
+            $data['tax_rate'] = $r->tax_rate;
+        }
+
+        $items = $r->relationLoaded('items') ? $r->items : ($r->items() ? $r->items : collect());
+        if (is_callable([$items, 'get']) && $items->isEmpty()) {
+            $items = ReceiptItem::where('receipt_id', $r->id)->get();
+        }
+
+        $data['items'] = $items->map(fn($item) => [
+            'id' => $item->id,
+            'description' => $item->description,
+            'qty' => (int) $item->qty,
+            'amount' => round((float) $item->amount, 2),
+        ])->toArray();
+
+        $data['items_summary'] = implode(', ', array_column($data['items'], 'description'));
+
+        return $data;
     }
 
     // ─── VAT PAYMENTS ────────────────────────────────────────────────────

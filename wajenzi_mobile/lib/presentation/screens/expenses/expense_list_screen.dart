@@ -6,56 +6,56 @@ import '../../../core/network/api_client.dart';
 import '../../providers/settings_provider.dart';
 
 class ExpenseFilter {
-  final DateTime startDate;
-  final DateTime endDate;
-  final int? projectId;
+  final DateTime? startDate;
+  final DateTime? endDate;
   final int? categoryId;
-  final String? status;
+  final int? subCategoryId;
 
   ExpenseFilter({
-    required this.startDate,
-    required this.endDate,
-    this.projectId,
+    this.startDate,
+    this.endDate,
     this.categoryId,
-    this.status,
+    this.subCategoryId,
   });
 
   ExpenseFilter copyWith({
     DateTime? startDate,
     DateTime? endDate,
-    int? projectId,
     int? categoryId,
-    String? status,
-    bool clearProject = false,
+    int? subCategoryId,
+    bool clearStartDate = false,
+    bool clearEndDate = false,
     bool clearCategory = false,
-    bool clearStatus = false,
+    bool clearSubCategory = false,
   }) {
     return ExpenseFilter(
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
-      projectId: clearProject ? null : (projectId ?? this.projectId),
+      startDate: clearStartDate ? null : (startDate ?? this.startDate),
+      endDate: clearEndDate ? null : (endDate ?? this.endDate),
       categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
-      status: clearStatus ? null : (status ?? this.status),
+      subCategoryId: clearSubCategory ? null : (subCategoryId ?? this.subCategoryId),
     );
   }
 
   Map<String, String> toQueryParams() {
-    final params = <String, String>{
-      'start_date': DateFormat('yyyy-MM-dd').format(startDate),
-      'end_date': DateFormat('yyyy-MM-dd').format(endDate),
-    };
-    if (projectId != null) params['project_id'] = projectId.toString();
-    if (categoryId != null) params['cost_category_id'] = categoryId.toString();
-    if (status != null && status!.isNotEmpty) params['status'] = status!;
+    final params = <String, String>{'per_page': '100'};
+    if (startDate != null) {
+      params['start_date'] = DateFormat('yyyy-MM-dd').format(startDate!);
+    }
+    if (endDate != null) {
+      params['end_date'] = DateFormat('yyyy-MM-dd').format(endDate!);
+    }
+    if (categoryId != null) {
+      params['expenses_category_id'] = categoryId.toString();
+    }
+    if (subCategoryId != null) {
+      params['expenses_sub_category_id'] = subCategoryId.toString();
+    }
     return params;
   }
 }
 
 final expenseFilterProvider = StateProvider.autoDispose<ExpenseFilter>((ref) {
-  return ExpenseFilter(
-    startDate: DateTime.now().subtract(const Duration(days: 30)),
-    endDate: DateTime.now(),
-  );
+  return ExpenseFilter();
 });
 
 final _expensesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
@@ -84,11 +84,15 @@ final _expensesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
     }
   }
 
-  final uniqueProjects = <int>{};
+  final uniqueCategories = <int>{};
   if (items is List) {
     for (var item in items) {
-      if (item is Map && item['project_id'] != null) {
-        uniqueProjects.add(item['project_id'] as int);
+      if (item is Map && item['expenses_category'] is Map) {
+        final category = item['expenses_category'] as Map;
+        final id = category['id'];
+        if (id is int) {
+          uniqueCategories.add(id);
+        }
       }
     }
   }
@@ -97,29 +101,17 @@ final _expensesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
     'items': items ?? [],
     'meta': meta,
     'total_amount': totalAmount,
-    'projects_count': uniqueProjects.length,
+    'categories_count': uniqueCategories.length,
     'records_count': items is List ? items.length : 0,
   };
 });
 
-final _expenseCategoriesProvider = FutureProvider.autoDispose<List<dynamic>>((
-  ref,
-) async {
+final _expenseReferencesProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);
   final response = await api.get('/expenses/categories');
-  return response.data['data'] as List? ?? [];
-});
-
-final _expenseProjectsProvider = FutureProvider.autoDispose<List<dynamic>>((
-  ref,
-) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/projects');
   final data = response.data['data'];
-  if (data is List) return data;
-  if (data is Map && data.containsKey('data'))
-    return (data['data'] as List?) ?? [];
-  return [];
+  return data is Map<String, dynamic> ? data : <String, dynamic>{};
 });
 
 class ExpenseListScreen extends ConsumerStatefulWidget {
@@ -139,7 +131,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Gharama za Mradi' : 'Project Costs'),
+        title: Text(isSwahili ? 'Matumizi' : 'Expenses'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -259,21 +251,6 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
   ) async {
     final isSwahili = ref.read(isSwahiliProvider);
     final isDarkMode = ref.read(isDarkModeProvider);
-    final status = (expense['status'] as String? ?? 'draft').toLowerCase();
-
-    if (status != 'draft') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isSwahili
-                ? 'Haiwezi kufuta gharama isiyokuwa rasimu'
-                : 'Only draft costs can be deleted',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -352,7 +329,7 @@ class _ExpenseStatsSection extends ConsumerWidget {
       data: (payload) {
         final totalAmount = payload['total_amount'] as double? ?? 0;
         final recordsCount = payload['records_count'] as int? ?? 0;
-        final projectsCount = payload['projects_count'] as int? ?? 0;
+        final categoriesCount = payload['categories_count'] as int? ?? 0;
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -365,9 +342,12 @@ class _ExpenseStatsSection extends ConsumerWidget {
               ),
             ],
           ),
-          child: Row(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
-              Expanded(
+              SizedBox(
+                width: 150,
                 child: _StatCard(
                   title: isSwahili ? 'Rekodi' : 'Records',
                   value: '$recordsCount',
@@ -376,8 +356,8 @@ class _ExpenseStatsSection extends ConsumerWidget {
                   isDarkMode: isDarkMode,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
+              SizedBox(
+                width: 150,
                 child: _StatCard(
                   title: isSwahili ? 'Jumla (TZS)' : 'Total (TZS)',
                   value: _formatAmount(totalAmount),
@@ -386,12 +366,12 @@ class _ExpenseStatsSection extends ConsumerWidget {
                   isDarkMode: isDarkMode,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
+              SizedBox(
+                width: 150,
                 child: _StatCard(
-                  title: isSwahili ? 'Miradi' : 'Projects',
-                  value: '$projectsCount',
-                  icon: Icons.folder,
+                  title: isSwahili ? 'Kategoria' : 'Categories',
+                  value: '$categoriesCount',
+                  icon: Icons.category,
                   color: const Color(0xFF9B59B6),
                   isDarkMode: isDarkMode,
                 ),
@@ -469,8 +449,7 @@ class _FilterSheet extends ConsumerWidget {
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final filter = ref.watch(expenseFilterProvider);
-    final categoriesAsync = ref.watch(_expenseCategoriesProvider);
-    final projectsAsync = ref.watch(_expenseProjectsProvider);
+    final referencesAsync = ref.watch(_expenseReferencesProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -508,66 +487,6 @@ class _FilterSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                isSwahili ? 'Mradi' : 'Project',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: isDarkMode
-                      ? const Color(0xFF2A2A3E)
-                      : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: projectsAsync.when(
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (_, __) => Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(isSwahili ? 'Imeshindikana' : 'Failed'),
-                  ),
-                  data: (projects) => DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      value: filter.projectId,
-                      hint: Text(isSwahili ? 'All Projects' : 'All Projects'),
-                      isExpanded: true,
-                      dropdownColor: isDarkMode
-                          ? const Color(0xFF2A2A3E)
-                          : Colors.white,
-                      items: [
-                        DropdownMenuItem(
-                          value: null,
-                          child: Text(
-                            isSwahili ? 'All Projects' : 'All Projects',
-                          ),
-                        ),
-                        ...projects.map(
-                          (p) => DropdownMenuItem(
-                            value: p['id'] as int,
-                            child: Text(p['project_name'] as String? ?? '-'),
-                          ),
-                        ),
-                      ],
-                      onChanged: (v) =>
-                          parentRef
-                              .read(expenseFilterProvider.notifier)
-                              .state = filter.copyWith(
-                            projectId: v,
-                            clearProject: v == null,
-                          ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
                 isSwahili ? 'Kategoria' : 'Category',
                 style: TextStyle(
                   fontSize: 14,
@@ -584,7 +503,7 @@ class _FilterSheet extends ConsumerWidget {
                       : Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: categoriesAsync.when(
+                child: referencesAsync.when(
                   loading: () => const Padding(
                     padding: EdgeInsets.all(16),
                     child: CircularProgressIndicator(),
@@ -593,7 +512,10 @@ class _FilterSheet extends ConsumerWidget {
                     padding: const EdgeInsets.all(16),
                     child: Text(isSwahili ? 'Imeshindikana' : 'Failed'),
                   ),
-                  data: (categories) => DropdownButtonHideUnderline(
+                  data: (refs) {
+                    final categories =
+                        (refs['categories'] as List? ?? const []).cast<dynamic>();
+                    return DropdownButtonHideUnderline(
                     child: DropdownButton<int?>(
                       value: filter.categoryId,
                       hint: Text(
@@ -625,7 +547,83 @@ class _FilterSheet extends ConsumerWidget {
                             clearCategory: v == null,
                           ),
                     ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isSwahili ? 'Sub Category' : 'Sub Category',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? const Color(0xFF2A2A3E)
+                      : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: referencesAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: CircularProgressIndicator(),
                   ),
+                  error: (_, __) => Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(isSwahili ? 'Imeshindikana' : 'Failed'),
+                  ),
+                  data: (refs) {
+                    final subCategories =
+                        (refs['sub_categories'] as List? ?? const [])
+                            .cast<dynamic>()
+                            .where(
+                              (item) =>
+                                  filter.categoryId == null ||
+                                  item['expenses_category_id'] == filter.categoryId,
+                            )
+                            .toList();
+                    return DropdownButtonHideUnderline(
+                      child: DropdownButton<int?>(
+                        value: filter.subCategoryId,
+                        hint: Text(
+                          isSwahili ? 'All Sub Categories' : 'All Sub Categories',
+                        ),
+                        isExpanded: true,
+                        dropdownColor: isDarkMode
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.white,
+                        items: [
+                          DropdownMenuItem(
+                            value: null,
+                            child: Text(
+                              isSwahili
+                                  ? 'All Sub Categories'
+                                  : 'All Sub Categories',
+                            ),
+                          ),
+                          ...subCategories.map(
+                            (c) => DropdownMenuItem(
+                              value: c['id'] as int,
+                              child: Text(c['name'] as String? ?? '-'),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) =>
+                            parentRef
+                                .read(expenseFilterProvider.notifier)
+                                .state = filter.copyWith(
+                              subCategoryId: v,
+                              clearSubCategory: v == null,
+                            ),
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 24),
@@ -671,13 +669,11 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
-  final _notesController = TextEditingController();
-  int? _selectedCategoryId;
-  int? _selectedProjectId;
+  int? _selectedSubCategoryId;
   DateTime _selectedDate = DateTime.now();
   bool _loading = false;
-  List<dynamic> _projects = [];
   List<dynamic> _categories = [];
+  List<dynamic> _subCategories = [];
   bool _loadingData = true;
 
   late final bool _isEditing;
@@ -694,21 +690,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
   Future<void> _loadData() async {
     try {
       final api = ref.read(apiClientProvider);
-      final responses = await Future.wait([
-        api.get('/projects'),
-        api.get('/expenses/categories'),
-      ]);
+      final response = await api.get('/expenses/categories');
 
       if (mounted) {
         setState(() {
-          final projectsData = responses[0].data['data'];
-          _projects = projectsData is List
-              ? projectsData
-              : (projectsData is Map && projectsData.containsKey('data')
-                    ? (projectsData['data'] as List?) ?? []
-                    : []);
-
-          _categories = responses[1].data['data'] as List? ?? [];
+          final data = response.data['data'] as Map<String, dynamic>? ?? const {};
+          _categories = data['categories'] as List? ?? [];
+          _subCategories = data['sub_categories'] as List? ?? [];
           _loadingData = false;
 
           if (_isEditing && widget.expense != null) {
@@ -716,15 +704,11 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
             _expenseId = e['id'] as int?;
             _descriptionController.text = e['description'] as String? ?? '';
             _amountController.text = _toDouble(e['amount']).toString();
-            _notesController.text = e['remarks'] as String? ?? '';
-
-            final project = e['project'] as Map<String, dynamic>?;
-            _selectedProjectId =
-                project?['id'] as int? ?? e['project_id'] as int?;
-
-            final category = e['cost_category'] as Map<String, dynamic>?;
-            _selectedCategoryId =
-                category?['id'] as int? ?? e['cost_category_id'] as int?;
+            final subCategory =
+                e['expenses_sub_category'] as Map<String, dynamic>?;
+            _selectedSubCategoryId =
+                subCategory?['id'] as int? ??
+                e['expenses_sub_category_id'] as int?;
 
             final dateStr = e['expense_date'] as String?;
             if (dateStr != null && dateStr.isNotEmpty) {
@@ -742,7 +726,6 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
   void dispose() {
     _descriptionController.dispose();
     _amountController.dispose();
-    _notesController.dispose();
     super.dispose();
   }
 
@@ -788,8 +771,8 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                       const SizedBox(height: 18),
                       Text(
                         _isEditing
-                            ? (isSwahili ? 'Hariri Gharama' : 'Edit Cost')
-                            : (isSwahili ? 'Gharama Mpya' : 'New Cost'),
+                            ? (isSwahili ? 'Hariri Expense' : 'Edit Expense')
+                            : (isSwahili ? 'Expense Mpya' : 'New Expense'),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -944,7 +927,7 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        isSwahili ? 'Mradi *' : 'Project *',
+                        isSwahili ? 'Expense Sub Category *' : 'Expense Sub Category *',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -964,104 +947,65 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<int?>(
-                            value: _selectedProjectId,
+                            value: _selectedSubCategoryId,
                             hint: Text(
-                              isSwahili ? 'Chagua mradi' : 'Select project',
+                              isSwahili
+                                  ? 'Chagua sub category'
+                                  : 'Select sub category',
                             ),
                             isExpanded: true,
                             dropdownColor: isDarkMode
                                 ? const Color(0xFF2A2A3E)
                                 : Colors.white,
-                            items: _projects
+                            items: _subCategories
                                 .map(
-                                  (p) => DropdownMenuItem(
-                                    value: p['id'] as int,
+                                  (c) => DropdownMenuItem(
+                                    value: c['id'] as int,
                                     child: Text(
-                                      p['project_name'] as String? ?? '-',
+                                      '${c['name'] ?? '-'}${(c['category_name'] as String?)?.isNotEmpty == true ? ' - ${c['category_name']}' : ''}',
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 )
                                 .toList(),
                             onChanged: (v) =>
-                                setState(() => _selectedProjectId = v),
+                                setState(() => _selectedSubCategoryId = v),
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        isSwahili ? 'Kategoria *' : 'Category *',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode
-                              ? Colors.white70
-                              : AppColors.textSecondary,
+                      if (_selectedSubCategoryId != null) ...[
+                        Text(
+                          isSwahili ? 'Category' : 'Category',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode
+                                ? Colors.white70
+                                : AppColors.textSecondary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? const Color(0xFF2A2A3E)
-                              : Colors.grey[100],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<int?>(
-                            value: _selectedCategoryId,
-                            hint: Text(
-                              isSwahili
-                                  ? 'Chagua kategoria'
-                                  : 'Select category',
-                            ),
-                            isExpanded: true,
-                            dropdownColor: isDarkMode
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
                                 ? const Color(0xFF2A2A3E)
-                                : Colors.white,
-                            items: _categories
-                                .map(
-                                  (c) => DropdownMenuItem(
-                                    value: c['id'] as int,
-                                    child: Text(c['name'] as String? ?? '-'),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _selectedCategoryId = v),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        isSwahili ? 'Maoni' : 'Notes',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode
-                              ? Colors.white70
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _notesController,
-                        maxLines: 3,
-                        decoration: InputDecoration(
-                          hintText: isSwahili
-                              ? 'Maoni ya ziada'
-                              : 'Additional notes',
-                          filled: true,
-                          fillColor: isDarkMode
-                              ? const Color(0xFF2A2A3E)
-                              : Colors.grey[100],
-                          border: OutlineInputBorder(
+                                : Colors.grey[100],
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
+                          ),
+                          child: Text(
+                            _selectedCategoryName(),
+                            style: TextStyle(
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                        const SizedBox(height: 24),
+                      ],
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -1089,8 +1033,8 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                                             ? 'Hifadhi Mabadiliko'
                                             : 'Save Changes')
                                       : (isSwahili
-                                            ? 'Unda Gharama'
-                                            : 'Create Cost'),
+                                            ? 'Unda Expense'
+                                            : 'Create Expense'),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -1119,24 +1063,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedProjectId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            ref.read(isSwahiliProvider) ? 'Chagua mradi' : 'Select a project',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    if (_selectedCategoryId == null) {
+    if (_selectedSubCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             ref.read(isSwahiliProvider)
-                ? 'Chagua kategoria'
-                : 'Select a category',
+                ? 'Chagua sub category'
+                : 'Select a sub category',
           ),
           backgroundColor: Colors.red,
         ),
@@ -1150,11 +1083,8 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
       final data = {
         'description': _descriptionController.text.trim(),
         'amount': double.parse(_amountController.text),
-        'expense_date': DateFormat('yyyy-MM-dd').format(_selectedDate),
-        'cost_category_id': _selectedCategoryId,
-        'project_id': _selectedProjectId,
-        if (_notesController.text.isNotEmpty)
-          'notes': _notesController.text.trim(),
+        'date': DateFormat('yyyy-MM-dd').format(_selectedDate),
+        'expenses_sub_category_id': _selectedSubCategoryId,
       };
 
       if (_isEditing && _expenseId != null) {
@@ -1171,6 +1101,14 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  String _selectedCategoryName() {
+    final selected = _subCategories.cast<Map>().firstWhere(
+      (item) => item['id'] == _selectedSubCategoryId,
+      orElse: () => <String, dynamic>{},
+    );
+    return selected['category_name'] as String? ?? '-';
   }
 }
 
@@ -1193,17 +1131,17 @@ class _ExpenseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final description = expense['description'] as String? ?? '-';
     final amount = _toDouble(expense['amount']);
-    final status = (expense['status'] as String? ?? 'draft').toLowerCase();
-    final date = expense['expense_date'] as String?;
+    final status = (expense['status'] as String? ?? 'pending').toLowerCase();
+    final date = expense['expense_date'] as String? ?? expense['date'] as String?;
     final category =
-        (expense['cost_category'] as Map<String, dynamic>?)?['name']
+        (expense['expenses_category'] as Map<String, dynamic>?)?['name']
             as String? ??
         '-';
-    final project =
-        (expense['project'] as Map<String, dynamic>?)?['project_name']
+    final subCategory =
+        (expense['expenses_sub_category'] as Map<String, dynamic>?)?['name']
             as String? ??
         '-';
-    final notes = expense['remarks'] as String?;
+    final notes = expense['document_number'] as String?;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1244,7 +1182,7 @@ class _ExpenseCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '$category - $project',
+                          '$subCategory - $category',
                           style: TextStyle(
                             fontSize: 12,
                             color: isDarkMode
@@ -1262,24 +1200,31 @@ class _ExpenseCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Icon(
-                    Icons.calendar_today_rounded,
-                    size: 14,
-                    color: isDarkMode ? Colors.white38 : AppColors.textHint,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 14,
+                        color: isDarkMode ? Colors.white38 : AppColors.textHint,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDate(date),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDarkMode
+                              ? Colors.white54
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatDate(date),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDarkMode
-                          ? Colors.white54
-                          : AppColors.textSecondary,
-                    ),
-                  ),
-                  const Spacer(),
                   Text(
                     'TZS ${NumberFormat('#,##0.00', 'en_US').format(amount)}',
                     style: const TextStyle(
@@ -1302,10 +1247,12 @@ class _ExpenseCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
-              if (status == 'draft') ...[
+              ...[
                 const Divider(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     TextButton.icon(
                       onPressed: onEdit,
@@ -1334,17 +1281,15 @@ class _ExpenseCard extends StatelessWidget {
 
   void _showDetails(BuildContext context) {
     final category =
-        (expense['cost_category'] as Map<String, dynamic>?)?['name']
+        (expense['expenses_category'] as Map<String, dynamic>?)?['name']
             as String? ??
         '-';
-    final project =
-        (expense['project'] as Map<String, dynamic>?)?['project_name']
+    final subCategory =
+        (expense['expenses_sub_category'] as Map<String, dynamic>?)?['name']
             as String? ??
         '-';
-    final creator =
-        (expense['creator'] as Map<String, dynamic>?)?['name'] as String? ??
-        '-';
-    final notes = expense['remarks'] as String?;
+    final documentNumber = expense['document_number'] as String? ?? '-';
+    final receiptUrl = expense['receipt_path'] as String?;
 
     showModalBottomSheet(
       context: context,
@@ -1382,8 +1327,8 @@ class _ExpenseCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _DetailRow(
-                label: isSwahili ? 'Mradi' : 'Project',
-                value: project,
+                label: isSwahili ? 'Sub Category' : 'Sub Category',
+                value: subCategory,
                 isDarkMode: isDarkMode,
               ),
               _DetailRow(
@@ -1408,14 +1353,14 @@ class _ExpenseCard extends StatelessWidget {
                 isDarkMode: isDarkMode,
               ),
               _DetailRow(
-                label: isSwahili ? 'Imeundwa na' : 'Created By',
-                value: creator,
+                label: isSwahili ? 'Document No' : 'Document No',
+                value: documentNumber,
                 isDarkMode: isDarkMode,
               ),
-              if (notes != null && notes.isNotEmpty)
+              if (receiptUrl != null && receiptUrl.isNotEmpty)
                 _DetailRow(
-                  label: isSwahili ? 'Maoni' : 'Notes',
-                  value: notes,
+                  label: isSwahili ? 'Receipt' : 'Receipt',
+                  value: receiptUrl,
                   isDarkMode: isDarkMode,
                 ),
             ],
@@ -1490,29 +1435,32 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? const Color(0xFF252540)
+            : Colors.grey.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 90,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
-              ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
             ),
           ),
-          Expanded(
-            child: Text(
-              value.isEmpty ? '-' : value,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isDarkMode ? Colors.white : AppColors.textPrimary,
-              ),
+          const SizedBox(height: 6),
+          Text(
+            value.isEmpty ? '-' : value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: isDarkMode ? Colors.white : AppColors.textPrimary,
             ),
           ),
         ],

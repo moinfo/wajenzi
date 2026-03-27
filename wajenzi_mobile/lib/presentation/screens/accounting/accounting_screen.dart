@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../providers/settings_provider.dart';
@@ -156,6 +157,11 @@ class _AccountingBody extends StatelessWidget {
                           ))
                       .toList(),
                 ),
+        ),
+        const SizedBox(height: 16),
+        _ProvisionTaxSection(
+          isSwahili: isSwahili,
+          isDarkMode: isDarkMode,
         ),
         const SizedBox(height: 90),
       ],
@@ -540,5 +546,276 @@ Color _statusColor(String status) {
       return AppColors.warning;
     default:
       return AppColors.info;
+  }
+}
+
+class _ProvisionTaxSection extends ConsumerStatefulWidget {
+  final bool isSwahili;
+  final bool isDarkMode;
+
+  const _ProvisionTaxSection({
+    required this.isSwahili,
+    required this.isDarkMode,
+  });
+
+  @override
+  ConsumerState<_ProvisionTaxSection> createState() => _ProvisionTaxSectionState();
+}
+
+class _ProvisionTaxSectionState extends ConsumerState<_ProvisionTaxSection> {
+  bool _isLoading = false;
+  List<dynamic> _taxes = [];
+  Map<String, dynamic> _summary = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProvisionTaxes();
+  }
+
+  Future<void> _loadProvisionTaxes() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.get('/provision-tax', queryParameters: {
+        'per_page': '5', // Only show recent ones in accounting screen
+      });
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'];
+        setState(() {
+          _taxes = data['data'] ?? [];
+          _summary = data['summary'] ?? {};
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _formatCurrency(double amount) {
+    final formatter = NumberFormat.currency(
+      locale: 'en_TZ',
+      symbol: 'TZS ',
+      decimalDigits: 0,
+    );
+    return formatter.format(amount);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      title: widget.isSwahili ? 'Usalala wa Kodi' : 'Provision Tax',
+      isDarkMode: widget.isDarkMode,
+      child: Column(
+        children: [
+          // Summary Row
+          Row(
+            children: [
+              Expanded(
+                child: _ProvisionTaxMetric(
+                  label: widget.isSwahili ? 'Jumla Kuu' : 'Total Amount',
+                  value: _formatCurrency(_summary['total_amount'] ?? 0),
+                  color: AppColors.info,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ProvisionTaxMetric(
+                  label: widget.isSwahili ? 'Rekodi' : 'Records',
+                  value: (_summary['count'] ?? 0).toString(),
+                  color: AppColors.success,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Recent Taxes List
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator())
+          else if (_taxes.isEmpty)
+            _EmptySection(label: widget.isSwahili ? 'Hakuna data' : 'No data')
+          else
+            Column(
+              children: _taxes.take(3).map((tax) => _ProvisionTaxRow(
+                tax: tax,
+                isDarkMode: widget.isDarkMode,
+                isSwahili: widget.isSwahili,
+              )).toList(),
+            ),
+          const SizedBox(height: 8),
+          // View All Button
+          if (_taxes.isNotEmpty)
+            TextButton(
+              onPressed: () {
+                context.push('/provision-tax');
+              },
+              child: Text(
+                widget.isSwahili ? 'Ona Zote' : 'View All',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProvisionTaxMetric extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _ProvisionTaxMetric({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProvisionTaxRow extends StatelessWidget {
+  final dynamic tax;
+  final bool isDarkMode;
+  final bool isSwahili;
+
+  const _ProvisionTaxRow({
+    required this.tax,
+    required this.isDarkMode,
+    required this.isSwahili,
+  });
+
+  String _formatCurrency(dynamic amount) {
+    final number = amount is num
+        ? amount.toDouble()
+        : double.tryParse(amount?.toString() ?? '') ?? 0;
+    final formatter = NumberFormat.currency(
+      locale: 'en_TZ',
+      symbol: 'TZS ',
+      decimalDigits: 0,
+    );
+    return formatter.format(number);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  tax['description'] ?? 'No Description',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+              Text(
+                _formatCurrency(tax['amount'] ?? 0),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.success,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(Icons.calendar_today, size: 12, color: AppColors.textSecondary),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  tax['date'] ?? 'No Date',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (tax['bank'] != null) ...[
+                const SizedBox(width: 8),
+                Icon(Icons.account_balance, size: 12, color: AppColors.textSecondary),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    tax['bank']['bank_name'] ?? 'Unknown Bank',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

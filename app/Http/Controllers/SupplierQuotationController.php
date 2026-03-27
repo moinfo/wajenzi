@@ -6,6 +6,7 @@ use App\Models\ProjectMaterialRequest;
 use App\Models\Supplier;
 use App\Models\SupplierQuotation;
 use App\Models\SupplierQuotationItem;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -20,11 +21,34 @@ class SupplierQuotationController extends Controller
             return back();
         }
 
-        $start_date = $request->input('start_date') ?? date('Y-m-01');
-        $end_date = $request->input('end_date') ?? date('Y-m-d');
+        $start_date = $request->input('start_date');
+        $end_date = $request->input('end_date');
 
-        $quotations = SupplierQuotation::with(['materialRequest.project', 'supplier', 'createdBy'])
-            ->whereBetween('quotation_date', [$start_date, $end_date])
+        $quotationsQuery = SupplierQuotation::with(['materialRequest.project', 'supplier', 'createdBy']);
+
+        // Only apply the date filter when the user explicitly requests it.
+        if ($start_date || $end_date) {
+            $parsedStartDate = $start_date ? Carbon::parse($start_date)->toDateString() : null;
+            $parsedEndDate = $end_date ? Carbon::parse($end_date)->toDateString() : null;
+
+            if ($parsedStartDate && $parsedEndDate && $parsedStartDate > $parsedEndDate) {
+                [$parsedStartDate, $parsedEndDate] = [$parsedEndDate, $parsedStartDate];
+            }
+
+            if ($parsedStartDate) {
+                $quotationsQuery->whereDate('quotation_date', '>=', $parsedStartDate);
+            }
+
+            if ($parsedEndDate) {
+                $quotationsQuery->whereDate('quotation_date', '<=', $parsedEndDate);
+            }
+
+            $start_date = $parsedStartDate;
+            $end_date = $parsedEndDate;
+        }
+
+        $quotations = $quotationsQuery
+            ->orderBy('quotation_date', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
 

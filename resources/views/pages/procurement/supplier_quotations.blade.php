@@ -29,28 +29,38 @@
                 <h3 class="block-title">All Quotations</h3>
             </div>
             <div class="block-content">
-                <form method="post" id="filter-form" autocomplete="off">
-                    @csrf
+                <form method="get" action="{{ route('supplier_quotations') }}" id="filter-form" autocomplete="off">
                     <div class="row mb-3">
                         <div class="col-md-3">
                             <div class="input-group">
                                 <span class="input-group-text">Start Date</span>
-                                <input type="text" name="start_date" class="form-control datepicker"
-                                    value="{{ $start_date ?? date('Y-m-01') }}">
+                                <input type="date" name="start_date" class="form-control"
+                                    value="{{ $start_date ?? '' }}">
                             </div>
                         </div>
                         <div class="col-md-3">
                             <div class="input-group">
                                 <span class="input-group-text">End Date</span>
-                                <input type="text" name="end_date" class="form-control datepicker"
-                                    value="{{ $end_date ?? date('Y-m-d') }}">
+                                <input type="date" name="end_date" class="form-control"
+                                    value="{{ $end_date ?? '' }}">
                             </div>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-4">
                             <button type="submit" class="btn btn-primary">Filter</button>
+                            <a href="{{ route('supplier_quotations') }}" class="btn btn-outline-secondary">Clear</a>
                         </div>
                     </div>
                 </form>
+
+                <div class="mb-3">
+                    <span class="badge badge-info">{{ $quotations->count() }} quotation(s)</span>
+                </div>
+
+                @if($quotations->isEmpty())
+                    <div class="alert alert-warning">
+                        No supplier quotations found for the selected filter.
+                    </div>
+                @endif
 
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
@@ -125,14 +135,3 @@
 </div>
 @endsection
 
-@section('js')
-<script>
-    $(document).ready(function() {
-        $('.datepicker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
-        });
-    });
-</script>
-@endsection

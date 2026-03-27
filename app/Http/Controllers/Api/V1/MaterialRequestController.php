@@ -133,6 +133,7 @@ class MaterialRequestController extends Controller
             }
 
             $validated = $request->validate([
+                'project_id' => 'sometimes|exists:projects,id',
                 'purpose' => 'sometimes|string|max:500',
                 'items' => 'sometimes|array|min:1',
                 'items.*.material_name' => 'required_with:items|string',
@@ -143,7 +144,23 @@ class MaterialRequestController extends Controller
                 'priority' => 'nullable|in:low,medium,high,urgent',
             ]);
 
-            $materialRequest->update($validated);
+            $updateData = $validated;
+            unset($updateData['items']);
+
+            $materialRequest->update($updateData);
+
+            if (array_key_exists('items', $validated)) {
+                $materialRequest->items()->delete();
+
+                foreach ($validated['items'] as $item) {
+                    ProjectMaterialRequestItem::create([
+                        'material_request_id' => $materialRequest->id,
+                        'description' => $item['material_name'],
+                        'quantity_requested' => $item['quantity'],
+                        'unit' => $item['unit'] ?? null,
+                    ]);
+                }
+            }
 
             return response()->json([
                 'success' => true,

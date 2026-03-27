@@ -17,3 +17,19 @@ metadata
 storage/debugbar/.gitignore
 .playwright-mcp/
 docs/screenshots/
+# Local env files
+.env
+.env.*
+wajenzi_mobile/.env.local
+
+# Debug / test files
+test_api.php
+debug_dashboard.php
+public/test_api.php
+public/debug_dashboard.php
+routes/api/debug.php
+routes/api/simple_dashboard.php
+
+# OS files
+.DS_Store
+Thumbs.db

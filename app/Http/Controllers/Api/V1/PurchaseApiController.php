@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Purchase;
+use App\Models\SupplierReceiving;
 use App\Models\Supplier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PurchaseApiController extends Controller
@@ -14,7 +16,16 @@ class PurchaseApiController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Purchase::with(['supplier', 'item', 'approvalStatus']);
+            $query = Purchase::with([
+                'supplier',
+                'item',
+                'project',
+                'materialRequest',
+                'quotationComparison',
+                'purchaseItems.boqItem',
+                'user',
+                'approvalStatus',
+            ]);
 
             if ($request->start_date) {
                 $query->where('date', '>=', $request->start_date);
@@ -26,6 +37,10 @@ class PurchaseApiController extends Controller
 
             if ($request->supplier_id) {
                 $query->where('supplier_id', $request->supplier_id);
+            }
+
+            if ($request->boolean('procurement_only')) {
+                $query->whereNotNull('material_request_id');
             }
 
             $purchases = $query->orderBy('date', 'desc')
@@ -57,7 +72,16 @@ class PurchaseApiController extends Controller
     public function show(int $id): JsonResponse
     {
         try {
-            $purchase = Purchase::with(['supplier', 'item', 'project', 'approvalStatus'])->findOrFail($id);
+            $purchase = Purchase::with([
+                'supplier',
+                'item',
+                'project',
+                'materialRequest',
+                'quotationComparison',
+                'purchaseItems.boqItem',
+                'user',
+                'approvalStatus',
+            ])->findOrFail($id);
 
             return response()->json([
                 'success' => true,
@@ -68,6 +92,265 @@ class PurchaseApiController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch purchase: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function pendingDeliveries(Request $request): JsonResponse
+    {
+        try {
+            $perPage = min((int) $request->integer('per_page', 100), 200);
+
+            $purchases = Purchase::with([
+                    'supplier',
+                    'project',
+                    'materialRequest',
+                    'purchaseItems',
+                    'approvalStatus',
+                ])
+                ->whereNotNull('material_request_id')
+                ->where(function ($query) {
+                    $query->whereRaw('UPPER(status) = ?', ['APPROVED'])
+                        ->orWhereHas('approvalStatus', function ($approvalQuery) {
+                            $approvalQuery->whereRaw('UPPER(status) = ?', ['APPROVED']);
+                        });
+                })
+                ->orderByDesc('created_at')
+                ->get()
+                ->filter(fn ($purchase) => $purchase->purchaseItems->contains(
+                    fn ($item) => !$item->isFullyReceived()
+                ))
+                ->values();
+
+            $items = $purchases->take($perPage)->map(function ($purchase) {
+                $totalItems = $purchase->purchaseItems->count();
+                $fullyReceived = $purchase->purchaseItems->filter(
+                    fn ($item) => $item->isFullyReceived()
+                )->count();
+                $partiallyReceived = $purchase->purchaseItems->filter(
+                    fn ($item) => $item->isPartiallyReceived()
+                )->count();
+
+                return [
+                    'id' => $purchase->id,
+                    'document_number' => $purchase->document_number ?? 'PO-' . $purchase->id,
+                    'project' => $purchase->project ? [
+                        'id' => $purchase->project->id,
+                        'name' => $purchase->project->project_name ?? $purchase->project->name,
+                    ] : null,
+                    'supplier' => $purchase->supplier ? [
+                        'id' => $purchase->supplier->id,
+                        'name' => $purchase->supplier->name,
+                    ] : null,
+                    'material_request' => $purchase->materialRequest ? [
+                        'id' => $purchase->materialRequest->id,
+                        'request_number' => $purchase->materialRequest->request_number,
+                    ] : null,
+                    'purchase_items_count' => $totalItems,
+                    'fully_received_count' => $fullyReceived,
+                    'partially_received_count' => $partiallyReceived,
+                    'pending_count' => max(0, $totalItems - $fullyReceived),
+                    'date' => $purchase->date,
+                    'status' => strtoupper($purchase->approvalStatus?->status ?? $purchase->status ?? 'PENDING'),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'data' => $items->values(),
+                    'meta' => [
+                        'current_page' => 1,
+                        'last_page' => 1,
+                        'per_page' => $perPage,
+                        'total' => $items->count(),
+                    ],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Pending deliveries error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch pending deliveries: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function storeDelivery(Request $request, int $id): JsonResponse
+    {
+        try {
+            $purchase = Purchase::with(['purchaseItems', 'supplier', 'project'])->findOrFail($id);
+
+            $status = strtoupper($purchase->approvalStatus?->status ?? $purchase->status ?? 'PENDING');
+            if ($status !== 'APPROVED' || $purchase->material_request_id === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only approved purchase orders can receive deliveries.',
+                ], 422);
+            }
+
+            $validated = $request->validate([
+                'delivery_note_number' => 'required|string|max:100',
+                'date' => 'required|date',
+                'condition' => 'required|in:good,damaged,partial_damage',
+                'description' => 'nullable|string',
+                'items' => 'required|array|min:1',
+                'items.*.purchase_item_id' => 'required|integer|exists:purchase_items,id',
+                'items.*.quantity' => 'required|numeric|min:0',
+            ]);
+
+            $quantitiesByItemId = collect($validated['items'])
+                ->mapWithKeys(fn ($item) => [(int) $item['purchase_item_id'] => (float) $item['quantity']]);
+
+            $totalDelivered = 0.0;
+            $totalOrdered = 0.0;
+
+            foreach ($purchase->purchaseItems as $purchaseItem) {
+                $quantity = $quantitiesByItemId[$purchaseItem->id] ?? 0.0;
+
+                if ($quantity > $purchaseItem->quantity_pending) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Delivery quantity exceeds pending quantity for item {$purchaseItem->id}.",
+                    ], 422);
+                }
+
+                $totalDelivered += $quantity;
+                $totalOrdered += (float) $purchaseItem->quantity;
+            }
+
+            if ($totalDelivered <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'At least one item must have a delivery quantity greater than zero.',
+                ], 422);
+            }
+
+            DB::transaction(function () use ($request, $purchase, $quantitiesByItemId, $totalDelivered, $totalOrdered) {
+                $receiving = SupplierReceiving::create([
+                    'purchase_id' => $purchase->id,
+                    'project_id' => $purchase->project_id,
+                    'supplier_id' => $purchase->supplier_id,
+                    'received_by' => $request->user()->id,
+                    'delivery_note_number' => $request->string('delivery_note_number')->toString(),
+                    'date' => $request->input('date'),
+                    'condition' => $request->string('condition')->toString(),
+                    'description' => $request->input('description'),
+                    'quantity_ordered' => $totalOrdered,
+                    'quantity_delivered' => $totalDelivered,
+                    'status' => 'pending',
+                ]);
+
+                if ($request->hasFile('file')) {
+                    $receiving->file = $request->file('file')->store('delivery_notes', 'public');
+                    $receiving->save();
+                }
+
+                foreach ($purchase->purchaseItems as $purchaseItem) {
+                    $quantity = $quantitiesByItemId[$purchaseItem->id] ?? 0.0;
+                    if ($quantity > 0) {
+                        $purchaseItem->recordReceiving($quantity);
+                    }
+                }
+            });
+
+            $updatedPurchase = Purchase::with([
+                'supplier',
+                'project',
+                'materialRequest',
+                'quotationComparison',
+                'purchaseItems.boqItem',
+                'user',
+                'approvalStatus',
+            ])->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Delivery recorded successfully.',
+                'data' => $this->formatPurchase($updatedPurchase, true),
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Throwable $e) {
+            Log::error('Store delivery error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to record delivery: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function receivings(Request $request): JsonResponse
+    {
+        try {
+            $query = SupplierReceiving::with([
+                'purchase',
+                'supplier',
+                'project',
+                'receivedBy',
+                'inspections',
+            ])
+                ->whereNotNull('purchase_id')
+                ->whereHas('purchase', fn ($purchaseQuery) => $purchaseQuery->whereNotNull('material_request_id'))
+                ->orderByDesc('created_at');
+
+            if ($request->start_date) {
+                $query->whereDate('date', '>=', $request->start_date);
+            }
+
+            if ($request->end_date) {
+                $query->whereDate('date', '<=', $request->end_date);
+            }
+
+            $receivings = $query->paginate($request->per_page ?? 100);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'data' => collect($receivings->items())
+                        ->map(fn ($receiving) => $this->formatReceiving($receiving))
+                        ->values(),
+                    'meta' => [
+                        'current_page' => $receivings->currentPage(),
+                        'last_page' => $receivings->lastPage(),
+                        'per_page' => $receivings->perPage(),
+                        'total' => $receivings->total(),
+                    ],
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Receivings index error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch receivings: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function showReceiving(int $id): JsonResponse
+    {
+        try {
+            $receiving = SupplierReceiving::with([
+                'purchase.purchaseItems.boqItem',
+                'supplier',
+                'project',
+                'receivedBy',
+                'inspections',
+            ])->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $this->formatReceiving($receiving, true),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Receiving show error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch receiving: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -220,6 +503,7 @@ class PurchaseApiController extends Controller
 
     private function formatPurchase($purchase, bool $detailed = false)
     {
+        $status = strtoupper($purchase->approvalStatus?->status ?? $purchase->status ?? 'PENDING');
         $data = [
             'id' => $purchase->id,
             'supplier_id' => $purchase->supplier_id,
@@ -232,8 +516,13 @@ class PurchaseApiController extends Controller
             'amount_vat_exc' => $purchase->amount_vat_exc,
             'vat_amount' => $purchase->vat_amount,
             'notes' => $purchase->notes,
-            'status' => $purchase->approvalStatus?->status ?? 'PENDING',
+            'status' => $status,
             'document_number' => $purchase->document_number,
+            'material_request_id' => $purchase->material_request_id,
+            'quotation_comparison_id' => $purchase->quotation_comparison_id,
+            'purchase_items_count' => $purchase->relationLoaded('purchaseItems')
+                ? $purchase->purchaseItems->count()
+                : null,
             'created_at' => $purchase->created_at?->toISOString(),
         ];
 
@@ -259,11 +548,137 @@ class PurchaseApiController extends Controller
             ];
         }
 
+        if ($purchase->relationLoaded('materialRequest') && $purchase->materialRequest) {
+            $data['material_request'] = [
+                'id' => $purchase->materialRequest->id,
+                'request_number' => $purchase->materialRequest->request_number,
+                'status' => $purchase->materialRequest->status,
+            ];
+        }
+
+        if ($purchase->relationLoaded('quotationComparison') && $purchase->quotationComparison) {
+            $data['quotation_comparison'] = [
+                'id' => $purchase->quotationComparison->id,
+                'comparison_number' => $purchase->quotationComparison->comparison_number,
+                'status' => $purchase->quotationComparison->status,
+            ];
+        }
+
+        if ($purchase->relationLoaded('user') && $purchase->user) {
+            $data['user'] = [
+                'id' => $purchase->user->id,
+                'name' => $purchase->user->name,
+            ];
+        }
+
         if ($detailed) {
             $data['file'] = $purchase->file;
             $data['expected_delivery_date'] = $purchase->expected_delivery_date;
             $data['delivery_address'] = $purchase->delivery_address;
             $data['payment_terms'] = $purchase->payment_terms;
+            $data['purchase_items'] = $purchase->relationLoaded('purchaseItems')
+                ? $purchase->purchaseItems->map(fn ($item) => [
+                    'id' => $item->id,
+                    'description' => $item->description ?? $item->boqItem?->description ?? 'Item',
+                    'unit' => $item->unit,
+                    'quantity' => $item->quantity,
+                    'quantity_received' => $item->quantity_received,
+                    'quantity_pending' => $item->quantity_pending,
+                    'unit_price' => $item->unit_price,
+                    'total_price' => $item->total_price,
+                    'material_name' => $item->boqItem?->description,
+                    'boq_item' => $item->boqItem ? [
+                        'id' => $item->boqItem->id,
+                        'description' => $item->boqItem->description,
+                    ] : null,
+                ])->values()
+                : [];
+        }
+
+        return $data;
+    }
+
+    private function formatReceiving(SupplierReceiving $receiving, bool $detailed = false): array
+    {
+        $purchase = $receiving->purchase;
+        $purchaseItems = $purchase?->purchaseItems ?? collect();
+        $fullyReceived = $purchaseItems->filter(fn ($item) => $item->isFullyReceived())->count();
+        $partiallyReceived = $purchaseItems->filter(fn ($item) => $item->isPartiallyReceived())->count();
+
+        $data = [
+            'id' => $receiving->id,
+            'receiving_number' => $receiving->receiving_number,
+            'purchase_id' => $receiving->purchase_id,
+            'delivery_note_number' => $receiving->delivery_note_number,
+            'date' => $receiving->date?->format('Y-m-d'),
+            'quantity_ordered' => $receiving->quantity_ordered,
+            'quantity_delivered' => $receiving->quantity_delivered,
+            'condition' => $receiving->condition,
+            'status' => $receiving->status,
+            'description' => $receiving->description,
+            'file' => $receiving->file,
+            'purchase_items_count' => $purchaseItems->count(),
+            'fully_received_count' => $fullyReceived,
+            'partially_received_count' => $partiallyReceived,
+            'pending_count' => max(0, $purchaseItems->count() - $fullyReceived),
+            'needs_inspection' => $receiving->needsInspection(),
+            'has_inspection' => $receiving->hasInspection(),
+            'created_at' => $receiving->created_at?->toISOString(),
+        ];
+
+        if ($receiving->relationLoaded('supplier') && $receiving->supplier) {
+            $data['supplier'] = [
+                'id' => $receiving->supplier->id,
+                'name' => $receiving->supplier->name,
+            ];
+        }
+
+        if ($receiving->relationLoaded('project') && $receiving->project) {
+            $data['project'] = [
+                'id' => $receiving->project->id,
+                'name' => $receiving->project->project_name ?? $receiving->project->name,
+            ];
+        }
+
+        if ($receiving->relationLoaded('purchase') && $receiving->purchase) {
+            $data['purchase'] = [
+                'id' => $receiving->purchase->id,
+                'document_number' => $receiving->purchase->document_number ?? 'PO-' . $receiving->purchase->id,
+            ];
+        }
+
+        if ($receiving->relationLoaded('receivedBy') && $receiving->receivedBy) {
+            $data['received_by'] = [
+                'id' => $receiving->receivedBy->id,
+                'name' => $receiving->receivedBy->name,
+            ];
+        }
+
+        if ($detailed) {
+            $data['purchase_items'] = $purchaseItems->map(fn ($item) => [
+                'id' => $item->id,
+                'description' => $item->description,
+                'unit' => $item->unit,
+                'quantity' => $item->quantity,
+                'quantity_received' => $item->quantity_received,
+                'status' => $item->status,
+                'boq_item' => $item->boqItem ? [
+                    'id' => $item->boqItem->id,
+                    'description' => $item->boqItem->description,
+                    'item_code' => $item->boqItem->item_code,
+                ] : null,
+            ])->values();
+
+            $data['inspections'] = $receiving->relationLoaded('inspections')
+                ? $receiving->inspections->map(fn ($inspection) => [
+                    'id' => $inspection->id,
+                    'inspection_number' => $inspection->inspection_number,
+                    'inspection_date' => $inspection->inspection_date?->format('Y-m-d'),
+                    'quantity_accepted' => $inspection->quantity_accepted,
+                    'overall_result' => $inspection->overall_result,
+                    'status' => $inspection->status,
+                ])->values()
+                : [];
         }
 
         return $data;
