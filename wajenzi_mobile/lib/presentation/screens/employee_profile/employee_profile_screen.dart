@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
 // --- State providers ---
@@ -17,7 +20,10 @@ final _staffListProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final api = ref.watch(apiClientProvider);
   final response = await api.get('/employee-profile/staff-list');
-  return (response.data['data'] as List).cast<Map<String, dynamic>>();
+  return (response.data['data'] as List)
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList();
 });
 
 final _profileProvider =
@@ -54,10 +60,15 @@ class EmployeeProfileScreen extends ConsumerWidget {
     final profileAsync = ref.watch(_profileProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDark = ref.watch(isDarkModeProvider);
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
 
     return Scaffold(
       backgroundColor: isDark ? _darkBg : AppColors.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Wasifu wa Mfanyakazi' : 'Employee Profile'),
         backgroundColor: isDark ? _darkCard : null,
       ),
@@ -167,7 +178,7 @@ class _FiltersBar extends ConsumerWidget {
                       ...staffList.map((s) => DropdownMenuItem<int?>(
                             value: s['id'] as int,
                             child: Text(
-                              '${s['name']} - ${s['department'] ?? ''}',
+                              '${s['name']} (${s['employee_number'] ?? ''})',
                               style: const TextStyle(fontSize: 13),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -306,8 +317,14 @@ class _ProfileBody extends StatelessWidget {
     final payrolls =
         (data['payroll_history'] as List?)?.cast<Map<String, dynamic>>() ??
             [];
+    final payrollSummary =
+        data['payroll_summary'] as Map<String, dynamic>? ?? {};
     final assets =
         (data['assets'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final loanSummary =
+        data['loan_history_summary'] as Map<String, dynamic>? ?? {};
+    final advanceSummary =
+        data['advance_salary_summary'] as Map<String, dynamic>? ?? {};
 
     // Bottom padding for nav bar
     final bottomPad = MediaQuery.of(context).padding.bottom + 90;
@@ -337,7 +354,11 @@ class _ProfileBody extends StatelessWidget {
             icon: Icons.account_balance_rounded,
             isDark: isDark,
             child: _LoanTable(
-                loans: loans, isDark: isDark, isSwahili: isSwahili),
+              loans: loans,
+              summary: loanSummary,
+              isDark: isDark,
+              isSwahili: isSwahili,
+            ),
           ),
           const SizedBox(height: 14),
         ],
@@ -351,7 +372,11 @@ class _ProfileBody extends StatelessWidget {
             icon: Icons.payments_rounded,
             isDark: isDark,
             child: _AdvanceSalaryTable(
-                advances: advances, isDark: isDark, isSwahili: isSwahili),
+              advances: advances,
+              summary: advanceSummary,
+              isDark: isDark,
+              isSwahili: isSwahili,
+            ),
           ),
           const SizedBox(height: 14),
         ],
@@ -363,7 +388,11 @@ class _ProfileBody extends StatelessWidget {
             icon: Icons.receipt_long_rounded,
             isDark: isDark,
             child: _PayrollList(
-                payrolls: payrolls, isDark: isDark, isSwahili: isSwahili),
+              payrolls: payrolls,
+              summary: payrollSummary,
+              isDark: isDark,
+              isSwahili: isSwahili,
+            ),
           ),
           const SizedBox(height: 14),
         ],
@@ -401,6 +430,7 @@ class _ProfileCard extends StatelessWidget {
     final empNo = personal['employee_number'] as String? ?? '';
     final designation = personal['designation'] as String? ?? '';
     final status = personal['status'] as String? ?? '';
+    final profilePhoto = _profilePhotoUrl(personal['profile_photo']?.toString());
     final basicSalary =
         (financial['basic_salary'] as num?)?.toDouble() ?? 0;
     final loanBalance =
@@ -423,20 +453,26 @@ class _ProfileCard extends StatelessWidget {
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 32,
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: const TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 32,
+              backgroundColor: Colors.white.withValues(alpha: 0.2),
+              backgroundImage:
+                  profilePhoto != null ? NetworkImage(profilePhoto) : null,
+              onBackgroundImageError:
+                  profilePhoto != null ? (_, __) {} : null,
+              child: profilePhoto == null
+                  ? Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    )
+                  : null,
             ),
-          ),
           const SizedBox(height: 8),
           Text(
             name,
@@ -461,9 +497,7 @@ class _ProfileCard extends StatelessWidget {
               const SizedBox(width: 8),
               _Badge(
                 label: status,
-                color: status == 'ACTIVE'
-                    ? Colors.green.withValues(alpha: 0.35)
-                    : Colors.red.withValues(alpha: 0.35),
+                color: _statusBadgeColor(status),
               ),
             ],
           ),
@@ -670,6 +704,8 @@ class _GeneralInfoCard extends StatelessWidget {
           personal['employment_date'] as String? ?? '-'),
       _InfoRow(Icons.apartment_rounded, isSwahili ? 'Idara' : 'Department',
           personal['department'] as String? ?? '-'),
+      _InfoRow(Icons.hub_outlined, isSwahili ? 'Mfumo' : 'System',
+          personal['system'] as String? ?? '-'),
       _InfoRow(Icons.person_outline_rounded, isSwahili ? 'Jinsia' : 'Gender',
           personal['gender'] as String? ?? '-'),
       _InfoRow(Icons.cake_rounded, isSwahili ? 'Kuzaliwa' : 'DOB',
@@ -686,6 +722,11 @@ class _GeneralInfoCard extends StatelessWidget {
           Icons.receipt_outlined, 'TIN', personal['tin'] as String? ?? '-'),
       _InfoRow(Icons.account_balance_rounded,
           isSwahili ? 'Akaunti' : 'Account', personal['account_number'] as String? ?? '-'),
+      _InfoRow(
+        Icons.verified_user_outlined,
+        isSwahili ? 'Hali' : 'Status',
+        _statusDisplayText(personal),
+      ),
     ];
 
     return _card(
@@ -739,6 +780,35 @@ class _GeneralInfoCard extends StatelessWidget {
   }
 }
 
+String _statusText(Map<String, dynamic> personal) {
+  final status = personal['status']?.toString() ?? '-';
+  final updated = personal['status_updated_at']?.toString() ?? '';
+  if (updated.isEmpty) return status;
+  return '$status  •  $updated';
+}
+
+String _statusDisplayText(Map<String, dynamic> personal) {
+  final status = personal['status']?.toString() ?? '-';
+  final updated = personal['status_updated_at']?.toString() ?? '';
+  if (updated.isEmpty) return status;
+  return '$status | $updated';
+}
+
+Color _statusBadgeColor(String status) {
+  switch (status.toUpperCase()) {
+    case 'ACTIVE':
+      return Colors.green.withValues(alpha: 0.35);
+    case 'DORMANT':
+      return Colors.orange.withValues(alpha: 0.35);
+    default:
+      return Colors.red.withValues(alpha: 0.35);
+  }
+}
+
+String? _profilePhotoUrl(String? path) {
+  return AppConfig.resolvePortalMediaUrl(path);
+}
+
 class _InfoRow {
   final IconData icon;
   final String label;
@@ -780,18 +850,24 @@ class _SectionCard extends StatelessWidget {
 
 class _LoanTable extends StatelessWidget {
   final List<Map<String, dynamic>> loans;
+  final Map<String, dynamic> summary;
   final bool isDark;
   final bool isSwahili;
 
   const _LoanTable(
-      {required this.loans, required this.isDark, required this.isSwahili});
+      {required this.loans,
+      required this.summary,
+      required this.isDark,
+      required this.isSwahili});
 
   @override
   Widget build(BuildContext context) {
-    double totalLoan = 0;
-    for (final l in loans) {
-      totalLoan += (l['amount'] as num?)?.toDouble() ?? 0;
-    }
+    final totalLoan =
+        (summary['total_loan'] as num?)?.toDouble() ??
+        loans.fold<double>(
+          0,
+          (sum, l) => sum + ((l['amount'] as num?)?.toDouble() ?? 0),
+        );
     return Column(
       children: [
         _TableHeader(columns: [
@@ -821,20 +897,24 @@ class _LoanTable extends StatelessWidget {
 
 class _AdvanceSalaryTable extends StatelessWidget {
   final List<Map<String, dynamic>> advances;
+  final Map<String, dynamic> summary;
   final bool isDark;
   final bool isSwahili;
 
   const _AdvanceSalaryTable(
       {required this.advances,
+      required this.summary,
       required this.isDark,
       required this.isSwahili});
 
   @override
   Widget build(BuildContext context) {
-    double total = 0;
-    for (final a in advances) {
-      total += (a['amount'] as num?)?.toDouble() ?? 0;
-    }
+    final total =
+        (summary['total_advance_salary'] as num?)?.toDouble() ??
+        advances.fold<double>(
+          0,
+          (sum, a) => sum + ((a['amount'] as num?)?.toDouble() ?? 0),
+        );
     return Column(
       children: [
         _TableHeader(columns: [
@@ -864,68 +944,169 @@ class _AdvanceSalaryTable extends StatelessWidget {
 
 class _PayrollList extends StatelessWidget {
   final List<Map<String, dynamic>> payrolls;
+  final Map<String, dynamic> summary;
   final bool isDark;
   final bool isSwahili;
 
   const _PayrollList(
       {required this.payrolls,
+      required this.summary,
       required this.isDark,
       required this.isSwahili});
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: payrolls.map((p) {
-        final period = p['period'] as String? ?? '';
-        final net = (p['net'] as num?)?.toDouble() ?? 0;
-        final salary = (p['salary'] as num?)?.toDouble() ?? 0;
-        final allowance = (p['allowance'] as num?)?.toDouble() ?? 0;
-        final gross = (p['gross'] as num?)?.toDouble() ?? 0;
-        final nssf = (p['nssf'] as num?)?.toDouble() ?? 0;
-        final paye = (p['paye'] as num?)?.toDouble() ?? 0;
-        final advance = (p['advance'] as num?)?.toDouble() ?? 0;
-        final loan = (p['loan'] as num?)?.toDouble() ?? 0;
+      children: [
+        ...payrolls.map((p) {
+          final period = p['period'] as String? ?? '';
+          final net = (p['net'] as num?)?.toDouble() ?? 0;
+          final salary = (p['salary'] as num?)?.toDouble() ?? 0;
+          final allowance = (p['allowance'] as num?)?.toDouble() ?? 0;
+          final gross = (p['gross'] as num?)?.toDouble() ?? 0;
+          final nssf = (p['nssf'] as num?)?.toDouble() ?? 0;
+          final paye = (p['paye'] as num?)?.toDouble() ?? 0;
+          final advance = (p['advance'] as num?)?.toDouble() ?? 0;
+          final loan = (p['loan'] as num?)?.toDouble() ?? 0;
+          final loanDeduction =
+              (p['loan_deduction'] as num?)?.toDouble() ?? 0;
+          final loanBalance =
+              (p['loan_balance'] as num?)?.toDouble() ?? 0;
+          final slipUrl = p['slip_url']?.toString() ?? '';
 
-        return Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: 14),
-            childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-            iconColor: isDark ? Colors.white38 : AppColors.textHint,
-            collapsedIconColor: isDark ? Colors.white24 : AppColors.textHint,
-            title: Text(
-              period,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : AppColors.textPrimary,
+          return Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.symmetric(horizontal: 14),
+              childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+              iconColor: isDark ? Colors.white38 : AppColors.textHint,
+              collapsedIconColor: isDark ? Colors.white24 : AppColors.textHint,
+              title: Text(
+                period,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
               ),
-            ),
-            subtitle: Text(
-              'Net: ${_fmt(net)}',
-              style: const TextStyle(
-                fontSize: 11,
-                color: _accentTeal,
-                fontWeight: FontWeight.w600,
+              subtitle: Text(
+                'Net: ${_fmt(net)}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: _accentTeal,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
+              children: [
+                _detailRow('Salary', salary, isDark),
+                _detailRow('Allowance', allowance, isDark),
+                _detailRow('Gross', gross, isDark),
+                _detailRow('NSSF', nssf, isDark),
+                _detailRow('PAYE', paye, isDark),
+                _detailRow('Advance', advance, isDark),
+                _detailRow('Loan', loan, isDark),
+                _detailRow('Deduction', loanDeduction, isDark),
+                _detailRow('Balance', loanBalance, isDark),
+                if (slipUrl.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        onPressed: () => context.push(
+                          '/portal-webview',
+                          extra: {
+                            'title': 'Salary Slip',
+                            'url': slipUrl,
+                          },
+                        ),
+                        icon: const Icon(Icons.receipt_long_rounded, size: 16),
+                        label: const Text('Slip'),
+                      ),
+                    ),
+                  ),
+                Divider(
+                    height: 10,
+                    color: isDark ? _darkBorder : Colors.grey.withValues(alpha: 0.2)),
+                _detailRow('Net Pay', net, isDark,
+                    bold: true, color: _accentTeal),
+              ],
             ),
-            children: [
-              _detailRow('Salary', salary, isDark),
-              _detailRow('Allowance', allowance, isDark),
-              _detailRow('Gross', gross, isDark),
-              _detailRow('NSSF', nssf, isDark),
-              _detailRow('PAYE', paye, isDark),
-              _detailRow('Advance', advance, isDark),
-              _detailRow('Loan', loan, isDark),
-              Divider(
-                  height: 10,
-                  color: isDark ? _darkBorder : Colors.grey.withValues(alpha: 0.2)),
-              _detailRow('Net Pay', net, isDark,
-                  bold: true, color: _accentTeal),
-            ],
+          );
+        }),
+        if (payrolls.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+            child: Column(
+              children: [
+                _detailRow(
+                  'Total Salary',
+                  (summary['salary'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                ),
+                _detailRow(
+                  'Total Allowance',
+                  (summary['allowance'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                ),
+                _detailRow(
+                  'Total Gross',
+                  (summary['gross'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                ),
+                _detailRow(
+                  'Total NSSF',
+                  (summary['nssf'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                ),
+                _detailRow(
+                  'Total PAYE',
+                  (summary['paye'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                ),
+                _detailRow(
+                  'Total Advance',
+                  (summary['advance'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                ),
+                _detailRow(
+                  'Total Loan',
+                  (summary['loan'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                ),
+                _detailRow(
+                  'Total Deduction',
+                  (summary['loan_deduction'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                ),
+                _detailRow(
+                  'Total Balance',
+                  (summary['loan_balance'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                ),
+                Divider(
+                    height: 10,
+                    color: isDark ? _darkBorder : Colors.grey.withValues(alpha: 0.2)),
+                _detailRow(
+                  'Total Net',
+                  (summary['net'] as num?)?.toDouble() ?? 0,
+                  isDark,
+                  bold: true,
+                  color: _accentTeal,
+                ),
+              ],
+            ),
           ),
-        );
-      }).toList(),
+      ],
     );
   }
 

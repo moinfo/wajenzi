@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Purchase;
+use App\Models\User;
 use App\Models\SupplierReceiving;
 use App\Models\Supplier;
+use RingleSoft\LaravelProcessApproval\Models\ProcessApprovalFlowStep;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,21 +45,27 @@ class PurchaseApiController extends Controller
                 $query->whereNotNull('material_request_id');
             }
 
-            $purchases = $query->orderBy('date', 'desc')
-                ->paginate($request->per_page ?? 20);
-
-            $items = collect($purchases->items())->map(fn($p) => $this->formatPurchase($p));
+            $purchases = $query->orderBy('date', 'desc')->get();
+            $items = collect($purchases)->map(fn($p) => $this->formatPurchase($p));
+            $totals = [
+                'total_amount' => (float) $items->sum(fn ($item) => (float) ($item['total_amount'] ?? 0)),
+                'amount_vat_exc' => (float) $items->sum(fn ($item) => (float) ($item['amount_vat_exc'] ?? 0)),
+                'vat_amount' => (float) $items->sum(fn ($item) => (float) ($item['vat_amount'] ?? 0)),
+            ];
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'data' => $items,
+                    'purchases' => $items->values(),
+                    'totals' => $totals,
                     'meta' => [
-                        'current_page' => $purchases->currentPage(),
-                        'last_page' => $purchases->lastPage(),
-                        'per_page' => $purchases->perPage(),
-                        'total' => $purchases->total(),
+                        'current_page' => 1,
+                        'last_page' => 1,
+                        'per_page' => $items->count(),
+                        'total' => $items->count(),
                     ],
+                    // Legacy compatibility for older mobile parsing paths.
+                    'data' => $items->values(),
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -81,6 +89,7 @@ class PurchaseApiController extends Controller
                 'purchaseItems.boqItem',
                 'user',
                 'approvalStatus',
+                'approvals.user',
             ])->findOrFail($id);
 
             return response()->json([
@@ -384,6 +393,7 @@ class PurchaseApiController extends Controller
             $validated = $request->validate([
                 'supplier_id' => 'required|exists:suppliers,id',
                 'item_id' => 'nullable|exists:items,id',
+                'purchase_type' => 'nullable|in:1,2',
                 'project_id' => 'nullable|exists:projects,id',
                 'date' => 'required|date',
                 'tax_invoice' => 'nullable|string|max:255',
@@ -391,6 +401,7 @@ class PurchaseApiController extends Controller
                 'total_amount' => 'required|numeric|min:0',
                 'amount_vat_exc' => 'nullable|numeric|min:0',
                 'vat_amount' => 'nullable|numeric|min:0',
+                'is_expense' => 'nullable|in:YES,NO',
                 'notes' => 'nullable|string',
                 'file' => 'nullable|file|max:5120',
             ]);
@@ -403,12 +414,11 @@ class PurchaseApiController extends Controller
             if (empty($validated['invoice_date'])) {
                 $validated['invoice_date'] = $validated['date'];
             }
-            if (empty($validated['amount_vat_exc'])) {
-                $validated['amount_vat_exc'] = $validated['total_amount'];
-            }
-            if (empty($validated['vat_amount'])) {
-                $validated['vat_amount'] = $validated['total_amount'] - $validated['amount_vat_exc'];
-            }
+            $purchaseType = (int) ($validated['purchase_type'] ?? 1);
+            $totalAmount = (float) $validated['total_amount'];
+            $validated['amount_vat_exc'] = $purchaseType === 1 ? ($totalAmount * 100 / 118) : 0;
+            $validated['vat_amount'] = $purchaseType === 1 ? ($validated['amount_vat_exc'] * 18 / 100) : 0;
+            $validated['is_expense'] = $validated['is_expense'] ?? 'NO';
 
             $validated['create_by_id'] = $request->user()->id;
             $validated['status'] = 'PENDING';
@@ -444,6 +454,7 @@ class PurchaseApiController extends Controller
             $validated = $request->validate([
                 'supplier_id' => 'sometimes|exists:suppliers,id',
                 'item_id' => 'nullable|exists:items,id',
+                'purchase_type' => 'nullable|in:1,2',
                 'project_id' => 'nullable|exists:projects,id',
                 'date' => 'sometimes|date',
                 'tax_invoice' => 'nullable|string|max:255',
@@ -451,6 +462,7 @@ class PurchaseApiController extends Controller
                 'total_amount' => 'sometimes|numeric|min:0',
                 'amount_vat_exc' => 'nullable|numeric|min:0',
                 'vat_amount' => 'nullable|numeric|min:0',
+                'is_expense' => 'nullable|in:YES,NO',
                 'notes' => 'nullable|string',
                 'file' => 'nullable|file|max:5120',
             ]);
@@ -458,6 +470,11 @@ class PurchaseApiController extends Controller
             if ($request->hasFile('file')) {
                 $validated['file'] = $request->file('file')->store('purchases', 'public');
             }
+
+            $purchaseType = (int) ($validated['purchase_type'] ?? $purchase->purchase_type ?? 1);
+            $totalAmount = (float) ($validated['total_amount'] ?? $purchase->total_amount ?? 0);
+            $validated['amount_vat_exc'] = $purchaseType === 1 ? ($totalAmount * 100 / 118) : 0;
+            $validated['vat_amount'] = $purchaseType === 1 ? ($validated['amount_vat_exc'] * 18 / 100) : 0;
 
             $purchase->update($validated);
             $purchase->load(['supplier', 'item']);
@@ -504,10 +521,12 @@ class PurchaseApiController extends Controller
     private function formatPurchase($purchase, bool $detailed = false)
     {
         $status = strtoupper($purchase->approvalStatus?->status ?? $purchase->status ?? 'PENDING');
+        $fileUrl = Purchase::resolveAttachmentUrl($purchase->file);
         $data = [
             'id' => $purchase->id,
             'supplier_id' => $purchase->supplier_id,
             'item_id' => $purchase->item_id,
+            'purchase_type' => $purchase->purchase_type,
             'project_id' => $purchase->project_id,
             'date' => $purchase->date,
             'tax_invoice' => $purchase->tax_invoice,
@@ -517,7 +536,12 @@ class PurchaseApiController extends Controller
             'vat_amount' => $purchase->vat_amount,
             'notes' => $purchase->notes,
             'status' => $status,
+            'approval_status' => $status,
+            'approval_summary' => $this->approvalSummary($status),
             'document_number' => $purchase->document_number,
+            'is_expense' => $purchase->is_expense,
+            'has_attachment' => !empty($purchase->file),
+            'file_url' => $fileUrl,
             'material_request_id' => $purchase->material_request_id,
             'quotation_comparison_id' => $purchase->quotation_comparison_id,
             'purchase_items_count' => $purchase->relationLoaded('purchaseItems')
@@ -540,6 +564,8 @@ class PurchaseApiController extends Controller
                 'name' => $purchase->item->name,
             ];
         }
+
+        $data['goods'] = $purchase->item?->name ?? ($purchase->document_number ? 'Project Purchase' : '-');
 
         if ($purchase->relationLoaded('project') && $purchase->project) {
             $data['project'] = [
@@ -573,9 +599,11 @@ class PurchaseApiController extends Controller
 
         if ($detailed) {
             $data['file'] = $purchase->file;
+            $data['approval_page_url'] = url("/purchase/{$purchase->id}/3");
             $data['expected_delivery_date'] = $purchase->expected_delivery_date;
             $data['delivery_address'] = $purchase->delivery_address;
             $data['payment_terms'] = $purchase->payment_terms;
+            $data['approval_flow'] = $this->buildApprovalFlow($purchase);
             $data['purchase_items'] = $purchase->relationLoaded('purchaseItems')
                 ? $purchase->purchaseItems->map(fn ($item) => [
                     'id' => $item->id,
@@ -596,6 +624,53 @@ class PurchaseApiController extends Controller
         }
 
         return $data;
+    }
+
+    private function buildApprovalFlow(Purchase $purchase): array
+    {
+        $steps = collect($purchase->approvalStatus?->steps ?? [])->map(function ($step) {
+            $flowStep = ProcessApprovalFlowStep::with('role')->find($step['id']);
+            $approval = !empty($step['process_approval_id'])
+                ? $purchase->approvals->firstWhere('id', $step['process_approval_id'])
+                : null;
+
+            return [
+                'step_id' => $step['id'] ?? null,
+                'role_name' => $flowStep?->role?->name ?? ('Step ' . ($step['id'] ?? '')),
+                'action' => $step['process_approval_action'] ?? 'Pending',
+                'approver_name' => $approval?->user?->name ?? $approval?->approver_name,
+                'date' => $approval?->created_at?->format('d F, Y'),
+                'comment' => $approval?->comment,
+            ];
+        })->values();
+
+        $nextStep = $purchase->nextApprovalStep();
+        $isCompleted = $purchase->isApprovalCompleted();
+
+        return [
+            'status_label' => $isCompleted
+                ? 'Approval completed!'
+                : ($purchase->isSubmitted() ? 'In Progress' : 'Not Submitted'),
+            'next_role_name' => $nextStep?->role?->name,
+            'is_submitted' => $purchase->isSubmitted(),
+            'is_completed' => $isCompleted,
+            'can_be_submitted' => auth()->check() ? (bool) $purchase->canBeSubmittedBy(auth()->user()) : false,
+            'can_be_approved' => auth()->check() ? (bool) $purchase->canBeApprovedBy(auth()->user()) : false,
+            'steps' => $steps,
+        ];
+    }
+
+    private function approvalSummary(string $status): string
+    {
+        return match ($status) {
+            'PENDING', 'CREATED' => 'Waiting for submission/approval',
+            'SUBMITTED' => 'Submitted into approval workflow',
+            'APPROVED', 'COMPLETED' => 'Approval completed',
+            'REJECTED' => 'Rejected in approval workflow',
+            'DISCARDED' => 'Discarded from approval workflow',
+            'PAID' => 'Processed and paid',
+            default => $status,
+        };
     }
 
     private function formatReceiving(SupplierReceiving $receiving, bool $detailed = false): array

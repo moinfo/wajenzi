@@ -122,7 +122,7 @@
     <div class="card-body">
         <div class="info-grid">
             @foreach($details as $label => $value)
-                @if($label != 'Uploaded File')
+                @if($label != 'Uploaded File' && $label != 'Uploaded File Url')
                     <div class="info-item">
                         <label>{{ $label }}</label>
                         <div class="info-value">{{ $value }}</div>
@@ -134,7 +134,7 @@
                 <div class="info-item">
                     <label>Uploaded File</label>
                     <div class="info-value">
-                        <a href="{{ url($details['Uploaded File']) }}" target="_blank" class="file-link">
+                        <a href="{{ $details['Uploaded File Url'] ?? url($details['Uploaded File']) }}" target="_blank" rel="noopener noreferrer" class="file-link">
                             <i class="fa fa-file-pdf"></i> View Document
                         </a>
                     </div>

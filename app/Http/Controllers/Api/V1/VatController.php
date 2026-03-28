@@ -15,6 +15,7 @@ use App\Models\Supplier;
 use App\Models\VatPayment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class VatController extends Controller
 {
@@ -390,6 +391,7 @@ class VatController extends Controller
             'vrn' => 'nullable|string|max:50',
             'receipt_number' => 'sometimes|required|string|max:100',
             'receipt_date' => 'sometimes|required|date',
+            'date' => 'nullable|date',
             'receipt_time' => 'nullable|string|max:20',
             'receipt_verification_code' => 'nullable|string|max:100',
             'receipt_total_excl_of_tax' => 'sometimes|required|numeric|min:0',
@@ -437,15 +439,24 @@ class VatController extends Controller
 
     private function formatAutoPurchase($r, bool $detailed = false): array
     {
+        $receiptTimeParts = explode(':', (string) ($r->receipt_time ?? ''));
+        $verificationSuffix = count($receiptTimeParts) >= 3
+            ? "{$receiptTimeParts[0]}{$receiptTimeParts[1]}{$receiptTimeParts[2]}"
+            : '';
+
         $data = [
             'id' => $r->id,
             'date' => $r->date,
+            'inserted_date' => $r->date,
             'receipt_date' => $r->receipt_date,
             'receipt_time' => $r->receipt_time,
             'company_name' => $r->company_name,
             'vrn' => $r->vrn,
             'receipt_number' => $r->receipt_number,
             'receipt_verification_code' => $r->receipt_verification_code,
+            'verification_url' => $r->receipt_verification_code && $verificationSuffix
+                ? "https://verify.tra.go.tz/{$r->receipt_verification_code}_{$verificationSuffix}"
+                : null,
             'amount_vat_exc' => round((float) $r->receipt_total_excl_of_tax, 2),
             'vat_amount' => round((float) $r->receipt_total_tax, 2),
             'total_amount' => round((float) $r->receipt_total_incl_of_tax, 2),
@@ -479,6 +490,7 @@ class VatController extends Controller
         ])->toArray();
 
         $data['items_summary'] = implode(', ', array_column($data['items'], 'description'));
+        $data['items_count'] = count($data['items']);
 
         return $data;
     }
@@ -516,15 +528,22 @@ class VatController extends Controller
             'bank_id' => 'required|exists:banks,id',
             'amount' => 'required|numeric',
             'date' => 'required|date',
+            'file' => 'nullable|file|max:5120',
         ]);
 
         $nextId = Utility::getLastId('VatPayment') + 1;
+
+        $file = null;
+        if ($request->hasFile('file')) {
+            $file = $request->file('file')->store('vat-payments', 'public');
+        }
 
         $payment = VatPayment::create([
             'bank_id' => $request->bank_id,
             'amount' => $request->amount,
             'description' => $request->description,
             'date' => $request->date,
+            'file' => $file,
             'status' => 'CREATED',
             'create_by_id' => $request->user()->id,
             'document_number' => "VATP/{$nextId}/" . date('Y'),
@@ -548,7 +567,19 @@ class VatController extends Controller
     public function updatePayment(Request $request, int $id): JsonResponse
     {
         $payment = VatPayment::findOrFail($id);
-        $payment->update($request->only(['bank_id', 'amount', 'description', 'date']));
+        $request->validate([
+            'bank_id' => 'sometimes|exists:banks,id',
+            'amount' => 'sometimes|numeric',
+            'date' => 'sometimes|date',
+            'file' => 'nullable|file|max:5120',
+        ]);
+
+        $data = $request->only(['bank_id', 'amount', 'description', 'date']);
+        if ($request->hasFile('file')) {
+            $data['file'] = $request->file('file')->store('vat-payments', 'public');
+        }
+
+        $payment->update($data);
 
         return response()->json([
             'success' => true,
@@ -564,6 +595,22 @@ class VatController extends Controller
 
     private function formatPayment(VatPayment $v): array
     {
+        $fileUrl = null;
+        if (!empty($v->file)) {
+            if (preg_match('/^https?:\/\//i', $v->file) === 1) {
+                $parsed = parse_url($v->file);
+                if (!empty($parsed['path'])) {
+                    $path = Str::startsWith($parsed['path'], '/') ? $parsed['path'] : '/' . $parsed['path'];
+                    $fileUrl = rtrim((string) config('app.portal_live_url', 'https://wajenziprosystem.co.tz'), '/') . $path;
+                } else {
+                    $fileUrl = $v->file;
+                }
+            } else {
+                $path = Str::startsWith($v->file, '/') ? $v->file : '/' . ltrim($v->file, '/');
+                $fileUrl = rtrim((string) config('app.portal_live_url', 'https://wajenziprosystem.co.tz'), '/') . $path;
+            }
+        }
+
         return [
             'id' => $v->id,
             'date' => $v->date,
@@ -573,6 +620,7 @@ class VatController extends Controller
             'amount' => (float) $v->amount,
             'status' => $v->status,
             'has_attachment' => !empty($v->file),
+            'file_url' => $fileUrl,
             'document_number' => $v->document_number,
         ];
     }

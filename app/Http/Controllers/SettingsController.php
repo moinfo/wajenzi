@@ -716,7 +716,7 @@ class SettingsController extends Controller
             return back();
         }
         $data = [
-            'positions' => Position::all()
+            'positions' => Position::with('reportsTo')->orderBy('name')->get()
         ];
         return view('pages.settings.settings_positions')->with($data);
     }

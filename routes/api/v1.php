@@ -49,11 +49,25 @@ use App\Http\Controllers\Api\V1\ProcessApprovalFlowStepApiController;
 use App\Http\Controllers\Api\V1\AllowanceSubscriptionApiController;
 use App\Http\Controllers\Api\V1\DeductionSettingApiController;
 use App\Http\Controllers\Api\V1\DepartmentApiController;
+use App\Http\Controllers\Api\V1\PositionApiController;
+use App\Http\Controllers\Api\V1\RoleApiController;
+use App\Http\Controllers\Api\V1\PermissionApiController;
+use App\Http\Controllers\Api\V1\SupplierSettingsApiController;
+use App\Http\Controllers\Api\V1\ItemSettingsApiController;
+use App\Http\Controllers\Api\V1\ExpensesCategoryApiController;
+use App\Http\Controllers\Api\V1\ExpensesSubCategoryApiController;
+use App\Http\Controllers\Api\V1\FinancialChargeCategoryApiController;
+use App\Http\Controllers\Api\V1\EfdApiController;
+use App\Http\Controllers\Api\V1\ApprovalDocumentTypeApiController;
+use App\Http\Controllers\Api\V1\ApprovalLevelApiController;
 use App\Http\Controllers\Api\V1\ServiceInterestedApiController;
 use App\Http\Controllers\Api\V1\LeadStatusApiController;
 use App\Http\Controllers\Api\V1\LeadSourceApiController;
 use App\Http\Controllers\Api\V1\ServiceTypeApiController;
 use App\Http\Controllers\Api\V1\ProjectStatusApiController;
+use App\Http\Controllers\Api\V1\CostCategoryApiController;
+use App\Http\Controllers\Api\V1\SystemApiController;
+use App\Http\Controllers\Api\V1\SettingsUserApiController;
 use App\Http\Controllers\Api\V1\EmployeeProfileController;
 use App\Http\Controllers\Api\V1\VatController;
 use App\Http\Controllers\Api\V1\StaffBankDetailController;
@@ -156,6 +170,92 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('{id}', [DepartmentApiController::class, 'update']);
         Route::delete('{id}', [DepartmentApiController::class, 'destroy']);
     });
+    Route::prefix('positions')->group(function () {
+        Route::get('reference-data', [PositionApiController::class, 'referenceData']);
+        Route::get('/', [PositionApiController::class, 'index']);
+        Route::post('/', [PositionApiController::class, 'store']);
+        Route::get('{id}', [PositionApiController::class, 'show']);
+        Route::put('{id}', [PositionApiController::class, 'update']);
+        Route::delete('{id}', [PositionApiController::class, 'destroy']);
+    });
+    Route::prefix('roles')->group(function () {
+        Route::get('/', [RoleApiController::class, 'index']);
+        Route::post('/', [RoleApiController::class, 'store']);
+        Route::get('{id}', [RoleApiController::class, 'show']);
+        Route::put('{id}', [RoleApiController::class, 'update']);
+        Route::delete('{id}', [RoleApiController::class, 'destroy']);
+    });
+    Route::prefix('permissions')->group(function () {
+        Route::get('reference-data', [PermissionApiController::class, 'referenceData']);
+        Route::get('/', [PermissionApiController::class, 'index']);
+        Route::post('/', [PermissionApiController::class, 'store']);
+        Route::get('{id}', [PermissionApiController::class, 'show']);
+        Route::put('{id}', [PermissionApiController::class, 'update']);
+        Route::delete('{id}', [PermissionApiController::class, 'destroy']);
+    });
+    Route::prefix('settings-suppliers')->group(function () {
+        Route::get('reference-data', [SupplierSettingsApiController::class, 'referenceData']);
+        Route::get('/', [SupplierSettingsApiController::class, 'index']);
+        Route::post('/', [SupplierSettingsApiController::class, 'store']);
+        Route::get('{id}', [SupplierSettingsApiController::class, 'show']);
+        Route::put('{id}', [SupplierSettingsApiController::class, 'update']);
+        Route::delete('{id}', [SupplierSettingsApiController::class, 'destroy']);
+        Route::post('{supplierId}/contacts', [SupplierSettingsApiController::class, 'storeContact']);
+        Route::put('contacts/{contactId}', [SupplierSettingsApiController::class, 'updateContact']);
+        Route::delete('contacts/{contactId}', [SupplierSettingsApiController::class, 'destroyContact']);
+    });
+    Route::prefix('settings-items')->group(function () {
+        Route::get('/', [ItemSettingsApiController::class, 'index']);
+        Route::post('/', [ItemSettingsApiController::class, 'store']);
+        Route::get('{id}', [ItemSettingsApiController::class, 'show']);
+        Route::put('{id}', [ItemSettingsApiController::class, 'update']);
+        Route::delete('{id}', [ItemSettingsApiController::class, 'destroy']);
+    });
+    Route::prefix('expenses-categories')->group(function () {
+        Route::get('/', [ExpensesCategoryApiController::class, 'index']);
+        Route::post('/', [ExpensesCategoryApiController::class, 'store']);
+        Route::get('{id}', [ExpensesCategoryApiController::class, 'show']);
+        Route::put('{id}', [ExpensesCategoryApiController::class, 'update']);
+        Route::delete('{id}', [ExpensesCategoryApiController::class, 'destroy']);
+    });
+    Route::prefix('expenses-sub-categories')->group(function () {
+        Route::get('reference-data', [ExpensesSubCategoryApiController::class, 'referenceData']);
+        Route::get('/', [ExpensesSubCategoryApiController::class, 'index']);
+        Route::post('/', [ExpensesSubCategoryApiController::class, 'store']);
+        Route::get('{id}', [ExpensesSubCategoryApiController::class, 'show']);
+        Route::put('{id}', [ExpensesSubCategoryApiController::class, 'update']);
+        Route::delete('{id}', [ExpensesSubCategoryApiController::class, 'destroy']);
+    });
+    Route::prefix('financial-charge-categories')->group(function () {
+        Route::get('/', [FinancialChargeCategoryApiController::class, 'index']);
+        Route::post('/', [FinancialChargeCategoryApiController::class, 'store']);
+        Route::get('{id}', [FinancialChargeCategoryApiController::class, 'show']);
+        Route::put('{id}', [FinancialChargeCategoryApiController::class, 'update']);
+        Route::delete('{id}', [FinancialChargeCategoryApiController::class, 'destroy']);
+    });
+    Route::prefix('efds')->group(function () {
+        Route::get('reference-data', [EfdApiController::class, 'referenceData']);
+        Route::get('/', [EfdApiController::class, 'index']);
+        Route::post('/', [EfdApiController::class, 'store']);
+        Route::get('{id}', [EfdApiController::class, 'show']);
+        Route::put('{id}', [EfdApiController::class, 'update']);
+        Route::delete('{id}', [EfdApiController::class, 'destroy']);
+    });
+    Route::prefix('approval-document-types')->group(function () {
+        Route::get('/', [ApprovalDocumentTypeApiController::class, 'index']);
+        Route::post('/', [ApprovalDocumentTypeApiController::class, 'store']);
+        Route::get('{id}', [ApprovalDocumentTypeApiController::class, 'show']);
+        Route::put('{id}', [ApprovalDocumentTypeApiController::class, 'update']);
+        Route::delete('{id}', [ApprovalDocumentTypeApiController::class, 'destroy']);
+    });
+    Route::prefix('approval-levels')->group(function () {
+        Route::get('reference-data', [ApprovalLevelApiController::class, 'referenceData']);
+        Route::get('/', [ApprovalLevelApiController::class, 'index']);
+        Route::post('/', [ApprovalLevelApiController::class, 'store']);
+        Route::get('{id}', [ApprovalLevelApiController::class, 'show']);
+        Route::put('{id}', [ApprovalLevelApiController::class, 'update']);
+        Route::delete('{id}', [ApprovalLevelApiController::class, 'destroy']);
+    });
     Route::prefix('service-interesteds')->group(function () {
         Route::get('/', [ServiceInterestedApiController::class, 'index']);
         Route::post('/', [ServiceInterestedApiController::class, 'store']);
@@ -190,6 +290,29 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('{id}', [ProjectStatusApiController::class, 'show']);
         Route::put('{id}', [ProjectStatusApiController::class, 'update']);
         Route::delete('{id}', [ProjectStatusApiController::class, 'destroy']);
+    });
+    Route::prefix('cost-categories')->group(function () {
+        Route::get('/', [CostCategoryApiController::class, 'index']);
+        Route::post('/', [CostCategoryApiController::class, 'store']);
+        Route::get('{id}', [CostCategoryApiController::class, 'show']);
+        Route::put('{id}', [CostCategoryApiController::class, 'update']);
+        Route::delete('{id}', [CostCategoryApiController::class, 'destroy']);
+    });
+    Route::prefix('systems')->group(function () {
+        Route::get('/', [SystemApiController::class, 'index']);
+        Route::post('/', [SystemApiController::class, 'store']);
+        Route::get('{id}', [SystemApiController::class, 'show']);
+        Route::put('{id}', [SystemApiController::class, 'update']);
+        Route::delete('{id}', [SystemApiController::class, 'destroy']);
+    });
+    Route::prefix('settings-users')->group(function () {
+        Route::get('reference-data', [SettingsUserApiController::class, 'referenceData']);
+        Route::get('/', [SettingsUserApiController::class, 'index']);
+        Route::post('/', [SettingsUserApiController::class, 'store']);
+        Route::get('{id}', [SettingsUserApiController::class, 'show']);
+        Route::put('{id}', [SettingsUserApiController::class, 'update']);
+        Route::delete('{id}', [SettingsUserApiController::class, 'destroy']);
+        Route::post('{id}/toggle-status', [SettingsUserApiController::class, 'toggleStatus']);
     });
 
     Route::prefix('messages')->group(function () {
@@ -569,10 +692,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Projects
     Route::prefix('projects')->group(function () {
+        Route::get('reference-data', [ProjectController::class, 'referenceData']);
         Route::get('stats', [ProjectController::class, 'stats']);
         Route::get('/', [ProjectController::class, 'index']);
         Route::post('/', [ProjectController::class, 'store']);
         Route::get('{id}', [ProjectController::class, 'show']);
+        Route::post('{id}/submit', [ProjectController::class, 'submit']);
+        Route::post('{id}/approve', [ProjectController::class, 'approve']);
+        Route::post('{id}/reject', [ProjectController::class, 'reject']);
+        Route::post('{id}/return', [ProjectController::class, 'returnForCorrection']);
+        Route::post('{id}/discard', [ProjectController::class, 'discard']);
         Route::put('{id}', [ProjectController::class, 'update']);
         Route::delete('{id}', [ProjectController::class, 'destroy']);
         Route::get('{id}/boq', [ProjectController::class, 'boq']);
@@ -602,9 +731,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Project Clients
     Route::prefix('project-clients')->group(function () {
+        Route::get('reference-data', [ProjectClientController::class, 'referenceData']);
         Route::get('/', [ProjectClientController::class, 'index']);
         Route::post('/', [ProjectClientController::class, 'store']);
         Route::get('{id}', [ProjectClientController::class, 'show']);
+        Route::post('{id}/submit', [ProjectClientController::class, 'submit']);
+        Route::post('{id}/approve', [ProjectClientController::class, 'approve']);
+        Route::post('{id}/reject', [ProjectClientController::class, 'reject']);
+        Route::post('{id}/return', [ProjectClientController::class, 'returnForCorrection']);
+        Route::post('{id}/discard', [ProjectClientController::class, 'discard']);
         Route::put('{id}', [ProjectClientController::class, 'update']);
         Route::delete('{id}', [ProjectClientController::class, 'destroy']);
     });

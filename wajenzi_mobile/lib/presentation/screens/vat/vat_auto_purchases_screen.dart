@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
+import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 import 'vat_shared.dart';
 
 final _autoStartProvider = StateProvider.autoDispose<DateTime>(
-  (ref) => DateTime(DateTime.now().year, DateTime.now().month, 1),
+  (ref) => DateTime.now(),
 );
 final _autoEndProvider = StateProvider.autoDispose<DateTime>(
   (ref) => DateTime.now(),
 );
+final _autoSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
 final _autoDataProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
@@ -33,12 +37,18 @@ class VatAutoPurchasesScreen extends ConsumerWidget {
     final isDark = ref.watch(isDarkModeProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final dataAsync = ref.watch(_autoDataProvider);
+    final search = ref.watch(_autoSearchProvider).trim().toLowerCase();
     final bottomPad = MediaQuery.of(context).padding.bottom + 90;
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
 
     return Scaffold(
       backgroundColor: isDark ? vatDarkBg : AppColors.background,
       appBar: AppBar(
-        title: Text(isSwahili ? 'Manunuzi ya EFD' : 'EFD Auto Purchases'),
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
+        title: Text(isSwahili ? 'Manunuzi ya Moja kwa Moja' : 'Auto Purchases'),
         backgroundColor: isDark ? vatDarkCard : null,
       ),
       floatingActionButton: Padding(
@@ -57,54 +67,76 @@ class VatAutoPurchasesScreen extends ConsumerWidget {
             isSwahili: isSwahili,
           ),
           data: (data) {
-            final receipts =
+            final allReceipts =
                 (data['receipts'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+            final receipts = search.isEmpty
+                ? allReceipts
+                : allReceipts.where((receipt) {
+                    final haystack = [
+                      receipt['company_name'],
+                      receipt['vrn'],
+                      receipt['receipt_number'],
+                      receipt['receipt_date'],
+                      receipt['date'],
+                      receipt['items_summary'],
+                      receipt['receipt_verification_code'],
+                      receipt['is_expense'],
+                    ].whereType<String>().join(' ').toLowerCase();
+                    return haystack.contains(search);
+                  }).toList();
             final totals = data['totals'] as Map<String, dynamic>? ?? {};
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad),
               children: [
+                _SearchField(
+                  isDark: isDark,
+                  isSwahili: isSwahili,
+                  onChanged: (value) =>
+                      ref.read(_autoSearchProvider.notifier).state = value,
+                ),
+                const SizedBox(height: 12),
                 VatDateRangeBar(
                   startProvider: _autoStartProvider,
                   endProvider: _autoEndProvider,
                   isDark: isDark,
                   isSwahili: isSwahili,
                 ),
-                const SizedBox(height: 12),
-                _AutoSummaryGrid(
-                  totals: totals,
-                  isDark: isDark,
-                  isSwahili: isSwahili,
-                ),
                 const SizedBox(height: 14),
-                VatCountBadge(
-                  count: receipts.length,
-                  label: isSwahili ? 'Risiti za EFD' : 'EFD Receipts',
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 8),
                 if (receipts.isEmpty)
                   VatEmptyState(isDark: isDark, isSwahili: isSwahili)
                 else
-                  ...receipts.map(
-                    (r) => _ReceiptCard(
-                      receipt: r,
+                  ...receipts.asMap().entries.map(
+                    (entry) => _ReceiptWebCard(
+                      index: entry.key + 1,
+                      receipt: entry.value,
                       isDark: isDark,
                       isSwahili: isSwahili,
+                      onOpenItems: () => _showReceiptItemsSheet(
+                        context,
+                        receipt: entry.value,
+                        isDark: isDark,
+                        isSwahili: isSwahili,
+                      ),
+                      onVerificationTap: () => _openVerificationLink(
+                        context,
+                        entry.value['verification_url'] as String?,
+                        isSwahili: isSwahili,
+                      ),
                       onEdit: () => _showAutoPurchaseForm(
                         context,
                         ref,
                         isDark,
                         isSwahili,
-                        receipt: r,
+                        receipt: entry.value,
                       ),
                       onDelete: () async {
                         final ok = await vatDelete(
                           context,
                           ref,
                           '/vat/auto-purchases',
-                          r['id'] as int,
+                          entry.value['id'] as int,
                           isSwahili: isSwahili,
                         );
                         if (ok) {
@@ -113,6 +145,13 @@ class VatAutoPurchasesScreen extends ConsumerWidget {
                       },
                     ),
                   ),
+                if (receipts.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  _TotalsFooter(
+                    totals: totals,
+                    isDark: isDark,
+                  ),
+                ],
               ],
             );
           },
@@ -120,6 +159,12 @@ class VatAutoPurchasesScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+double _asDouble(dynamic value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0;
+  return 0;
 }
 
 Future<void> _showAutoPurchaseForm(
@@ -138,6 +183,9 @@ Future<void> _showAutoPurchaseForm(
   );
   final receiptDateCtrl = TextEditingController(
     text: receipt?['receipt_date'] as String? ?? vatDateFmt(DateTime.now()),
+  );
+  final dateCtrl = TextEditingController(
+    text: receipt?['date'] as String? ?? vatDateFmt(DateTime.now()),
   );
   final receiptTimeCtrl = TextEditingController(
     text: receipt?['receipt_time'] as String? ?? TimeOfDay.now().format(context),
@@ -216,7 +264,7 @@ Future<void> _showAutoPurchaseForm(
                       isEdit
                           ? (isSwahili
                               ? 'Hariri Manunuzi ya EFD'
-                              : 'Edit EFD Auto Purchase')
+                              : 'Edit ${receipt?['company_name'] ?? ''} Receipt')
                           : (isSwahili
                               ? 'Ongeza Manunuzi ya EFD'
                               : 'Add EFD Auto Purchase'),
@@ -246,120 +294,140 @@ Future<void> _showAutoPurchaseForm(
                       ],
                     ),
                     const SizedBox(height: 4),
-                    vatTextField(
-                      controller: companyCtrl,
-                      label: isSwahili ? 'Jina la Muuzaji *' : 'Supplier Name *',
-                      isDark: isDark,
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Required' : null,
-                    ),
-                    vatTextField(
-                      controller: vrnCtrl,
-                      label: 'VRN',
-                      isDark: isDark,
-                    ),
-                    vatTextField(
-                      controller: receiptNoCtrl,
-                      label: isSwahili ? 'Namba ya Risiti *' : 'Receipt Number *',
-                      isDark: isDark,
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Required' : null,
-                    ),
-                    vatTextField(
-                      controller: receiptDateCtrl,
-                      label: isSwahili ? 'Tarehe ya Risiti *' : 'Receipt Date *',
-                      isDark: isDark,
-                      readOnly: true,
-                      onTap: () async {
-                        final picked = await vatPickDate(
-                          ctx,
-                          DateTime.tryParse(receiptDateCtrl.text) ?? DateTime.now(),
-                        );
-                        if (picked != null) {
-                          receiptDateCtrl.text = vatDateFmt(picked);
-                        }
-                      },
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Required' : null,
-                    ),
-                    vatTextField(
-                      controller: receiptTimeCtrl,
-                      label: isSwahili ? 'Muda wa Risiti' : 'Receipt Time',
-                      isDark: isDark,
-                    ),
-                    vatTextField(
-                      controller: verificationCtrl,
-                      label: isSwahili
-                          ? 'Namba ya Uhakiki'
-                          : 'Verification Code',
-                      isDark: isDark,
-                    ),
-                    vatTextField(
-                      controller: amountVatExcCtrl,
-                      label: isSwahili ? 'Kiasi Bila VAT *' : 'Amount VAT Excl. *',
-                      isDark: isDark,
-                      keyboardType: TextInputType.number,
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Required' : null,
-                    ),
-                    vatTextField(
-                      controller: vatAmountCtrl,
-                      label: 'VAT Amount',
-                      isDark: isDark,
-                      keyboardType: TextInputType.number,
-                    ),
-                    vatTextField(
-                      controller: totalAmountCtrl,
-                      label: isSwahili ? 'Jumla *' : 'Total Amount *',
-                      isDark: isDark,
-                      keyboardType: TextInputType.number,
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Required' : null,
-                    ),
-                    vatTextField(
-                      controller: discountCtrl,
-                      label: isSwahili ? 'Punguzo' : 'Discount',
-                      isDark: isDark,
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      isSwahili ? 'Bidhaa za Risiti' : 'Receipt Items',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ...List.generate(itemControllers.length, (index) {
-                      final item = itemControllers[index];
-                      return _ItemEditorCard(
-                        index: index,
+                    if (isEdit) ...[
+                      vatTextField(
+                        controller: dateCtrl,
+                        label: isSwahili ? 'Tarehe *' : 'Date *',
                         isDark: isDark,
-                        isSwahili: isSwahili,
-                        descriptionCtrl:
-                            item['description']! as TextEditingController,
-                        qtyCtrl: item['qty']! as TextEditingController,
-                        amountCtrl: item['amount']! as TextEditingController,
-                        canRemove: itemControllers.length > 1,
-                        onRemove: () {
+                        readOnly: true,
+                        onTap: () async {
+                          final picked = await vatPickDate(
+                            ctx,
+                            DateTime.tryParse(dateCtrl.text) ?? DateTime.now(),
+                          );
+                          if (picked != null) {
+                            dateCtrl.text = vatDateFmt(picked);
+                          }
+                        },
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      ),
+                    ] else ...[
+                      vatTextField(
+                        controller: companyCtrl,
+                        label: isSwahili ? 'Jina la Muuzaji *' : 'Supplier Name *',
+                        isDark: isDark,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      ),
+                      vatTextField(
+                        controller: vrnCtrl,
+                        label: 'VRN',
+                        isDark: isDark,
+                      ),
+                      vatTextField(
+                        controller: receiptNoCtrl,
+                        label: isSwahili ? 'Namba ya Risiti *' : 'Receipt Number *',
+                        isDark: isDark,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      ),
+                      vatTextField(
+                        controller: receiptDateCtrl,
+                        label: isSwahili ? 'Tarehe ya Risiti *' : 'Receipt Date *',
+                        isDark: isDark,
+                        readOnly: true,
+                        onTap: () async {
+                          final picked = await vatPickDate(
+                            ctx,
+                            DateTime.tryParse(receiptDateCtrl.text) ?? DateTime.now(),
+                          );
+                          if (picked != null) {
+                            receiptDateCtrl.text = vatDateFmt(picked);
+                          }
+                        },
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      ),
+                      vatTextField(
+                        controller: receiptTimeCtrl,
+                        label: isSwahili ? 'Muda wa Risiti' : 'Receipt Time',
+                        isDark: isDark,
+                      ),
+                      vatTextField(
+                        controller: verificationCtrl,
+                        label: isSwahili
+                            ? 'Namba ya Uhakiki'
+                            : 'Verification Code',
+                        isDark: isDark,
+                      ),
+                      vatTextField(
+                        controller: amountVatExcCtrl,
+                        label: isSwahili ? 'Kiasi Bila VAT *' : 'Amount VAT Excl. *',
+                        isDark: isDark,
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      ),
+                      vatTextField(
+                        controller: vatAmountCtrl,
+                        label: 'VAT Amount',
+                        isDark: isDark,
+                        keyboardType: TextInputType.number,
+                      ),
+                      vatTextField(
+                        controller: totalAmountCtrl,
+                        label: isSwahili ? 'Jumla *' : 'Total Amount *',
+                        isDark: isDark,
+                        keyboardType: TextInputType.number,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
+                      ),
+                      vatTextField(
+                        controller: discountCtrl,
+                        label: isSwahili ? 'Punguzo' : 'Discount',
+                        isDark: isDark,
+                        keyboardType: TextInputType.number,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        isSwahili ? 'Bidhaa za Risiti' : 'Receipt Items',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      ...List.generate(itemControllers.length, (index) {
+                        final item = itemControllers[index];
+                        return _ItemEditorCard(
+                          index: index,
+                          isDark: isDark,
+                          isSwahili: isSwahili,
+                          descriptionCtrl:
+                              item['description']! as TextEditingController,
+                          qtyCtrl: item['qty']! as TextEditingController,
+                          amountCtrl: item['amount']! as TextEditingController,
+                          canRemove: itemControllers.length > 1,
+                          onRemove: () {
+                            setState(() {
+                              itemControllers.removeAt(index);
+                            });
+                          },
+                        );
+                      }),
+                      const SizedBox(height: 6),
+                      OutlinedButton.icon(
+                        onPressed: () {
                           setState(() {
-                            itemControllers.removeAt(index);
+                            itemControllers.add(_buildItemController());
                           });
                         },
-                      );
-                    }),
-                    const SizedBox(height: 6),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          itemControllers.add(_buildItemController());
-                        });
-                      },
-                      icon: const Icon(Icons.add_rounded),
-                      label: Text(isSwahili ? 'Ongeza Bidhaa' : 'Add Item'),
-                    ),
+                        icon: const Icon(Icons.add_rounded),
+                        label: Text(isSwahili ? 'Ongeza Bidhaa' : 'Add Item'),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     SizedBox(
                       width: double.infinity,
@@ -416,7 +484,10 @@ Future<void> _showAutoPurchaseForm(
                             if (isEdit) {
                               await api.put(
                                 '/vat/auto-purchases/${receipt['id']}',
-                                data: fields,
+                                data: {
+                                  'is_expense': isExpense,
+                                  'date': dateCtrl.text.trim(),
+                                },
                               );
                             } else {
                               await api.post('/vat/auto-purchases', data: fields);
@@ -472,282 +543,525 @@ Map<String, TextEditingController> _buildItemController() => {
       'amount': TextEditingController(),
     };
 
-class _AutoSummaryGrid extends StatelessWidget {
-  final Map<String, dynamic> totals;
-  final bool isDark;
-  final bool isSwahili;
+Future<void> _showReceiptItemsSheet(
+  BuildContext context, {
+  required Map<String, dynamic> receipt,
+  required bool isDark,
+  required bool isSwahili,
+}) async {
+  final items =
+      (receipt['items'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
 
-  const _AutoSummaryGrid({
-    required this.totals,
-    required this.isDark,
-    required this.isSwahili,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final chips = [
-      VatSummaryChip(
-        label: 'Total',
-        value: vatMoney(totals['total_amount']),
-        color: vatAccentBlue,
-        isDark: isDark,
-      ),
-      VatSummaryChip(
-        label: 'VAT Exc.',
-        value: vatMoney(totals['amount_vat_exc']),
-        color: vatAccentTeal,
-        isDark: isDark,
-      ),
-      VatSummaryChip(
-        label: 'VAT',
-        value: vatMoney(totals['vat_amount']),
-        color: const Color(0xFFF59E0B),
-        isDark: isDark,
-      ),
-      VatSummaryChip(
-        label: isSwahili ? 'Punguzo' : 'Discount',
-        value: vatMoney(totals['discount']),
-        color: const Color(0xFF8B5CF6),
-        isDark: isDark,
-      ),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final itemWidth = width < 640 ? width : (width - 8) / 2;
-
-        return Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: chips
-              .map(
-                (chip) => SizedBox(
-                  width: itemWidth,
-                  child: chip,
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: isDark ? vatDarkCard : Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (ctx) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[400],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              isSwahili
+                  ? 'Bidhaa za ${receipt['company_name'] ?? 'Risiti'}'
+                  : 'Receipt items for ${receipt['company_name'] ?? 'Receipt'}',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (items.isEmpty)
+              Text(
+                isSwahili ? 'Hakuna bidhaa' : 'No items available',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white54 : AppColors.textSecondary,
                 ),
               )
-              .toList(),
-        );
-      },
+            else
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: vatCardDeco(isDark),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: vatAccentBlue.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${index + 1}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: vatAccentBlue,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item['description'] as String? ?? '-',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  '${isSwahili ? 'Idadi' : 'Qty'}: ${item['qty'] ?? 0}',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? Colors.white54
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Text(
+                            vatMoney(_asDouble(item['amount'])),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? vatAccentTeal : vatAccentBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _openVerificationLink(
+  BuildContext context,
+  String? url, {
+  required bool isSwahili,
+}) async {
+  final trimmed = url?.trim() ?? '';
+  if (trimmed.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isSwahili
+              ? 'Hakuna kiungo cha uhakiki.'
+              : 'No verification link available.',
+        ),
+      ),
+    );
+    return;
+  }
+
+  final opened = await ExternalLauncherService.openUri(Uri.parse(trimmed));
+  if (!opened && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isSwahili ? 'Imeshindwa kufungua kiungo.' : 'Failed to open link.',
+        ),
+      ),
     );
   }
 }
 
-class _ReceiptCard extends StatelessWidget {
+class _SearchField extends ConsumerWidget {
+  final bool isDark;
+  final bool isSwahili;
+  final ValueChanged<String> onChanged;
+
+  const _SearchField({
+    required this.isDark,
+    required this.isSwahili,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final value = ref.watch(_autoSearchProvider);
+    return TextFormField(
+      initialValue: value,
+      onChanged: onChanged,
+      style: TextStyle(
+        fontSize: 13,
+        color: isDark ? Colors.white : AppColors.textPrimary,
+      ),
+      decoration: InputDecoration(
+        labelText: isSwahili ? 'Tafuta' : 'Search',
+        prefixIcon: const Icon(Icons.search_rounded),
+        filled: true,
+        fillColor:
+            isDark ? const Color(0xFF0F1923) : Colors.grey.withValues(alpha: 0.05),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2),
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(
+            color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2),
+          ),
+        ),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      ),
+    );
+  }
+}
+
+class _ReceiptWebCard extends StatelessWidget {
+  final int index;
   final Map<String, dynamic> receipt;
   final bool isDark;
   final bool isSwahili;
+  final VoidCallback onOpenItems;
+  final VoidCallback onVerificationTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _ReceiptCard({
+  const _ReceiptWebCard({
+    required this.index,
     required this.receipt,
     required this.isDark,
     required this.isSwahili,
+    required this.onOpenItems,
+    required this.onVerificationTap,
     required this.onEdit,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    final items =
-        (receipt['items'] as List?)?.cast<Map<String, dynamic>>() ?? const [];
-    final itemsSummary = receipt['items_summary'] as String? ?? '';
+    final goodsText = (receipt['items_summary'] as String? ?? '').trim();
     final verificationCode =
-        receipt['receipt_verification_code'] as String? ?? '';
-    final vrn = receipt['vrn'] as String? ?? '';
+        (receipt['receipt_verification_code'] as String? ?? '').trim();
+    final verificationUrl = receipt['verification_url'] as String?;
+    final hasVerification = verificationCode.isNotEmpty && verificationUrl != null;
 
-    return GestureDetector(
-      onTap: onEdit,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: vatCardDeco(isDark),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.receipt_long_rounded,
-                  size: 16,
-                  color: const Color(0xFF66BB6A),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: vatCardDeco(isDark),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: vatAccentBlue.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        receipt['company_name'] as String? ?? '-',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                        ),
-                      ),
-                      if (itemsSummary.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          itemsSummary,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark
-                                ? Colors.white54
-                                : AppColors.textSecondary,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
+                child: Text(
+                  '$index',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: vatAccentBlue,
                   ),
                 ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'EFD',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF3B82F6),
-                        ),
+                    Text(
+                      receipt['company_name'] as String? ?? '-',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: onDelete,
-                      child: Icon(
-                        Icons.delete_outline_rounded,
-                        size: 18,
-                        color: Colors.red.withValues(alpha: 0.7),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${receipt['inserted_date'] ?? receipt['date'] ?? '-'}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark ? Colors.white54 : AppColors.textSecondary,
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                _InfoCell(
-                  label: 'Date',
-                  value: receipt['receipt_date'] as String? ?? '-',
-                  isDark: isDark,
-                ),
-                _InfoCell(
-                  label: 'Receipt #',
-                  value: receipt['receipt_number'] as String? ?? '-',
-                  isDark: isDark,
-                ),
-                _InfoCell(
-                  label: 'Items',
-                  value: '${items.length}',
-                  isDark: isDark,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                _MoneyCell(
-                  label: 'Total',
-                  value: vatMoney(receipt['total_amount']),
-                  isDark: isDark,
-                ),
-                _MoneyCell(
-                  label: 'VAT Exc.',
-                  value: vatMoney(receipt['amount_vat_exc']),
-                  isDark: isDark,
-                ),
-                _MoneyCell(
-                  label: 'VAT',
-                  value: vatMoney(receipt['vat_amount']),
-                  isDark: isDark,
-                ),
-                _MoneyCell(
-                  label: isSwahili ? 'Punguzo' : 'Discount',
-                  value: vatMoney(receipt['discount']),
-                  isDark: isDark,
-                ),
-              ],
-            ),
-            if (vrn.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                'VRN: $vrn',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isDark ? Colors.white38 : AppColors.textHint,
-                ),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'edit') onEdit();
+                  if (value == 'delete') onDelete();
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text(isSwahili ? 'Hariri' : 'Edit'),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text(isSwahili ? 'Futa' : 'Delete'),
+                  ),
+                ],
               ),
             ],
-            if (verificationCode.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Row(
+          ),
+          const SizedBox(height: 12),
+          _TwoColumnRow(
+            leftLabel: 'SupplierVRN',
+            leftValue: receipt['vrn'] as String? ?? '-',
+            rightLabel: 'TaxInvoice',
+            rightValue: receipt['receipt_number'] as String? ?? '-',
+            isDark: isDark,
+          ),
+          const SizedBox(height: 8),
+          _TwoColumnRow(
+            leftLabel: 'InvoiceDate',
+            leftValue: receipt['receipt_date'] as String? ?? '-',
+            rightLabel: 'Is Expenses',
+            rightValue: receipt['is_expense'] as String? ?? 'NO',
+            isDark: isDark,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Goods',
+            style: TextStyle(
+              fontSize: 10,
+              color: isDark ? Colors.white38 : AppColors.textHint,
+            ),
+          ),
+          const SizedBox(height: 4),
+          InkWell(
+            onTap: onOpenItems,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Text(
+                goodsText.isEmpty ? '-' : goodsText,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: vatAccentBlue,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            children: [
+              _MoneyCell(
+                label: 'AmountVATEXC',
+                value: vatMoney(receipt['amount_vat_exc']),
+                isDark: isDark,
+              ),
+              _MoneyCell(
+                label: 'VATAmount',
+                value: vatMoney(receipt['vat_amount']),
+                isDark: isDark,
+              ),
+              _MoneyCell(
+                label: 'TotalAmount',
+                value: vatMoney(receipt['total_amount']),
+                isDark: isDark,
+              ),
+              _MoneyCell(
+                label: 'Discount',
+                value: vatMoney(receipt['discount']),
+                isDark: isDark,
+              ),
+            ],
+          ),
+          if (hasVerification) ...[
+            const SizedBox(height: 10),
+            InkWell(
+              onTap: onVerificationTap,
+              borderRadius: BorderRadius.circular(8),
+              child: Row(
                 children: [
                   const Icon(
                     Icons.verified_rounded,
-                    size: 12,
+                    size: 14,
                     color: Color(0xFF10B981),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Verified: $verificationCode',
+                      'VerificationCode: $verificationCode',
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                         color: Color(0xFF10B981),
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                 ],
               ),
-            ],
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: (receipt['is_expense'] == 'YES'
-                        ? Colors.orange
-                        : Colors.green)
-                    .withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                receipt['is_expense'] == 'YES'
-                    ? (isSwahili ? 'Gharama' : 'Expense')
-                    : (isSwahili ? 'Sio Gharama' : 'Not Expense'),
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: receipt['is_expense'] == 'YES'
-                      ? Colors.orange
-                      : Colors.green,
-                ),
-              ),
             ),
           ],
-        ),
+        ],
       ),
+    );
+  }
+}
+
+class _TwoColumnRow extends StatelessWidget {
+  final String leftLabel;
+  final String leftValue;
+  final String rightLabel;
+  final String rightValue;
+  final bool isDark;
+
+  const _TwoColumnRow({
+    required this.leftLabel,
+    required this.leftValue,
+    required this.rightLabel,
+    required this.rightValue,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: VatInfoCol(
+            label: leftLabel,
+            value: leftValue,
+            isDark: isDark,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: VatInfoCol(
+            label: rightLabel,
+            value: rightValue,
+            isDark: isDark,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TotalsFooter extends StatelessWidget {
+  final Map<String, dynamic> totals;
+  final bool isDark;
+
+  const _TotalsFooter({required this.totals, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: vatCardDeco(isDark),
+      child: Column(
+        children: [
+          _TotalRow(
+            label: 'AmountVATEXC',
+            value: vatMoney(totals['amount_vat_exc']),
+            isDark: isDark,
+          ),
+          const SizedBox(height: 8),
+          _TotalRow(
+            label: 'VATAmount',
+            value: vatMoney(totals['vat_amount']),
+            isDark: isDark,
+          ),
+          const SizedBox(height: 8),
+          _TotalRow(
+            label: 'TotalAmount',
+            value: vatMoney(totals['total_amount']),
+            isDark: isDark,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TotalRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isDark;
+
+  const _TotalRow({
+    required this.label,
+    required this.value,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white70 : AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isDark ? vatAccentTeal : vatAccentBlue,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -842,48 +1156,6 @@ class _ItemEditorCard extends StatelessWidget {
   }
 }
 
-class _InfoCell extends StatelessWidget {
-  final String label;
-  final String value;
-  final bool isDark;
-
-  const _InfoCell({
-    required this.label,
-    required this.value,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 92,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              color: isDark ? Colors.white38 : AppColors.textHint,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: isDark ? Colors.white70 : AppColors.textSecondary,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _MoneyCell extends StatelessWidget {
   final String label;
   final String value;
@@ -898,7 +1170,7 @@ class _MoneyCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 92,
+      width: 110,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

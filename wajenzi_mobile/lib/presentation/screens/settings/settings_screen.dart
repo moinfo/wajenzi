@@ -200,10 +200,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       'hr_settings_deductions': '/deductions',
       'hr_settings_deduction_subscriptions': '/deduction-subscriptions',
       'hr_settings_departments': '/settings/departments',
+      'hr_settings_positions': '/settings/positions',
+      'hr_settings_roles': '/settings/roles',
+      'hr_settings_permissions': '/settings/permissions',
+      'hr_settings_suppliers': '/settings/suppliers',
+      'hr_settings_items': '/settings/items',
+      'hr_settings_expenses_categories': '/settings/expenses-categories',
+      'hr_settings_expenses_sub_categories': '/settings/expenses-sub-categories',
+      'hr_settings_financial_charge_categories':
+          '/settings/financial-charge-categories',
+      'hr_settings_efd': '/settings/efd',
+      'hr_settings_approval_document_types':
+          '/settings/approval-document-types',
+      'hr_settings_approval_levels': '/settings/approval-levels',
       'hr_settings_banks': '/staff-bank-details',
       'hr_settings_lead_sources': '/settings/lead-sources',
       'hr_settings_service_types': '/settings/service-types',
       'hr_settings_project_statuses': '/settings/project-statuses',
+      'hr_settings_cost_categories': '/settings/cost-categories',
+      'hr_settings_systems': '/settings/systems',
+      'hr_settings_users': '/settings/users',
       'hr_settings_project_types_settings': '/project-types',
       'hr_settings_approvals': '/approvals',
       'hr_settings_statutory_payments': '/statutory-payments',
@@ -259,6 +275,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (normalized.contains('bank')) return Icons.account_balance_outlined;
     if (normalized.contains('lead')) return Icons.track_changes_outlined;
     if (normalized.contains('project')) return Icons.business_center_outlined;
+    if (normalized.contains('cost')) return Icons.category_outlined;
     if (normalized.contains('asset')) return Icons.inventory_2_outlined;
     if (normalized.contains('system')) return Icons.settings_suggest_outlined;
     if (normalized.contains('user')) return Icons.groups_outlined;

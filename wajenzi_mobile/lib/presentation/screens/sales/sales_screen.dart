@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
+import '../../../core/services/external_launcher_service.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import '../vat/vat_shared.dart';
+
+final _salesStartProvider =
+    StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
+final _salesEndProvider =
+    StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
+final _salesSearchProvider =
+    StateProvider.autoDispose<String>((ref) => '');
 
 final _salesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/sales');
+  final start = ref.watch(_salesStartProvider);
+  final end = ref.watch(_salesEndProvider);
+  final response = await api.get('/sales', queryParameters: {
+    'start_date': vatDateFmt(start),
+    'end_date': vatDateFmt(end),
+  });
 
   List items = [];
   Map<String, dynamic> meta = {};
@@ -19,9 +36,16 @@ final _salesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
     if (responseData is Map) {
       final dynamic dataField = responseData['data'];
       if (dataField is Map) {
-        items =
-            (dataField['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-        meta = (dataField['meta'] as Map<String, dynamic>?) ?? {};
+        if (dataField['sales'] is List) {
+          items =
+              (dataField['sales'] as List).cast<Map<String, dynamic>>();
+        } else if (dataField['data'] is List) {
+          items =
+              (dataField['data'] as List).cast<Map<String, dynamic>>();
+        }
+        meta = (dataField['totals'] as Map<String, dynamic>?) ??
+            (dataField['meta'] as Map<String, dynamic>?) ??
+            {};
       } else if (dataField is List) {
         items = dataField.cast<Map<String, dynamic>>();
       }
@@ -54,17 +78,24 @@ class SalesScreen extends ConsumerWidget {
     final salesAsync = ref.watch(_salesProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
+    final searchTerm = ref.watch(_salesSearchProvider).trim().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Uuzaji' : 'Sales'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_rounded),
-            tooltip: isSwahili ? 'Ongeza' : 'Add',
-            onPressed: () => _showSaleForm(context, ref),
-          ),
-        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showSaleForm(context, ref),
+          tooltip: isSwahili ? 'Ongeza' : 'Add',
+          child: const Icon(Icons.add),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -79,12 +110,35 @@ class SalesScreen extends ConsumerWidget {
           ),
           data: (payload) {
             final List sales = payload['items'] as List? ?? [];
+            final Map<String, dynamic> meta =
+                payload['meta'] as Map<String, dynamic>? ?? {};
+            final filteredSales = sales.where((rawSale) {
+              if (searchTerm.isEmpty) return true;
+              final sale = rawSale as Map<String, dynamic>;
+              final haystack = [
+                sale['date'],
+                sale['document_number'],
+                sale['status'],
+                sale['approval_summary'],
+                sale['amount'],
+                sale['net'],
+                sale['tax'],
+                sale['turn_over'],
+                (sale['efd'] as Map<String, dynamic>?)?['name'],
+              ].whereType<Object>().join(' ').toLowerCase();
+              return haystack.contains(searchTerm);
+            }).toList();
 
-            if (sales.isEmpty) {
+            if (filteredSales.isEmpty) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(32),
                 children: [
+                  _SalesFiltersBar(
+                    isDark: isDarkMode,
+                    isSwahili: isSwahili,
+                  ),
+                  const SizedBox(height: 24),
                   const SizedBox(height: 100),
                   Icon(
                     Icons.point_of_sale_outlined,
@@ -93,7 +147,13 @@ class SalesScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    isSwahili ? 'Hakuna uuzaji uliopatikana' : 'No sales found',
+                    sales.isEmpty
+                        ? (isSwahili
+                            ? 'Hakuna uuzaji uliopatikana'
+                            : 'No sales found')
+                        : (isSwahili
+                            ? 'Hakuna matokeo yanayolingana'
+                            : 'No sales match your search'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
@@ -112,13 +172,33 @@ class SalesScreen extends ConsumerWidget {
             return ListView.builder(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
-              itemCount: sales.length + 1,
+              itemCount: filteredSales.length + 3,
               itemBuilder: (context, index) {
-                if (index == sales.length) {
+                if (index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _SalesFiltersBar(
+                      isDark: isDarkMode,
+                      isSwahili: isSwahili,
+                    ),
+                  );
+                }
+                if (index == 1) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _SalesTotalsCard(
+                      meta: meta,
+                      isDark: isDarkMode,
+                    ),
+                  );
+                }
+                final saleIndex = index - 2;
+                if (saleIndex == filteredSales.length) {
                   return const SizedBox(height: 80);
                 }
-                final sale = sales[index] as Map<String, dynamic>;
+                final sale = filteredSales[saleIndex] as Map<String, dynamic>;
                 return _SaleCard(
+                  index: saleIndex + 1,
                   sale: sale,
                   isSwahili: isSwahili,
                   isDarkMode: isDarkMode,
@@ -289,6 +369,11 @@ class SalesScreen extends ConsumerWidget {
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
+                      label: isSwahili ? 'Uidhinishaji' : 'Approvals',
+                      value: sale['approval_summary'] as String? ?? '-',
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
                       label: 'Turnover',
                       value: _formatMoney(_toDouble(sale['amount'])),
                       isDarkMode: isDarkMode,
@@ -315,10 +400,34 @@ class SalesScreen extends ConsumerWidget {
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
+                      label: isSwahili ? 'Kiambatisho' : 'Attachment',
+                      value: (sale['has_attachment'] == true)
+                          ? (isSwahili ? 'Kipo' : 'Available')
+                          : (isSwahili ? 'Hakipo' : 'No File'),
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
                       label: isSwahili ? 'Hali' : 'Status',
                       value: sale['status'] as String? ?? 'PENDING',
                       isDarkMode: isDarkMode,
                     ),
+                    if ((sale['file_url'] as String?)?.isNotEmpty ?? false) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _openAttachment(
+                            context,
+                            sale['file_url'] as String,
+                            isSwahili: isSwahili,
+                          ),
+                          icon: const Icon(Icons.attach_file_rounded),
+                          label: Text(
+                            isSwahili ? 'Fungua Kiambatisho' : 'Open Attachment',
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -347,6 +456,158 @@ class SalesScreen extends ConsumerWidget {
     if (amount <= 0) return '-';
     return 'TZS ${NumberFormat('#,##0', 'en').format(amount)}';
   }
+
+  Future<void> _openAttachment(
+    BuildContext context,
+    String fileUrl, {
+    required bool isSwahili,
+  }) async {
+    final normalizedUrl = AppConfig.normalizeExternalUrl(fileUrl);
+    if (normalizedUrl == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isSwahili
+                  ? 'Kiambatisho hakikupatikana'
+                  : 'Attachment not available',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    final opened = await ExternalLauncherService.openUri(
+      Uri.parse(normalizedUrl),
+    );
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isSwahili
+                ? 'Imeshindikana kufungua kiambatisho'
+                : 'Failed to open attachment',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+}
+
+class _SalesFiltersBar extends ConsumerWidget {
+  final bool isDark;
+  final bool isSwahili;
+
+  const _SalesFiltersBar({
+    required this.isDark,
+    required this.isSwahili,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final searchController = TextEditingController(
+      text: ref.watch(_salesSearchProvider),
+    );
+    searchController.selection = TextSelection.collapsed(
+      offset: searchController.text.length,
+    );
+
+    return Column(
+      children: [
+        TextField(
+          controller: searchController,
+          onChanged: (value) =>
+              ref.read(_salesSearchProvider.notifier).state = value,
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search_rounded),
+            hintText: isSwahili ? 'Search' : 'Search',
+            filled: true,
+            fillColor: isDark ? vatDarkCard : Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark
+                    ? vatDarkBorder
+                    : Colors.grey.withValues(alpha: 0.15),
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: isDark
+                    ? vatDarkBorder
+                    : Colors.grey.withValues(alpha: 0.15),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        VatDateRangeBar(
+          startProvider: _salesStartProvider,
+          endProvider: _salesEndProvider,
+          isDark: isDark,
+          isSwahili: isSwahili,
+        ),
+      ],
+    );
+  }
+}
+
+class _SalesTotalsCard extends StatelessWidget {
+  final Map<String, dynamic> meta;
+  final bool isDark;
+
+  const _SalesTotalsCard({
+    required this.meta,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final itemWidth = width < 640 ? width : (width - 8) / 2;
+        final chips = [
+          VatSummaryChip(
+            label: 'Turnover',
+            value: vatMoney(meta['turnover']),
+            color: vatAccentTeal,
+            isDark: isDark,
+          ),
+          VatSummaryChip(
+            label: 'NET (A+B+C)',
+            value: vatMoney(meta['net']),
+            color: vatAccentBlue,
+            isDark: isDark,
+          ),
+          VatSummaryChip(
+            label: 'Tax',
+            value: vatMoney(meta['tax']),
+            color: const Color(0xFFF59E0B),
+            isDark: isDark,
+          ),
+          VatSummaryChip(
+            label: 'Turnover (EX + SR)',
+            value: vatMoney(meta['turnover_exempt']),
+            color: const Color(0xFF8B5CF6),
+            isDark: isDark,
+          ),
+        ];
+
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: chips
+              .map((chip) => SizedBox(width: itemWidth, child: chip))
+              .toList(),
+        );
+      },
+    );
+  }
 }
 
 class _SaleFormSheet extends ConsumerStatefulWidget {
@@ -365,10 +626,10 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
   late final TextEditingController _netController;
   late final TextEditingController _taxController;
   late final TextEditingController _turnOverController;
-  late final TextEditingController _vatController;
   int? _selectedEfdId;
   DateTime _selectedDate = DateTime.now();
   bool _loading = false;
+  File? _selectedFile;
 
   @override
   void initState() {
@@ -385,9 +646,6 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
     _turnOverController = TextEditingController(
       text: widget.sale?['turn_over']?.toString() ?? '',
     );
-    _vatController = TextEditingController(
-      text: widget.sale?['vat']?.toString() ?? '',
-    );
     _selectedEfdId = widget.sale?['efd_id'] as int?;
     if (widget.sale?['date'] != null) {
       try {
@@ -402,7 +660,6 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
     _netController.dispose();
     _taxController.dispose();
     _turnOverController.dispose();
-    _vatController.dispose();
     super.dispose();
   }
 
@@ -423,37 +680,76 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDarkMode ? Colors.white24 : Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    16,
+                    20,
+                    16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? vatDarkCard : AppColors.primary,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(24),
                     ),
                   ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  widget.isNew
-                      ? (isSwahili ? 'Uuzaji Mpya' : 'New Sale')
-                      : (isSwahili ? 'Hariri Uuzaji' : 'Edit Sale'),
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                  child: Column(
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 42,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(
+                              Icons.arrow_back_rounded,
+                              color: Colors.white,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                          Expanded(
+                            child: Text(
+                              widget.isNew
+                                  ? (isSwahili ? 'Uuzaji Mpya' : 'New Sale')
+                                  : (isSwahili ? 'Hariri Uuzaji' : 'Edit Sale'),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 48),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                 Text(
-                  'EFD *',
+                  'Efd Name',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -556,7 +852,7 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Amount (Turnover) *',
+                  'Turnover',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -654,7 +950,7 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Turn Over',
+                            'Turnover(EX + SR)',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -678,37 +974,13 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'VAT',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: isDarkMode
-                                  ? Colors.white70
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _vatController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(
-                              hintText: '0.00',
-                              filled: true,
-                              fillColor: isDarkMode
-                                  ? const Color(0xFF2A2A3E)
-                                  : Colors.grey[100],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
+                ),
+                VatFilePicker(
+                  file: _selectedFile,
+                  isDark: isDarkMode,
+                  isSwahili: isSwahili,
+                  onPicked: (file) => setState(() => _selectedFile = file),
                 ),
                 const SizedBox(height: 32),
                 SizedBox(
@@ -744,6 +1016,9 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -777,13 +1052,16 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
         'net': double.tryParse(_netController.text) ?? 0,
         'tax': double.tryParse(_taxController.text) ?? 0,
         'turn_over': double.tryParse(_turnOverController.text) ?? 0,
-        'vat': double.tryParse(_vatController.text) ?? 0,
       };
+      final formData = await vatBuildFormData(data, _selectedFile);
 
       if (widget.isNew) {
-        await api.post('/sales', data: data);
+        await api.post('/sales', data: formData);
       } else {
-        await api.put('/sales/${widget.sale!['id']}', data: data);
+        await api.post(
+          '/sales/${widget.sale!['id']}',
+          data: formData..fields.add(const MapEntry('_method', 'PUT')),
+        );
       }
 
       if (mounted) {
@@ -807,6 +1085,7 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
 }
 
 class _SaleCard extends StatelessWidget {
+  final int index;
   final Map<String, dynamic> sale;
   final bool isSwahili;
   final bool isDarkMode;
@@ -815,6 +1094,7 @@ class _SaleCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const _SaleCard({
+    required this.index,
     required this.sale,
     required this.isSwahili,
     required this.isDarkMode,
@@ -827,6 +1107,13 @@ class _SaleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = sale['status'] as String? ?? 'PENDING';
     final amount = _toDouble(sale['amount']);
+    final net = _toDouble(sale['net']);
+    final tax = _toDouble(sale['tax']);
+    final exempt = _toDouble(sale['turn_over']);
+    final approvalSummary = sale['approval_summary'] as String? ?? '-';
+    final hasAttachment = sale['has_attachment'] == true;
+    final efdName =
+        (sale['efd'] as Map<String, dynamic>?)?['name'] as String? ?? '-';
 
     Color statusColor;
     switch (status.toUpperCase()) {
@@ -859,14 +1146,20 @@ class _SaleCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: const Color(0xFF27AE60).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.point_of_sale,
-                      color: Color(0xFF27AE60),
+                    child: Center(
+                      child: Text(
+                        '$index',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF27AE60),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -875,9 +1168,7 @@ class _SaleCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          (sale['efd'] as Map<String, dynamic>?)?['name']
-                                  as String? ??
-                              '-',
+                          efdName,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -919,33 +1210,55 @@ class _SaleCard extends StatelessWidget {
               const SizedBox(height: 16),
               const Divider(height: 1),
               const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _MetricChip(
+                    label: 'Turnover',
+                    value: _formatMoney(amount),
+                    isDarkMode: isDarkMode,
+                    valueColor: const Color(0xFF27AE60),
+                  ),
+                  _MetricChip(
+                    label: 'NET (A+B+C)',
+                    value: _formatMoney(net),
+                    isDarkMode: isDarkMode,
+                  ),
+                  _MetricChip(
+                    label: 'Tax',
+                    value: _formatMoney(tax),
+                    isDarkMode: isDarkMode,
+                  ),
+                  _MetricChip(
+                    label: 'Turnover (EX + SR)',
+                    value: _formatMoney(exempt),
+                    isDarkMode: isDarkMode,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Turnover',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDarkMode
-                                ? Colors.white54
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _formatMoney(amount),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF27AE60),
-                          ),
-                        ),
-                      ],
+                    child: _DetailLine(
+                      label: isSwahili ? 'Attachment' : 'Attachment',
+                      value: hasAttachment ? 'Attachment' : 'No File',
+                      isDarkMode: isDarkMode,
+                      valueColor: hasAttachment ? vatAccentBlue : null,
                     ),
                   ),
+                  if (hasAttachment)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Icon(
+                        Icons.attach_file_rounded,
+                        size: 18,
+                        color: isDarkMode
+                            ? Colors.white54
+                            : AppColors.textSecondary,
+                      ),
+                    ),
                   PopupMenuButton<String>(
                     onSelected: (value) {
                       if (value == 'edit') onEdit();
@@ -983,6 +1296,19 @@ class _SaleCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              _DetailLine(
+                label: 'Approvals',
+                value: approvalSummary,
+                isDarkMode: isDarkMode,
+              ),
+              const SizedBox(height: 6),
+              _DetailLine(
+                label: 'Status',
+                value: status,
+                isDarkMode: isDarkMode,
+                valueColor: statusColor,
+              ),
             ],
           ),
         ),
@@ -1007,6 +1333,100 @@ class _SaleCard extends StatelessWidget {
   String _formatMoney(double amount) {
     if (amount <= 0) return '-';
     return 'TZS ${NumberFormat('#,##0', 'en').format(amount)}';
+  }
+}
+
+class _MetricChip extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isDarkMode;
+  final Color? valueColor;
+
+  const _MetricChip({
+    required this.label,
+    required this.value,
+    required this.isDarkMode,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: isDarkMode
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.grey.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: valueColor ??
+                  (isDarkMode ? Colors.white : AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailLine extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isDarkMode;
+  final Color? valueColor;
+
+  const _DetailLine({
+    required this.label,
+    required this.value,
+    required this.isDarkMode,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: valueColor ??
+                  (isDarkMode ? Colors.white : AppColors.textPrimary),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

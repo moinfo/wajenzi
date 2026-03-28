@@ -77,6 +77,11 @@ class User extends Authenticatable
         return $this->belongsTo(AttendanceType::class);
     }
 
+    public function system(): BelongsTo
+    {
+        return $this->belongsTo(System::class);
+    }
+
     // Project Management relationships
     public function role(): BelongsTo
     {

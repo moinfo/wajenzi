@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 
 class AppConfig {
@@ -70,8 +72,33 @@ class AppConfig {
   static String _normalizeBaseUrl(String url) =>
       url.replaceFirst(RegExp(r'\/+$'), '');
 
-  static String _ensureApiBaseUrl(String url) {
+  static String _rewriteLocalhostForDevice(String url) {
+    if (kIsWeb) {
+      return url;
+    }
+
     final normalized = _normalizeBaseUrl(url);
+    final uri = Uri.tryParse(normalized);
+    if (uri == null || uri.host.isEmpty) {
+      return normalized;
+    }
+
+    final isLocalHost =
+        uri.host == '127.0.0.1' || uri.host == 'localhost';
+
+    if (!isLocalHost) {
+      return normalized;
+    }
+
+    if (Platform.isAndroid) {
+      return uri.replace(host: '10.0.2.2').toString();
+    }
+
+    return normalized;
+  }
+
+  static String _ensureApiBaseUrl(String url) {
+    final normalized = _rewriteLocalhostForDevice(url);
 
     if (normalized.endsWith(_apiPath)) {
       return normalized;
@@ -89,7 +116,7 @@ class AppConfig {
   }
 
   static String _ensureClientApiBaseUrl(String url) {
-    final normalized = _normalizeBaseUrl(url);
+    final normalized = _rewriteLocalhostForDevice(url);
 
     if (normalized.endsWith(_clientApiPath)) {
       return normalized;
@@ -108,7 +135,7 @@ class AppConfig {
 
   static String get _runtimeOrigin {
     if (!kIsWeb) {
-      return _normalizeBaseUrl(portalBaseUrl);
+      return _rewriteLocalhostForDevice(portalBaseUrl);
     }
 
     final origin = Uri.base.origin;
@@ -168,11 +195,48 @@ class AppConfig {
 
   static String portalUrl(String path) {
     final normalizedPath = path.startsWith('/') ? path : '/$path';
-    final origin = kIsWeb ? _runtimeOrigin : _normalizeBaseUrl(portalBaseUrl);
+    final origin = kIsWeb ? _runtimeOrigin : _rewriteLocalhostForDevice(portalBaseUrl);
     return '$origin$normalizedPath';
   }
 
   static String get webBaseUrl {
     return kIsWeb ? _runtimeOrigin : portalBaseUrl;
+  }
+
+  static String get canonicalPortalBaseUrl {
+    return _defaultPortalBaseUrl;
+  }
+
+  static String? resolvePortalMediaUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+
+    final uri = Uri.tryParse(path);
+    if (uri != null && uri.hasScheme) {
+      return normalizeExternalUrl(path);
+    }
+
+    final normalizedPath = path.startsWith('/') ? path : '/$path';
+    return '$canonicalPortalBaseUrl$normalizedPath';
+  }
+
+  static String? normalizeExternalUrl(String? url) {
+    if (url == null || url.isEmpty) return null;
+
+    final parsed = Uri.tryParse(url);
+    if (parsed == null) return url;
+    if (!parsed.hasScheme) return portalUrl(url);
+
+    final isLoopbackHost =
+        parsed.host == '127.0.0.1' || parsed.host == 'localhost';
+    if (isLoopbackHost) {
+      final normalizedPath = parsed.path.startsWith('/')
+          ? parsed.path
+          : '/${parsed.path}';
+      final query = parsed.hasQuery ? '?${parsed.query}' : '';
+      final fragment = parsed.hasFragment ? '#${parsed.fragment}' : '';
+      return portalUrl('$normalizedPath$query$fragment');
+    }
+
+    return _rewriteLocalhostForDevice(url);
   }
 }

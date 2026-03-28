@@ -36,11 +36,25 @@ import '../../presentation/screens/settings/process_approval_flow_steps_screen.d
 import '../../presentation/screens/settings/allowance_subscriptions_screen.dart';
 import '../../presentation/screens/settings/deduction_settings_screen.dart';
 import '../../presentation/screens/settings/departments_screen.dart';
+import '../../presentation/screens/settings/positions_screen.dart';
+import '../../presentation/screens/settings/roles_screen.dart';
+import '../../presentation/screens/settings/permissions_screen.dart';
+import '../../presentation/screens/settings/suppliers_screen.dart';
+import '../../presentation/screens/settings/items_screen.dart';
+import '../../presentation/screens/settings/expenses_categories_screen.dart';
+import '../../presentation/screens/settings/expenses_sub_categories_screen.dart';
+import '../../presentation/screens/settings/financial_charge_categories_screen.dart';
+import '../../presentation/screens/settings/efd_screen.dart';
+import '../../presentation/screens/settings/approval_document_types_screen.dart';
+import '../../presentation/screens/settings/approval_levels_screen.dart';
 import '../../presentation/screens/settings/service_interesteds_screen.dart';
 import '../../presentation/screens/settings/lead_statuses_screen.dart';
 import '../../presentation/screens/settings/lead_sources_screen.dart';
 import '../../presentation/screens/settings/service_types_screen.dart';
 import '../../presentation/screens/settings/project_statuses_screen.dart';
+import '../../presentation/screens/settings/cost_categories_screen.dart';
+import '../../presentation/screens/settings/systems_screen.dart';
+import '../../presentation/screens/settings/users_screen.dart';
 import '../../presentation/screens/dashboard/activities_screen.dart';
 import '../../presentation/screens/dashboard/followups_screen.dart';
 import '../../presentation/screens/dashboard/invoices_screen.dart';
@@ -540,6 +554,61 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const DepartmentsScreen(),
           ),
           GoRoute(
+            path: '/settings/positions',
+            name: 'settings-positions',
+            builder: (context, state) => const PositionsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/roles',
+            name: 'settings-roles',
+            builder: (context, state) => const RolesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/permissions',
+            name: 'settings-permissions',
+            builder: (context, state) => const PermissionsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/suppliers',
+            name: 'settings-suppliers',
+            builder: (context, state) => const SuppliersScreen(),
+          ),
+          GoRoute(
+            path: '/settings/items',
+            name: 'settings-items',
+            builder: (context, state) => const ItemsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/expenses-categories',
+            name: 'settings-expenses-categories',
+            builder: (context, state) => const ExpensesCategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/expenses-sub-categories',
+            name: 'settings-expenses-sub-categories',
+            builder: (context, state) => const ExpensesSubCategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/financial-charge-categories',
+            name: 'settings-financial-charge-categories',
+            builder: (context, state) => const FinancialChargeCategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/efd',
+            name: 'settings-efd',
+            builder: (context, state) => const EfdScreen(),
+          ),
+          GoRoute(
+            path: '/settings/approval-document-types',
+            name: 'settings-approval-document-types',
+            builder: (context, state) => const ApprovalDocumentTypesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/approval-levels',
+            name: 'settings-approval-levels',
+            builder: (context, state) => const ApprovalLevelsScreen(),
+          ),
+          GoRoute(
             path: '/settings/service-interesteds',
             name: 'settings-service-interesteds',
             builder: (context, state) => const ServiceInterestedsScreen(),
@@ -563,6 +632,21 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/settings/project-statuses',
             name: 'settings-project-statuses',
             builder: (context, state) => const ProjectStatusesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/cost-categories',
+            name: 'settings-cost-categories',
+            builder: (context, state) => const CostCategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/systems',
+            name: 'settings-systems',
+            builder: (context, state) => const SystemsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/users',
+            name: 'settings-users',
+            builder: (context, state) => const UsersScreen(),
           ),
           GoRoute(
             path: '/portal-webview',
@@ -1231,6 +1315,39 @@ String? _mapWebRoute(String webRoute) {
     'settings/deduction-settings': '/settings/deduction-settings',
     'hr_settings_departments': '/settings/departments',
     'settings/departments': '/settings/departments',
+    'hr_settings_positions': '/settings/positions',
+    'settings/positions': '/settings/positions',
+    'hr_settings_roles': '/settings/roles',
+    'settings/roles': '/settings/roles',
+    'hr_settings_permissions': '/settings/permissions',
+    'settings/permissions': '/settings/permissions',
+    'hr_settings_suppliers': '/settings/suppliers',
+    'settings/suppliers': '/settings/suppliers',
+    'hr_settings_items': '/settings/items',
+    'settings/items': '/settings/items',
+    'hr_settings_expenses_categories': '/settings/expenses-categories',
+    'settings/expenses_categories': '/settings/expenses-categories',
+    'settings/expenses-categories': '/settings/expenses-categories',
+    'hr_settings_expenses_sub_categories': '/settings/expenses-sub-categories',
+    'settings/expenses_sub_categories': '/settings/expenses-sub-categories',
+    'settings/expenses-sub-categories': '/settings/expenses-sub-categories',
+    'hr_settings_financial_charge_categories':
+        '/settings/financial-charge-categories',
+    'settings/financial_charge_categories':
+        '/settings/financial-charge-categories',
+    'settings/financial-charge-categories':
+        '/settings/financial-charge-categories',
+    'hr_settings_efd': '/settings/efd',
+    'settings/efd': '/settings/efd',
+    'hr_settings_approval_document_types':
+        '/settings/approval-document-types',
+    'settings/approval_document_types':
+        '/settings/approval-document-types',
+    'settings/approval-document-types':
+        '/settings/approval-document-types',
+    'hr_settings_approval_levels': '/settings/approval-levels',
+    'settings/approval_levels': '/settings/approval-levels',
+    'settings/approval-levels': '/settings/approval-levels',
     'hr_settings_service_interesteds': '/settings/service-interesteds',
     'settings/service_interesteds': '/settings/service-interesteds',
     'settings/service-interesteds': '/settings/service-interesteds',
@@ -1246,6 +1363,13 @@ String? _mapWebRoute(String webRoute) {
     'hr_settings_project_statuses': '/settings/project-statuses',
     'settings/project_statuses': '/settings/project-statuses',
     'settings/project-statuses': '/settings/project-statuses',
+    'hr_settings_cost_categories': '/settings/cost-categories',
+    'settings/cost_categories': '/settings/cost-categories',
+    'settings/cost-categories': '/settings/cost-categories',
+    'hr_settings_systems': '/settings/systems',
+    'settings/systems': '/settings/systems',
+    'hr_settings_users': '/settings/users',
+    'settings/users': '/settings/users',
     'user_profile': '/profile',
     'user_inbox': '/dashboard',
     'user_notifications': '/notifications',

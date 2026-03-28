@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Efd;
 use App\Models\Sale;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -28,21 +29,24 @@ class SaleApiController extends Controller
                 $query->where('efd_id', $request->efd_id);
             }
 
-            $sales = $query->orderBy('date', 'desc')
-                ->paginate($request->per_page ?? 20);
-
-            $items = collect($sales->items())->map(fn($s) => $this->formatSale($s));
+            $sales = $query->orderBy('date', 'desc')->get();
+            $items = $sales->map(fn($s) => $this->formatSale($s));
+            $totals = $this->buildTotals($items);
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'data' => $items,
+                    'sales' => $items->values(),
+                    'totals' => $totals,
+                    'efds' => Efd::orderBy('name')->get(['id', 'name']),
                     'meta' => [
-                        'current_page' => $sales->currentPage(),
-                        'last_page' => $sales->lastPage(),
-                        'per_page' => $sales->perPage(),
-                        'total' => $sales->total(),
+                        'current_page' => 1,
+                        'last_page' => 1,
+                        'per_page' => $items->count(),
+                        'total' => $items->count(),
                     ],
+                    // Legacy compatibility for older mobile parsing paths.
+                    'data' => $items->values(),
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -78,7 +82,6 @@ class SaleApiController extends Controller
             $efds = Efd::orderBy('name')->get()->map(fn($e) => [
                 'id' => $e->id,
                 'name' => $e->name,
-                'serial_number' => $e->serial_number ?? null,
             ]);
 
             return response()->json([
@@ -203,17 +206,26 @@ class SaleApiController extends Controller
 
     private function formatSale($sale, bool $detailed = false)
     {
+        $approvalStatus = (string) ($sale->approvalStatus?->status ?? $sale->status ?? 'PENDING');
+        $normalizedStatus = strtoupper($approvalStatus);
+        $fileUrl = $this->resolveFileUrl($sale->file);
         $data = [
             'id' => $sale->id,
             'efd_id' => $sale->efd_id,
             'date' => $sale->date,
             'amount' => $sale->amount,
+            'turnover' => $sale->amount,
             'net' => $sale->net,
             'tax' => $sale->tax,
             'turn_over' => $sale->turn_over,
+            'turnover_exempt' => $sale->turn_over,
             'vat' => $sale->vat,
-            'status' => $sale->approvalStatus?->status ?? 'PENDING',
+            'status' => $approvalStatus,
+            'approval_status' => $approvalStatus,
+            'approval_summary' => $this->approvalSummary($normalizedStatus),
             'document_number' => $sale->document_number,
+            'has_attachment' => !empty($sale->file),
+            'file_url' => $fileUrl,
             'created_at' => $sale->created_at?->toISOString(),
         ];
 
@@ -221,7 +233,6 @@ class SaleApiController extends Controller
             $data['efd'] = [
                 'id' => $sale->efd->id,
                 'name' => $sale->efd->name,
-                'serial_number' => $sale->efd->serial_number ?? null,
             ];
         }
 
@@ -231,8 +242,37 @@ class SaleApiController extends Controller
 
         if ($detailed) {
             $data['file'] = $sale->file;
+            $data['approval_page_url'] = url("/sale/{$sale->id}/2");
         }
 
         return $data;
+    }
+
+    private function buildTotals(Collection $items): array
+    {
+        return [
+            'turnover' => (float) $items->sum(fn ($item) => (float) ($item['amount'] ?? 0)),
+            'net' => (float) $items->sum(fn ($item) => (float) ($item['net'] ?? 0)),
+            'tax' => (float) $items->sum(fn ($item) => (float) ($item['tax'] ?? 0)),
+            'turnover_exempt' => (float) $items->sum(fn ($item) => (float) ($item['turn_over'] ?? 0)),
+        ];
+    }
+
+    private function resolveFileUrl(?string $file): ?string
+    {
+        return Sale::resolveAttachmentUrl($file);
+    }
+
+    private function approvalSummary(string $status): string
+    {
+        return match ($status) {
+            'PENDING', 'CREATED' => 'Waiting for submission/approval',
+            'SUBMITTED' => 'Submitted into approval workflow',
+            'APPROVED', 'COMPLETED' => 'Approval completed',
+            'REJECTED' => 'Rejected in approval workflow',
+            'DISCARDED' => 'Discarded from approval workflow',
+            'PAID' => 'Processed and paid',
+            default => $status,
+        };
     }
 }

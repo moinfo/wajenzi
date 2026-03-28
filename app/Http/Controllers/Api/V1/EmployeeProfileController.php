@@ -22,8 +22,8 @@ class EmployeeProfileController extends Controller
     {
         $staff = User::where('status', 'ACTIVE')
             ->where('type', 'STAFF')
-            ->select('id', 'name', 'employee_number', 'designation', 'department_id')
-            ->with('department:id,name')
+            ->select('id', 'name', 'employee_number', 'designation', 'department_id', 'system_id')
+            ->with(['department:id,name', 'system:id,name'])
             ->orderBy('name')
             ->get()
             ->map(fn($u) => [
@@ -32,6 +32,7 @@ class EmployeeProfileController extends Controller
                 'employee_number' => $u->employee_number,
                 'designation' => $u->designation,
                 'department' => $u->department->name ?? null,
+                'system' => $u->system->name ?? null,
             ]);
 
         return response()->json([
@@ -52,7 +53,7 @@ class EmployeeProfileController extends Controller
         $endDate = $request->input('end_date', date('Y-m-d'));
 
         // Load relationships
-        $user->load(['department']);
+        $user->load(['department', 'system']);
 
         // Financial summary
         $basicSalary = StaffSalary::staffSalary($staffId);
@@ -92,6 +93,7 @@ class EmployeeProfileController extends Controller
                 'deduction' => (float) $loan->deduction,
                 'amount' => (float) $loan->amount,
             ]);
+        $totalLoan = (float) $loanHistories->sum('amount');
 
         // Advance salary history
         $advanceSalaries = AdvanceSalary::where('staff_id', $staffId)
@@ -105,6 +107,7 @@ class EmployeeProfileController extends Controller
                 'description' => $adv->description,
                 'amount' => (float) $adv->amount,
             ]);
+        $totalAdvanceSalary = (float) $advanceSalaries->sum('amount');
 
         // Payroll history (APPROVED payrolls in date range)
         $payrolls = Payroll::where('status', 'APPROVED')
@@ -139,8 +142,25 @@ class EmployeeProfileController extends Controller
                     'loan_deduction' => (float) $loanDeduction,
                     'loan_balance' => (float) $loanBalance,
                     'net' => (float) $net,
+                    'slip_url' => route('employee_salary_slip', [
+                        'staff_id' => $staffId,
+                        'month' => $payroll->month,
+                        'year' => $payroll->year,
+                    ]),
                 ];
             });
+        $payrollTotals = [
+            'salary' => (float) $payrolls->sum('salary'),
+            'allowance' => (float) $payrolls->sum('allowance'),
+            'gross' => (float) $payrolls->sum('gross'),
+            'nssf' => (float) $payrolls->sum('nssf'),
+            'paye' => (float) $payrolls->sum('paye'),
+            'advance' => (float) $payrolls->sum('advance'),
+            'loan' => (float) $payrolls->sum('loan'),
+            'loan_deduction' => (float) $payrolls->sum('loan_deduction'),
+            'loan_balance' => (float) $payrolls->sum('loan_balance'),
+            'net' => (float) $payrolls->sum('net'),
+        ];
 
         // Assets
         $assets = AssetProperty::select('asset_properties.*', 'asset_properties.name as asset_proper', 'assets.name as asset_name')
@@ -168,10 +188,12 @@ class EmployeeProfileController extends Controller
                     'phone' => $user->phone_number,
                     'address' => $user->address,
                     'department' => $user->department->name ?? null,
+                    'system' => $user->system->name ?? null,
                     'national_id' => $user->national_id,
                     'tin' => $user->tin,
                     'status' => $user->status,
-                    'employment_date' => $user->employment_date,
+                    'employment_date' => $user->employment_date ?? optional($user->created_at)->toDateString(),
+                    'status_updated_at' => optional($user->updated_at)->format('Y-m-d H:i:s'),
                     'profile_photo' => $user->profile,
                     'account_number' => $bankDetails->account_number ?? null,
                 ],
@@ -180,12 +202,20 @@ class EmployeeProfileController extends Controller
                     'gross_pay' => (float) $grossPay,
                     'allowances' => (float) $allowance,
                     'total_deductions' => (float) $totalDeduction,
+                    'taxable' => (float) $taxable,
                     'net_pay' => (float) $net,
                     'loan_balance' => (float) $loanBalance,
                 ],
                 'loan_history' => $loanHistories,
+                'loan_history_summary' => [
+                    'total_loan' => $totalLoan,
+                ],
                 'advance_salaries' => $advanceSalaries,
+                'advance_salary_summary' => [
+                    'total_advance_salary' => $totalAdvanceSalary,
+                ],
                 'payroll_history' => $payrolls,
+                'payroll_summary' => $payrollTotals,
                 'assets' => $assets,
             ],
         ]);

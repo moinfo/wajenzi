@@ -12,6 +12,7 @@ class Permission extends Model
     protected $fillable = [
         'name',
         'description',
+        'guard_name',
         'permission_type',
         'module' // New field to identify permission module (e.g., 'project', 'hr', etc.)
     ];

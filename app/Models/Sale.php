@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
@@ -37,6 +38,35 @@ class Sale extends Model implements ApprovableModel
 
     public function user(){
         return $this->belongsTo(User::class, 'create_by_id');
+    }
+
+    public function getLiveAttachmentUrlAttribute(): ?string
+    {
+        return self::resolveAttachmentUrl($this->file);
+    }
+
+    public static function resolveAttachmentUrl(?string $file): ?string
+    {
+        if (empty($file)) {
+            return null;
+        }
+
+        $portalBase = rtrim((string) config('app.portal_live_url', 'https://wajenziprosystem.co.tz'), '/');
+
+        if (preg_match('/^https?:\/\//i', $file) === 1) {
+            $parsed = parse_url($file);
+            if (!empty($parsed['path'])) {
+                $path = Str::startsWith($parsed['path'], '/') ? $parsed['path'] : '/' . $parsed['path'];
+                $query = !empty($parsed['query']) ? '?' . $parsed['query'] : '';
+                $fragment = !empty($parsed['fragment']) ? '#' . $parsed['fragment'] : '';
+                return $portalBase . $path . $query . $fragment;
+            }
+
+            return $file;
+        }
+
+        $path = Str::startsWith($file, '/') ? $file : '/' . ltrim($file, '/');
+        return $portalBase . $path;
     }
 
     public function getAll($start_date,$end_date,$efd_id = null,$status = null){

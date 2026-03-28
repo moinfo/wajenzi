@@ -20,6 +20,16 @@ class ProjectResource extends JsonResource
             'project_name' => $this->project_name,
             'description' => $this->description,
             'status' => $this->approvalStatus?->status ?? $this->status,
+            'approval_status' => $this->approvalStatus?->status ?? $this->status,
+            'approval_summary' => $this->whenLoaded('approvalStatus', function () {
+                $status = strtoupper((string) ($this->approvalStatus?->status ?? $this->status ?? 'PENDING'));
+                return match ($status) {
+                    'APPROVED', 'COMPLETED' => 'Approval completed',
+                    'SUBMITTED' => 'Submitted for approval',
+                    'REJECTED' => 'Rejected',
+                    default => 'Pending approval',
+                };
+            }),
             'priority' => $this->priority,
             'start_date' => $this->start_date?->toDateString(),
             'expected_end_date' => $this->expected_end_date?->toDateString(),
@@ -28,7 +38,10 @@ class ProjectResource extends JsonResource
             'planned_duration' => $this->planned_duration,
             'actual_duration' => $this->actual_duration,
             'delay_days' => $delay,
+            'delay' => $delay,
+            'is_delayed' => ($delay ?? 0) > 0,
             'location' => $this->location,
+            'approval_page_url' => url("/projects/{$this->id}/10"),
             'client' => $this->whenLoaded('client', function () {
                 if ($this->client) {
                     return [

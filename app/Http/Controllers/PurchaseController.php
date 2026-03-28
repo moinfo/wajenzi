@@ -125,7 +125,8 @@ class PurchaseController extends Controller
             'Amount VAT EXC' => number_format($approval_data->amount_vat_exc),
             'Date' => $approval_data->date,
             'VAT Amount' => number_format($approval_data->vat_amount),
-            'Uploaded File' => $approval_data->file
+            'Uploaded File' => $approval_data->file,
+            'Uploaded File Url' => $approval_data->live_attachment_url,
         ];
 
         // Load purchase items for procurement-linked purchases

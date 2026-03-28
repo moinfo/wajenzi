@@ -1,15 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
+import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 import 'vat_shared.dart';
 
 final _startProvider = StateProvider.autoDispose<DateTime>(
-    (ref) => DateTime(DateTime.now().year, DateTime.now().month, 1));
+    (ref) => DateTime.now());
 final _endProvider =
     StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
+final _paymentSearchProvider =
+    StateProvider.autoDispose<String>((ref) => '');
 
 final _dataProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
@@ -29,11 +35,17 @@ class VatPaymentsScreen extends ConsumerWidget {
     final isDark = ref.watch(isDarkModeProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final dataAsync = ref.watch(_dataProvider);
+    final searchTerm = ref.watch(_paymentSearchProvider).trim().toLowerCase();
     final bottomPad = MediaQuery.of(context).padding.bottom + 90;
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
 
     return Scaffold(
       backgroundColor: isDark ? vatDarkBg : AppColors.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Malipo ya VAT' : 'VAT Payments'),
         backgroundColor: isDark ? vatDarkCard : null,
       ),
@@ -53,15 +65,55 @@ class VatPaymentsScreen extends ConsumerWidget {
             isSwahili: isSwahili,
           ),
           data: (data) {
-            final payments =
+            final allPayments =
                 (data['payments'] as List?)?.cast<Map<String, dynamic>>() ??
                     [];
+            final payments = searchTerm.isEmpty
+                ? allPayments
+                : allPayments.where((payment) {
+                    final haystack = [
+                      payment['date'],
+                      payment['bank_name'],
+                      payment['description'],
+                      payment['status'],
+                      payment['approval_summary'],
+                      payment['amount'],
+                    ].whereType<Object>().join(' ').toLowerCase();
+                    return haystack.contains(searchTerm);
+                  }).toList();
             final totals = data['totals'] as Map<String, dynamic>? ?? {};
 
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad),
               children: [
+                TextField(
+                  onChanged: (value) =>
+                      ref.read(_paymentSearchProvider.notifier).state = value,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    hintText: isSwahili ? 'Search' : 'Search',
+                    filled: true,
+                    fillColor: isDark ? vatDarkCard : Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark
+                            ? vatDarkBorder
+                            : Colors.grey.withValues(alpha: 0.15),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark
+                            ? vatDarkBorder
+                            : Colors.grey.withValues(alpha: 0.15),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 VatDateRangeBar(
                   startProvider: _startProvider,
                   endProvider: _endProvider,
@@ -88,6 +140,8 @@ class VatPaymentsScreen extends ConsumerWidget {
                         payment: p,
                         isDark: isDark,
                         isSwahili: isSwahili,
+                        onView: () =>
+                            _showPaymentDetails(context, ref, isDark, isSwahili, p),
                         onEdit: () => _showPaymentForm(
                             context, ref, isDark, isSwahili,
                             payment: p),
@@ -105,6 +159,148 @@ class VatPaymentsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<void> _showPaymentDetails(
+  BuildContext context,
+  WidgetRef ref,
+  bool isDark,
+  bool isSwahili,
+  Map<String, dynamic> payment,
+) async {
+  Map<String, dynamic> detail = payment;
+
+  try {
+    final api = ref.read(apiClientProvider);
+    final resp = await api.get('/vat/payments/${payment['id']}');
+    final data = resp.data['data'];
+    if (data is Map<String, dynamic>) {
+      detail = data;
+    }
+  } catch (_) {}
+
+  if (!context.mounted) return;
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (ctx) => Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      decoration: BoxDecoration(
+        color: isDark ? vatDarkCard : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          isSwahili ? 'Maelezo ya Malipo' : 'Payment Details',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                children: [
+                  _DetailRow(
+                    label: isSwahili ? 'Benki' : 'Bank',
+                    value: detail['bank_name']?.toString() ?? '-',
+                    isDarkMode: isDark,
+                  ),
+                  _DetailRow(
+                    label: isSwahili ? 'Tarehe' : 'Date',
+                    value: detail['date']?.toString() ?? '-',
+                    isDarkMode: isDark,
+                  ),
+                  _DetailRow(
+                    label: isSwahili ? 'Kiasi' : 'Amount',
+                    value: vatMoney(detail['amount']),
+                    isDarkMode: isDark,
+                    valueColor: vatAccentTeal,
+                  ),
+                  _DetailRow(
+                    label: isSwahili ? 'Hali' : 'Status',
+                    value: detail['status']?.toString() ?? '-',
+                    isDarkMode: isDark,
+                  ),
+                  _DetailRow(
+                    label: isSwahili ? 'Namba ya Hati' : 'Document Number',
+                    value: detail['document_number']?.toString() ?? '-',
+                    isDarkMode: isDark,
+                  ),
+                  _DetailRow(
+                    label: isSwahili ? 'Kiambatisho' : 'Attachment',
+                    value: (detail['has_attachment'] == true)
+                        ? (isSwahili ? 'Kipo' : 'Available')
+                        : (isSwahili ? 'Hakipo' : 'Not available'),
+                    isDarkMode: isDark,
+                  ),
+                  if ((detail['file_url']?.toString().isNotEmpty ?? false)) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final normalizedUrl = AppConfig.normalizeExternalUrl(
+                            detail['file_url']?.toString(),
+                          );
+                          if (normalizedUrl == null) return;
+                          await ExternalLauncherService.openUri(
+                            Uri.parse(normalizedUrl),
+                          );
+                        },
+                        icon: const Icon(Icons.attach_file_rounded),
+                        label: Text(
+                          isSwahili ? 'Fungua Kiambatisho' : 'Open Attachment',
+                        ),
+                      ),
+                    ),
+                  ],
+                  if ((detail['description']?.toString().isNotEmpty ?? false))
+                    _DetailRow(
+                      label: isSwahili ? 'Maelezo' : 'Description',
+                      value: detail['description'].toString(),
+                      isDarkMode: isDark,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 Future<void> _showPaymentForm(BuildContext context, WidgetRef ref, bool isDark,
@@ -252,8 +448,12 @@ Future<void> _showPaymentForm(BuildContext context, WidgetRef ref, bool isDark,
                               final data = await vatBuildFormData(
                                   fields, selectedFile);
                               await api.uploadFile(
-                                  '/vat/payments/${payment['id']}',
-                                  data: data);
+                                '/vat/payments/${payment['id']}',
+                                data: data,
+                                options: Options(
+                                  contentType: 'multipart/form-data',
+                                ),
+                              );
                             } else {
                               await api.put(
                                   '/vat/payments/${payment['id']}',
@@ -263,8 +463,13 @@ Future<void> _showPaymentForm(BuildContext context, WidgetRef ref, bool isDark,
                             if (selectedFile != null) {
                               final data = await vatBuildFormData(
                                   fields, selectedFile);
-                              await api.uploadFile('/vat/payments',
-                                  data: data);
+                              await api.uploadFile(
+                                '/vat/payments',
+                                data: data,
+                                options: Options(
+                                  contentType: 'multipart/form-data',
+                                ),
+                              );
                             } else {
                               await api.post('/vat/payments', data: fields);
                             }
@@ -313,12 +518,14 @@ class _PaymentCard extends StatelessWidget {
   final Map<String, dynamic> payment;
   final bool isDark;
   final bool isSwahili;
+  final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   const _PaymentCard({
     required this.payment,
     required this.isDark,
     required this.isSwahili,
+    required this.onView,
     required this.onEdit,
     required this.onDelete,
   });
@@ -326,7 +533,7 @@ class _PaymentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onEdit,
+      onTap: onView,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
@@ -351,6 +558,13 @@ class _PaymentCard extends StatelessWidget {
                 ),
                 VatStatusBadge(
                     status: payment['status'] as String? ?? ''),
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: onEdit,
+                  child: Icon(Icons.edit_outlined,
+                      size: 18,
+                      color: (isDark ? Colors.white70 : AppColors.textSecondary)),
+                ),
                 const SizedBox(width: 6),
                 GestureDetector(
                   onTap: onDelete,
@@ -390,6 +604,52 @@ class _PaymentCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isDarkMode;
+  final Color? valueColor;
+
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    required this.isDarkMode,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? '-' : value,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: valueColor ??
+                    (isDarkMode ? Colors.white : AppColors.textPrimary),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

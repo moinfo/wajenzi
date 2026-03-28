@@ -54,6 +54,8 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    'portal_live_url' => env('PORTAL_LIVE_URL', 'https://wajenziprosystem.co.tz'),
+
     'asset_url' => env('ASSET_URL', null),
 
     /*

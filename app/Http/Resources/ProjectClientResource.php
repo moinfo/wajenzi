@@ -21,9 +21,21 @@ class ProjectClientResource extends JsonResource
             'identification_number' => $this->identification_number,
             'status' => $this->status,
             'file' => $this->file ? asset('storage/' . $this->file) : null,
-            'portal_access_enabled' => $this->portal_access_enabled,
+            'has_account' => !empty($this->password),
+            'portal_access_enabled' => (bool) $this->portal_access_enabled,
+            'last_login_at' => $this->last_login_at,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
+            'approval_status' => $this->approvalStatus?->status ?? $this->status,
+            'approval_summary' => $this->whenLoaded('approvalStatus', function () {
+                $status = strtoupper((string) ($this->approvalStatus?->status ?? $this->status ?? 'PENDING'));
+                return match ($status) {
+                    'APPROVED', 'COMPLETED' => 'Approval completed',
+                    'SUBMITTED' => 'Submitted for approval',
+                    'REJECTED' => 'Rejected',
+                    default => 'Pending approval',
+                };
+            }),
             'client_source' => $this->whenLoaded('client_source', function () {
                 return [
                     'id' => $this->client_source->id,

@@ -57,7 +57,8 @@ class SaleController extends Controller
             'Tax' => number_format($approval_data->tax),
             'Turnover (EX + SR)' => number_format($approval_data->turn_over),
             'Date' => $approval_data->date,
-            'Uploaded File' => $approval_data->file
+            'Uploaded File' => $approval_data->file,
+            'Uploaded File Url' => $approval_data->live_attachment_url,
         ];
 
         $data = [

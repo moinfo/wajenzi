@@ -18,7 +18,7 @@ class Receipt extends Model
         'receipt_total_tax', 'receipt_total_incl_of_tax', 'receipt_total_discount',
         'kwh_charge', 'kva_charge', 'service_charge', 'interest_amount',
         'receipt_rea', 'receipt_ewura', 'receipt_property_tax', 'tax_rate',
-        'is_tanesco', 'date'
+        'is_tanesco', 'is_expense', 'date'
     ];
 
     public static function isExist($receipt_verification_code)

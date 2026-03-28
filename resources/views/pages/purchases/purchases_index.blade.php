@@ -147,7 +147,7 @@
                                         <td class="font-w600">{{ $purchase->is_expense }}</td>
                                         <td class="text-center">
                                             @if($purchase->file != null)
-                                                <a href="{{ url("$purchase->file") }}">Attachment</a>
+                                                <a href="{{ $purchase->live_attachment_url }}" target="_blank" rel="noopener noreferrer">Attachment</a>
                                             @else
                                                 No File
                                             @endif
