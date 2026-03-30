@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
 final _boqsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
@@ -46,82 +47,147 @@ class _BoqListScreenState extends ConsumerState<BoqListScreen> {
   int? _selectedProjectId;
   String? _selectedType;
   String? _selectedStatus;
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final boqsAsync = ref.watch(_boqsProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Usimamizi wa BOQ' : 'BOQ Management'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showBoqForm(context),
-            tooltip: isSwahili ? 'Ongeza BOQ' : 'Add BOQ',
+        actions: [],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showBoqForm(context),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza BOQ' : 'Add BOQ',
+        ),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: isSwahili ? 'Tafuta BOQ...' : 'Search BOQ...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: () => _showFilterSheet(context),
+                ),
+                filled: true,
+                fillColor: isDarkMode
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey.withValues(alpha: 0.1),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterSheet(context),
-            tooltip: isSwahili ? 'Chuja' : 'Filter',
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => ref.invalidate(_boqsProvider),
+              child: boqsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => _ErrorView(
+                  error: e,
+                  isSwahili: isSwahili,
+                  onRetry: () => ref.invalidate(_boqsProvider),
+                ),
+                data: (payload) {
+                  final allBoqs = (payload['items'] as List)
+                      .cast<Map<String, dynamic>>();
+                  final searchQuery = _searchController.text.toLowerCase();
+                  final boqs = searchQuery.isEmpty
+                      ? allBoqs
+                      : allBoqs.where((boq) {
+                          final projectName =
+                              (boq['project_name'] as String? ?? '')
+                                  .toLowerCase();
+                          final version = (boq['version']?.toString() ?? '')
+                              .toLowerCase();
+                          final status = (boq['status'] as String? ?? '')
+                              .toLowerCase();
+                          final type = (boq['type'] as String? ?? '')
+                              .toLowerCase();
+                          return projectName.contains(searchQuery) ||
+                              version.contains(searchQuery) ||
+                              status.contains(searchQuery) ||
+                              type.contains(searchQuery);
+                        }).toList();
+
+                  if (boqs.isEmpty) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(32),
+                      children: [
+                        const SizedBox(height: 100),
+                        Icon(
+                          Icons.inventory_2_outlined,
+                          size: 56,
+                          color: Colors.grey[300],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          searchQuery.isEmpty
+                              ? (isSwahili
+                                    ? 'Hakuna BOQ iliyopatikana'
+                                    : 'No BOQs found')
+                              : (isSwahili
+                                    ? 'Hakuna matokeo ya utafutaji'
+                                    : 'No search results'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: boqs.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == boqs.length)
+                        return const SizedBox(height: 80);
+                      final boq = boqs[index];
+                      return _BoqCard(
+                        boq: boq,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        onTap: () => _showBoqDetails(context, ref, boq),
+                        onEdit: () => _showBoqForm(context, boq: boq),
+                        onDelete: () => _deleteBoq(context, ref, boq),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
           ),
         ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(_boqsProvider),
-        child: boqsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _ErrorView(
-            error: e,
-            isSwahili: isSwahili,
-            onRetry: () => ref.invalidate(_boqsProvider),
-          ),
-          data: (payload) {
-            final boqs = (payload['items'] as List)
-                .cast<Map<String, dynamic>>();
-
-            if (boqs.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(32),
-                children: [
-                  const SizedBox(height: 100),
-                  Icon(
-                    Icons.inventory_2_outlined,
-                    size: 56,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    isSwahili ? 'Hakuna BOQ iliyopatikana' : 'No BOQs found',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              );
-            }
-
-            return ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: boqs.length + 1,
-              itemBuilder: (context, index) {
-                if (index == boqs.length) return const SizedBox(height: 80);
-                final boq = boqs[index];
-                return _BoqCard(
-                  boq: boq,
-                  isSwahili: isSwahili,
-                  isDarkMode: isDarkMode,
-                  onTap: () => _showBoqDetails(context, ref, boq),
-                  onEdit: () => _showBoqForm(context, boq: boq),
-                  onDelete: () => _deleteBoq(context, ref, boq),
-                );
-              },
-            );
-          },
-        ),
       ),
     );
   }

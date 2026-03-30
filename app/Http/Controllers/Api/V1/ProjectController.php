@@ -85,6 +85,29 @@ class ProjectController extends Controller
 
         $query = Project::with(['client', 'projectType', 'serviceType', 'salesperson', 'projectManager', 'approvalStatus']);
 
+        // Apply search (mobile API - same structure as project_site_visits)
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('project_name', 'like', "%{$search}%")
+                  ->orWhere('document_number', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('client', function ($clientQuery) use ($search) {
+                      $clientQuery->where('first_name', 'like', "%{$search}%")
+                                   ->orWhere('last_name', 'like', "%{$search}%")
+                                   ->orWhere('phone_number', 'like', "%{$search}%")
+                                   ->orWhere('email', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('salesperson', function ($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('projectManager', function ($userQuery) use ($search) {
+                      $userQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
         // Apply filters
         if ($request->status) {
             $query->where('status', $request->status);
@@ -104,6 +127,15 @@ class ProjectController extends Controller
 
         if ($request->project_manager_id) {
             $query->where('project_manager_id', $request->project_manager_id);
+        }
+
+        // Filter by date range (same as project_site_visits)
+        if ($request->start_date) {
+            $query->whereDate('start_date', '>=', $request->start_date);
+        }
+
+        if ($request->end_date) {
+            $query->whereDate('start_date', '<=', $request->end_date);
         }
 
         $projects = $query->orderBy('created_at', 'desc')

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
 class SiteVisitsFilter {
@@ -40,12 +42,12 @@ class SiteVisitsFilter {
 
 final siteVisitsFilterProvider = StateProvider<SiteVisitsFilter>((ref) {
   return SiteVisitsFilter(
-    startDate: DateTime.now().subtract(const Duration(days: 30)),
+    startDate: DateTime.now().subtract(const Duration(days: 365)),
     endDate: DateTime.now(),
   );
 });
 
-final _siteVisitsProvider = FutureProvider.autoDispose<List<dynamic>>((
+final _siteVisitsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
@@ -55,9 +57,13 @@ final _siteVisitsProvider = FutureProvider.autoDispose<List<dynamic>>((
     queryParameters: filter.toQueryParams(),
   );
   final data = response.data['data'];
-  if (data is List) return data;
-  if (data is Map && data['data'] is List) return data['data'] as List;
-  return [];
+  if (data is List) return {'items': data, 'meta': {}};
+  if (data is Map && data['data'] is List)
+    return {
+      'items': data['data'] as List,
+      'meta': data['meta'] as Map<String, dynamic>? ?? {},
+    };
+  return {'items': <dynamic>[], 'meta': {}};
 });
 
 final _siteVisitProjectsProvider = FutureProvider.autoDispose<List<dynamic>>((
@@ -80,85 +86,197 @@ class SiteVisitsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final visitsAsync = ref.watch(_siteVisitsProvider);
+    final referenceAsync = ref.watch(_siteVisitProjectsProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
     final filter = ref.watch(siteVisitsFilterProvider);
+    final search = ref.watch(_siteVisitsSearchProvider).trim().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Visiti za Shughuli' : 'Site Visits'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_rounded),
-            tooltip: isSwahili ? 'Ongeza Visit' : 'Add Visit',
-            onPressed: () => _showVisitForm(context, ref),
-          ),
-          if (filter.projectId != null)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () =>
-                  ref.read(siteVisitsFilterProvider.notifier).state = filter
-                      .copyWith(clearProject: true),
-            ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterSheet(context, ref),
-          ),
-        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showVisitForm(context, ref),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza Visit' : 'Add Visit',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_siteVisitsProvider),
-        child: visitsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.grey),
-                const SizedBox(height: 16),
-                Text('$e'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(_siteVisitsProvider),
-                  child: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
-                ),
-              ],
-            ),
-          ),
-          data: (visits) {
-            if (visits.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(32),
-                children: [
-                  const SizedBox(height: 100),
-                  Icon(Icons.location_off, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    isSwahili
-                        ? 'Hakuna visiti zilizopatikana'
-                        : 'No site visits found',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                  ),
-                ],
-              );
-            }
-            return ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: visits.length,
-              itemBuilder: (context, index) => _SiteVisitCard(
-                visit: visits[index] as Map<String, dynamic>,
-                isSwahili: isSwahili,
-                onTap: () => _showVisitDetail(
-                  context,
-                  ref,
-                  visits[index] as Map<String, dynamic>,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    TextField(
+                      onChanged: (value) =>
+                          ref.read(_siteVisitsSearchProvider.notifier).state =
+                              value,
+                      decoration: InputDecoration(
+                        hintText: isSwahili
+                            ? 'Tafuta visiti...'
+                            : 'Search site visits...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: search.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () =>
+                                    ref
+                                            .read(
+                                              _siteVisitsSearchProvider
+                                                  .notifier,
+                                            )
+                                            .state =
+                                        '',
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: isDarkMode
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    referenceAsync.when(
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                      data: (projects) => _SiteVisitsFilters(
+                        reference: projects as List,
+                        filter: filter,
+                        isSwahili: isSwahili,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            );
-          },
+            ),
+            visitsAsync.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text('$e', textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(_siteVisitsProvider),
+                        child: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              data: (payload) {
+                final allItems = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
+                final meta = payload['meta'] as Map<String, dynamic>? ?? {};
+                final visits = search.isEmpty
+                    ? allItems
+                    : allItems.where((visit) {
+                        final project =
+                            visit['project'] as Map<String, dynamic>?;
+                        final haystack = [
+                          project?['project_name'] ?? '',
+                          project?['name'] ?? '',
+                          visit['location'] ?? '',
+                          visit['description'] ?? '',
+                          visit['findings'] ?? '',
+                          visit['recommendations'] ?? '',
+                          visit['status'] ?? '',
+                        ].join(' ').toLowerCase();
+                        return haystack.contains(search);
+                      }).toList();
+
+                if (visits.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.location_off,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            allItems.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna visiti'
+                                      : 'No site visits found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No visits match your search'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          if (search.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  ref
+                                          .read(
+                                            _siteVisitsSearchProvider.notifier,
+                                          )
+                                          .state =
+                                      '',
+                              icon: const Icon(Icons.arrow_back_rounded),
+                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final visit = visits[index];
+                      return _SiteVisitCard(
+                        visit: visit,
+                        isSwahili: isSwahili,
+                        onTap: () => _showVisitDetail(context, ref, visit),
+                      );
+                    }, childCount: visits.length),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -215,6 +333,192 @@ class SiteVisitsScreen extends ConsumerWidget {
   }
 }
 
+final _siteVisitsSearchProvider = StateProvider.autoDispose<String>(
+  (ref) => '',
+);
+
+class _SiteVisitsFilters extends ConsumerWidget {
+  final List reference;
+  final SiteVisitsFilter filter;
+  final bool isSwahili;
+
+  const _SiteVisitsFilters({
+    required this.reference,
+    required this.filter,
+    required this.isSwahili,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ExpansionTile(
+      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      initiallyExpanded: filter.projectId != null,
+      childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+      backgroundColor: Colors.white,
+      collapsedBackgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      collapsedShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      children: [
+        _Drop<int>(
+          label: isSwahili ? 'Mradi' : 'Project',
+          value: filter.projectId,
+          items: reference.cast<Map<String, dynamic>>(),
+          onChanged: (v) => ref.read(siteVisitsFilterProvider.notifier).state =
+              filter.copyWith(projectId: v, clearProject: v == null),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: filter.startDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null)
+                    ref.read(siteVisitsFilterProvider.notifier).state = filter
+                        .copyWith(startDate: picked);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 20),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            DateFormat('dd MMM yyyy').format(filter.startDate),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: filter.endDate,
+                    firstDate: filter.startDate,
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null)
+                    ref.read(siteVisitsFilterProvider.notifier).state = filter
+                        .copyWith(endDate: picked);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 20),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            DateFormat('dd MMM yyyy').format(filter.endDate),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (filter.projectId != null)
+          OutlinedButton(
+            onPressed: () => ref.read(siteVisitsFilterProvider.notifier).state =
+                SiteVisitsFilter(
+                  startDate: DateTime.now().subtract(const Duration(days: 365)),
+                  endDate: DateTime.now(),
+                ),
+            child: Text(isSwahili ? 'Futa' : 'Clear'),
+          ),
+      ],
+    );
+  }
+}
+
+class _Drop<T> extends StatelessWidget {
+  final String label;
+  final T? value;
+  final List<Map<String, dynamic>> items;
+  final void Function(T?) onChanged;
+
+  const _Drop({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<T>(
+        value: value,
+        isExpanded: true,
+        decoration: InputDecoration(labelText: label),
+        items: [
+          DropdownMenuItem<T>(
+            value: null,
+            child: const Text('All', overflow: TextOverflow.ellipsis),
+          ),
+          ...items.map(
+            (item) => DropdownMenuItem<T>(
+              value: item['id'] as T,
+              child: Text(
+                item['project_name']?.toString() ?? '-',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
 Color getVisitStatusColor(String status) {
   switch (status.toUpperCase()) {
     case 'APPROVED':
@@ -225,6 +529,8 @@ Color getVisitStatusColor(String status) {
       return const Color(0xFFF39C12);
     case 'REJECTED':
       return const Color(0xFFE74C3C);
+    case 'COMPLETED':
+      return const Color(0xFF9B59B6);
     default:
       return const Color(0xFF95A5A6);
   }
@@ -240,6 +546,8 @@ String getVisitStatusLabel(String status, bool isSwahili) {
       return isSwahili ? 'IMEUNDWA' : 'CREATED';
     case 'REJECTED':
       return isSwahili ? 'IMEKATALIWA' : 'REJECTED';
+    case 'COMPLETED':
+      return isSwahili ? 'IMEKAMILIWA' : 'COMPLETED';
     default:
       return status;
   }
@@ -259,10 +567,11 @@ class _SiteVisitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final project = visit['project'] as Map<String, dynamic>?;
-    final projectName =
-        project?['project_name'] as String? ??
-        project?['name'] as String? ??
-        '-';
+    final projectName = project?['project_name'] as String? ?? '-';
+    final clientName = project?['client'] != null
+        ? '${project!['client']['first_name'] ?? ''} ${project['client']['last_name'] ?? ''}'
+              .trim()
+        : '';
     final status = visit['status'] as String? ?? 'CREATED';
     final visitDate =
         visit['visit_date'] as String? ?? visit['date'] as String? ?? '';
@@ -270,8 +579,6 @@ class _SiteVisitCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -285,7 +592,7 @@ class _SiteVisitCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
+                      color: statusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -308,7 +615,17 @@ class _SiteVisitCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        if (clientName.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            clientName,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 6),
                         Row(
                           children: [
                             Icon(
@@ -324,6 +641,27 @@ class _SiteVisitCard extends StatelessWidget {
                                 color: Colors.grey[600],
                               ),
                             ),
+                            if (visit['location'] != null &&
+                                (visit['location'] as String).isNotEmpty) ...[
+                              const SizedBox(width: 12),
+                              Icon(
+                                Icons.place,
+                                size: 14,
+                                color: Colors.grey[500],
+                              ),
+                              const SizedBox(width: 2),
+                              Flexible(
+                                child: Text(
+                                  visit['location'] as String,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],
@@ -336,13 +674,13 @@ class _SiteVisitCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.12),
+                      color: statusColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       getVisitStatusLabel(status, isSwahili),
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: statusColor,
                       ),
@@ -353,11 +691,18 @@ class _SiteVisitCard extends StatelessWidget {
               if (visit['description'] != null &&
                   (visit['description'] as String).isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(
-                  visit['description'] as String,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    visit['description'] as String,
+                    style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ],
@@ -379,7 +724,6 @@ class _SiteVisitCard extends StatelessWidget {
 
 class _FilterSheet extends ConsumerWidget {
   final WidgetRef parentRef;
-
   const _FilterSheet({required this.parentRef});
 
   @override
@@ -428,9 +772,9 @@ class _FilterSheet extends ConsumerWidget {
             child: projectsAsync.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(16),
-                child: CircularProgressIndicator(),
+                child: Center(child: CircularProgressIndicator()),
               ),
-              error: (_, __) => Text(isSwahili ? 'Imeshindikana' : 'Failed'),
+              error: (e, _) => Text(isSwahili ? 'Imeshindikana' : 'Failed'),
               data: (projects) => DropdownButtonHideUnderline(
                 child: DropdownButton<int?>(
                   value: filter.projectId,
@@ -448,29 +792,50 @@ class _FilterSheet extends ConsumerWidget {
                       ),
                     ),
                   ],
-                  onChanged: (v) {
-                    parentRef.read(siteVisitsFilterProvider.notifier).state =
-                        filter.copyWith(projectId: v, clearProject: v == null);
-                  },
+                  onChanged: (v) =>
+                      parentRef
+                          .read(siteVisitsFilterProvider.notifier)
+                          .state = filter.copyWith(
+                        projectId: v,
+                        clearProject: v == null,
+                      ),
                 ),
               ),
             ),
           ),
           const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1ABC9C),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () =>
+                      parentRef
+                          .read(siteVisitsFilterProvider.notifier)
+                          .state = SiteVisitsFilter(
+                        startDate: DateTime.now().subtract(
+                          const Duration(days: 365),
+                        ),
+                        endDate: DateTime.now(),
+                      ),
+                  child: Text(isSwahili ? 'Futa' : 'Clear'),
                 ),
               ),
-              child: Text(isSwahili ? 'Onyesha Matokeo' : 'Show Results'),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(isSwahili ? 'Onyesha' : 'Show'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -541,15 +906,16 @@ class _VisitDetailSheet extends ConsumerWidget {
                           IconButton(
                             icon: const Icon(
                               Icons.edit,
-                              color: Color(0xFF1ABC9C),
+                              color: AppColors.primary,
                             ),
                             onPressed: onEdit,
-                            tooltip: isSwahili ? 'Hariri' : 'Edit',
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
+                            icon: const Icon(
+                              Icons.delete,
+                              color: AppColors.error,
+                            ),
                             onPressed: () => _showDeleteDialog(context, ref),
-                            tooltip: isSwahili ? 'Futa' : 'Delete',
                           ),
                         ],
                         IconButton(
@@ -697,28 +1063,28 @@ class _VisitDetailSheet extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isSwahili ? 'Cancel' : 'Cancel'),
+            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: Text(isSwahili ? 'Futa' : 'Delete'),
           ),
         ],
       ),
     );
-
     if (confirmed == true) {
       try {
         final api = ref.read(apiClientProvider);
         await api.delete('/site-visits/$visitId');
-        if (context.mounted) {
-          onDeleted?.call();
-        }
+        if (context.mounted) onDeleted?.call();
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
       }
@@ -752,10 +1118,10 @@ class _DetailRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: const Color(0xFF1ABC9C).withValues(alpha: 0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 20, color: const Color(0xFF1ABC9C)),
+            child: Icon(icon, size: 20, color: AppColors.primary),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -785,7 +1151,6 @@ class _DetailRow extends StatelessWidget {
 
 class _VisitFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic>? visit;
-
   const _VisitFormSheet({this.visit});
 
   @override
@@ -814,7 +1179,7 @@ class _VisitFormSheetState extends ConsumerState<_VisitFormSheet> {
       final project = v['project'] as Map<String, dynamic>?;
       _selectedProjectId = project?['id'] as int? ?? v['project_id'] as int?;
       _visitDate = _parseDate(
-        v['visit_date'] as String? ?? v['date'] as String?,
+        v['visit_date'] as String? ?? v['date'] as String? ?? '',
       );
       _locationController.text = v['location'] as String? ?? '';
       _descriptionController.text = v['description'] as String? ?? '';
@@ -902,9 +1267,9 @@ class _VisitFormSheetState extends ConsumerState<_VisitFormSheet> {
                   child: projectsAsync.when(
                     loading: () => const Padding(
                       padding: EdgeInsets.all(16),
-                      child: CircularProgressIndicator(),
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                    error: (_, __) =>
+                    error: (e, _) =>
                         Text(isSwahili ? 'Imeshindikana' : 'Failed'),
                     data: (projects) => DropdownButtonHideUnderline(
                       child: DropdownButton<int?>(
@@ -1012,7 +1377,7 @@ class _VisitFormSheetState extends ConsumerState<_VisitFormSheet> {
                   child: ElevatedButton(
                     onPressed: _loading ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1ABC9C),
+                      backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -1047,13 +1412,12 @@ class _VisitFormSheetState extends ConsumerState<_VisitFormSheet> {
   }
 
   Future<void> _submit() async {
+    final isSwahili = ref.read(isSwahiliProvider);
     if (_selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            ref.read(isSwahiliProvider) ? 'Chagua mradi' : 'Select a project',
-          ),
-          backgroundColor: Colors.red,
+          content: Text(isSwahili ? 'Chagua mradi' : 'Select a project'),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -1077,7 +1441,6 @@ class _VisitFormSheetState extends ConsumerState<_VisitFormSheet> {
             ? null
             : _recommendationsController.text.trim(),
       };
-
       if (_isEditing && _visitId != null) {
         await api.put('/site-visits/$_visitId', data: data);
       } else {
@@ -1085,10 +1448,14 @@ class _VisitFormSheetState extends ConsumerState<_VisitFormSheet> {
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
         );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }

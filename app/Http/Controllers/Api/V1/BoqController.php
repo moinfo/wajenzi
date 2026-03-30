@@ -15,6 +15,7 @@ class BoqController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
+            $currentUser = auth()->user();
             $query = ProjectBoq::with(['project', 'approvalStatus']);
 
             if ($request->project_id) {
@@ -41,6 +42,9 @@ class BoqController extends Controller
                 'total_amount' => $boq->total_amount,
                 'status' => $boq->approvalStatus?->status ?? 'Pending',
                 'items_count' => $boq->items()->count(),
+                'is_submitted' => $boq->isSubmitted(),
+                'can_be_submitted' => $currentUser ? $boq->canBeSubmittedBy($currentUser) : false,
+                'can_be_approved' => $currentUser ? ($boq->canBeApprovedBy($currentUser) && !$boq->isSubmitted()) : false,
             ]);
 
             return response()->json([
@@ -106,6 +110,12 @@ class BoqController extends Controller
         try {
             $boq = ProjectBoq::with(['project', 'approvalStatus', 'items'])->findOrFail($id);
 
+            $currentUser = auth()->user();
+            $isSubmitted = $boq->isSubmitted();
+            $isRejected = $boq->isRejected();
+            $isReturned = $boq->isReturned();
+            $canApprove = $currentUser ? $boq->canBeApprovedBy($currentUser) : false;
+
             $items = $boq->items->map(fn($item) => [
                 'id' => $item->id,
                 'item_code' => $item->item_code,
@@ -119,6 +129,29 @@ class BoqController extends Controller
                 'procurement_status' => $item->procurement_status,
             ]);
 
+            $approvalSteps = [];
+            if ($isSubmitted && $boq->approvalStatus) {
+                $modelApprovalSteps = collect($boq->approvalStatus->steps ?? [])->map(function ($step) {
+                    $stepData = \RingleSoft\LaravelProcessApproval\Models\ProcessApprovalFlowStep::with('role')->find($step['id']);
+                    $approval = ($step['process_approval_id'] !== null) 
+                        ? \RingleSoft\LaravelProcessApproval\Models\ProcessApproval::find($step['process_approval_id']) 
+                        : null;
+                    return [
+                        'step' => $stepData,
+                        'approval' => $approval,
+                    ];
+                });
+                foreach ($modelApprovalSteps as $idx => $step) {
+                    $approvalSteps[] = [
+                        'step' => $step['step']?->role?->name ?? 'Step ' . ($idx + 1),
+                        'status' => $step['approval']?->approval_action ?? 'pending',
+                        'user_name' => $step['approval']?->user?->name ?? null,
+                        'comment' => $step['approval']?->comment ?? null,
+                        'created_at' => $step['approval']?->created_at?->format('Y-m-d H:i:s') ?? null,
+                    ];
+                }
+            }
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -131,6 +164,14 @@ class BoqController extends Controller
                     'total_amount' => $boq->total_amount,
                     'items_count' => $boq->items()->count(),
                     'items' => $items,
+                    'is_submitted' => $isSubmitted,
+                    'is_rejected' => $isRejected,
+                    'is_returned' => $isReturned,
+                    'can_be_approved' => $canApprove && !$isRejected,
+                    'can_be_rejected' => $canApprove && !$isRejected,
+                    'can_be_returned' => $canApprove && !$isRejected,
+                    'can_be_submitted' => $currentUser ? $boq->canBeSubmittedBy($currentUser) : false,
+                    'approval_steps' => $approvalSteps,
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -245,6 +286,131 @@ class BoqController extends Controller
                 'success' => false,
                 'message' => 'Failed to get next version: ' . $e->getMessage(),
                 'version' => 1,
+            ], 500);
+        }
+    }
+
+    public function submit(Request $request, int $id): JsonResponse
+    {
+        try {
+            $boq = ProjectBoq::findOrFail($id);
+            
+            if (!$boq->canBeSubmittedBy($request->user())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You cannot submit this BOQ for approval.',
+                ], 403);
+            }
+
+            $boq->submitForApproval();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'BOQ submitted for approval successfully.',
+                'data' => [
+                    'status' => $boq->approvalStatus?->status ?? 'Submitted',
+                    'is_submitted' => true,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Boq submit error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to submit BOQ: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function approve(Request $request, int $id): JsonResponse
+    {
+        try {
+            $boq = ProjectBoq::findOrFail($id);
+            
+            if (!$boq->canBeApprovedBy($request->user())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You cannot approve this BOQ.',
+                ], 403);
+            }
+
+            $boq->approve($request->input('comment'), auth()->user());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'BOQ approved successfully.',
+                'data' => [
+                    'status' => $boq->approvalStatus?->status ?? 'Approved',
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Boq approve error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve BOQ: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function reject(Request $request, int $id): JsonResponse
+    {
+        try {
+            $boq = ProjectBoq::findOrFail($id);
+            
+            if (!$boq->canBeApprovedBy($request->user())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You cannot reject this BOQ.',
+                ], 403);
+            }
+
+            $request->validate(['comment' => 'required|string']);
+
+            $boq->reject($request->input('comment'), auth()->user());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'BOQ rejected.',
+                'data' => [
+                    'status' => $boq->approvalStatus?->status ?? 'Rejected',
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Boq reject error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject BOQ: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function returnBoq(Request $request, int $id): JsonResponse
+    {
+        try {
+            $boq = ProjectBoq::findOrFail($id);
+            
+            if (!$boq->canBeApprovedBy($request->user())) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You cannot return this BOQ.',
+                ], 403);
+            }
+
+            $request->validate(['comment' => 'required|string']);
+
+            $boq->return($request->input('comment'), auth()->user());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'BOQ returned for revision.',
+                'data' => [
+                    'status' => $boq->approvalStatus?->status ?? 'Returned',
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Boq return error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to return BOQ: ' . $e->getMessage(),
             ], 500);
         }
     }

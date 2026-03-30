@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
 class ExpenseFilter {
@@ -32,7 +33,9 @@ class ExpenseFilter {
       startDate: clearStartDate ? null : (startDate ?? this.startDate),
       endDate: clearEndDate ? null : (endDate ?? this.endDate),
       categoryId: clearCategory ? null : (categoryId ?? this.categoryId),
-      subCategoryId: clearSubCategory ? null : (subCategoryId ?? this.subCategoryId),
+      subCategoryId: clearSubCategory
+          ? null
+          : (subCategoryId ?? this.subCategoryId),
     );
   }
 
@@ -108,11 +111,11 @@ final _expensesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
 
 final _expenseReferencesProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/expenses/categories');
-  final data = response.data['data'];
-  return data is Map<String, dynamic> ? data : <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/expenses/categories');
+      final data = response.data['data'];
+      return data is Map<String, dynamic> ? data : <String, dynamic>{};
+    });
 
 class ExpenseListScreen extends ConsumerStatefulWidget {
   const ExpenseListScreen({super.key});
@@ -122,8 +125,17 @@ class ExpenseListScreen extends ConsumerStatefulWidget {
 }
 
 class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final expensesAsync = ref.watch(_expensesProvider);
     final filter = ref.watch(expenseFilterProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
@@ -131,23 +143,59 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Matumizi' : 'Expenses'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showExpenseForm(context),
-            tooltip: isSwahili ? 'Ongeza' : 'Add',
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterSheet(context),
-            tooltip: isSwahili ? 'Chuja' : 'Filter',
-          ),
-        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showExpenseForm(context),
+          tooltip: isSwahili ? 'Ongeza' : 'Add Expense',
+          child: const Icon(Icons.add_rounded),
+        ),
       ),
       body: Column(
         children: [
           _ExpenseStatsSection(isSwahili: isSwahili, isDarkMode: isDarkMode),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: isSwahili ? 'Tafuta...' : 'Search...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_searchController.text.isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {});
+                        },
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.filter_list),
+                      onPressed: () => _showFilterSheet(context),
+                    ),
+                  ],
+                ),
+                filled: true,
+                fillColor: isDarkMode
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey.withValues(alpha: 0.1),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async => ref.invalidate(_expensesProvider),
@@ -159,8 +207,33 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                   onRetry: () => ref.invalidate(_expensesProvider),
                 ),
                 data: (payload) {
-                  final expenses = (payload['items'] as List)
+                  final allExpenses = (payload['items'] as List)
                       .cast<Map<String, dynamic>>();
+                  final searchQuery = _searchController.text.toLowerCase();
+                  final expenses = searchQuery.isEmpty
+                      ? allExpenses
+                      : allExpenses.where((e) {
+                          final description =
+                              (e['description'] as String? ?? '').toLowerCase();
+                          final category =
+                              ((e['expenses_category']
+                                              as Map?)?['expenses_category_name']
+                                          as String? ??
+                                      '')
+                                  .toLowerCase();
+                          final subCategory =
+                              ((e['expenses_sub_category']
+                                              as Map?)?['expenses_sub_category_name']
+                                          as String? ??
+                                      '')
+                                  .toLowerCase();
+                          final amount = (e['amount']?.toString() ?? '')
+                              .toLowerCase();
+                          return description.contains(searchQuery) ||
+                              category.contains(searchQuery) ||
+                              subCategory.contains(searchQuery) ||
+                              amount.contains(searchQuery);
+                        }).toList();
 
                   if (expenses.isEmpty) {
                     return ListView(
@@ -175,9 +248,13 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          isSwahili
-                              ? 'Hakuna gharama zilizopatikana'
-                              : 'No costs found',
+                          searchQuery.isEmpty
+                              ? (isSwahili
+                                    ? 'Hakuna gharama zilizopatikana'
+                                    : 'No costs found')
+                              : (isSwahili
+                                    ? 'Hakuna matokeo ya utafutaji'
+                                    : 'No search results'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: isDarkMode
@@ -513,40 +590,40 @@ class _FilterSheet extends ConsumerWidget {
                     child: Text(isSwahili ? 'Imeshindikana' : 'Failed'),
                   ),
                   data: (refs) {
-                    final categories =
-                        (refs['categories'] as List? ?? const []).cast<dynamic>();
+                    final categories = (refs['categories'] as List? ?? const [])
+                        .cast<dynamic>();
                     return DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      value: filter.categoryId,
-                      hint: Text(
-                        isSwahili ? 'All Categories' : 'All Categories',
+                      child: DropdownButton<int?>(
+                        value: filter.categoryId,
+                        hint: Text(
+                          isSwahili ? 'All Categories' : 'All Categories',
+                        ),
+                        isExpanded: true,
+                        dropdownColor: isDarkMode
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.white,
+                        items: [
+                          DropdownMenuItem(
+                            value: null,
+                            child: Text(
+                              isSwahili ? 'All Categories' : 'All Categories',
+                            ),
+                          ),
+                          ...categories.map(
+                            (c) => DropdownMenuItem(
+                              value: c['id'] as int,
+                              child: Text(c['name'] as String? ?? '-'),
+                            ),
+                          ),
+                        ],
+                        onChanged: (v) =>
+                            parentRef
+                                .read(expenseFilterProvider.notifier)
+                                .state = filter.copyWith(
+                              categoryId: v,
+                              clearCategory: v == null,
+                            ),
                       ),
-                      isExpanded: true,
-                      dropdownColor: isDarkMode
-                          ? const Color(0xFF2A2A3E)
-                          : Colors.white,
-                      items: [
-                        DropdownMenuItem(
-                          value: null,
-                          child: Text(
-                            isSwahili ? 'All Categories' : 'All Categories',
-                          ),
-                        ),
-                        ...categories.map(
-                          (c) => DropdownMenuItem(
-                            value: c['id'] as int,
-                            child: Text(c['name'] as String? ?? '-'),
-                          ),
-                        ),
-                      ],
-                      onChanged: (v) =>
-                          parentRef
-                              .read(expenseFilterProvider.notifier)
-                              .state = filter.copyWith(
-                            categoryId: v,
-                            clearCategory: v == null,
-                          ),
-                    ),
                     );
                   },
                 ),
@@ -585,14 +662,17 @@ class _FilterSheet extends ConsumerWidget {
                             .where(
                               (item) =>
                                   filter.categoryId == null ||
-                                  item['expenses_category_id'] == filter.categoryId,
+                                  item['expenses_category_id'] ==
+                                      filter.categoryId,
                             )
                             .toList();
                     return DropdownButtonHideUnderline(
                       child: DropdownButton<int?>(
                         value: filter.subCategoryId,
                         hint: Text(
-                          isSwahili ? 'All Sub Categories' : 'All Sub Categories',
+                          isSwahili
+                              ? 'All Sub Categories'
+                              : 'All Sub Categories',
                         ),
                         isExpanded: true,
                         dropdownColor: isDarkMode
@@ -669,9 +749,12 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
+  final _remarksController = TextEditingController();
+  int? _selectedProjectId;
   int? _selectedSubCategoryId;
   DateTime _selectedDate = DateTime.now();
   bool _loading = false;
+  List<dynamic> _projects = [];
   List<dynamic> _categories = [];
   List<dynamic> _subCategories = [];
   bool _loadingData = true;
@@ -691,10 +774,15 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
     try {
       final api = ref.read(apiClientProvider);
       final response = await api.get('/expenses/categories');
+      final projectsRes = await api.get('/projects');
 
       if (mounted) {
         setState(() {
-          final data = response.data['data'] as Map<String, dynamic>? ?? const {};
+          _projects = (projectsRes.data['data'] as List? ?? [])
+              .map((p) => {'id': p['id'], 'project_name': p['project_name']})
+              .toList();
+          final data =
+              response.data['data'] as Map<String, dynamic>? ?? const {};
           _categories = data['categories'] as List? ?? [];
           _subCategories = data['sub_categories'] as List? ?? [];
           _loadingData = false;
@@ -704,6 +792,8 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
             _expenseId = e['id'] as int?;
             _descriptionController.text = e['description'] as String? ?? '';
             _amountController.text = _toDouble(e['amount']).toString();
+            _remarksController.text = e['remarks'] as String? ?? '';
+            _selectedProjectId = e['project_id'] as int?;
             final subCategory =
                 e['expenses_sub_category'] as Map<String, dynamic>?;
             _selectedSubCategoryId =
@@ -782,6 +872,52 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                         ),
                       ),
                       const SizedBox(height: 24),
+                      Text(
+                        isSwahili ? 'Mradi *' : 'Project *',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A3E)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int?>(
+                            value: _selectedProjectId,
+                            hint: Text(
+                              isSwahili ? 'Chagua Mradi' : 'Select Project',
+                            ),
+                            isExpanded: true,
+                            dropdownColor: isDarkMode
+                                ? const Color(0xFF2A2A3E)
+                                : Colors.white,
+                            items: _projects
+                                .map(
+                                  (p) => DropdownMenuItem(
+                                    value: p['id'] as int,
+                                    child: Text(
+                                      p['project_name'] as String? ?? '-',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _selectedProjectId = v),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       Text(
                         isSwahili ? 'Maelezo *' : 'Description *',
                         style: TextStyle(
@@ -927,7 +1063,9 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        isSwahili ? 'Expense Sub Category *' : 'Expense Sub Category *',
+                        isSwahili
+                            ? 'Expense Sub Category *'
+                            : 'Expense Sub Category *',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1063,6 +1201,17 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (_selectedProjectId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            ref.read(isSwahiliProvider) ? 'Chagua mradi' : 'Select a project',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     if (_selectedSubCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1085,6 +1234,8 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
         'amount': double.parse(_amountController.text),
         'date': DateFormat('yyyy-MM-dd').format(_selectedDate),
         'expenses_sub_category_id': _selectedSubCategoryId,
+        'project_id': _selectedProjectId,
+        'remarks': _remarksController.text.trim(),
       };
 
       if (_isEditing && _expenseId != null) {
@@ -1132,7 +1283,8 @@ class _ExpenseCard extends StatelessWidget {
     final description = expense['description'] as String? ?? '-';
     final amount = _toDouble(expense['amount']);
     final status = (expense['status'] as String? ?? 'pending').toLowerCase();
-    final date = expense['expense_date'] as String? ?? expense['date'] as String?;
+    final date =
+        expense['expense_date'] as String? ?? expense['date'] as String?;
     final category =
         (expense['expenses_category'] as Map<String, dynamic>?)?['name']
             as String? ??

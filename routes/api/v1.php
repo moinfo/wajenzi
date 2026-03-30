@@ -753,6 +753,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('{id}', [BoqController::class, 'update']);
         Route::delete('{id}', [BoqController::class, 'destroy']);
         Route::get('next-version', [BoqController::class, 'nextVersion']);
+        Route::post('{id}/submit', [BoqController::class, 'submit']);
+        Route::post('{id}/approve', [BoqController::class, 'approve']);
+        Route::post('{id}/reject', [BoqController::class, 'reject']);
+        Route::post('{id}/return', [BoqController::class, 'returnBoq']);
     });
 
     // Project Materials
