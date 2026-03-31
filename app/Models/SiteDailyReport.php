@@ -12,6 +12,12 @@ class SiteDailyReport extends Model implements ApprovableModel
 {
     use HasFactory, Approvable;
 
+    public const STATUS_DRAFT = 'DRAFT';
+    public const STATUS_PENDING = 'PENDING';
+    public const STATUS_APPROVED = 'APPROVED';
+    public const STATUS_REJECTED = 'REJECTED';
+    public const STATUS_SUBMITTED = 'SUBMITTED';
+
     protected $fillable = [
         'report_date',
         'site_id',
@@ -33,21 +39,21 @@ class SiteDailyReport extends Model implements ApprovableModel
      */
     public function onApprovalCompleted(ProcessApproval|\RingleSoft\LaravelProcessApproval\Models\ProcessApproval $approval): bool
     {
-        $this->status = 'APPROVED';
+        $this->status = self::STATUS_APPROVED;
         $this->save();
         return true;
     }
 
     public function onSubmissionCompleted(\RingleSoft\LaravelProcessApproval\Models\ProcessApproval $approval): bool
     {
-        $this->status = 'PENDING';
+        $this->status = self::STATUS_PENDING;
         $this->save();
         return true;
     }
 
     public function onApprovalRejected(ProcessApproval|\RingleSoft\LaravelProcessApproval\Models\ProcessApproval $approval): bool
     {
-        $this->status = 'REJECTED';
+        $this->status = self::STATUS_REJECTED;
         $this->save();
         return true;
     }
@@ -143,22 +149,22 @@ class SiteDailyReport extends Model implements ApprovableModel
 
     public function canEdit()
     {
-        return in_array($this->status, ['DRAFT', 'REJECTED']);
+        return in_array($this->status, [self::STATUS_DRAFT, self::STATUS_REJECTED]);
     }
 
     public function canSubmit()
     {
-        return $this->status === 'DRAFT';
+        return $this->status === self::STATUS_DRAFT;
     }
 
     public function canApprove()
     {
-        return $this->status === 'PENDING';
+        return $this->status === self::STATUS_PENDING;
     }
 
     public function canDelete()
     {
-        return $this->status === 'DRAFT';
+        return $this->status === self::STATUS_DRAFT;
     }
 
     /**

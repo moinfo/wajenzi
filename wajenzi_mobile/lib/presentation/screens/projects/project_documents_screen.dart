@@ -5,25 +5,29 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 
-final _projectDocumentsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
-  ref,
-) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/project-documents');
+final _projectDocumentsSearchProvider = StateProvider.autoDispose<String>(
+  (ref) => '',
+);
 
-  final payload = response.data['data'];
-  final collection = payload is Map<String, dynamic> ? payload : null;
-  final items = collection?['data'] ?? payload;
-  final meta =
-      collection?['meta'] as Map<String, dynamic>? ??
-      response.data['meta'] as Map<String, dynamic>? ??
-      {};
+final _projectDocumentsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/project-documents');
 
-  return {'items': items as List? ?? const [], 'meta': meta};
-});
+      final payload = response.data['data'];
+      final collection = payload is Map<String, dynamic> ? payload : null;
+      final items = collection?['data'] ?? payload;
+      final meta =
+          collection?['meta'] as Map<String, dynamic>? ??
+          response.data['meta'] as Map<String, dynamic>? ??
+          {};
+
+      return {'items': items as List? ?? const [], 'meta': meta};
+    });
 
 String _projectDocumentErrorMessage(Object error, bool isSwahili) {
   if (error is DioException) {
@@ -39,98 +43,191 @@ String _projectDocumentErrorMessage(Object error, bool isSwahili) {
   return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
 }
 
-class ProjectDocumentsScreen extends ConsumerWidget {
+class ProjectDocumentsScreen extends ConsumerStatefulWidget {
   const ProjectDocumentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProjectDocumentsScreen> createState() =>
+      _ProjectDocumentsScreenState();
+}
+
+class _ProjectDocumentsScreenState
+    extends ConsumerState<ProjectDocumentsScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final documentsAsync = ref.watch(_projectDocumentsProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final search = ref
+        .watch(_projectDocumentsSearchProvider)
+        .trim()
+        .toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Nyaraka za Miradi' : 'Project Documents'),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_projectDocumentsProvider),
-        child: documentsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _DocumentsErrorView(
-            error: e,
-            isSwahili: isSwahili,
-            onRetry: () => ref.invalidate(_projectDocumentsProvider),
-          ),
-          data: (payload) {
-            final documents = (payload['items'] as List)
-                .cast<Map<String, dynamic>>();
-            final meta = payload['meta'] as Map<String, dynamic>? ?? {};
-
-            if (documents.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(32),
-                children: [
-                  const SizedBox(height: 100),
-                  Icon(
-                    Icons.folder_open_outlined,
-                    size: 56,
-                    color: isDarkMode ? Colors.white24 : Colors.grey[300],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    isSwahili
-                        ? 'Hakuna nyaraka za miradi'
-                        : 'No project documents found',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isDarkMode
-                          ? Colors.white54
-                          : AppColors.textSecondary,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  onChanged: (value) =>
+                      ref.read(_projectDocumentsSearchProvider.notifier).state =
+                          value,
+                  decoration: InputDecoration(
+                    hintText: isSwahili
+                        ? 'Tafuta nyaraka...'
+                        : 'Search documents...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () =>
+                                ref
+                                        .read(
+                                          _projectDocumentsSearchProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    '',
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
                   ),
-                ],
-              );
-            }
+                ),
+              ),
+            ),
+            documentsAsync.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => SliverFillRemaining(
+                child: _DocumentsErrorView(
+                  error: e,
+                  isSwahili: isSwahili,
+                  onRetry: () => ref.invalidate(_projectDocumentsProvider),
+                ),
+              ),
+              data: (payload) {
+                final allItems = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
+                final meta = payload['meta'] as Map<String, dynamic>? ?? {};
 
-            return ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: documents.length + 2,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  final total = meta['total'] ?? documents.length;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                      isSwahili
-                          ? 'Jumla ya nyaraka: $total'
-                          : 'Total documents: $total',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: isDarkMode
-                            ? Colors.white70
-                            : AppColors.textSecondary,
+                final documents = search.isEmpty
+                    ? allItems
+                    : allItems.where((doc) {
+                        final haystack = [
+                          doc['file_name'] ?? '',
+                          doc['project_name'] ?? '',
+                          doc['document_type'] ?? '',
+                          doc['uploaded_by_name'] ?? '',
+                        ].join(' ').toLowerCase();
+                        return haystack.contains(search);
+                      }).toList();
+
+                if (documents.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.folder_open_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            allItems.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna nyaraka za miradi'
+                                      : 'No project documents found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No documents match your search'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          if (search.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  ref
+                                          .read(
+                                            _projectDocumentsSearchProvider
+                                                .notifier,
+                                          )
+                                          .state =
+                                      '',
+                              icon: const Icon(Icons.arrow_back_rounded),
+                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   );
                 }
 
-                if (index == documents.length + 1) {
-                  return const SizedBox(height: 80);
-                }
+                final total = meta['total'] ?? documents.length;
 
-                final document = documents[index - 1];
-                return _DocumentCard(
-                  document: document,
-                  isSwahili: isSwahili,
-                  isDarkMode: isDarkMode,
-                  onTap: () => _showDocumentDetails(context, ref, document),
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          isSwahili
+                              ? 'Jumla ya nyaraka: $total'
+                              : 'Total documents: $total',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode
+                                ? Colors.white70
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      ...documents.map(
+                        (document) => _DocumentCard(
+                          document: document,
+                          isSwahili: isSwahili,
+                          isDarkMode: isDarkMode,
+                          onTap: () => _showDocumentDetails(context, document),
+                        ),
+                      ),
+                      const SizedBox(height: 80),
+                    ]),
+                  ),
                 );
               },
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -138,7 +235,6 @@ class ProjectDocumentsScreen extends ConsumerWidget {
 
   Future<void> _showDocumentDetails(
     BuildContext context,
-    WidgetRef ref,
     Map<String, dynamic> document,
   ) async {
     final isSwahili = ref.read(isSwahiliProvider);
@@ -223,7 +319,8 @@ class ProjectDocumentsScreen extends ConsumerWidget {
                   value: _formatDate(document['created_at']),
                   isDarkMode: isDarkMode,
                 ),
-                if ((document['description'] as String?)?.trim().isNotEmpty == true)
+                if ((document['description'] as String?)?.trim().isNotEmpty ==
+                    true)
                   _InfoRow(
                     label: isSwahili ? 'Maelezo' : 'Description',
                     value: document['description'] as String,
@@ -233,7 +330,7 @@ class ProjectDocumentsScreen extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () => _openDocument(context, ref, document),
+                    onPressed: () => _openDocument(context, document),
                     icon: const Icon(Icons.open_in_new_rounded),
                     label: Text(isSwahili ? 'Fungua Hati' : 'Open Document'),
                   ),
@@ -248,7 +345,6 @@ class ProjectDocumentsScreen extends ConsumerWidget {
 
   Future<void> _openDocument(
     BuildContext context,
-    WidgetRef ref,
     Map<String, dynamic> document,
   ) async {
     final isSwahili = ref.read(isSwahiliProvider);
@@ -317,7 +413,9 @@ class _DocumentCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),

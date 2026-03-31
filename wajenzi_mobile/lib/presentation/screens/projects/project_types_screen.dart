@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+
+final _projectTypesSearchProvider = StateProvider.autoDispose<String>(
+  (ref) => '',
+);
 
 final _projectTypesProvider = FutureProvider.autoDispose<List<dynamic>>((
   ref,
@@ -38,90 +43,176 @@ String _projectTypeErrorMessage(Object error, bool isSwahili) {
   return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
 }
 
-class ProjectTypesScreen extends ConsumerWidget {
+class ProjectTypesScreen extends ConsumerStatefulWidget {
   const ProjectTypesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProjectTypesScreen> createState() => _ProjectTypesScreenState();
+}
+
+class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final typesAsync = ref.watch(_projectTypesProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final search = ref.watch(_projectTypesSearchProvider).trim().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Aina za Mradi' : 'Project Types'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showTypeForm(context, ref),
-            tooltip: isSwahili ? 'Ongeza' : 'Add',
-          ),
-        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showTypeForm(context),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza' : 'Add',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(_projectTypesProvider.future),
-        child: typesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _ErrorView(
-            error: e,
-            isSwahili: isSwahili,
-            onRetry: () => ref.invalidate(_projectTypesProvider),
-          ),
-          data: (types) {
-            if (types.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(32),
-                children: [
-                  const SizedBox(height: 100),
-                  Icon(
-                    Icons.category_outlined,
-                    size: 56,
-                    color: isDarkMode ? Colors.white24 : Colors.grey[300],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    isSwahili
-                        ? 'Hakuna aina za mradi zilizopatikana'
-                        : 'No project types found',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isDarkMode
-                          ? Colors.white54
-                          : AppColors.textSecondary,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  onChanged: (value) =>
+                      ref.read(_projectTypesSearchProvider.notifier).state =
+                          value,
+                  decoration: InputDecoration(
+                    hintText: isSwahili
+                        ? 'Tafuta aina za mradi...'
+                        : 'Search project types...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () =>
+                                ref
+                                        .read(
+                                          _projectTypesSearchProvider.notifier,
+                                        )
+                                        .state =
+                                    '',
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
                     ),
                   ),
-                ],
-              );
-            }
-
-            return ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              itemCount: types.length + 1,
-              itemBuilder: (context, index) {
-                if (index == types.length) return const SizedBox(height: 80);
-                return _TypeCard(
-                  type: types[index],
+                ),
+              ),
+            ),
+            typesAsync.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => SliverFillRemaining(
+                child: _ErrorView(
+                  error: e,
                   isSwahili: isSwahili,
-                  isDarkMode: isDarkMode,
-                  onTap: () => _showTypeDetail(context, types[index]),
-                  onEdit: () => _showTypeForm(context, ref, type: types[index]),
-                  onDelete: () => _deleteType(context, ref, types[index]),
+                  onRetry: () => ref.invalidate(_projectTypesProvider),
+                ),
+              ),
+              data: (allItems) {
+                final types = search.isEmpty
+                    ? allItems
+                    : allItems.where((type) {
+                        final haystack = [
+                          type['name'] ?? '',
+                          type['description'] ?? '',
+                        ].join(' ').toLowerCase();
+                        return haystack.contains(search);
+                      }).toList();
+
+                if (types.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.category_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            allItems.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna aina za mradi zilizopatikana'
+                                      : 'No project types found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No types match your search'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          if (search.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  ref
+                                          .read(
+                                            _projectTypesSearchProvider
+                                                .notifier,
+                                          )
+                                          .state =
+                                      '',
+                              icon: const Icon(Icons.arrow_back_rounded),
+                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      return _TypeCard(
+                        type: types[index],
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        onTap: () => _showTypeDetail(context, types[index]),
+                        onEdit: () =>
+                            _showTypeForm(context, type: types[index]),
+                        onDelete: () => _deleteType(context, types[index]),
+                      );
+                    }, childCount: types.length),
+                  ),
                 );
               },
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _showTypeForm(
-    BuildContext context,
-    WidgetRef ref, {
-    Map<String, dynamic>? type,
-  }) {
+  void _showTypeForm(BuildContext context, {Map<String, dynamic>? type}) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -143,7 +234,6 @@ class ProjectTypesScreen extends ConsumerWidget {
 
   Future<void> _deleteType(
     BuildContext context,
-    WidgetRef ref,
     Map<String, dynamic> type,
   ) async {
     final isSwahili = ref.read(isSwahiliProvider);
@@ -696,10 +786,7 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _projectTypeErrorMessage(
-                e,
-                ref.read(isSwahiliProvider),
-              ),
+              _projectTypeErrorMessage(e, ref.read(isSwahiliProvider)),
             ),
             backgroundColor: Colors.red,
           ),

@@ -1,9 +1,15 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+
+final _assignmentsSearchProvider = StateProvider.autoDispose<String>(
+  (ref) => '',
+);
 
 final _assignmentsFilterProvider = StateProvider<AssignmentsFilter>((ref) {
   return AssignmentsFilter();
@@ -48,183 +54,154 @@ class AssignmentsFilter {
   }
 }
 
-class SiteSupervisorAssignmentsScreen extends ConsumerWidget {
+class SiteSupervisorAssignmentsScreen extends ConsumerStatefulWidget {
   const SiteSupervisorAssignmentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SiteSupervisorAssignmentsScreen> createState() =>
+      _SiteSupervisorAssignmentsScreenState();
+}
+
+class _SiteSupervisorAssignmentsScreenState
+    extends ConsumerState<SiteSupervisorAssignmentsScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final isDark = ref.watch(isDarkModeProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final dataAsync = ref.watch(_assignmentsProvider);
+    final search = ref.watch(_assignmentsSearchProvider).trim().toLowerCase();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1923) : AppColors.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(
           isSwahili ? 'Makabidhi ya Wasimamizi' : 'Supervisor Assignments',
         ),
-        backgroundColor: isDark ? const Color(0xFF1A2332) : null,
-        actions: [
-          TextButton.icon(
-            onPressed: () => _showCreateForm(context, ref, isDark, isSwahili),
-            icon: const Icon(Icons.add, size: 20),
-            label: Text(
-              isSwahili ? 'Ongeza' : 'Add',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(_assignmentsProvider),
-          ),
-        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showCreateForm(context, ref, isDark, isSwahili),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza Kabidhi' : 'Assign Supervisor',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(_assignmentsProvider.future),
-        child: dataAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _ErrorView(
-            error: e,
-            isSwahili: isSwahili,
-            onRetry: () => ref.invalidate(_assignmentsProvider),
-          ),
-          data: (data) {
-            final assignments =
-                (data['assignments'] as List?)?.cast<Map<String, dynamic>>() ??
-                [];
-            final unassignedSites =
-                (data['unassigned_sites'] as List?)
-                    ?.cast<Map<String, dynamic>>() ??
-                [];
-            final sites =
-                (data['sites'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-            final supervisors =
-                (data['supervisors'] as List?)?.cast<Map<String, dynamic>>() ??
-                [];
-            final stats = data['stats'] as Map<String, dynamic>? ?? {};
-
-            return ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (unassignedSites.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.orange.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.warning_rounded,
-                              color: Colors.orange,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              isSwahili
-                                  ? 'Maeneo Yasiyobidhiwa'
-                                  : 'Unassigned Sites',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.orange,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ...unassignedSites
-                            .take(3)
-                            .map(
-                              (site) => Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 2,
-                                ),
-                                child: Text(
-                                  '• ${site['name'] ?? site['location'] ?? '-'}',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: isDark
-                                        ? Colors.white70
-                                        : Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ),
-                        if (unassignedSites.length > 3)
-                          Text(
-                            '+${unassignedSites.length - 3} ${isSwahili ? 'zaidi' : 'more'}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.orange,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                _FilterBar(
-                  sites: sites,
-                  supervisors: supervisors,
-                  isDark: isDark,
-                  isSwahili: isSwahili,
-                  onFilterChanged: (filter) =>
-                      ref.read(_assignmentsFilterProvider.notifier).state =
-                          filter,
-                ),
-                const SizedBox(height: 12),
-                Row(
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                    TextField(
+                      onChanged: (value) =>
+                          ref.read(_assignmentsSearchProvider.notifier).state =
+                              value,
+                      decoration: InputDecoration(
+                        hintText: isSwahili
+                            ? 'Tafuta makabidhi...'
+                            : 'Search assignments...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: search.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () =>
+                                    ref
+                                            .read(
+                                              _assignmentsSearchProvider
+                                                  .notifier,
+                                            )
+                                            .state =
+                                        '',
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: isDark
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.assignment_ind_rounded,
-                            size: 16,
-                            color: Color(0xFF3B82F6),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${stats['total'] ?? assignments.length} ${isSwahili ? 'Makabidhi' : 'Assignments'}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF3B82F6),
-                            ),
-                          ),
-                        ],
+                    ),
+                    const SizedBox(height: 12),
+                    dataAsync.when(
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                      data: (data) => _FilterBar(
+                        sites:
+                            (data['sites'] as List?)
+                                ?.cast<Map<String, dynamic>>() ??
+                            [],
+                        supervisors:
+                            (data['supervisors'] as List?)
+                                ?.cast<Map<String, dynamic>>() ??
+                            [],
+                        isDark: isDark,
+                        isSwahili: isSwahili,
+                        onFilterChanged: (filter) =>
+                            ref
+                                    .read(_assignmentsFilterProvider.notifier)
+                                    .state =
+                                filter,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                if (assignments.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(40),
+              ),
+            ),
+            dataAsync.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => SliverFillRemaining(
+                child: _ErrorView(
+                  error: e,
+                  isSwahili: isSwahili,
+                  onRetry: () => ref.invalidate(_assignmentsProvider),
+                ),
+              ),
+              data: (data) {
+                final unassignedSites =
+                    (data['unassigned_sites'] as List?)
+                        ?.cast<Map<String, dynamic>>() ??
+                    [];
+                final stats = data['stats'] as Map<String, dynamic>? ?? {};
+
+                final assignments =
+                    (data['assignments'] as List?)
+                        ?.cast<Map<String, dynamic>>() ??
+                    [];
+
+                final filteredAssignments = search.isEmpty
+                    ? assignments
+                    : assignments.where((a) {
+                        final haystack = [
+                          a['supervisor_name'] ?? '',
+                          a['site_name'] ?? '',
+                          a['site_location'] ?? '',
+                          a['assigned_by_name'] ?? '',
+                        ].join(' ').toLowerCase();
+                        return haystack.contains(search);
+                      }).toList();
+
+                if (filteredAssignments.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.assignment_outlined,
@@ -233,35 +210,157 @@ class SiteSupervisorAssignmentsScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            isSwahili
-                                ? 'Hakuna makabidhi'
-                                : 'No assignments found',
+                            assignments.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna makabidhi'
+                                      : 'No assignments found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No matching results'),
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
                             ),
                           ),
+                          if (search.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  ref
+                                          .read(
+                                            _assignmentsSearchProvider.notifier,
+                                          )
+                                          .state =
+                                      '',
+                              icon: const Icon(Icons.clear),
+                              label: Text(
+                                isSwahili ? 'Futa utafutaji' : 'Clear search',
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
-                  )
-                else
-                  ...assignments.map(
-                    (a) => _AssignmentCard(
-                      assignment: a,
-                      isDark: isDark,
-                      isSwahili: isSwahili,
-                      onTap: () =>
-                          _showDetail(context, ref, a, isDark, isSwahili),
-                      onEdit: () =>
-                          _showEditForm(context, ref, a, isDark, isSwahili),
-                      onEnd: () => _endAssignment(context, ref, a, isSwahili),
-                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      if (unassignedSites.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.orange.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.warning_rounded,
+                                    color: Colors.orange,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isSwahili
+                                        ? 'Maeneo Yasiyobidhiwa'
+                                        : 'Unassigned Sites',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.orange,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              ...unassignedSites
+                                  .take(3)
+                                  .map(
+                                    (site) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2,
+                                      ),
+                                      child: Text(
+                                        '• ${site['name'] ?? site['location'] ?? '-'}',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: isDark
+                                              ? Colors.white70
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              if (unassignedSites.length > 3)
+                                Text(
+                                  '+${unassignedSites.length - 3} ${isSwahili ? 'zaidi' : 'more'}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.assignment_ind_rounded,
+                              size: 16,
+                              color: Color(0xFF3B82F6),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${stats['total'] ?? filteredAssignments.length} ${isSwahili ? 'Makabidhi' : 'Assignments'}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF3B82F6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ...filteredAssignments.map(
+                        (a) => _AssignmentCard(
+                          assignment: a,
+                          isDark: isDark,
+                          isSwahili: isSwahili,
+                          onTap: () =>
+                              _showDetail(context, ref, a, isDark, isSwahili),
+                          onEdit: () =>
+                              _showEditForm(context, ref, a, isDark, isSwahili),
+                          onEnd: () =>
+                              _endAssignment(context, ref, a, isSwahili),
+                        ),
+                      ),
+                    ]),
                   ),
-                const SizedBox(height: 80),
-              ],
-            );
-          },
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -958,8 +1057,8 @@ class SiteSupervisorAssignmentsScreen extends ConsumerWidget {
 }
 
 class _FilterBar extends ConsumerWidget {
-  final List<dynamic> sites;
-  final List<dynamic> supervisors;
+  final List<Map<String, dynamic>> sites;
+  final List<Map<String, dynamic>> supervisors;
   final bool isDark;
   final bool isSwahili;
   final ValueChanged<AssignmentsFilter> onFilterChanged;
@@ -979,13 +1078,8 @@ class _FilterBar extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A2332) : Colors.white,
+        color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? const Color(0xFF243447)
-              : Colors.grey.withValues(alpha: 0.1),
-        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1128,16 +1222,11 @@ class _AssignmentCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A2332) : Colors.white,
+          color: isDark ? const Color(0xFF2A2A3E) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark
-                ? const Color(0xFF243447)
-                : Colors.grey.withValues(alpha: 0.1),
-          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1391,27 +1480,30 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(32),
-      children: [
-        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-        const Icon(Icons.error_outline, size: 64, color: AppColors.error),
-        const SizedBox(height: 16),
-        Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 24),
-        Center(
-          child: ElevatedButton.icon(
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$error',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[600]),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

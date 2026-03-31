@@ -137,6 +137,11 @@ class Staff extends User
 
     }
 
+    public static function getStaffSalaryPaid($staff_id, $payroll_id)
+    {
+        return PayrollSalary::Where('staff_id', $staff_id)->Where('payroll_id', $payroll_id)->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;
+    }
+
     public static function getStaffGrossPayPaid($staff_id, $payroll_id)
     {
         return PayrollGrossPay::Where('staff_id', $staff_id)->Where('payroll_id', $payroll_id)->select([DB::raw("SUM(amount) as total_amount")])->get()->first()['total_amount'] ?? 0;

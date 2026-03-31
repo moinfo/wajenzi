@@ -52,20 +52,28 @@ class AccountTypeApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'type' => 'required|string|max:255',
-            'code' => 'required|string|max:255|unique:account_types,code',
-            'normal_balance' => 'required|string|max:10',
-        ]);
+        try {
+            $validated = $request->validate([
+                'type' => 'required|string|max:255',
+                'code' => 'required|string|max:255|unique:account_types,code',
+                'normal_balance' => 'required|string|max:10',
+            ]);
 
-        $type = AccountType::create($validated);
-        $type->loadCount('chartAccounts');
+            $type = AccountType::create($validated);
+            $type->loadCount('chartAccounts');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Account type created successfully',
-            'data' => $this->transformType($type),
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Account type created successfully',
+                'data' => $this->transformType($type),
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create account type: ' . $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ], 500);
+        }
     }
 
     public function update(Request $request, int $id): JsonResponse

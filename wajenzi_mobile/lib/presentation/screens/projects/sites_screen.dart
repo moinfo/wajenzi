@@ -1,22 +1,61 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
-final _sitesFilterProvider = StateProvider<SitesFilter>((ref) {
-  return SitesFilter();
-});
+final _sitesSearchProvider = StateProvider.autoDispose<String>((ref) => '');
+
+class _SitesFilter {
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final String? status;
+
+  _SitesFilter({this.startDate, this.endDate, this.status});
+
+  _SitesFilter copyWith({
+    DateTime? startDate,
+    DateTime? endDate,
+    String? status,
+    bool clearStart = false,
+    bool clearEnd = false,
+    bool clearStatus = false,
+  }) {
+    return _SitesFilter(
+      startDate: clearStart ? null : (startDate ?? this.startDate),
+      endDate: clearEnd ? null : (endDate ?? this.endDate),
+      status: clearStatus ? null : (status ?? this.status),
+    );
+  }
+
+  Map<String, String> toQueryParams() {
+    final params = <String, String>{};
+    if (startDate != null)
+      params['start_date'] = DateFormat('yyyy-MM-dd').format(startDate!);
+    if (endDate != null)
+      params['end_date'] = DateFormat('yyyy-MM-dd').format(endDate!);
+    if (status != null && status!.isNotEmpty) params['status'] = status!;
+    return params;
+  }
+}
+
+final _sitesFilterProvider = StateProvider.autoDispose<_SitesFilter>(
+  (ref) => _SitesFilter(),
+);
 
 final _sitesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);
   final filter = ref.watch(_sitesFilterProvider);
+  final search = ref.watch(_sitesSearchProvider);
 
   final response = await api.get(
-    '/sites',
+    '/projects/sites',
     queryParameters: {
-      if (filter.search.isNotEmpty) 'search': filter.search,
-      if (filter.status.isNotEmpty) 'status': filter.status,
+      if (search.isNotEmpty) 'search': search,
+      ...filter.toQueryParams(),
     },
   );
 
@@ -28,153 +67,201 @@ final _sitesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
 final _siteDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>?, int>((ref, id) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/sites/$id');
+      final response = await api.get('/projects/sites/$id');
       return response.data['data'] as Map<String, dynamic>?;
     });
 
-class SitesFilter {
-  final String search;
-  final String status;
-
-  SitesFilter({this.search = '', this.status = ''});
-
-  SitesFilter copyWith({String? search, String? status}) {
-    return SitesFilter(
-      search: search ?? this.search,
-      status: status ?? this.status,
-    );
-  }
+String _siteErrorMessage(Object error, bool isSwahili) {
+  return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
 }
 
-class SitesScreen extends ConsumerWidget {
+class SitesScreen extends ConsumerStatefulWidget {
   const SitesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SitesScreen> createState() => _SitesScreenState();
+}
+
+class _SitesScreenState extends ConsumerState<SitesScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
+    final sitesAsync = ref.watch(_sitesProvider);
     final isDark = ref.watch(isDarkModeProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
-    final sitesAsync = ref.watch(_sitesProvider);
+    final filter = ref.watch(_sitesFilterProvider);
+    final search = ref.watch(_sitesSearchProvider).trim().toLowerCase();
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0F1923) : AppColors.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Maeneo ya Mradi' : 'Project Sites'),
-        backgroundColor: isDark ? const Color(0xFF1A2332) : null,
-        actions: [
-          TextButton.icon(
-            onPressed: () => _showSiteForm(context, ref, isDark, isSwahili),
-            icon: const Icon(Icons.add, size: 20),
-            label: Text(
-              isSwahili ? 'Ongeza' : 'Add',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => ref.invalidate(_sitesProvider),
-          ),
-        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showSiteForm(context, ref, isDark, isSwahili),
-        child: const Icon(Icons.add),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showSiteForm(context),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza' : 'Add',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(_sitesProvider.future),
-        child: sitesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _SitesErrorView(
-            error: e,
-            isSwahili: isSwahili,
-            onRetry: () => ref.invalidate(_sitesProvider),
-          ),
-          data: (sites) {
-            if (sites.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.3),
-                  Center(
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.location_off_rounded,
-                          size: 64,
-                          color: Colors.grey[400],
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    TextField(
+                      onChanged: (value) =>
+                          ref.read(_sitesSearchProvider.notifier).state = value,
+                      decoration: InputDecoration(
+                        hintText: isSwahili
+                            ? 'Tafuta maeneo...'
+                            : 'Search sites...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: search.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () =>
+                                    ref
+                                            .read(_sitesSearchProvider.notifier)
+                                            .state =
+                                        '',
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: isDark
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          isSwahili ? 'Hakuna maeneo' : 'No sites found',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              );
-            }
-
-            return ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              children: [
-                _SitesFilterBar(
-                  isDark: isDark,
+                    const SizedBox(height: 12),
+                    _SiteFilters(
+                      filter: filter,
+                      isSwahili: isSwahili,
+                      isDarkMode: isDark,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            sitesAsync.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => SliverFillRemaining(
+                child: _SitesErrorView(
+                  error: e,
                   isSwahili: isSwahili,
-                  onFilterChanged: (filter) =>
-                      ref.read(_sitesFilterProvider.notifier).state = filter,
+                  onRetry: () => ref.invalidate(_sitesProvider),
                 ),
-                const SizedBox(height: 12),
-                ...sites.map(
-                  (site) => _SiteCard(
-                    site: site,
-                    isDark: isDark,
-                    isSwahili: isSwahili,
-                    onTap: () =>
-                        _showSiteDetail(context, ref, site, isDark, isSwahili),
-                    onEdit: () => _showSiteForm(
-                      context,
-                      ref,
-                      isDark,
-                      isSwahili,
-                      site: site,
+              ),
+              data: (allItems) {
+                final sites = search.isEmpty
+                    ? allItems
+                    : allItems.where((site) {
+                        final haystack = [
+                          site['name'] ?? '',
+                          site['location'] ?? '',
+                          site['status'] ?? '',
+                        ].join(' ').toLowerCase();
+                        return haystack.contains(search);
+                      }).toList();
+
+                if (sites.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.location_off_rounded,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            allItems.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna maeneo'
+                                      : 'No sites found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No sites match your search'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          if (search.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  ref
+                                          .read(_sitesSearchProvider.notifier)
+                                          .state =
+                                      '',
+                              icon: const Icon(Icons.arrow_back_rounded),
+                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                    onDelete: () => _deleteSite(context, ref, site, isSwahili),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _SiteCard(
+                        site: sites[index],
+                        isDark: isDark,
+                        isSwahili: isSwahili,
+                        onView: () => _showSiteDetail(context, sites[index]),
+                        onEdit: () =>
+                            _showSiteForm(context, site: sites[index]),
+                        onDelete: () => _deleteSite(context, sites[index]),
+                      ),
+                      childCount: sites.length,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 80),
-              ],
-            );
-          },
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _showSiteDetail(
-    BuildContext context,
-    WidgetRef ref,
-    Map<String, dynamic> site,
-    bool isDark,
-    bool isSwahili,
-  ) {
-    final detailAsync = ref.read(_siteDetailProvider(site['id']).future);
+  void _showSiteDetail(BuildContext context, Map<String, dynamic> site) {
+    final isDark = ref.read(isDarkModeProvider);
+    final isSwahili = ref.read(isSwahiliProvider);
+    final detailAsync = ref.read(_siteDetailProvider(site['id'] as int).future);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF1A2332) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return FutureBuilder<Map<String, dynamic>?>(
@@ -192,161 +279,193 @@ class SitesScreen extends ConsumerWidget {
                 (snapshot.data?['recent_reports'] as List?) ?? [];
 
             return DraggableScrollableSheet(
-              initialChildSize: 0.6,
+              initialChildSize: 0.7,
               minChildSize: 0.4,
               maxChildSize: 0.9,
               expand: false,
               builder: (ctx, scrollController) {
-                return SingleChildScrollView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[400],
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        detail['name'] ?? 'Site Details',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      _DetailRow(
-                        label: isSwahili ? 'Mahali' : 'Location',
-                        value: detail['location'] ?? '-',
-                        isDark: isDark,
-                      ),
-                      _DetailRow(
-                        label: isSwahili ? 'Hali' : 'Status',
-                        value: detail['status'] ?? '-',
-                        isDark: isDark,
-                        valueColor: _getStatusColor(detail['status']),
-                      ),
-                      _DetailRow(
-                        label: isSwahili ? 'Mratibu' : 'Supervisor',
-                        value:
-                            (detail['current_supervisor']
-                                as Map<String, dynamic>?)?['name'] ??
-                            '-',
-                        isDark: isDark,
-                      ),
-                      _DetailRow(
-                        label: isSwahili ? 'Maendeleo' : 'Progress',
-                        value:
-                            '${_toPercent(detail['progress_percentage'], decimals: 1)}%',
-                        isDark: isDark,
-                      ),
-                      _DetailRow(
-                        label: isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
-                        value: detail['start_date'] ?? '-',
-                        isDark: isDark,
-                      ),
-                      _DetailRow(
-                        label: isSwahili
-                            ? 'Tarehe ya Kukamilika'
-                            : 'Expected End',
-                        value: detail['expected_end_date'] ?? '-',
-                        isDark: isDark,
-                      ),
-                      if (detail['actual_end_date'] != null) ...[
-                        _DetailRow(
-                          label: isSwahili
-                              ? 'Tarehe ya Kumalizia'
-                              : 'Actual End',
-                          value: detail['actual_end_date'] ?? '-',
-                          isDark: isDark,
-                        ),
-                      ],
-                      if (detail['description'] != null &&
-                          (detail['description'] as String).isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Text(
-                          isSwahili ? 'Maelezo' : 'Description',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark ? Colors.white54 : AppColors.textHint,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          detail['description'],
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-                      if (recentReports.isNotEmpty) ...[
-                        Text(
-                          isSwahili
-                              ? 'Ripoti za Hivi Karibuni'
-                              : 'Recent Reports',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ...recentReports.map(
-                          (report) => ListTile(
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                            leading: Icon(
-                              Icons.description_rounded,
-                              color: _getStatusColor(report['status']),
-                              size: 20,
+                return Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[400],
+                              borderRadius: BorderRadius.circular(2),
                             ),
-                            title: Text(
-                              report['report_date'] ?? '-',
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  detail['name'] ?? 'Site Details',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        children: [
+                          _DetailRow(
+                            label: isSwahili ? 'Mahali' : 'Location',
+                            value: detail['location'] ?? '-',
+                            isDark: isDark,
+                          ),
+                          _DetailRow(
+                            label: isSwahili ? 'Hali' : 'Status',
+                            value: detail['status'] ?? '-',
+                            isDark: isDark,
+                            valueColor: _getStatusColor(detail['status']),
+                          ),
+                          _DetailRow(
+                            label: isSwahili ? 'Mratibu' : 'Supervisor',
+                            value:
+                                (detail['current_supervisor']
+                                    as Map<String, dynamic>?)?['name'] ??
+                                '-',
+                            isDark: isDark,
+                          ),
+                          _DetailRow(
+                            label: isSwahili ? 'Maendeleo' : 'Progress',
+                            value:
+                                '${_toPercent(detail['progress_percentage'], decimals: 1)}%',
+                            isDark: isDark,
+                          ),
+                          _DetailRow(
+                            label: isSwahili
+                                ? 'Tarehe ya Kuanza'
+                                : 'Start Date',
+                            value: detail['start_date'] ?? '-',
+                            isDark: isDark,
+                          ),
+                          _DetailRow(
+                            label: isSwahili
+                                ? 'Tarehe ya Kukamilika'
+                                : 'Expected End',
+                            value: detail['expected_end_date'] ?? '-',
+                            isDark: isDark,
+                          ),
+                          if (detail['actual_end_date'] != null)
+                            _DetailRow(
+                              label: isSwahili
+                                  ? 'Tarehe ya Kumalizia'
+                                  : 'Actual End',
+                              value: detail['actual_end_date'] ?? '-',
+                              isDark: isDark,
+                            ),
+                          if (detail['description'] != null &&
+                              (detail['description'] as String).isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili ? 'Maelezo' : 'Description',
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                                 color: isDark
                                     ? Colors.white
                                     : AppColors.textPrimary,
                               ),
                             ),
-                            subtitle: Text(
-                              report['prepared_by'] ?? '-',
-                              style: TextStyle(
-                                fontSize: 11,
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
                                 color: isDark
-                                    ? Colors.white54
-                                    : AppColors.textHint,
+                                    ? const Color(0xFF252540)
+                                    : Colors.grey.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                detail['description'] ?? '',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : AppColors.textSecondary,
+                                ),
                               ),
                             ),
-                            trailing: Text(
-                              '${_toPercent(report['progress_percentage'], decimals: 0)}%',
+                          ],
+                          if (recentReports.isNotEmpty) ...[
+                            const SizedBox(height: 20),
+                            Text(
+                              isSwahili
+                                  ? 'Ripoti za Hivi Karibuni'
+                                  : 'Recent Reports',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: isDark
-                                    ? Colors.white70
-                                    : AppColors.textSecondary,
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
                               ),
                             ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                            const SizedBox(height: 8),
+                            ...recentReports.map(
+                              (report) => ListTile(
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(
+                                  Icons.description_rounded,
+                                  color: _getStatusColor(report['status']),
+                                  size: 20,
+                                ),
+                                title: Text(
+                                  report['report_date'] ?? '-',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  report['prepared_by'] ?? '-',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark
+                                        ? Colors.white54
+                                        : AppColors.textHint,
+                                  ),
+                                ),
+                                trailing: Text(
+                                  '${_toPercent(report['progress_percentage'], decimals: 0)}%',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             );
@@ -356,13 +475,9 @@ class SitesScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showSiteForm(
-    BuildContext context,
-    WidgetRef ref,
-    bool isDark,
-    bool isSwahili, {
-    Map<String, dynamic>? site,
-  }) async {
+  void _showSiteForm(BuildContext context, {Map<String, dynamic>? site}) {
+    final isDark = ref.read(isDarkModeProvider);
+    final isSwahili = ref.read(isSwahiliProvider);
     final isEdit = site != null;
     final nameCtrl = TextEditingController(text: site?['name'] ?? '');
     final locationCtrl = TextEditingController(text: site?['location'] ?? '');
@@ -379,12 +494,12 @@ class SitesScreen extends ConsumerWidget {
     );
     final formKey = GlobalKey<FormState>();
 
-    await showModalBottomSheet(
+    showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF1A2332) : Colors.white,
+      backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -405,7 +520,7 @@ class SitesScreen extends ConsumerWidget {
                     children: [
                       Center(
                         child: Container(
-                          width: 40,
+                          width: 42,
                           height: 4,
                           decoration: BoxDecoration(
                             color: Colors.grey[400],
@@ -413,18 +528,18 @@ class SitesScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
                       Text(
                         isEdit
                             ? (isSwahili ? 'Hariri Eneo' : 'Edit Site')
                             : (isSwahili ? 'Ongeza Eneo' : 'Add Site'),
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: isDark ? Colors.white : AppColors.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 24),
                       _FormField(
                         controller: nameCtrl,
                         label: isSwahili ? 'Jina *' : 'Name *',
@@ -489,7 +604,7 @@ class SitesScreen extends ConsumerWidget {
                           ctx: ctx,
                         ),
                       ],
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -511,11 +626,11 @@ class SitesScreen extends ConsumerWidget {
                             try {
                               if (isEdit) {
                                 await api.put(
-                                  '/sites/${site['id']}',
+                                  '/projects/sites/${site!['id']}',
                                   data: data,
                                 );
                               } else {
-                                await api.post('/sites', data: data);
+                                await api.post('/projects/sites', data: data);
                               }
                               ref.invalidate(_sitesProvider);
                               if (ctx.mounted) Navigator.pop(ctx);
@@ -524,7 +639,7 @@ class SitesScreen extends ConsumerWidget {
                                 ScaffoldMessenger.of(ctx).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      _errorMessage(e, isSwahili: isSwahili),
+                                      _siteErrorMessage(e, isSwahili),
                                     ),
                                     backgroundColor: Colors.red,
                                   ),
@@ -535,18 +650,23 @@ class SitesScreen extends ConsumerWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           child: Text(
                             isEdit
                                 ? (isSwahili ? 'Sasisha' : 'Update')
                                 : (isSwahili ? 'Hifadhi' : 'Save'),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -560,18 +680,28 @@ class SitesScreen extends ConsumerWidget {
 
   Future<void> _deleteSite(
     BuildContext context,
-    WidgetRef ref,
     Map<String, dynamic> site,
-    bool isSwahili,
   ) async {
+    final isDark = ref.read(isDarkModeProvider);
+    final isSwahili = ref.read(isSwahiliProvider);
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isSwahili ? 'Thibitisha' : 'Confirm'),
+        backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+        title: Text(
+          isSwahili ? 'Thibitisha' : 'Confirm',
+          style: TextStyle(
+            color: isDark ? Colors.white : AppColors.textPrimary,
+          ),
+        ),
         content: Text(
           isSwahili
               ? 'Una uhakika unataka kufuta eneo hili?'
               : 'Are you sure you want to delete this site?',
+          style: TextStyle(
+            color: isDark ? Colors.white70 : AppColors.textSecondary,
+          ),
         ),
         actions: [
           TextButton(
@@ -586,30 +716,23 @@ class SitesScreen extends ConsumerWidget {
         ],
       ),
     );
+
     if (confirmed != true) return;
+
     try {
       final api = ref.read(apiClientProvider);
-      await api.delete('/sites/${site['id']}');
+      await api.delete('/projects/sites/${site['id']}');
       ref.invalidate(_sitesProvider);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_errorMessage(e, isSwahili: isSwahili)),
+            content: Text(_siteErrorMessage(e, isSwahili)),
             backgroundColor: Colors.red,
           ),
         );
       }
     }
-  }
-
-  String _errorMessage(Object error, {bool isSwahili = false}) {
-    if (error is Exception) {
-      return isSwahili
-          ? 'Hitilafu imetokea. Jaribu tena.'
-          : 'Something went wrong. Please try again.';
-    }
-    return isSwahili ? 'Hitilafu imetokea.' : 'An error occurred.';
   }
 
   Color _getStatusColor(String? status) {
@@ -634,124 +757,212 @@ class SitesScreen extends ConsumerWidget {
   }
 }
 
-class _SitesFilterBar extends ConsumerWidget {
-  final bool isDark;
+class _SiteFilters extends ConsumerWidget {
+  final _SitesFilter filter;
   final bool isSwahili;
-  final ValueChanged<SitesFilter> onFilterChanged;
+  final bool isDarkMode;
 
-  const _SitesFilterBar({
-    required this.isDark,
+  const _SiteFilters({
+    required this.filter,
     required this.isSwahili,
-    required this.onFilterChanged,
+    required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final filter = ref.watch(_sitesFilterProvider);
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A2332) : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark
-              ? const Color(0xFF243447)
-              : Colors.grey.withValues(alpha: 0.1),
-        ),
+    return ExpansionTile(
+      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      initiallyExpanded:
+          filter.status != null ||
+          filter.startDate != null ||
+          filter.endDate != null,
+      childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+      backgroundColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.white,
+      collapsedBackgroundColor: isDarkMode
+          ? const Color(0xFF2A2A3E)
+          : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      collapsedShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              height: 36,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF0F1923)
-                    : Colors.grey.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextField(
-                onChanged: (v) => onFilterChanged(filter.copyWith(search: v)),
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white : AppColors.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  hintText: isSwahili ? 'Tafuta...' : 'Search...',
-                  hintStyle: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? Colors.white38 : AppColors.textHint,
+      children: [
+        _StatusFilterChips(
+          isSwahili: isSwahili,
+          isDarkMode: isDarkMode,
+          selectedStatus: filter.status,
+          onChanged: (value) => ref.read(_sitesFilterProvider.notifier).state =
+              filter.copyWith(status: value, clearStatus: value == null),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: filter.startDate ?? DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null)
+                    ref.read(_sitesFilterProvider.notifier).state = filter
+                        .copyWith(startDate: picked);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 18,
-                    color: isDark ? Colors.white38 : AppColors.textHint,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF0F1923)
-                  : Colors.grey.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: PopupMenuButton<String>(
-              onSelected: (v) => onFilterChanged(filter.copyWith(status: v)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.filter_list,
-                      size: 18,
-                      color: isDark ? Colors.white54 : AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      filter.status.isEmpty
-                          ? (isSwahili ? 'Hali' : 'Status')
-                          : filter.status,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark
-                            ? Colors.white54
-                            : AppColors.textSecondary,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 20),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            filter.startDate != null
+                                ? DateFormat(
+                                    'dd MMM yyyy',
+                                  ).format(filter.startDate!)
+                                : '-',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-              itemBuilder: (ctx) => [
-                PopupMenuItem(
-                  value: '',
-                  child: Text(isSwahili ? 'Zote' : 'All'),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: filter.endDate ?? DateTime.now(),
+                    firstDate: filter.startDate ?? DateTime(2020),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null)
+                    ref.read(_sitesFilterProvider.notifier).state = filter
+                        .copyWith(endDate: picked);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 20),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            filter.endDate != null
+                                ? DateFormat(
+                                    'dd MMM yyyy',
+                                  ).format(filter.endDate!)
+                                : '-',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                PopupMenuItem(
-                  value: 'ACTIVE',
-                  child: Text(isSwahili ? 'Wastani' : 'Active'),
-                ),
-                PopupMenuItem(
-                  value: 'INACTIVE',
-                  child: Text(isSwahili ? 'Isiyo Endelevu' : 'Inactive'),
-                ),
-                PopupMenuItem(
-                  value: 'COMPLETED',
-                  child: Text(isSwahili ? 'Imalizika' : 'Completed'),
-                ),
-              ],
+              ),
+            ),
+          ],
+        ),
+        if (filter.status != null ||
+            filter.startDate != null ||
+            filter.endDate != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: OutlinedButton(
+              onPressed: () => ref.read(_sitesFilterProvider.notifier).state =
+                  _SitesFilter(),
+              child: Text(isSwahili ? 'Futa' : 'Clear'),
             ),
           ),
-        ],
+      ],
+    );
+  }
+}
+
+class _StatusFilterChips extends StatelessWidget {
+  final bool isSwahili;
+  final bool isDarkMode;
+  final String? selectedStatus;
+  final ValueChanged<String?> onChanged;
+
+  const _StatusFilterChips({
+    required this.isSwahili,
+    required this.isDarkMode,
+    required this.selectedStatus,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final options = <String?, String>{
+      null: isSwahili ? 'Zote' : 'All',
+      'ACTIVE': isSwahili ? 'Wastani' : 'Active',
+      'INACTIVE': isSwahili ? 'Isiyo Endelevu' : 'Inactive',
+      'COMPLETED': isSwahili ? 'Imalizika' : 'Completed',
+    };
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: options.entries.map((entry) {
+          final selected = selectedStatus == entry.key;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8, bottom: 12),
+            child: ChoiceChip(
+              selected: selected,
+              label: Text(entry.value),
+              onSelected: (_) => onChanged(entry.key),
+              selectedColor: AppColors.primary.withValues(alpha: 0.15),
+              labelStyle: TextStyle(
+                color: selected
+                    ? AppColors.primary
+                    : (isDarkMode ? Colors.white70 : AppColors.textSecondary),
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              ),
+              side: BorderSide(
+                color: selected
+                    ? AppColors.primary
+                    : (isDarkMode
+                          ? Colors.white12
+                          : AppColors.textHint.withValues(alpha: 0.4)),
+              ),
+              backgroundColor: isDarkMode
+                  ? const Color(0xFF1A2332)
+                  : Colors.white,
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -761,7 +972,7 @@ class _SiteCard extends StatelessWidget {
   final Map<String, dynamic> site;
   final bool isDark;
   final bool isSwahili;
-  final VoidCallback onTap;
+  final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -769,124 +980,54 @@ class _SiteCard extends StatelessWidget {
     required this.site,
     required this.isDark,
     required this.isSwahili,
-    required this.onTap,
+    required this.onView,
     required this.onEdit,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: () => _showActions(context),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A2332) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark
-                ? const Color(0xFF243447)
-                : Colors.grey.withValues(alpha: 0.1),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.location_on_rounded,
-                    size: 20,
-                    color: Color(0xFF3B82F6),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        site['name'] ?? '-',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.place_rounded,
-                            size: 12,
-                            color: isDark ? Colors.white38 : AppColors.textHint,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              site['location'] ?? '-',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isDark
-                                    ? Colors.white54
-                                    : AppColors.textSecondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(
-                      site['status'],
-                    ).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    site['status'] ?? '-',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: _getStatusColor(site['status']),
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: onView,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.location_on_rounded,
+                      color: Color(0xFF3B82F6),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.person_rounded,
-                        size: 14,
-                        color: isDark ? Colors.white38 : AppColors.textHint,
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          (site['current_supervisor']
-                                  as Map<String, dynamic>?)?['name'] ??
-                              '-',
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          site['name'] ?? '-',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          site['location'] ?? '-',
                           style: TextStyle(
                             fontSize: 12,
                             color: isDark
@@ -896,94 +1037,165 @@ class _SiteCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'view')
+                        onView();
+                      else if (value == 'edit')
+                        onEdit();
+                      else if (value == 'delete')
+                        onDelete();
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'view',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.visibility, size: 20),
+                            const SizedBox(width: 8),
+                            Text(isSwahili ? 'Tazama' : 'View'),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.05)
-                        : Colors.grey.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.trending_up_rounded,
-                        size: 12,
-                        color: const Color(0xFF27AE60),
+                      PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.edit, size: 20),
+                            const SizedBox(width: 8),
+                            Text(isSwahili ? 'Hariri' : 'Edit'),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${_toPercent(site['progress_percentage'], decimals: 0)}%',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: isDark
-                              ? Colors.white70
-                              : AppColors.textPrimary,
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.delete,
+                              size: 20,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isSwahili ? 'Futa' : 'Delete',
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
                 ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: 12,
-                  color: isDark ? Colors.white38 : AppColors.textHint,
+                decoration: BoxDecoration(
+                  color: _getStatusColor(
+                    site['status'],
+                  ).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  '${isSwahili ? 'Kuanza' : 'Start'}: ${site['start_date'] ?? '-'}',
+                child: Text(
+                  site['status'] ?? '-',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDark ? Colors.white38 : AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    color: _getStatusColor(site['status']),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showActions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: Text(isSwahili ? 'Hariri' : 'Edit'),
-              onTap: () {
-                Navigator.pop(ctx);
-                onEdit();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: Text(
-                isSwahili ? 'Futa' : 'Delete',
-                style: const TextStyle(color: Colors.red),
               ),
-              onTap: () {
-                Navigator.pop(ctx);
-                onDelete();
-              },
-            ),
-          ],
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.person_rounded,
+                          size: 14,
+                          color: isDark ? Colors.white38 : AppColors.textHint,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            (site['current_supervisor']
+                                    as Map<String, dynamic>?)?['name'] ??
+                                '-',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark
+                                  ? Colors.white54
+                                  : AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.grey.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.trending_up_rounded,
+                          size: 12,
+                          color: Color(0xFF27AE60),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${_toPercent(site['progress_percentage'], decimals: 0)}%',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark
+                                ? Colors.white70
+                                : AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 12,
+                    color: isDark ? Colors.white38 : AppColors.textHint,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${isSwahili ? 'Kuanza' : 'Start'}: ${site['start_date'] ?? '-'}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? Colors.white38 : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1027,7 +1239,7 @@ class _DetailRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1037,13 +1249,13 @@ class _DetailRow extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: isDark ? Colors.white54 : AppColors.textHint,
+                color: isDark ? Colors.white54 : AppColors.textSecondary,
               ),
             ),
           ),
           Expanded(
             child: Text(
-              value,
+              value.isEmpty ? '-' : value,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
@@ -1083,7 +1295,7 @@ class _FormField extends StatelessWidget {
         maxLines: maxLines,
         validator: validator,
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 14,
           color: isDark ? Colors.white : AppColors.textPrimary,
         ),
         decoration: InputDecoration(
@@ -1097,7 +1309,7 @@ class _FormField extends StatelessWidget {
               ? const Color(0xFF0F1923)
               : Colors.grey.withValues(alpha: 0.05),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
               color: isDark
                   ? const Color(0xFF243447)
@@ -1105,7 +1317,7 @@ class _FormField extends StatelessWidget {
             ),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
               color: isDark
                   ? const Color(0xFF243447)
@@ -1156,7 +1368,7 @@ class _StatusDropdown extends StatelessWidget {
           ),
         ],
         onChanged: onChanged,
-        dropdownColor: isDark ? const Color(0xFF1A2332) : Colors.white,
+        dropdownColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         decoration: InputDecoration(
           labelText: isSwahili ? 'Hali' : 'Status',
           labelStyle: TextStyle(
@@ -1168,7 +1380,7 @@ class _StatusDropdown extends StatelessWidget {
               ? const Color(0xFF0F1923)
               : Colors.grey.withValues(alpha: 0.05),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
               color: isDark
                   ? const Color(0xFF243447)
@@ -1176,7 +1388,7 @@ class _StatusDropdown extends StatelessWidget {
             ),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
               color: isDark
                   ? const Color(0xFF243447)
@@ -1226,7 +1438,7 @@ class _DateField extends StatelessWidget {
           }
         },
         style: TextStyle(
-          fontSize: 13,
+          fontSize: 14,
           color: isDark ? Colors.white : AppColors.textPrimary,
         ),
         decoration: InputDecoration(
@@ -1240,7 +1452,7 @@ class _DateField extends StatelessWidget {
               ? const Color(0xFF0F1923)
               : Colors.grey.withValues(alpha: 0.05),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
               color: isDark
                   ? const Color(0xFF243447)
@@ -1248,7 +1460,7 @@ class _DateField extends StatelessWidget {
             ),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(
               color: isDark
                   ? const Color(0xFF243447)

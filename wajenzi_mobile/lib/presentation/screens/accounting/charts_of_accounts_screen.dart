@@ -4,14 +4,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
-final _chartsOfAccountsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/charts-of-accounts');
-  final data = response.data is Map<String, dynamic> ? response.data as Map<String, dynamic> : const <String, dynamic>{};
-  return data['data'] is Map ? Map<String, dynamic>.from(data['data'] as Map) : const <String, dynamic>{};
-});
+final _chartsSearchProvider = StateProvider.autoDispose<String>((ref) => '');
+final _chartsAccountTypeFilterProvider = StateProvider.autoDispose<int?>(
+  (ref) => null,
+);
+final _chartsStatusFilterProvider = StateProvider.autoDispose<String?>(
+  (ref) => null,
+);
+
+final _chartsOfAccountsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/charts-of-accounts');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
 String _chartErrorMessage(Object error, bool isSwahili) {
   if (error is DioException) {
@@ -23,97 +37,293 @@ String _chartErrorMessage(Object error, bool isSwahili) {
       }
     }
   }
-
   return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
 }
 
-class ChartsOfAccountsScreen extends ConsumerWidget {
+class ChartsOfAccountsScreen extends ConsumerStatefulWidget {
   const ChartsOfAccountsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ChartsOfAccountsScreen> createState() =>
+      _ChartsOfAccountsScreenState();
+}
+
+class _ChartsOfAccountsScreenState
+    extends ConsumerState<ChartsOfAccountsScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final chartsAsync = ref.watch(_chartsOfAccountsProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final search = ref.watch(_chartsSearchProvider).trim().toLowerCase();
+    final typeFilter = ref.watch(_chartsAccountTypeFilterProvider);
+    final statusFilter = ref.watch(_chartsStatusFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Chati ya Akaunti' : 'Charts of Accounts'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openForm(context, ref),
-          ),
-        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _openForm(context, ref),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza' : 'Add',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_chartsOfAccountsProvider),
-        child: chartsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _ChartsErrorView(
-            message: _chartErrorMessage(error, isSwahili),
-            isSwahili: isSwahili,
-            onRetry: () => ref.invalidate(_chartsOfAccountsProvider),
-          ),
-          data: (payload) {
-            final accountTypes = _toMaps(payload['account_types']);
-            final accounts = _toMaps(payload['accounts']);
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    TextField(
+                      onChanged: (value) =>
+                          ref.read(_chartsSearchProvider.notifier).state =
+                              value,
+                      decoration: InputDecoration(
+                        hintText: isSwahili
+                            ? 'Tafuta akaunti...'
+                            : 'Search accounts...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: search.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () =>
+                                    ref
+                                            .read(
+                                              _chartsSearchProvider.notifier,
+                                            )
+                                            .state =
+                                        '',
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: isDarkMode
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    chartsAsync.when(
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                      data: (payload) {
+                        final accountTypes = _toMaps(payload['account_types']);
+                        if (accountTypes.isEmpty)
+                          return const SizedBox.shrink();
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? const Color(0xFF2A2A3E)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: DropdownButton<int?>(
+                            value: typeFilter,
+                            hint: Text(isSwahili ? 'Aina zote' : 'All types'),
+                            underline: const SizedBox(),
+                            isExpanded: true,
+                            dropdownColor: isDarkMode
+                                ? const Color(0xFF1A2332)
+                                : Colors.white,
+                            items: [
+                              DropdownMenuItem(
+                                value: null,
+                                child: Text(
+                                  isSwahili ? 'Aina zote' : 'All types',
+                                ),
+                              ),
+                              ...accountTypes.map(
+                                (t) => DropdownMenuItem(
+                                  value: t['id'] as int,
+                                  child: Text('${t['code']} - ${t['type']}'),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) =>
+                                ref
+                                        .read(
+                                          _chartsAccountTypeFilterProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    value,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            chartsAsync.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (error, _) => SliverFillRemaining(
+                child: _ChartsErrorView(
+                  message: _chartErrorMessage(error, isSwahili),
+                  isSwahili: isSwahili,
+                  onRetry: () => ref.invalidate(_chartsOfAccountsProvider),
+                ),
+              ),
+              data: (payload) {
+                final accountTypes = _toMaps(payload['account_types']);
+                final accounts = _toMaps(payload['accounts']);
 
-            if (accounts.isEmpty) {
-              return ListView(
-                padding: const EdgeInsets.all(32),
-                children: [
-                  const SizedBox(height: 100),
-                  Icon(Icons.account_tree_outlined, size: 56, color: isDarkMode ? Colors.white24 : Colors.grey[300]),
-                  const SizedBox(height: 12),
-                  Text(
-                    isSwahili ? 'Hakuna akaunti zilizopatikana' : 'No chart accounts found',
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              );
-            }
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                ...accountTypes.map((type) {
-                  final typeAccounts = accounts.where((account) => _toInt(account['account_type']) == _toInt(type['id'])).toList();
-                  if (typeAccounts.isEmpty) {
-                    return const SizedBox.shrink();
+                final filteredAccounts = accounts.where((account) {
+                  if (search.isNotEmpty) {
+                    final haystack = [
+                      account['code'] ?? '',
+                      account['account_name'] ?? '',
+                      account['description'] ?? '',
+                    ].join(' ').toLowerCase();
+                    if (!haystack.contains(search)) return false;
                   }
+                  if (typeFilter != null) {
+                    if (_toInt(account['account_type']) != typeFilter)
+                      return false;
+                  }
+                  if (statusFilter != null && statusFilter.isNotEmpty) {
+                    if ((account['status'] ?? '').toString().toLowerCase() !=
+                        statusFilter.toLowerCase())
+                      return false;
+                  }
+                  return true;
+                }).toList();
 
-                  return _AccountTypeSection(
-                    type: type,
-                    accounts: typeAccounts,
-                    isSwahili: isSwahili,
-                    onView: (account) => _showChartAccountDetails(context, account, isSwahili, isDarkMode),
-                    onEdit: (account) => _openForm(context, ref, account: account),
-                    onDelete: (account) => _deleteAccount(context, ref, account),
+                if (filteredAccounts.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.account_tree_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            accounts.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna akaunti'
+                                      : 'No chart accounts found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No matching results'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          if (search.isNotEmpty || typeFilter != null) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                ref.read(_chartsSearchProvider.notifier).state =
+                                    '';
+                                ref
+                                        .read(
+                                          _chartsAccountTypeFilterProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    null;
+                              },
+                              icon: const Icon(Icons.clear),
+                              label: Text(
+                                isSwahili ? 'Futa vichujio' : 'Clear filters',
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   );
-                }),
-                const SizedBox(height: 80),
-              ],
-            );
-          },
+                }
+
+                final filteredTypes = typeFilter != null
+                    ? accountTypes
+                          .where((t) => _toInt(t['id']) == typeFilter)
+                          .toList()
+                    : accountTypes;
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final type = filteredTypes[index];
+                      final typeAccounts = filteredAccounts
+                          .where(
+                            (account) =>
+                                _toInt(account['account_type']) ==
+                                _toInt(type['id']),
+                          )
+                          .toList();
+                      if (typeAccounts.isEmpty) return const SizedBox.shrink();
+
+                      return _AccountTypeCard(
+                        type: type,
+                        accounts: typeAccounts,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        onView: (account) => _showChartAccountDetails(
+                          context,
+                          account,
+                          isSwahili,
+                          isDarkMode,
+                        ),
+                        onEdit: (account) =>
+                            _openForm(context, ref, account: account),
+                        onDelete: (account) =>
+                            _deleteAccount(context, ref, account),
+                      );
+                    }, childCount: filteredTypes.length),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Future<void> _openForm(BuildContext context, WidgetRef ref, {Map<String, dynamic>? account}) async {
+  Future<void> _openForm(
+    BuildContext context,
+    WidgetRef ref, {
+    Map<String, dynamic>? account,
+  }) async {
     final payload = await ref.read(_chartsOfAccountsProvider.future);
     final result = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.9,
-        child: _ChartAccountFormSheet(
-          payload: payload,
-          account: account,
-        ),
-      ),
+      builder: (_) =>
+          _ChartAccountFormSheet(payload: payload, account: account),
     );
 
     if (result == true) {
@@ -121,12 +331,15 @@ class ChartsOfAccountsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _deleteAccount(BuildContext context, WidgetRef ref, Map<String, dynamic> account) async {
+  Future<void> _deleteAccount(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> account,
+  ) async {
     final isSwahili = ref.read(isSwahiliProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        scrollable: true,
         title: Text(isSwahili ? 'Futa Akaunti' : 'Delete Account'),
         content: Text(
           isSwahili
@@ -140,23 +353,28 @@ class ChartsOfAccountsScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(isSwahili ? 'Futa' : 'Delete'),
+            child: Text(
+              isSwahili ? 'Futa' : 'Delete',
+              style: const TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
     );
 
-    if (confirmed != true) {
-      return;
-    }
+    if (confirmed != true) return;
 
     try {
-      await ref.read(apiClientProvider).delete('/charts-of-accounts/${account['id']}');
+      await ref
+          .read(apiClientProvider)
+          .delete('/charts-of-accounts/${account['id']}');
       ref.invalidate(_chartsOfAccountsProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSwahili ? 'Akaunti imefutwa' : 'Chart account deleted'),
+            content: Text(
+              isSwahili ? 'Akaunti imefutwa' : 'Chart account deleted',
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -173,35 +391,159 @@ class ChartsOfAccountsScreen extends ConsumerWidget {
     }
   }
 
-  void _showChartAccountDetails(BuildContext context, Map<String, dynamic> account, bool isSwahili, bool isDarkMode) {
+  void _showChartAccountDetails(
+    BuildContext context,
+    Map<String, dynamic> account,
+    bool isSwahili,
+    bool isDarkMode,
+  ) {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.72,
-        child: _ChartAccountDetailSheet(
-          account: account,
-          isSwahili: isSwahili,
-          isDarkMode: isDarkMode,
+      builder: (_) => Container(
+        height: 0.7 * MediaQuery.of(context).size.height,
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isDarkMode ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${account['code'] ?? '-'} - ${account['account_name'] ?? '-'}',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _DetailRow(
+                      label: isSwahili ? 'Aina ya Akaunti' : 'Account Type',
+                      value: account['account_type_name']?.toString() ?? '-',
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
+                      label: isSwahili ? 'Szabuni' : 'Parent',
+                      value: account['parent_name']?.toString() ?? '-',
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
+                      label: isSwahili ? 'Sarafu' : 'Currency',
+                      value: account['currency_name']?.toString() ?? '-',
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
+                      label: isSwahili ? 'Hali' : 'Status',
+                      value: _statusLabel(account['status']?.toString()),
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
+                      label: isSwahili ? 'Watoto' : 'Children',
+                      value: '${account['children_count'] ?? 0}',
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
+                      label: isSwahili ? 'Maelezo' : 'Description',
+                      value: account['description']?.toString() ?? '-',
+                      isDarkMode: isDarkMode,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _AccountTypeSection extends StatelessWidget {
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isDarkMode;
+
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? Colors.white54 : AppColors.textHint,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value.isEmpty ? '-' : value,
+              style: TextStyle(
+                fontSize: 14,
+                color: isDarkMode ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountTypeCard extends StatelessWidget {
   final Map<String, dynamic> type;
   final List<Map<String, dynamic>> accounts;
   final bool isSwahili;
+  final bool isDarkMode;
   final void Function(Map<String, dynamic>) onView;
   final void Function(Map<String, dynamic>) onEdit;
   final void Function(Map<String, dynamic>) onDelete;
 
-  const _AccountTypeSection({
+  const _AccountTypeCard({
     required this.type,
     required this.accounts,
     required this.isSwahili,
+    required this.isDarkMode,
     required this.onView,
     required this.onEdit,
     required this.onDelete,
@@ -209,35 +551,93 @@ class _AccountTypeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rootAccounts = accounts.where((account) => _toInt(account['parent']) == 0).toList()
-      ..sort((a, b) => (a['code'] ?? '').toString().compareTo((b['code'] ?? '').toString()));
-
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
+      color: isDarkMode ? const Color(0xFF2A2A3E) : Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '${type['code'] ?? ''} ${type['type'] ?? ''}'.trim(),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Normal Balance: ${type['normal_balance'] ?? '-'}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.account_tree,
+                    color: Color(0xFF3B82F6),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${type['code'] ?? ''} ${type['type'] ?? ''}'.trim(),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: isDarkMode
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        '${isSwahili ? 'Salio la Kawaida' : 'Normal Balance'}: ${type['normal_balance'] ?? '-'}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDarkMode
+                              ? Colors.white54
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${accounts.length} ${isSwahili ? 'akaunti' : 'accounts'}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDarkMode ? Colors.white54 : AppColors.textHint,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            ...rootAccounts.map((account) => _AccountTreeTile(
-                  account: account,
-                  allAccounts: accounts,
-                  level: 0,
-                  isSwahili: isSwahili,
-                  onView: onView,
-                  onEdit: onEdit,
-                  onDelete: onDelete,
-                )),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            ...accounts
+                .take(5)
+                .map(
+                  (account) => _AccountTile(
+                    account: account,
+                    isSwahili: isSwahili,
+                    isDarkMode: isDarkMode,
+                    onView: onView,
+                    onEdit: onEdit,
+                    onDelete: onDelete,
+                  ),
+                ),
+            if (accounts.length > 5) ...[
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton(
+                  onPressed: () => onView(accounts.first),
+                  child: Text(
+                    isSwahili
+                        ? '+${accounts.length - 5} zaidi'
+                        : '+${accounts.length - 5} more',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -245,20 +645,18 @@ class _AccountTypeSection extends StatelessWidget {
   }
 }
 
-class _AccountTreeTile extends StatelessWidget {
+class _AccountTile extends StatelessWidget {
   final Map<String, dynamic> account;
-  final List<Map<String, dynamic>> allAccounts;
-  final int level;
   final bool isSwahili;
+  final bool isDarkMode;
   final void Function(Map<String, dynamic>) onView;
   final void Function(Map<String, dynamic>) onEdit;
   final void Function(Map<String, dynamic>) onDelete;
 
-  const _AccountTreeTile({
+  const _AccountTile({
     required this.account,
-    required this.allAccounts,
-    required this.level,
     required this.isSwahili,
+    required this.isDarkMode,
     required this.onView,
     required this.onEdit,
     required this.onDelete,
@@ -266,86 +664,105 @@ class _AccountTreeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final id = _toInt(account['id']);
-    final children = allAccounts.where((item) => _toInt(item['parent']) == id).toList()
-      ..sort((a, b) => (a['code'] ?? '').toString().compareTo((b['code'] ?? '').toString()));
-
-    final tile = Container(
-      margin: EdgeInsets.only(left: level * 14.0, bottom: 8),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: level == 0 ? AppColors.primary.withValues(alpha: 0.05) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: level == 0 ? AppColors.primary.withValues(alpha: 0.12) : Colors.transparent,
-        ),
+        color: isDarkMode
+            ? const Color(0xFF0F1923)
+            : Colors.grey.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: ListTile(
-        isThreeLine: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        leading: CircleAvatar(
-          radius: 18,
-          backgroundColor: _statusColor(account['status']?.toString()).withValues(alpha: 0.14),
-          child: Icon(Icons.account_balance_wallet_outlined, size: 18, color: _statusColor(account['status']?.toString())),
-        ),
-        title: Text(
-          '${account['code'] ?? '-'} - ${account['account_name'] ?? '-'}',
-          style: TextStyle(fontSize: level == 0 ? 14 : 13, fontWeight: level == 0 ? FontWeight.w700 : FontWeight.w500),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          'Status: ${_statusLabel(account['status']?.toString())}${_currencySuffix(account)}',
-          style: const TextStyle(fontSize: 12),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            if (value == 'view') {
-              onView(account);
-            } else if (value == 'edit') {
-              onEdit(account);
-            } else if (value == 'delete') {
-              onDelete(account);
-            }
-          },
-          itemBuilder: (_) => [
-            PopupMenuItem<String>(value: 'view', child: Text(isSwahili ? 'Tazama' : 'View')),
-            PopupMenuItem<String>(value: 'edit', child: Text(isSwahili ? 'Hariri' : 'Edit')),
-            PopupMenuItem<String>(value: 'delete', child: Text(isSwahili ? 'Futa' : 'Delete')),
-          ],
-        ),
-        onTap: () => onView(account),
-      ),
-    );
-
-    if (children.isEmpty) {
-      return tile;
-    }
-
-    return ExpansionTile(
-      tilePadding: EdgeInsets.zero,
-      childrenPadding: EdgeInsets.zero,
-      title: tile,
-      children: children
-          .map(
-            (child) => _AccountTreeTile(
-              account: child,
-              allAccounts: allAccounts,
-              level: level + 1,
-              isSwahili: isSwahili,
-              onView: onView,
-              onEdit: onEdit,
-              onDelete: onDelete,
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _statusColor(account['status']?.toString()),
             ),
-          )
-          .toList(),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${account['code'] ?? '-'} - ${account['account_name'] ?? '-'}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (account['currency_name'] != null)
+                  Text(
+                    account['currency_name'].toString(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDarkMode ? Colors.white54 : AppColors.textHint,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          PopupMenuButton<String>(
+            icon: Icon(
+              Icons.more_vert,
+              size: 20,
+              color: isDarkMode ? Colors.white54 : AppColors.textHint,
+            ),
+            onSelected: (value) {
+              if (value == 'view') {
+                onView(account);
+              } else if (value == 'edit') {
+                onEdit(account);
+              } else if (value == 'delete') {
+                onDelete(account);
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'view',
+                child: Row(
+                  children: [
+                    const Icon(Icons.visibility, size: 20),
+                    const SizedBox(width: 8),
+                    Text(isSwahili ? 'Tazama' : 'View'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    const Icon(Icons.edit, size: 20),
+                    const SizedBox(width: 8),
+                    Text(isSwahili ? 'Hariri' : 'Edit'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete, size: 20, color: AppColors.error),
+                    const SizedBox(width: 8),
+                    Text(
+                      isSwahili ? 'Futa' : 'Delete',
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
-  }
-
-  String _currencySuffix(Map<String, dynamic> account) {
-    final name = (account['currency_name'] ?? account['currency'] ?? '').toString().trim();
-    return name.isEmpty ? '' : ' - $name';
   }
 }
 
@@ -353,20 +770,26 @@ class _ChartAccountFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic> payload;
   final Map<String, dynamic>? account;
 
-  const _ChartAccountFormSheet({
-    required this.payload,
-    this.account,
-  });
+  const _ChartAccountFormSheet({required this.payload, this.account});
 
   @override
-  ConsumerState<_ChartAccountFormSheet> createState() => _ChartAccountFormSheetState();
+  ConsumerState<_ChartAccountFormSheet> createState() =>
+      _ChartAccountFormSheetState();
 }
 
-class _ChartAccountFormSheetState extends ConsumerState<_ChartAccountFormSheet> {
+class _ChartAccountFormSheetState
+    extends ConsumerState<_ChartAccountFormSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _codeController = TextEditingController(text: widget.account?['code']?.toString() ?? '');
-  late final TextEditingController _nameController = TextEditingController(text: widget.account?['account_name']?.toString() ?? '');
-  late final TextEditingController _descriptionController = TextEditingController(text: widget.account?['description']?.toString() ?? '');
+  late final TextEditingController _codeController = TextEditingController(
+    text: widget.account?['code']?.toString() ?? '',
+  );
+  late final TextEditingController _nameController = TextEditingController(
+    text: widget.account?['account_name']?.toString() ?? '',
+  );
+  late final TextEditingController _descriptionController =
+      TextEditingController(
+        text: widget.account?['description']?.toString() ?? '',
+      );
   int? _accountTypeId;
   int? _parentId;
   int? _currencyId;
@@ -399,177 +822,222 @@ class _ChartAccountFormSheetState extends ConsumerState<_ChartAccountFormSheet> 
     final accountTypes = _toMaps(widget.payload['account_types']);
     final currencies = _toMaps(widget.payload['currencies']);
     final allAccounts = _toMaps(widget.payload['accounts']);
-    final parentOptions = allAccounts.where((item) => _toInt(item['id']) != _toInt(widget.account?['id'])).toList();
+    final parentOptions = allAccounts
+        .where((item) => _toInt(item['id']) != _toInt(widget.account?['id']))
+        .toList();
+
+    final bgColor = isDarkMode ? const Color(0xFF1A2332) : Colors.white;
+    final inputBg = isDarkMode ? const Color(0xFF0F1923) : Colors.grey[100];
+    final textColor = isDarkMode ? Colors.white : AppColors.textPrimary;
+
+    InputDecoration inputStyle(String label) => InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: inputBg,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    );
 
     return Container(
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+        color: bgColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.white24 : Colors.black12,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            16,
+            20,
+            MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                      Text(
-                        widget.account == null
-                            ? (isSwahili ? 'Akaunti Mpya' : 'New Chart Account')
-                            : (isSwahili ? 'Hariri Akaunti' : 'Edit Chart Account'),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(999),
                       ),
-                      const SizedBox(height: 20),
-                      _dropdown(
-                        label: 'Account Type *',
-                        items: accountTypes.map((e) => {'id': e['id'], 'name': '${e['type']} (${e['code']})'}).toList(),
-                        value: _accountTypeId,
-                        onChanged: (value) => setState(() => _accountTypeId = value),
-                      ),
-                      const SizedBox(height: 12),
-                      _dropdown(
-                        label: 'Parent Account',
-                        required: false,
-                        items: parentOptions.map((e) => {'id': e['id'], 'name': '${e['code']} - ${e['account_name']}'}).toList(),
-                        value: _parentId,
-                        onChanged: (value) => setState(() => _parentId = value),
-                      ),
-                      const SizedBox(height: 12),
-                      _input(_codeController, 'Account Code *', isDarkMode),
-                      const SizedBox(height: 12),
-                      _dropdown(
-                        label: 'Currency',
-                        required: false,
-                        items: currencies.map((e) => {'id': e['id'], 'name': '${e['symbol'] ?? ''} ${e['name'] ?? ''}'.trim()}).toList(),
-                        value: _currencyId,
-                        onChanged: (value) => setState(() => _currencyId = value),
-                      ),
-                      const SizedBox(height: 12),
-                      _input(_nameController, 'Account Name *', isDarkMode),
-                      const SizedBox(height: 12),
-                      _input(_descriptionController, 'Description', isDarkMode, required: false, maxLines: 3),
-                      const SizedBox(height: 12),
-                      _dropdown(
-                        label: 'Status',
-                        items: const [
-                          {'id': 'ACTIVE', 'name': 'Active'},
-                          {'id': 'INACTIVE', 'name': 'Inactive'},
-                        ],
-                        value: _status,
-                        onChangedString: (value) => setState(() => _status = value ?? 'ACTIVE'),
-                      ),
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: _saving ? null : _submit,
-                        child: _saving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : Text(widget.account == null ? 'Save' : 'Update'),
-                      ),
-                      ],
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    widget.account == null
+                        ? (isSwahili ? 'Akaunti Mpya' : 'New Chart Account')
+                        : (isSwahili ? 'Hariri Akaunti' : 'Edit Chart Account'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<int>(
+                    value: _accountTypeId,
+                    isExpanded: true,
+                    decoration: inputStyle(
+                      isSwahili ? 'Aina ya Akaunti *' : 'Account Type *',
+                    ),
+                    dropdownColor: bgColor,
+                    items: accountTypes
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e['id'] as int,
+                            child: Text(
+                              '${e['type']} (${e['code']})',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) =>
+                        setState(() => _accountTypeId = value),
+                    validator: (v) => v == null
+                        ? (isSwahili ? 'Hitajiwa' : 'Required')
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: _parentId,
+                    isExpanded: true,
+                    decoration: inputStyle(
+                      isSwahili ? 'Szabuni ya Akaunti' : 'Parent Account',
+                    ),
+                    dropdownColor: bgColor,
+                    items: [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(isSwahili ? 'Hakuna' : 'None'),
+                      ),
+                      ...parentOptions.map(
+                        (e) => DropdownMenuItem(
+                          value: e['id'] as int,
+                          child: Text(
+                            '${e['code']} - ${e['account_name']}',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) => setState(() => _parentId = value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _codeController,
+                    decoration: inputStyle(
+                      isSwahili ? 'Kodi ya Akaunti *' : 'Account Code *',
+                    ),
+                    style: TextStyle(color: textColor),
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? (isSwahili ? 'Hitajiwa' : 'Required')
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<int>(
+                    value: _currencyId,
+                    isExpanded: true,
+                    decoration: inputStyle(isSwahili ? 'Sarafu' : 'Currency'),
+                    dropdownColor: bgColor,
+                    items: [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(isSwahili ? 'Hakuna' : 'None'),
+                      ),
+                      ...currencies.map(
+                        (e) => DropdownMenuItem(
+                          value: e['id'] as int,
+                          child: Text(
+                            '${e['symbol'] ?? ''} ${e['name'] ?? ''}'.trim(),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) => setState(() => _currencyId = value),
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: inputStyle(
+                      isSwahili ? 'Jina la Akaunti *' : 'Account Name *',
+                    ),
+                    style: TextStyle(color: textColor),
+                    validator: (v) => v == null || v.trim().isEmpty
+                        ? (isSwahili ? 'Hitajiwa' : 'Required')
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _descriptionController,
+                    maxLines: 3,
+                    decoration: inputStyle(
+                      isSwahili ? 'Maelezo' : 'Description',
+                    ),
+                    style: TextStyle(color: textColor),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _status,
+                    isExpanded: true,
+                    decoration: inputStyle(isSwahili ? 'Hali' : 'Status'),
+                    dropdownColor: bgColor,
+                    items: const [
+                      DropdownMenuItem(value: 'ACTIVE', child: Text('Active')),
+                      DropdownMenuItem(
+                        value: 'INACTIVE',
+                        child: Text('Inactive'),
+                      ),
+                    ],
+                    onChanged: (value) =>
+                        setState(() => _status = value ?? 'ACTIVE'),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _saving ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: _saving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            widget.account == null
+                                ? (isSwahili ? 'Hifadhi' : 'Save')
+                                : (isSwahili ? 'Sasisha' : 'Update'),
+                          ),
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _input(
-    TextEditingController controller,
-    String label,
-    bool isDarkMode, {
-    bool required = true,
-    int maxLines = 1,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      validator: required ? (value) => value == null || value.trim().isEmpty ? 'Required' : null : null,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100],
-      ),
-    );
-  }
-
-  Widget _dropdown({
-    required String label,
-    required List<Map<String, dynamic>> items,
-    dynamic value,
-    ValueChanged<int?>? onChanged,
-    ValueChanged<String?>? onChangedString,
-    bool required = true,
-  }) {
-    final isDarkMode = ref.read(isDarkModeProvider);
-    final useString = onChangedString != null;
-
-    if (useString) {
-      return DropdownButtonFormField<String>(
-        value: value?.toString(),
-        isExpanded: true,
-        validator: required ? (selected) => selected == null || selected.isEmpty ? 'Required' : null : null,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100],
-        ),
-      items: items
-          .map((item) => DropdownMenuItem<String>(
-                value: item['id'].toString(),
-                child: Text(item['name']?.toString() ?? '-', overflow: TextOverflow.ellipsis),
-              ))
-          .toList(),
-        onChanged: onChangedString,
-      );
-    }
-
-    return DropdownButtonFormField<int>(
-      value: items.any((item) => _toInt(item['id']) == value) ? value as int? : null,
-      isExpanded: true,
-      validator: required ? (selected) => selected == null ? 'Required' : null : null,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100],
-      ),
-      items: items
-          .map((item) => DropdownMenuItem<int>(
-                value: _toInt(item['id']),
-                child: Text(item['name']?.toString() ?? '-', overflow: TextOverflow.ellipsis),
-              ))
-          .toList(),
-      onChanged: onChanged,
     );
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _saving = true);
     try {
@@ -580,14 +1048,19 @@ class _ChartAccountFormSheetState extends ConsumerState<_ChartAccountFormSheet> 
         'code': _codeController.text.trim(),
         'currency': _currencyId,
         'account_name': _nameController.text.trim(),
-        'description': _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+        'description': _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
         'status': _status,
       };
 
       if (widget.account == null) {
         await api.post('/charts-of-accounts', data: data);
       } else {
-        await api.put('/charts-of-accounts/${widget.account!['id']}', data: data);
+        await api.put(
+          '/charts-of-accounts/${widget.account!['id']}',
+          data: data,
+        );
       }
 
       if (mounted) {
@@ -597,7 +1070,9 @@ class _ChartAccountFormSheetState extends ConsumerState<_ChartAccountFormSheet> 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_chartErrorMessage(error, ref.read(isSwahiliProvider))),
+            content: Text(
+              _chartErrorMessage(error, ref.read(isSwahiliProvider)),
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -623,95 +1098,25 @@ class _ChartsErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(32),
-      children: [
-        const SizedBox(height: 100),
-        const Icon(Icons.error_outline, size: 64, color: AppColors.error),
-        const SizedBox(height: 16),
-        Text(isSwahili ? 'Hitilafu imetokea' : 'Something went wrong', textAlign: TextAlign.center),
-        const SizedBox(height: 8),
-        Text(message, textAlign: TextAlign.center),
-        const SizedBox(height: 24),
-        Center(
-          child: ElevatedButton.icon(
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
           ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ChartAccountDetailSheet extends StatelessWidget {
-  final Map<String, dynamic> account;
-  final bool isSwahili;
-  final bool isDarkMode;
-
-  const _ChartAccountDetailSheet({
-    required this.account,
-    required this.isSwahili,
-    required this.isDarkMode,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.white24 : Colors.black12,
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                children: [
-                  Text(
-                    '${account['code'] ?? '-'} - ${account['account_name'] ?? '-'}',
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 10),
-                  _detailLine('Account Type', account['account_type_name']),
-                  _detailLine('Parent', account['parent_name']),
-                  _detailLine('Currency', account['currency_name'] ?? account['currency']),
-                  _detailLine('Status', _statusLabel(account['status']?.toString())),
-                  _detailLine('Children', account['children_count']),
-                  _detailLine('Description', account['description']),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _detailLine(String label, dynamic value) {
-    final text = (value ?? '').toString().trim();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-          children: [
-            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w700)),
-            TextSpan(text: text.isEmpty ? '-' : text),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -719,7 +1124,10 @@ class _ChartAccountDetailSheet extends StatelessWidget {
 
 List<Map<String, dynamic>> _toMaps(dynamic value) {
   final list = value as List? ?? const [];
-  return list.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+  return list
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList();
 }
 
 int _toInt(dynamic value) {
@@ -748,6 +1156,10 @@ String _statusLabel(String? status) {
   return status
       .replaceAll('_', ' ')
       .split(' ')
-      .map((word) => word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}')
+      .map(
+        (word) => word.isEmpty
+            ? word
+            : '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}',
+      )
       .join(' ');
 }

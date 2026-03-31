@@ -98,9 +98,11 @@ import '../../presentation/screens/staff/staff_salaries_screen.dart';
 import '../../presentation/screens/staff/staff_loans_screen.dart';
 import '../../presentation/screens/staff/deductions_screen.dart';
 import '../../presentation/screens/staff/deduction_subscriptions_screen.dart';
+import '../../presentation/screens/staff/salary_slips_screen.dart';
 import '../../presentation/screens/staff/leave_managements_screen.dart';
 import '../../presentation/screens/staff/leave_requests_screen.dart';
 import '../../presentation/screens/staff/leave_types_screen.dart';
+import '../../presentation/screens/staff/leave_dashboard_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
 import '../../presentation/screens/messages/messages_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
@@ -559,6 +561,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const PayrollAdministrationScreen(),
           ),
           GoRoute(
+            path: '/payroll/salary-slips',
+            name: 'payroll-salary-slips',
+            builder: (context, state) => const SalarySlipsScreen(),
+          ),
+          GoRoute(
             path: '/allowances',
             name: 'allowances',
             builder: (context, state) => const AllowancesScreen(),
@@ -606,7 +613,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/leave-dashboard',
             name: 'leave-dashboard',
-            builder: (context, state) => const LeaveRequestsScreen(),
+            builder: (context, state) => const LeaveDashboardScreen(),
           ),
           GoRoute(
             path: '/accounting',
@@ -1335,10 +1342,9 @@ String? _mapWebRoute(String webRoute) {
     'leave-dashboard': '/leave-dashboard',
     'leaves_leave_dashboard': '/leave-dashboard',
     'leaves/leave_dashboard': '/leave-dashboard',
-    'salary_slips': '/payroll',
-    'salary-slips': '/payroll',
-    'payroll_salary_slips': '/payroll',
-    'payroll/salary_slips': '/payroll',
+    'salary_slips': '/payroll/salary-slips',
+    'payroll_salary_slips': '/payroll/salary-slips',
+    'payroll/salary_slips': '/payroll/salary-slips',
     'employee_salary_slip': '/payroll',
     'payroll_employee_salary_slip': '/payroll',
     'crdb_bank_file': '/payroll-crdb-bank-file',
@@ -1355,18 +1361,24 @@ String? _mapWebRoute(String webRoute) {
     'payroll': '/payroll',
     'payroll_administration': '/payroll-administration',
     'payroll-administration': '/payroll-administration',
+    'payroll_payroll_administration': '/payroll-administration',
     'allowances': '/allowances',
     'settings_allowances': '/allowances',
     'hr_settings_allowances': '/allowances',
     'deductions': '/deductions',
     'settings_deductions': '/deductions',
     'hr_settings_deductions': '/deductions',
+    'payroll_deductions': '/deductions',
     'deduction_subscriptions': '/deduction-subscriptions',
     'deduction-subscriptions': '/deduction-subscriptions',
     'settings_deduction_subscriptions': '/deduction-subscriptions',
     'hr_settings_deduction_subscriptions': '/deduction-subscriptions',
+    'payroll_deduction_subscriptions': '/deduction-subscriptions',
     'payroll_staff_bank_details': '/staff-bank-details',
     'staff_bank_details': '/staff-bank-details',
+    'staff_bank_detail': '/staff-bank-details',
+    'settings_staff_bank_details': '/staff-bank-details',
+    'hr_settings_staff_bank_detail': '/staff-bank-details',
     'adjustment': '/adjustments',
     'adjustments': '/adjustments',
     'expenses': '/expenses',

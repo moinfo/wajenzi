@@ -4,108 +4,119 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
 
-final _billingStatusProvider =
-    StateProvider.autoDispose<String?>((ref) => null);
+final _billingStatusProvider = StateProvider.autoDispose<String?>(
+  (ref) => null,
+);
 
-final _billingTypeProvider =
-    StateProvider.autoDispose<String?>((ref) => null);
+final _billingTypeProvider = StateProvider.autoDispose<String?>((ref) => null);
 
 final _billingDocumentsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final status = ref.watch(_billingStatusProvider);
-  final type = ref.watch(_billingTypeProvider);
-  final response = await api.get(
-    '/billing/documents',
-    queryParameters: {
-      if (status != null && status.isNotEmpty) 'status': status,
-      if (type != null && type.isNotEmpty) 'document_type': type,
-    },
-  );
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return {
-    'items': (data['data'] as List? ?? const [])
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList(),
-    'meta': data['meta'] is Map
-        ? Map<String, dynamic>.from(data['meta'] as Map)
-        : const <String, dynamic>{},
-  };
-});
+      final api = ref.watch(apiClientProvider);
+      final status = ref.watch(_billingStatusProvider);
+      final type = ref.watch(_billingTypeProvider);
+      final response = await api.get(
+        '/billing/documents',
+        queryParameters: {
+          if (status != null && status.isNotEmpty) 'status': status,
+          if (type != null && type.isNotEmpty) 'document_type': type,
+        },
+      );
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return {
+        'items': (data['data'] as List? ?? const [])
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(),
+        'meta': data['meta'] is Map
+            ? Map<String, dynamic>.from(data['meta'] as Map)
+            : const <String, dynamic>{},
+      };
+    });
 
 final _billingDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/billing/documents/$id');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/billing/documents/$id');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
 final _billingPaymentsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/billing/payments');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return {
-    'items': (data['data'] as List? ?? const [])
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList(),
-    'meta': data['meta'] is Map
-        ? Map<String, dynamic>.from(data['meta'] as Map)
-        : const <String, dynamic>{},
-  };
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/billing/payments');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return {
+        'items': (data['data'] as List? ?? const [])
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(),
+        'meta': data['meta'] is Map
+            ? Map<String, dynamic>.from(data['meta'] as Map)
+            : const <String, dynamic>{},
+      };
+    });
 
 final _billingClientsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/billing/clients');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/billing/clients');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
 final _billingDashboardProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/billing/dashboard');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/billing/dashboard');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
-class StaffBillingScreen extends ConsumerWidget {
+class StaffBillingScreen extends ConsumerStatefulWidget {
   const StaffBillingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StaffBillingScreen> createState() => _StaffBillingScreenState();
+}
+
+class _StaffBillingScreenState extends ConsumerState<StaffBillingScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
 
     return DefaultTabController(
       length: 4,
       child: Scaffold(
         appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.menu_rounded),
+            onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+          ),
           title: Text(isSwahili ? 'Ankara' : 'Billing'),
           bottom: TabBar(
             isScrollable: true,
@@ -163,30 +174,45 @@ class _DashboardTab extends ConsumerWidget {
         ),
         data: (data) {
           final metrics = data['metrics'] as Map<String, dynamic>? ?? const {};
-          final recentInvoices =
-              (data['recent_invoices'] as List? ?? const []).cast<Map<String, dynamic>>();
+          final recentInvoices = (data['recent_invoices'] as List? ?? const [])
+              .cast<Map<String, dynamic>>();
           final overdueInvoices =
-              (data['overdue_invoices'] as List? ?? const []).cast<Map<String, dynamic>>();
-          final recentPayments =
-              (data['recent_payments'] as List? ?? const []).cast<Map<String, dynamic>>();
+              (data['overdue_invoices'] as List? ?? const [])
+                  .cast<Map<String, dynamic>>();
+          final recentPayments = (data['recent_payments'] as List? ?? const [])
+              .cast<Map<String, dynamic>>();
           final statusBreakdown =
-              (data['status_breakdown'] as List? ?? const []).cast<Map<String, dynamic>>();
-          final monthlyRevenue =
-              (data['monthly_revenue'] as List? ?? const []).cast<Map<String, dynamic>>();
+              (data['status_breakdown'] as List? ?? const [])
+                  .cast<Map<String, dynamic>>();
+          final monthlyRevenue = (data['monthly_revenue'] as List? ?? const [])
+              .cast<Map<String, dynamic>>();
 
           return ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             children: [
-              _MetricsGrid(metrics: metrics, isSwahili: isSwahili, isDarkMode: isDarkMode),
+              _MetricsGrid(
+                metrics: metrics,
+                isSwahili: isSwahili,
+                isDarkMode: isDarkMode,
+              ),
               const SizedBox(height: 16),
               _DashboardSection(
-                title: isSwahili ? 'Ankara za Hivi Karibuni' : 'Recent Invoices',
+                title: isSwahili
+                    ? 'Ankara za Hivi Karibuni'
+                    : 'Recent Invoices',
                 child: recentInvoices.isEmpty
-                    ? _SectionEmpty(label: isSwahili ? 'Hakuna ankara' : 'No invoices')
+                    ? _SectionEmpty(
+                        label: isSwahili ? 'Hakuna ankara' : 'No invoices',
+                      )
                     : Column(
                         children: recentInvoices
-                            .map((item) => _MiniDocRow(item: item, isDarkMode: isDarkMode))
+                            .map(
+                              (item) => _MiniDocRow(
+                                item: item,
+                                isDarkMode: isDarkMode,
+                              ),
+                            )
                             .toList(),
                       ),
               ),
@@ -195,30 +221,51 @@ class _DashboardTab extends ConsumerWidget {
                 title: isSwahili ? 'Ankara Zilizochelewa' : 'Overdue Invoices',
                 child: overdueInvoices.isEmpty
                     ? _SectionEmpty(
-                        label: isSwahili ? 'Hakuna ankara zilizochelewa' : 'No overdue invoices',
+                        label: isSwahili
+                            ? 'Hakuna ankara zilizochelewa'
+                            : 'No overdue invoices',
                       )
                     : Column(
                         children: overdueInvoices
-                            .map((item) => _MiniDocRow(item: item, isDarkMode: isDarkMode, overdue: true))
+                            .map(
+                              (item) => _MiniDocRow(
+                                item: item,
+                                isDarkMode: isDarkMode,
+                                overdue: true,
+                              ),
+                            )
                             .toList(),
                       ),
               ),
               const SizedBox(height: 16),
               _DashboardSection(
-                title: isSwahili ? 'Malipo ya Hivi Karibuni' : 'Recent Payments',
+                title: isSwahili
+                    ? 'Malipo ya Hivi Karibuni'
+                    : 'Recent Payments',
                 child: recentPayments.isEmpty
-                    ? _SectionEmpty(label: isSwahili ? 'Hakuna malipo' : 'No payments')
+                    ? _SectionEmpty(
+                        label: isSwahili ? 'Hakuna malipo' : 'No payments',
+                      )
                     : Column(
                         children: recentPayments
-                            .map((item) => _MiniPaymentRow(item: item, isDarkMode: isDarkMode))
+                            .map(
+                              (item) => _MiniPaymentRow(
+                                item: item,
+                                isDarkMode: isDarkMode,
+                              ),
+                            )
                             .toList(),
                       ),
               ),
               const SizedBox(height: 16),
               _DashboardSection(
-                title: isSwahili ? 'Hali ya Ankara' : 'Invoice Status Breakdown',
+                title: isSwahili
+                    ? 'Hali ya Ankara'
+                    : 'Invoice Status Breakdown',
                 child: statusBreakdown.isEmpty
-                    ? _SectionEmpty(label: isSwahili ? 'Hakuna takwimu' : 'No breakdown')
+                    ? _SectionEmpty(
+                        label: isSwahili ? 'Hakuna takwimu' : 'No breakdown',
+                      )
                     : Column(
                         children: statusBreakdown
                             .map((item) => _StatusBreakdownRow(item: item))
@@ -227,10 +274,17 @@ class _DashboardTab extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _DashboardSection(
-                title: isSwahili ? 'Mwelekeo wa Mapato' : 'Monthly Revenue Trend',
+                title: isSwahili
+                    ? 'Mwelekeo wa Mapato'
+                    : 'Monthly Revenue Trend',
                 child: monthlyRevenue.isEmpty
-                    ? _SectionEmpty(label: isSwahili ? 'Hakuna data' : 'No trend data')
-                    : _RevenueTrend(monthlyRevenue: monthlyRevenue, isDarkMode: isDarkMode),
+                    ? _SectionEmpty(
+                        label: isSwahili ? 'Hakuna data' : 'No trend data',
+                      )
+                    : _RevenueTrend(
+                        monthlyRevenue: monthlyRevenue,
+                        isDarkMode: isDarkMode,
+                      ),
               ),
               const SizedBox(height: 24),
             ],
@@ -274,8 +328,8 @@ class _DocumentsTab extends ConsumerWidget {
                 onRetry: () => ref.invalidate(_billingDocumentsProvider),
               ),
               data: (payload) {
-                final docs =
-                    (payload['items'] as List).cast<Map<String, dynamic>>();
+                final docs = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
                 final meta =
                     payload['meta'] as Map<String, dynamic>? ?? const {};
 
@@ -307,8 +361,11 @@ class _DocumentsTab extends ConsumerWidget {
                       (doc) => _BillingCard(
                         doc: doc,
                         isDarkMode: isDarkMode,
-                        onTap: () =>
-                            _showBillingDetailSheet(context, ref, _toInt(doc['id'])),
+                        onTap: () => _showBillingDetailSheet(
+                          context,
+                          ref,
+                          _toInt(doc['id']),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 80),
@@ -356,8 +413,10 @@ class _PaymentsTab extends ConsumerWidget {
             itemBuilder: (context, index) {
               if (index == items.length) return const SizedBox(height: 80);
               final payment = items[index];
-              final doc = payment['document'] as Map<String, dynamic>? ?? const {};
-              final client = payment['client'] as Map<String, dynamic>? ?? const {};
+              final doc =
+                  payment['document'] as Map<String, dynamic>? ?? const {};
+              final client =
+                  payment['client'] as Map<String, dynamic>? ?? const {};
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
@@ -450,7 +509,10 @@ class _ClientsTab extends ConsumerWidget {
                   contentPadding: const EdgeInsets.all(16),
                   leading: CircleAvatar(
                     backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    child: const Icon(Icons.person_outline, color: AppColors.primary),
+                    child: const Icon(
+                      Icons.person_outline,
+                      color: AppColors.primary,
+                    ),
                   ),
                   title: Text(
                     client['full_name']?.toString() ?? '-',
@@ -625,7 +687,10 @@ class _MetricsGrid extends StatelessWidget {
                 card.value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               Text(
                 card.label,
@@ -648,10 +713,7 @@ class _DashboardSection extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const _DashboardSection({
-    required this.title,
-    required this.child,
-  });
+  const _DashboardSection({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -753,10 +815,7 @@ class _MiniDocRow extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 status.replaceAll('_', ' '),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: _statusColor(status),
-                ),
+                style: TextStyle(fontSize: 12, color: _statusColor(status)),
               ),
             ],
           ),
@@ -770,10 +829,7 @@ class _MiniPaymentRow extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isDarkMode;
 
-  const _MiniPaymentRow({
-    required this.item,
-    required this.isDarkMode,
-  });
+  const _MiniPaymentRow({required this.item, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -872,10 +928,7 @@ class _RevenueTrend extends StatelessWidget {
   final List<Map<String, dynamic>> monthlyRevenue;
   final bool isDarkMode;
 
-  const _RevenueTrend({
-    required this.monthlyRevenue,
-    required this.isDarkMode,
-  });
+  const _RevenueTrend({required this.monthlyRevenue, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -902,8 +955,13 @@ class _RevenueTrend extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  revenue >= 1000 ? '${(revenue / 1000).toStringAsFixed(0)}k' : revenue.toStringAsFixed(0),
-                  style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                  revenue >= 1000
+                      ? '${(revenue / 1000).toStringAsFixed(0)}k'
+                      : revenue.toStringAsFixed(0),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Container(
@@ -945,7 +1003,8 @@ class _BillingCard extends StatelessWidget {
     final docNumber = doc['document_number'] as String? ?? '';
     final client =
         doc['client'] as Map<String, dynamic>? ?? const <String, dynamic>{};
-    final clientName = client['full_name'] as String? ??
+    final clientName =
+        client['full_name'] as String? ??
         client['name'] as String? ??
         client['first_name'] as String? ??
         '';
@@ -980,7 +1039,11 @@ class _BillingCard extends StatelessWidget {
                 color: statusColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(Icons.receipt_long_rounded, color: statusColor, size: 22),
+              child: Icon(
+                Icons.receipt_long_rounded,
+                color: statusColor,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1052,8 +1115,10 @@ class _BillingCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -1106,10 +1171,11 @@ void _showBillingDetailSheet(BuildContext context, WidgetRef ref, int id) {
               data: (detail) {
                 final items =
                     (detail['items'] as List?)?.cast<Map<String, dynamic>>() ??
-                        [];
+                    [];
                 final payments =
-                    (detail['payments'] as List?)?.cast<Map<String, dynamic>>() ??
-                        [];
+                    (detail['payments'] as List?)
+                        ?.cast<Map<String, dynamic>>() ??
+                    [];
                 final client = detail['client'] as Map<String, dynamic>?;
                 final project = detail['project'] as Map<String, dynamic>?;
 
@@ -1117,7 +1183,8 @@ void _showBillingDetailSheet(BuildContext context, WidgetRef ref, int id) {
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
                   children: [
                     Text(
-                      detail['document_number'] as String? ?? 'Billing Document',
+                      detail['document_number'] as String? ??
+                          'Billing Document',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -1125,7 +1192,9 @@ void _showBillingDetailSheet(BuildContext context, WidgetRef ref, int id) {
                     ),
                     const SizedBox(height: 18),
                     _BillingDetailRow(
-                        'Type', detail['document_type'] as String? ?? 'N/A'),
+                      'Type',
+                      detail['document_type'] as String? ?? 'N/A',
+                    ),
                     _BillingDetailRow(
                       'Client',
                       client?['full_name'] as String? ??
@@ -1137,14 +1206,29 @@ void _showBillingDetailSheet(BuildContext context, WidgetRef ref, int id) {
                       project?['project_name'] as String? ?? 'N/A',
                     ),
                     _BillingDetailRow(
-                        'Status', detail['status'] as String? ?? 'N/A'),
+                      'Status',
+                      detail['status'] as String? ?? 'N/A',
+                    ),
                     _BillingDetailRow(
-                        'Issue Date', detail['issue_date'] as String? ?? '-'),
+                      'Issue Date',
+                      detail['issue_date'] as String? ?? '-',
+                    ),
                     _BillingDetailRow(
-                        'Due Date', detail['due_date'] as String? ?? '-'),
-                    _BillingDetailRow('Total Amount', _money(detail['total_amount'])),
-                    _BillingDetailRow('Paid Amount', _money(detail['paid_amount'])),
-                    _BillingDetailRow('Balance', _money(detail['balance_amount'])),
+                      'Due Date',
+                      detail['due_date'] as String? ?? '-',
+                    ),
+                    _BillingDetailRow(
+                      'Total Amount',
+                      _money(detail['total_amount']),
+                    ),
+                    _BillingDetailRow(
+                      'Paid Amount',
+                      _money(detail['paid_amount']),
+                    ),
+                    _BillingDetailRow(
+                      'Balance',
+                      _money(detail['balance_amount']),
+                    ),
                     if ((detail['notes'] as String? ?? '').isNotEmpty)
                       _BillingDetailRow('Notes', detail['notes'] as String),
                     if (items.isNotEmpty) ...[
@@ -1265,13 +1349,21 @@ void _showPaymentSheet(
                     const SizedBox(height: 18),
                     _BillingDetailRow('Amount', _money(payment['amount'])),
                     _BillingDetailRow(
-                        'Date', payment['payment_date']?.toString() ?? '-'),
+                      'Date',
+                      payment['payment_date']?.toString() ?? '-',
+                    ),
                     _BillingDetailRow(
-                        'Method', payment['payment_method']?.toString() ?? '-'),
+                      'Method',
+                      payment['payment_method']?.toString() ?? '-',
+                    ),
                     _BillingDetailRow(
-                        'Status', payment['status']?.toString() ?? '-'),
+                      'Status',
+                      payment['status']?.toString() ?? '-',
+                    ),
                     _BillingDetailRow(
-                        'Document', document['document_number']?.toString() ?? '-'),
+                      'Document',
+                      document['document_number']?.toString() ?? '-',
+                    ),
                     _BillingDetailRow(
                       'Client',
                       client['full_name']?.toString() ??
@@ -1355,13 +1447,21 @@ void _showClientSheet(
                     ),
                     const SizedBox(height: 18),
                     _BillingDetailRow(
-                        'Email', client['email']?.toString() ?? '-'),
+                      'Email',
+                      client['email']?.toString() ?? '-',
+                    ),
                     _BillingDetailRow(
-                        'Phone', client['phone_number']?.toString() ?? '-'),
+                      'Phone',
+                      client['phone_number']?.toString() ?? '-',
+                    ),
                     _BillingDetailRow(
-                        'Address', client['address']?.toString() ?? '-'),
+                      'Address',
+                      client['address']?.toString() ?? '-',
+                    ),
                     _BillingDetailRow(
-                        'Status', client['status']?.toString() ?? '-'),
+                      'Status',
+                      client['status']?.toString() ?? '-',
+                    ),
                     _BillingDetailRow(
                       'Portal Access',
                       client['portal_access_enabled'] == true
@@ -1418,10 +1518,7 @@ class _EmptyView extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _EmptyView({
-    required this.icon,
-    required this.label,
-  });
+  const _EmptyView({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -1484,8 +1581,9 @@ class _ErrorView extends StatelessWidget {
 }
 
 String _money(dynamic amount) {
-  final val =
-      amount is num ? amount.toDouble() : double.tryParse('$amount') ?? 0;
+  final val = amount is num
+      ? amount.toDouble()
+      : double.tryParse('$amount') ?? 0;
   final formatter = NumberFormat('#,##0.##', 'en');
   return 'TZS ${formatter.format(val)}';
 }

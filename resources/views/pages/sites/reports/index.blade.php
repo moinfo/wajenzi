@@ -116,19 +116,23 @@
                     <tbody>
                         @forelse($reports as $report)
                             <tr>
-                                <td>{{ $report->report_date->format('M d, Y') }}</td>
+                                <td>{{ $report->report_date ? $report->report_date->format('M d, Y') : '-' }}</td>
                                 <td>
-                                    <strong>{{ $report->site->name }}</strong>
-                                    <br><small class="text-muted">{{ $report->site->location }}</small>
+                                    @if($report->site)
+                                        <strong>{{ $report->site->name }}</strong>
+                                        <br><small class="text-muted">{{ $report->site->location ?? '' }}</small>
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
-                                <td>{{ $report->supervisor->name }}</td>
+                                <td>{{ $report->supervisor->name ?? '-' }}</td>
                                 <td>
                                     <div class="progress" style="height: 20px;">
                                         <div class="progress-bar" role="progressbar" 
-                                             style="width: {{ $report->progress_percentage }}%"
-                                             aria-valuenow="{{ $report->progress_percentage }}" 
+                                             style="width: {{ $report->progress_percentage ?? 0 }}%"
+                                             aria-valuenow="{{ $report->progress_percentage ?? 0 }}" 
                                              aria-valuemin="0" aria-valuemax="100">
-                                            {{ number_format($report->progress_percentage, 1) }}%
+                                            {{ number_format($report->progress_percentage ?? 0, 1) }}%
                                         </div>
                                     </div>
                                 </td>
@@ -150,7 +154,7 @@
                                             'REJECTED' => 'danger'
                                         ][$report->status] ?? 'secondary';
                                     @endphp
-                                    <span class="badge badge-{{ $statusClass }}">{{ $report->status }}</span>
+                                    <span class="badge badge-{{ $statusClass }}">{{ $report->status ?? 'DRAFT' }}</span>
                                 </td>
                                 <td>
                                     <x-ringlesoft-approval-status-summary :model="$report" />

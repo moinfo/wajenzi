@@ -27,12 +27,12 @@ class StaffSalaryApiController extends Controller
 
     public function referenceData(): JsonResponse
     {
-        $staffs = User::onlyStaffs()->sortBy('name')->values();
+        $staffs = collect(User::onlyStaffs())->sortBy('name')->values();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'staffs' => $staffs->map(fn (User $staff) => [
+                'staffs' => $staffs->map(fn ($staff) => [
                     'id' => $staff->id,
                     'name' => $staff->name,
                 ])->values(),

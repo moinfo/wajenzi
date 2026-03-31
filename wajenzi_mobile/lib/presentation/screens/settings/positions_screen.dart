@@ -3,256 +3,214 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
-import '../../widgets/common/loading_widget.dart';
+import '../../../core/router/app_router.dart';
+import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
+
+final _positionsSearchProvider = StateProvider<String>((ref) => '');
 
 final _positionsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/positions');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/positions');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
 final _positionsReferenceProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/positions/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map<String, dynamic>
-      ? Map<String, dynamic>.from(data['data'] as Map<String, dynamic>)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/positions/reference-data');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map<String, dynamic>
+          ? Map<String, dynamic>.from(data['data'] as Map<String, dynamic>)
+          : const <String, dynamic>{};
+    });
 
 class PositionsScreen extends ConsumerWidget {
   const PositionsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final asyncData = ref.watch(_positionsProvider);
+    final isSwahili = ref.watch(isSwahiliProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
+    final search = ref.watch(_positionsSearchProvider).trim().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Positions'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openForm(context, ref),
-          ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
+        title: Text(isSwahili ? 'Nafasi za Kazi' : 'Positions'),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _openForm(context, ref),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza Nafasi' : 'Add Position',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_positionsProvider);
           ref.invalidate(_positionsReferenceProvider);
         },
-        child: asyncData.when(
-          loading: () => const LoadingWidget(message: 'Loading positions...'),
-          error: (error, _) => ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(24),
-            children: [
-              const SizedBox(height: 48),
-              const Icon(Icons.error_outline, size: 56, color: AppColors.error),
-              const SizedBox(height: 12),
-              const Text(
-                'Failed to load positions',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  onChanged: (value) =>
+                      ref.read(_positionsSearchProvider.notifier).state = value,
+                  decoration: InputDecoration(
+                    hintText: isSwahili
+                        ? 'Tafuta nafasi...'
+                        : 'Search positions...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () =>
+                                ref
+                                        .read(_positionsSearchProvider.notifier)
+                                        .state =
+                                    '',
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(vatErrorMessage(error), textAlign: TextAlign.center),
-            ],
-          ),
-          data: (items) {
-            if (items.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(24),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.badge_outlined, size: 56, color: AppColors.primary),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'No positions found',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Create a position to manage this setting from mobile.',
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => _openForm(context, ref),
-                          icon: const Icon(Icons.add),
-                          label: const Text('New Position'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            }
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 18,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
+            ),
+            asyncData.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (error, _) => SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(Icons.badge_outlined, color: AppColors.primary),
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.grey[400],
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Positions',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Showing ${items.length} records',
-                              style: const TextStyle(color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
+                      const SizedBox(height: 16),
+                      Text('$error', textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(_positionsProvider),
+                        child: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                ...List.generate(items.length, (index) {
-                  final item = items[index];
-                  final status = (item['status'] ?? 'ACTIVE').toString();
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      leading: Container(
-                        width: 42,
-                        height: 42,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          item['abbreviation']?.toString().isNotEmpty == true
-                              ? item['abbreviation'].toString()
-                              : '${index + 1}',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      title: Text(
-                        item['name']?.toString() ?? '-',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Reports to: ${item['report_to_name'] ?? 'Not assigned'}'),
-                            const SizedBox(height: 4),
-                            Text(
-                              item['description']?.toString().trim().isNotEmpty == true
-                                  ? item['description'].toString()
-                                  : 'No description',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+              ),
+              data: (items) {
+                final filtered = search.isEmpty
+                    ? items
+                    : items.where((item) {
+                        final name =
+                            item['name']?.toString().toLowerCase() ?? '';
+                        final abbr =
+                            item['abbreviation']?.toString().toLowerCase() ??
+                            '';
+                        return name.contains(search) || abbr.contains(search);
+                      }).toList();
+
+                if (filtered.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.badge_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            items.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna nafasi'
+                                      : 'No positions found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No matching results'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
                             ),
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: status == 'ACTIVE'
-                                    ? AppColors.success.withValues(alpha: 0.12)
-                                    : Colors.grey.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                status,
-                                style: TextStyle(
-                                  color: status == 'ACTIVE'
-                                      ? AppColors.success
-                                      : AppColors.textSecondary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
+                          ),
+                          if (search.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  ref
+                                          .read(
+                                            _positionsSearchProvider.notifier,
+                                          )
+                                          .state =
+                                      '',
+                              icon: const Icon(Icons.clear),
+                              label: Text(
+                                isSwahili ? 'Futa utafutaji' : 'Clear search',
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _openForm(context, ref, item: item);
-                          } else if (value == 'delete') {
-                            _deleteItem(context, ref, item);
-                          }
-                        },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
                         ],
                       ),
                     ),
                   );
-                }),
-                const SizedBox(height: 80),
-              ],
-            );
-          },
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = filtered[index];
+                      return _PositionCard(
+                        item: item,
+                        index: index,
+                        onEdit: () => _openForm(context, ref, item: item),
+                        onDelete: () => _deleteItem(context, ref, item),
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                      );
+                    }, childCount: filtered.length),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(context, ref),
-        icon: const Icon(Icons.add),
-        label: const Text('New Position'),
       ),
     );
   }
@@ -282,19 +240,25 @@ class PositionsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isSwahili = ref.read(isSwahiliProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Position'),
-        content: Text('Delete ${item['name']}?'),
+        title: Text(isSwahili ? 'Futa Nafasi' : 'Delete Position'),
+        content: Text(
+          isSwahili ? 'Futa ${item['name']}?' : 'Delete ${item['name']}?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(
+              isSwahili ? 'Futa' : 'Delete',
+              style: const TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -306,8 +270,10 @@ class PositionsScreen extends ConsumerWidget {
       ref.invalidate(_positionsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Position deleted successfully'),
+        SnackBar(
+          content: Text(
+            isSwahili ? 'Nafasi imefutwa' : 'Position deleted successfully',
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -320,6 +286,138 @@ class PositionsScreen extends ConsumerWidget {
         ),
       );
     }
+  }
+}
+
+class _PositionCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final int index;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final bool isSwahili;
+  final bool isDarkMode;
+
+  const _PositionCard({
+    required this.item,
+    required this.index,
+    required this.onEdit,
+    required this.onDelete,
+    required this.isSwahili,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final status = (item['status'] ?? 'ACTIVE').toString();
+    final abbreviation = item['abbreviation']?.toString() ?? '';
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: isDarkMode ? const Color(0xFF2A2A3E) : Colors.white,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        leading: Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            abbreviation.isNotEmpty ? abbreviation : '${index + 1}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+        title: Text(
+          item['name']?.toString() ?? '-',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isSwahili
+                    ? 'Ripoti kwa: ${item['report_to_name'] ?? 'Haiwekezwi'}'
+                    : 'Reports to: ${item['report_to_name'] ?? 'Not assigned'}',
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: status == 'ACTIVE'
+                      ? AppColors.success.withValues(alpha: 0.12)
+                      : Colors.grey.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    color: status == 'ACTIVE'
+                        ? AppColors.success
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'edit') {
+              onEdit();
+            } else if (value == 'delete') {
+              onDelete();
+            }
+          },
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: 'edit',
+              child: Row(
+                children: [
+                  const Icon(Icons.edit_rounded, size: 20),
+                  const SizedBox(width: 8),
+                  Text(isSwahili ? 'Hariri' : 'Edit'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.delete_rounded,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isSwahili ? 'Futa' : 'Delete',
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -371,6 +469,7 @@ class _PositionFormSheetState extends ConsumerState<_PositionFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
     final referenceAsync = ref.watch(_positionsReferenceProvider);
 
     return Container(
@@ -403,37 +502,48 @@ class _PositionFormSheetState extends ConsumerState<_PositionFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _isEdit ? 'Edit Position' : 'Create New Position',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  _isEdit
+                      ? (isSwahili ? 'Hariri Nafasi' : 'Edit Position')
+                      : (isSwahili
+                            ? 'Unda Nafasi Mpya'
+                            : 'Create New Position'),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Position Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Jina la Nafasi' : 'Position Name',
+                    border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Name is required' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? (isSwahili ? 'Jina linahitajika' : 'Name is required')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _abbreviationController,
                   textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    labelText: 'Abbreviation',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Kifupi' : 'Abbreviation',
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty)
-                      ? 'Abbreviation is required'
+                      ? (isSwahili
+                            ? 'Kifupi kinahitajika'
+                            : 'Abbreviation is required')
                       : null,
                 ),
                 const SizedBox(height: 16),
                 referenceAsync.when(
                   loading: () => const LinearProgressIndicator(),
-                  error: (_, _) => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
                   data: (reference) {
-                    final rawPositions = reference['positions'] as List? ?? const [];
+                    final rawPositions =
+                        reference['positions'] as List? ?? const [];
                     final positions = rawPositions
                         .whereType<Map>()
                         .map((item) => Map<String, dynamic>.from(item))
@@ -442,14 +552,18 @@ class _PositionFormSheetState extends ConsumerState<_PositionFormSheet> {
 
                     return DropdownButtonFormField<int?>(
                       value: _reportToId,
-                      decoration: const InputDecoration(
-                        labelText: 'Reports To',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: isSwahili ? 'Ripoti Kwa' : 'Reports To',
+                        border: const OutlineInputBorder(),
                       ),
                       items: [
-                        const DropdownMenuItem<int?>(
+                        DropdownMenuItem<int?>(
                           value: null,
-                          child: Text('No reporting line'),
+                          child: Text(
+                            isSwahili
+                                ? 'Hakuna mstari wa ripoti'
+                                : 'No reporting line',
+                          ),
                         ),
                         ...positions.map(
                           (position) => DropdownMenuItem<int?>(
@@ -467,23 +581,30 @@ class _PositionFormSheetState extends ConsumerState<_PositionFormSheet> {
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: _status,
-                  decoration: const InputDecoration(
-                    labelText: 'Status',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Hali' : 'Status',
+                    border: const OutlineInputBorder(),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'ACTIVE', child: Text('ACTIVE')),
-                    DropdownMenuItem(value: 'INACTIVE', child: Text('INACTIVE')),
+                  items: [
+                    DropdownMenuItem(
+                      value: 'ACTIVE',
+                      child: Text(isSwahili ? 'INAENDELEA' : 'ACTIVE'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'INACTIVE',
+                      child: Text(isSwahili ? 'HAIUNA KAZI' : 'INACTIVE'),
+                    ),
                   ],
-                  onChanged: (value) => setState(() => _status = value ?? 'ACTIVE'),
+                  onChanged: (value) =>
+                      setState(() => _status = value ?? 'ACTIVE'),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _descriptionController,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Maelezo' : 'Description',
+                    border: const OutlineInputBorder(),
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -494,8 +615,14 @@ class _PositionFormSheetState extends ConsumerState<_PositionFormSheet> {
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? 'Saving...'
-                          : (_isEdit ? 'Update Position' : 'Save Position'),
+                          ? (isSwahili ? 'Inahifadhi...' : 'Saving...')
+                          : (_isEdit
+                                ? (isSwahili
+                                      ? 'Sasisha Nafasi'
+                                      : 'Update Position')
+                                : (isSwahili
+                                      ? 'Hifadhi Nafasi'
+                                      : 'Save Position')),
                     ),
                   ),
                 ),

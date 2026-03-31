@@ -3,11 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
-import '../../widgets/common/loading_widget.dart';
+import '../../../core/router/app_router.dart';
+import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
 
-final _itemsProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+final _itemsSearchProvider = StateProvider<String>((ref) => '');
+
+final _itemsProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
   final response = await api.get('/settings-items');
   final data = response.data is Map<String, dynamic>
@@ -25,178 +29,165 @@ class ItemsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final asyncData = ref.watch(_itemsProvider);
+    final isSwahili = ref.watch(isSwahiliProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
+    final search = ref.watch(_itemsSearchProvider).trim().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Items'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openForm(context, ref),
-          ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
+        title: Text(isSwahili ? 'Vifaa' : 'Items'),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _openForm(context, ref),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza Kifaa' : 'Add Item',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_itemsProvider),
-        child: asyncData.when(
-          loading: () => const LoadingWidget(message: 'Loading items...'),
-          error: (error, _) => ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(24),
-            children: [
-              const SizedBox(height: 48),
-              const Icon(Icons.error_outline, size: 56, color: AppColors.error),
-              const SizedBox(height: 12),
-              const Text(
-                'Failed to load items',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  onChanged: (value) =>
+                      ref.read(_itemsSearchProvider.notifier).state = value,
+                  decoration: InputDecoration(
+                    hintText: isSwahili ? 'Tafuta kifaa...' : 'Search items...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () =>
+                                ref.read(_itemsSearchProvider.notifier).state =
+                                    '',
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              Text(vatErrorMessage(error), textAlign: TextAlign.center),
-            ],
-          ),
-          data: (items) {
-            if (items.isEmpty) {
-              return ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(24),
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(Icons.inventory_2_outlined, size: 56, color: AppColors.primary),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'No items found',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Create an item to manage this setting from mobile.',
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => _openForm(context, ref),
-                          icon: const Icon(Icons.add),
-                          label: const Text('New Item'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            }
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 18,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Row(
+            ),
+            asyncData.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (error, _) => SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(Icons.inventory_2_outlined, color: AppColors.primary),
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.grey[400],
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Items',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Showing ${items.length} records',
-                              style: const TextStyle(color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
+                      const SizedBox(height: 16),
+                      Text('$error', textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(_itemsProvider),
+                        child: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                ...List.generate(items.length, (index) {
-                  final item = items[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      leading: Container(
-                        width: 38,
-                        height: 38,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          '${index + 1}',
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      title: Text(
-                        item['name']?.toString() ?? '-',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                      ),
-                      trailing: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _openForm(context, ref, item: item);
-                          } else if (value == 'delete') {
-                            _deleteItem(context, ref, item);
-                          }
-                        },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+              ),
+              data: (items) {
+                final filtered = search.isEmpty
+                    ? items
+                    : items.where((item) {
+                        final name =
+                            item['name']?.toString().toLowerCase() ?? '';
+                        return name.contains(search);
+                      }).toList();
+
+                if (filtered.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            items.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna vifaa'
+                                      : 'No items found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No matching results'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          if (search.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  ref
+                                          .read(_itemsSearchProvider.notifier)
+                                          .state =
+                                      '',
+                              icon: const Icon(Icons.clear),
+                              label: Text(
+                                isSwahili ? 'Futa utafutaji' : 'Clear search',
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
                   );
-                }),
-                const SizedBox(height: 80),
-              ],
-            );
-          },
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = filtered[index];
+                      return _ItemCard(
+                        item: item,
+                        index: index,
+                        onEdit: () => _openForm(context, ref, item: item),
+                        onDelete: () => _deleteItem(context, ref, item),
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                      );
+                    }, childCount: filtered.length),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(context, ref),
-        icon: const Icon(Icons.add),
-        label: const Text('New Item'),
       ),
     );
   }
@@ -225,19 +216,25 @@ class ItemsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isSwahili = ref.read(isSwahiliProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Item'),
-        content: Text('Delete ${item['name']}?'),
+        title: Text(isSwahili ? 'Futa Kifaa' : 'Delete Item'),
+        content: Text(
+          isSwahili ? 'Futa ${item['name']}?' : 'Delete ${item['name']}?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(
+              isSwahili ? 'Futa' : 'Delete',
+              style: const TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -249,8 +246,10 @@ class ItemsScreen extends ConsumerWidget {
       ref.invalidate(_itemsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Item deleted successfully'),
+        SnackBar(
+          content: Text(
+            isSwahili ? 'Kifaa kimefutwa' : 'Item deleted successfully',
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -263,6 +262,98 @@ class ItemsScreen extends ConsumerWidget {
         ),
       );
     }
+  }
+}
+
+class _ItemCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final int index;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final bool isSwahili;
+  final bool isDarkMode;
+
+  const _ItemCard({
+    required this.item,
+    required this.index,
+    required this.onEdit,
+    required this.onDelete,
+    required this.isSwahili,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: isDarkMode ? const Color(0xFF2A2A3E) : Colors.white,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ),
+        leading: Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            '${index + 1}',
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+        title: Text(
+          item['name']?.toString() ?? '-',
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'edit') {
+              onEdit();
+            } else if (value == 'delete') {
+              onDelete();
+            }
+          },
+          itemBuilder: (_) => [
+            PopupMenuItem(
+              value: 'edit',
+              child: Row(
+                children: [
+                  const Icon(Icons.edit_rounded, size: 20),
+                  const SizedBox(width: 8),
+                  Text(isSwahili ? 'Hariri' : 'Edit'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.delete_rounded,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isSwahili ? 'Futa' : 'Delete',
+                    style: const TextStyle(color: AppColors.error),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -298,6 +389,7 @@ class _ItemFormSheetState extends ConsumerState<_ItemFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -328,18 +420,26 @@ class _ItemFormSheetState extends ConsumerState<_ItemFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _isEdit ? 'Edit Item' : 'Create New Item',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  _isEdit
+                      ? (isSwahili ? 'Hariri Kifaa' : 'Edit Item')
+                      : (isSwahili ? 'Unda Kifaa Kipya' : 'Create New Item'),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Item Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: isSwahili ? 'Jina la Kifaa' : 'Item Name',
+                    border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Item name is required' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? (isSwahili
+                            ? 'Jina linahitajika'
+                            : 'Item name is required')
+                      : null,
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -347,7 +447,11 @@ class _ItemFormSheetState extends ConsumerState<_ItemFormSheet> {
                   child: ElevatedButton(
                     onPressed: _submitting ? null : _submit,
                     child: Text(
-                      _submitting ? 'Saving...' : (_isEdit ? 'Update Item' : 'Save Item'),
+                      _submitting
+                          ? (isSwahili ? 'Inahifadhi...' : 'Saving...')
+                          : (_isEdit
+                                ? (isSwahili ? 'Sasisha Kifaa' : 'Update Item')
+                                : (isSwahili ? 'Hifadhi Kifaa' : 'Save Item')),
                     ),
                   ),
                 ),
@@ -363,9 +467,7 @@ class _ItemFormSheetState extends ConsumerState<_ItemFormSheet> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
 
-    final payload = {
-      'name': _nameController.text.trim(),
-    };
+    final payload = {'name': _nameController.text.trim()};
 
     try {
       final api = ref.read(apiClientProvider);

@@ -3,265 +3,299 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
 
-final _leaveManagementStatusProvider =
-    StateProvider.autoDispose<String?>((ref) => null);
+final _leaveManagementStatusProvider = StateProvider.autoDispose<String?>(
+  (ref) => null,
+);
 
-final _leaveManagementSearchProvider =
-    StateProvider.autoDispose<String>((ref) => '');
+final _leaveManagementSearchProvider = StateProvider.autoDispose<String>(
+  (ref) => '',
+);
 
 final _leaveManagementsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final status = ref.watch(_leaveManagementStatusProvider);
-  final search = ref.watch(_leaveManagementSearchProvider);
-  final response = await api.get(
-    '/leave-managements',
-    queryParameters: {
-      if (status != null && status.isNotEmpty) 'status': status,
-      if (search.trim().isNotEmpty) 'search': search.trim(),
-    },
-  );
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return {
-    'items': items
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList(),
-    'meta': data['meta'] is Map
-        ? Map<String, dynamic>.from(data['meta'] as Map)
-        : const <String, dynamic>{},
-  };
-});
+      final api = ref.watch(apiClientProvider);
+      final status = ref.watch(_leaveManagementStatusProvider);
+      final search = ref.watch(_leaveManagementSearchProvider);
+      final response = await api.get(
+        '/leave-managements',
+        queryParameters: {
+          if (status != null && status.isNotEmpty) 'status': status,
+          if (search.trim().isNotEmpty) 'search': search.trim(),
+        },
+      );
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return {
+        'items': items
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(),
+        'meta': data['meta'] is Map
+            ? Map<String, dynamic>.from(data['meta'] as Map)
+            : const <String, dynamic>{},
+      };
+    });
 
 final _leaveManagementDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/leave-managements/$id');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/leave-managements/$id');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : <String, dynamic>{};
+    });
 
 final _leaveManagementActionProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, Map<String, dynamic>>((ref, item) async {
-  final id = _toInt(item['id']);
-  if (id <= 0) return item;
+      final id = _toInt(item['id']);
+      if (id <= 0) return item;
 
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/leave-managements/$id');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : item;
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/leave-managements/$id');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : item;
+    });
 
-class LeaveManagementsScreen extends ConsumerWidget {
+class LeaveManagementsScreen extends ConsumerStatefulWidget {
   const LeaveManagementsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LeaveManagementsScreen> createState() =>
+      _LeaveManagementsScreenState();
+}
+
+class _LeaveManagementsScreenState
+    extends ConsumerState<LeaveManagementsScreen> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final itemsAsync = ref.watch(_leaveManagementsProvider);
     final status = ref.watch(_leaveManagementStatusProvider);
+    final search = ref.watch(_leaveManagementSearchProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Usimamizi wa Likizo' : 'Leave Management'),
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: TextField(
-              onChanged: (value) =>
-                  ref.read(_leaveManagementSearchProvider.notifier).state =
-                      value,
-              decoration: InputDecoration(
-                hintText: isSwahili
-                    ? 'Tafuta mfanyakazi, aina au sababu'
-                    : 'Search employee, type or reason',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: isDarkMode ? const Color(0xFF1A2332) : Colors.white,
-              ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-          ),
-          _ManagementFilterBar(
-            isSwahili: isSwahili,
-            isDarkMode: isDarkMode,
-            selectedStatus: status,
-            onChanged: (value) => ref
-                .read(_leaveManagementStatusProvider.notifier)
-                .state = value,
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) =>
+                      ref.read(_leaveManagementSearchProvider.notifier).state =
+                          value,
+                  decoration: InputDecoration(
+                    hintText: isSwahili
+                        ? 'Tafuta mfanyakazi, aina au sababu'
+                        : 'Search employee, type or reason',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref
+                                      .read(
+                                        _leaveManagementSearchProvider.notifier,
+                                      )
+                                      .state =
+                                  '';
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 40,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _FilterChip(
+                        label: isSwahili ? 'Zote' : 'All',
+                        isSelected: status == null,
+                        onTap: () =>
+                            ref
+                                    .read(
+                                      _leaveManagementStatusProvider.notifier,
+                                    )
+                                    .state =
+                                null,
+                        isDarkMode: isDarkMode,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: isSwahili ? 'Inasubiri' : 'Pending',
+                        isSelected: status == 'pending',
+                        onTap: () =>
+                            ref
+                                    .read(
+                                      _leaveManagementStatusProvider.notifier,
+                                    )
+                                    .state =
+                                'pending',
+                        isDarkMode: isDarkMode,
+                        color: Colors.orange,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: isSwahili ? 'Imeidhinishwa' : 'Approved',
+                        isSelected: status == 'approved',
+                        onTap: () =>
+                            ref
+                                    .read(
+                                      _leaveManagementStatusProvider.notifier,
+                                    )
+                                    .state =
+                                'approved',
+                        isDarkMode: isDarkMode,
+                        color: AppColors.success,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: isSwahili ? 'Imekataliwa' : 'Rejected',
+                        isSelected: status == 'rejected',
+                        onTap: () =>
+                            ref
+                                    .read(
+                                      _leaveManagementStatusProvider.notifier,
+                                    )
+                                    .state =
+                                'rejected',
+                        isDarkMode: isDarkMode,
+                        color: AppColors.error,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async => ref.invalidate(_leaveManagementsProvider),
               child: itemsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, _) => _ManagementErrorView(
+                error: (error, _) => _ErrorView(
                   isSwahili: isSwahili,
                   message: vatErrorMessage(error, isSwahili: isSwahili),
                   onRetry: () => ref.invalidate(_leaveManagementsProvider),
+                  isDarkMode: isDarkMode,
                 ),
                 data: (payload) {
-                  final items =
-                      (payload['items'] as List).cast<Map<String, dynamic>>();
+                  final items = payload['items'] as List? ?? [];
                   final meta =
                       payload['meta'] as Map<String, dynamic>? ?? const {};
 
                   if (items.isEmpty) {
                     return ListView(
-                      padding: const EdgeInsets.all(32),
                       children: [
-                        const SizedBox(height: 100),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                        ),
                         Icon(
                           Icons.event_note_outlined,
-                          size: 56,
-                          color: isDarkMode ? Colors.white24 : Colors.grey[300],
+                          size: 64,
+                          color: Colors.grey[400],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         Text(
                           isSwahili
                               ? 'Hakuna maombi ya likizo'
                               : 'No leave requests found',
                           textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       ],
                     );
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: items.length + 1,
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    itemCount: items.length,
                     itemBuilder: (context, index) {
-                      if (index == items.length) return const SizedBox(height: 90);
-                      final item = items[index];
-                      final user = item['user'] as Map<String, dynamic>? ?? const {};
+                      final item = items[index] as Map<String, dynamic>;
+                      final user = item['user'] as Map<String, dynamic>? ?? {};
                       final leaveType =
-                          item['leave_type'] as Map<String, dynamic>? ?? const {};
+                          item['leave_type'] as Map<String, dynamic>? ?? {};
                       final statusValue =
-                          (item['status']?.toString() ?? 'pending').toLowerCase();
+                          (item['status']?.toString() ?? 'pending')
+                              .toLowerCase();
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor: _statusColor(statusValue)
-                                        .withValues(alpha: 0.12),
-                                    child: Icon(
-                                      Icons.assignment_turned_in_outlined,
-                                      color: _statusColor(statusValue),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          user['name']?.toString() ?? '-',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          leaveType['name']?.toString() ?? '-',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          _dateText(item),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            color: AppColors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  _ManagementStatusBadge(
-                                    status: statusValue,
-                                    isSwahili: isSwahili,
-                                  ),
-                                  Text(
-                                    '${item['total_days'] ?? 0} ${isSwahili ? 'siku' : 'days'}',
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  OutlinedButton.icon(
-                                    onPressed: () => _showManagementSheet(
-                                      context,
-                                      ref,
-                                      _toInt(item['id']),
-                                      isSwahili,
-                                    ),
-                                    icon: const Icon(Icons.visibility_outlined),
-                                    label: Text(isSwahili ? 'Tazama' : 'View'),
-                                  ),
-                                    if (statusValue == 'pending')
-                                      ElevatedButton.icon(
-                                        onPressed: () => _openReviewSheet(
-                                          context,
-                                          ref,
-                                          item,
-                                          isSwahili,
-                                        ),
-                                      icon: const Icon(Icons.edit_outlined),
-                                      label: Text(
-                                        isSwahili ? 'Sasisha' : 'Update',
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
+                      return _LeaveManagementCard(
+                        item: item,
+                        user: user,
+                        leaveType: leaveType,
+                        statusValue: statusValue,
+                        index: index + 1,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        onView: () => _showManagementSheet(
+                          context,
+                          ref,
+                          _toInt(item['id']),
+                          isSwahili,
                         ),
+                        onReview: statusValue == 'pending'
+                            ? () => _openReviewSheet(
+                                context,
+                                ref,
+                                item,
+                                isSwahili,
+                              )
+                            : null,
                       );
                     },
                   );
@@ -273,245 +307,577 @@ class LeaveManagementsScreen extends ConsumerWidget {
       ),
       bottomNavigationBar: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 4,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
           child: Text(
             isSwahili
                 ? 'Jumla ya maombi: ${itemsAsync.valueOrNull?['meta']?['total'] ?? 0}'
                 : 'Total requests: ${itemsAsync.valueOrNull?['meta']?['total'] ?? 0}',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(
+              color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  void _openReviewSheet(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> item,
+    bool isSwahili,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.6,
+        child: Consumer(
+          builder: (context, ref, _) {
+            final detailAsync = ref.watch(_leaveManagementActionProvider(item));
+            final isDarkMode = ref.watch(isDarkModeProvider);
+            return _BottomSheetShell(
+              isDarkMode: isDarkMode,
+              child: detailAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => _ErrorView(
+                  isSwahili: isSwahili,
+                  message: vatErrorMessage(error, isSwahili: isSwahili),
+                  onRetry: () =>
+                      ref.invalidate(_leaveManagementActionProvider(item)),
+                  isDarkMode: isDarkMode,
+                ),
+                data: (resolvedItem) => ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    20,
+                    20,
+                    MediaQuery.of(context).viewInsets.bottom + 24,
+                  ),
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
+                          child: const Icon(
+                            Icons.edit,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          isSwahili
+                              ? 'Sasisha Ombi la Likizo'
+                              : 'Update Leave Request',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _DetailRow(
+                      icon: Icons.person_outlined,
+                      label: isSwahili ? 'Mfanyakazi' : 'Employee',
+                      value:
+                          (resolvedItem['user']
+                                  as Map<String, dynamic>?)?['name']
+                              ?.toString() ??
+                          '-',
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
+                      icon: Icons.event_note_outlined,
+                      label: isSwahili ? 'Aina ya Likizo' : 'Leave Type',
+                      value:
+                          (resolvedItem['leave_type']
+                                  as Map<String, dynamic>?)?['name']
+                              ?.toString() ??
+                          '-',
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
+                      icon: Icons.calendar_today_outlined,
+                      label: isSwahili ? 'Tarehe' : 'Date Range',
+                      value: _dateText(resolvedItem),
+                      isDarkMode: isDarkMode,
+                    ),
+                    const SizedBox(height: 12),
+                    _ReviewForm(
+                      itemId: _toInt(resolvedItem['id']),
+                      isSwahili: isSwahili,
+                      isDarkMode: isDarkMode,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showManagementSheet(
+    BuildContext context,
+    WidgetRef ref,
+    int id,
+    bool isSwahili,
+  ) {
+    if (id <= 0) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => FractionallySizedBox(
+        heightFactor: 0.78,
+        child: Consumer(
+          builder: (context, ref, _) {
+            final detailAsync = ref.watch(_leaveManagementDetailProvider(id));
+            final isDarkMode = ref.watch(isDarkModeProvider);
+            return _BottomSheetShell(
+              isDarkMode: isDarkMode,
+              child: detailAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => _ErrorView(
+                  isSwahili: isSwahili,
+                  message: vatErrorMessage(error, isSwahili: isSwahili),
+                  onRetry: () =>
+                      ref.invalidate(_leaveManagementDetailProvider(id)),
+                  isDarkMode: isDarkMode,
+                ),
+                data: (item) => ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
+                          child: const Icon(
+                            Icons.event_note,
+                            color: AppColors.primary,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                (item['user'] as Map<String, dynamic>?)?['name']
+                                        ?.toString() ??
+                                    '-',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              _StatusBadge(
+                                status: item['status']?.toString() ?? 'pending',
+                                isSwahili: isSwahili,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _DetailRow(
+                      icon: Icons.event_note_outlined,
+                      label: isSwahili ? 'Aina ya Likizo' : 'Leave Type',
+                      value:
+                          (item['leave_type'] as Map<String, dynamic>?)?['name']
+                              ?.toString() ??
+                          '-',
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
+                      icon: Icons.calendar_today_outlined,
+                      label: isSwahili ? 'Tarehe' : 'Date Range',
+                      value: _dateText(item),
+                      isDarkMode: isDarkMode,
+                    ),
+                    _DetailRow(
+                      icon: Icons.timelapse_outlined,
+                      label: isSwahili ? 'Jumla ya Siku' : 'Total Days',
+                      value: '${item['total_days'] ?? 0}',
+                      isDarkMode: isDarkMode,
+                    ),
+                    if ((item['reason']?.toString().trim().isNotEmpty == true))
+                      _DetailRow(
+                        icon: Icons.description_outlined,
+                        label: isSwahili ? 'Sababu' : 'Reason',
+                        value: item['reason']?.toString() ?? '-',
+                        isDarkMode: isDarkMode,
+                      ),
+                    _DetailRow(
+                      icon: Icons.comment_outlined,
+                      label: isSwahili ? 'Maoni ya Admin' : 'Admin Remarks',
+                      value:
+                          item['admin_remarks']?.toString().trim().isNotEmpty ==
+                              true
+                          ? item['admin_remarks'].toString()
+                          : '-',
+                      isDarkMode: isDarkMode,
+                    ),
+                    if ((item['status']?.toString() ?? 'pending')
+                            .toLowerCase() ==
+                        'pending') ...[
+                      const SizedBox(height: 18),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _openReviewSheet(context, ref, item, isSwahili);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.edit_outlined),
+                        label: Text(
+                          isSwahili ? 'Sasisha Ombi' : 'Update Request',
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 }
 
-class _ManagementFilterBar extends StatelessWidget {
-  final bool isSwahili;
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
   final bool isDarkMode;
-  final String? selectedStatus;
-  final ValueChanged<String?> onChanged;
+  final Color? color;
 
-  const _ManagementFilterBar({
-    required this.isSwahili,
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
     required this.isDarkMode,
-    required this.selectedStatus,
-    required this.onChanged,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    final options = <String?, String>{
-      null: isSwahili ? 'Zote' : 'All',
-      'pending': isSwahili ? 'Inasubiri' : 'Pending',
-      'approved': isSwahili ? 'Imeidhinishwa' : 'Approved',
-      'rejected': isSwahili ? 'Imekataliwa' : 'Rejected',
-    };
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: options.entries.map((entry) {
-            final selected = selectedStatus == entry.key;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: ChoiceChip(
-                selected: selected,
-                label: Text(entry.value),
-                onSelected: (_) => onChanged(entry.key),
-              ),
-            );
-          }).toList(),
+    final chipColor = color ?? AppColors.primary;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? chipColor
+              : (isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[200]),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected
+                ? Colors.white
+                : (isDarkMode ? Colors.white : Colors.grey[700]),
+          ),
         ),
       ),
     );
   }
 }
 
-void _openReviewSheet(
-  BuildContext context,
-  WidgetRef ref,
-  Map<String, dynamic> item,
-  bool isSwahili,
-) {
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => FractionallySizedBox(
-      heightFactor: 0.58,
-      child: Consumer(
-        builder: (context, ref, _) {
-          final detailAsync = ref.watch(_leaveManagementActionProvider(item));
-          final isDarkMode = ref.watch(isDarkModeProvider);
-          return _ReviewBottomSheetShell(
-            isDarkMode: isDarkMode,
-            child: detailAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => _ManagementErrorView(
-              isSwahili: isSwahili,
-              message: vatErrorMessage(error, isSwahili: isSwahili),
-              onRetry: () => ref.invalidate(_leaveManagementActionProvider(item)),
-            ),
-            data: (resolvedItem) => ListView(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                20,
-                20,
-                MediaQuery.of(context).viewInsets.bottom + 24,
-              ),
-              children: [
-                Text(
-                  isSwahili ? 'Sasisha Ombi la Likizo' : 'Update Leave Request',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _DetailRow(
-                  isSwahili ? 'Mfanyakazi' : 'Employee',
-                  (resolvedItem['user'] as Map<String, dynamic>?)?['name']
-                          ?.toString() ??
-                      '-',
-                ),
-                _DetailRow(
-                  isSwahili ? 'Aina ya Likizo' : 'Leave Type',
-                  ((resolvedItem['leave_type'] as Map<String, dynamic>?)?['name']
-                          ?.toString()) ??
-                      '-',
-                ),
-                _DetailRow(
-                  isSwahili ? 'Tarehe' : 'Date Range',
-                  _dateText(resolvedItem),
-                ),
-                const SizedBox(height: 12),
-                _ReviewForm(
-                  itemId: _toInt(resolvedItem['id']),
-                  isSwahili: isSwahili,
-                ),
-              ],
-            ),
-          ),
-          );
-        },
+class _StatusBadge extends StatelessWidget {
+  final String status;
+  final bool isSwahili;
+
+  const _StatusBadge({required this.status, required this.isSwahili});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _statusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
       ),
-    ),
-  );
+      child: Text(
+        _statusLabel(status, isSwahili),
+        style: TextStyle(
+          fontSize: 12,
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 }
 
-void _showManagementSheet(
-  BuildContext context,
-  WidgetRef ref,
-  int id,
-  bool isSwahili,
-) {
-  if (id <= 0) return;
+class _LeaveManagementCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final Map<String, dynamic> user;
+  final Map<String, dynamic> leaveType;
+  final String statusValue;
+  final int index;
+  final bool isSwahili;
+  final bool isDarkMode;
+  final VoidCallback onView;
+  final VoidCallback? onReview;
 
-  showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => FractionallySizedBox(
-      heightFactor: 0.84,
-      child: Consumer(
-        builder: (context, ref, _) {
-          final detailAsync = ref.watch(_leaveManagementDetailProvider(id));
-          final isDarkMode = ref.watch(isDarkModeProvider);
-          return _ReviewBottomSheetShell(
-            isDarkMode: isDarkMode,
-            child: detailAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => _ManagementErrorView(
-              isSwahili: isSwahili,
-              message: vatErrorMessage(error, isSwahili: isSwahili),
-              onRetry: () => ref.invalidate(_leaveManagementDetailProvider(id)),
-            ),
-            data: (item) => ListView(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                16,
-                20,
-                MediaQuery.of(context).viewInsets.bottom + 24,
-              ),
-              children: [
-                Text(
-                  (item['user'] as Map<String, dynamic>?)?['name']
-                          ?.toString() ??
-                      '-',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+  const _LeaveManagementCard({
+    required this.item,
+    required this.user,
+    required this.leaveType,
+    required this.statusValue,
+    required this.index,
+    required this.isSwahili,
+    required this.isDarkMode,
+    required this.onView,
+    this.onReview,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = _statusColor(statusValue);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isDarkMode ? Colors.white12 : Colors.grey[200]!,
+        ),
+      ),
+      color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+      child: InkWell(
+        onTap: onView,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$index',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: statusColor,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _ManagementStatusBadge(
-                  status: item['status']?.toString() ?? 'pending',
-                  isSwahili: isSwahili,
-                ),
-                const SizedBox(height: 18),
-                _DetailRow(
-                  isSwahili ? 'Aina ya Likizo' : 'Leave Type',
-                  ((item['leave_type'] as Map<String, dynamic>?)?['name']
-                          ?.toString()) ??
-                      '-',
-                ),
-                _DetailRow(
-                  isSwahili ? 'Tarehe' : 'Date Range',
-                  _dateText(item),
-                ),
-                _DetailRow(
-                  isSwahili ? 'Jumla ya Siku' : 'Total Days',
-                  '${item['total_days'] ?? 0}',
-                ),
-                _DetailRow(
-                  isSwahili ? 'Sababu' : 'Reason',
-                  item['reason']?.toString() ?? '-',
-                ),
-                _DetailRow(
-                  isSwahili ? 'Maoni ya Admin' : 'Admin Remarks',
-                  item['admin_remarks']?.toString().trim().isNotEmpty == true
-                      ? item['admin_remarks'].toString()
-                      : '-',
-                ),
-                if ((item['status']?.toString().toLowerCase() ?? 'pending') ==
-                    'pending') ...[
-                  const SizedBox(height: 18),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _openReviewSheet(context, ref, item, isSwahili);
-                    },
-                    icon: const Icon(Icons.edit_outlined),
-                    label: Text(
-                      isSwahili ? 'Sasisha Ombi' : 'Update Request',
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user['name']?.toString() ?? '-',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          leaveType['name']?.toString() ?? '-',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDarkMode
+                                ? Colors.white54
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _dateText(item),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDarkMode
+                                ? Colors.white54
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _StatusBadge(status: statusValue, isSwahili: isSwahili),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${item['total_days'] ?? 0} ${isSwahili ? 'siku' : 'days'}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (statusValue.toLowerCase() == 'pending') ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onView,
+                        icon: const Icon(Icons.visibility_outlined, size: 18),
+                        label: Text(isSwahili ? 'Tazama' : 'View'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: const BorderSide(color: AppColors.primary),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: onReview,
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: Text(isSwahili ? 'Review' : 'Review'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool isDarkMode;
+
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: AppColors.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDarkMode
+                        ? Colors.white54
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value.isEmpty ? '-' : value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
               ],
             ),
           ),
-          );
-        },
+        ],
       ),
-    ),
-  );
+    );
+  }
 }
 
-class _ReviewBottomSheetShell extends StatelessWidget {
+class _BottomSheetShell extends StatelessWidget {
   final bool isDarkMode;
   final Widget child;
 
-  const _ReviewBottomSheetShell({
-    required this.isDarkMode,
-    required this.child,
-  });
+  const _BottomSheetShell({required this.isDarkMode, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -544,10 +910,12 @@ class _ReviewBottomSheetShell extends StatelessWidget {
 class _ReviewForm extends ConsumerStatefulWidget {
   final int itemId;
   final bool isSwahili;
+  final bool isDarkMode;
 
   const _ReviewForm({
     required this.itemId,
     required this.isSwahili,
+    required this.isDarkMode,
   });
 
   @override
@@ -568,7 +936,6 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = ref.watch(isDarkModeProvider);
     return Form(
       key: _formKey,
       child: Column(
@@ -576,7 +943,11 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
         children: [
           Text(
             widget.isSwahili ? 'Kagua Ombi' : 'Review Request',
-            style: const TextStyle(fontWeight: FontWeight.w700),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: widget.isDarkMode ? Colors.white : AppColors.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
@@ -584,7 +955,20 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
             decoration: InputDecoration(
               labelText: widget.isSwahili ? 'Uamuzi *' : 'Decision *',
               filled: true,
-              fillColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100],
+              fillColor: widget.isDarkMode
+                  ? const Color(0xFF2A2A3E)
+                  : Colors.grey[100],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
             ),
             items: [
               DropdownMenuItem(
@@ -598,23 +982,46 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
             ],
             onChanged: (value) => setState(() => _status = value ?? 'approved'),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           TextFormField(
             controller: _remarksController,
             maxLines: 4,
             validator: (value) => value == null || value.trim().isEmpty
-                ? (widget.isSwahili ? 'Maoni yanahitajika' : 'Remarks are required')
+                ? (widget.isSwahili
+                      ? 'Maoni yanahitajika'
+                      : 'Remarks are required')
                 : null,
             decoration: InputDecoration(
               labelText: widget.isSwahili ? 'Maoni *' : 'Remarks *',
               alignLabelWithHint: true,
               filled: true,
-              fillColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100],
+              fillColor: widget.isDarkMode
+                  ? const Color(0xFF2A2A3E)
+                  : Colors.grey[100],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           ElevatedButton(
             onPressed: _saving ? null : _submit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
             child: _saving
                 ? const SizedBox(
                     width: 20,
@@ -624,7 +1031,13 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
                       color: Colors.white,
                     ),
                   )
-                : Text(widget.isSwahili ? 'Hifadhi Mapitio' : 'Save Review'),
+                : Text(
+                    widget.isSwahili ? 'Hifadhi Mapitio' : 'Save Review',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -635,13 +1048,15 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
-      await ref.read(apiClientProvider).put(
-        '/leave-managements/${widget.itemId}',
-        data: {
-          'status': _status,
-          'admin_remarks': _remarksController.text.trim(),
-        },
-      );
+      await ref
+          .read(apiClientProvider)
+          .put(
+            '/leave-managements/${widget.itemId}',
+            data: {
+              'status': _status,
+              'admin_remarks': _remarksController.text.trim(),
+            },
+          );
       ref.invalidate(_leaveManagementsProvider);
       ref.invalidate(_leaveManagementDetailProvider(widget.itemId));
       if (mounted) {
@@ -649,9 +1064,7 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              widget.isSwahili
-                  ? 'Mapitio yamehifadhiwa'
-                  : 'Leave review saved',
+              widget.isSwahili ? 'Mapitio yamehifadhiwa' : 'Leave review saved',
             ),
             backgroundColor: AppColors.success,
           ),
@@ -661,8 +1074,7 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text(vatErrorMessage(error, isSwahili: widget.isSwahili)),
+            content: Text(vatErrorMessage(error, isSwahili: widget.isSwahili)),
             backgroundColor: AppColors.error,
           ),
         );
@@ -673,73 +1085,17 @@ class _ReviewFormState extends ConsumerState<_ReviewForm> {
   }
 }
 
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DetailRow(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Expanded(child: Text(value.isEmpty ? '-' : value)),
-        ],
-      ),
-    );
-  }
-}
-
-class _ManagementStatusBadge extends StatelessWidget {
-  final String status;
-  final bool isSwahili;
-
-  const _ManagementStatusBadge({
-    required this.status,
-    required this.isSwahili,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = _statusColor(status);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        _statusLabel(status, isSwahili),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: color, fontWeight: FontWeight.w600),
-      ),
-    );
-  }
-}
-
-class _ManagementErrorView extends StatelessWidget {
+class _ErrorView extends StatelessWidget {
   final bool isSwahili;
   final String message;
   final VoidCallback onRetry;
+  final bool isDarkMode;
 
-  const _ManagementErrorView({
+  const _ErrorView({
     required this.isSwahili,
     required this.message,
     required this.onRetry,
+    required this.isDarkMode,
   });
 
   @override
@@ -751,12 +1107,11 @@ class _ManagementErrorView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.error_outline, size: 64, color: AppColors.error),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
-              isSwahili
-                  ? 'Imeshindikana kupakia usimamizi wa likizo'
-                  : 'Failed to load leave management',
+              isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
               textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(message, textAlign: TextAlign.center),
@@ -765,6 +1120,10 @@ class _ManagementErrorView extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
               label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
             ),
           ],
         ),
@@ -796,7 +1155,7 @@ Color _statusColor(String status) {
     case 'rejected':
       return AppColors.error;
     default:
-      return AppColors.warning;
+      return Colors.orange;
   }
 }
 

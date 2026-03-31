@@ -105,6 +105,7 @@ use App\Http\Controllers\Api\V1\AllowanceApiController;
 use App\Http\Controllers\Api\V1\AdvanceSalaryApiController;
 use App\Http\Controllers\Api\V1\StaffSalaryApiController;
 use App\Http\Controllers\Api\V1\LoanApiController;
+use App\Http\Controllers\Api\V1\SalarySlipApiController;
 use App\Http\Controllers\Api\V1\SiteApiController;
 use App\Http\Controllers\Api\V1\SiteSupervisorAssignmentApiController;
 
@@ -1019,6 +1020,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Adjustments
     Route::get('adjustments', [AdjustmentController::class, 'index']);
     Route::get('adjustments/{id}', [AdjustmentController::class, 'show']);
+
+    // Salary Slips
+    Route::prefix('salary-slips')->group(function () {
+        Route::get('/', [SalarySlipApiController::class, 'index']);
+        Route::get('/payslip', [SalarySlipApiController::class, 'getPayslip']);
+        Route::get('/staff/{staffId}/payslips', [SalarySlipApiController::class, 'listStaffPayslips']);
+    });
 
     // Accounting
     Route::get('accounting', [AccountingController::class, 'index']);

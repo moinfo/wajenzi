@@ -3,7 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+
+final _dailyReportsSearchProvider = StateProvider.autoDispose<String>(
+  (ref) => '',
+);
 
 final projectDailyReportFilterProvider =
     StateProvider.autoDispose<ReportFilter>((ref) => ReportFilter());
@@ -80,132 +85,201 @@ class _ProjectDailyReportListScreenState
     extends ConsumerState<ProjectDailyReportListScreen> {
   @override
   Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final reportsAsync = ref.watch(_projectDailyReportsProvider);
+    final projectsAsync = ref.watch(_projectDailyReportProjectsProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final filter = ref.watch(projectDailyReportFilterProvider);
+    final search = ref.watch(_dailyReportsSearchProvider).trim().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(
           isSwahili ? 'Ripoti za Mradi kwa Siku' : 'Project Daily Reports',
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showReportForm(context),
-            tooltip: isSwahili ? 'Ongeza' : 'Add',
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterSheet(context),
-            tooltip: isSwahili ? 'Chuja' : 'Filter',
-          ),
-        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showReportForm(context),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza' : 'Add',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_projectDailyReportsProvider),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: reportsAsync.when(
-                loading: () => const SizedBox(
-                  height: 60,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (payload) {
-                  final total = payload['total'] as int;
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          title: isSwahili
-                              ? 'Jumla ya Ripoti'
-                              : 'Total Reports',
-                          value: '$total',
-                          icon: Icons.assignment,
-                          color: const Color(0xFF3498DB),
-                          isDarkMode: isDarkMode,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    TextField(
+                      onChanged: (value) =>
+                          ref.read(_dailyReportsSearchProvider.notifier).state =
+                              value,
+                      decoration: InputDecoration(
+                        hintText: isSwahili
+                            ? 'Tafuta ripoti...'
+                            : 'Search reports...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: search.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () =>
+                                    ref
+                                            .read(
+                                              _dailyReportsSearchProvider
+                                                  .notifier,
+                                            )
+                                            .state =
+                                        '',
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: isDarkMode
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
                         ),
                       ),
-                      if (filter.projectId != null ||
-                          filter.startDate != null) ...[
-                        const SizedBox(width: 12),
-                        TextButton.icon(
-                          onPressed: () =>
-                              ref
-                                      .read(
-                                        projectDailyReportFilterProvider
-                                            .notifier,
-                                      )
-                                      .state =
-                                  ReportFilter(),
-                          icon: const Icon(Icons.clear, size: 18),
-                          label: Text(isSwahili ? 'Ondoa' : 'Clear'),
-                        ),
-                      ],
-                    ],
-                  );
-                },
+                    ),
+                    const SizedBox(height: 12),
+                    projectsAsync.when(
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                      data: (projects) => _ReportFilters(
+                        projects: projects as List,
+                        filter: filter,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            Expanded(
-              child: reportsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => _ErrorView(
-                  error: e,
-                  isSwahili: isSwahili,
-                  onRetry: () => ref.invalidate(_projectDailyReportsProvider),
-                ),
-                data: (payload) {
-                  final reports = (payload['items'] as List)
-                      .cast<Map<String, dynamic>>();
-
-                  if (reports.isEmpty) {
-                    return ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(32),
+            SliverToBoxAdapter(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: reportsAsync.when(
+                  loading: () => const SizedBox(
+                    height: 60,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (payload) {
+                    final total = payload['total'] as int;
+                    return Row(
                       children: [
-                        const SizedBox(height: 100),
-                        Icon(
-                          Icons.assignment_outlined,
-                          size: 56,
-                          color: Colors.grey[300],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          isSwahili
-                              ? 'Hakuna ripoti zilizopatikana'
-                              : 'No reports found',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: isDarkMode
-                                ? Colors.white54
-                                : AppColors.textSecondary,
+                        Expanded(
+                          child: _StatCard(
+                            title: isSwahili
+                                ? 'Jumla ya Ripoti'
+                                : 'Total Reports',
+                            value: '$total',
+                            icon: Icons.assignment,
+                            color: const Color(0xFF3498DB),
+                            isDarkMode: isDarkMode,
                           ),
                         ),
                       ],
                     );
-                  }
+                  },
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            reportsAsync.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => SliverFillRemaining(
+                child: _ErrorView(
+                  error: e,
+                  isSwahili: isSwahili,
+                  onRetry: () => ref.invalidate(_projectDailyReportsProvider),
+                ),
+              ),
+              data: (payload) {
+                final allItems = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
+                final reports = search.isEmpty
+                    ? allItems
+                    : allItems.where((report) {
+                        final haystack = [
+                          report['project_name'] ?? '',
+                          report['supervisor_name'] ?? '',
+                          report['weather_conditions'] ?? '',
+                          report['work_completed'] ?? '',
+                          report['report_date'] ?? '',
+                        ].join(' ').toLowerCase();
+                        return haystack.contains(search);
+                      }).toList();
 
-                  return ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    itemCount: reports.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == reports.length)
-                        return const SizedBox(height: 80);
+                if (reports.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.assignment_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            allItems.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna ripoti zilizopatikana'
+                                      : 'No reports found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No reports match your search'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          if (search.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  ref
+                                          .read(
+                                            _dailyReportsSearchProvider
+                                                .notifier,
+                                          )
+                                          .state =
+                                      '',
+                              icon: const Icon(Icons.arrow_back_rounded),
+                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
                       return _ReportCard(
                         report: reports[index],
                         isSwahili: isSwahili,
@@ -216,10 +290,10 @@ class _ProjectDailyReportListScreenState
                         onDelete: () =>
                             _deleteReport(context, ref, reports[index]),
                       );
-                    },
-                  );
-                },
-              ),
+                    }, childCount: reports.length),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -319,6 +393,211 @@ class _ProjectDailyReportListScreenState
         }
       }
     }
+  }
+}
+
+class _ReportFilters extends ConsumerWidget {
+  final List projects;
+  final ReportFilter filter;
+  final bool isSwahili;
+  final bool isDarkMode;
+
+  const _ReportFilters({
+    required this.projects,
+    required this.filter,
+    required this.isSwahili,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ExpansionTile(
+      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      initiallyExpanded:
+          filter.projectId != null ||
+          filter.startDate != null ||
+          filter.endDate != null,
+      childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+      backgroundColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.white,
+      collapsedBackgroundColor: isDarkMode
+          ? const Color(0xFF2A2A3E)
+          : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      collapsedShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      children: [
+        _Drop<int>(
+          label: isSwahili ? 'Mradi' : 'Project',
+          value: filter.projectId,
+          items: projects.cast<Map<String, dynamic>>(),
+          onChanged: (v) =>
+              ref.read(projectDailyReportFilterProvider.notifier).state = filter
+                  .copyWith(projectId: v, clearProject: v == null),
+          displayField: 'project_name',
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: filter.startDate ?? DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null)
+                    ref.read(projectDailyReportFilterProvider.notifier).state =
+                        filter.copyWith(startDate: picked);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 20),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            filter.startDate != null
+                                ? _formatDateStr(filter.startDate!.toString())
+                                : '-',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: filter.endDate ?? DateTime.now(),
+                    firstDate: filter.startDate ?? DateTime(2020),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null)
+                    ref.read(projectDailyReportFilterProvider.notifier).state =
+                        filter.copyWith(endDate: picked);
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today, size: 20),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            filter.endDate != null
+                                ? _formatDateStr(filter.endDate!.toString())
+                                : '-',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (filter.projectId != null ||
+            filter.startDate != null ||
+            filter.endDate != null)
+          OutlinedButton(
+            onPressed: () =>
+                ref.read(projectDailyReportFilterProvider.notifier).state =
+                    ReportFilter(),
+            child: Text(isSwahili ? 'Futa' : 'Clear'),
+          ),
+      ],
+    );
+  }
+
+  String _formatDateStr(String date) {
+    if (date.isEmpty) return '-';
+    try {
+      return DateFormat('dd MMM yyyy').format(DateTime.parse(date));
+    } catch (_) {
+      return date;
+    }
+  }
+}
+
+class _Drop<T> extends StatelessWidget {
+  final String label;
+  final T? value;
+  final List<Map<String, dynamic>> items;
+  final void Function(T?) onChanged;
+  final String displayField;
+
+  const _Drop({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    required this.displayField,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<T>(
+        value: value,
+        isExpanded: true,
+        decoration: InputDecoration(labelText: label),
+        items: [
+          DropdownMenuItem<T>(
+            value: null,
+            child: const Text('All', overflow: TextOverflow.ellipsis),
+          ),
+          ...items.map(
+            (item) => DropdownMenuItem<T>(
+              value: item['id'] as T,
+              child: Text(
+                item[displayField]?.toString() ?? '-',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
+        onChanged: onChanged,
+      ),
+    );
   }
 }
 

@@ -3,168 +3,280 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
 
+final _constructionStagesSearchProvider = StateProvider.autoDispose<String>(
+  (ref) => '',
+);
+
 final _constructionStagesProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/construction-stages');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/construction-stages');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
 final _constructionStageRefsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/construction-stages/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/construction-stages/reference-data');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
-class ConstructionStagesScreen extends ConsumerWidget {
+class ConstructionStagesScreen extends ConsumerStatefulWidget {
   const ConstructionStagesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConstructionStagesScreen> createState() =>
+      _ConstructionStagesScreenState();
+}
+
+class _ConstructionStagesScreenState
+    extends ConsumerState<ConstructionStagesScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final stagesAsync = ref.watch(_constructionStagesProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final search = ref
+        .watch(_constructionStagesSearchProvider)
+        .trim()
+        .toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Construction Stages' : 'Construction Stages'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openForm(context, ref),
-          ),
-        ],
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
+        title: Text(isSwahili ? 'Hatua za Ujenzi' : 'Construction Stages'),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _openForm(context, ref),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza Hatua' : 'Add Stage',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_constructionStagesProvider),
-        child: stagesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _ConstructionStageErrorView(
-            message: vatErrorMessage(error, isSwahili: isSwahili),
-            isSwahili: isSwahili,
-            onRetry: () => ref.invalidate(_constructionStagesProvider),
-          ),
-          data: (stages) {
-            if (stages.isEmpty) {
-              return ListView(
-                padding: const EdgeInsets.all(32),
-                children: [
-                  const SizedBox(height: 100),
-                  Icon(Icons.layers_outlined, size: 56, color: isDarkMode ? Colors.white24 : Colors.grey[300]),
-                  const SizedBox(height: 12),
-                  Text(
-                    isSwahili ? 'Hakuna construction stages' : 'No construction stages found',
-                    textAlign: TextAlign.center,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  onChanged: (value) =>
+                      ref
+                              .read(_constructionStagesSearchProvider.notifier)
+                              .state =
+                          value,
+                  decoration: InputDecoration(
+                    hintText: isSwahili
+                        ? 'Tafuta hatua ya ujenzi...'
+                        : 'Search construction stages...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () =>
+                                ref
+                                        .read(
+                                          _constructionStagesSearchProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    '',
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
-                ],
-              );
-            }
+                ),
+              ),
+            ),
+            stagesAsync.when(
+              loading: () => const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (error, _) => SliverFillRemaining(
+                child: _StageErrorView(
+                  message: vatErrorMessage(error, isSwahili: isSwahili),
+                  isSwahili: isSwahili,
+                  onRetry: () => ref.invalidate(_constructionStagesProvider),
+                ),
+              ),
+              data: (stages) {
+                final sorted = _sortStages(stages);
+                final filteredStages = sorted.where((stage) {
+                  if (search.isNotEmpty) {
+                    final haystack = [
+                      stage['name'] ?? '',
+                      stage['parent_name'] ?? '',
+                      stage['description'] ?? '',
+                    ].join(' ').toLowerCase();
+                    if (!haystack.contains(search)) return false;
+                  }
+                  return true;
+                }).toList();
 
-            final sorted = _sortConstructionStages(stages);
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: sorted.length + 1,
-              itemBuilder: (context, index) {
-                if (index == sorted.length) return const SizedBox(height: 80);
-                final stage = sorted[index];
-                final isChild = stage['parent_id'] != null;
-                return Card(
-                  margin: EdgeInsets.only(left: isChild ? 20 : 0, bottom: 12),
-                  child: ListTile(
-                    isThreeLine: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    leading: CircleAvatar(
-                      backgroundColor: (isChild ? AppColors.info : AppColors.primary).withValues(alpha: 0.12),
-                      child: Icon(isChild ? Icons.subdirectory_arrow_right : Icons.layers, color: isChild ? AppColors.info : AppColors.primary),
+                if (filteredStages.isEmpty) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.layers_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            stages.isEmpty
+                                ? (isSwahili
+                                      ? 'Hakuna hatua za ujenzi'
+                                      : 'No construction stages found')
+                                : (isSwahili
+                                      ? 'Hakuna matokeo yanayolingana'
+                                      : 'No matching results'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          if (search.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () =>
+                                  ref
+                                          .read(
+                                            _constructionStagesSearchProvider
+                                                .notifier,
+                                          )
+                                          .state =
+                                      '',
+                              icon: const Icon(Icons.clear),
+                              label: Text(
+                                isSwahili ? 'Futa utafutaji' : 'Clear search',
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                    title: Text(
-                      stage['name']?.toString() ?? '-',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    subtitle: Text(
-                      '${stage['parent_name'] ?? 'Top Level'}\n${stage['description'] ?? '-'}',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'view') {
-                          _showDetails(context, stage, isDarkMode);
-                        } else if (value == 'edit') {
-                          _openForm(context, ref, stage: stage);
-                        } else if (value == 'delete') {
-                          _deleteStage(context, ref, stage);
-                        }
-                      },
-                      itemBuilder: (_) => [
-                        PopupMenuItem(value: 'view', child: Text(isSwahili ? 'Tazama' : 'View')),
-                        PopupMenuItem(value: 'edit', child: Text(isSwahili ? 'Hariri' : 'Edit')),
-                        PopupMenuItem(value: 'delete', child: Text(isSwahili ? 'Futa' : 'Delete')),
-                      ],
-                    ),
-                    onTap: () => _showDetails(context, stage, isDarkMode),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final stage = filteredStages[index];
+                      return _StageCard(
+                        stage: stage,
+                        index: index,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        onEdit: () => _openForm(context, ref, stage: stage),
+                        onDelete: () => _deleteStage(context, ref, stage),
+                      );
+                    }, childCount: filteredStages.length),
                   ),
                 );
               },
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Future<void> _openForm(BuildContext context, WidgetRef ref, {Map<String, dynamic>? stage}) async {
+  Future<void> _openForm(
+    BuildContext context,
+    WidgetRef ref, {
+    Map<String, dynamic>? stage,
+  }) async {
     final refs = await ref.read(_constructionStageRefsProvider.future);
     final result = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.84,
-        child: _ConstructionStageFormSheet(refs: refs, stage: stage),
-      ),
+      builder: (_) => _StageFormSheet(refs: refs, stage: stage),
     );
     if (result == true) ref.invalidate(_constructionStagesProvider);
   }
 
-  Future<void> _deleteStage(BuildContext context, WidgetRef ref, Map<String, dynamic> stage) async {
+  Future<void> _deleteStage(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> stage,
+  ) async {
     final isSwahili = ref.read(isSwahiliProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        scrollable: true,
-        title: Text(isSwahili ? 'Futa Stage' : 'Delete Stage'),
-        content: Text(isSwahili ? 'Je, unataka kufuta ${stage['name']}?' : 'Delete ${stage['name']}?'),
+        title: Text(
+          isSwahili ? 'Futa Hatua ya Ujenzi' : 'Delete Construction Stage',
+        ),
+        content: Text(
+          isSwahili ? 'Futa "${stage['name']}"?' : 'Delete "${stage['name']}"?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(isSwahili ? 'Ghairi' : 'Cancel')),
-          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(isSwahili ? 'Futa' : 'Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              isSwahili ? 'Futa' : 'Delete',
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
         ],
       ),
     );
     if (confirmed != true) return;
 
     try {
-      await ref.read(apiClientProvider).delete('/construction-stages/${stage['id']}');
+      await ref
+          .read(apiClientProvider)
+          .delete('/construction-stages/${stage['id']}');
       ref.invalidate(_constructionStagesProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSwahili ? 'Stage imefutwa' : 'Stage deleted'),
+            content: Text(
+              isSwahili ? 'Hatua imefutwa' : 'Construction stage deleted',
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -180,66 +292,235 @@ class ConstructionStagesScreen extends ConsumerWidget {
       }
     }
   }
+}
 
-  void _showDetails(BuildContext context, Map<String, dynamic> stage, bool isDarkMode) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.56,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+class _StageErrorView extends StatelessWidget {
+  final String message;
+  final bool isSwahili;
+  final VoidCallback onRetry;
+
+  const _StageErrorView({
+    required this.message,
+    required this.isSwahili,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 44,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: isDarkMode ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(999),
+          const SizedBox(height: 8),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StageCard extends StatelessWidget {
+  final Map<String, dynamic> stage;
+  final int index;
+  final bool isSwahili;
+  final bool isDarkMode;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _StageCard({
+    required this.stage,
+    required this.index,
+    required this.isSwahili,
+    required this.isDarkMode,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isChild = stage['parent_id'] != null;
+    final childrenCount = stage['children_count'] ?? 0;
+
+    return Card(
+      margin: EdgeInsets.only(left: isChild ? 20 : 0, bottom: 12),
+      color: isDarkMode ? const Color(0xFF2A2A3E) : Colors.white,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: (isChild ? AppColors.info : AppColors.primary)
+                    .withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isChild ? Icons.subdirectory_arrow_right : Icons.layers,
+                color: isChild ? AppColors.info : AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          stage['name']?.toString() ?? '-',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (stage['sort_order'] != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.info.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '#${stage['sort_order']}',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.info,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (stage['parent_name'] != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.account_tree,
+                          size: 12,
+                          color: isDarkMode
+                              ? Colors.white54
+                              : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${isSwahili ? 'Wazazi' : 'Parent'}: ${stage['parent_name']}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDarkMode
+                                  ? Colors.white54
+                                  : AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (stage['description']?.toString().isNotEmpty ?? false) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      stage['description']?.toString() ?? '-',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDarkMode ? Colors.white38 : AppColors.textHint,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  if (childrenCount > 0) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.list,
+                          size: 12,
+                          color: isDarkMode
+                              ? Colors.white38
+                              : AppColors.textHint,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$childrenCount ${isSwahili ? 'watoto' : 'children'}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDarkMode
+                                ? Colors.white38
+                                : AppColors.textHint,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'edit') {
+                  onEdit();
+                } else if (value == 'delete') {
+                  onDelete();
+                }
+              },
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_rounded, size: 20),
+                      const SizedBox(width: 8),
+                      Text(isSwahili ? 'Hariri' : 'Edit'),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
                     children: [
-                      Text(
-                        stage['name']?.toString() ?? '-',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      const Icon(
+                        Icons.delete_rounded,
+                        size: 20,
+                        color: AppColors.error,
                       ),
-                      const SizedBox(height: 16),
-                      _detailLine('Parent', stage['parent_name'] ?? 'Top Level'),
-                      _detailLine('Description', stage['description']),
-                      _detailLine('Sort Order', stage['sort_order']),
-                      _detailLine('Children', stage['children_count']),
+                      const SizedBox(width: 8),
+                      Text(
+                        isSwahili ? 'Futa' : 'Delete',
+                        style: const TextStyle(color: AppColors.error),
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _detailLine(String label, dynamic value) {
-    final text = (value ?? '').toString().trim();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-          children: [
-            TextSpan(text: '$label: ', style: const TextStyle(fontWeight: FontWeight.w700)),
-            TextSpan(text: text.isEmpty ? '-' : text),
           ],
         ),
       ),
@@ -247,30 +528,38 @@ class ConstructionStagesScreen extends ConsumerWidget {
   }
 }
 
-class _ConstructionStageFormSheet extends ConsumerStatefulWidget {
+class _StageFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic> refs;
   final Map<String, dynamic>? stage;
 
-  const _ConstructionStageFormSheet({
-    required this.refs,
-    this.stage,
-  });
+  const _StageFormSheet({required this.refs, this.stage});
 
   @override
-  ConsumerState<_ConstructionStageFormSheet> createState() => _ConstructionStageFormSheetState();
+  ConsumerState<_StageFormSheet> createState() => _StageFormSheetState();
 }
 
-class _ConstructionStageFormSheetState extends ConsumerState<_ConstructionStageFormSheet> {
+class _StageFormSheetState extends ConsumerState<_StageFormSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController = TextEditingController(text: widget.stage?['name']?.toString() ?? '');
-  late final TextEditingController _descriptionController = TextEditingController(text: widget.stage?['description']?.toString() ?? '');
-  late final TextEditingController _sortOrderController = TextEditingController(text: widget.stage?['sort_order']?.toString() ?? '0');
+  late final TextEditingController _nameController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _sortOrderController;
   int? _parentId;
   bool _saving = false;
+
+  bool get _isEdit => widget.stage != null;
 
   @override
   void initState() {
     super.initState();
+    _nameController = TextEditingController(
+      text: widget.stage?['name']?.toString() ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.stage?['description']?.toString() ?? '',
+    );
+    _sortOrderController = TextEditingController(
+      text: widget.stage?['sort_order']?.toString() ?? '0',
+    );
     _parentId = _toNullableInt(widget.stage?['parent_id']);
   }
 
@@ -290,9 +579,22 @@ class _ConstructionStageFormSheetState extends ConsumerState<_ConstructionStageF
         .where((item) => _toInt(item['id']) != _toInt(widget.stage?['id']))
         .toList();
 
+    final bgColor = isDarkMode ? const Color(0xFF1A1A2E) : Colors.white;
+    final inputBg = isDarkMode ? const Color(0xFF0F1923) : Colors.grey[100];
+    final textColor = isDarkMode ? Colors.white : AppColors.textPrimary;
+
+    InputDecoration inputStyle(String label) => InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: inputBg,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+    );
+
     return Container(
+      height: 0.85 * MediaQuery.of(context).size.height,
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+        color: bgColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
@@ -309,52 +611,122 @@ class _ConstructionStageFormSheetState extends ConsumerState<_ConstructionStageF
               ),
             ),
             Expanded(
-              child: ListView(
-                padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
-                children: [
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          widget.stage == null ? 'New Construction Stage' : 'Edit Construction Stage',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    20,
+                    16,
+                    20,
+                    MediaQuery.of(context).viewInsets.bottom + 24,
+                  ),
+                  children: [
+                    Text(
+                      _isEdit
+                          ? (isSwahili
+                                ? 'Hariri Hatua ya Ujenzi'
+                                : 'Edit Construction Stage')
+                          : (isSwahili
+                                ? 'Hatua Mpya ya Ujenzi'
+                                : 'New Construction Stage'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _nameController,
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
+                          ? (isSwahili
+                                ? 'Jina linahitajika'
+                                : 'Name is required')
+                          : null,
+                      decoration: inputStyle(
+                        isSwahili ? 'Jina la Hatua *' : 'Stage Name *',
+                      ),
+                      style: TextStyle(color: textColor),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int?>(
+                      isExpanded: true,
+                      value: _parentId,
+                      decoration: inputStyle(
+                        isSwahili ? 'Wazazi' : 'Parent Stage',
+                      ),
+                      dropdownColor: bgColor,
+                      items: [
+                        DropdownMenuItem<int?>(
+                          value: null,
+                          child: Text(
+                            isSwahili
+                                ? '-- Hakuna Wazazi (Kiwango cha Juu) --'
+                                : '-- No Parent (Top Level) --',
+                            style: TextStyle(color: textColor),
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        _input(_nameController, isSwahili ? 'Stage Name *' : 'Stage Name *', isDarkMode),
-                        const SizedBox(height: 12),
-                        _dropdown(
-                          isDarkMode: isDarkMode,
-                          label: isSwahili ? 'Parent Construction Stage' : 'Parent Construction Stage',
-                          items: [
-                            {'id': 0, 'name': '-- No Parent (Top Level) --'},
-                            ...parents.map((e) => {'id': e['id'], 'name': e['name']}),
-                          ],
-                          value: _parentId ?? 0,
-                          onChanged: (value) => setState(() => _parentId = (value == null || value == 0) ? null : value),
-                          required: false,
-                        ),
-                        const SizedBox(height: 12),
-                        _input(_descriptionController, isSwahili ? 'Description' : 'Description', isDarkMode, required: false, maxLines: 4),
-                        const SizedBox(height: 12),
-                        _input(_sortOrderController, isSwahili ? 'Sort Order' : 'Sort Order', isDarkMode, required: false, keyboardType: TextInputType.number),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: _saving ? null : _submit,
-                          child: _saving
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                )
-                              : Text(widget.stage == null ? (isSwahili ? 'Hifadhi' : 'Save') : (isSwahili ? 'Sasisha' : 'Update')),
+                        ...parents.map(
+                          (item) => DropdownMenuItem<int?>(
+                            value: _toInt(item['id']),
+                            child: Text(
+                              item['name']?.toString() ?? '-',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: textColor),
+                            ),
+                          ),
                         ),
                       ],
+                      onChanged: (value) => setState(() => _parentId = value),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _descriptionController,
+                      maxLines: 3,
+                      decoration: inputStyle(
+                        isSwahili ? 'Maelezo' : 'Description',
+                      ),
+                      style: TextStyle(color: textColor),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _sortOrderController,
+                      keyboardType: TextInputType.number,
+                      decoration: inputStyle(
+                        isSwahili ? 'Mpangilio (Oda)' : 'Sort Order',
+                      ),
+                      style: TextStyle(color: textColor),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _saving ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: _saving
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              _isEdit
+                                  ? (isSwahili ? 'Sasisha' : 'Update')
+                                  : (isSwahili ? 'Hifadhi' : 'Save'),
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -363,70 +735,28 @@ class _ConstructionStageFormSheetState extends ConsumerState<_ConstructionStageF
     );
   }
 
-  Widget _input(
-    TextEditingController controller,
-    String label,
-    bool isDarkMode, {
-    bool required = true,
-    int maxLines = 1,
-    TextInputType? keyboardType,
-  }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      validator: required ? (value) => value == null || value.trim().isEmpty ? 'Required' : null : null,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100],
-      ),
-    );
-  }
-
-  Widget _dropdown({
-    required bool isDarkMode,
-    required String label,
-    required List<Map<String, dynamic>> items,
-    required int? value,
-    required ValueChanged<int?> onChanged,
-    bool required = true,
-  }) {
-    return DropdownButtonFormField<int>(
-      isExpanded: true,
-      value: items.any((item) => _toInt(item['id']) == value) ? value : null,
-      validator: required ? (selected) => selected == null ? 'Required' : null : null,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100],
-      ),
-      items: items
-          .map((item) => DropdownMenuItem<int>(
-                value: _toInt(item['id']),
-                child: Text(item['name']?.toString() ?? '-', overflow: TextOverflow.ellipsis),
-              ))
-          .toList(),
-      onChanged: onChanged,
-    );
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
+
     try {
       final api = ref.read(apiClientProvider);
       final data = {
         'name': _nameController.text.trim(),
         'parent_id': _parentId,
-        'description': _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+        'description': _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
         'sort_order': int.tryParse(_sortOrderController.text.trim()) ?? 0,
       };
 
-      if (widget.stage == null) {
-        await api.post('/construction-stages', data: data);
+      if (_isEdit) {
+        await api.put(
+          '/construction-stages/${widget.stage!['id']}',
+          data: data,
+        );
       } else {
-        await api.put('/construction-stages/${widget.stage!['id']}', data: data);
+        await api.post('/construction-stages', data: data);
       }
 
       if (mounted) Navigator.pop(context, true);
@@ -434,7 +764,9 @@ class _ConstructionStageFormSheetState extends ConsumerState<_ConstructionStageF
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(vatErrorMessage(error, isSwahili: ref.read(isSwahiliProvider))),
+            content: Text(
+              vatErrorMessage(error, isSwahili: ref.read(isSwahiliProvider)),
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -445,44 +777,12 @@ class _ConstructionStageFormSheetState extends ConsumerState<_ConstructionStageF
   }
 }
 
-class _ConstructionStageErrorView extends StatelessWidget {
-  final String message;
-  final bool isSwahili;
-  final VoidCallback onRetry;
-
-  const _ConstructionStageErrorView({
-    required this.message,
-    required this.isSwahili,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(32),
-      children: [
-        const SizedBox(height: 100),
-        const Icon(Icons.error_outline, size: 64, color: AppColors.error),
-        const SizedBox(height: 16),
-        Text(isSwahili ? 'Hitilafu imetokea' : 'Something went wrong', textAlign: TextAlign.center),
-        const SizedBox(height: 8),
-        Text(message, textAlign: TextAlign.center),
-        const SizedBox(height: 24),
-        Center(
-          child: ElevatedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 List<Map<String, dynamic>> _toMaps(dynamic value) {
   final list = value as List? ?? const [];
-  return list.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+  return list
+      .whereType<Map>()
+      .map((item) => Map<String, dynamic>.from(item))
+      .toList();
 }
 
 int _toInt(dynamic value) {
@@ -495,13 +795,15 @@ int? _toNullableInt(dynamic value) {
   return parsed == null || parsed == 0 ? null : parsed;
 }
 
-List<Map<String, dynamic>> _sortConstructionStages(List<Map<String, dynamic>> stages) {
+List<Map<String, dynamic>> _sortStages(List<Map<String, dynamic>> stages) {
   final parents = stages.where((stage) => stage['parent_id'] == null).toList()
     ..sort((a, b) {
       final aSort = _toInt(a['sort_order']);
       final bSort = _toInt(b['sort_order']);
       if (aSort != bSort) return aSort.compareTo(bSort);
-      return (a['name']?.toString() ?? '').compareTo(b['name']?.toString() ?? '');
+      return (a['name']?.toString() ?? '').compareTo(
+        b['name']?.toString() ?? '',
+      );
     });
 
   final childrenByParent = <int, List<Map<String, dynamic>>>{};
@@ -515,7 +817,9 @@ List<Map<String, dynamic>> _sortConstructionStages(List<Map<String, dynamic>> st
       final aSort = _toInt(a['sort_order']);
       final bSort = _toInt(b['sort_order']);
       if (aSort != bSort) return aSort.compareTo(bSort);
-      return (a['name']?.toString() ?? '').compareTo(b['name']?.toString() ?? '');
+      return (a['name']?.toString() ?? '').compareTo(
+        b['name']?.toString() ?? '',
+      );
     });
   }
 
@@ -525,5 +829,13 @@ List<Map<String, dynamic>> _sortConstructionStages(List<Map<String, dynamic>> st
     sorted.addAll(childrenByParent[_toInt(parent['id'])] ?? const []);
   }
 
+  final orphans = stages
+      .where(
+        (stage) =>
+            stage['parent_id'] != null &&
+            !childrenByParent.containsKey(_toInt(stage['parent_id'])),
+      )
+      .toList();
+  sorted.addAll(orphans);
   return sorted;
 }

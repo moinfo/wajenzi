@@ -104,7 +104,7 @@ class SiteDailyReportController extends Controller
                 'progress_percentage' => $validated['progress_percentage'] ?? null,
                 'next_steps' => $validated['next_steps'] ?? null,
                 'challenges' => $validated['challenges'] ?? null,
-                'status' => SiteDailyReport::STATUS_DRAFT ?? 'draft',
+                'status' => SiteDailyReport::STATUS_DRAFT,
             ]);
 
             // Create work activities
@@ -344,7 +344,7 @@ class SiteDailyReportController extends Controller
             ], 403);
         }
 
-        $report->update(['status' => SiteDailyReport::STATUS_PENDING ?? 'pending']);
+        $report->update(['status' => SiteDailyReport::STATUS_PENDING]);
 
         return response()->json([
             'success' => true,
@@ -367,7 +367,7 @@ class SiteDailyReportController extends Controller
             ], 403);
         }
 
-        $report->update(['status' => SiteDailyReport::STATUS_APPROVED ?? 'approved']);
+        $report->update(['status' => SiteDailyReport::STATUS_APPROVED]);
 
         return response()->json([
             'success' => true,
@@ -395,7 +395,7 @@ class SiteDailyReportController extends Controller
         }
 
         $report->update([
-            'status' => SiteDailyReport::STATUS_REJECTED ?? 'rejected',
+            'status' => SiteDailyReport::STATUS_REJECTED,
             'rejection_reason' => $request->reason,
         ]);
 

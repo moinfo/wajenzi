@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+
+final _inventorySearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
 double _toDouble(dynamic value) {
   if (value is num) return value.toDouble();
@@ -105,10 +108,7 @@ final _inventoryDetailProvider = FutureProvider.autoDispose
 class MaterialInventoryScreen extends ConsumerStatefulWidget {
   final bool stockRegisterMode;
 
-  const MaterialInventoryScreen({
-    super.key,
-    this.stockRegisterMode = false,
-  });
+  const MaterialInventoryScreen({super.key, this.stockRegisterMode = false});
 
   @override
   ConsumerState<MaterialInventoryScreen> createState() =>
@@ -119,11 +119,14 @@ class _MaterialInventoryScreenState
     extends ConsumerState<MaterialInventoryScreen> {
   @override
   Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final inventoryAsync = ref.watch(_inventoryProvider);
     final projectsAsync = ref.watch(_inventoryProjectsProvider);
+    final materialsAsync = ref.watch(_inventoryMaterialsProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final filter = ref.watch(inventoryFilterProvider);
+    final search = ref.watch(_inventorySearchProvider).trim().toLowerCase();
     final selectedProject = filter.projectId;
     final selectedProjectName = projectsAsync.maybeWhen(
       data: (projects) {
@@ -142,234 +145,234 @@ class _MaterialInventoryScreenState
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(
           widget.stockRegisterMode
               ? (isSwahili ? 'Daftari la Stock' : 'Stock Register')
               : (isSwahili ? 'Hisa ya Vifurushi' : 'Material Inventory'),
         ),
-        actions: [
-          if (!widget.stockRegisterMode)
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => _showInventoryForm(context),
-              tooltip: isSwahili ? 'Ongeza' : 'Add',
-            ),
-          if (widget.stockRegisterMode && selectedProject != null)
-            PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'issue') {
-                  _showIssueMaterialsForm(context, selectedProject);
-                } else if (value == 'movements') {
-                  _showStockMovements(context, selectedProject);
-                } else if (value == 'change_project') {
-                  ref.read(inventoryFilterProvider.notifier).state =
-                      filter.copyWith(clearProject: true, clearMaterial: true);
-                }
-              },
-              itemBuilder: (ctx) => [
-                PopupMenuItem(
-                  value: 'issue',
-                  child: Text(
-                    isSwahili ? 'Toa Vifaa' : 'Issue Materials',
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'movements',
-                  child: Text(isSwahili ? 'Mienendo' : 'Movements'),
-                ),
-                PopupMenuItem(
-                  value: 'change_project',
-                  child: Text(
-                    isSwahili ? 'Badili Mradi' : 'Change Project',
-                  ),
-                ),
-              ],
-            ),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterSheet(context),
-            tooltip: isSwahili ? 'Chuja' : 'Filter',
-          ),
-        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showInventoryForm(context),
+          child: const Icon(Icons.add_rounded),
+          tooltip: isSwahili ? 'Ongeza' : 'Add',
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_inventoryProvider),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                  ),
-                ],
-              ),
-              child: inventoryAsync.when(
-                loading: () => const SizedBox(
-                  height: 60,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (_, __) => const SizedBox.shrink(),
-                data: (payload) {
-                  final totalCount = payload['total_count'] as int;
-                  final totalQty = payload['total_quantity'] as double;
-                  final stats = payload['stats'] as Map<String, dynamic>? ?? const {};
-
-                  return widget.stockRegisterMode
-                      ? Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            SizedBox(
-                              width: 160,
-                              child: _StatCard(
-                                title: isSwahili ? 'Jumla ya Bidhaa' : 'Total Items',
-                                value: '${stats['total'] ?? totalCount}',
-                                icon: Icons.inventory_2,
-                                color: const Color(0xFF3498DB),
-                                isDarkMode: isDarkMode,
-                              ),
-                            ),
-                            SizedBox(
-                              width: 160,
-                              child: _StatCard(
-                                title: isSwahili ? 'Zipo Stock' : 'In Stock',
-                                value: '${stats['in_stock'] ?? 0}',
-                                icon: Icons.check_circle,
-                                color: const Color(0xFF27AE60),
-                                isDarkMode: isDarkMode,
-                              ),
-                            ),
-                            SizedBox(
-                              width: 160,
-                              child: _StatCard(
-                                title: isSwahili ? 'Stock Ndogo' : 'Low Stock',
-                                value: '${stats['low_stock'] ?? 0}',
-                                icon: Icons.warning_amber_rounded,
-                                color: const Color(0xFFF59E0B),
-                                isDarkMode: isDarkMode,
-                              ),
-                            ),
-                            SizedBox(
-                              width: 160,
-                              child: _StatCard(
-                                title: isSwahili ? 'Hakuna Stock' : 'Out of Stock',
-                                value: '${stats['out_of_stock'] ?? 0}',
-                                icon: Icons.remove_shopping_cart_rounded,
-                                color: const Color(0xFFEF4444),
-                                isDarkMode: isDarkMode,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          children: [
-                            Expanded(
-                              child: _StatCard(
-                                title: isSwahili ? 'Jumla' : 'Total',
-                                value: '$totalCount',
-                                icon: Icons.inventory_2,
-                                color: const Color(0xFF3498DB),
-                                isDarkMode: isDarkMode,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _StatCard(
-                                title: isSwahili ? 'Jumla ya Kiasi' : 'Total Qty',
-                                value: _formatNumber(totalQty),
-                                icon: Icons.analytics,
-                                color: const Color(0xFF27AE60),
-                                isDarkMode: isDarkMode,
-                              ),
-                            ),
-                          ],
-                        );
-                },
-              ),
-            ),
-            if (widget.stockRegisterMode && selectedProject != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-                color: isDarkMode ? const Color(0xFF141427) : Colors.white,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      isSwahili ? 'Mradi Uliochaguliwa' : 'Selected Project',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isDarkMode
-                            ? Colors.white54
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      selectedProjectName ?? '${isSwahili ? 'Mradi' : 'Project'} #$selectedProject',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                    TextField(
+                      onChanged: (value) =>
+                          ref.read(_inventorySearchProvider.notifier).state =
+                              value,
+                      decoration: InputDecoration(
+                        hintText: isSwahili
+                            ? 'Tafuta inventory...'
+                            : 'Search inventory...',
+                        prefixIcon: const Icon(Icons.search_rounded),
+                        suffixIcon: search.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () =>
+                                    ref
+                                            .read(
+                                              _inventorySearchProvider.notifier,
+                                            )
+                                            .state =
+                                        '',
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: isDarkMode
+                            ? const Color(0xFF2A2A3E)
+                            : Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _ActionChipButton(
-                          icon: Icons.outbox_rounded,
-                          label: isSwahili ? 'Toa Vifaa' : 'Issue Materials',
-                          onTap: () =>
+                    projectsAsync.when(
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                      data: (projects) => materialsAsync.when(
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                        data: (materials) => _InventoryFilters(
+                          projects: projects as List,
+                          materials: materials as List,
+                          filter: filter,
+                          isSwahili: isSwahili,
+                          isDarkMode: isDarkMode,
+                          stockRegisterMode: widget.stockRegisterMode,
+                          selectedProject: selectedProject,
+                          selectedProjectName: selectedProjectName,
+                          onProjectChanged: (v) {
+                            ref
+                                .read(inventoryFilterProvider.notifier)
+                                .state = filter.copyWith(
+                              projectId: v,
+                              clearProject: v == null,
+                            );
+                          },
+                          onIssueMaterials: () =>
                               _showIssueMaterialsForm(context, selectedProject),
-                        ),
-                        _ActionChipButton(
-                          icon: Icons.history_rounded,
-                          label: isSwahili ? 'Mienendo' : 'Movements',
-                          onTap: () =>
+                          onShowMovements: () =>
                               _showStockMovements(context, selectedProject),
-                        ),
-                        _ActionChipButton(
-                          icon: Icons.swap_horiz_rounded,
-                          label: isSwahili ? 'Badili Mradi' : 'Change Project',
-                          onTap: () {
-                            ref.read(inventoryFilterProvider.notifier).state =
-                                filter.copyWith(
-                                  clearProject: true,
-                                  clearMaterial: true,
-                                );
+                          onChangeProject: () {
+                            ref
+                                .read(inventoryFilterProvider.notifier)
+                                .state = filter.copyWith(
+                              clearProject: true,
+                              clearMaterial: true,
+                            );
                           },
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
               ),
+            ),
+            SliverToBoxAdapter(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: inventoryAsync.when(
+                  loading: () => const SizedBox(
+                    height: 60,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (payload) {
+                    final totalCount = payload['total_count'] as int;
+                    final totalQty = payload['total_quantity'] as double;
+                    final stats =
+                        payload['stats'] as Map<String, dynamic>? ?? const {};
+
+                    return widget.stockRegisterMode
+                        ? Wrap(
+                            spacing: 12,
+                            runSpacing: 12,
+                            children: [
+                              SizedBox(
+                                width: 160,
+                                child: _StatCard(
+                                  title: isSwahili
+                                      ? 'Jumla ya Bidhaa'
+                                      : 'Total Items',
+                                  value: '${stats['total'] ?? totalCount}',
+                                  icon: Icons.inventory_2,
+                                  color: const Color(0xFF3498DB),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 160,
+                                child: _StatCard(
+                                  title: isSwahili ? 'Zipo Stock' : 'In Stock',
+                                  value: '${stats['in_stock'] ?? 0}',
+                                  icon: Icons.check_circle,
+                                  color: const Color(0xFF27AE60),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 160,
+                                child: _StatCard(
+                                  title: isSwahili
+                                      ? 'Stock Ndogo'
+                                      : 'Low Stock',
+                                  value: '${stats['low_stock'] ?? 0}',
+                                  icon: Icons.warning_amber_rounded,
+                                  color: const Color(0xFFF59E0B),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                              SizedBox(
+                                width: 160,
+                                child: _StatCard(
+                                  title: isSwahili
+                                      ? 'Hakuna Stock'
+                                      : 'Out of Stock',
+                                  value: '${stats['out_of_stock'] ?? 0}',
+                                  icon: Icons.remove_shopping_cart_rounded,
+                                  color: const Color(0xFFEF4444),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: _StatCard(
+                                  title: isSwahili ? 'Jumla' : 'Total',
+                                  value: '$totalCount',
+                                  icon: Icons.inventory_2,
+                                  color: const Color(0xFF3498DB),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _StatCard(
+                                  title: isSwahili
+                                      ? 'Jumla ya Kiasi'
+                                      : 'Total Qty',
+                                  value: _formatNumber(totalQty),
+                                  icon: Icons.analytics,
+                                  color: const Color(0xFF27AE60),
+                                  isDarkMode: isDarkMode,
+                                ),
+                              ),
+                            ],
+                          );
+                  },
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
             if (widget.stockRegisterMode && selectedProject == null)
-              Expanded(
-                child: projectsAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => _ErrorView(
+              projectsAsync.when(
+                loading: () => const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => SliverFillRemaining(
+                  child: _ErrorView(
                     error: e,
                     isSwahili: isSwahili,
                     onRetry: () => ref.invalidate(_inventoryProjectsProvider),
                   ),
-                  data: (projects) => ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    children: [
+                ),
+                data: (projects) => SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
                       Text(
                         isSwahili ? 'Chagua Mradi' : 'Select a Project',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                          color: isDarkMode
+                              ? Colors.white
+                              : AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -378,77 +381,95 @@ class _MaterialInventoryScreenState
                           project: Map<String, dynamic>.from(project as Map),
                           isDarkMode: isDarkMode,
                           onTap: () {
-                           ref.read(inventoryFilterProvider.notifier).state =
-                                filter.copyWith(projectId: project['id'] as int?);
+                            ref
+                                .read(inventoryFilterProvider.notifier)
+                                .state = filter.copyWith(
+                              projectId: project['id'] as int?,
+                            );
                           },
                         ),
                       ),
-                    ],
+                    ]),
                   ),
                 ),
               )
             else
-              Expanded(
-                child: inventoryAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => _ErrorView(
+              inventoryAsync.when(
+                loading: () => const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => SliverFillRemaining(
+                  child: _ErrorView(
                     error: e,
                     isSwahili: isSwahili,
                     onRetry: () => ref.invalidate(_inventoryProvider),
                   ),
-                  data: (payload) {
-                    final inventory = (payload['items'] as List)
-                        .cast<Map<String, dynamic>>();
+                ),
+                data: (payload) {
+                  final allItems = (payload['items'] as List)
+                      .cast<Map<String, dynamic>>();
+                  final inventory = search.isEmpty
+                      ? allItems
+                      : allItems.where((item) {
+                          final haystack = [
+                            item['material_name'] ?? '',
+                            item['project_name'] ?? '',
+                            item['item_code'] ?? '',
+                            item['description'] ?? '',
+                            item['unit'] ?? '',
+                          ].join(' ').toLowerCase();
+                          return haystack.contains(search);
+                        }).toList();
 
-                    if (inventory.isEmpty) {
-                      return ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(32),
-                        children: [
-                          const SizedBox(height: 100),
-                          Icon(
-                            Icons.inventory_2_outlined,
-                            size: 56,
-                            color: Colors.grey[300],
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            isSwahili
-                                ? 'Hakuna inventory iliyopatikana'
-                                : 'No inventory found',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: isDarkMode
-                                  ? Colors.white54
-                                  : AppColors.textSecondary,
+                  if (inventory.isEmpty) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
                             ),
-                          ),
-                          if (filter.projectId != null ||
-                              filter.materialId != null) ...[
                             const SizedBox(height: 16),
-                            TextButton(
-                              onPressed: () =>
-                                  ref
-                                          .read(inventoryFilterProvider.notifier)
-                                          .state =
-                                      InventoryFilter(),
-                              child: Text(
-                                isSwahili ? 'Ondoa vichujio' : 'Clear filters',
+                            Text(
+                              allItems.isEmpty
+                                  ? (isSwahili
+                                        ? 'Hakuna inventory iliyopatikana'
+                                        : 'No inventory found')
+                                  : (isSwahili
+                                        ? 'Hakuna matokeo yanayolingana'
+                                        : 'No items match your search'),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
                               ),
                             ),
+                            if (search.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                onPressed: () =>
+                                    ref
+                                            .read(
+                                              _inventorySearchProvider.notifier,
+                                            )
+                                            .state =
+                                        '',
+                                icon: const Icon(Icons.arrow_back_rounded),
+                                label: Text(isSwahili ? 'Rudi' : 'Back'),
+                              ),
+                            ],
                           ],
-                        ],
-                      );
-                    }
+                        ),
+                      ),
+                    );
+                  }
 
-                    return ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      itemCount: inventory.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == inventory.length) {
-                          return const SizedBox(height: 80);
-                        }
+                  return SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
                         return _InventoryCard(
                           inventory: inventory[index],
                           isSwahili: isSwahili,
@@ -463,10 +484,10 @@ class _MaterialInventoryScreenState
                           onDelete: () =>
                               _deleteInventory(context, ref, inventory[index]),
                         );
-                      },
-                    );
-                  },
-                ),
+                      }, childCount: inventory.length),
+                    ),
+                  );
+                },
               ),
           ],
         ),
@@ -562,10 +583,8 @@ class _MaterialInventoryScreenState
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => _StockMovementsSheet(
-        projectId: projectId,
-        boqItemId: boqItemId,
-      ),
+      builder: (ctx) =>
+          _StockMovementsSheet(projectId: projectId, boqItemId: boqItemId),
     ).then((result) {
       if (result == true) {
         ref.invalidate(_inventoryProvider);
@@ -997,8 +1016,8 @@ class _InventoryCard extends StatelessWidget {
                         Text(
                           stockRegisterMode
                               ? (inventory['description'] as String? ??
-                                  inventory['material_name'] as String? ??
-                                  '-')
+                                    inventory['material_name'] as String? ??
+                                    '-')
                               : (inventory['project_name'] as String? ?? '-'),
                           style: TextStyle(
                             fontSize: 12,
@@ -1081,25 +1100,29 @@ class _InventoryCard extends StatelessWidget {
                     _MiniStat(
                       label: isSwahili ? 'Received' : 'Received',
                       value:
-                          '${_formatNumber(quantity)} ${inventory['unit'] ?? ''}'.trim(),
+                          '${_formatNumber(quantity)} ${inventory['unit'] ?? ''}'
+                              .trim(),
                       dark: isDarkMode,
                     ),
                     _MiniStat(
                       label: isSwahili ? 'Used' : 'Used',
                       value:
-                          '${_formatNumber(quantityUsed)} ${inventory['unit'] ?? ''}'.trim(),
+                          '${_formatNumber(quantityUsed)} ${inventory['unit'] ?? ''}'
+                              .trim(),
                       dark: isDarkMode,
                     ),
                     _MiniStat(
                       label: isSwahili ? 'Available' : 'Available',
                       value:
-                          '${_formatNumber(quantityAvailable)} ${inventory['unit'] ?? ''}'.trim(),
+                          '${_formatNumber(quantityAvailable)} ${inventory['unit'] ?? ''}'
+                              .trim(),
                       dark: isDarkMode,
                     ),
                     _MiniStat(
                       label: isSwahili ? 'Min Stock' : 'Min Stock',
                       value:
-                          '${_formatNumber(minimumStock)} ${inventory['unit'] ?? ''}'.trim(),
+                          '${_formatNumber(minimumStock)} ${inventory['unit'] ?? ''}'
+                              .trim(),
                       dark: isDarkMode,
                     ),
                   ],
@@ -1166,7 +1189,9 @@ class _InventoryCard extends StatelessWidget {
                   '${isSwahili ? 'Updated' : 'Updated'}: ${_formatDate(inventory['updated_at'] as String? ?? '')}',
                   style: TextStyle(
                     fontSize: 11,
-                    color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                    color: isDarkMode
+                        ? Colors.white54
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -1281,7 +1306,9 @@ class _ProjectCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppColors.textPrimary,
                       ),
                     ),
                     if ((project['code'] as String?)?.isNotEmpty ?? false) ...[
@@ -1354,11 +1381,11 @@ class _InventoryDetailSheet extends ConsumerWidget {
                         child: Text(
                           stockRegisterMode
                               ? (isSwahili
-                                  ? 'Maelezo ya Stock'
-                                  : 'Stock Item Details')
+                                    ? 'Maelezo ya Stock'
+                                    : 'Stock Item Details')
                               : (isSwahili
-                                  ? 'Maelezo ya Inventory'
-                                  : 'Inventory Details'),
+                                    ? 'Maelezo ya Inventory'
+                                    : 'Inventory Details'),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -1399,7 +1426,8 @@ class _InventoryDetailSheet extends ConsumerWidget {
                     ),
                   _DetailRow(
                     label: isSwahili ? 'Maelezo' : 'Description',
-                    value: inventory['description'] as String? ??
+                    value:
+                        inventory['description'] as String? ??
                         inventory['material_name'] as String? ??
                         '-',
                     dark: isDarkMode,
@@ -1548,6 +1576,175 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
+class _InventoryFilters extends ConsumerWidget {
+  final List projects;
+  final List materials;
+  final InventoryFilter filter;
+  final bool isSwahili;
+  final bool isDarkMode;
+  final bool stockRegisterMode;
+  final int? selectedProject;
+  final String? selectedProjectName;
+  final void Function(int?) onProjectChanged;
+  final VoidCallback onIssueMaterials;
+  final VoidCallback onShowMovements;
+  final VoidCallback onChangeProject;
+
+  const _InventoryFilters({
+    required this.projects,
+    required this.materials,
+    required this.filter,
+    required this.isSwahili,
+    required this.isDarkMode,
+    required this.stockRegisterMode,
+    required this.selectedProject,
+    required this.selectedProjectName,
+    required this.onProjectChanged,
+    required this.onIssueMaterials,
+    required this.onShowMovements,
+    required this.onChangeProject,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ExpansionTile(
+      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      initiallyExpanded: filter.projectId != null || filter.materialId != null,
+      childrenPadding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
+      backgroundColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.white,
+      collapsedBackgroundColor: isDarkMode
+          ? const Color(0xFF2A2A3E)
+          : Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      collapsedShape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      children: [
+        if (stockRegisterMode && selectedProject != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isSwahili ? 'Mradi Uliochaguliwa' : 'Selected Project',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  selectedProjectName ?? 'Project #$selectedProject',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _ActionChipButton(
+                      icon: Icons.outbox_rounded,
+                      label: isSwahili ? 'Toa Vifaa' : 'Issue Materials',
+                      onTap: onIssueMaterials,
+                    ),
+                    _ActionChipButton(
+                      icon: Icons.history_rounded,
+                      label: isSwahili ? 'Mienendo' : 'Movements',
+                      onTap: onShowMovements,
+                    ),
+                    _ActionChipButton(
+                      icon: Icons.swap_horiz_rounded,
+                      label: isSwahili ? 'Badili Mradi' : 'Change Project',
+                      onTap: onChangeProject,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ] else ...[
+          _Drop<int>(
+            label: isSwahili ? 'Mradi' : 'Project',
+            value: filter.projectId,
+            items: projects.cast<Map<String, dynamic>>(),
+            onChanged: onProjectChanged,
+            displayField: 'project_name',
+          ),
+          _Drop<int>(
+            label: isSwahili ? 'Kifurushi' : 'Material',
+            value: filter.materialId,
+            items: materials.cast<Map<String, dynamic>>(),
+            onChanged: (v) => ref.read(inventoryFilterProvider.notifier).state =
+                filter.copyWith(materialId: v, clearMaterial: v == null),
+            displayField: 'name',
+          ),
+        ],
+        if (filter.projectId != null || filter.materialId != null)
+          OutlinedButton(
+            onPressed: () => ref.read(inventoryFilterProvider.notifier).state =
+                InventoryFilter(),
+            child: Text(isSwahili ? 'Futa' : 'Clear'),
+          ),
+      ],
+    );
+  }
+}
+
+class _Drop<T> extends StatelessWidget {
+  final String label;
+  final T? value;
+  final List<Map<String, dynamic>> items;
+  final void Function(T?) onChanged;
+  final String displayField;
+
+  const _Drop({
+    required this.label,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+    required this.displayField,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<T>(
+        value: value,
+        isExpanded: true,
+        decoration: InputDecoration(labelText: label),
+        items: [
+          DropdownMenuItem<T>(
+            value: null,
+            child: const Text('All', overflow: TextOverflow.ellipsis),
+          ),
+          ...items.map(
+            (item) => DropdownMenuItem<T>(
+              value: item['id'] as T,
+              child: Text(
+                item[displayField]?.toString() ?? '-',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ],
+        onChanged: onChanged,
+      ),
+    );
+  }
+}
+
 class _ActionChipButton extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -1588,7 +1785,8 @@ class _IssueMaterialsSheet extends ConsumerStatefulWidget {
   const _IssueMaterialsSheet({required this.projectId});
 
   @override
-  ConsumerState<_IssueMaterialsSheet> createState() => _IssueMaterialsSheetState();
+  ConsumerState<_IssueMaterialsSheet> createState() =>
+      _IssueMaterialsSheetState();
 }
 
 class _IssueMaterialsSheetState extends ConsumerState<_IssueMaterialsSheet> {
@@ -1663,7 +1861,9 @@ class _IssueMaterialsSheetState extends ConsumerState<_IssueMaterialsSheet> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                            color: isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -1679,7 +1879,9 @@ class _IssueMaterialsSheetState extends ConsumerState<_IssueMaterialsSheet> {
                         ? 'Chagua vifaa vya kutoa na kiasi chake.'
                         : 'Choose the materials to issue and how much to issue.',
                     style: TextStyle(
-                      color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                      color: isDarkMode
+                          ? Colors.white54
+                          : AppColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -1750,7 +1952,9 @@ class _IssueMaterialsSheetState extends ConsumerState<_IssueMaterialsSheet> {
                             const SizedBox(height: 8),
                             Text(
                               _buildAvailabilityText(
-                                allItems.firstWhere((item) => item['id'] == row.inventoryId),
+                                allItems.firstWhere(
+                                  (item) => item['id'] == row.inventoryId,
+                                ),
                                 isSwahili,
                               ),
                               style: TextStyle(
@@ -1816,9 +2020,7 @@ class _IssueMaterialsSheetState extends ConsumerState<_IssueMaterialsSheet> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.outbox_rounded),
-                      label: Text(
-                        isSwahili ? 'Toa Vifaa' : 'Issue Materials',
-                      ),
+                      label: Text(isSwahili ? 'Toa Vifaa' : 'Issue Materials'),
                     ),
                   ),
                 ],
@@ -1845,7 +2047,9 @@ class _IssueMaterialsSheetState extends ConsumerState<_IssueMaterialsSheet> {
     for (final row in _rows) {
       if (row.inventoryId == null) continue;
       final quantity = _toDouble(row.quantityController.text.trim());
-      final item = allItems.firstWhere((entry) => entry['id'] == row.inventoryId);
+      final item = allItems.firstWhere(
+        (entry) => entry['id'] == row.inventoryId,
+      );
       final available = _toDouble(item['quantity_available']);
       if (quantity <= 0 || quantity > available) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1885,10 +2089,7 @@ class _IssueMaterialsSheetState extends ConsumerState<_IssueMaterialsSheet> {
       final api = ref.read(apiClientProvider);
       await api.post(
         '/material-inventory/issue',
-        data: {
-          'project_id': widget.projectId,
-          'items': payloadItems,
-        },
+        data: {'project_id': widget.projectId, 'items': payloadItems},
       );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -1972,7 +2173,9 @@ class _AdjustStockSheetState extends ConsumerState<_AdjustStockSheet> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppColors.textPrimary,
                       ),
                     ),
                   ),
@@ -1990,7 +2193,8 @@ class _AdjustStockSheetState extends ConsumerState<_AdjustStockSheet> {
               ),
               _DetailRow(
                 label: isSwahili ? 'Maelezo' : 'Description',
-                value: widget.inventory['description'] as String? ??
+                value:
+                    widget.inventory['description'] as String? ??
                     widget.inventory['material_name'] as String? ??
                     '-',
                 dark: isDarkMode,
@@ -2004,7 +2208,9 @@ class _AdjustStockSheetState extends ConsumerState<_AdjustStockSheet> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _newQuantityController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 decoration: InputDecoration(
                   labelText: isSwahili
                       ? 'Kiasi Kipya Cha Jumla'
@@ -2023,7 +2229,9 @@ class _AdjustStockSheetState extends ConsumerState<_AdjustStockSheet> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: _loading ? null : () => _submit(context, isSwahili),
+                  onPressed: _loading
+                      ? null
+                      : () => _submit(context, isSwahili),
                   icon: _loading
                       ? const SizedBox(
                           width: 18,
@@ -2087,13 +2295,11 @@ class _StockMovementsSheet extends ConsumerStatefulWidget {
   final int projectId;
   final int? boqItemId;
 
-  const _StockMovementsSheet({
-    required this.projectId,
-    this.boqItemId,
-  });
+  const _StockMovementsSheet({required this.projectId, this.boqItemId});
 
   @override
-  ConsumerState<_StockMovementsSheet> createState() => _StockMovementsSheetState();
+  ConsumerState<_StockMovementsSheet> createState() =>
+      _StockMovementsSheetState();
 }
 
 class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
@@ -2150,7 +2356,9 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
-                            color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                            color: isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -2165,18 +2373,29 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                     value: _movementType,
                     isExpanded: true,
                     decoration: InputDecoration(
-                      labelText: isSwahili ? 'Aina ya Mwendendo' : 'Movement Type',
+                      labelText: isSwahili
+                          ? 'Aina ya Mwendendo'
+                          : 'Movement Type',
                     ),
                     items: const [
                       DropdownMenuItem(value: '', child: Text('All Types')),
-                      DropdownMenuItem(value: 'received', child: Text('Received')),
+                      DropdownMenuItem(
+                        value: 'received',
+                        child: Text('Received'),
+                      ),
                       DropdownMenuItem(value: 'issued', child: Text('Issued')),
                       DropdownMenuItem(
                         value: 'adjustment',
                         child: Text('Adjustment'),
                       ),
-                      DropdownMenuItem(value: 'returned', child: Text('Returned')),
-                      DropdownMenuItem(value: 'transfer', child: Text('Transfer')),
+                      DropdownMenuItem(
+                        value: 'returned',
+                        child: Text('Returned'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'transfer',
+                        child: Text('Transfer'),
+                      ),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -2242,10 +2461,13 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                                 children: [
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          movement['movement_number'] as String? ?? '-',
+                                          movement['movement_number']
+                                                  as String? ??
+                                              '-',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -2275,7 +2497,9 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                     child: Text(
-                                      movement['movement_type_label'] as String? ?? '-',
+                                      movement['movement_type_label']
+                                              as String? ??
+                                          '-',
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -2293,7 +2517,8 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                                   _MiniStat(
                                     label: isSwahili ? 'Date' : 'Date',
                                     value: _formatDate(
-                                      movement['movement_date'] as String? ?? '',
+                                      movement['movement_date'] as String? ??
+                                          '',
                                     ),
                                     dark: isDarkMode,
                                   ),
@@ -2304,7 +2529,9 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                                     dark: isDarkMode,
                                   ),
                                   _MiniStat(
-                                    label: isSwahili ? 'Balance' : 'Balance After',
+                                    label: isSwahili
+                                        ? 'Balance'
+                                        : 'Balance After',
                                     value:
                                         '${_formatNumber(_toDouble(movement['balance_after']))} ${movement['unit'] ?? ''}',
                                     dark: isDarkMode,
@@ -2312,7 +2539,9 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                                 ],
                               ),
                               const SizedBox(height: 10),
-                              if ((movement['location'] as String?)?.isNotEmpty ?? false)
+                              if ((movement['location'] as String?)
+                                      ?.isNotEmpty ??
+                                  false)
                                 Text(
                                   '${isSwahili ? 'Location' : 'Location'}: ${movement['location']}',
                                   style: TextStyle(
@@ -2322,7 +2551,8 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                                         : AppColors.textPrimary,
                                   ),
                                 ),
-                              if ((movement['notes'] as String?)?.isNotEmpty ?? false) ...[
+                              if ((movement['notes'] as String?)?.isNotEmpty ??
+                                  false) ...[
                                 const SizedBox(height: 6),
                                 Text(
                                   movement['notes'] as String,
@@ -2354,8 +2584,13 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                                     TextButton.icon(
                                       onPressed: _loading
                                           ? null
-                                          : () => _verify(context, movement['id'] as int?),
-                                      icon: const Icon(Icons.check_circle_outline),
+                                          : () => _verify(
+                                              context,
+                                              movement['id'] as int?,
+                                            ),
+                                      icon: const Icon(
+                                        Icons.check_circle_outline,
+                                      ),
                                       label: Text(
                                         isSwahili ? 'Thibitisha' : 'Verify',
                                       ),

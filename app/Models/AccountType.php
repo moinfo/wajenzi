@@ -10,7 +10,6 @@ class AccountType extends Model
     use HasFactory;
 
     protected $fillable = [
-        'id',
         'type',
         'code',
         'normal_balance',
