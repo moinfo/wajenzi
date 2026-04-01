@@ -10,21 +10,30 @@ class AppConfig {
   static const String _clientApiPath = '/api/client';
   static const String _defaultClientApiBaseUrl =
       '$_defaultPortalBaseUrl$_clientApiPath';
+  static const String _explicitApiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: '',
+  );
+  static const String _explicitPortalBaseUrl = String.fromEnvironment(
+    'PORTAL_BASE_URL',
+    defaultValue: '',
+  );
+  static const String _explicitClientApiBaseUrl = String.fromEnvironment(
+    'CLIENT_API_BASE_URL',
+    defaultValue: '',
+  );
 
   // API Configuration
   static const String apiBaseUrl = '$_defaultPortalBaseUrl$_apiPath';
-  static const String devApiBaseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: apiBaseUrl,
-  );
-  static const String portalBaseUrl = String.fromEnvironment(
-    'PORTAL_BASE_URL',
-    defaultValue: _defaultPortalBaseUrl,
-  );
-  static const String clientApiBaseUrl = String.fromEnvironment(
-    'CLIENT_API_BASE_URL',
-    defaultValue: _defaultClientApiBaseUrl,
-  );
+  static final String devApiBaseUrl = _explicitApiBaseUrl.isEmpty
+      ? apiBaseUrl
+      : _explicitApiBaseUrl;
+  static final String portalBaseUrl = _explicitPortalBaseUrl.isEmpty
+      ? _defaultPortalBaseUrl
+      : _explicitPortalBaseUrl;
+  static final String clientApiBaseUrl = _explicitClientApiBaseUrl.isEmpty
+      ? _defaultClientApiBaseUrl
+      : _explicitClientApiBaseUrl;
   static const String supportEmail = String.fromEnvironment(
     'SUPPORT_EMAIL',
     defaultValue: 'support@wajenzi.com',
@@ -152,6 +161,14 @@ class AppConfig {
       return '$_runtimeOrigin$_apiPath';
     }
 
+    if (_explicitApiBaseUrl.isNotEmpty) {
+      return _ensureApiBaseUrl(_explicitApiBaseUrl);
+    }
+
+    if (_explicitPortalBaseUrl.isNotEmpty) {
+      return _ensureApiBaseUrl(_explicitPortalBaseUrl);
+    }
+
     return _ensureApiBaseUrl(isDebug ? devApiBaseUrl : apiBaseUrl);
   }
 
@@ -181,6 +198,10 @@ class AppConfig {
 
   static String get clientBaseUrl => kIsWeb
       ? '$_runtimeOrigin$_clientApiPath'
+      : _explicitClientApiBaseUrl.isNotEmpty
+      ? _ensureClientApiBaseUrl(_explicitClientApiBaseUrl)
+      : _explicitPortalBaseUrl.isNotEmpty
+      ? _ensureClientApiBaseUrl(_explicitPortalBaseUrl)
       : _ensureClientApiBaseUrl(isDebug ? devClientApiBaseUrl : clientApiBaseUrl);
 
   static String clientUrl(String path) {
@@ -203,6 +224,10 @@ class AppConfig {
     return kIsWeb ? _runtimeOrigin : portalBaseUrl;
   }
 
+  static String get activePortalBaseUrl {
+    return kIsWeb ? _runtimeOrigin : _rewriteLocalhostForDevice(portalBaseUrl);
+  }
+
   static String get canonicalPortalBaseUrl {
     return _defaultPortalBaseUrl;
   }
@@ -216,7 +241,7 @@ class AppConfig {
     }
 
     final normalizedPath = path.startsWith('/') ? path : '/$path';
-    return '$canonicalPortalBaseUrl$normalizedPath';
+    return '$activePortalBaseUrl$normalizedPath';
   }
 
   static String? normalizeExternalUrl(String? url) {

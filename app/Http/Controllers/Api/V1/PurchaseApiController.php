@@ -45,6 +45,24 @@ class PurchaseApiController extends Controller
                 $query->whereNotNull('material_request_id');
             }
 
+            if ($request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('purchase_number', 'like', "%{$search}%")
+                      ->orWhere('document_number', 'like', "%{$search}%")
+                      ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
+                          $supplierQuery->where('name', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('project', function ($projectQuery) use ($search) {
+                          $projectQuery->where('name', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+
             $purchases = $query->orderBy('date', 'desc')->get();
             $items = collect($purchases)->map(fn($p) => $this->formatPurchase($p));
             $totals = [
@@ -110,7 +128,7 @@ class PurchaseApiController extends Controller
         try {
             $perPage = min((int) $request->integer('per_page', 100), 200);
 
-            $purchases = Purchase::with([
+            $query = Purchase::with([
                     'supplier',
                     'project',
                     'materialRequest',
@@ -124,8 +142,23 @@ class PurchaseApiController extends Controller
                             $approvalQuery->whereRaw('UPPER(status) = ?', ['APPROVED']);
                         });
                 })
-                ->orderByDesc('created_at')
-                ->get()
+                ->orderByDesc('created_at');
+
+            if ($request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('purchase_number', 'like', "%{$search}%")
+                      ->orWhere('document_number', 'like', "%{$search}%")
+                      ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
+                          $supplierQuery->where('name', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('project', function ($projectQuery) use ($search) {
+                          $projectQuery->where('name', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            $purchases = $query->get()
                 ->filter(fn ($purchase) => $purchase->purchaseItems->contains(
                     fn ($item) => !$item->isFullyReceived()
                 ))
@@ -313,6 +346,27 @@ class PurchaseApiController extends Controller
 
             if ($request->end_date) {
                 $query->whereDate('date', '<=', $request->end_date);
+            }
+
+            if ($request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('receiving_number', 'like', "%{$search}%")
+                      ->orWhereHas('purchase', function ($pq) use ($search) {
+                          $pq->where('purchase_number', 'like', "%{$search}%")
+                            ->orWhere('document_number', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('supplier', function ($sq) use ($search) {
+                          $sq->where('name', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('project', function ($pq) use ($search) {
+                          $pq->where('name', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            if ($request->status) {
+                $query->where('status', $request->status);
             }
 
             $receivings = $query->paginate($request->per_page ?? 100);

@@ -3,28 +3,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
 
+final _paymentSearchProvider = StateProvider.autoDispose<String>((ref) => '');
+
+final _paymentStatusProvider = StateProvider.autoDispose<String?>(
+  (ref) => null,
+);
+
 final _paymentListProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get(
-    '/billing/payments',
-    queryParameters: {'per_page': 100},
-  );
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get(
+        '/billing/payments',
+        queryParameters: {'per_page': 100},
+      );
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
-final _paymentRefsProvider =
-    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final _paymentRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
   final response = await api.get('/billing/payments/reference-data');
   final data = response.data is Map<String, dynamic>
@@ -37,184 +45,578 @@ final _paymentRefsProvider =
 
 final _paymentDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/billing/payments/$id');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/billing/payments/$id');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
-class BillingPaymentsScreen extends ConsumerWidget {
+class BillingPaymentsScreen extends ConsumerStatefulWidget {
   const BillingPaymentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BillingPaymentsScreen> createState() =>
+      _BillingPaymentsScreenState();
+}
+
+class _BillingPaymentsScreenState extends ConsumerState<BillingPaymentsScreen> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final itemsAsync = ref.watch(_paymentListProvider);
+    final search = ref.watch(_paymentSearchProvider);
+    final status = ref.watch(_paymentStatusProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Malipo ya Billing' : 'Billing Payments'),
-        actions: [
-          IconButton(
-            tooltip: isSwahili ? 'Ongeza' : 'Add',
-            onPressed: () => _openPaymentForm(context, ref),
-            icon: const Icon(Icons.add),
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
+        title: Text(isSwahili ? 'Malipo' : 'Payments'),
+      ),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) =>
+                      ref.read(_paymentSearchProvider.notifier).state = value,
+                  decoration: InputDecoration(
+                    hintText: isSwahili
+                        ? 'Tafuta malipo...'
+                        : 'Search payments...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(_paymentSearchProvider.notifier).state =
+                                  '';
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _FilterChip(
+                        label: 'All',
+                        isSelected: status == null,
+                        onTap: () =>
+                            ref.read(_paymentStatusProvider.notifier).state =
+                                null,
+                        isDarkMode: isDarkMode,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Completed',
+                        isSelected: status == 'completed',
+                        onTap: () =>
+                            ref.read(_paymentStatusProvider.notifier).state =
+                                'completed',
+                        isDarkMode: isDarkMode,
+                        color: AppColors.success,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Pending',
+                        isSelected: status == 'pending',
+                        onTap: () =>
+                            ref.read(_paymentStatusProvider.notifier).state =
+                                'pending',
+                        isDarkMode: isDarkMode,
+                        color: Colors.orange,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Voided',
+                        isSelected: status == 'voided',
+                        onTap: () =>
+                            ref.read(_paymentStatusProvider.notifier).state =
+                                'voided',
+                        isDarkMode: isDarkMode,
+                        color: AppColors.error,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => ref.invalidate(_paymentListProvider),
+              child: itemsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => _PaymentErrorView(
+                  isSwahili: isSwahili,
+                  message: vatErrorMessage(error, isSwahili: isSwahili),
+                  onRetry: () => ref.invalidate(_paymentListProvider),
+                  isDarkMode: isDarkMode,
+                ),
+                data: (items) {
+                  final filteredItems = items.where((item) {
+                    if (status != null &&
+                        _text(item['status']).toLowerCase() != status) {
+                      return false;
+                    }
+                    if (search.isEmpty) return true;
+                    final query = search.toLowerCase();
+                    final paymentNumber = (_text(
+                      item['payment_number'],
+                    )).toLowerCase();
+                    final document =
+                        item['document'] as Map<String, dynamic>? ?? {};
+                    final docNumber = (_text(
+                      document['document_number'],
+                    )).toLowerCase();
+
+                    // Try direct client first, then document client
+                    Map<String, dynamic>? client =
+                        item['client'] as Map<String, dynamic>?;
+                    client ??= document['client'] as Map<String, dynamic>?;
+
+                    final clientName = _getClientName(client).toLowerCase();
+                    return paymentNumber.contains(query) ||
+                        docNumber.contains(query) ||
+                        clientName.contains(query);
+                  }).toList();
+
+                  if (filteredItems.isEmpty) {
+                    return ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                        ),
+                        Icon(
+                          Icons.payments_outlined,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          isSwahili ? 'Hakuna malipo' : 'No payments found',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    itemCount: filteredItems.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredItems[index];
+                      final id = _toInt(item['id']);
+                      final paymentStatus = _text(item['status']);
+                      final isPending =
+                          paymentStatus.toLowerCase() == 'pending';
+
+                      return _PaymentCard(
+                        item: item,
+                        index: index + 1,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        onTap: id > 0
+                            ? () => _showPaymentSheet(context, ref, id)
+                            : null,
+                        onEdit: (isPending || paymentStatus.isEmpty)
+                            ? () =>
+                                  _openPaymentForm(context, ref, payment: item)
+                            : null,
+                        onDelete: (isPending || paymentStatus.isEmpty)
+                            ? () => _deletePayment(context, ref, item)
+                            : null,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(_paymentListProvider),
-        child: itemsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _PaymentErrorView(
-            isSwahili: isSwahili,
-            message: vatErrorMessage(error, isSwahili: isSwahili),
-            onRetry: () => ref.invalidate(_paymentListProvider),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 70),
+        child: FloatingActionButton(
+          onPressed: () => _openPaymentForm(context, ref),
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add, color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isDarkMode;
+  final Color color;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.isDarkMode,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? color
+              : (isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100]),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? color : Colors.transparent),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected
+                ? Colors.white
+                : (isDarkMode ? Colors.white54 : Colors.grey[600]),
           ),
-          data: (items) {
-            if (items.isEmpty) {
-              return ListView(
-                padding: const EdgeInsets.all(24),
-                children: [
-                  const SizedBox(height: 100),
-                  Icon(
-                    Icons.payments_outlined,
-                    size: 60,
-                    color: isDarkMode ? Colors.white24 : Colors.black12,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    isSwahili ? 'Hakuna malipo bado' : 'No payments yet',
-                    textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final int index;
+  final bool isSwahili;
+  final bool isDarkMode;
+  final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  const _PaymentCard({
+    required this.item,
+    required this.index,
+    required this.isSwahili,
+    required this.isDarkMode,
+    this.onTap,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final status = _text(item['status']);
+    final document = item['document'] as Map<String, dynamic>? ?? {};
+
+    // Try payment's direct client first, then fall back to document's client
+    Map<String, dynamic>? client = item['client'] as Map<String, dynamic>?;
+    client ??= document['client'] as Map<String, dynamic>?;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isDarkMode ? Colors.white12 : Colors.grey[200]!,
+        ),
+      ),
+      color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    '$index',
                     style: const TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.success,
                     ),
                   ),
-                ],
-              );
-            }
-
-            return ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final id = _toInt(item['id']);
-                final document =
-                    item['document'] as Map<String, dynamic>? ?? const {};
-                final client =
-                    item['client'] as Map<String, dynamic>? ?? const {};
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: id > 0 ? () => _showPaymentSheet(context, ref, id) : null,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            backgroundColor:
-                                AppColors.success.withValues(alpha: 0.12),
-                            child: const Icon(
-                              Icons.payments,
-                              color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _text(item['payment_number']),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getClientName(client),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDarkMode
+                            ? Colors.white54
+                            : AppColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _StatusChip(label: status),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  _text(item['payment_number']),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                const Icon(
+                                  Icons.receipt_outlined,
+                                  size: 10,
+                                  color: AppColors.primary,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${_text(document['document_number'])}\n${client['full_name']?.toString() ?? client['name']?.toString() ?? '-'}',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
+                                const SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    _text(document['document_number']),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      color: AppColors.primary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 6,
-                                  children: [
-                                    _MiniChip(
-                                      icon: Icons.calendar_today_outlined,
-                                      label: _text(item['payment_date']),
-                                    ),
-                                    _MiniChip(
-                                      icon: Icons.credit_card_outlined,
-                                      label: _text(item['payment_method']),
-                                    ),
-                                  ],
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_today_outlined,
+                          size: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _text(item['payment_date']),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDarkMode
+                                ? Colors.white54
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Icon(
+                          Icons.credit_card_outlined,
+                          size: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            _text(item['payment_method']).replaceAll('_', ' '),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDarkMode
+                                  ? Colors.white54
+                                  : AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    _money(item['amount']),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.success,
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'view') {
+                        onTap?.call();
+                      } else if (value == 'edit') {
+                        onEdit?.call();
+                      } else if (value == 'delete') {
+                        onDelete?.call();
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'view',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.visibility_outlined, size: 20),
+                            const SizedBox(width: 10),
+                            Text(isSwahili ? 'Tazama' : 'View'),
+                          ],
+                        ),
+                      ),
+                      if (onEdit != null)
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
                             children: [
-                              Text(
-                                _money(item['amount']),
-                                style: const TextStyle(
-                                  color: AppColors.success,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                              const Icon(Icons.edit_outlined, size: 20),
+                              const SizedBox(width: 10),
+                              Text(isSwahili ? 'Hariri' : 'Edit'),
+                            ],
+                          ),
+                        ),
+                      if (onDelete != null)
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.delete_outlined,
+                                size: 20,
+                                color: AppColors.error,
                               ),
-                              PopupMenuButton<String>(
-                                onSelected: (value) {
-                                  if (value == 'view') {
-                                    _showPaymentSheet(context, ref, id);
-                                  } else if (value == 'edit') {
-                                    _openPaymentForm(context, ref, payment: item);
-                                  } else if (value == 'delete') {
-                                    _deletePayment(context, ref, item);
-                                  }
-                                },
-                                itemBuilder: (context) => const [
-                                  PopupMenuItem<String>(
-                                    value: 'view',
-                                    child: Text('View'),
-                                  ),
-                                  PopupMenuItem<String>(
-                                    value: 'edit',
-                                    child: Text('Edit'),
-                                  ),
-                                  PopupMenuItem<String>(
-                                    value: 'delete',
-                                    child: Text('Delete'),
-                                  ),
-                                ],
+                              const SizedBox(width: 10),
+                              Text(
+                                isSwahili ? 'Futa' : 'Delete',
+                                style: const TextStyle(color: AppColors.error),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                    ],
                   ),
-                );
-              },
-            );
-          },
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String label;
+
+  const _StatusChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = label.toLowerCase();
+    Color color;
+    if (normalized == 'completed') {
+      color = AppColors.success;
+    } else if (normalized == 'pending') {
+      color = Colors.orange;
+    } else if (normalized == 'voided') {
+      color = AppColors.error;
+    } else {
+      color = AppColors.textSecondary;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 10,
         ),
       ),
     );
@@ -256,20 +658,38 @@ Future<void> _deletePayment(
   WidgetRef ref,
   Map<String, dynamic> payment,
 ) async {
+  final isSwahili = ref.read(isSwahiliProvider);
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      scrollable: true,
-      title: const Text('Delete Payment'),
-      content: Text('Delete ${_text(payment['payment_number'])}?'),
+      backgroundColor: ref.read(isDarkModeProvider)
+          ? const Color(0xFF1A1A2E)
+          : null,
+      title: Text(
+        isSwahili ? 'Thibitisha Kufuta' : 'Confirm Delete',
+        style: TextStyle(
+          color: ref.read(isDarkModeProvider) ? Colors.white : null,
+        ),
+      ),
+      content: Text(
+        isSwahili
+            ? 'Je, una uhakika unataka kufuta "${_text(payment['payment_number'])}"?'
+            : 'Are you sure you want to delete "${_text(payment['payment_number'])}"?',
+        style: TextStyle(
+          color: ref.read(isDarkModeProvider) ? Colors.white70 : null,
+        ),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, false),
-          child: const Text('Cancel'),
+          child: Text(isSwahili ? 'Hapana' : 'No'),
         ),
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, true),
-          child: const Text('Delete'),
+          child: Text(
+            isSwahili ? 'Ndiyo, Futa' : 'Yes, Delete',
+            style: const TextStyle(color: AppColors.error),
+          ),
         ),
       ],
     ),
@@ -277,13 +697,15 @@ Future<void> _deletePayment(
   if (confirmed != true) return;
 
   try {
-    await ref.read(apiClientProvider).delete('/billing/payments/${payment['id']}');
+    await ref
+        .read(apiClientProvider)
+        .delete('/billing/payments/${payment['id']}');
     ref.invalidate(_paymentListProvider);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: AppColors.success,
-          content: Text('Payment deleted'),
+          content: Text(isSwahili ? 'Malipo yamefutwa' : 'Payment deleted'),
         ),
       );
     }
@@ -292,7 +714,7 @@ Future<void> _deletePayment(
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.error,
-          content: Text(vatErrorMessage(error, isSwahili: false)),
+          content: Text(vatErrorMessage(error, isSwahili: isSwahili)),
         ),
       );
     }
@@ -306,31 +728,39 @@ void _showPaymentSheet(BuildContext context, WidgetRef ref, int id) {
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
     builder: (_) => FractionallySizedBox(
-      heightFactor: 0.84,
+      heightFactor: 0.88,
       child: Consumer(
         builder: (context, ref, _) {
           final detailAsync = ref.watch(_paymentDetailProvider(id));
+          final isSwahili = ref.watch(isSwahiliProvider);
           final isDarkMode = ref.watch(isDarkModeProvider);
           return Container(
             decoration: BoxDecoration(
               color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             child: SafeArea(
               top: false,
               child: detailAsync.when(
                 loading: () => const _BottomLoading(),
                 error: (error, _) => _PaymentErrorView(
-                  isSwahili: false,
-                  message: vatErrorMessage(error, isSwahili: false),
+                  isSwahili: isSwahili,
+                  message: vatErrorMessage(error, isSwahili: isSwahili),
                   onRetry: () => ref.invalidate(_paymentDetailProvider(id)),
+                  isDarkMode: isDarkMode,
                 ),
                 data: (payment) {
                   final document =
-                      payment['document'] as Map<String, dynamic>? ?? const {};
+                      payment['document'] as Map<String, dynamic>? ?? {};
                   final client =
-                      payment['client'] as Map<String, dynamic>? ?? const {};
-                  return Column(
+                      payment['client'] as Map<String, dynamic>? ?? {};
+                  final paymentStatus = _text(payment['status']);
+                  final isPending = paymentStatus.toLowerCase() == 'pending';
+
+                  return ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                     children: [
                       const SizedBox(height: 12),
                       Container(
@@ -341,37 +771,139 @@ void _showPaymentSheet(BuildContext context, WidgetRef ref, int id) {
                           borderRadius: BorderRadius.circular(999),
                         ),
                       ),
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: AppColors.success.withValues(
+                              alpha: 0.1,
+                            ),
+                            child: const Icon(
+                              Icons.payments,
+                              color: AppColors.success,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _text(payment['payment_number']),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                _StatusChip(label: paymentStatus),
+                              ],
+                            ),
+                          ),
+                          if (isPending)
+                            IconButton(
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                                await _openPaymentForm(
+                                  context,
+                                  ref,
+                                  payment: payment,
+                                );
+                              },
+                              icon: const Icon(Icons.edit_outlined),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      _SectionCard(
+                        title: isSwahili ? 'Maelezo' : 'Details',
+                        children: [
+                          _PaymentDetailRow(
+                            label: isSwahili ? 'Mteja' : 'Client',
+                            value:
+                                client['full_name']?.toString() ??
+                                client['name']?.toString() ??
+                                '-',
+                            isDarkMode: isDarkMode,
+                          ),
+                          _PaymentDetailRow(
+                            label: isSwahili ? 'Hati' : 'Document',
+                            value: _text(document['document_number']),
+                            isDarkMode: isDarkMode,
+                          ),
+                          _PaymentDetailRow(
+                            label: isSwahili ? 'Tarehe' : 'Payment Date',
+                            value: _text(payment['payment_date']),
+                            isDarkMode: isDarkMode,
+                          ),
+                          _PaymentDetailRow(
+                            label: isSwahili ? 'Njia' : 'Payment Method',
+                            value: _text(
+                              payment['payment_method'],
+                            ).replaceAll('_', ' '),
+                            isDarkMode: isDarkMode,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      _SectionCard(
+                        title: isSwahili ? 'Kiasi' : 'Amount',
+                        children: [
+                          _PaymentDetailRow(
+                            label: isSwahili ? 'Kiasi' : 'Amount',
+                            value: _money(payment['amount']),
+                            isDarkMode: isDarkMode,
+                            valueColor: AppColors.success,
+                          ),
+                        ],
+                      ),
+                      if (_text(payment['reference_number']).isNotEmpty &&
+                          _text(payment['reference_number']) != '-') ...[
+                        const SizedBox(height: 14),
+                        _SectionCard(
+                          title: isSwahili ? 'Marejeo' : 'Reference',
                           children: [
-                            Text(
-                              _text(payment['payment_number']),
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
+                            _PaymentDetailRow(
+                              label: isSwahili ? 'Nambari' : 'Reference Number',
+                              value: _text(payment['reference_number']),
+                              isDarkMode: isDarkMode,
+                            ),
+                            if (_text(payment['bank_name']).isNotEmpty)
+                              _PaymentDetailRow(
+                                label: isSwahili ? 'Benki' : 'Bank',
+                                value: _text(payment['bank_name']),
+                                isDarkMode: isDarkMode,
                               ),
-                            ),
-                            const SizedBox(height: 18),
-                            _DetailRow('Amount', _money(payment['amount'])),
-                            _DetailRow('Date', _text(payment['payment_date'])),
-                            _DetailRow('Method', _text(payment['payment_method'])),
-                            _DetailRow('Status', _text(payment['status'])),
-                            _DetailRow('Document', _text(document['document_number'])),
-                            _DetailRow(
-                              'Client',
-                              client['full_name']?.toString() ??
-                                  client['name']?.toString() ??
-                                  '-',
-                            ),
-                            _DetailRow('Reference', _text(payment['reference_number'])),
-                            _DetailRow('Bank', _text(payment['bank_name'])),
-                            _DetailRow('Cheque', _text(payment['cheque_number'])),
-                            _DetailRow('Transaction', _text(payment['transaction_id'])),
-                            _DetailRow('Notes', _text(payment['notes'])),
+                            if (_text(payment['cheque_number']).isNotEmpty)
+                              _PaymentDetailRow(
+                                label: isSwahili ? 'Cheque' : 'Cheque Number',
+                                value: _text(payment['cheque_number']),
+                                isDarkMode: isDarkMode,
+                              ),
+                            if (_text(payment['transaction_id']).isNotEmpty)
+                              _PaymentDetailRow(
+                                label: isSwahili ? 'Muamala' : 'Transaction ID',
+                                value: _text(payment['transaction_id']),
+                                isDarkMode: isDarkMode,
+                              ),
                           ],
                         ),
-                      ),
+                      ],
+                      if (_text(payment['notes']).isNotEmpty &&
+                          _text(payment['notes']) != '-') ...[
+                        const SizedBox(height: 14),
+                        _SectionCard(
+                          title: isSwahili ? 'Maelezo' : 'Notes',
+                          children: [
+                            Text(
+                              _text(payment['notes']),
+                              style: const TextStyle(height: 1.4),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   );
                 },
@@ -384,14 +916,178 @@ void _showPaymentSheet(BuildContext context, WidgetRef ref, int id) {
   );
 }
 
+class _PaymentDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool isDarkMode;
+  final Color? valueColor;
+
+  const _PaymentDetailRow({
+    required this.label,
+    required this.value,
+    required this.isDarkMode,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDarkMode
+                        ? Colors.white54
+                        : AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value.isEmpty ? '-' : value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    color:
+                        valueColor ??
+                        (isDarkMode ? Colors.white : AppColors.textPrimary),
+                    fontWeight: valueColor != null
+                        ? FontWeight.w600
+                        : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _SectionCard({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        color: Colors.grey.withValues(alpha: 0.08),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentErrorView extends StatelessWidget {
+  final bool isSwahili;
+  final String message;
+  final VoidCallback onRetry;
+  final bool isDarkMode;
+
+  const _PaymentErrorView({
+    required this.isSwahili,
+    required this.message,
+    required this.onRetry,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text(
+              isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomLoading extends StatelessWidget {
+  const _BottomLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 44,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.black12,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const Expanded(child: Center(child: CircularProgressIndicator())),
+        ],
+      ),
+    );
+  }
+}
+
 class _PaymentFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic> refs;
   final Map<String, dynamic>? payment;
 
-  const _PaymentFormSheet({
-    required this.refs,
-    this.payment,
-  });
+  const _PaymentFormSheet({required this.refs, this.payment});
 
   @override
   ConsumerState<_PaymentFormSheet> createState() => _PaymentFormSheetState();
@@ -399,20 +1095,28 @@ class _PaymentFormSheet extends ConsumerStatefulWidget {
 
 class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _dateController =
-      TextEditingController(text: _dateValue(widget.payment?['payment_date']));
-  late final TextEditingController _amountController =
-      TextEditingController(text: _numberText(widget.payment?['amount']));
-  late final TextEditingController _referenceController =
-      TextEditingController(text: widget.payment?['reference_number']?.toString() ?? '');
-  late final TextEditingController _bankController =
-      TextEditingController(text: widget.payment?['bank_name']?.toString() ?? '');
-  late final TextEditingController _chequeController =
-      TextEditingController(text: widget.payment?['cheque_number']?.toString() ?? '');
+  late final TextEditingController _dateController = TextEditingController(
+    text: _dateValue(widget.payment?['payment_date']),
+  );
+  late final TextEditingController _amountController = TextEditingController(
+    text: _numberText(widget.payment?['amount']),
+  );
+  late final TextEditingController _referenceController = TextEditingController(
+    text: widget.payment?['reference_number']?.toString() ?? '',
+  );
+  late final TextEditingController _bankController = TextEditingController(
+    text: widget.payment?['bank_name']?.toString() ?? '',
+  );
+  late final TextEditingController _chequeController = TextEditingController(
+    text: widget.payment?['cheque_number']?.toString() ?? '',
+  );
   late final TextEditingController _transactionController =
-      TextEditingController(text: widget.payment?['transaction_id']?.toString() ?? '');
-  late final TextEditingController _notesController =
-      TextEditingController(text: widget.payment?['notes']?.toString() ?? '');
+      TextEditingController(
+        text: widget.payment?['transaction_id']?.toString() ?? '',
+      );
+  late final TextEditingController _notesController = TextEditingController(
+    text: widget.payment?['notes']?.toString() ?? '',
+  );
 
   int? _documentId;
   String? _paymentMethod;
@@ -439,6 +1143,7 @@ class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final documents = (widget.refs['documents'] as List? ?? const [])
         .whereType<Map>()
@@ -482,21 +1187,35 @@ class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
                     MediaQuery.of(context).viewInsets.bottom + 28,
                   ),
                   children: [
-                    Text(
-                      widget.payment == null ? 'New Payment' : 'Edit Payment',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: AppColors.success.withValues(
+                            alpha: 0.1,
+                          ),
+                          child: Icon(
+                            widget.payment == null ? Icons.add : Icons.edit,
+                            color: AppColors.success,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          widget.payment == null
+                              ? (isSwahili ? 'Malipo Mpya' : 'New Payment')
+                              : (isSwahili ? 'Hariri Malipo' : 'Edit Payment'),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 18),
                     _dropdownField(
-                      label: 'Document *',
+                      label: isSwahili ? 'Hati *' : 'Document *',
                       isDarkMode: isDarkMode,
-                      value: documents.any((item) => _toNullableInt(item['id']) == _documentId)
-                          ? _documentId
-                          : null,
+                      value: _documentId,
                       items: documents
                           .map(
                             (item) => DropdownMenuItem<int?>(
@@ -513,7 +1232,7 @@ class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
                     if (selectedDocument.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
-                        'Balance: ${_money(selectedDocument['balance_amount'])}',
+                        '${isSwahili ? 'Salio' : 'Balance'}: ${_money(selectedDocument['balance_amount'])}',
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
@@ -524,23 +1243,25 @@ class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
                     _dateField(
                       context,
                       controller: _dateController,
-                      label: 'Payment Date *',
+                      label: isSwahili ? 'Tarehe *' : 'Payment Date *',
                       isDarkMode: isDarkMode,
                     ),
                     const SizedBox(height: 12),
                     _textField(
                       controller: _amountController,
-                      label: 'Amount *',
+                      label: isSwahili ? 'Kiasi *' : 'Amount *',
                       isDarkMode: isDarkMode,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _dropdownMethodField(
-                      label: 'Payment Method *',
+                      label: isSwahili
+                          ? 'Njia ya Malipo *'
+                          : 'Payment Method *',
                       isDarkMode: isDarkMode,
-                      value: methods.any((item) => item['id']?.toString() == _paymentMethod)
-                          ? _paymentMethod
-                          : null,
+                      value: _paymentMethod,
                       items: methods
                           .map(
                             (item) => DropdownMenuItem<String>(
@@ -549,40 +1270,43 @@ class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
                             ),
                           )
                           .toList(),
-                      onChanged: (value) => setState(() => _paymentMethod = value),
+                      onChanged: (value) =>
+                          setState(() => _paymentMethod = value),
                     ),
                     const SizedBox(height: 12),
                     _textField(
                       controller: _referenceController,
-                      label: 'Reference Number',
+                      label: isSwahili
+                          ? 'Nambari ya Marejeo'
+                          : 'Reference Number',
                       isDarkMode: isDarkMode,
                       isRequired: false,
                     ),
                     const SizedBox(height: 12),
                     _textField(
                       controller: _bankController,
-                      label: 'Bank Name',
+                      label: isSwahili ? 'Jina la Benki' : 'Bank Name',
                       isDarkMode: isDarkMode,
                       isRequired: false,
                     ),
                     const SizedBox(height: 12),
                     _textField(
                       controller: _chequeController,
-                      label: 'Cheque Number',
+                      label: isSwahili ? 'Nambari ya Cheque' : 'Cheque Number',
                       isDarkMode: isDarkMode,
                       isRequired: false,
                     ),
                     const SizedBox(height: 12),
                     _textField(
                       controller: _transactionController,
-                      label: 'Transaction ID',
+                      label: isSwahili ? 'ID ya Muamala' : 'Transaction ID',
                       isDarkMode: isDarkMode,
                       isRequired: false,
                     ),
                     const SizedBox(height: 12),
                     _textField(
                       controller: _notesController,
-                      label: 'Notes',
+                      label: isSwahili ? 'Maoni' : 'Notes',
                       isDarkMode: isDarkMode,
                       isRequired: false,
                       maxLines: 4,
@@ -599,7 +1323,11 @@ class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
                                 color: Colors.white,
                               ),
                             )
-                          : Text(widget.payment == null ? 'Save' : 'Update'),
+                          : Text(
+                              widget.payment == null
+                                  ? (isSwahili ? 'Hifadhi' : 'Save')
+                                  : (isSwahili ? 'Sasisha' : 'Update'),
+                            ),
                     ),
                   ],
                 ),
@@ -612,7 +1340,10 @@ class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _documentId == null || _paymentMethod == null) {
+    final isSwahili = ref.read(isSwahiliProvider);
+    if (!_formKey.currentState!.validate() ||
+        _documentId == null ||
+        _paymentMethod == null) {
       return;
     }
     setState(() => _saving = true);
@@ -640,7 +1371,11 @@ class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.success,
-          content: Text(id > 0 ? 'Payment updated' : 'Payment created'),
+          content: Text(
+            id > 0
+                ? (isSwahili ? 'Malipo yamesasishwa' : 'Payment updated')
+                : (isSwahili ? 'Malipo yamehifadhiwa' : 'Payment created'),
+          ),
         ),
       );
     } catch (error) {
@@ -648,124 +1383,12 @@ class _PaymentFormSheetState extends ConsumerState<_PaymentFormSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.error,
-          content: Text(vatErrorMessage(error, isSwahili: false)),
+          content: Text(vatErrorMessage(error, isSwahili: isSwahili)),
         ),
       );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-}
-
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DetailRow(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(value),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _MiniChip({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.textSecondary),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12)),
-        ],
-      ),
-    );
-  }
-}
-
-class _PaymentErrorView extends StatelessWidget {
-  final bool isSwahili;
-  final String message;
-  final VoidCallback onRetry;
-
-  const _PaymentErrorView({
-    required this.isSwahili,
-    required this.message,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline, size: 52, color: AppColors.error),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BottomLoading extends StatelessWidget {
-  const _BottomLoading();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 12),
-        Container(
-          width: 44,
-          height: 5,
-          decoration: BoxDecoration(
-            color: Colors.white24,
-            borderRadius: BorderRadius.circular(999),
-          ),
-        ),
-        const Expanded(child: Center(child: CircularProgressIndicator())),
-      ],
-    );
   }
 }
 
@@ -788,7 +1411,7 @@ Widget _textField({
           ? Colors.white.withValues(alpha: 0.05)
           : Colors.grey.withValues(alpha: 0.08),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       alignLabelWithHint: maxLines > 1,
@@ -819,7 +1442,7 @@ Widget _dropdownField({
           ? Colors.white.withValues(alpha: 0.05)
           : Colors.grey.withValues(alpha: 0.08),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
     ),
@@ -846,7 +1469,7 @@ Widget _dropdownMethodField({
           ? Colors.white.withValues(alpha: 0.05)
           : Colors.grey.withValues(alpha: 0.08),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
     ),
@@ -872,12 +1495,11 @@ Widget _dateField(
           ? Colors.white.withValues(alpha: 0.05)
           : Colors.grey.withValues(alpha: 0.08),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
     ),
-    validator: (value) =>
-        (value ?? '').trim().isEmpty ? 'Required' : null,
+    validator: (value) => (value ?? '').trim().isEmpty ? 'Required' : null,
     onTap: () async {
       final initialDate = DateTime.tryParse(controller.text) ?? DateTime.now();
       final picked = await showDatePicker(
@@ -896,6 +1518,37 @@ Widget _dateField(
 String _text(dynamic value) {
   final text = value?.toString().trim() ?? '';
   return text.isEmpty ? '-' : text;
+}
+
+String _getClientName(Map<String, dynamic>? client) {
+  if (client == null) return '-';
+
+  // Try full_name first
+  final fullName = client['full_name']?.toString();
+  if (fullName != null && fullName.isNotEmpty && fullName.trim().isNotEmpty) {
+    return fullName.trim();
+  }
+
+  // Try first_name + last_name (ProjectClient)
+  final firstName = (client['first_name'] ?? '').toString().trim();
+  final lastName = (client['last_name'] ?? '').toString().trim();
+  if (firstName.isNotEmpty || lastName.isNotEmpty) {
+    return '$firstName $lastName'.trim();
+  }
+
+  // Try contact_person (BillingClient)
+  final contactPerson = (client['contact_person'] ?? '').toString().trim();
+  if (contactPerson.isNotEmpty) {
+    return contactPerson;
+  }
+
+  // Try company_name (BillingClient)
+  final companyName = (client['company_name'] ?? '').toString().trim();
+  if (companyName.isNotEmpty) {
+    return companyName;
+  }
+
+  return '-';
 }
 
 String _money(dynamic value) {

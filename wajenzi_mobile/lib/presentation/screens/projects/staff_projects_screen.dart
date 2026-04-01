@@ -5,42 +5,37 @@ import 'package:intl/intl.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
-import '../../providers/settings_provider.dart';
 
-final _filtersProvider = StateProvider.autoDispose<Map<String, dynamic>>(
-  (ref) => {},
-);
+final _filtersProvider =
+    StateProvider.autoDispose<Map<String, dynamic>>((ref) => {});
 final _searchProvider = StateProvider.autoDispose<String>((ref) => '');
 
-final _referenceProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
-  ref,
-) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/projects/reference-data');
-  return response.data['data'] as Map<String, dynamic>? ?? {};
-});
+final _referenceProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/projects/reference-data');
+      return response.data['data'] as Map<String, dynamic>? ?? {};
+    });
 
-final _statsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
-  ref,
-) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/projects/stats');
-  return response.data['data'] as Map<String, dynamic>? ?? {};
-});
+final _statsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/projects/stats');
+      return response.data['data'] as Map<String, dynamic>? ?? {};
+    });
 
-final _projectsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
-  ref,
-) async {
-  final api = ref.watch(apiClientProvider);
-  final filters = ref.watch(_filtersProvider);
-  final response = await api.get('/projects', queryParameters: filters);
-  final payload = response.data['data'];
-  final collection = payload is Map<String, dynamic> ? payload : null;
-  return {
-    'items': (collection?['data'] ?? const []) as List,
-    'meta': collection?['meta'] as Map<String, dynamic>? ?? {},
-  };
-});
+final _projectsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+      final api = ref.watch(apiClientProvider);
+      final filters = ref.watch(_filtersProvider);
+      final response = await api.get('/projects', queryParameters: filters);
+      final payload = response.data['data'];
+      final collection = payload is Map<String, dynamic> ? payload : null;
+      return {
+        'items': (collection?['data'] ?? const []) as List,
+        'meta': collection?['meta'] as Map<String, dynamic>? ?? {},
+      };
+    });
 
 final _projectDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
@@ -59,7 +54,6 @@ class StaffProjectsScreen extends ConsumerWidget {
     final statsAsync = ref.watch(_statsProvider);
     final referenceAsync = ref.watch(_referenceProvider);
     final search = ref.watch(_searchProvider).trim().toLowerCase();
-    final isSwahili = ref.watch(isSwahiliProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -67,14 +61,13 @@ class StaffProjectsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Miradi' : 'Projects'),
+        title: const Text('Projects'),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
         child: FloatingActionButton(
           onPressed: () => _showProjectForm(context, ref),
-          child: Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza Mradi Mpya' : 'Add Project',
+          child: const Icon(Icons.add_rounded),
         ),
       ),
       body: RefreshIndicator(
@@ -95,46 +88,11 @@ class StaffProjectsScreen extends ConsumerWidget {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Column(
-                  children: [
-                    // Search field at TOP (like site_visits_screen)
-                    TextField(
-                      onChanged: (value) =>
-                          ref.read(_searchProvider.notifier).state = value,
-                      decoration: InputDecoration(
-                        hintText: isSwahili
-                            ? 'Tafuta miradi...'
-                            : 'Search projects...',
-                        prefixIcon: const Icon(Icons.search_rounded),
-                        suffixIcon: search.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () =>
-                                    ref.read(_searchProvider.notifier).state =
-                                        '',
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: Theme.of(context).cardColor,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Filters below search
-                    referenceAsync.when(
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, __) => const SizedBox.shrink(),
-                      data: (reference) => _Filters(reference: reference),
-                    ),
-                  ],
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: referenceAsync.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                  data: (reference) => _Filters(reference: reference),
                 ),
               ),
             ),
@@ -142,42 +100,26 @@ class StaffProjectsScreen extends ConsumerWidget {
               loading: () => const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (e, _) =>
-                  SliverFillRemaining(child: Center(child: Text('$e'))),
+              error: (e, _) => SliverFillRemaining(
+                child: Center(child: Text('$e')),
+              ),
               data: (payload) {
-                final allItems = (payload['items'] as List)
-                    .cast<Map<String, dynamic>>();
+                final allItems =
+                    (payload['items'] as List).cast<Map<String, dynamic>>();
                 final items = search.isEmpty
                     ? allItems
                     : allItems.where((project) {
                         final haystack = [
-                          project['document_number'] ?? '',
-                          project['project_name'] ?? '',
-                          (project['client']
-                                  as Map<String, dynamic>?)?['name'] ??
-                              '',
-                          (project['project_type']
-                                  as Map<String, dynamic>?)?['name'] ??
-                              '',
-                          (project['service_type']
-                                  as Map<String, dynamic>?)?['name'] ??
-                              '',
-                          project['status'] ?? '',
-                          project['approval_status'] ?? '',
-                          project['approval_summary'] ?? '',
-                          (project['salesperson']
-                                  as Map<String, dynamic>?)?['name'] ??
-                              '',
-                          (project['project_manager']
-                                  as Map<String, dynamic>?)?['name'] ??
-                              '',
-                          project['description'] ?? '',
-                          project['location'] ?? '',
-                          project['priority'] ?? '',
-                          project['start_date']?.toString() ?? '',
-                          project['expected_end_date']?.toString() ?? '',
-                          project['actual_end_date']?.toString() ?? '',
-                          project['contract_value']?.toString() ?? '',
+                          project['document_number'],
+                          project['project_name'],
+                          (project['client'] as Map<String, dynamic>?)?['name'],
+                          (project['project_type'] as Map<String, dynamic>?)?['name'],
+                          (project['service_type'] as Map<String, dynamic>?)?['name'],
+                          project['status'],
+                          project['approval_status'],
+                          project['approval_summary'],
+                          (project['salesperson'] as Map<String, dynamic>?)?['name'],
+                          (project['project_manager'] as Map<String, dynamic>?)?['name'],
                         ].whereType<Object>().join(' ').toLowerCase();
                         return haystack.contains(search);
                       }).toList();
@@ -189,19 +131,14 @@ class StaffProjectsScreen extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              isSwahili
-                                  ? 'Hakuna mradi iliyopatikana'
-                                  : 'No projects found',
-                            ),
+                            const Text('No projects found'),
                             if (search.isNotEmpty) ...[
                               const SizedBox(height: 12),
                               ElevatedButton.icon(
                                 onPressed: () =>
-                                    ref.read(_searchProvider.notifier).state =
-                                        '',
+                                    ref.read(_searchProvider.notifier).state = '',
                                 icon: const Icon(Icons.arrow_back_rounded),
-                                label: Text(isSwahili ? 'Rudi' : 'Back'),
+                                label: const Text('Back'),
                               ),
                             ],
                           ],
@@ -217,10 +154,8 @@ class StaffProjectsScreen extends ConsumerWidget {
                       final project = items[index];
                       return _ProjectCard(
                         project: project,
-                        onView: () =>
-                            _showProjectDetails(context, project['id'] as int),
-                        onEdit: () =>
-                            _showProjectForm(context, ref, project: project),
+                        onView: () => _showProjectDetails(context, project['id'] as int),
+                        onEdit: () => _showProjectForm(context, ref, project: project),
                         onDelete: () => _deleteProject(context, ref, project),
                       );
                     }, childCount: items.length),
@@ -265,87 +200,52 @@ class StaffProjectsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> project,
   ) async {
-    final isSwahili = ref.watch(isSwahiliProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isSwahili ? 'Futa Mradi' : 'Delete Project'),
+        title: const Text('Delete Project'),
         content: Text(
-          isSwahili
-              ? 'Una uhakika unataka kufuta ${project['project_name'] ?? 'hili mradi'}?'
-              : 'Are you sure you want to delete ${project['project_name'] ?? 'this project'}?',
+          'Are you sure you want to delete ${project['project_name'] ?? 'this project'}?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(isSwahili ? 'Futa' : 'Delete'),
+            child: const Text('Delete'),
           ),
         ],
       ),
     );
     if (confirmed != true) return;
     final api = ref.read(apiClientProvider);
-    try {
-      await api.delete('/projects/${project['id']}');
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isSwahili ? 'Mradi umefutwa' : 'Project deleted'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      String errorMessage = 'Failed to delete project';
-
-      // Enhanced error handling for delete
-      if (e.toString().contains('403')) {
-        errorMessage = isSwahili
-            ? 'Huna ruhusa wa kufuta mradi huyu'
-            : 'You do not have permission to delete this project';
-      } else if (e.toString().contains('404')) {
-        errorMessage = isSwahili ? 'Mradi hayapatikani' : 'Project not found';
-      } else if (e.toString().contains('500')) {
-        errorMessage = isSwahili
-            ? 'Hitilafu ya seva. Tafadhali jaribu tena baadaye'
-            : 'Server error. Please try again later';
-      } else if (e.toString().contains('constraint')) {
-        errorMessage = isSwahili
-            ? 'Mradi huu una miradi inayohusiana. Huwezi kufutwa'
-            : 'This project has associated items and cannot be deleted';
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-      }
+    await api.delete('/projects/${project['id']}');
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Project deleted'),
+          backgroundColor: AppColors.success,
+        ),
+      );
     }
     ref.invalidate(_projectsProvider);
     ref.invalidate(_statsProvider);
   }
 }
 
-class _StatsRow extends ConsumerWidget {
+class _StatsRow extends StatelessWidget {
   final Map<String, dynamic> stats;
   const _StatsRow({required this.stats});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+  Widget build(BuildContext context) {
     final cards = [
-      ('Total', isSwahili ? 'Jumla' : '${stats['total'] ?? 0}'),
-      ('Active', isSwahili ? 'Hai' : '${stats['active'] ?? 0}'),
-      ('Completed', isSwahili ? 'Imekamilisha' : '${stats['completed'] ?? 0}'),
-      ('Delayed', isSwahili ? 'Yachelewa' : '${stats['delayed'] ?? 0}'),
+      ('Total', '${stats['total'] ?? 0}'),
+      ('Active', '${stats['active'] ?? 0}'),
+      ('Completed', '${stats['completed'] ?? 0}'),
+      ('Delayed', '${stats['delayed'] ?? 0}'),
       ('Value', NumberFormat.compact().format(_toDouble(stats['total_value']))),
     ];
     return SizedBox(
@@ -371,18 +271,9 @@ class _StatsRow extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                cards[index].$2,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              Text(cards[index].$2, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               const SizedBox(height: 6),
-              Text(
-                cards[index].$1,
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
+              Text(cards[index].$1, style: const TextStyle(color: AppColors.textSecondary)),
             ],
           ),
         ),
@@ -400,52 +291,56 @@ class _Filters extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filters = ref.watch(_filtersProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final search = ref.watch(_searchProvider);
     return ExpansionTile(
-      title: Text(isSwahili ? 'Miradi Yote' : 'All Projects'),
-      subtitle: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      title: const Text('All Projects'),
+      subtitle: const Text('Filters'),
       initiallyExpanded: filters.isNotEmpty,
       childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       backgroundColor: Colors.white,
       collapsedBackgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      collapsedShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: TextFormField(
+            initialValue: search,
+            onChanged: (value) => ref.read(_searchProvider.notifier).state = value,
+            decoration: const InputDecoration(
+              labelText: 'Search',
+              prefixIcon: Icon(Icons.search_rounded),
+            ),
+          ),
+        ),
         _Drop<int>(
-          label: isSwahili ? 'Aina ya Mradi' : 'Project Type',
+          label: 'Project Type',
           value: filters['project_type_id'] as int?,
-          items: (reference['project_types'] as List? ?? const [])
-              .cast<Map<String, dynamic>>(),
+          items: (reference['project_types'] as List? ?? const []).cast<Map<String, dynamic>>(),
           onChanged: (value) => _set(ref, 'project_type_id', value),
         ),
         _Drop<int>(
-          label: isSwahili ? 'Aina ya Huduma' : 'Service Type',
+          label: 'Service Type',
           value: filters['service_type_id'] as int?,
-          items: (reference['service_types'] as List? ?? const [])
-              .cast<Map<String, dynamic>>(),
+          items: (reference['service_types'] as List? ?? const []).cast<Map<String, dynamic>>(),
           onChanged: (value) => _set(ref, 'service_type_id', value),
         ),
         _Drop<String>(
-          label: isSwahili ? 'Hali' : 'Status',
+          label: 'Status',
           value: filters['status'] as String?,
-          items: (reference['statuses'] as List? ?? const [])
-              .cast<Map<String, dynamic>>(),
+          items: (reference['statuses'] as List? ?? const []).cast<Map<String, dynamic>>(),
           onChanged: (value) => _set(ref, 'status', value),
         ),
         _Drop<int>(
-          label: isSwahili ? 'Mauzo' : 'Salesperson',
+          label: 'Salesperson',
           value: filters['salesperson_id'] as int?,
-          items: (reference['salespersons'] as List? ?? const [])
-              .cast<Map<String, dynamic>>(),
+          items: (reference['salespersons'] as List? ?? const []).cast<Map<String, dynamic>>(),
           onChanged: (value) => _set(ref, 'salesperson_id', value),
         ),
         _Drop<int>(
-          label: isSwahili ? 'Meneja wa Mradi' : 'Project Manager',
+          label: 'Project Manager',
           value: filters['project_manager_id'] as int?,
-          items: (reference['project_managers'] as List? ?? const [])
-              .cast<Map<String, dynamic>>(),
+          items: (reference['project_managers'] as List? ?? const []).cast<Map<String, dynamic>>(),
           onChanged: (value) => _set(ref, 'project_manager_id', value),
         ),
         OutlinedButton(
@@ -453,7 +348,7 @@ class _Filters extends ConsumerWidget {
             ref.read(_filtersProvider.notifier).state = {};
             ref.read(_searchProvider.notifier).state = '';
           },
-          child: Text(isSwahili ? 'Futa' : 'Clear'),
+          child: const Text('Clear'),
         ),
       ],
     );
@@ -475,12 +370,7 @@ class _Drop<T> extends StatelessWidget {
   final T? value;
   final List<Map<String, dynamic>> items;
   final void Function(T?) onChanged;
-  const _Drop({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
+  const _Drop({required this.label, required this.value, required this.items, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -493,18 +383,19 @@ class _Drop<T> extends StatelessWidget {
         items: [
           DropdownMenuItem<T>(
             value: null,
-            child: const Text('All', overflow: TextOverflow.ellipsis),
-          ),
-          ...items.map(
-            (item) => DropdownMenuItem<T>(
-              value: item['id'] as T,
-              child: Text(
-                item['name']?.toString() ?? '-',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+            child: const Text(
+              'All',
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+          ...items.map((item) => DropdownMenuItem<T>(
+                value: item['id'] as T,
+                child: Text(
+                  item['name']?.toString() ?? '-',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              )),
         ],
         onChanged: onChanged,
       ),
@@ -527,9 +418,7 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status =
-        (project['approval_status'] ?? project['status'] ?? 'pending')
-            .toString();
+    final status = (project['approval_status'] ?? project['status'] ?? 'pending').toString();
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -548,22 +437,15 @@ class _ProjectCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          project['document_number']?.toString().isNotEmpty ==
-                                  true
+                          project['document_number']?.toString().isNotEmpty == true
                               ? project['document_number'].toString()
                               : 'PRJ-${project['id']}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
+                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           project['project_name']?.toString() ?? '-',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -590,55 +472,18 @@ class _ProjectCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              _InfoLine(
-                'Client',
-                (project['client'] as Map<String, dynamic>?)?['name']
-                        ?.toString() ??
-                    '-',
-              ),
-              _InfoLine(
-                'Category',
-                (project['project_type'] as Map<String, dynamic>?)?['name']
-                        ?.toString() ??
-                    '-',
-              ),
-              _InfoLine(
-                'Service Type',
-                (project['service_type'] as Map<String, dynamic>?)?['name']
-                        ?.toString() ??
-                    '-',
-              ),
-              _InfoLine(
-                'Start Date',
-                _formatDate(project['start_date']?.toString()),
-              ),
-              _InfoLine(
-                'Expected End',
-                _formatDate(project['expected_end_date']?.toString()),
-              ),
-              _InfoLine(
-                'Actual End',
-                _formatDate(project['actual_end_date']?.toString()),
-              ),
-              _InfoLine(
-                'Planned (Days)',
-                _display(project['planned_duration']),
-              ),
+              _InfoLine('Client', (project['client'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
+              _InfoLine('Category', (project['project_type'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
+              _InfoLine('Service Type', (project['service_type'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
+              _InfoLine('Start Date', _formatDate(project['start_date']?.toString())),
+              _InfoLine('Expected End', _formatDate(project['expected_end_date']?.toString())),
+              _InfoLine('Actual End', _formatDate(project['actual_end_date']?.toString())),
+              _InfoLine('Planned (Days)', _display(project['planned_duration'])),
               _InfoLine('Actual (Days)', _display(project['actual_duration'])),
               _InfoLine('Delay (Days)', _display(project['delay_days'])),
               _InfoLine('Contract Value', _money(project['contract_value'])),
-              _InfoLine(
-                'Salesperson',
-                (project['salesperson'] as Map<String, dynamic>?)?['name']
-                        ?.toString() ??
-                    '-',
-              ),
-              _InfoLine(
-                'Project Manager',
-                (project['project_manager'] as Map<String, dynamic>?)?['name']
-                        ?.toString() ??
-                    '-',
-              ),
+              _InfoLine('Salesperson', (project['salesperson'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
+              _InfoLine('Project Manager', (project['project_manager'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
             ],
           ),
         ),
@@ -652,8 +497,7 @@ class _ProjectDetailSheet extends ConsumerStatefulWidget {
   const _ProjectDetailSheet({required this.projectId});
 
   @override
-  ConsumerState<_ProjectDetailSheet> createState() =>
-      _ProjectDetailSheetState();
+  ConsumerState<_ProjectDetailSheet> createState() => _ProjectDetailSheetState();
 }
 
 class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
@@ -663,7 +507,6 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(_projectDetailProvider(widget.projectId));
-    final isSwahili = ref.watch(isSwahiliProvider);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -671,13 +514,12 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
       ),
       child: SafeArea(
         top: false,
-        child: (_detail != null ? AsyncValue.data(_detail!) : detailAsync).when(
-          loading: () => const SizedBox(
-            height: 320,
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (e, _) =>
-              SizedBox(height: 320, child: Center(child: Text('$e'))),
+        child: (_detail != null
+                ? AsyncValue.data(_detail!)
+                : detailAsync)
+            .when(
+          loading: () => const SizedBox(height: 320, child: Center(child: CircularProgressIndicator())),
+          error: (e, _) => SizedBox(height: 320, child: Center(child: Text('$e'))),
           data: (project) => SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -691,67 +533,23 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Project Details',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      const Text('Project Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 12),
-                      ...(((project['project_details']
-                                  as Map<String, dynamic>?) ??
-                              {})
-                          .entries
-                          .map(
-                            (entry) => _DetailLine(
-                              entry.key,
-                              entry.value?.toString() ?? '-',
-                            ),
-                          )),
-                      if ((project['description']?.toString().isNotEmpty ??
-                              false) &&
-                          ((project['project_details']
-                                  as Map<String, dynamic>?)?['Description'] ==
-                              null))
-                        _DetailLine(
-                          isSwahili ? 'Maelezo' : 'Description',
-                          project['description'].toString(),
-                        ),
+                      ...(((project['project_details'] as Map<String, dynamic>?) ?? {}).entries
+                          .map((entry) => _DetailLine(entry.key, entry.value?.toString() ?? '-'))),
+                      if ((project['description']?.toString().isNotEmpty ?? false) &&
+                          ((project['project_details'] as Map<String, dynamic>?)?['Description'] == null))
+                        _DetailLine('Description', project['description'].toString()),
                       const SizedBox(height: 20),
-                      const Text(
-                        'Approval Flow',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      const Text('Approval Flow', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 12),
-                      _DetailLine(
-                        '',
-                        ((project['approval_flow']
-                                    as Map<String, dynamic>?)?['status_label']
-                                ?.toString() ??
-                            'In Progress'),
-                      ),
+                      _DetailLine('', ((project['approval_flow'] as Map<String, dynamic>?)?['status_label']?.toString() ?? 'In Progress')),
                       const SizedBox(height: 12),
-                      const Text(
-                        'Approvals',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                      const Text('Approvals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 12),
                       Text(
-                        ((project['approval_flow']
-                                    as Map<String, dynamic>?)?['message']
-                                ?.toString() ??
-                            ''),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
-                        ),
+                        ((project['approval_flow'] as Map<String, dynamic>?)?['message']?.toString() ?? ''),
+                        style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
                       ),
                       if (_busy) ...[
                         const SizedBox(height: 12),
@@ -759,22 +557,13 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
                       ],
                       const SizedBox(height: 12),
                       _ApprovalActions(
-                        flow:
-                            (project['approval_flow']
-                                as Map<String, dynamic>?) ??
-                            const {},
+                        flow: (project['approval_flow'] as Map<String, dynamic>?) ?? const {},
                         busy: _busy,
                         onAction: (action) => _performAction(action),
                       ),
-                      if ((((project['approval_flow']
-                                      as Map<String, dynamic>?)?['steps'])
-                                  as List?)
-                              ?.isNotEmpty ??
-                          false) ...[
+                      if ((((project['approval_flow'] as Map<String, dynamic>?)?['steps']) as List?)?.isNotEmpty ?? false) ...[
                         const SizedBox(height: 12),
-                        ...(((project['approval_flow']
-                                    as Map<String, dynamic>)['steps']
-                                as List)
+                        ...(((project['approval_flow'] as Map<String, dynamic>)['steps'] as List)
                             .cast<Map<String, dynamic>>()
                             .map((step) => _ApprovalStepCard(step: step))),
                       ],
@@ -790,57 +579,34 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
   }
 
   Future<void> _performAction(String action) async {
-    final isSwahili = ref.watch(isSwahiliProvider);
     String? comment;
     if (action == 'reject' || action == 'return') {
-      comment = await _promptForComment(
-        action == 'reject'
-            ? (isSwahili ? 'Idhini Ombi' : 'Reject Request')
-            : (isSwahili ? 'Rudisha Ombi' : 'Return Request'),
-        required: true,
-      );
+      comment = await _promptForComment(action == 'reject' ? 'Reject Request' : 'Return Request', required: true);
       if (comment == null || comment.trim().isEmpty) return;
     } else if (action == 'approve' || action == 'discard') {
-      comment = await _promptForComment(
-        action == 'approve'
-            ? (isSwahili ? 'Maoni ya Idhini' : 'Approval Comment')
-            : (isSwahili ? 'Futa Ombi' : 'Discard Request'),
-        required: false,
-      );
+      comment = await _promptForComment(action == 'approve' ? 'Approval Comment' : 'Discard Request', required: false);
       if (comment == null) return;
     }
 
     setState(() => _busy = true);
     try {
       final api = ref.read(apiClientProvider);
-      late dynamic response;
+      late final response;
       switch (action) {
         case 'submit':
           response = await api.post('/projects/${widget.projectId}/submit');
           break;
         case 'approve':
-          response = await api.post(
-            '/projects/${widget.projectId}/approve',
-            data: {'comment': comment},
-          );
+          response = await api.post('/projects/${widget.projectId}/approve', data: {'comment': comment});
           break;
         case 'reject':
-          response = await api.post(
-            '/projects/${widget.projectId}/reject',
-            data: {'comment': comment},
-          );
+          response = await api.post('/projects/${widget.projectId}/reject', data: {'comment': comment});
           break;
         case 'return':
-          response = await api.post(
-            '/projects/${widget.projectId}/return',
-            data: {'comment': comment},
-          );
+          response = await api.post('/projects/${widget.projectId}/return', data: {'comment': comment});
           break;
         case 'discard':
-          response = await api.post(
-            '/projects/${widget.projectId}/discard',
-            data: {'comment': comment},
-          );
+          response = await api.post('/projects/${widget.projectId}/discard', data: {'comment': comment});
           break;
         default:
           return;
@@ -858,28 +624,9 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
         );
       }
     } catch (e) {
-      String errorMessage = 'Failed to perform $action';
-
-      // Enhanced error handling for approval actions
-      if (e.toString().contains('403')) {
-        errorMessage = isSwahili
-            ? 'Huna ruhusa wa kufanya hili hatua ya idhini'
-            : 'You cannot perform this approval action';
-      } else if (e.toString().contains('404')) {
-        errorMessage = isSwahili ? 'Mradi hayapatikani' : 'Project not found';
-      } else if (e.toString().contains('500')) {
-        errorMessage = isSwahili
-            ? 'Hitilafu ya seva. Tafadhali jaribu tena baadaye'
-            : 'Server error. Please try again later';
-      }
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 4),
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -887,11 +634,7 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
     }
   }
 
-  Future<String?> _promptForComment(
-    String title, {
-    required bool required,
-  }) async {
-    final isSwahili = ref.watch(isSwahiliProvider);
+  Future<String?> _promptForComment(String title, {required bool required}) async {
     final controller = TextEditingController();
     return showDialog<String>(
       context: context,
@@ -901,23 +644,18 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
           controller: controller,
           maxLines: 4,
           decoration: InputDecoration(
-            hintText: required
-                ? (isSwahili ? 'Maoni yanahitajika' : 'Comment is required')
-                : (isSwahili ? 'Maoni ya hiari' : 'Optional comment'),
+            hintText: required ? 'Comment is required' : 'Optional comment',
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, null),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, null), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
               final value = controller.text.trim();
               if (required && value.isEmpty) return;
               Navigator.pop(ctx, value);
             },
-            child: Text(isSwahili ? 'Endelea' : 'Continue'),
+            child: const Text('Continue'),
           ),
         ],
       ),
@@ -955,44 +693,18 @@ class _ProjectFormSheetState extends ConsumerState<_ProjectFormSheet> {
   void initState() {
     super.initState();
     final p = widget.project;
-    _projectName = TextEditingController(
-      text: p?['project_name']?.toString() ?? '',
-    );
-    _description = TextEditingController(
-      text: p?['description']?.toString() ?? '',
-    );
-    _startDate = TextEditingController(
-      text:
-          p?['start_date']?.toString() ??
-          DateFormat('yyyy-MM-dd').format(DateTime.now()),
-    );
-    _expectedEndDate = TextEditingController(
-      text:
-          p?['expected_end_date']?.toString() ??
-          DateFormat('yyyy-MM-dd').format(DateTime.now()),
-    );
-    _actualEndDate = TextEditingController(
-      text: p?['actual_end_date']?.toString() ?? '',
-    );
-    _contractValue = TextEditingController(
-      text: p?['contract_value']?.toString() ?? '',
-    );
+    _projectName = TextEditingController(text: p?['project_name']?.toString() ?? '');
+    _description = TextEditingController(text: p?['description']?.toString() ?? '');
+    _startDate = TextEditingController(text: p?['start_date']?.toString() ?? DateFormat('yyyy-MM-dd').format(DateTime.now()));
+    _expectedEndDate = TextEditingController(text: p?['expected_end_date']?.toString() ?? DateFormat('yyyy-MM-dd').format(DateTime.now()));
+    _actualEndDate = TextEditingController(text: p?['actual_end_date']?.toString() ?? '');
+    _contractValue = TextEditingController(text: p?['contract_value']?.toString() ?? '');
     _clientId = _toInt((p?['client'] as Map<String, dynamic>?)?['id']);
-    _projectTypeId = _toInt(
-      (p?['project_type'] as Map<String, dynamic>?)?['id'],
-    );
-    _serviceTypeId = _toInt(
-      (p?['service_type'] as Map<String, dynamic>?)?['id'],
-    );
-    _salespersonId = _toInt(
-      (p?['salesperson'] as Map<String, dynamic>?)?['id'],
-    );
-    _projectManagerId = _toInt(
-      (p?['project_manager'] as Map<String, dynamic>?)?['id'],
-    );
-    _priority = p?['priority']?.toString().isNotEmpty == true
-        ? p!['priority'].toString()
-        : 'normal';
+    _projectTypeId = _toInt((p?['project_type'] as Map<String, dynamic>?)?['id']);
+    _serviceTypeId = _toInt((p?['service_type'] as Map<String, dynamic>?)?['id']);
+    _salespersonId = _toInt((p?['salesperson'] as Map<String, dynamic>?)?['id']);
+    _projectManagerId = _toInt((p?['project_manager'] as Map<String, dynamic>?)?['id']);
+    _priority = p?['priority']?.toString().isNotEmpty == true ? p!['priority'].toString() : 'normal';
   }
 
   @override
@@ -1009,35 +721,24 @@ class _ProjectFormSheetState extends ConsumerState<_ProjectFormSheet> {
   @override
   Widget build(BuildContext context) {
     final referenceAsync = ref.watch(_referenceProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SafeArea(
         top: false,
         child: referenceAsync.when(
-          loading: () => const SizedBox(
-            height: 320,
-            child: Center(child: CircularProgressIndicator()),
-          ),
-          error: (e, _) =>
-              SizedBox(height: 320, child: Center(child: Text('$e'))),
+          loading: () => const SizedBox(height: 320, child: Center(child: CircularProgressIndicator())),
+          error: (e, _) => SizedBox(height: 320, child: Center(child: Text('$e'))),
           data: (reference) => SingleChildScrollView(
             child: Form(
               key: _formKey,
               child: Column(
                 children: [
                   _SheetHeader(
-                    title: _isNew
-                        ? (isSwahili ? 'Tengeneza Mradi' : 'Create New Project')
-                        : (isSwahili
-                              ? 'Sasisha ${widget.project?['project_name'] ?? 'Mradi'}'
-                              : 'Edit ${widget.project?['project_name'] ?? 'Project'}'),
+                    title: _isNew ? 'Create New Project' : 'Edit ${widget.project?['project_name'] ?? 'Project'}',
                     onBack: () => Navigator.pop(context),
                   ),
                   Padding(
@@ -1046,100 +747,58 @@ class _ProjectFormSheetState extends ConsumerState<_ProjectFormSheet> {
                       children: [
                         TextFormField(
                           controller: _projectName,
-                          decoration: InputDecoration(
-                            labelText: isSwahili
-                                ? 'Jina la Mradi'
-                                : 'Project Name',
-                          ),
-                          validator: (v) => v == null || v.trim().isEmpty
-                              ? (isSwahili ? 'Inahitajika' : 'Required')
-                              : null,
+                          decoration: const InputDecoration(labelText: 'Project Name'),
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
                         ),
                         const SizedBox(height: 12),
                         _Drop<int>(
-                          label: isSwahili ? 'Mteja' : 'Client',
+                          label: 'Client',
                           value: _clientId,
-                          items: (reference['clients'] as List? ?? const [])
-                              .cast<Map<String, dynamic>>(),
+                          items: (reference['clients'] as List? ?? const []).cast<Map<String, dynamic>>(),
                           onChanged: (v) => setState(() => _clientId = v),
                         ),
                         _Drop<int>(
-                          label: isSwahili
-                              ? 'Aina ya Mradi'
-                              : 'Project Category',
+                          label: 'Project Category',
                           value: _projectTypeId,
-                          items:
-                              (reference['project_types'] as List? ?? const [])
-                                  .cast<Map<String, dynamic>>(),
+                          items: (reference['project_types'] as List? ?? const []).cast<Map<String, dynamic>>(),
                           onChanged: (v) => setState(() => _projectTypeId = v),
                         ),
                         _Drop<int>(
-                          label: isSwahili ? 'Aina ya Huduma' : 'Service Type',
+                          label: 'Service Type',
                           value: _serviceTypeId,
-                          items:
-                              (reference['service_types'] as List? ?? const [])
-                                  .cast<Map<String, dynamic>>(),
+                          items: (reference['service_types'] as List? ?? const []).cast<Map<String, dynamic>>(),
                           onChanged: (v) => setState(() => _serviceTypeId = v),
                         ),
-                        _DateField(
-                          label: isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
-                          controller: _startDate,
-                        ),
-                        _DateField(
-                          label: isSwahili
-                              ? 'Tarehe ya kukamilisha inatarajewa'
-                              : 'Expected End Date',
-                          controller: _expectedEndDate,
-                        ),
-                        _DateField(
-                          label: isSwahili
-                              ? 'Tarehe ya kukamilisha kweli'
-                              : 'Actual End Date',
-                          controller: _actualEndDate,
-                          allowBlank: true,
-                        ),
+                        _DateField(label: 'Start Date', controller: _startDate),
+                        _DateField(label: 'Expected End Date', controller: _expectedEndDate),
+                        _DateField(label: 'Actual End Date', controller: _actualEndDate, allowBlank: true),
                         TextFormField(
                           controller: _contractValue,
-                          decoration: InputDecoration(
-                            labelText: isSwahili
-                                ? 'Thamani ya Mkataba (TZS)'
-                                : 'Contract Value (TZS)',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Contract Value (TZS)'),
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 12),
                         _Drop<String>(
-                          label: isSwahili ? 'Kipa' : 'Priority',
+                          label: 'Priority',
                           value: _priority,
-                          items: (reference['priorities'] as List? ?? const [])
-                              .cast<Map<String, dynamic>>(),
+                          items: (reference['priorities'] as List? ?? const []).cast<Map<String, dynamic>>(),
                           onChanged: (v) => setState(() => _priority = v),
                         ),
                         _Drop<int>(
-                          label: isSwahili ? 'Mauzo' : 'Salesperson',
+                          label: 'Salesperson',
                           value: _salespersonId,
-                          items:
-                              (reference['salespersons'] as List? ?? const [])
-                                  .cast<Map<String, dynamic>>(),
+                          items: (reference['salespersons'] as List? ?? const []).cast<Map<String, dynamic>>(),
                           onChanged: (v) => setState(() => _salespersonId = v),
                         ),
                         _Drop<int>(
-                          label: isSwahili
-                              ? 'Meneja wa Mradi'
-                              : 'Project Manager',
+                          label: 'Project Manager',
                           value: _projectManagerId,
-                          items:
-                              (reference['project_managers'] as List? ??
-                                      const [])
-                                  .cast<Map<String, dynamic>>(),
-                          onChanged: (v) =>
-                              setState(() => _projectManagerId = v),
+                          items: (reference['project_managers'] as List? ?? const []).cast<Map<String, dynamic>>(),
+                          onChanged: (v) => setState(() => _projectManagerId = v),
                         ),
                         TextFormField(
                           controller: _description,
-                          decoration: InputDecoration(
-                            labelText: isSwahili ? 'Maelezo' : 'Description',
-                          ),
+                          decoration: const InputDecoration(labelText: 'Description'),
                           maxLines: 2,
                         ),
                         const SizedBox(height: 20),
@@ -1148,23 +807,8 @@ class _ProjectFormSheetState extends ConsumerState<_ProjectFormSheet> {
                           child: ElevatedButton(
                             onPressed: _loading ? null : _submit,
                             child: _loading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : Text(
-                                    _isNew
-                                        ? (isSwahili
-                                              ? 'Tengeneza Mradi'
-                                              : 'Create Project')
-                                        : (isSwahili
-                                              ? 'Sasisha Mradi'
-                                              : 'Update Project'),
-                                  ),
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : Text(_isNew ? 'Create Project' : 'Update Project'),
                           ),
                         ),
                       ],
@@ -1180,18 +824,10 @@ class _ProjectFormSheetState extends ConsumerState<_ProjectFormSheet> {
   }
 
   Future<void> _submit() async {
-    final isSwahili = ref.watch(isSwahiliProvider);
     if (!_formKey.currentState!.validate()) return;
     if (_clientId == null || _projectTypeId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isSwahili
-                ? 'Mteja na Aina ya Mradi zinahitajika'
-                : 'Client and Project Category are required',
-          ),
-          backgroundColor: AppColors.error,
-        ),
+        const SnackBar(content: Text('Client and Project Category are required')),
       );
       return;
     }
@@ -1207,16 +843,10 @@ class _ProjectFormSheetState extends ConsumerState<_ProjectFormSheet> {
         'project_manager_id': _projectManagerId,
         'start_date': _startDate.text.trim(),
         'expected_end_date': _expectedEndDate.text.trim(),
-        'actual_end_date': _actualEndDate.text.trim().isEmpty
-            ? null
-            : _actualEndDate.text.trim(),
-        'contract_value': _contractValue.text.trim().isEmpty
-            ? null
-            : double.tryParse(_contractValue.text.trim()),
+        'actual_end_date': _actualEndDate.text.trim().isEmpty ? null : _actualEndDate.text.trim(),
+        'contract_value': _contractValue.text.trim().isEmpty ? null : double.tryParse(_contractValue.text.trim()),
         'priority': _priority,
-        'description': _description.text.trim().isEmpty
-            ? null
-            : _description.text.trim(),
+        'description': _description.text.trim().isEmpty ? null : _description.text.trim(),
       };
       if (_isNew) {
         await api.post('/projects', data: data);
@@ -1225,36 +855,9 @@ class _ProjectFormSheetState extends ConsumerState<_ProjectFormSheet> {
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      String errorMessage = 'Failed to ${_isNew ? 'create' : 'update'} project';
-
-      // Enhanced error handling for form submission
-      if (e.toString().contains('422')) {
-        errorMessage = isSwahili
-            ? 'Hakikii zote zilizo hitajika'
-            : 'Validation failed';
-      } else if (e.toString().contains('403')) {
-        errorMessage = isSwahili
-            ? 'Huna ruhusa wa kufanya hili'
-            : 'You do not have permission to perform this action';
-      } else if (e.toString().contains('404')) {
-        errorMessage = isSwahili ? 'Mradi hayapatikani' : 'Project not found';
-      } else if (e.toString().contains('500')) {
-        errorMessage = isSwahili
-            ? 'Hitilafu ya seva. Tafadhali jaribu tena baadaye'
-            : 'Server error. Please try again later';
-      } else if (e.toString().contains('network')) {
-        errorMessage = isSwahili
-            ? 'Hitilafu ya mtandao. Tafadhali angalia muunganisho wako'
-            : 'Network error. Please check your connection';
-      }
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 4),
-          ),
+          SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -1345,8 +948,7 @@ class _DateField extends StatelessWidget {
         ),
         validator: allowBlank
             ? null
-            : (value) =>
-                  value == null || value.trim().isEmpty ? 'Required' : null,
+            : (value) => value == null || value.trim().isEmpty ? 'Required' : null,
         onTap: () async {
           final initial = controller.text.trim().isNotEmpty
               ? DateTime.tryParse(controller.text.trim()) ?? DateTime.now()
@@ -1389,11 +991,7 @@ class _StatusPill extends StatelessWidget {
       ),
       child: Text(
         normalized.replaceAll('_', ' '),
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -1415,10 +1013,7 @@ class _InfoLine extends StatelessWidget {
             const TextSpan(style: TextStyle(fontWeight: FontWeight.w700)),
             TextSpan(
               text: '$label: ',
-              style: const TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textSecondary),
             ),
             TextSpan(text: value),
           ],
@@ -1455,10 +1050,7 @@ class _DetailLine extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 14,
-                color: AppColors.textPrimary,
-              ),
+              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
             ),
           ),
         ],
@@ -1481,8 +1073,7 @@ class _ApprovalActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final buttons = <Widget>[];
-    final nextAction = (flow['next_action']?.toString() ?? 'APPROVE')
-        .toUpperCase();
+    final nextAction = (flow['next_action']?.toString() ?? 'APPROVE').toUpperCase();
     final approveLabel = flow['is_rejected'] == true
         ? 'Re-Approve'
         : _capitalize(nextAction.toLowerCase());
@@ -1538,12 +1129,10 @@ class _ApprovalActions extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: buttons
-          .map(
-            (button) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: button,
-            ),
-          )
+          .map((button) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: button,
+              ))
           .toList(),
     );
   }
@@ -1572,29 +1161,20 @@ class _ApprovalStepCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${step['role_name'] ?? '-'}',
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
           if ((step['date']?.toString().isNotEmpty ?? false)) ...[
             const SizedBox(height: 4),
             Text(
               '${step['date']}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
           if ((step['comment']?.toString().isNotEmpty ?? false)) ...[
             const SizedBox(height: 4),
             Text(
               '${step['comment']}',
-              style: const TextStyle(
-                fontSize: 12,
-                color: AppColors.textPrimary,
-              ),
+              style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
             ),
           ],
         ],

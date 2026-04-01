@@ -18,12 +18,15 @@ class BillingPaymentController extends Controller
             ->limit(200)
             ->get()
             ->map(function (BillingDocument $document) {
+                $clientName = $document->client->full_name 
+                    ?? trim(($document->client->first_name ?? '') . ' ' . ($document->client->last_name ?? ''))
+                    ?? 'Unknown Client';
                 return [
                     'id' => $document->id,
                     'document_number' => $document->document_number,
                     'document_type' => $document->document_type,
                     'client_id' => $document->client_id,
-                    'client_name' => trim(($document->client->first_name ?? '') . ' ' . ($document->client->last_name ?? '')),
+                    'client_name' => $clientName,
                     'balance_amount' => $document->balance_amount,
                     'total_amount' => $document->total_amount,
                 ];
@@ -46,7 +49,7 @@ class BillingPaymentController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = BillingPayment::with(['document', 'client', 'receiver'])
+        $query = BillingPayment::with(['document.client', 'client', 'receiver'])
             ->orderBy('payment_date', 'desc');
 
         if ($request->document_id) {
@@ -94,7 +97,7 @@ class BillingPaymentController extends Controller
         $validated['client_id'] = BillingDocument::find($validated['document_id'])?->client_id;
 
         $payment = BillingPayment::create($validated);
-        $payment->load(['document', 'client', 'receiver']);
+        $payment->load(['document.client', 'client', 'receiver']);
 
         return response()->json([
             'success' => true,
@@ -105,7 +108,7 @@ class BillingPaymentController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $payment = BillingPayment::with(['document', 'client', 'receiver'])->findOrFail($id);
+        $payment = BillingPayment::with(['document.client', 'client', 'receiver'])->findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -138,7 +141,7 @@ class BillingPaymentController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Payment updated successfully.',
-            'data' => new BillingPaymentResource($payment->fresh(['document', 'client'])),
+            'data' => new BillingPaymentResource($payment->fresh(['document.client', 'client'])),
         ]);
     }
 

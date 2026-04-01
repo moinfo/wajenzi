@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/network/api_client.dart';
+import '../../core/router/app_router.dart';
 import '../providers/auth_provider.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/common/loading_widget.dart';
 import '../widgets/common/error_widget.dart';
 import '../widgets/common/empty_state_widget.dart';
@@ -180,6 +182,7 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
   }
 
   void _showFilterBottomSheet() {
+    final isSwahili = ref.read(isSwahiliProvider);
     // Convert reference data to options format expected by FilterBottomSheet
     Map<String, Map<String, dynamic>> options = {};
 
@@ -203,7 +206,7 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) => FilterBottomSheet(
-        title: 'Filter Bonus Tasks',
+        title: isSwahili ? 'Chuja Kazi za Bonasi' : 'Filter Bonus Tasks',
         filters: _filters,
         options: options,
         onApply: (filters) {
@@ -243,29 +246,30 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Architect Bonus'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () =>
+              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
+        ),
+        title: Text(isSwahili ? 'Bonasi ya Mapatanzio' : 'Architect Bonus'),
         actions: [
           if (_isAdmin) ...[
             IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () {
-                // Navigate to create task
-              },
-            ),
-            IconButton(
               icon: const Icon(Icons.tune),
-              tooltip: 'Weights Configuration',
+              tooltip: isSwahili
+                  ? 'Mipangilio ya Uzito'
+                  : 'Weights Configuration',
               onPressed: () {
                 context.push('/architect-bonus/weights');
               },
             ),
             IconButton(
               icon: const Icon(Icons.bar_chart),
-              tooltip: 'View Report',
+              tooltip: isSwahili ? 'Tazama Ripoti' : 'View Report',
               onPressed: () {
                 context.push('/architect-bonus/report');
               },
@@ -273,109 +277,141 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
           ],
           IconButton(
             icon: const Icon(Icons.filter_list),
+            tooltip: isSwahili ? 'Chuja' : 'Filter',
             onPressed: _showFilterBottomSheet,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
             onPressed: () => _loadData(refresh: true),
           ),
         ],
       ),
+      floatingActionButton: _isAdmin
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 80),
+              child: FloatingActionButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isSwahili
+                            ? 'Kuongeza kazi mpya ya bonasi'
+                            : 'Add new bonus task',
+                      ),
+                    ),
+                  );
+                },
+                child: const Icon(Icons.add_rounded),
+              ),
+            )
+          : const SizedBox.shrink(),
       body: RefreshIndicator(
         onRefresh: () => _loadData(refresh: true),
         child: _isLoading
-            ? const LoadingWidget(message: 'Loading bonus tasks...')
+            ? LoadingWidget(
+                message: isSwahili
+                    ? 'Inapakia kazi za bonasi...'
+                    : 'Loading bonus tasks...',
+              )
             : _tasks.isEmpty && _summary.isEmpty
-                ? const EmptyStateWidget(
-                    message: 'No bonus tasks found',
-                    icon: Icons.card_giftcard,
-                  )
-                : Column(
-                    children: [
-                      // Summary Cards
-                      if (_summary.isNotEmpty) ...[
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _SummaryCard(
-                                  title: 'Total Bonus Earned',
-                                  value:
-                                      'TZS ${(_summary['total_bonus_earned'] ?? 0).toString()}',
-                                  icon: Icons.trending_up,
-                                  color: Colors.green,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _SummaryCard(
-                                  title: 'Tasks Completed',
-                                  value:
-                                      (_summary['total_tasks_completed'] ??
-                                              0)
-                                          .toString(),
-                                  icon: Icons.check_circle,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                            ],
+            ? EmptyStateWidget(
+                message: isSwahili
+                    ? 'Hakuna kazi za bonasi zilizopatikana'
+                    : 'No bonus tasks found',
+                icon: Icons.card_giftcard,
+              )
+            : Column(
+                children: [
+                  // Summary Cards
+                  if (_summary.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _SummaryCard(
+                              title: isSwahili
+                                  ? 'Jumla ya Bonasi Iliyopokezwa'
+                                  : 'Total Bonus Earned',
+                              value:
+                                  'TZS ${(_summary['total_bonus_earned'] ?? 0).toString()}',
+                              icon: Icons.trending_up,
+                              color: Colors.green,
+                            ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _SummaryCard(
-                                  title: 'Pending Tasks',
-                                  value:
-                                      (_summary['pending_tasks'] ??
-                                              0)
-                                          .toString(),
-                                  icon: Icons.pending,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _SummaryCard(
+                              title: isSwahili
+                                  ? 'Kazi Zilizokamilika'
+                                  : 'Tasks Completed',
+                              value: (_summary['total_tasks_completed'] ?? 0)
+                                  .toString(),
+                              icon: Icons.check_circle,
+                              color: Colors.blue,
+                            ),
                           ),
-                        ),
-                      ],
-                      // Tasks List
-                      Expanded(
-                        child: _tasks.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'No tasks found for current filters',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              )
-                            : ListView.builder(
-                                controller: _scrollController,
-                                padding: const EdgeInsets.all(16),
-                                itemCount: _tasks.length + (_hasMore ? 1 : 0),
-                                itemBuilder: (context, index) {
-                                  if (index == _tasks.length) {
-                                    return const Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Center(child: CircularProgressIndicator()),
-                                    );
-                                  }
-
-                                  final task = _tasks[index];
-                                  return BonusTaskCard(
-                                    task: task,
-                                    onTap: () {
-                                      // Navigate to task details
-                                    },
-                                  );
-                                },
-                              ),
+                        ],
                       ),
-                    ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _SummaryCard(
+                              title: isSwahili
+                                  ? 'Kazi Zinazokusudiwa'
+                                  : 'Pending Tasks',
+                              value: (_summary['pending_tasks'] ?? 0)
+                                  .toString(),
+                              icon: Icons.pending,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  // Tasks List
+                  Expanded(
+                    child: _tasks.isEmpty
+                        ? Center(
+                            child: Text(
+                              isSwahili
+                                  ? 'Hakuna kazi zinazolingana na vichujio'
+                                  : 'No tasks found for current filters',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _tasks.length + (_hasMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _tasks.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+
+                              final task = _tasks[index];
+                              return BonusTaskCard(
+                                task: task,
+                                isSwahili: isSwahili,
+                                onTap: () {
+                                  // Navigate to task details
+                                },
+                              );
+                            },
+                          ),
                   ),
+                ],
+              ),
       ),
     );
   }
@@ -438,8 +474,14 @@ class _SummaryCard extends StatelessWidget {
 class BonusTaskCard extends StatelessWidget {
   final dynamic task;
   final VoidCallback onTap;
+  final bool isSwahili;
 
-  const BonusTaskCard({super.key, required this.task, required this.onTap});
+  const BonusTaskCard({
+    super.key,
+    required this.task,
+    required this.onTap,
+    required this.isSwahili,
+  });
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -478,7 +520,10 @@ class BonusTaskCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          task['task_number'] ?? 'Unknown Task',
+                          task['task_number'] ??
+                              (isSwahili
+                                  ? 'Kazi Isiyojulikana'
+                                  : 'Unknown Task'),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -487,7 +532,8 @@ class BonusTaskCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          task['project_name'] ?? 'No Project',
+                          task['project_name'] ??
+                              (isSwahili ? 'Mradi Hakuna' : 'No Project'),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -561,7 +607,8 @@ class BonusTaskCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      task['due_date'] ?? 'No due date',
+                      task['due_date'] ??
+                          (isSwahili ? 'Tarehe Hakuna' : 'No due date'),
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       overflow: TextOverflow.ellipsis,
                     ),

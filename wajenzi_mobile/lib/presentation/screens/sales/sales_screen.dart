@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 import 'dart:io';
 import '../../../core/services/external_launcher_service.dart';
 import '../../../core/config/app_config.dart';
@@ -9,6 +10,59 @@ import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
+
+Future<Response<dynamic>> _getWithFallback(
+  ApiClient api,
+  String primaryPath, {
+  String? fallbackPath,
+  Map<String, dynamic>? queryParameters,
+}) async {
+  try {
+    return await api.get(
+      primaryPath,
+      queryParameters: queryParameters,
+    );
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 404 && fallbackPath != null) {
+      return api.get(
+        fallbackPath,
+        queryParameters: queryParameters,
+      );
+    }
+    rethrow;
+  }
+}
+
+Future<Response<dynamic>> _deleteWithFallback(
+  ApiClient api,
+  String primaryPath, {
+  String? fallbackPath,
+}) async {
+  try {
+    return await api.delete(primaryPath);
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 404 && fallbackPath != null) {
+      return api.delete(fallbackPath);
+    }
+    rethrow;
+  }
+}
+
+Future<Response<dynamic>> _postWithFallback(
+  ApiClient api,
+  String primaryPath, {
+  String? fallbackPath,
+  dynamic data,
+}) async {
+  try {
+    return await api.post(primaryPath, data: data);
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 404 && fallbackPath != null) {
+      return api.post(fallbackPath, data: data);
+    }
+    rethrow;
+  }
+}
 
 final _salesStartProvider =
     StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
@@ -23,10 +77,16 @@ final _salesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   final api = ref.watch(apiClientProvider);
   final start = ref.watch(_salesStartProvider);
   final end = ref.watch(_salesEndProvider);
-  final response = await api.get('/sales', queryParameters: {
+  final query = {
     'start_date': vatDateFmt(start),
     'end_date': vatDateFmt(end),
-  });
+  };
+  final response = await _getWithFallback(
+    api,
+    '/sales',
+    fallbackPath: '/vat/sales',
+    queryParameters: query,
+  );
 
   List items = [];
   Map<String, dynamic> meta = {};
@@ -59,14 +119,25 @@ final _salesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
 
 final _efdsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/sales/efds');
-  return response.data['data'] as List? ?? [];
+  try {
+    final response = await api.get('/sales/efds');
+    return response.data['data'] as List? ?? [];
+  } on DioException catch (e) {
+    if (e.response?.statusCode != 404) rethrow;
+    final fallback = await api.get('/vat/reference-data');
+    final data = fallback.data['data'] as Map<String, dynamic>? ?? {};
+    return data['efds'] as List? ?? [];
+  }
 });
 
 final _saleDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/sales/$id');
+      final response = await _getWithFallback(
+        api,
+        '/sales/$id',
+        fallbackPath: '/vat/sales/$id',
+      );
       return response.data['data'] as Map<String, dynamic>? ?? {};
     });
 
@@ -264,7 +335,11 @@ class SalesScreen extends ConsumerWidget {
 
     try {
       final api = ref.read(apiClientProvider);
-      await api.delete('/sales/${sale['id']}');
+      await _deleteWithFallback(
+        api,
+        '/sales/${sale['id']}',
+        fallbackPath: '/vat/sales/${sale['id']}',
+      );
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1056,10 +1131,17 @@ class _SaleFormSheetState extends ConsumerState<_SaleFormSheet> {
       final formData = await vatBuildFormData(data, _selectedFile);
 
       if (widget.isNew) {
-        await api.post('/sales', data: formData);
+        await _postWithFallback(
+          api,
+          '/sales',
+          fallbackPath: '/vat/sales',
+          data: formData,
+        );
       } else {
-        await api.post(
+        await _postWithFallback(
+          api,
           '/sales/${widget.sale!['id']}',
+          fallbackPath: '/vat/sales/${widget.sale!['id']}',
           data: formData..fields.add(const MapEntry('_method', 'PUT')),
         );
       }

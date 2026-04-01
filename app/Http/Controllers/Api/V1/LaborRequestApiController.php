@@ -35,6 +35,20 @@ class LaborRequestApiController extends Controller
                 $query->where('status', $status);
             }
 
+            if ($request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('request_number', 'like', "%{$search}%")
+                      ->orWhereHas('project', function ($pq) use ($search) {
+                          $pq->where('name', 'like', "%{$search}%")
+                            ->orWhere('project_name', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('artisan', function ($aq) use ($search) {
+                          $aq->where('name', 'like', "%{$search}%");
+                      });
+                });
+            }
+
             $requests = $query->paginate($perPage);
 
             $items = collect($requests->items())->map(fn($r) => $this->formatLaborRequest($r));

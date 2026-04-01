@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
 final laborLogsProjectFilterProvider = StateProvider.autoDispose<int?>(
@@ -57,11 +59,16 @@ final _laborLogsDashboardProvider =
       return response.data['data'] as Map<String, dynamic>? ?? const {};
     });
 
-class LaborLogsScreen extends ConsumerWidget {
+class LaborLogsScreen extends ConsumerStatefulWidget {
   const LaborLogsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LaborLogsScreen> createState() => _LaborLogsScreenState();
+}
+
+class _LaborLogsScreenState extends ConsumerState<LaborLogsScreen> {
+  @override
+  Widget build(BuildContext context) {
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final logsAsync = ref.watch(_laborLogsProvider);
@@ -78,8 +85,18 @@ class LaborLogsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () =>
+              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Kumbukumbu za Kazi' : 'Work Logs'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.dashboard_rounded),
+            tooltip: isSwahili ? 'Dashibodi' : 'Dashboard',
+            onPressed: () => context.go('/labor-dashboard'),
+          ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: () => _selectDateRange(context, ref),
@@ -400,6 +417,7 @@ class _WorkLogCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final contract = item['contract'] as Map<String, dynamic>?;
+    final artisan = contract?['artisan'] as Map<String, dynamic>?;
 
     return Container(
       width: double.infinity,
@@ -437,106 +455,199 @@ class _WorkLogCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      DateFormat('EEE, MMM d, yyyy').format(
-                        DateTime.parse(
-                          item['log_date'] as String? ??
-                              DateTime.now().toString(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          item['log_date'] != null
+                              ? DateFormat('EEE, MMM d, yyyy').format(
+                                  DateTime.parse(item['log_date'] as String),
+                                )
+                              : '-',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            color: isDarkMode
+                                ? Colors.white
+                                : AppColors.textPrimary,
+                          ),
                         ),
-                      ),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                        color: isDarkMode
-                            ? Colors.white
-                            : AppColors.textPrimary,
-                      ),
+                        if (item['weather_conditions'] != null)
+                          _WeatherBadge(
+                            condition: item['weather_conditions'] as String,
+                            isDarkMode: isDarkMode,
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     if (contract != null) ...[
-                      Text(
-                        '${contract['contract_number'] ?? '-'} - ${contract['artisan_name'] ?? '-'}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: isDarkMode
-                              ? Colors.white70
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                      if (contract['project_name'] != null)
-                        Text(
-                          contract['project_name'] as String? ?? '-',
-                          style: TextStyle(
-                            fontSize: 12,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.description_outlined,
+                            size: 14,
                             color: isDarkMode
                                 ? Colors.white54
                                 : AppColors.textHint,
                           ),
-                        ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              contract['contract_number'] as String? ?? '-',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF2563EB),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (artisan != null) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person_outline,
+                            size: 14,
+                            color: isDarkMode
+                                ? Colors.white54
+                                : AppColors.textHint,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            artisan['name'] as String? ?? '-',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                          if (artisan['trade_skill'] != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF0891B2,
+                                ).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                artisan['trade_skill'] as String? ?? '',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: Color(0xFF0891B2),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ],
                 ),
               ),
-              if (item['weather_conditions'] != null) ...[
-                _WeatherBadge(
-                  condition: item['weather_conditions'] as String,
-                  isDarkMode: isDarkMode,
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF252540) : Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isSwahili ? 'Kazi Iliyofanywa' : 'Work Done',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white54 : AppColors.textHint,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item['work_done'] as String? ?? '-',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDarkMode
+                        ? Colors.white70
+                        : AppColors.textSecondary,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            item['work_done'] as String? ?? '-',
-            style: TextStyle(
-              fontSize: 13,
-              color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
             ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
+          Row(
             children: [
-              _MiniStat(
-                icon: Icons.people_outline,
-                value: '${item['workers_present'] ?? 0}',
-                label: isSwahili ? 'Wafanyi kazi' : 'Workers',
-                isDarkMode: isDarkMode,
+              Expanded(
+                child: _TableCell(
+                  label: isSwahili ? 'Wafanyi kazi' : 'Workers',
+                  value: '${item['workers_present'] ?? 0}',
+                  icon: Icons.people_outline,
+                  isDarkMode: isDarkMode,
+                ),
               ),
-              if (item['hours_worked'] != null)
-                _MiniStat(
-                  icon: Icons.access_time,
-                  value: '${(item['hours_worked'] as num).toStringAsFixed(1)}h',
+              const SizedBox(width: 8),
+              Expanded(
+                child: _TableCell(
                   label: isSwahili ? 'Masaa' : 'Hours',
+                  value: item['hours_worked'] != null
+                      ? '${(item['hours_worked'] as num).toStringAsFixed(1)}h'
+                      : '-',
+                  icon: Icons.access_time,
                   isDarkMode: isDarkMode,
                 ),
-              if (item['progress_percentage'] != null)
-                _MiniStat(
-                  icon: Icons.trending_up,
-                  value:
-                      '${(item['progress_percentage'] as num).toStringAsFixed(1)}%',
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _TableCell(
                   label: isSwahili ? 'Maendeleo' : 'Progress',
+                  value: item['progress_percentage'] != null
+                      ? '${(item['progress_percentage'] as num).toStringAsFixed(0)}%'
+                      : '-',
+                  icon: Icons.trending_up,
                   isDarkMode: isDarkMode,
                 ),
-              if ((item['photo_count'] as int? ?? 0) > 0)
-                _MiniStat(
-                  icon: Icons.photo_library_outlined,
-                  value: '${item['photo_count']}',
-                  label: isSwahili ? 'Picha' : 'Photos',
-                  isDarkMode: isDarkMode,
-                ),
-              if ((item['materials_count'] as int? ?? 0) > 0)
-                _MiniStat(
-                  icon: Icons.inventory_2_outlined,
-                  value: '${item['materials_count']}',
-                  label: isSwahili ? 'Vifaa' : 'Materials',
-                  isDarkMode: isDarkMode,
-                ),
+              ),
             ],
           ),
+          if ((item['photo_count'] as int? ?? 0) > 0 ||
+              (item['materials_count'] as int? ?? 0) > 0) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if ((item['photo_count'] as int? ?? 0) > 0)
+                  _MiniBadge(
+                    icon: Icons.photo_library_outlined,
+                    value: '${item['photo_count']}',
+                    label: isSwahili ? 'Picha' : 'Photos',
+                    isDarkMode: isDarkMode,
+                  ),
+                if ((item['materials_count'] as int? ?? 0) > 0)
+                  _MiniBadge(
+                    icon: Icons.inventory_2_outlined,
+                    value: '${item['materials_count']}',
+                    label: isSwahili ? 'Vifaa' : 'Materials',
+                    isDarkMode: isDarkMode,
+                  ),
+              ],
+            ),
+          ],
           if (item['challenges'] != null &&
               (item['challenges'] as String).isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -573,26 +684,113 @@ class _WorkLogCard extends StatelessWidget {
               ),
             ),
           ],
-          if (item['logger'] != null) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.person_outline,
-                  size: 14,
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(
+                Icons.person_outline,
+                size: 14,
+                color: isDarkMode ? Colors.white38 : AppColors.textHint,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${isSwahili ? 'Alirekodi' : 'Logged by'}: ${(item['logger'] as Map?)?['name'] as String? ?? '-'}',
+                style: TextStyle(
+                  fontSize: 11,
                   color: isDarkMode ? Colors.white38 : AppColors.textHint,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  (item['logger'] as Map)['name'] as String? ?? '-',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDarkMode ? Colors.white38 : AppColors.textHint,
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TableCell extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final bool isDarkMode;
+
+  const _TableCell({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF252540) : Colors.grey[100],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: isDarkMode ? Colors.white54 : AppColors.textHint,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDarkMode ? Colors.white : AppColors.textPrimary,
             ),
-          ],
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: isDarkMode ? Colors.white54 : AppColors.textHint,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniBadge extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final bool isDarkMode;
+
+  const _MiniBadge({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF252540) : Colors.grey[100],
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: const Color(0xFF2563EB)),
+          const SizedBox(width: 4),
+          Text(
+            '$value $label',
+            style: TextStyle(
+              fontSize: 11,
+              color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
+            ),
+          ),
         ],
       ),
     );

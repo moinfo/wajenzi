@@ -9,41 +9,41 @@ import '../vat/vat_shared.dart';
 
 final _statutoryPaymentsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/statutory-payments');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/statutory-payments');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
 final _statutoryPaymentRefsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/statutory-payments/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/statutory-payments/reference-data');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
 final _statutoryPaymentDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/statutory-payments/$id');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/statutory-payments/$id');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
 class StatutoryPaymentsScreen extends ConsumerWidget {
   const StatutoryPaymentsScreen({super.key});
@@ -111,7 +111,9 @@ class StatutoryPaymentsScreen extends ConsumerWidget {
                       vertical: 10,
                     ),
                     leading: CircleAvatar(
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                      backgroundColor: AppColors.primary.withValues(
+                        alpha: 0.12,
+                      ),
                       child: const Icon(
                         Icons.account_balance_wallet_outlined,
                         color: AppColors.primary,
@@ -271,7 +273,9 @@ void _showDetails(BuildContext context, WidgetRef ref, int id) {
           return Container(
             decoration: BoxDecoration(
               color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             child: SafeArea(
               top: false,
@@ -280,7 +284,8 @@ void _showDetails(BuildContext context, WidgetRef ref, int id) {
                 error: (error, _) => _ErrorState(
                   isSwahili: isSwahili,
                   message: vatErrorMessage(error, isSwahili: isSwahili),
-                  onRetry: () => ref.invalidate(_statutoryPaymentDetailProvider(id)),
+                  onRetry: () =>
+                      ref.invalidate(_statutoryPaymentDetailProvider(id)),
                 ),
                 data: (payment) => Column(
                   children: [
@@ -305,21 +310,33 @@ void _showDetails(BuildContext context, WidgetRef ref, int id) {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          _detailLine('Sub Category', payment['sub_category_name']),
+                          _detailLine(
+                            'Sub Category',
+                            payment['sub_category_name'],
+                          ),
                           _detailLine('Amount', vatMoney(payment['amount'])),
                           _detailLine('Issue Date', payment['issue_date']),
                           _detailLine('Due Date', payment['due_date']),
-                          _detailLine('Billing Cycle', payment['billing_cycle_name']),
-                          _detailLine('Control Number', payment['control_number']),
+                          _detailLine(
+                            'Billing Cycle',
+                            payment['billing_cycle_name'],
+                          ),
+                          _detailLine(
+                            'Control Number',
+                            payment['control_number'],
+                          ),
                           _detailLine('Status', payment['status']),
                           _detailLine('Description', payment['description']),
-                          if ((payment['file_url']?.toString() ?? '').isNotEmpty) ...[
+                          if ((payment['file_url']?.toString() ?? '')
+                              .isNotEmpty) ...[
                             const SizedBox(height: 8),
                             OutlinedButton.icon(
                               onPressed: () async {
-                                final uri =
-                                    Uri.tryParse(payment['file_url']!.toString());
-                                final opened = uri != null &&
+                                final uri = Uri.tryParse(
+                                  payment['file_url']!.toString(),
+                                );
+                                final opened =
+                                    uri != null &&
                                     await ExternalLauncherService.openUri(uri);
                                 if (!context.mounted || opened) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -377,13 +394,18 @@ class _FormSheetState extends ConsumerState<_FormSheet> {
     final payment = widget.payment;
     _subCategoryId = _toNullableInt(payment?['sub_category_id']);
     _billingCycleLabel = payment?['billing_cycle_name']?.toString();
-    _issueDateController =
-        TextEditingController(text: _dateText(payment?['issue_date']));
-    _dueDateController = TextEditingController(text: _dateText(payment?['due_date']));
-    _amountController =
-        TextEditingController(text: _numberText(payment?['amount']));
-    _descriptionController =
-        TextEditingController(text: payment?['description']?.toString() ?? '');
+    _issueDateController = TextEditingController(
+      text: _dateText(payment?['issue_date']),
+    );
+    _dueDateController = TextEditingController(
+      text: _dateText(payment?['due_date']),
+    );
+    _amountController = TextEditingController(
+      text: _numberText(payment?['amount']),
+    );
+    _descriptionController = TextEditingController(
+      text: payment?['description']?.toString() ?? '',
+    );
     _controlNumberController = TextEditingController(
       text: payment?['control_number']?.toString() ?? '',
     );
@@ -450,9 +472,11 @@ class _FormSheetState extends ConsumerState<_FormSheet> {
                     _dropdownField(
                       label: 'Sub Category *',
                       isDarkMode: isDarkMode,
-                      value: subCategories.any(
-                        (item) => _toNullableInt(item['id']) == _subCategoryId,
-                      )
+                      value:
+                          subCategories.any(
+                            (item) =>
+                                _toNullableInt(item['id']) == _subCategoryId,
+                          )
                           ? _subCategoryId
                           : null,
                       items: subCategories
@@ -468,15 +492,21 @@ class _FormSheetState extends ConsumerState<_FormSheet> {
                           .toList(),
                       onChanged: (value) {
                         setState(() => _subCategoryId = value);
-                        final selected = subCategories.cast<Map<String, dynamic>?>().firstWhere(
+                        final selected = subCategories
+                            .cast<Map<String, dynamic>?>()
+                            .firstWhere(
                               (item) => _toNullableInt(item?['id']) == value,
                               orElse: () => null,
                             );
                         if (selected != null) {
-                          _amountController.text = _numberText(selected['price']);
+                          _amountController.text = _numberText(
+                            selected['price'],
+                          );
                           _billingCycleLabel =
                               selected['billing_cycle_name']?.toString() ?? '-';
-                          _recalculateDueDate(_toInt(selected['billing_cycle']));
+                          _recalculateDueDate(
+                            _toInt(selected['billing_cycle']),
+                          );
                         }
                       },
                     ),
@@ -497,13 +527,17 @@ class _FormSheetState extends ConsumerState<_FormSheet> {
                       label: 'Issue Date *',
                       isDarkMode: isDarkMode,
                       onChanged: () {
-                        final selected = subCategories.cast<Map<String, dynamic>?>().firstWhere(
+                        final selected = subCategories
+                            .cast<Map<String, dynamic>?>()
+                            .firstWhere(
                               (item) =>
                                   _toNullableInt(item?['id']) == _subCategoryId,
                               orElse: () => null,
                             );
                         if (selected != null) {
-                          _recalculateDueDate(_toInt(selected['billing_cycle']));
+                          _recalculateDueDate(
+                            _toInt(selected['billing_cycle']),
+                          );
                         }
                       },
                     ),
@@ -519,8 +553,9 @@ class _FormSheetState extends ConsumerState<_FormSheet> {
                       controller: _amountController,
                       label: 'Amount *',
                       isDarkMode: isDarkMode,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _textField(
@@ -588,17 +623,24 @@ class _FormSheetState extends ConsumerState<_FormSheet> {
     try {
       final api = ref.read(apiClientProvider);
       final id = _toInt(widget.payment?['id']);
-      if (id > 0) {
+      final isUpdate = id > 0;
+      if (isUpdate) {
         await api.put('/statutory-payments/$id', data: payload);
       } else {
-        await api.post('/statutory-payments', data: payload);
+        final response = await api.post('/statutory-payments', data: payload);
+        if (response.data is Map && response.data['data'] != null) {
+          final newId = response.data['data']['id'];
+          if (newId != null && mounted) {
+            widget.payment?['id'] = newId;
+          }
+        }
       }
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            id > 0
+            isUpdate
                 ? 'Statutory payment updated'
                 : 'Statutory payment created',
           ),

@@ -29,10 +29,24 @@ class BillingPaymentResource extends JsonResource
                     'id' => $this->document->id,
                     'document_number' => $this->document->document_number,
                     'document_type' => $this->document->document_type,
+                    'client' => $this->document->client ? [
+                        'id' => $this->document->client->id,
+                        'first_name' => $this->document->client->first_name,
+                        'last_name' => $this->document->client->last_name,
+                        'full_name' => $this->document->client->full_name,
+                        'email' => $this->document->client->email,
+                        'phone_number' => $this->document->client->phone_number,
+                    ] : null,
                 ];
             }),
             'client' => $this->whenLoaded('client', function () {
-                return new ProjectClientResource($this->client);
+                return [
+                    'id' => $this->client->id,
+                    'contact_person' => $this->client->contact_person,
+                    'company_name' => $this->client->company_name,
+                    'email' => $this->client->email,
+                    'phone' => $this->client->phone,
+                ];
             }),
             'received_by' => $this->whenLoaded('receiver', function () {
                 return [

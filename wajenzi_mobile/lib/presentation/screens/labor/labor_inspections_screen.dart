@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/filter_bottom_sheet.dart';
@@ -10,20 +13,22 @@ class LaborInspectionsScreen extends ConsumerStatefulWidget {
   const LaborInspectionsScreen({super.key});
 
   @override
-  ConsumerState<LaborInspectionsScreen> createState() => _LaborInspectionsScreenState();
+  ConsumerState<LaborInspectionsScreen> createState() =>
+      _LaborInspectionsScreenState();
 }
 
-class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen> {
+class _LaborInspectionsScreenState
+    extends ConsumerState<LaborInspectionsScreen> {
   final ScrollController _scrollController = ScrollController();
   int _currentPage = 1;
   bool _isLoading = false;
   bool _hasMore = true;
-  
+
   List<dynamic> _inspections = [];
   List<dynamic> _projects = [];
   List<dynamic> _contracts = [];
   Map<String, dynamic> _filters = {};
-  
+
   @override
   void initState() {
     super.initState();
@@ -38,7 +43,8 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
       _loadMoreData();
     }
   }
@@ -60,17 +66,27 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
     try {
       final api = ref.read(apiClientProvider);
 
-      final inspectionsResponse = await api.get('/labor/inspections', queryParameters: {
-        ..._filters,
-        'per_page': '20',
-        'page': _currentPage.toString(),
-      });
-      
-      final referenceDataResponse = await api.get('/labor/inspections/reference-data');
+      final inspectionsResponse = await api.get(
+        '/labor/inspections',
+        queryParameters: {
+          ..._filters,
+          'per_page': '20',
+          'page': _currentPage.toString(),
+        },
+      );
 
-      if (inspectionsResponse.statusCode == 200 && referenceDataResponse.statusCode == 200) {
-        final inspectionsData = inspectionsResponse.data['data'] as Map<String, dynamic>? ?? const {};
-        final referenceData = referenceDataResponse.data['data'] as Map<String, dynamic>? ?? const {};
+      final referenceDataResponse = await api.get(
+        '/labor/inspections/reference-data',
+      );
+
+      if (inspectionsResponse.statusCode == 200 &&
+          referenceDataResponse.statusCode == 200) {
+        final inspectionsData =
+            inspectionsResponse.data['data'] as Map<String, dynamic>? ??
+            const {};
+        final referenceData =
+            referenceDataResponse.data['data'] as Map<String, dynamic>? ??
+            const {};
 
         setState(() {
           if (refresh) {
@@ -78,11 +94,13 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
           } else {
             _inspections.addAll(inspectionsData['data'] ?? []);
           }
-          
+
           _projects = referenceData['projects'] ?? [];
           _contracts = referenceData['contracts'] ?? [];
-          
-          _hasMore = (inspectionsData['meta']['current_page'] ?? 1) < (inspectionsData['meta']['last_page'] ?? 1);
+
+          _hasMore =
+              (inspectionsData['meta']['current_page'] ?? 1) <
+              (inspectionsData['meta']['last_page'] ?? 1);
           _isLoading = false;
         });
       }
@@ -90,20 +108,25 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
       setState(() {
         _isLoading = false;
       });
-      
+
       String errorMessage = 'Error loading inspections';
-      
+
       // Check for authentication errors
-      if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+      if (e.toString().contains('401') ||
+          e.toString().contains('Unauthorized')) {
         errorMessage = 'Authentication required. Please login again.';
-      } else if (e.toString().contains('403') || e.toString().contains('Forbidden')) {
-        errorMessage = 'Permission denied. You may not have access to inspections.';
+      } else if (e.toString().contains('403') ||
+          e.toString().contains('Forbidden')) {
+        errorMessage =
+            'Permission denied. You may not have access to inspections.';
       } else if (e.toString().contains('404')) {
-        errorMessage = 'Inspections endpoint not found. Please check API configuration.';
+        errorMessage =
+            'Inspections endpoint not found. Please check API configuration.';
       } else if (e.toString().contains('Connection')) {
-        errorMessage = 'Cannot connect to server. Please check your internet connection.';
+        errorMessage =
+            'Cannot connect to server. Please check your internet connection.';
       }
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -129,17 +152,22 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
 
     try {
       final api = ref.read(apiClientProvider);
-      final response = await api.get('/labor/inspections', queryParameters: {
-        ..._filters,
-        'per_page': '20',
-        'page': _currentPage.toString(),
-      });
+      final response = await api.get(
+        '/labor/inspections',
+        queryParameters: {
+          ..._filters,
+          'per_page': '20',
+          'page': _currentPage.toString(),
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as Map<String, dynamic>? ?? const {};
         setState(() {
           _inspections.addAll(data['data'] ?? []);
-          _hasMore = (data['meta']['current_page'] ?? 1) < (data['meta']['last_page'] ?? 1);
+          _hasMore =
+              (data['meta']['current_page'] ?? 1) <
+              (data['meta']['last_page'] ?? 1);
           _isLoading = false;
         });
       }
@@ -165,18 +193,26 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
           'project_id': {
             'label': 'Project',
             'type': 'select',
-            'options': _projects.map((p) => {
-              'value': p['id'].toString(),
-              'label': p['project_name'],
-            }).toList(),
+            'options': _projects
+                .map(
+                  (p) => {
+                    'value': p['id'].toString(),
+                    'label': p['project_name'],
+                  },
+                )
+                .toList(),
           },
           'contract_id': {
             'label': 'Contract',
             'type': 'select',
-            'options': _contracts.map((c) => {
-              'value': c['id'].toString(),
-              'label': '${c['contract_number']} - ${c['artisan_name']}',
-            }).toList(),
+            'options': _contracts
+                .map(
+                  (c) => {
+                    'value': c['id'].toString(),
+                    'label': '${c['contract_number']} - ${c['artisan_name']}',
+                  },
+                )
+                .toList(),
           },
           'status': {
             'label': 'Status',
@@ -201,14 +237,8 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
               {'value': 'safety', 'label': 'Safety'},
             ],
           },
-          'start_date': {
-            'label': 'Start Date',
-            'type': 'date',
-          },
-          'end_date': {
-            'label': 'End Date',
-            'type': 'date',
-          },
+          'start_date': {'label': 'Start Date', 'type': 'date'},
+          'end_date': {'label': 'End Date', 'type': 'date'},
         },
         onApply: (filters) {
           setState(() {
@@ -278,12 +308,22 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull?.user;
+    final isSwahili = ref.watch(isSwahiliProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Labor Inspections'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () =>
+              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
+        ),
+        title: Text(isSwahili ? 'Ukaguzi wa Labor' : 'Labor Inspections'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.dashboard_rounded),
+            tooltip: isSwahili ? 'Dashibodi' : 'Dashboard',
+            onPressed: () => context.go('/labor-dashboard'),
+          ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: _showFilterBottomSheet,
@@ -322,44 +362,35 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
                   ),
                 ),
               ),
-            
+
             // Inspections list
             Expanded(
               child: _isLoading && _inspections.isEmpty
                   ? const LoadingWidget()
                   : _inspections.isEmpty
-                      ? const EmptyStateWidget(
-                          message: 'No inspections found',
-                          icon: Icons.search_off,
-                        )
-                      : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _inspections.length + (_hasMore ? 1 : 0),
-                          itemBuilder: (context, index) {
-                            if (index == _inspections.length) {
-                              return const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(child: CircularProgressIndicator()),
-                              );
-                            }
+                  ? const EmptyStateWidget(
+                      message: 'No inspections found',
+                      icon: Icons.search_off,
+                    )
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _inspections.length + (_hasMore ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == _inspections.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
 
-                            final inspection = _inspections[index];
-                            return _buildInspectionCard(inspection);
-                          },
-                        ),
+                        final inspection = _inspections[index];
+                        return _buildInspectionCard(inspection);
+                      },
+                    ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Navigate to create inspection screen
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Create inspection feature coming soon')),
-          );
-        },
-        child: const Icon(Icons.add),
       ),
     );
   }
@@ -367,7 +398,7 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
   Widget _buildInspectionCard(Map<String, dynamic> inspection) {
     final contract = inspection['contract'] ?? {};
     final inspector = inspection['inspector'] ?? {};
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       elevation: 2,
@@ -375,7 +406,9 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
         onTap: () {
           // TODO: Navigate to inspection details
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Inspection details feature coming soon')),
+            const SnackBar(
+              content: Text('Inspection details feature coming soon'),
+            ),
           );
         },
         child: Padding(
@@ -409,7 +442,10 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: _getStatusColor(inspection['status'] ?? 'draft'),
                       borderRadius: BorderRadius.circular(20),
@@ -425,9 +461,9 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Contract and artisan info
               Row(
                 children: [
@@ -455,21 +491,25 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Inspection details row
               Row(
                 children: [
                   // Type badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade100,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      inspection['inspection_type']?.toString().toUpperCase() ?? 'UNKNOWN',
+                      inspection['inspection_type']?.toString().toUpperCase() ??
+                          'UNKNOWN',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -477,9 +517,9 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(width: 8),
-                  
+
                   // Completion percentage
                   Expanded(
                     child: Column(
@@ -493,26 +533,34 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
                           ),
                         ),
                         LinearProgressIndicator(
-                          value: (inspection['completion_percentage'] ?? 0) / 100,
+                          value:
+                              (inspection['completion_percentage'] ?? 0) / 100,
                           backgroundColor: Colors.grey.shade300,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.blue,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 8),
-              
+
               // Quality and result badges
               Row(
                 children: [
                   if (inspection['work_quality'] != null) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: _getQualityColor(inspection['work_quality']).withOpacity(0.2),
+                        color: _getQualityColor(
+                          inspection['work_quality'],
+                        ).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -526,12 +574,17 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
                     ),
                     const SizedBox(width: 8),
                   ],
-                  
+
                   if (inspection['result'] != null) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
-                        color: _getResultColor(inspection['result']).withOpacity(0.2),
+                        color: _getResultColor(
+                          inspection['result'],
+                        ).withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -546,16 +599,13 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
                   ],
                 ],
               ),
-              
+
               // Inspector info
               if (inspector['name'] != null) ...[
                 const SizedBox(height: 8),
                 Text(
                   'Inspector: ${inspector['name']}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                 ),
               ],
             ],
@@ -568,10 +618,16 @@ class _LaborInspectionsScreenState extends ConsumerState<LaborInspectionsScreen>
   String _getFilterLabel(String key, dynamic value) {
     switch (key) {
       case 'project_id':
-        final project = _projects.firstWhere((p) => p['id'].toString() == value.toString(), orElse: () => null);
+        final project = _projects.firstWhere(
+          (p) => p['id'].toString() == value.toString(),
+          orElse: () => null,
+        );
         return 'Project: ${project?['project_name'] ?? value}';
       case 'contract_id':
-        final contract = _contracts.firstWhere((c) => c['id'].toString() == value.toString(), orElse: () => null);
+        final contract = _contracts.firstWhere(
+          (c) => c['id'].toString() == value.toString(),
+          orElse: () => null,
+        );
         return 'Contract: ${contract?['contract_number'] ?? value}';
       case 'status':
         return 'Status: ${value.toString().toUpperCase()}';

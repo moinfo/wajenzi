@@ -21,14 +21,32 @@ class ProcurementController extends Controller
     {
         $perPage = min((int) $request->integer('per_page', 100), 200);
 
-        $comparisons = QuotationComparison::with([
+        $query = QuotationComparison::with([
                 'materialRequest.project',
                 'selectedQuotation.supplier',
                 'preparedBy',
             ])
             ->orderByDesc('comparison_date')
-            ->orderByDesc('created_at')
-            ->paginate($perPage)
+            ->orderByDesc('created_at');
+
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('comparison_number', 'like', "%{$search}%")
+                  ->orWhereHas('materialRequest', function ($mrq) use ($search) {
+                      $mrq->where('request_number', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('materialRequest.project', function ($pq) use ($search) {
+                      $pq->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+
+        $comparisons = $query->paginate($perPage)
             ->through(fn ($comparison) => [
                 'id' => $comparison->id,
                 'comparison_number' => $comparison->comparison_number,

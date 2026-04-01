@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/network/api_client.dart';
+import '../../core/router/app_router.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/common/loading_widget.dart';
 import '../widgets/common/empty_state_widget.dart';
 import '../widgets/common/filter_bottom_sheet.dart';
@@ -66,7 +68,9 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
         },
       );
 
-      final referenceDataResponse = await api.get('/provision-tax/reference-data');
+      final referenceDataResponse = await api.get(
+        '/provision-tax/reference-data',
+      );
 
       if (taxesResponse.statusCode == 200 &&
           referenceDataResponse.statusCode == 200) {
@@ -224,7 +228,10 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
     return formatter.format(number);
   }
 
-  Future<void> _openTaxForm({Map<String, dynamic>? tax}) async {
+  Future<void> _openTaxForm({
+    Map<String, dynamic>? tax,
+    bool isSwahili = false,
+  }) async {
     final isEdit = tax != null;
     final banks = (_referenceData['banks'] as List? ?? const [])
         .whereType<Map>()
@@ -233,14 +240,22 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
 
     if (banks.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No banks available for provision tax.')),
+        SnackBar(
+          content: Text(
+            isSwahili
+                ? 'Hakuna benki zinazopatikana kwa kodi ya akiba.'
+                : 'No banks available for provision tax.',
+          ),
+        ),
       );
       return;
     }
 
     final formKey = GlobalKey<FormState>();
     final dateCtrl = TextEditingController(
-      text: tax?['date']?.toString() ?? DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      text:
+          tax?['date']?.toString() ??
+          DateFormat('yyyy-MM-dd').format(DateTime.now()),
     );
     final amountCtrl = TextEditingController(
       text: tax?['amount']?.toString() ?? '',
@@ -294,7 +309,13 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            isEdit ? 'Edit Provision Tax' : 'New Provision Tax',
+                            isEdit
+                                ? (isSwahili
+                                      ? 'Hariri Kodi ya Akiba'
+                                      : 'Edit Provision Tax')
+                                : (isSwahili
+                                      ? 'Kodi Mpya ya Akiba'
+                                      : 'New Provision Tax'),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
@@ -307,56 +328,72 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                                 .map((bank) => _toInt(bank['id']))
                                 .where((id) => id > 0)
                                 .toList(),
-                            label: 'Bank *',
+                            label: isSwahili ? 'Benki *' : 'Bank *',
                             isDark: false,
                             labelBuilder: (id) {
                               final bank = banks.firstWhere(
                                 (item) => _toInt(item['id']) == id,
                                 orElse: () => const <String, dynamic>{},
                               );
-                              return (bank['bank_name'] ?? bank['name'] ?? bank['label'] ?? '-')
+                              return (bank['bank_name'] ??
+                                      bank['name'] ??
+                                      bank['label'] ??
+                                      '-')
                                   .toString();
                             },
                             onChanged: (value) =>
                                 setSheetState(() => selectedBankId = value),
-                            validator: (value) => value == null ? 'Required' : null,
+                            validator: (value) => value == null
+                                ? (isSwahili ? 'Inahitajika' : 'Required')
+                                : null,
                           ),
                           vatTextField(
                             controller: amountCtrl,
-                            label: 'Amount *',
+                            label: isSwahili ? 'Kiasi *' : 'Amount *',
                             isDark: false,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             validator: (value) =>
-                                (value == null || value.trim().isEmpty) ? 'Required' : null,
+                                (value == null || value.trim().isEmpty)
+                                ? (isSwahili ? 'Inahitajika' : 'Required')
+                                : null,
                           ),
                           vatTextField(
                             controller: descriptionCtrl,
-                            label: 'Description *',
+                            label: isSwahili ? 'Maelezo *' : 'Description *',
                             isDark: false,
                             validator: (value) =>
-                                (value == null || value.trim().isEmpty) ? 'Required' : null,
+                                (value == null || value.trim().isEmpty)
+                                ? (isSwahili ? 'Inahitajika' : 'Required')
+                                : null,
                           ),
                           vatTextField(
                             controller: debitCtrl,
-                            label: 'Debit Number',
+                            label: isSwahili
+                                ? 'Nambari ya Debiti'
+                                : 'Debit Number',
                             isDark: false,
                           ),
                           vatTextField(
                             controller: dateCtrl,
-                            label: 'Date *',
+                            label: isSwahili ? 'Tarehe *' : 'Date *',
                             isDark: false,
                             readOnly: true,
                             onTap: () async {
                               final picked = await vatPickDate(
                                 sheetContext,
-                                DateTime.tryParse(dateCtrl.text) ?? DateTime.now(),
+                                DateTime.tryParse(dateCtrl.text) ??
+                                    DateTime.now(),
                               );
                               if (picked != null) {
                                 dateCtrl.text = vatDateFmt(picked);
                               }
                             },
                             validator: (value) =>
-                                (value == null || value.trim().isEmpty) ? 'Required' : null,
+                                (value == null || value.trim().isEmpty)
+                                ? (isSwahili ? 'Inahitajika' : 'Required')
+                                : null,
                           ),
                           VatFilePicker(
                             file: selectedFile,
@@ -375,7 +412,9 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
 
                                 final fields = <String, dynamic>{
                                   'date': dateCtrl.text.trim(),
-                                  'amount': double.tryParse(amountCtrl.text.trim()) ?? 0,
+                                  'amount':
+                                      double.tryParse(amountCtrl.text.trim()) ??
+                                      0,
                                   'description': descriptionCtrl.text.trim(),
                                   'bank_id': selectedBankId,
                                   'debit_number': _blankToNull(debitCtrl.text),
@@ -386,8 +425,10 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                                   if (isEdit) {
                                     if (selectedFile != null) {
                                       fields['_method'] = 'PUT';
-                                      final formData =
-                                          await vatBuildFormData(fields, selectedFile);
+                                      final formData = await vatBuildFormData(
+                                        fields,
+                                        selectedFile,
+                                      );
                                       await api.uploadFile(
                                         '/provision-tax/${tax['id']}',
                                         data: formData,
@@ -400,14 +441,19 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                                     }
                                   } else {
                                     if (selectedFile != null) {
-                                      final formData =
-                                          await vatBuildFormData(fields, selectedFile);
+                                      final formData = await vatBuildFormData(
+                                        fields,
+                                        selectedFile,
+                                      );
                                       await api.uploadFile(
                                         '/provision-tax',
                                         data: formData,
                                       );
                                     } else {
-                                      await api.post('/provision-tax', data: fields);
+                                      await api.post(
+                                        '/provision-tax',
+                                        data: fields,
+                                      );
                                     }
                                   }
 
@@ -416,7 +462,9 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                                   }
                                 } catch (e) {
                                   if (sheetContext.mounted) {
-                                    ScaffoldMessenger.of(sheetContext).showSnackBar(
+                                    ScaffoldMessenger.of(
+                                      sheetContext,
+                                    ).showSnackBar(
                                       SnackBar(
                                         backgroundColor: Colors.red,
                                         content: Text(vatErrorMessage(e)),
@@ -425,7 +473,11 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                                   }
                                 }
                               },
-                              child: Text(isEdit ? 'Update' : 'Save'),
+                              child: Text(
+                                isEdit
+                                    ? (isSwahili ? 'Sasisha' : 'Update')
+                                    : (isSwahili ? 'Hifadhi' : 'Save'),
+                              ),
                             ),
                           ),
                         ],
@@ -450,22 +502,27 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
     }
   }
 
-  Future<void> _deleteTax(Map<String, dynamic> tax) async {
+  Future<void> _deleteTax(
+    Map<String, dynamic> tax, {
+    bool isSwahili = false,
+  }) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Provision Tax'),
+        title: Text(isSwahili ? 'Futa Kodi ya Akiba' : 'Delete Provision Tax'),
         content: Text(
-          'Delete "${tax['description'] ?? 'this record'}"?',
+          isSwahili
+              ? 'Futa "${tax['description'] ?? 'rekodi hii'}"?'
+              : 'Delete "${tax['description'] ?? 'this record'}"?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(isSwahili ? 'Cancel' : 'Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(isSwahili ? 'Futa' : 'Delete'),
           ),
         ],
       ),
@@ -477,9 +534,13 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
       await ref.read(apiClientProvider).delete('/provision-tax/${tax['id']}');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           backgroundColor: Colors.green,
-          content: Text('Provision tax deleted successfully'),
+          content: Text(
+            isSwahili
+                ? 'Kodi ya akiba imefutwa kwa mafanikio'
+                : 'Provision tax deleted successfully',
+          ),
         ),
       );
       _loadData(refresh: true);
@@ -496,102 +557,130 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Provision Tax'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () =>
+              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
+        ),
+        title: Text(isSwahili ? 'Kodi ya Akiba' : 'Provision Tax'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openTaxForm(),
-          ),
-          IconButton(
             icon: const Icon(Icons.filter_list),
+            tooltip: isSwahili ? 'Chuja' : 'Filter',
             onPressed: _showFilterBottomSheet,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
             onPressed: () => _loadData(refresh: true),
           ),
         ],
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _openTaxForm(isSwahili: isSwahili),
+          tooltip: isSwahili ? 'Ongeza' : 'Add',
+          child: const Icon(Icons.add_rounded),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: () => _loadData(refresh: true),
         child: _isLoading
-            ? const LoadingWidget(message: 'Loading provision taxes...')
+            ? LoadingWidget(
+                message: isSwahili
+                    ? 'Inapakia kodi za akiba...'
+                    : 'Loading provision taxes...',
+              )
             : _taxes.isEmpty && _summary.isEmpty
-                ? const EmptyStateWidget(
-                    message: 'No provision taxes found',
-                    icon: Icons.receipt_long,
-                  )
-                : Column(
-                    children: [
-                      // Summary Cards
-                      if (_summary.isNotEmpty) ...[
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _SummaryCard(
-                                  title: 'Total Amount',
-                                  value: _formatCurrency(_summary['total_amount'] ?? 0),
-                                  icon: Icons.trending_up,
-                                  color: Colors.green,
-                                ),
+            ? EmptyStateWidget(
+                message: isSwahili
+                    ? 'Hakuna kodi za akiba zilizopatikana'
+                    : 'No provision taxes found',
+                icon: Icons.receipt_long,
+              )
+            : Column(
+                children: [
+                  // Summary Cards
+                  if (_summary.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _SummaryCard(
+                              title: isSwahili
+                                  ? 'Jumla ya Kiasi'
+                                  : 'Total Amount',
+                              value: _formatCurrency(
+                                _summary['total_amount'] ?? 0,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _SummaryCard(
-                                  title: 'Total Records',
-                                  value: (_summary['count'] ?? 0).toString(),
-                                  icon: Icons.receipt_long,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                            ],
+                              icon: Icons.trending_up,
+                              color: Colors.green,
+                            ),
                           ),
-                        ),
-                      ],
-                      // Taxes List
-                      Expanded(
-                        child: _taxes.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'No taxes found for current filters',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              )
-                            : ListView.builder(
-                                controller: _scrollController,
-                                padding: const EdgeInsets.all(16),
-                                itemCount: _taxes.length + (_hasMore ? 1 : 0),
-                                itemBuilder: (context, index) {
-                                  if (index == _taxes.length) {
-                                    return const Padding(
-                                      padding: EdgeInsets.all(16),
-                                      child: Center(child: CircularProgressIndicator()),
-                                    );
-                                  }
-
-                                  final tax = _taxes[index];
-                                  return ProvisionTaxCard(
-                                    tax: Map<String, dynamic>.from(tax as Map),
-                                    onTap: () => _openTaxForm(
-                                      tax: Map<String, dynamic>.from(tax as Map),
-                                    ),
-                                    onDelete: () => _deleteTax(
-                                      Map<String, dynamic>.from(tax as Map),
-                                    ),
-                                  );
-                                },
-                              ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _SummaryCard(
+                              title: isSwahili
+                                  ? 'Jumla ya Rekodi'
+                                  : 'Total Records',
+                              value: (_summary['count'] ?? 0).toString(),
+                              icon: Icons.receipt_long,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ],
+                  // Taxes List
+                  Expanded(
+                    child: _taxes.isEmpty
+                        ? Center(
+                            child: Text(
+                              isSwahili
+                                  ? 'Hakuna kodi zinazolingana na vichujio'
+                                  : 'No taxes found for current filters',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.all(16),
+                            itemCount: _taxes.length + (_hasMore ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _taxes.length) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+
+                              final tax = _taxes[index];
+                              return ProvisionTaxCard(
+                                tax: Map<String, dynamic>.from(tax as Map),
+                                isSwahili: isSwahili,
+                                onTap: () => _openTaxForm(
+                                  tax: Map<String, dynamic>.from(tax as Map),
+                                  isSwahili: isSwahili,
+                                ),
+                                onDelete: () => _deleteTax(
+                                  Map<String, dynamic>.from(tax as Map),
+                                  isSwahili: isSwahili,
+                                ),
+                              );
+                            },
+                          ),
                   ),
+                ],
+              ),
       ),
     );
   }
@@ -655,12 +744,14 @@ class ProvisionTaxCard extends StatelessWidget {
   final Map<String, dynamic> tax;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final bool isSwahili;
 
   const ProvisionTaxCard({
     super.key,
     required this.tax,
     required this.onTap,
     required this.onDelete,
+    this.isSwahili = false,
   });
 
   @override
@@ -693,7 +784,8 @@ class ProvisionTaxCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          tax['date'] ?? 'No Date',
+                          tax['date'] ??
+                              (isSwahili ? 'Tarehe Hakuna' : 'No Date'),
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey[600],
@@ -710,14 +802,14 @@ class ProvisionTaxCard extends StatelessWidget {
                         onDelete();
                       }
                     },
-                    itemBuilder: (context) => const [
+                    itemBuilder: (context) => [
                       PopupMenuItem<String>(
                         value: 'edit',
-                        child: Text('Edit'),
+                        child: Text(isSwahili ? 'Hariri' : 'Edit'),
                       ),
                       PopupMenuItem<String>(
                         value: 'delete',
-                        child: Text('Delete'),
+                        child: Text(isSwahili ? 'Futa' : 'Delete'),
                       ),
                     ],
                   ),
@@ -741,15 +833,16 @@ class ProvisionTaxCard extends StatelessWidget {
                   ),
                   if (tax['bank'] != null) ...[
                     const SizedBox(width: 8),
-                    Icon(Icons.account_balance, size: 16, color: Colors.grey[600]),
+                    Icon(
+                      Icons.account_balance,
+                      size: 16,
+                      color: Colors.grey[600],
+                    ),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         tax['bank']['bank_name'] ?? 'Unknown Bank',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,
                       ),
@@ -765,11 +858,8 @@ class ProvisionTaxCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        'Debit #: ${tax['debit_number']}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
+                        '${isSwahili ? 'Debiti #' : 'Debit #'}: ${tax['debit_number']}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -784,11 +874,10 @@ class ProvisionTaxCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        'Attachment available',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blue,
-                        ),
+                        isSwahili
+                            ? 'Kiambatanisho kinapatikana'
+                            : 'Attachment available',
+                        style: TextStyle(fontSize: 12, color: Colors.blue),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

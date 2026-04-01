@@ -23,6 +23,20 @@ class MaterialInspectionController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('inspection_number', 'like', "%{$search}%")
+                  ->orWhereHas('supplierReceiving', function ($srq) use ($search) {
+                      $srq->where('receiving_number', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('project', function ($pq) use ($search) {
+                      $pq->where('name', 'like', "%{$search}%")
+                        ->orWhere('project_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
         $inspections = $query->paginate($request->per_page ?? 20);
 
         return response()->json([

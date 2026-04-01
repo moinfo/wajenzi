@@ -31,6 +31,30 @@ import '../../presentation/screens/projects/client_project_detail_screen.dart';
 import '../../presentation/screens/settings/profile_screen.dart';
 import '../../presentation/screens/settings/change_password_screen.dart';
 import '../../presentation/screens/settings/legal_screen.dart';
+import '../../presentation/screens/settings/process_approval_flows_screen.dart';
+import '../../presentation/screens/settings/process_approval_flow_steps_screen.dart';
+import '../../presentation/screens/settings/allowance_subscriptions_screen.dart';
+import '../../presentation/screens/settings/deduction_settings_screen.dart';
+import '../../presentation/screens/settings/departments_screen.dart';
+import '../../presentation/screens/settings/positions_screen.dart';
+import '../../presentation/screens/settings/roles_screen.dart';
+import '../../presentation/screens/settings/permissions_screen.dart';
+import '../../presentation/screens/settings/suppliers_screen.dart';
+import '../../presentation/screens/settings/items_screen.dart';
+import '../../presentation/screens/settings/expenses_categories_screen.dart';
+import '../../presentation/screens/settings/expenses_sub_categories_screen.dart';
+import '../../presentation/screens/settings/financial_charge_categories_screen.dart';
+import '../../presentation/screens/settings/efd_screen.dart';
+import '../../presentation/screens/settings/approval_document_types_screen.dart';
+import '../../presentation/screens/settings/approval_levels_screen.dart';
+import '../../presentation/screens/settings/service_interesteds_screen.dart';
+import '../../presentation/screens/settings/lead_statuses_screen.dart';
+import '../../presentation/screens/settings/lead_sources_screen.dart';
+import '../../presentation/screens/settings/service_types_screen.dart';
+import '../../presentation/screens/settings/project_statuses_screen.dart';
+import '../../presentation/screens/settings/cost_categories_screen.dart';
+import '../../presentation/screens/settings/systems_screen.dart';
+import '../../presentation/screens/settings/users_screen.dart';
 import '../../presentation/screens/dashboard/activities_screen.dart';
 import '../../presentation/screens/dashboard/followups_screen.dart';
 import '../../presentation/screens/dashboard/invoices_screen.dart';
@@ -58,11 +82,11 @@ import '../../presentation/screens/billing/billing_emails_screen.dart';
 import '../../presentation/screens/billing/billing_products_screen.dart';
 import '../../presentation/screens/procurement/procurement_screen.dart';
 import '../../presentation/screens/employee_profile/employee_profile_screen.dart';
-import '../../presentation/screens/reports/site_daily_report_list_screen.dart';
-import '../../presentation/screens/reports/project_daily_report_list_screen.dart';
-import '../../presentation/screens/reports/sales_daily_report_list_screen.dart';
 import '../../presentation/screens/reports/architect_bonus_report_screen.dart';
 import '../../presentation/screens/reports/reports_hub_screen.dart';
+import '../../presentation/screens/reports/vat_analysis_report_screen.dart';
+import '../../presentation/screens/reports/sales_report_screen.dart';
+import '../../presentation/screens/reports/generic_report_screen.dart';
 import '../../presentation/screens/vat/vat_sales_screen.dart';
 import '../../presentation/screens/vat/vat_purchases_screen.dart';
 import '../../presentation/screens/vat/vat_auto_purchases_screen.dart';
@@ -74,9 +98,6 @@ import '../../presentation/screens/accounting/charts_of_accounts_screen.dart';
 import '../../presentation/screens/accounting/imprest_requests_screen.dart';
 import '../../presentation/screens/accounting/exchange_rates_screen.dart';
 import '../../presentation/screens/accounting/statutory_payments_screen.dart';
-import '../../presentation/screens/accounting/statutory_category_report_screen.dart';
-import '../../presentation/screens/accounting/statutory_payment_report_screen.dart';
-import '../../presentation/screens/accounting/statutory_schedules_report_screen.dart';
 import '../../presentation/screens/accounting/chart_account_variables_screen.dart';
 import '../../presentation/screens/accounting/building_types_screen.dart';
 import '../../presentation/screens/accounting/boq_item_categories_screen.dart';
@@ -98,13 +119,12 @@ import '../../presentation/screens/staff/staff_salaries_screen.dart';
 import '../../presentation/screens/staff/staff_loans_screen.dart';
 import '../../presentation/screens/staff/deductions_screen.dart';
 import '../../presentation/screens/staff/deduction_subscriptions_screen.dart';
-import '../../presentation/screens/staff/salary_slips_screen.dart';
 import '../../presentation/screens/staff/leave_managements_screen.dart';
 import '../../presentation/screens/staff/leave_requests_screen.dart';
 import '../../presentation/screens/staff/leave_types_screen.dart';
-import '../../presentation/screens/staff/leave_dashboard_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
 import '../../presentation/screens/messages/messages_screen.dart';
+import '../../presentation/screens/web/portal_webview_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final rootScaffoldKeyProvider = Provider<GlobalKey<ScaffoldState>>((ref) {
@@ -450,19 +470,420 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ArchitectBonusReportScreen(),
           ),
           GoRoute(
-            path: '/site-daily-reports',
-            name: 'site-daily-reports',
-            builder: (context, state) => const SiteDailyReportListScreen(),
+            path: '/reports-vat-analysis',
+            name: 'reports-vat-analysis',
+            builder: (context, state) => const VatAnalysisReportScreen(),
           ),
           GoRoute(
-            path: '/sales-daily-reports',
-            name: 'sales-daily-reports',
-            builder: (context, state) => const SalesDailyReportListScreen(),
+            path: '/reports-sales',
+            name: 'reports-sales',
+            builder: (context, state) => const SalesReportScreen(),
           ),
           GoRoute(
-            path: '/project-daily-reports',
-            name: 'project-daily-reports',
-            builder: (context, state) => const ProjectDailyReportListScreen(),
+            path: '/reports-vat-payments',
+            name: 'reports-vat-payments',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'VAT Payments Report',
+              titleSw: 'Ripoti ya Malipo ya VAT',
+              apiEndpoint: '/reports/vat-payments-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-exempt-analysis',
+            name: 'reports-exempt-analysis',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Exempt Analysis Report',
+              titleSw: 'Ripoti ya Uchambuzi wa Vipotoshi',
+              apiEndpoint: '/reports/exempt-analysis-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-purchases',
+            name: 'reports-purchases',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Purchases Report',
+              titleSw: 'Ripoti ya Ununuzi',
+              apiEndpoint: '/reports/purchases-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-attendances',
+            name: 'reports-attendances',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Attendances Report',
+              titleSw: 'Ripoti ya Mahudhurio',
+              apiEndpoint: '/reports/attendances-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-daily-attendances',
+            name: 'reports-daily-attendances',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Daily Attendances Report',
+              titleSw: 'Ripoti ya Mahudhurio ya Kila Siku',
+              apiEndpoint: '/reports/daily-attendances-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-purchases-by-supplier',
+            name: 'reports-purchases-by-supplier',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Purchases By Supplier Report',
+              titleSw: 'Ripoti ya Ununuzi kwa Mnunuzi',
+              apiEndpoint: '/reports/purchases-by-supplier-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-deduction',
+            name: 'reports-deduction',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Deduction Report',
+              titleSw: 'Ripoti ya Punguzo',
+              apiEndpoint: '/reports/deduction-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-allowance-subscriptions',
+            name: 'reports-allowance-subscriptions',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Allowance Subscriptions Report',
+              titleSw: 'Ripoti ya Malipo ya Maslahi',
+              apiEndpoint: '/reports/allowance-subscriptions-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-statement-comprehensive-income',
+            name: 'reports-statement-comprehensive-income',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Statement of Comprehensive Income',
+              titleSw: 'Taarifa ya Mapato ya Kiwango',
+              apiEndpoint: '/reports/statement-of-comprehensive-income-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-statement-financial-position',
+            name: 'reports-statement-financial-position',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Statement of Financial Position',
+              titleSw: 'Taarifa ya Hali ya Kifedha',
+              apiEndpoint: '/reports/statement-of-financial-position-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-detailed-expenditure',
+            name: 'reports-detailed-expenditure',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Detailed Expenditure Statement',
+              titleSw: 'Taarifa ya Kina ya Matumizi',
+              apiEndpoint: '/reports/detailed-expenditure-statement-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-efd',
+            name: 'reports-efd',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'EFD Report',
+              titleSw: 'Ripoti ya EFD',
+              apiEndpoint: '/reports/efd-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-detailed-efd',
+            name: 'reports-detailed-efd',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Detailed EFD Report',
+              titleSw: 'Ripoti ya Kina ya EFD',
+              apiEndpoint: '/reports/detailed-efd-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-sales',
+            name: 'reports-annually-sales',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Sales Summary',
+              titleSw: 'Muhtasari wa Mauzo ya Mwaka',
+              apiEndpoint: '/reports/annually-sales-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-purchases',
+            name: 'reports-annually-purchases',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Purchases Summary',
+              titleSw: 'Muhtasari wa Ununuzi wa Mwaka',
+              apiEndpoint: '/reports/annually-purchases-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-expenses',
+            name: 'reports-annually-expenses',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Expenses Summary',
+              titleSw: 'Muhtasari wa Gharama za Mwaka',
+              apiEndpoint: '/reports/annually-expenses-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-expense-categories',
+            name: 'reports-annually-expense-categories',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Expense Sub Categories',
+              titleSw: 'Vipengele vya Gharama vya Mwaka',
+              apiEndpoint:
+                  '/reports/annually-expense-sub-categories-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-financial-charges',
+            name: 'reports-annually-financial-charges',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Financial Charges Summary',
+              titleSw: 'Muhtasari wa Ada za Kifedha za Mwaka',
+              apiEndpoint: '/reports/annually-financial-charges-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-salaries',
+            name: 'reports-annually-salaries',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Salaries Summary',
+              titleSw: 'Muhtasari wa Mishahara ya Mwaka',
+              apiEndpoint: '/reports/annually-salaries-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-sdl',
+            name: 'reports-annually-sdl',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually SDL Summary',
+              titleSw: 'Muhtasari wa SDL wa Mwaka',
+              apiEndpoint: '/reports/annually-sdl-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-advance-salary',
+            name: 'reports-annually-advance-salary',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Advance Salary Summary',
+              titleSw: 'Muhtasari wa Mishahara ya Mapema ya Mwaka',
+              apiEndpoint: '/reports/annually-advance-salary-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-allowance',
+            name: 'reports-annually-allowance',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Allowance Summary',
+              titleSw: 'Muhtasari wa Maslahi ya Mwaka',
+              apiEndpoint: '/reports/annually-allowance-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-heslb',
+            name: 'reports-annually-heslb',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually HESLB Summary',
+              titleSw: 'Muhtasari wa HESLB wa Mwaka',
+              apiEndpoint: '/reports/annually-heslb-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-net-salary',
+            name: 'reports-annually-net-salary',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Net Salary Summary',
+              titleSw: 'Muhtasari wa Mishahara Neti ya Mwaka',
+              apiEndpoint: '/reports/annually-net-salary-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-nhif',
+            name: 'reports-annually-nhif',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually NHIF Summary',
+              titleSw: 'Muhtasari wa NHIF wa Mwaka',
+              apiEndpoint: '/reports/annually-nhif-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-nssf',
+            name: 'reports-annually-nssf',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually NSSF Summary',
+              titleSw: 'Muhtasari wa NSSF wa Mwaka',
+              apiEndpoint: '/reports/annually-nssf-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-deduction',
+            name: 'reports-annually-deduction',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually Deduction Summary',
+              titleSw: 'Muhtasari wa Punguzo za Mwaka',
+              apiEndpoint: '/reports/annually-deduction-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-paye',
+            name: 'reports-annually-paye',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually PAYE Summary',
+              titleSw: 'Muhtasari wa PAYE wa Mwaka',
+              apiEndpoint: '/reports/annually-paye-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-annually-wcf',
+            name: 'reports-annually-wcf',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Annually WCF Summary',
+              titleSw: 'Muhtasari wa WCF wa Mwaka',
+              apiEndpoint: '/reports/annually-wcf-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-expense-categories',
+            name: 'reports-expense-categories',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Expense Categories Report',
+              titleSw: 'Ripoti ya Vipengele vya Gharama',
+              apiEndpoint: '/reports/expense-categories-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-expenses-per-system',
+            name: 'reports-expenses-per-system',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Expenses Per System Report',
+              titleSw: 'Ripoti ya Gharama kwa Mfumo',
+              apiEndpoint: '/reports/expenses-per-system-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-gross',
+            name: 'reports-gross',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Gross Summary Report',
+              titleSw: 'Ripoti ya Muhtasari wa Gross',
+              apiEndpoint: '/reports/gross-summary-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-net',
+            name: 'reports-net',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Net Report',
+              titleSw: 'Ripoti ya Neti',
+              apiEndpoint: '/reports/net-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-nhif',
+            name: 'reports-nhif',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'NHIF Report',
+              titleSw: 'Ripoti ya NHIF',
+              apiEndpoint: '/reports/nhif-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-nssf',
+            name: 'reports-nssf',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'NSSF Report',
+              titleSw: 'Ripoti ya NSSF',
+              apiEndpoint: '/reports/nssf-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-paye',
+            name: 'reports-paye',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'PAYE Report',
+              titleSw: 'Ripoti ya PAYE',
+              apiEndpoint: '/reports/paye-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-sdl',
+            name: 'reports-sdl',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'SDL Report',
+              titleSw: 'Ripoti ya SDL',
+              apiEndpoint: '/reports/sdl-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-wcf',
+            name: 'reports-wcf',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'WCF Report',
+              titleSw: 'Ripoti ya WCF',
+              apiEndpoint: '/reports/wcf-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-heslb',
+            name: 'reports-heslb',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'HESLB Report',
+              titleSw: 'Ripoti ya HESLB',
+              apiEndpoint: '/reports/heslb-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-provision',
+            name: 'reports-provision',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Provision Report',
+              titleSw: 'Ripoti ya Akiba',
+              apiEndpoint: '/reports/provision-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-statutory-category',
+            name: 'reports-statutory-category',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Statutory Category Report',
+              titleSw: 'Ripoti ya Kategoria ya Kisheria',
+              apiEndpoint: '/reports/statutory-category-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-statutory-payment',
+            name: 'reports-statutory-payment',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Statutory Payment Report',
+              titleSw: 'Ripoti ya Malipo ya Kisheria',
+              apiEndpoint: '/reports/statutory-payment-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-statutory-schedules',
+            name: 'reports-statutory-schedules',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Statutory Schedules Report',
+              titleSw: 'Ripoti ya Majedwali ya Kisheria',
+              apiEndpoint: '/reports/statutory-schedules-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-bank-deposit',
+            name: 'reports-bank-deposit',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Bank Deposit Report',
+              titleSw: 'Ripoti ya Amana za Benki',
+              apiEndpoint: '/reports/bank-deposit-report',
+            ),
+          ),
+          GoRoute(
+            path: '/reports-bank-withdraw',
+            name: 'reports-bank-withdraw',
+            builder: (context, state) => const GenericReportScreen(
+              title: 'Bank Withdraw Report',
+              titleSw: 'Ripoti ya Utoaji wa Benki',
+              apiEndpoint: '/reports/bank-withdraw-report',
+            ),
           ),
           GoRoute(
             path: '/sites',
@@ -504,6 +925,138 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/settings',
             name: 'settings',
             builder: (context, state) => const SettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/process-approval-flows',
+            name: 'settings-process-approval-flows',
+            builder: (context, state) => const ProcessApprovalFlowsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/process-approval-flow-steps',
+            name: 'settings-process-approval-flow-steps',
+            builder: (context, state) => const ProcessApprovalFlowStepsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/allowance-subscriptions',
+            name: 'settings-allowance-subscriptions',
+            builder: (context, state) => const AllowanceSubscriptionsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/deduction-settings',
+            name: 'settings-deduction-settings',
+            builder: (context, state) => const DeductionSettingsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/departments',
+            name: 'settings-departments',
+            builder: (context, state) => const DepartmentsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/positions',
+            name: 'settings-positions',
+            builder: (context, state) => const PositionsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/roles',
+            name: 'settings-roles',
+            builder: (context, state) => const RolesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/permissions',
+            name: 'settings-permissions',
+            builder: (context, state) => const PermissionsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/suppliers',
+            name: 'settings-suppliers',
+            builder: (context, state) => const SuppliersScreen(),
+          ),
+          GoRoute(
+            path: '/settings/items',
+            name: 'settings-items',
+            builder: (context, state) => const ItemsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/expenses-categories',
+            name: 'settings-expenses-categories',
+            builder: (context, state) => const ExpensesCategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/expenses-sub-categories',
+            name: 'settings-expenses-sub-categories',
+            builder: (context, state) => const ExpensesSubCategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/financial-charge-categories',
+            name: 'settings-financial-charge-categories',
+            builder: (context, state) =>
+                const FinancialChargeCategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/efd',
+            name: 'settings-efd',
+            builder: (context, state) => const EfdScreen(),
+          ),
+          GoRoute(
+            path: '/settings/approval-document-types',
+            name: 'settings-approval-document-types',
+            builder: (context, state) => const ApprovalDocumentTypesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/approval-levels',
+            name: 'settings-approval-levels',
+            builder: (context, state) => const ApprovalLevelsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/service-interesteds',
+            name: 'settings-service-interesteds',
+            builder: (context, state) => const ServiceInterestedsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/lead-statuses',
+            name: 'settings-lead-statuses',
+            builder: (context, state) => const LeadStatusesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/lead-sources',
+            name: 'settings-lead-sources',
+            builder: (context, state) => const LeadSourcesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/service-types',
+            name: 'settings-service-types',
+            builder: (context, state) => const ServiceTypesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/project-statuses',
+            name: 'settings-project-statuses',
+            builder: (context, state) => const ProjectStatusesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/cost-categories',
+            name: 'settings-cost-categories',
+            builder: (context, state) => const CostCategoriesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/systems',
+            name: 'settings-systems',
+            builder: (context, state) => const SystemsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/users',
+            name: 'settings-users',
+            builder: (context, state) => const UsersScreen(),
+          ),
+          GoRoute(
+            path: '/portal-webview',
+            name: 'portal-webview',
+            builder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>? ?? const {};
+              return PortalWebViewScreen(
+                title: (extra['title'] ?? 'Portal').toString(),
+                url: (extra['url'] ?? '').toString(),
+              );
+            },
           ),
           GoRoute(
             path: '/employee-profile',
@@ -561,11 +1114,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const PayrollAdministrationScreen(),
           ),
           GoRoute(
-            path: '/payroll/salary-slips',
-            name: 'payroll-salary-slips',
-            builder: (context, state) => const SalarySlipsScreen(),
-          ),
-          GoRoute(
             path: '/allowances',
             name: 'allowances',
             builder: (context, state) => const AllowancesScreen(),
@@ -613,7 +1161,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/leave-dashboard',
             name: 'leave-dashboard',
-            builder: (context, state) => const LeaveDashboardScreen(),
+            builder: (context, state) => const LeaveRequestsScreen(),
           ),
           GoRoute(
             path: '/accounting',
@@ -654,21 +1202,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/statutory-payments',
             name: 'statutory-payments',
             builder: (context, state) => const StatutoryPaymentsScreen(),
-          ),
-          GoRoute(
-            path: '/reports-statutory-category-report',
-            name: 'reports-statutory-category-report',
-            builder: (context, state) => const StatutoryCategoryReportScreen(),
-          ),
-          GoRoute(
-            path: '/reports-statutory-payment-report',
-            name: 'reports-statutory-payment-report',
-            builder: (context, state) => const StatutoryPaymentReportScreen(),
-          ),
-          GoRoute(
-            path: '/reports-statutory-schedules-report',
-            name: 'reports-statutory-schedules-report',
-            builder: (context, state) => const StatutorySchedulesReportScreen(),
           ),
           GoRoute(
             path: '/chart-account-variables',
@@ -1152,6 +1685,75 @@ String? _mapWebRoute(String webRoute) {
     'hr_settings': '/settings',
     'system_settings': '/settings',
     'user_settings': '/settings',
+    'hr_settings_process_approval_flows': '/settings/process-approval-flows',
+    'settings/process_approval_flows': '/settings/process-approval-flows',
+    'settings/process-approval-flows': '/settings/process-approval-flows',
+    'hr_settings_process_approval_flow_steps':
+        '/settings/process-approval-flow-steps',
+    'settings/process_approval_flow_steps':
+        '/settings/process-approval-flow-steps',
+    'settings/process-approval-flow-steps':
+        '/settings/process-approval-flow-steps',
+    'allowance_subscriptions': '/settings/allowance-subscriptions',
+    'settings/allowance_subscriptions': '/settings/allowance-subscriptions',
+    'settings/allowance-subscriptions': '/settings/allowance-subscriptions',
+    'hr_settings_deduction_settings': '/settings/deduction-settings',
+    'settings/deduction_settings': '/settings/deduction-settings',
+    'settings/deduction-settings': '/settings/deduction-settings',
+    'hr_settings_departments': '/settings/departments',
+    'settings/departments': '/settings/departments',
+    'hr_settings_positions': '/settings/positions',
+    'settings/positions': '/settings/positions',
+    'hr_settings_roles': '/settings/roles',
+    'settings/roles': '/settings/roles',
+    'hr_settings_permissions': '/settings/permissions',
+    'settings/permissions': '/settings/permissions',
+    'hr_settings_suppliers': '/settings/suppliers',
+    'settings/suppliers': '/settings/suppliers',
+    'hr_settings_items': '/settings/items',
+    'settings/items': '/settings/items',
+    'hr_settings_expenses_categories': '/settings/expenses-categories',
+    'settings/expenses_categories': '/settings/expenses-categories',
+    'settings/expenses-categories': '/settings/expenses-categories',
+    'hr_settings_expenses_sub_categories': '/settings/expenses-sub-categories',
+    'settings/expenses_sub_categories': '/settings/expenses-sub-categories',
+    'settings/expenses-sub-categories': '/settings/expenses-sub-categories',
+    'hr_settings_financial_charge_categories':
+        '/settings/financial-charge-categories',
+    'settings/financial_charge_categories':
+        '/settings/financial-charge-categories',
+    'settings/financial-charge-categories':
+        '/settings/financial-charge-categories',
+    'hr_settings_efd': '/settings/efd',
+    'settings/efd': '/settings/efd',
+    'hr_settings_approval_document_types': '/settings/approval-document-types',
+    'settings/approval_document_types': '/settings/approval-document-types',
+    'settings/approval-document-types': '/settings/approval-document-types',
+    'hr_settings_approval_levels': '/settings/approval-levels',
+    'settings/approval_levels': '/settings/approval-levels',
+    'settings/approval-levels': '/settings/approval-levels',
+    'hr_settings_service_interesteds': '/settings/service-interesteds',
+    'settings/service_interesteds': '/settings/service-interesteds',
+    'settings/service-interesteds': '/settings/service-interesteds',
+    'hr_settings_lead_statuses': '/settings/lead-statuses',
+    'settings/lead_statuses': '/settings/lead-statuses',
+    'settings/lead-statuses': '/settings/lead-statuses',
+    'hr_settings_lead_sources': '/settings/lead-sources',
+    'settings/lead_sources': '/settings/lead-sources',
+    'settings/lead-sources': '/settings/lead-sources',
+    'hr_settings_service_types': '/settings/service-types',
+    'settings/service_types': '/settings/service-types',
+    'settings/service-types': '/settings/service-types',
+    'hr_settings_project_statuses': '/settings/project-statuses',
+    'settings/project_statuses': '/settings/project-statuses',
+    'settings/project-statuses': '/settings/project-statuses',
+    'hr_settings_cost_categories': '/settings/cost-categories',
+    'settings/cost_categories': '/settings/cost-categories',
+    'settings/cost-categories': '/settings/cost-categories',
+    'hr_settings_systems': '/settings/systems',
+    'settings/systems': '/settings/systems',
+    'hr_settings_users': '/settings/users',
+    'settings/users': '/settings/users',
     'user_profile': '/profile',
     'user_inbox': '/dashboard',
     'user_notifications': '/notifications',
@@ -1265,12 +1867,6 @@ String? _mapWebRoute(String webRoute) {
     'report': '/reports',
     'reports_index': '/reports',
     'reports.index': '/reports',
-    'reports_statutory_payment_report': '/reports-statutory-payment-report',
-    'reports/statutory_payment_report': '/reports-statutory-payment-report',
-    'reports_statutory_category_report': '/reports-statutory-category-report',
-    'reports/statutory_category_report': '/reports-statutory-category-report',
-    'reports_statutory_schedules_report': '/reports-statutory-schedules-report',
-    'reports/statutory_schedules_report': '/reports-statutory-schedules-report',
     'reports_deduction_report': '/employee-profile',
     'reports_allowance_subscriptions_report': '/employee-profile',
     'reports_annually_sales_summary_report': '/vat-sales',
@@ -1342,9 +1938,10 @@ String? _mapWebRoute(String webRoute) {
     'leave-dashboard': '/leave-dashboard',
     'leaves_leave_dashboard': '/leave-dashboard',
     'leaves/leave_dashboard': '/leave-dashboard',
-    'salary_slips': '/payroll/salary-slips',
-    'payroll_salary_slips': '/payroll/salary-slips',
-    'payroll/salary_slips': '/payroll/salary-slips',
+    'salary_slips': '/payroll',
+    'salary-slips': '/payroll',
+    'payroll_salary_slips': '/payroll',
+    'payroll/salary_slips': '/payroll',
     'employee_salary_slip': '/payroll',
     'payroll_employee_salary_slip': '/payroll',
     'crdb_bank_file': '/payroll-crdb-bank-file',
@@ -1361,24 +1958,18 @@ String? _mapWebRoute(String webRoute) {
     'payroll': '/payroll',
     'payroll_administration': '/payroll-administration',
     'payroll-administration': '/payroll-administration',
-    'payroll_payroll_administration': '/payroll-administration',
     'allowances': '/allowances',
     'settings_allowances': '/allowances',
     'hr_settings_allowances': '/allowances',
     'deductions': '/deductions',
     'settings_deductions': '/deductions',
     'hr_settings_deductions': '/deductions',
-    'payroll_deductions': '/deductions',
     'deduction_subscriptions': '/deduction-subscriptions',
     'deduction-subscriptions': '/deduction-subscriptions',
     'settings_deduction_subscriptions': '/deduction-subscriptions',
     'hr_settings_deduction_subscriptions': '/deduction-subscriptions',
-    'payroll_deduction_subscriptions': '/deduction-subscriptions',
     'payroll_staff_bank_details': '/staff-bank-details',
     'staff_bank_details': '/staff-bank-details',
-    'staff_bank_detail': '/staff-bank-details',
-    'settings_staff_bank_details': '/staff-bank-details',
-    'hr_settings_staff_bank_detail': '/staff-bank-details',
     'adjustment': '/adjustments',
     'adjustments': '/adjustments',
     'expenses': '/expenses',
@@ -1428,19 +2019,12 @@ String? _mapWebRoute(String webRoute) {
     'settings_sub_activities': '/settings-sub-activities',
     'hr_settings_sub_activities': '/settings-sub-activities',
     'procurement_dashboard': '/procurement',
-    'site_daily_reports_my_reports': '/site-daily-reports',
-    'site_daily_reports': '/site-daily-reports',
-    'project_daily_reports': '/project-daily-reports',
-    'project_daily_report': '/project-daily-reports',
     'client_dashboard': '/dashboard',
     'client_projects': '/projects',
     'client_billing': '/billing',
     'client_project': '/projects',
     'project': '/staff-projects',
     'project_create': '/staff-projects',
-    'sales_daily_reports': '/sales-daily-reports',
-    'sales_daily_report': '/sales-daily-reports',
-    'sales-daily-reports': '/sales-daily-reports',
     'site_visits': '/site-visits',
     'material_requests': '/material-requests',
     'supplier_quotation': '/supplier-quotations',
@@ -1466,7 +2050,6 @@ String? _mapWebRoute(String webRoute) {
     'expense_adjustable': '/adjustments',
     'site_management': '/attendance',
     'site_supervisor_assignments': '/attendance',
-    'allowance_subscriptions': '/employee-profile',
     'staff_salaries': '/staff-salaries',
     'staff-salaries': '/staff-salaries',
     'settings_staff_salaries': '/staff-salaries',
@@ -1505,7 +2088,6 @@ String? _mapWebRoute(String webRoute) {
     'individual_projects': '/staff-projects',
     'individual_project_clients': '/project-clients',
     'individual_project_site_visits': '/site-visits',
-    'site_daily_report': '/site-daily-reports',
     'labor.dashboard': '/labor-dashboard',
     'labor.requests.index': '/labor-requests',
     'labor.requests': '/labor-requests',
@@ -1583,9 +2165,10 @@ String? _resolveWebRoute(String webRoute) {
       route.contains('billing-email')) {
     return '/billing-emails';
   }
-  if (route.contains('provision_tax') || route.contains('provision-tax')) {
-    return '/provision-tax';
+  if (route.contains('billing.') || route.contains('billing_')) {
+    return '/staff-billing';
   }
+  if (route == 'reports' || route == 'report') return '/reports';
   if ((route.contains('architect') && route.contains('bonus')) &&
       route.contains('report')) {
     return '/architect-bonus/report';
@@ -1597,20 +2180,14 @@ String? _resolveWebRoute(String webRoute) {
   if (route.contains('architect') && route.contains('bonus')) {
     return '/architect-bonus';
   }
+  if (route.contains('vat_analysis') || route.contains('vat-analysis-report')) {
+    return '/reports-vat-analysis';
+  }
+  if (route.contains('sales_report') || route.contains('sales-report')) {
+    return '/reports-sales';
+  }
   if (route.contains('sms') || route.contains('message')) {
     return '/messages';
-  }
-  if (route.contains('statutory_category_report') ||
-      route.contains('statutory-category-report')) {
-    return '/reports-statutory-category-report';
-  }
-  if (route.contains('statutory_payment_report') ||
-      route.contains('statutory-payment-report')) {
-    return '/reports-statutory-payment-report';
-  }
-  if (route.contains('statutory_schedules_report') ||
-      route.contains('statutory-schedules-report')) {
-    return '/reports-statutory-schedules-report';
   }
   if (route.contains('statutory_payment') ||
       route.contains('statutory-payment')) {
@@ -1684,14 +2261,6 @@ String? _resolveWebRoute(String webRoute) {
     return '/payroll-crdb-bank-file';
   }
   if (route.contains('payroll')) return '/payroll';
-  if (route.contains('site_daily_report') ||
-      route.contains('site-daily-report')) {
-    return '/site-daily-reports';
-  }
-  if (route.contains('project_daily_report') ||
-      route.contains('project-daily-report')) {
-    return '/project-daily-reports';
-  }
   if (route.contains('attendance') ||
       route.contains('site_visit') ||
       route.contains('site-visit') ||

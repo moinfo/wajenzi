@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
@@ -85,30 +84,22 @@ class ProjectClientsScreen extends ConsumerWidget {
             final clients = searchTerm.isEmpty
                 ? allClients
                 : allClients.where((client) {
-                    // Enhanced search to match backend search fields
                     final haystack = [
-                      client['document_number'] ?? '',
-                      client['first_name'] ?? '',
-                      client['last_name'] ?? '',
-                      client['full_name'] ?? '',
-                      client['email'] ?? '',
-                      client['phone_number'] ?? '',
-                      client['status'] ?? '',
-                      client['approval_status'] ?? '',
-                      client['approval_summary'] ?? '',
-                      // Search in projects count as string
-                      client['projects_count']?.toString() ?? '',
-                      // Search in documents count as string
-                      client['documents_count']?.toString() ?? '',
-                      // Search in portal access status
+                      client['document_number'],
+                      client['first_name'],
+                      client['last_name'],
+                      client['full_name'],
+                      client['email'],
+                      client['phone_number'],
+                      client['status'],
+                      client['approval_status'],
+                      client['approval_summary'],
+                      client['projects_count'],
+                      client['documents_count'],
+                      client['last_login_at'],
                       client['portal_access_enabled'] == true ? 'active' : '',
                       client['has_account'] == true ? 'disabled' : 'no account',
-                      // Search in client source name
-                      (client['client_source'] as Map<String, dynamic>?)?['name'] ?? '',
-                      // Search in identification number
-                      client['identification_number'] ?? '',
-                      // Search in address
-                      client['address'] ?? '',
+                      (client['client_source'] as Map<String, dynamic>?)?['name'],
                     ].whereType<Object>().join(' ').toLowerCase();
                     return haystack.contains(searchTerm);
                   }).toList();
@@ -329,25 +320,11 @@ class ProjectClientsScreen extends ConsumerWidget {
 
       ref.invalidate(_clientsProvider);
     } catch (e) {
-      String errorMessage = 'Failed to delete client';
-      
-      // Enhanced error handling for delete
-      if (e.toString().contains('403')) {
-        errorMessage = 'You do not have permission to delete this client';
-      } else if (e.toString().contains('404')) {
-        errorMessage = 'Client not found';
-      } else if (e.toString().contains('500')) {
-        errorMessage = 'Server error. Please try again later';
-      } else if (e.toString().contains('constraint')) {
-        errorMessage = 'This client has associated projects and cannot be deleted';
-      }
-      
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
+            content: Text('Error: $e'),
             backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -369,20 +346,7 @@ class ProjectClientsScreen extends ConsumerWidget {
       if (data is Map<String, dynamic>) {
         detail = data;
       }
-    } catch (e) {
-      String errorMessage = 'Failed to load client details';
-      
-      // Enhanced error handling for detail view
-      if (e.toString().contains('403')) {
-        errorMessage = 'You do not have permission to view this client\'s details';
-      } else if (e.toString().contains('404')) {
-        errorMessage = 'Client not found';
-      }
-      
-      // Silently fail for detail view - don't show error for better UX
-      // Only log for debugging
-      print('Client detail error: $e');
-    }
+    } catch (_) {}
 
     if (!context.mounted) return;
     showModalBottomSheet(
@@ -839,8 +803,6 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
   int? _clientSourceId;
   bool _portalAccessEnabled = true;
   bool _loading = false;
-  String? _selectedFilePath;
-  String? _selectedFileName;
 
   @override
   void initState() {
@@ -1006,7 +968,7 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
                 TextFormField(
                   controller: _phoneController,
                   decoration: InputDecoration(
-                    labelText: isSwahili ? 'Nambari ya Simu *' : 'Phone Number *',
+                    labelText: isSwahili ? 'Nambari ya Simu *' : 'Phone *',
                     filled: true,
                     fillColor: isDarkMode
                         ? const Color(0xFF2A2A3E)
@@ -1055,46 +1017,6 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Document Number (Display only - auto-generated)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDarkMode
-                          ? Colors.white24
-                          : Colors.grey.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isSwahili ? 'Nambari ya Waraka' : 'Document Number',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.isNew
-                            ? (isSwahili ? 'Itatengenezwa otomatiki' : 'Will be auto-generated')
-                            : (widget.client?['document_number'] as String? ?? '-'),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   value: _clientSourceId,
                   decoration: InputDecoration(
@@ -1116,85 +1038,6 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
                   validator: (value) => value == null
                       ? (isSwahili ? 'Required' : 'Required')
                       : null,
-                ),
-                const SizedBox(height: 16),
-                // File Upload Section
-                Text(
-                  isSwahili ? 'Kupakia Faili' : 'File Upload',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isDarkMode
-                          ? Colors.white24
-                          : Colors.grey.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.upload_file,
-                            size: 20,
-                            color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _selectedFileName ?? (isSwahili ? 'Bado hakuna faili lililochaguliwa' : 'No file selected'),
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                          if (_selectedFileName != null) ...[
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () => setState(() {
-                                _selectedFilePath = null;
-                                _selectedFileName = null;
-                              }),
-                              icon: const Icon(Icons.close, size: 18),
-                              color: AppColors.error,
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _loading ? null : _pickFile,
-                          icon: const Icon(Icons.folder_open, size: 18),
-                          label: Text(isSwahili ? 'Chagua Faili' : 'Choose File'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.white,
-                            foregroundColor: isDarkMode ? Colors.white : AppColors.primary,
-                            side: BorderSide(
-                              color: isDarkMode
-                                  ? Colors.white24
-                                  : AppColors.primary.withValues(alpha: 0.3),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -1293,29 +1136,6 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
     );
   }
 
-  Future<void> _pickFile() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? file = await picker.pickMedia();
-      
-      if (file != null) {
-        setState(() {
-          _selectedFilePath = file.path;
-          _selectedFileName = file.name;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error picking file: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -1346,13 +1166,6 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
             : _confirmPasswordController.text.trim(),
       };
 
-      // Add file if selected
-      if (_selectedFilePath != null) {
-        // For now, we'll handle file upload separately
-        // In a real implementation, you'd use multipart request
-        print('File to upload: $_selectedFilePath');
-      }
-
       if (widget.isNew) {
         await api.post('/project-clients', data: data);
       } else {
@@ -1361,33 +1174,11 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
 
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      String errorMessage = 'An error occurred';
-      
-      // Enhanced error handling
-      if (e.toString().contains('422')) {
-        errorMessage = 'Please check all required fields';
-      } else if (e.toString().contains('403')) {
-        errorMessage = 'You do not have permission to perform this action';
-      } else if (e.toString().contains('404')) {
-        errorMessage = 'Client not found';
-      } else if (e.toString().contains('500')) {
-        errorMessage = 'Server error. Please try again later';
-      } else if (e.toString().contains('network')) {
-        errorMessage = 'Network error. Please check your connection';
-      }
-      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
+            content: Text('Error: $e'),
             backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 4),
-            action: SnackBarAction(
-              label: 'Dismiss',
-              onPressed: () {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              },
-            ),
           ),
         );
       }
@@ -1434,13 +1225,12 @@ class _ClientCard extends StatelessWidget {
     final fullName =
         client['full_name'] as String? ??
         '${client['first_name'] ?? ''} ${client['last_name'] ?? ''}'.trim();
-    final status = client['approval_status'] as String? ?? client['status'] as String? ?? 'PENDING';
+    final status = client['status'] as String? ?? 'PENDING';
     final source =
         (client['client_source'] as Map<String, dynamic>?)?['name'] as String?;
     final projectsCount = client['projects_count']?.toString() ?? '0';
     final documentsCount = client['documents_count']?.toString() ?? '0';
     final documentNumber = client['document_number'] as String? ?? '-';
-    final lastLoginAt = client['last_login_at'] as String?;
     final portalStatus = client['portal_access_enabled'] == true
         ? 'Active'
         : ((client['has_account'] == true)
@@ -1481,33 +1271,12 @@ class _ClientCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          documentNumber,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        if (lastLoginAt != null) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.access_time,
-                            size: 10,
-                            color: AppColors.textHint,
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            _formatRelativeTime(lastLoginAt),
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppColors.textHint,
-                            ),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      documentNumber,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Wrap(
@@ -1927,27 +1696,6 @@ class _ErrorView extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-String _formatRelativeTime(String? raw) {
-  if (raw == null || raw.isEmpty) return '-';
-  try {
-    final dateTime = DateTime.parse(raw);
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-    
-    if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  } catch (_) {
-    return raw;
   }
 }
 

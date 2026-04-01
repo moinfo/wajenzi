@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
 
@@ -8,10 +10,12 @@ class ArchitectBonusReportScreen extends ConsumerStatefulWidget {
   const ArchitectBonusReportScreen({super.key});
 
   @override
-  ConsumerState<ArchitectBonusReportScreen> createState() => _ArchitectBonusReportScreenState();
+  ConsumerState<ArchitectBonusReportScreen> createState() =>
+      _ArchitectBonusReportScreenState();
 }
 
-class _ArchitectBonusReportScreenState extends ConsumerState<ArchitectBonusReportScreen> {
+class _ArchitectBonusReportScreenState
+    extends ConsumerState<ArchitectBonusReportScreen> {
   bool _isLoading = false;
   Map<String, dynamic> _reportData = {};
   String? _selectedMonth;
@@ -32,9 +36,10 @@ class _ArchitectBonusReportScreenState extends ConsumerState<ArchitectBonusRepor
 
     try {
       final api = ref.read(apiClientProvider);
-      final response = await api.get('/architect-bonus/report', queryParameters: {
-        'month': _selectedMonth,
-      });
+      final response = await api.get(
+        '/architect-bonus/report',
+        queryParameters: {'month': _selectedMonth},
+      );
 
       if (response.statusCode == 200) {
         setState(() {
@@ -46,22 +51,27 @@ class _ArchitectBonusReportScreenState extends ConsumerState<ArchitectBonusRepor
       }
     } catch (e) {
       String errorMessage = 'Error loading bonus report';
-      
-      if (e.toString().contains('401') || e.toString().contains('Unauthorized')) {
+
+      if (e.toString().contains('401') ||
+          e.toString().contains('Unauthorized')) {
         errorMessage = 'Authentication required. Please login again.';
-      } else if (e.toString().contains('403') || e.toString().contains('Forbidden')) {
-        errorMessage = 'Permission denied. You may not have access to bonus reports.';
+      } else if (e.toString().contains('403') ||
+          e.toString().contains('Forbidden')) {
+        errorMessage =
+            'Permission denied. You may not have access to bonus reports.';
       } else if (e.toString().contains('404')) {
-        errorMessage = 'Bonus report endpoint not found. Please check API configuration.';
+        errorMessage =
+            'Bonus report endpoint not found. Please check API configuration.';
       } else if (e.toString().contains('Connection')) {
-        errorMessage = 'Cannot connect to server. Please check your internet connection.';
+        errorMessage =
+            'Cannot connect to server. Please check your internet connection.';
       }
 
       setState(() {
         _isLoading = false;
         _errorMessage = errorMessage;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -95,167 +105,178 @@ class _ArchitectBonusReportScreenState extends ConsumerState<ArchitectBonusRepor
 
   @override
   Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bonus Report'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.go('/reports'),
+        ),
+        title: Text(isSwahili ? 'Ripoti ya Bonasi' : 'Bonus Report'),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: _selectMonth,
-            tooltip: 'Select Month',
+            tooltip: isSwahili ? 'Chagua Mwezi' : 'Select Month',
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
             onPressed: _loadReport,
           ),
         ],
       ),
       body: _isLoading
-          ? const LoadingWidget(message: 'Loading report...')
+          ? LoadingWidget(
+              message: isSwahili ? 'Inapakia ripoti...' : 'Loading report...',
+            )
           : _errorMessage != null
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.error_outline, size: 52, color: Colors.red),
-                        const SizedBox(height: 12),
-                        Text(_errorMessage!, textAlign: TextAlign.center),
-                      ],
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 52,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(_errorMessage!, textAlign: TextAlign.center),
+                  ],
+                ),
+              ),
+            )
+          : _reportData.isEmpty
+          ? EmptyStateWidget(
+              message: isSwahili
+                  ? 'Hakuna data ya ripoti'
+                  : 'No report data available',
+              icon: Icons.bar_chart,
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Report Header
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Ripoti ya Bonasi' : 'Bonus Report',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${isSwahili ? 'Mwezi' : 'Month'}: ${_formatMonth(_selectedMonth ?? '')}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                )
-          : _reportData.isEmpty
-              ? const EmptyStateWidget(
-                  message: 'No report data available',
-                  icon: Icons.bar_chart,
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 16),
+                  Row(
                     children: [
-                      // Report Header
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Bonus Report',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Month: ${_formatMonth(_selectedMonth ?? '')}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
+                      Expanded(
+                        child: _SummaryCard(
+                          title: isSwahili ? 'Jumla ya Kazi' : 'Total Tasks',
+                          value: (_reportData['total_tasks'] ?? 0).toString(),
+                          icon: Icons.task_alt,
+                          color: Colors.orange,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      
-                      // Summary Cards
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _SummaryCard(
-                              title: 'Total Bonus',
-                              value: 'TZS ${_formatCurrency(_reportData['grand_total_bonus'])}',
-                              icon: Icons.trending_up,
-                              color: Colors.green,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _SummaryCard(
-                              title: 'Total Units',
-                              value: (_reportData['grand_total_units'] ?? 0).toString(),
-                              icon: Icons.work,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _SummaryCard(
-                              title: 'Total Tasks',
-                              value: (_reportData['total_tasks'] ?? 0).toString(),
-                              icon: Icons.task_alt,
-                              color: Colors.orange,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // Architect Summary
-                      Text(
-                        'Architect Summary',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Architect Cards
-                      ...(_reportData['architect_summary'] as List? ?? []).map((architect) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _ArchitectSummaryCard(architect: architect),
-                        );
-                      }).toList(),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Task Details',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      ...(_reportData['tasks'] as List? ?? []).map((task) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _TaskDetailCard(task: Map<String, dynamic>.from(task as Map)),
-                        );
-                      }).toList(),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 24),
+
+                  // Architect Summary
+                  Text(
+                    isSwahili ? 'Muhtasari wa Mapatanzio' : 'Architect Summary',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Architect Cards
+                  ...(_reportData['architect_summary'] as List? ?? []).map((
+                    architect,
+                  ) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _ArchitectSummaryCard(
+                        architect: architect,
+                        isSwahili: isSwahili,
+                      ),
+                    );
+                  }).toList(),
+                  const SizedBox(height: 8),
+                  Text(
+                    isSwahili ? 'Maelezo ya Kazi' : 'Task Details',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  ...(_reportData['tasks'] as List? ?? []).map((task) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _TaskDetailCard(
+                        task: Map<String, dynamic>.from(task as Map),
+                        isSwahili: isSwahili,
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+            ),
     );
   }
 
   String _formatMonth(String monthString) {
     if (monthString.length < 7) return monthString;
-    
+
     final year = monthString.substring(0, 4);
     final month = monthString.substring(5, 7);
-    
+
     final months = [
-      '01', '02', '03', '04', '05', '06', '07',
-      '08', '09', '10', '11', '12'
+      '01',
+      '02',
+      '03',
+      '04',
+      '05',
+      '06',
+      '07',
+      '08',
+      '09',
+      '10',
+      '11',
+      '12',
     ];
     final monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
-    
+
     final monthIndex = months.indexOf(month);
     if (monthIndex < 0) return monthString;
     return '${monthNames[monthIndex]} $year';
@@ -297,10 +318,7 @@ class _SummaryCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -322,10 +340,12 @@ class _SummaryCard extends StatelessWidget {
 
 class _ArchitectSummaryCard extends StatelessWidget {
   final dynamic architect;
+  final bool isSwahili;
 
   const _ArchitectSummaryCard({
     super.key,
     required this.architect,
+    required this.isSwahili,
   });
 
   @override
@@ -340,7 +360,10 @@ class _ArchitectSummaryCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   child: Text(
-                    architect['architect']?['name']?.substring(0, 1).toUpperCase() ?? 'A',
+                    architect['architect']?['name']
+                            ?.substring(0, 1)
+                            .toUpperCase() ??
+                        'A',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -354,7 +377,10 @@ class _ArchitectSummaryCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        architect['architect']?['name'] ?? 'Unknown Architect',
+                        architect['architect']?['name'] ??
+                            (isSwahili
+                                ? 'Mapatanzio Haijulikani'
+                                : 'Unknown Architect'),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -362,11 +388,8 @@ class _ArchitectSummaryCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Performance Score: ${architect['avg_performance']?.toString() ?? '0'}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        '${isSwahili ? 'Alama ya Utendaji' : 'Performance Score'}: ${architect['avg_performance']?.toString() ?? '0'}',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -378,12 +401,12 @@ class _ArchitectSummaryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _MetricItem(
-                  label: 'Tasks',
+                  label: isSwahili ? 'Kazi' : 'Tasks',
                   value: architect['tasks_count']?.toString() ?? '0',
                   icon: Icons.task_alt,
                 ),
                 _MetricItem(
-                  label: 'Units',
+                  label: isSwahili ? 'Vifurushi' : 'Units',
                   value: architect['total_units']?.toString() ?? '0',
                   icon: Icons.work,
                 ),
@@ -394,13 +417,13 @@ class _ArchitectSummaryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _MetricItem(
-                  label: 'Bonus',
+                  label: isSwahili ? 'Bonasi' : 'Bonus',
                   value: 'TZS ${_formatNumber(architect['total_bonus'])}',
                   icon: Icons.trending_up,
                   color: Colors.green,
                 ),
                 _MetricItem(
-                  label: 'Avg Performance',
+                  label: isSwahili ? 'Wastani wa Utendaji' : 'Avg Performance',
                   value: architect['avg_performance']?.toString() ?? '0',
                   icon: Icons.speed,
                   color: Colors.orange,
@@ -416,8 +439,9 @@ class _ArchitectSummaryCard extends StatelessWidget {
 
 class _TaskDetailCard extends StatelessWidget {
   final Map<String, dynamic> task;
+  final bool isSwahili;
 
-  const _TaskDetailCard({required this.task});
+  const _TaskDetailCard({required this.task, required this.isSwahili});
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
@@ -436,7 +460,8 @@ class _TaskDetailCard extends StatelessWidget {
     final architect = task['architect'] is Map
         ? Map<String, dynamic>.from(task['architect'] as Map)
         : const <String, dynamic>{};
-    final status = task['status_label']?.toString() ?? task['status']?.toString() ?? '-';
+    final status =
+        task['status_label']?.toString() ?? task['status']?.toString() ?? '-';
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -450,7 +475,8 @@ class _TaskDetailCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        task['task_number']?.toString() ?? 'Unknown Task',
+                        task['task_number']?.toString() ??
+                            (isSwahili ? 'Kazi Isiyojulikana' : 'Unknown Task'),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -465,7 +491,10 @@ class _TaskDetailCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: _statusColor(status).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(999),
@@ -482,7 +511,7 @@ class _TaskDetailCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Architect: ${architect['name'] ?? '-'}',
+              '${isSwahili ? 'Mapatanzio' : 'Architect'}: ${architect['name'] ?? '-'}',
               style: TextStyle(color: Colors.grey[700]),
             ),
             const SizedBox(height: 10),
@@ -490,12 +519,30 @@ class _TaskDetailCard extends StatelessWidget {
               spacing: 12,
               runSpacing: 10,
               children: [
-                _MetricChip(label: 'SP', value: _formatNumber(task['schedule_performance'])),
-                _MetricChip(label: 'DQ', value: _formatNumber(task['design_quality_score'])),
-                _MetricChip(label: 'CA', value: _formatNumber(task['client_approval_efficiency'])),
-                _MetricChip(label: 'PS', value: _formatPercent(task['performance_score'])),
-                _MetricChip(label: 'Units', value: _formatNumber(task['final_units'])),
-                _MetricChip(label: 'Bonus', value: 'TZS ${_formatNumber(task['bonus_amount'])}'),
+                _MetricChip(
+                  label: isSwahili ? 'UP' : 'SP',
+                  value: _formatNumber(task['schedule_performance']),
+                ),
+                _MetricChip(
+                  label: isSwahili ? 'UB' : 'DQ',
+                  value: _formatNumber(task['design_quality_score']),
+                ),
+                _MetricChip(
+                  label: isSwahili ? 'UP' : 'CA',
+                  value: _formatNumber(task['client_approval_efficiency']),
+                ),
+                _MetricChip(
+                  label: isSwahili ? 'UT' : 'PS',
+                  value: _formatPercent(task['performance_score']),
+                ),
+                _MetricChip(
+                  label: isSwahili ? 'Vifurushi' : 'Units',
+                  value: _formatNumber(task['final_units']),
+                ),
+                _MetricChip(
+                  label: isSwahili ? 'Bonasi' : 'Bonus',
+                  value: 'TZS ${_formatNumber(task['bonus_amount'])}',
+                ),
               ],
             ),
           ],
@@ -523,15 +570,9 @@ class _MetricChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-          ),
+          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
           const SizedBox(height: 2),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -558,13 +599,7 @@ class _MetricItem extends StatelessWidget {
       children: [
         Icon(icon, size: 20, color: color ?? Colors.grey[600]),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
         Text(
           value,
           style: TextStyle(

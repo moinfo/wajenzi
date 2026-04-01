@@ -29,6 +29,17 @@ class MaterialRequestController extends Controller
                 $query->where('requester_id', $request->user()->id);
             }
 
+            if ($request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('request_number', 'like', "%{$search}%")
+                      ->orWhere('purpose', 'like', "%{$search}%")
+                      ->orWhereHas('project', function ($projectQuery) use ($search) {
+                          $projectQuery->where('name', 'like', "%{$search}%");
+                      });
+                });
+            }
+
             $requests = $query->paginate($request->per_page ?? 20);
 
             return response()->json([

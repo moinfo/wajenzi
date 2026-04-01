@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/services/external_launcher_service.dart';
 import '../../../presentation/providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
@@ -46,29 +47,41 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () =>
+              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Ripoti' : 'Reports'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
+            onPressed: () => ref.invalidate(_reportsHubMenusProvider),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_reportsHubMenusProvider),
         child: menusAsync.when(
-          loading: () => const LoadingWidget(message: 'Loading reports...'),
+          loading: () => LoadingWidget(
+            message: isSwahili ? 'Inapakia ripoti...' : 'Loading reports...',
+          ),
           error: (error, _) => _ReportsErrorView(
             message: error.toString(),
             isSwahili: isSwahili,
             onRetry: () => ref.invalidate(_reportsHubMenusProvider),
           ),
           data: (reportsPayload) {
-            final reports = _buildReportItems(reportsPayload)
-                .where((item) {
-                  if (_query.trim().isEmpty) {
-                    return true;
-                  }
+            final reports = _buildReportItems(reportsPayload).where((item) {
+              if (_query.trim().isEmpty) {
+                return true;
+              }
 
-                  final query = _query.toLowerCase();
-                  return item.name.toLowerCase().contains(query) ||
-                      item.route.toLowerCase().contains(query);
-                })
-                .toList();
+              final query = _query.toLowerCase();
+              return item.name.toLowerCase().contains(query) ||
+                  item.route.toLowerCase().contains(query);
+            }).toList();
 
             return CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -107,24 +120,25 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
                             : 2;
 
                         return SliverGrid(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, index) {
-                              final item = reports[index];
-                              return _ReportCard(
-                                item: item,
-                                isDarkMode: isDarkMode,
-                                isSwahili: isSwahili,
-                                onTap: () => _openReport(item),
-                              );
-                            },
-                            childCount: reports.length,
-                          ),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            mainAxisSpacing: 14,
-                            crossAxisSpacing: 14,
-                            childAspectRatio: width >= 800 ? 1.28 : 0.98,
-                          ),
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final item = reports[index];
+                            return _ReportCard(
+                              item: item,
+                              isDarkMode: isDarkMode,
+                              isSwahili: isSwahili,
+                              onTap: () => _openReport(item),
+                            );
+                          }, childCount: reports.length),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: crossAxisCount,
+                                mainAxisSpacing: 14,
+                                crossAxisSpacing: 14,
+                                childAspectRatio: width >= 800 ? 1.28 : 0.98,
+                              ),
                         );
                       },
                     ),
@@ -187,17 +201,77 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
     }
 
     const directMap = <String, String>{
-      'reports_statutory_category_report': '/reports-statutory-category-report',
-      'reports/statutory_category_report': '/reports-statutory-category-report',
-      'reports_statutory_payment_report': '/reports-statutory-payment-report',
-      'reports/statutory_payment_report': '/reports-statutory-payment-report',
-      'reports_statutory_schedules_report':
-          '/reports-statutory-schedules-report',
-      'reports/statutory_schedules_report':
-          '/reports-statutory-schedules-report',
       'architect.bonus.report': '/architect-bonus/report',
       'architect_bonus_report': '/architect-bonus/report',
       'architect-bonus/report': '/architect-bonus/report',
+      'reports_vat_analysis_report': '/reports-vat-analysis',
+      'reports/vat_analysis_report': '/reports-vat-analysis',
+      'reports_sales_report': '/reports-sales',
+      'reports/sales_report': '/reports-sales',
+      'reports_vat_payments_report': '/reports-vat-payments',
+      'reports/vat_payments_report': '/reports-vat-payments',
+      'reports_exempt_analysis_report': '/reports-exempt-analysis',
+      'reports/exempt_analysis_report': '/reports-exempt-analysis',
+      'reports_purchases_report': '/reports-purchases',
+      'reports/purchases_report': '/reports-purchases',
+      'reports_attendances_report': '/reports-attendances',
+      'reports/attendances_report': '/reports-attendances',
+      'reports_daily_attendances_report': '/reports-daily-attendances',
+      'reports/daily_attendances_report': '/reports-daily-attendances',
+      'reports_purchases_by_supplier_report': '/reports-purchases-by-supplier',
+      'reports/purchases_by_supplier_report': '/reports-purchases-by-supplier',
+      'reports_deduction_report': '/reports-deduction',
+      'reports/deduction_report': '/reports-deduction',
+      'reports_allowance_subscriptions_report':
+          '/reports-allowance-subscriptions',
+      'reports/allowance_subscriptions_report':
+          '/reports-allowance-subscriptions',
+      'reports_statement_of_comprehensive_income_report':
+          '/reports-statement-comprehensive-income',
+      'reports_statement_of_financial_position_report':
+          '/reports-statement-financial-position',
+      'reports_detailed_expenditure_statement_report':
+          '/reports-detailed-expenditure',
+      'reports_efd_report': '/reports-efd',
+      'reports_detailed_efd_report': '/reports-detailed-efd',
+      'reports_annually_sales_summary_report': '/reports-annually-sales',
+      'reports_annually_purchases_summary_report':
+          '/reports-annually-purchases',
+      'reports_annually_expenses_summary_report': '/reports-annually-expenses',
+      'reports_annually_expense_sub_categories_summary_report':
+          '/reports-annually-expense-categories',
+      'reports_annually_financial_charges_summary_report':
+          '/reports-annually-financial-charges',
+      'reports_annually_salaries_summary_report': '/reports-annually-salaries',
+      'reports_annually_sdl_summary_report': '/reports-annually-sdl',
+      'reports_annually_advance_salary_summary_report':
+          '/reports-annually-advance-salary',
+      'reports_annually_allowance_summary_report':
+          '/reports-annually-allowance',
+      'reports_annually_heslb_summary_report': '/reports-annually-heslb',
+      'reports_annually_net_salary_summary_report':
+          '/reports-annually-net-salary',
+      'reports_annually_nhif_summary_report': '/reports-annually-nhif',
+      'reports_annually_nssf_summary_report': '/reports-annually-nssf',
+      'reports_annually_deduction_report': '/reports-annually-deduction',
+      'reports_annually_paye_summary_report': '/reports-annually-paye',
+      'reports_annually_wcf_summary_report': '/reports-annually-wcf',
+      'reports_expense_categories_report': '/reports-expense-categories',
+      'reports_expenses_per_system_report': '/reports-expenses-per-system',
+      'reports_gross_summary_report': '/reports-gross',
+      'reports_net_report': '/reports-net',
+      'reports_nhif_report': '/reports-nhif',
+      'reports_nssf_report': '/reports-nssf',
+      'reports_paye_report': '/reports-paye',
+      'reports_sdl_report': '/reports-sdl',
+      'reports_wcf_report': '/reports-wcf',
+      'reports_heslb_report': '/reports-heslb',
+      'reports_provision_report': '/reports-provision',
+      'reports_statutory_category_report': '/reports-statutory-category',
+      'reports_statutory_payment_report': '/reports-statutory-payment',
+      'reports_statutory_schedules_report': '/reports-statutory-schedules',
+      'bank_deposit_report': '/reports-bank-deposit',
+      'bank_withdraw_report': '/reports-bank-withdraw',
     };
 
     if (directMap.containsKey(normalizedRoute)) {
@@ -207,24 +281,157 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
     if (path == '/reports') {
       return '/reports';
     }
-    if (path.contains('/reports/statutory-category-report')) {
-      return '/reports-statutory-category-report';
+    if (path.contains('/vat-analysis-report')) {
+      return '/reports-vat-analysis';
     }
-    if (path.contains('/reports/statutory-payment-report')) {
-      return '/reports-statutory-payment-report';
-    }
-    if (path.contains('/reports/statutory-schedules-report')) {
-      return '/reports-statutory-schedules-report';
+    if (path.contains('/sales-report') && !path.contains('daily')) {
+      return '/reports-sales';
     }
     if (path.contains('/architect-bonus/report')) {
       return '/architect-bonus/report';
+    }
+    if (path.contains('/vat-payments-report')) {
+      return '/reports-vat-payments';
+    }
+    if (path.contains('/exempt-analysis-report')) {
+      return '/reports-exempt-analysis';
+    }
+    if (path.contains('/purchases-report') && !path.contains('supplier')) {
+      return '/reports-purchases';
+    }
+    if (path.contains('/purchases-by-supplier-report')) {
+      return '/reports-purchases-by-supplier';
+    }
+    if (path.contains('/attendances-report') && !path.contains('daily')) {
+      return '/reports-attendances';
+    }
+    if (path.contains('/daily-attendances-report')) {
+      return '/reports-daily-attendances';
+    }
+    if (path.contains('/deduction-report') && !path.contains('annually')) {
+      return '/reports-deduction';
+    }
+    if (path.contains('/allowance-subscriptions-report')) {
+      return '/reports-allowance-subscriptions';
+    }
+    if (path.contains('/statement-of-comprehensive-income-report')) {
+      return '/reports-statement-comprehensive-income';
+    }
+    if (path.contains('/statement-of-financial-position-report')) {
+      return '/reports-statement-financial-position';
+    }
+    if (path.contains('/detailed-expenditure-statement-report')) {
+      return '/reports-detailed-expenditure';
+    }
+    if (path.contains('/efd-report') && !path.contains('detailed')) {
+      return '/reports-efd';
+    }
+    if (path.contains('/detailed-efd-report')) {
+      return '/reports-detailed-efd';
+    }
+    if (path.contains('/annually-sales-summary-report')) {
+      return '/reports-annually-sales';
+    }
+    if (path.contains('/annually-purchases-summary-report')) {
+      return '/reports-annually-purchases';
+    }
+    if (path.contains('/annually-expenses-summary-report')) {
+      return '/reports-annually-expenses';
+    }
+    if (path.contains('/annually-expense-sub-categories-summary-report')) {
+      return '/reports-annually-expense-categories';
+    }
+    if (path.contains('/annually-financial-charges-summary-report')) {
+      return '/reports-annually-financial-charges';
+    }
+    if (path.contains('/annually-salaries-summary-report')) {
+      return '/reports-annually-salaries';
+    }
+    if (path.contains('/annually-sdl-summary-report')) {
+      return '/reports-annually-sdl';
+    }
+    if (path.contains('/annually-advance-salary-summary-report')) {
+      return '/reports-annually-advance-salary';
+    }
+    if (path.contains('/annually-allowance-summary-report')) {
+      return '/reports-annually-allowance';
+    }
+    if (path.contains('/annually-heslb-summary-report')) {
+      return '/reports-annually-heslb';
+    }
+    if (path.contains('/annually-net-salary-summary-report')) {
+      return '/reports-annually-net-salary';
+    }
+    if (path.contains('/annually-nhif-summary-report')) {
+      return '/reports-annually-nhif';
+    }
+    if (path.contains('/annually-nssf-summary-report')) {
+      return '/reports-annually-nssf';
+    }
+    if (path.contains('/annually-deduction-report')) {
+      return '/reports-annually-deduction';
+    }
+    if (path.contains('/annually-paye-summary-report')) {
+      return '/reports-annually-paye';
+    }
+    if (path.contains('/annually-wcf-summary-report')) {
+      return '/reports-annually-wcf';
+    }
+    if (path.contains('/expense-categories-report')) {
+      return '/reports-expense-categories';
+    }
+    if (path.contains('/expenses-per-system-report')) {
+      return '/reports-expenses-per-system';
+    }
+    if (path.contains('/gross-summary-report')) {
+      return '/reports-gross';
+    }
+    if (path.contains('/net-report')) {
+      return '/reports-net';
+    }
+    if (path.contains('/nhif-report')) {
+      return '/reports-nhif';
+    }
+    if (path.contains('/nssf-report')) {
+      return '/reports-nssf';
+    }
+    if (path.contains('/paye-report')) {
+      return '/reports-paye';
+    }
+    if (path.contains('/sdl-report')) {
+      return '/reports-sdl';
+    }
+    if (path.contains('/wcf-report')) {
+      return '/reports-wcf';
+    }
+    if (path.contains('/heslb-report')) {
+      return '/reports-heslb';
+    }
+    if (path.contains('/provision-report')) {
+      return '/reports-provision';
+    }
+    if (path.contains('/statutory-category-report')) {
+      return '/reports-statutory-category';
+    }
+    if (path.contains('/statutory-payment-report')) {
+      return '/reports-statutory-payment';
+    }
+    if (path.contains('/statutory-schedules-report')) {
+      return '/reports-statutory-schedules';
+    }
+    if (path.contains('/bank-deposit-report')) {
+      return '/reports-bank-deposit';
+    }
+    if (path.contains('/bank-withdraw-report')) {
+      return '/reports-bank-withdraw';
     }
 
     return null;
   }
 
   Future<void> _openReport(_ReportItem item) async {
-    if (item.mobileDestination != null && item.mobileDestination != '/reports') {
+    if (item.mobileDestination != null &&
+        item.mobileDestination != '/reports') {
       if (!mounted) return;
       context.go(item.mobileDestination!);
       return;
@@ -236,9 +443,14 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
     );
     if (!mounted || opened) return;
 
+    final isSwahili = ref.read(isSwahiliProvider);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${item.name} is not available in the mobile app yet.'),
+        content: Text(
+          item.supportsMobile
+              ? (isSwahili ? 'Hakuna huko kwa sasa' : 'Not available yet')
+              : '${item.name} - ${isSwahili ? 'Hakuna kwenye app ya simu bado' : 'Not available in mobile app yet'}',
+        ),
       ),
     );
   }
@@ -445,10 +657,7 @@ class _ReportsErrorView extends StatelessWidget {
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
-        Text(
-          message,
-          textAlign: TextAlign.center,
-        ),
+        Text(message, textAlign: TextAlign.center),
         const SizedBox(height: 16),
         Center(
           child: OutlinedButton.icon(

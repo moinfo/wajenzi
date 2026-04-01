@@ -81,7 +81,17 @@ class BillingProductApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $validated = $this->validatePayload($request);
+        \Log::info('BillingProduct store request:', $request->all());
+        try {
+            $validated = $this->validatePayload($request);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation errors: ' . json_encode($e->errors()));
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        }
         $product = BillingProduct::create($this->normalizePayload($validated));
         $product->load('taxRate');
 
@@ -113,7 +123,17 @@ class BillingProductApiController extends Controller
     public function update(Request $request, int $id): JsonResponse
     {
         $product = BillingProduct::findOrFail($id);
-        $validated = $this->validatePayload($request, $product->id);
+        \Log::info("BillingProduct update request for ID $id:", $request->all());
+        try {
+            $validated = $this->validatePayload($request, $product->id);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation errors: ' . json_encode($e->errors()));
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        }
         $product->update($this->normalizePayload($validated));
         $product->load('taxRate');
 

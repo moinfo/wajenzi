@@ -3,32 +3,37 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
 
+final _proformaSearchProvider = StateProvider.autoDispose<String>((ref) => '');
+
+final _proformaStatusProvider = StateProvider.autoDispose<String?>(
+  (ref) => null,
+);
+
 final _proformaListProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get(
-    '/billing/documents',
-    queryParameters: {
-      'document_type': 'proforma',
-      'per_page': 100,
-    },
-  );
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get(
+        '/billing/documents',
+        queryParameters: {'document_type': 'proforma', 'per_page': 100},
+      );
 
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
-final _proformaRefsProvider =
-    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final _proformaRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
   final response = await api.get('/billing/reference-data');
   final data = response.data is Map<String, dynamic>
@@ -41,232 +46,263 @@ final _proformaRefsProvider =
 
 final _proformaDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/billing/documents/$id');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/billing/documents/$id');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : <String, dynamic>{};
+    });
 
-class BillingProformasScreen extends ConsumerWidget {
+class BillingProformasScreen extends ConsumerStatefulWidget {
   const BillingProformasScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<BillingProformasScreen> createState() =>
+      _BillingProformasScreenState();
+}
+
+class _BillingProformasScreenState
+    extends ConsumerState<BillingProformasScreen> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final itemsAsync = ref.watch(_proformaListProvider);
+    final search = ref.watch(_proformaSearchProvider);
+    final status = ref.watch(_proformaStatusProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Proformas' : 'Billing Proformas'),
-        actions: [
-          IconButton(
-            tooltip: isSwahili ? 'Ongeza' : 'Add',
-            onPressed: () => _openProformaForm(context, ref),
-            icon: const Icon(Icons.add),
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
+        title: Text(isSwahili ? 'Proformas' : 'Proformas'),
+      ),
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _searchController,
+                  onChanged: (value) =>
+                      ref.read(_proformaSearchProvider.notifier).state = value,
+                  decoration: InputDecoration(
+                    hintText: isSwahili
+                        ? 'Tafuta proforma...'
+                        : 'Search proforma...',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: search.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(_proformaSearchProvider.notifier).state =
+                                  '';
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : Colors.grey[100],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _FilterChip(
+                        label: 'All',
+                        isSelected: status == null,
+                        onTap: () =>
+                            ref.read(_proformaStatusProvider.notifier).state =
+                                null,
+                        isDarkMode: isDarkMode,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Draft',
+                        isSelected: status == 'draft',
+                        onTap: () =>
+                            ref.read(_proformaStatusProvider.notifier).state =
+                                'draft',
+                        isDarkMode: isDarkMode,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Pending',
+                        isSelected: status == 'pending',
+                        onTap: () =>
+                            ref.read(_proformaStatusProvider.notifier).state =
+                                'pending',
+                        isDarkMode: isDarkMode,
+                        color: Colors.blue,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Sent',
+                        isSelected: status == 'sent',
+                        onTap: () =>
+                            ref.read(_proformaStatusProvider.notifier).state =
+                                'sent',
+                        isDarkMode: isDarkMode,
+                        color: Colors.blue,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Accepted',
+                        isSelected: status == 'accepted',
+                        onTap: () =>
+                            ref.read(_proformaStatusProvider.notifier).state =
+                                'accepted',
+                        isDarkMode: isDarkMode,
+                        color: AppColors.success,
+                      ),
+                      const SizedBox(width: 8),
+                      _FilterChip(
+                        label: 'Rejected',
+                        isSelected: status == 'rejected',
+                        onTap: () =>
+                            ref.read(_proformaStatusProvider.notifier).state =
+                                'rejected',
+                        isDarkMode: isDarkMode,
+                        color: AppColors.error,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async => ref.invalidate(_proformaListProvider),
+              child: itemsAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => _ProformaErrorView(
+                  isSwahili: isSwahili,
+                  message: vatErrorMessage(error, isSwahili: isSwahili),
+                  onRetry: () => ref.invalidate(_proformaListProvider),
+                  isDarkMode: isDarkMode,
+                ),
+                data: (items) {
+                  final filteredItems = items.where((item) {
+                    if (status != null &&
+                        _text(item['status']).toLowerCase() != status) {
+                      return false;
+                    }
+                    if (search.isEmpty) return true;
+                    final query = search.toLowerCase();
+                    final docNumber = (_text(
+                      item['document_number'],
+                    )).toLowerCase();
+                    final client =
+                        item['client'] as Map<String, dynamic>? ?? {};
+                    final clientName = (_text(
+                      client['full_name'] ?? client['name'],
+                    )).toLowerCase();
+                    return docNumber.contains(query) ||
+                        clientName.contains(query);
+                  }).toList();
+
+                  if (filteredItems.isEmpty) {
+                    return ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.2,
+                        ),
+                        Icon(
+                          Icons.request_quote_outlined,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          isSwahili ? 'Hakuna proforma' : 'No proformas found',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    itemCount: filteredItems.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredItems[index];
+                      final id = _toInt(item['id']);
+                      final itemStatus = _text(item['status']);
+                      final isDraft = itemStatus.toLowerCase() == 'draft';
+
+                      return _ProformaCard(
+                        item: item,
+                        index: index + 1,
+                        isSwahili: isSwahili,
+                        isDarkMode: isDarkMode,
+                        onTap: id > 0
+                            ? () => _showProformaSheet(context, ref, id)
+                            : null,
+                        onEdit: isDraft
+                            ? () => _openProformaForm(
+                                context,
+                                ref,
+                                proforma: item,
+                              )
+                            : null,
+                        onDelete: isDraft
+                            ? () => _deleteProforma(context, ref, item)
+                            : null,
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(_proformaListProvider),
-        child: itemsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _QuotationErrorView(
-            isSwahili: isSwahili,
-            message: vatErrorMessage(error, isSwahili: isSwahili),
-            onRetry: () => ref.invalidate(_proformaListProvider),
-          ),
-          data: (items) {
-            if (items.isEmpty) {
-              return ListView(
-                padding: const EdgeInsets.all(24),
-                children: [
-                  const SizedBox(height: 100),
-                  Icon(
-                    Icons.request_quote_outlined,
-                    size: 60,
-                    color: isDarkMode ? Colors.white24 : Colors.black12,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    isSwahili
-                        ? 'Hakuna proformas bado'
-                        : 'No proformas yet',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    isSwahili
-                        ? 'Bonyeza alama ya kuongeza kuunda proforma mpya.'
-                        : 'Tap the add button to create a proforma.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              );
-            }
-
-            return ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final id = _toInt(item['id']);
-                final status = _text(item['status']);
-                final isDraft = status.toLowerCase() == 'draft';
-                final client =
-                    item['client'] as Map<String, dynamic>? ?? const {};
-                final project =
-                    item['project'] as Map<String, dynamic>? ?? const {};
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: id > 0
-                        ? () => _showProformaSheet(context, ref, id)
-                        : null,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CircleAvatar(
-                                backgroundColor:
-                                    AppColors.info.withValues(alpha: 0.12),
-                                child: const Icon(
-                                  Icons.request_quote,
-                                  color: AppColors.info,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _text(item['document_number']),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      client['full_name']?.toString() ??
-                                          client['name']?.toString() ??
-                                          '-',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuButton<String>(
-                                onSelected: (value) {
-                                  if (value == 'view') {
-                                    _showProformaSheet(context, ref, id);
-                                  } else if (value == 'edit') {
-                                    _openProformaForm(
-                                      context,
-                                      ref,
-                                      quotation: item,
-                                    );
-                                  } else if (value == 'delete') {
-                                    _deleteProforma(context, ref, item);
-                                  }
-                                },
-                                itemBuilder: (context) {
-                                  final menu = <PopupMenuEntry<String>>[
-                                    PopupMenuItem<String>(
-                                      value: 'view',
-                                      child: Text(
-                                        isSwahili ? 'Tazama' : 'View',
-                                      ),
-                                    ),
-                                  ];
-                                  if (isDraft) {
-                                    menu.addAll([
-                                      PopupMenuItem<String>(
-                                        value: 'edit',
-                                        child: Text(
-                                          isSwahili ? 'Hariri' : 'Edit',
-                                        ),
-                                      ),
-                                      PopupMenuItem<String>(
-                                        value: 'delete',
-                                        child: Text(
-                                          isSwahili ? 'Futa' : 'Delete',
-                                        ),
-                                      ),
-                                    ]);
-                                  }
-                                  return menu;
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              _StatusChip(label: status),
-                              _InfoChip(
-                                icon: Icons.calendar_today_outlined,
-                                label: _text(item['issue_date']),
-                              ),
-                              if (_text(project['project_name']).isNotEmpty &&
-                                  _text(project['project_name']) != '-')
-                                _InfoChip(
-                                  icon: Icons.apartment_outlined,
-                                  label: _text(project['project_name']),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 12,
-                            runSpacing: 8,
-                            children: [
-                              _MetricText(
-                                label: isSwahili ? 'Jumla' : 'Total',
-                                value: _money(item['total_amount']),
-                              ),
-                              _MetricText(
-                                label: isSwahili ? 'Malipo' : 'Paid',
-                                value: _money(item['paid_amount']),
-                              ),
-                              _MetricText(
-                                label: isSwahili ? 'Salio' : 'Balance',
-                                value: _money(item['balance_amount']),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 70),
+        child: FloatingActionButton(
+          onPressed: () => _openProformaForm(context, ref),
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.add, color: Colors.white),
         ),
       ),
     );
@@ -276,15 +312,17 @@ class BillingProformasScreen extends ConsumerWidget {
 Future<void> _openProformaForm(
   BuildContext context,
   WidgetRef ref, {
-  Map<String, dynamic>? quotation,
+  Map<String, dynamic>? proforma,
 }) async {
   final refs = await ref.read(_proformaRefsProvider.future);
-  var initialQuotation = quotation;
-  final quotationId = _toInt(quotation?['id']);
-  final hasItems = quotation?['items'] is List;
+  var initialProforma = proforma;
+  final proformaId = _toInt(proforma?['id']);
+  final hasItems = proforma?['items'] is List;
 
-  if (quotation != null && quotationId > 0 && !hasItems) {
-    initialQuotation = await ref.read(_proformaDetailProvider(quotationId).future);
+  if (proforma != null && proformaId > 0 && !hasItems) {
+    initialProforma = await ref.read(
+      _proformaDetailProvider(proformaId).future,
+    );
   }
 
   if (!context.mounted) return;
@@ -295,17 +333,14 @@ Future<void> _openProformaForm(
     isScrollControlled: true,
     builder: (_) => FractionallySizedBox(
       heightFactor: 0.94,
-      child: _QuotationFormSheet(
-        refs: refs,
-        quotation: initialQuotation,
-      ),
+      child: _ProformaFormSheet(refs: refs, proforma: initialProforma),
     ),
   );
 
   if (result == true) {
     ref.invalidate(_proformaListProvider);
-    if (quotationId > 0) {
-      ref.invalidate(_proformaDetailProvider(quotationId));
+    if (proformaId > 0) {
+      ref.invalidate(_proformaDetailProvider(proformaId));
     }
   }
 }
@@ -342,18 +377,16 @@ Future<void> _deleteProforma(
   if (confirmed != true) return;
 
   try {
-    await ref.read(apiClientProvider).delete(
-          '/billing/documents/${quotation['id']}',
-        );
+    await ref
+        .read(apiClientProvider)
+        .delete('/billing/documents/${quotation['id']}');
     ref.invalidate(_proformaListProvider);
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.success,
-          content: Text(
-            isSwahili ? 'Proforma imefutwa' : 'Proforma deleted',
-          ),
+          content: Text(isSwahili ? 'Proforma imefutwa' : 'Proforma deleted'),
         ),
       );
     }
@@ -369,11 +402,7 @@ Future<void> _deleteProforma(
   }
 }
 
-void _showProformaSheet(
-  BuildContext context,
-  WidgetRef ref,
-  int id,
-) {
+void _showProformaSheet(BuildContext context, WidgetRef ref, int id) {
   if (id <= 0) return;
 
   showModalBottomSheet<void>(
@@ -413,7 +442,8 @@ void _showProformaSheet(
                       .whereType<Map>()
                       .map((item) => Map<String, dynamic>.from(item))
                       .toList();
-                  final isDraft = _text(detail['status']).toLowerCase() == 'draft';
+                  final isDraft =
+                      _text(detail['status']).toLowerCase() == 'draft';
 
                   return Column(
                     children: [
@@ -435,7 +465,8 @@ void _showProformaSheet(
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         _text(detail['document_number']),
@@ -449,7 +480,9 @@ void _showProformaSheet(
                                         spacing: 8,
                                         runSpacing: 8,
                                         children: [
-                                          _StatusChip(label: _text(detail['status'])),
+                                          _StatusChip(
+                                            label: _text(detail['status']),
+                                          ),
                                           _InfoChip(
                                             icon: Icons.event_outlined,
                                             label: _text(detail['issue_date']),
@@ -467,7 +500,7 @@ void _showProformaSheet(
                                       await _openProformaForm(
                                         context,
                                         ref,
-                                        quotation: detail,
+                                        proforma: detail,
                                       );
                                     },
                                     icon: const Icon(Icons.edit_outlined),
@@ -480,24 +513,33 @@ void _showProformaSheet(
                               children: [
                                 _QuotationDetailRow(
                                   label: isSwahili ? 'Mteja' : 'Client',
-                                  value: client['full_name']?.toString() ??
+                                  value:
+                                      client['full_name']?.toString() ??
                                       client['name']?.toString() ??
                                       '-',
                                 ),
                                 _QuotationDetailRow(
                                   label: isSwahili ? 'Mradi' : 'Project',
-                                  value: project['project_name']?.toString() ?? '-',
+                                  value:
+                                      project['project_name']?.toString() ??
+                                      '-',
                                 ),
                                 _QuotationDetailRow(
-                                  label: isSwahili ? 'Issue Date' : 'Issue Date',
+                                  label: isSwahili
+                                      ? 'Issue Date'
+                                      : 'Issue Date',
                                   value: _text(detail['issue_date']),
                                 ),
                                 _QuotationDetailRow(
-                                  label: isSwahili ? 'Valid Until' : 'Valid Until',
+                                  label: isSwahili
+                                      ? 'Valid Until'
+                                      : 'Valid Until',
                                   value: _text(detail['valid_until_date']),
                                 ),
                                 _QuotationDetailRow(
-                                  label: isSwahili ? 'Payment Terms' : 'Payment Terms',
+                                  label: isSwahili
+                                      ? 'Payment Terms'
+                                      : 'Payment Terms',
                                   value: _text(detail['payment_terms']),
                                 ),
                               ],
@@ -559,7 +601,9 @@ void _showProformaSheet(
                                 children: items
                                     .map(
                                       (item) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 10),
+                                        padding: const EdgeInsets.only(
+                                          bottom: 10,
+                                        ),
                                         child: Container(
                                           width: double.infinity,
                                           padding: const EdgeInsets.all(12),
@@ -567,8 +611,9 @@ void _showProformaSheet(
                                             color: Colors.grey.withValues(
                                               alpha: 0.08,
                                             ),
-                                            borderRadius:
-                                                BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                           child: Column(
                                             crossAxisAlignment:
@@ -584,7 +629,8 @@ void _showProformaSheet(
                                               Text(
                                                 '${_decimalText(item['quantity'])} ${_text(item['unit'])} x ${_money(item['unit_price'])}',
                                                 style: const TextStyle(
-                                                  color: AppColors.textSecondary,
+                                                  color:
+                                                      AppColors.textSecondary,
                                                 ),
                                               ),
                                               const SizedBox(height: 4),
@@ -617,56 +663,54 @@ void _showProformaSheet(
   );
 }
 
-class _QuotationFormSheet extends ConsumerStatefulWidget {
+class _ProformaFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic> refs;
-  final Map<String, dynamic>? quotation;
+  final Map<String, dynamic>? proforma;
 
-  const _QuotationFormSheet({
-    required this.refs,
-    this.quotation,
-  });
+  const _ProformaFormSheet({required this.refs, this.proforma});
 
   @override
-  ConsumerState<_QuotationFormSheet> createState() => _QuotationFormSheetState();
+  ConsumerState<_ProformaFormSheet> createState() => _ProformaFormSheetState();
 }
 
-class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
+class _ProformaFormSheetState extends ConsumerState<_ProformaFormSheet> {
   final _formKey = GlobalKey<FormState>();
 
-  late final TextEditingController _issueDateController =
-      TextEditingController(text: _dateValue(widget.quotation?['issue_date']));
+  late final TextEditingController _issueDateController = TextEditingController(
+    text: _dateValue(widget.proforma?['issue_date']),
+  );
   late final TextEditingController _validUntilController =
       TextEditingController(
-        text: _dateValue(widget.quotation?['valid_until_date']),
+        text: _dateValue(widget.proforma?['valid_until_date']),
       );
   late final TextEditingController _paymentTermsController =
       TextEditingController(
-        text: widget.quotation?['payment_terms']?.toString() ?? '',
+        text: widget.proforma?['payment_terms']?.toString() ?? '',
       );
   late final TextEditingController _notesController = TextEditingController(
-    text: widget.quotation?['notes']?.toString() ?? '',
+    text: widget.proforma?['notes']?.toString() ?? '',
   );
   late final TextEditingController _termsController = TextEditingController(
-    text: widget.quotation?['terms_conditions']?.toString() ?? '',
+    text: widget.proforma?['terms_conditions']?.toString() ?? '',
   );
 
   int? _clientId;
   int? _projectId;
   bool _saving = false;
-  late final List<_QuotationItemState> _items;
+  late final List<_ProformaItemState> _items;
 
   @override
   void initState() {
     super.initState();
-    _clientId = _toNullableInt(widget.quotation?['client_id']);
-    _projectId = _toNullableInt(widget.quotation?['project_id']);
-    final sourceItems = (widget.quotation?['items'] as List? ?? const [])
+    _clientId = _toNullableInt(widget.proforma?['client_id']);
+    _projectId = _toNullableInt(widget.proforma?['project_id']);
+    final sourceItems = (widget.proforma?['items'] as List? ?? const [])
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
         .toList();
     _items = sourceItems.isNotEmpty
-        ? sourceItems.map(_QuotationItemState.fromMap).toList()
-        : [_QuotationItemState.empty()];
+        ? sourceItems.map(_ProformaItemState.fromMap).toList()
+        : [_ProformaItemState.empty()];
   }
 
   @override
@@ -725,7 +769,7 @@ class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
                   ),
                   children: [
                     Text(
-                      widget.quotation == null
+                      widget.proforma == null
                           ? (isSwahili ? 'Proforma Mpya' : 'New Proforma')
                           : (isSwahili ? 'Hariri Proforma' : 'Edit Proforma'),
                       textAlign: TextAlign.center,
@@ -738,7 +782,10 @@ class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
                     _buildDropdownField(
                       label: isSwahili ? 'Mteja *' : 'Client *',
                       isDarkMode: isDarkMode,
-                      value: clients.any((item) => _toNullableInt(item['id']) == _clientId)
+                      value:
+                          clients.any(
+                            (item) => _toNullableInt(item['id']) == _clientId,
+                          )
                           ? _clientId
                           : null,
                       items: clients
@@ -759,9 +806,11 @@ class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
                       label: isSwahili ? 'Mradi' : 'Project',
                       isDarkMode: isDarkMode,
                       value:
-                          projects.any((item) => _toNullableInt(item['id']) == _projectId)
-                              ? _projectId
-                              : null,
+                          projects.any(
+                            (item) => _toNullableInt(item['id']) == _projectId,
+                          )
+                          ? _projectId
+                          : null,
                       items: [
                         DropdownMenuItem<int?>(
                           value: null,
@@ -816,7 +865,7 @@ class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
                         ),
                         TextButton.icon(
                           onPressed: () => setState(
-                            () => _items.add(_QuotationItemState.empty()),
+                            () => _items.add(_ProformaItemState.empty()),
                           ),
                           icon: const Icon(Icons.add),
                           label: Text(isSwahili ? 'Ongeza' : 'Add'),
@@ -856,7 +905,7 @@ class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
                               ),
                             )
                           : Text(
-                              widget.quotation == null
+                              widget.proforma == null
                                   ? (isSwahili ? 'Hifadhi' : 'Save')
                                   : (isSwahili ? 'Sasisha' : 'Update'),
                             ),
@@ -1018,9 +1067,9 @@ class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
     setState(() => _saving = true);
     try {
       final api = ref.read(apiClientProvider);
-      final quotationId = _toInt(widget.quotation?['id']);
-      if (quotationId > 0) {
-        await api.put('/billing/documents/$quotationId', data: payload);
+      final proformaId = _toInt(widget.proforma?['id']);
+      if (proformaId > 0) {
+        await api.put('/billing/documents/$proformaId', data: payload);
       } else {
         await api.post('/billing/documents', data: payload);
       }
@@ -1031,7 +1080,7 @@ class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
         SnackBar(
           backgroundColor: AppColors.success,
           content: Text(
-            quotationId > 0
+            proformaId > 0
                 ? (isSwahili ? 'Proforma imesasishwa' : 'Proforma updated')
                 : (isSwahili ? 'Proforma imehifadhiwa' : 'Proforma created'),
           ),
@@ -1053,7 +1102,7 @@ class _QuotationFormSheetState extends ConsumerState<_QuotationFormSheet> {
   }
 }
 
-class _QuotationItemState {
+class _ProformaItemState {
   final TextEditingController descriptionController;
   final TextEditingController quantityController;
   final TextEditingController unitController;
@@ -1061,7 +1110,7 @@ class _QuotationItemState {
   final TextEditingController discountController;
   final TextEditingController taxController;
 
-  _QuotationItemState({
+  _ProformaItemState({
     required this.descriptionController,
     required this.quantityController,
     required this.unitController,
@@ -1070,8 +1119,8 @@ class _QuotationItemState {
     required this.taxController,
   });
 
-  factory _QuotationItemState.empty() {
-    return _QuotationItemState(
+  factory _ProformaItemState.empty() {
+    return _ProformaItemState(
       descriptionController: TextEditingController(),
       quantityController: TextEditingController(text: '1'),
       unitController: TextEditingController(),
@@ -1081,19 +1130,26 @@ class _QuotationItemState {
     );
   }
 
-  factory _QuotationItemState.fromMap(Map<String, dynamic> map) {
-    return _QuotationItemState(
-      descriptionController:
-          TextEditingController(text: map['description']?.toString() ?? ''),
-      quantityController:
-          TextEditingController(text: _decimalText(map['quantity'])),
-      unitController: TextEditingController(text: map['unit']?.toString() ?? ''),
-      unitPriceController:
-          TextEditingController(text: _decimalText(map['unit_price'])),
-      discountController:
-          TextEditingController(text: _decimalText(map['discount_percentage'])),
-      taxController:
-          TextEditingController(text: _decimalText(map['tax_percentage'])),
+  factory _ProformaItemState.fromMap(Map<String, dynamic> map) {
+    return _ProformaItemState(
+      descriptionController: TextEditingController(
+        text: map['description']?.toString() ?? '',
+      ),
+      quantityController: TextEditingController(
+        text: _decimalText(map['quantity']),
+      ),
+      unitController: TextEditingController(
+        text: map['unit']?.toString() ?? '',
+      ),
+      unitPriceController: TextEditingController(
+        text: _decimalText(map['unit_price']),
+      ),
+      discountController: TextEditingController(
+        text: _decimalText(map['discount_percentage']),
+      ),
+      taxController: TextEditingController(
+        text: _decimalText(map['tax_percentage']),
+      ),
     );
   }
 
@@ -1122,10 +1178,7 @@ class _QuotationDetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _QuotationDetailRow({
-    required this.label,
-    required this.value,
-  });
+  const _QuotationDetailRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1143,11 +1196,297 @@ class _QuotationDetailRow extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 14, height: 1.4),
-          ),
+          Text(value, style: const TextStyle(fontSize: 14, height: 1.4)),
         ],
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isDarkMode;
+  final Color color;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.isDarkMode,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? color
+              : (isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100]),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: isSelected ? color : Colors.transparent),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isSelected
+                ? Colors.white
+                : (isDarkMode ? Colors.white54 : Colors.grey[600]),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProformaCard extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final int index;
+  final bool isSwahili;
+  final bool isDarkMode;
+  final VoidCallback? onTap;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  const _ProformaCard({
+    required this.item,
+    required this.index,
+    required this.isSwahili,
+    required this.isDarkMode,
+    this.onTap,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final status = _text(item['status']);
+    final client = item['client'] as Map<String, dynamic>? ?? {};
+    final project = item['project'] as Map<String, dynamic>? ?? {};
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: isDarkMode ? Colors.white12 : Colors.grey[200]!,
+        ),
+      ),
+      color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    '$index',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _text(item['document_number']),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      client['full_name']?.toString() ??
+                          client['name']?.toString() ??
+                          '-',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDarkMode
+                            ? Colors.white54
+                            : AppColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _StatusChip(label: status),
+                        const SizedBox(width: 8),
+                        if (_text(project['project_name']).isNotEmpty &&
+                            _text(project['project_name']) != '-')
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              _text(project['project_name']),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _money(item['total_amount']),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'view') {
+                    onTap?.call();
+                  } else if (value == 'edit') {
+                    onEdit?.call();
+                  } else if (value == 'delete') {
+                    onDelete?.call();
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'view',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.visibility_outlined, size: 20),
+                        const SizedBox(width: 10),
+                        Text(isSwahili ? 'Tazama' : 'View'),
+                      ],
+                    ),
+                  ),
+                  if (onEdit != null)
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.edit_outlined, size: 20),
+                          const SizedBox(width: 10),
+                          Text(isSwahili ? 'Hariri' : 'Edit'),
+                        ],
+                      ),
+                    ),
+                  if (onDelete != null)
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.delete_outlined,
+                            size: 20,
+                            color: AppColors.error,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            isSwahili ? 'Futa' : 'Delete',
+                            style: const TextStyle(color: AppColors.error),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ProformaErrorView extends StatelessWidget {
+  final bool isSwahili;
+  final String message;
+  final VoidCallback onRetry;
+  final bool isDarkMode;
+
+  const _ProformaErrorView({
+    required this.isSwahili,
+    required this.message,
+    required this.onRetry,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text(
+              isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1157,10 +1496,7 @@ class _SectionCard extends StatelessWidget {
   final String title;
   final List<Widget> children;
 
-  const _SectionCard({
-    required this.title,
-    required this.children,
-  });
+  const _SectionCard({required this.title, required this.children});
 
   @override
   Widget build(BuildContext context) {
@@ -1176,10 +1512,7 @@ class _SectionCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
           ...children,
@@ -1230,10 +1563,7 @@ class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-  });
+  const _InfoChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -1261,35 +1591,6 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-class _MetricText extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _MetricText({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
-        style: DefaultTextStyle.of(context).style.copyWith(fontSize: 13),
-        children: [
-          TextSpan(
-            text: '$label: ',
-            style: const TextStyle(color: AppColors.textSecondary),
-          ),
-          TextSpan(
-            text: value,
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _QuotationErrorView extends StatelessWidget {
   final bool isSwahili;
   final String message;
@@ -1309,11 +1610,7 @@ class _QuotationErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 52,
-              color: AppColors.error,
-            ),
+            const Icon(Icons.error_outline, size: 52, color: AppColors.error),
             const SizedBox(height: 12),
             Text(
               message,
@@ -1349,9 +1646,7 @@ class _BottomSheetLoading extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
         ),
-        const Expanded(
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        const Expanded(child: Center(child: CircularProgressIndicator())),
       ],
     );
   }
@@ -1454,8 +1749,7 @@ Widget _buildDateField(
       return null;
     },
     onTap: () async {
-      final initialDate =
-          DateTime.tryParse(controller.text) ?? DateTime.now();
+      final initialDate = DateTime.tryParse(controller.text) ?? DateTime.now();
       final picked = await showDatePicker(
         context: context,
         initialDate: initialDate,

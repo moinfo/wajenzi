@@ -4,25 +4,23 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
 final laborDashboardProjectFilterProvider = StateProvider.autoDispose<int?>(
   (ref) => null,
 );
 
-final _laborDashboardProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
-  ref,
-) async {
-  final api = ref.watch(apiClientProvider);
-  final projectId = ref.watch(laborDashboardProjectFilterProvider);
-  final response = await api.get(
-    '/labor/dashboard',
-    queryParameters: {
-      if (projectId != null) 'project_id': projectId,
-    },
-  );
-  return response.data['data'] as Map<String, dynamic>? ?? const {};
-});
+final _laborDashboardProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+      final api = ref.watch(apiClientProvider);
+      final projectId = ref.watch(laborDashboardProjectFilterProvider);
+      final response = await api.get(
+        '/labor/dashboard',
+        queryParameters: {if (projectId != null) 'project_id': projectId},
+      );
+      return response.data['data'] as Map<String, dynamic>? ?? const {};
+    });
 
 class LaborDashboardScreen extends ConsumerWidget {
   const LaborDashboardScreen({super.key});
@@ -36,9 +34,12 @@ class LaborDashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          isSwahili ? 'Dashibodi ya Labor' : 'Labor Dashboard',
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () =>
+              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
         ),
+        title: Text(isSwahili ? 'Dashibodi ya Labor' : 'Labor Dashboard'),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_laborDashboardProvider),
@@ -51,19 +52,22 @@ class LaborDashboardScreen extends ConsumerWidget {
           ),
           data: (payload) {
             final stats = payload['stats'] as Map<String, dynamic>? ?? const {};
-            final projects =
-                (payload['projects'] as List? ?? const []).cast<dynamic>();
+            final projects = (payload['projects'] as List? ?? const [])
+                .cast<dynamic>();
             final actions =
-                payload['actions_required'] as Map<String, dynamic>? ?? const {};
+                payload['actions_required'] as Map<String, dynamic>? ??
+                const {};
             final nearEnd =
                 (payload['contracts_nearing_end'] as List? ?? const [])
                     .cast<dynamic>();
-            final overdue =
-                (payload['overdue_contracts'] as List? ?? const []).cast<dynamic>();
+            final overdue = (payload['overdue_contracts'] as List? ?? const [])
+                .cast<dynamic>();
             final recentRequests =
-                (payload['recent_requests'] as List? ?? const []).cast<dynamic>();
+                (payload['recent_requests'] as List? ?? const [])
+                    .cast<dynamic>();
             final recentContracts =
-                (payload['recent_contracts'] as List? ?? const []).cast<dynamic>();
+                (payload['recent_contracts'] as List? ?? const [])
+                    .cast<dynamic>();
             final recentInspections =
                 (payload['recent_inspections'] as List? ?? const [])
                     .cast<dynamic>();
@@ -120,8 +124,12 @@ class LaborDashboardScreen extends ConsumerWidget {
                         ],
                         onChanged: (value) {
                           ref
-                              .read(laborDashboardProjectFilterProvider.notifier)
-                              .state = value;
+                                  .read(
+                                    laborDashboardProjectFilterProvider
+                                        .notifier,
+                                  )
+                                  .state =
+                              value;
                         },
                       ),
                     ],
@@ -135,8 +143,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                     SizedBox(
                       width: 160,
                       child: _StatCard(
-                        title:
-                            isSwahili ? 'Mikataba Hai' : 'Active Contracts',
+                        title: isSwahili ? 'Mikataba Hai' : 'Active Contracts',
                         value: '${stats['active_contracts'] ?? 0}',
                         subtitle:
                             '${_formatCurrency(_toDouble(stats['active_contract_value']))} TZS',
@@ -148,8 +155,9 @@ class LaborDashboardScreen extends ConsumerWidget {
                     SizedBox(
                       width: 160,
                       child: _StatCard(
-                        title:
-                            isSwahili ? 'Maombi Pending' : 'Pending Requests',
+                        title: isSwahili
+                            ? 'Maombi Pending'
+                            : 'Pending Requests',
                         value: '${stats['pending_requests'] ?? 0}',
                         subtitle: isSwahili
                             ? 'Yanasubiri idhini'
@@ -174,8 +182,7 @@ class LaborDashboardScreen extends ConsumerWidget {
                     SizedBox(
                       width: 160,
                       child: _StatCard(
-                        title:
-                            isSwahili ? 'Mikataba Imekamilika' : 'Completed',
+                        title: isSwahili ? 'Mikataba Imekamilika' : 'Completed',
                         value: '${stats['completed_contracts'] ?? 0}',
                         subtitle:
                             '${_formatCurrency(_toDouble(stats['paid_amount']))} TZS',
@@ -245,8 +252,9 @@ class LaborDashboardScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   _SectionCard(
                     isDarkMode: isDarkMode,
-                    title:
-                        isSwahili ? 'Mikataba Iliyochelewa' : 'Overdue Contracts',
+                    title: isSwahili
+                        ? 'Mikataba Iliyochelewa'
+                        : 'Overdue Contracts',
                     child: Column(
                       children: overdue
                           .map(
@@ -278,14 +286,14 @@ class LaborDashboardScreen extends ConsumerWidget {
                           children: recentRequests
                               .map(
                                 (item) => _StatusListRow(
-                                  title: item['request_number'] as String? ?? '-',
+                                  title:
+                                      item['request_number'] as String? ?? '-',
                                   subtitle:
                                       item['artisan_name'] as String? ??
                                       item['work_description'] as String? ??
                                       '-',
-                                  trailing:
-                                      (item['status'] as String? ?? '-')
-                                          .toUpperCase(),
+                                  trailing: (item['status'] as String? ?? '-')
+                                      .toUpperCase(),
                                   badgeColor: _badgeColor(
                                     item['status_badge_class'] as String?,
                                   ),
@@ -320,8 +328,9 @@ class LaborDashboardScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _SectionCard(
                   isDarkMode: isDarkMode,
-                  title:
-                      isSwahili ? 'Recent Inspections' : 'Recent Inspections',
+                  title: isSwahili
+                      ? 'Recent Inspections'
+                      : 'Recent Inspections',
                   child: recentInspections.isEmpty
                       ? _EmptyText(
                           text: isSwahili
@@ -557,7 +566,9 @@ class _TimelineRow extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                    color: isDarkMode
+                        ? Colors.white54
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -619,7 +630,9 @@ class _StatusListRow extends StatelessWidget {
                   subtitle,
                   style: TextStyle(
                     fontSize: 12,
-                    color: isDarkMode ? Colors.white54 : AppColors.textSecondary,
+                    color: isDarkMode
+                        ? Colors.white54
+                        : AppColors.textSecondary,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -675,11 +688,14 @@ class _ContractRow extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: _badgeColor(item['status_badge_class'] as String?)
-                      .withValues(alpha: 0.12),
+                  color: _badgeColor(
+                    item['status_badge_class'] as String?,
+                  ).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -710,7 +726,8 @@ class _ContractRow extends StatelessWidget {
             children: [
               _MiniInfo(
                 label: 'Paid',
-                value: '${_toDouble(item['payment_progress']).toStringAsFixed(0)}%',
+                value:
+                    '${_toDouble(item['payment_progress']).toStringAsFixed(0)}%',
                 dark: isDarkMode,
               ),
               _MiniInfo(
@@ -762,7 +779,8 @@ class _InspectionRow extends StatelessWidget {
             runSpacing: 8,
             children: [
               _Badge(
-                label: (item['inspection_type'] as String? ?? '-').toUpperCase(),
+                label: (item['inspection_type'] as String? ?? '-')
+                    .toUpperCase(),
                 color: _badgeColor(item['type_badge_class'] as String?),
               ),
               _Badge(

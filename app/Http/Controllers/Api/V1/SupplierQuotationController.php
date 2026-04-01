@@ -27,6 +27,19 @@ class SupplierQuotationController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('quotation_number', 'like', "%{$search}%")
+                  ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
+                      $supplierQuery->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('materialRequest', function ($mrQuery) use ($search) {
+                      $mrQuery->where('request_number', 'like', "%{$search}%");
+                  });
+            });
+        }
+
         $quotations = $query->paginate($request->per_page ?? 20);
 
         return response()->json([

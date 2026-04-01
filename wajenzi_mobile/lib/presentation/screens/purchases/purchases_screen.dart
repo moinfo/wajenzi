@@ -12,6 +12,68 @@ import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
 
+Future<Response<dynamic>> _getWithFallback(
+  ApiClient api,
+  String primaryPath, {
+  String? fallbackPath,
+  Map<String, dynamic>? queryParameters,
+}) async {
+  try {
+    return await api.get(
+      primaryPath,
+      queryParameters: queryParameters,
+    );
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 404 && fallbackPath != null) {
+      return api.get(
+        fallbackPath,
+        queryParameters: queryParameters,
+      );
+    }
+    rethrow;
+  }
+}
+
+Future<Response<dynamic>> _deleteWithFallback(
+  ApiClient api,
+  String primaryPath, {
+  String? fallbackPath,
+}) async {
+  try {
+    return await api.delete(primaryPath);
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 404 && fallbackPath != null) {
+      return api.delete(fallbackPath);
+    }
+    rethrow;
+  }
+}
+
+Future<Response<dynamic>> _uploadWithFallback(
+  ApiClient api,
+  String primaryPath, {
+  String? fallbackPath,
+  required FormData data,
+  Options? options,
+}) async {
+  try {
+    return await api.uploadFile(
+      primaryPath,
+      data: data,
+      options: options,
+    );
+  } on DioException catch (e) {
+    if (e.response?.statusCode == 404 && fallbackPath != null) {
+      return api.uploadFile(
+        fallbackPath,
+        data: data,
+        options: options,
+      );
+    }
+    rethrow;
+  }
+}
+
 final _purchasesStartProvider =
     StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
 final _purchasesEndProvider =
@@ -25,10 +87,15 @@ final _purchasesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   final api = ref.watch(apiClientProvider);
   final start = ref.watch(_purchasesStartProvider);
   final end = ref.watch(_purchasesEndProvider);
-  final response = await api.get('/purchases', queryParameters: {
-    'start_date': vatDateFmt(start),
-    'end_date': vatDateFmt(end),
-  });
+  final response = await _getWithFallback(
+    api,
+    '/purchases',
+    fallbackPath: '/vat/purchases',
+    queryParameters: {
+      'start_date': vatDateFmt(start),
+      'end_date': vatDateFmt(end),
+    },
+  );
 
   List items = [];
   Map<String, dynamic> meta = {};
@@ -57,14 +124,25 @@ final _suppliersProvider = FutureProvider.autoDispose<List<dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/purchases/suppliers');
-  return response.data['data'] as List? ?? [];
+  try {
+    final response = await api.get('/purchases/suppliers');
+    return response.data['data'] as List? ?? [];
+  } on DioException catch (e) {
+    if (e.response?.statusCode != 404) rethrow;
+    final fallback = await api.get('/vat/reference-data');
+    final data = fallback.data['data'] as Map<String, dynamic>? ?? {};
+    return data['suppliers'] as List? ?? [];
+  }
 });
 
 final _purchaseDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/purchases/$id');
+      final response = await _getWithFallback(
+        api,
+        '/purchases/$id',
+        fallbackPath: '/vat/purchases/$id',
+      );
       return response.data['data'] as Map<String, dynamic>? ?? {};
     });
 
@@ -270,7 +348,11 @@ class PurchasesScreen extends ConsumerWidget {
 
     try {
       final api = ref.read(apiClientProvider);
-      await api.delete('/purchases/${purchase['id']}');
+      await _deleteWithFallback(
+        api,
+        '/purchases/${purchase['id']}',
+        fallbackPath: '/vat/purchases/${purchase['id']}',
+      );
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -305,7 +387,11 @@ class PurchasesScreen extends ConsumerWidget {
 
     try {
       final api = ref.read(apiClientProvider);
-      final response = await api.get('/purchases/${purchase['id']}');
+      final response = await _getWithFallback(
+        api,
+        '/purchases/${purchase['id']}',
+        fallbackPath: '/vat/purchases/${purchase['id']}',
+      );
       final data = response.data['data'];
       if (data is Map<String, dynamic>) {
         detail = data;
@@ -1338,15 +1424,19 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
       final formData = await vatBuildFormData(data, _selectedFile);
 
       if (widget.isNew) {
-        await api.uploadFile(
+        await _uploadWithFallback(
+          api,
           '/purchases',
+          fallbackPath: '/vat/purchases',
           data: formData,
           options: Options(contentType: 'multipart/form-data'),
         );
       } else {
         formData.fields.add(const MapEntry('_method', 'PUT'));
-        await api.uploadFile(
+        await _uploadWithFallback(
+          api,
           '/purchases/${widget.purchase!['id']}',
+          fallbackPath: '/vat/purchases/${widget.purchase!['id']}',
           data: formData,
           options: Options(contentType: 'multipart/form-data'),
         );

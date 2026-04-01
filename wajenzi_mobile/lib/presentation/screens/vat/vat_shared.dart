@@ -25,10 +25,31 @@ String vatDateFmt(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 String vatErrorMessage(Object error, {bool isSwahili = false}) {
   if (error is DioException) {
     final data = error.response?.data;
+
+    // Try to parse the error body
+    Map<String, dynamic>? errorData;
     if (data is Map<String, dynamic>) {
-      final message = data['message'];
+      errorData = data;
+    } else if (data is String) {
+      try {
+        errorData = Map<String, dynamic>.from(
+          (data as Map).cast<String, dynamic>(),
+        );
+      } catch (_) {
+        // If parsing fails, return the raw string if it's not empty
+        if (data.toString().trim().isNotEmpty) {
+          return data.toString();
+        }
+      }
+    }
+
+    if (errorData != null) {
+      // Try to get message from various Laravel error response formats
+      final message = errorData['message'];
       if (message is String && message.isNotEmpty) return message;
-      final errors = data['errors'];
+
+      // Laravel validation errors format
+      final errors = errorData['errors'];
       if (errors is Map && errors.isNotEmpty) {
         final first = errors.values.first;
         if (first is List && first.isNotEmpty) {
@@ -36,27 +57,57 @@ String vatErrorMessage(Object error, {bool isSwahili = false}) {
         }
         if (first != null) return '$first';
       }
+
+      // Try to get error from original error (for redirect responses)
+      final originalError = errorData['originalError'];
+      if (originalError != null) {
+        final originalMsg = originalError['message'];
+        if (originalMsg is String && originalMsg.isNotEmpty) {
+          return originalMsg;
+        }
+      }
+    }
+
+    // If no structured error found, return a user-friendly message based on status
+    final statusCode = error.response?.statusCode;
+    if (statusCode == 422) {
+      return isSwahili
+          ? 'Takwimu si sahihi. Angalia maingizo yako.'
+          : 'Validation failed. Please check your input.';
+    }
+    if (statusCode == 401) {
+      return isSwahili
+          ? 'Hati tambulisho haijaidhinishwa.'
+          : 'Unauthorized. Please login again.';
+    }
+    if (statusCode == 403) {
+      return isSwahili ? 'Huna ruhusa ya kufanya hili.' : 'Permission denied.';
+    }
+    if (statusCode == 404) {
+      return isSwahili ? 'Hakuna matokeo yaliyopatikana.' : 'Not found.';
     }
   }
-  return isSwahili ? 'Hitilafu imetokea. Jaribu tena.' : 'Something went wrong. Please try again.';
+  return isSwahili
+      ? 'Hitilafu imetokea. Jaribu tena.'
+      : 'Something went wrong. Please try again.';
 }
 
 BoxDecoration vatCardDeco(bool isDark) => BoxDecoration(
-      color: isDark ? vatDarkCard : Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.1),
-      ),
-      boxShadow: isDark
-          ? null
-          : [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-    );
+  color: isDark ? vatDarkCard : Colors.white,
+  borderRadius: BorderRadius.circular(12),
+  border: Border.all(
+    color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.1),
+  ),
+  boxShadow: isDark
+      ? null
+      : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+);
 
 // --- Date Range Bar ---
 class VatDateRangeBar extends ConsumerWidget {
@@ -104,15 +155,19 @@ class VatDateRangeBar extends ConsumerWidget {
                 }
               },
               child: _DateChip(
-                  label: isSwahili ? 'Kuanzia' : 'From',
-                  date: df.format(start),
-                  isDark: isDark),
+                label: isSwahili ? 'Kuanzia' : 'From',
+                date: df.format(start),
+                isDark: isDark,
+              ),
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Icon(Icons.arrow_forward_rounded,
-                size: 16, color: isDark ? Colors.white38 : AppColors.textHint),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              size: 16,
+              color: isDark ? Colors.white38 : AppColors.textHint,
+            ),
           ),
           Expanded(
             child: GestureDetector(
@@ -128,9 +183,10 @@ class VatDateRangeBar extends ConsumerWidget {
                 }
               },
               child: _DateChip(
-                  label: isSwahili ? 'Hadi' : 'To',
-                  date: df.format(end),
-                  isDark: isDark),
+                label: isSwahili ? 'Hadi' : 'To',
+                date: df.format(end),
+                isDark: isDark,
+              ),
             ),
           ),
         ],
@@ -143,28 +199,37 @@ class _DateChip extends StatelessWidget {
   final String label;
   final String date;
   final bool isDark;
-  const _DateChip(
-      {required this.label, required this.date, required this.isDark});
+  const _DateChip({
+    required this.label,
+    required this.date,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: 10,
-                color: isDark ? Colors.white38 : AppColors.textHint)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: isDark ? Colors.white38 : AppColors.textHint,
+          ),
+        ),
         const SizedBox(height: 2),
         Row(
           children: [
             Icon(Icons.calendar_today_rounded, size: 12, color: vatAccentTeal),
             const SizedBox(width: 6),
-            Text(date,
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : AppColors.textPrimary)),
+            Text(
+              date,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : AppColors.textPrimary,
+              ),
+            ),
           ],
         ),
       ],
@@ -198,25 +263,32 @@ class VatSummaryChip extends StatelessWidget {
             ? null
             : [
                 BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2))
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
               ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white54 : AppColors.textSecondary)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: isDark ? Colors.white54 : AppColors.textSecondary,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : AppColors.textPrimary)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : AppColors.textPrimary,
+            ),
+          ),
         ],
       ),
     );
@@ -228,20 +300,22 @@ class VatCountBadge extends StatelessWidget {
   final int count;
   final String label;
   final bool isDark;
-  const VatCountBadge(
-      {super.key,
-      required this.count,
-      required this.label,
-      required this.isDark});
+  const VatCountBadge({
+    super.key,
+    required this.count,
+    required this.label,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Text(
       '$label ($count)',
       style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: isDark ? Colors.white70 : AppColors.textPrimary),
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: isDark ? Colors.white70 : AppColors.textPrimary,
+      ),
     );
   }
 }
@@ -252,12 +326,13 @@ class VatInfoCol extends StatelessWidget {
   final String value;
   final bool isDark;
   final bool isMoney;
-  const VatInfoCol(
-      {super.key,
-      required this.label,
-      required this.value,
-      required this.isDark,
-      this.isMoney = false});
+  const VatInfoCol({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.isDark,
+    this.isMoney = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -265,10 +340,13 @@ class VatInfoCol extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(
-                  fontSize: 9,
-                  color: isDark ? Colors.white38 : AppColors.textHint)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              color: isDark ? Colors.white38 : AppColors.textHint,
+            ),
+          ),
           const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -313,10 +391,13 @@ class VatKvRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label,
-                style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? Colors.white38 : AppColors.textHint)),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark ? Colors.white38 : AppColors.textHint,
+              ),
+            ),
           ),
           Expanded(
             child: Text(
@@ -339,22 +420,28 @@ class VatKvRow extends StatelessWidget {
 // --- Reference Data Provider ---
 final vatReferenceDataProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final resp = await api.get('/vat/reference-data');
-  return resp.data['data'] as Map<String, dynamic>;
-});
+      final api = ref.watch(apiClientProvider);
+      final resp = await api.get('/vat/reference-data');
+      return resp.data['data'] as Map<String, dynamic>;
+    });
 
 // --- CRUD Helpers ---
 Future<bool> vatDelete(
-    BuildContext context, WidgetRef ref, String endpoint, int id,
-    {required bool isSwahili}) async {
+  BuildContext context,
+  WidgetRef ref,
+  String endpoint,
+  int id, {
+  required bool isSwahili,
+}) async {
   final confirmed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(isSwahili ? 'Thibitisha' : 'Confirm'),
-      content: Text(isSwahili
-          ? 'Una uhakika unataka kufuta?'
-          : 'Are you sure you want to delete?'),
+      content: Text(
+        isSwahili
+            ? 'Una uhakika unataka kufuta?'
+            : 'Are you sure you want to delete?',
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
@@ -406,26 +493,35 @@ Widget vatTextField({
       onTap: onTap,
       validator: validator,
       style: TextStyle(
-          fontSize: 13, color: isDark ? Colors.white : AppColors.textPrimary),
+        fontSize: 13,
+        color: isDark ? Colors.white : AppColors.textPrimary,
+      ),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
-            fontSize: 12, color: isDark ? Colors.white54 : AppColors.textHint),
+          fontSize: 12,
+          color: isDark ? Colors.white54 : AppColors.textHint,
+        ),
         filled: true,
-        fillColor:
-            isDark ? const Color(0xFF0F1923) : Colors.grey.withValues(alpha: 0.05),
+        fillColor: isDark
+            ? const Color(0xFF0F1923)
+            : Colors.grey.withValues(alpha: 0.05),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-              color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2)),
+            color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-              color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2)),
+            color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
       ),
     ),
   );
@@ -446,41 +542,55 @@ Widget vatDropdown<T>({
       // ignore: deprecated_member_use
       value: value,
       items: items
-          .map((item) => DropdownMenuItem<T>(
-                value: item,
-                child: Text(labelBuilder(item),
-                    style: TextStyle(
-                        fontSize: 13,
-                        color:
-                            isDark ? Colors.white : AppColors.textPrimary)),
-              ))
+          .map(
+            (item) => DropdownMenuItem<T>(
+              value: item,
+              child: Text(
+                labelBuilder(item),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white : AppColors.textPrimary,
+                ),
+              ),
+            ),
+          )
           .toList(),
       onChanged: onChanged,
       validator: validator,
-      hint: Text(label.replaceAll(' *', ''),
-          style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.white38 : AppColors.textHint)),
+      hint: Text(
+        label.replaceAll(' *', ''),
+        style: TextStyle(
+          fontSize: 13,
+          color: isDark ? Colors.white38 : AppColors.textHint,
+        ),
+      ),
       dropdownColor: isDark ? vatDarkCard : Colors.white,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TextStyle(
-            fontSize: 12, color: isDark ? Colors.white54 : AppColors.textHint),
+          fontSize: 12,
+          color: isDark ? Colors.white54 : AppColors.textHint,
+        ),
         filled: true,
-        fillColor:
-            isDark ? const Color(0xFF0F1923) : Colors.grey.withValues(alpha: 0.05),
+        fillColor: isDark
+            ? const Color(0xFF0F1923)
+            : Colors.grey.withValues(alpha: 0.05),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-              color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2)),
+            color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-              color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2)),
+            color: isDark ? vatDarkBorder : Colors.grey.withValues(alpha: 0.2),
+          ),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
       ),
     ),
   );
@@ -520,8 +630,9 @@ class VatFilePicker extends StatelessWidget {
           Text(
             isSwahili ? 'Chagua faili' : 'Choose file',
             style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white54 : AppColors.textHint),
+              fontSize: 12,
+              color: isDark ? Colors.white54 : AppColors.textHint,
+            ),
           ),
           const SizedBox(height: 6),
           GestureDetector(
@@ -570,9 +681,11 @@ class VatFilePicker extends StatelessWidget {
                   if (file != null)
                     GestureDetector(
                       onTap: () => onPicked(null),
-                      child: Icon(Icons.close_rounded,
-                          size: 18,
-                          color: Colors.red.withValues(alpha: 0.7)),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: Colors.red.withValues(alpha: 0.7),
+                      ),
                     ),
                 ],
               ),
@@ -594,8 +707,10 @@ class VatFilePicker extends StatelessWidget {
               title: Text(isSwahili ? 'Chagua picha' : 'Pick from gallery'),
               onTap: () async {
                 Navigator.pop(ctx);
-                final picked = await ImagePicker()
-                    .pickImage(source: ImageSource.gallery, imageQuality: 80);
+                final picked = await ImagePicker().pickImage(
+                  source: ImageSource.gallery,
+                  imageQuality: 80,
+                );
                 if (picked != null) onPicked(File(picked.path));
               },
             ),
@@ -604,8 +719,10 @@ class VatFilePicker extends StatelessWidget {
               title: Text(isSwahili ? 'Piga picha' : 'Take photo'),
               onTap: () async {
                 Navigator.pop(ctx);
-                final picked = await ImagePicker()
-                    .pickImage(source: ImageSource.camera, imageQuality: 80);
+                final picked = await ImagePicker().pickImage(
+                  source: ImageSource.camera,
+                  imageQuality: 80,
+                );
                 if (picked != null) onPicked(File(picked.path));
               },
             ),
@@ -618,14 +735,18 @@ class VatFilePicker extends StatelessWidget {
 
 // --- Build FormData with optional file ---
 Future<FormData> vatBuildFormData(
-    Map<String, dynamic> fields, File? file) async {
+  Map<String, dynamic> fields,
+  File? file,
+) async {
   final map = <String, dynamic>{};
   for (final e in fields.entries) {
     map[e.key] = e.value;
   }
   if (file != null) {
-    map['file'] = await MultipartFile.fromFile(file.path,
-        filename: file.path.split('/').last);
+    map['file'] = await MultipartFile.fromFile(
+      file.path,
+      filename: file.path.split('/').last,
+    );
   }
   return FormData.fromMap(map);
 }
@@ -659,9 +780,14 @@ class VatStatusBadge extends StatelessWidget {
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(status.toUpperCase(),
-          style:
-              TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: color)),
+      child: Text(
+        status.toUpperCase(),
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -670,8 +796,11 @@ class VatStatusBadge extends StatelessWidget {
 class VatEmptyState extends StatelessWidget {
   final bool isDark;
   final bool isSwahili;
-  const VatEmptyState(
-      {super.key, required this.isDark, required this.isSwahili});
+  const VatEmptyState({
+    super.key,
+    required this.isDark,
+    required this.isSwahili,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -679,14 +808,18 @@ class VatEmptyState extends StatelessWidget {
       padding: const EdgeInsets.only(top: 40),
       child: Column(
         children: [
-          Icon(Icons.inbox_rounded,
-              size: 48, color: isDark ? Colors.white24 : Colors.grey[300]),
+          Icon(
+            Icons.inbox_rounded,
+            size: 48,
+            color: isDark ? Colors.white24 : Colors.grey[300],
+          ),
           const SizedBox(height: 12),
           Text(
             isSwahili ? 'Hakuna data' : 'No data available',
             style: TextStyle(
-                fontSize: 13,
-                color: isDark ? Colors.white38 : AppColors.textSecondary),
+              fontSize: 13,
+              color: isDark ? Colors.white38 : AppColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -698,8 +831,11 @@ class VatEmptyState extends StatelessWidget {
 class VatErrorBody extends StatelessWidget {
   final VoidCallback onRetry;
   final bool isSwahili;
-  const VatErrorBody(
-      {super.key, required this.onRetry, required this.isSwahili});
+  const VatErrorBody({
+    super.key,
+    required this.onRetry,
+    required this.isSwahili,
+  });
 
   @override
   Widget build(BuildContext context) {

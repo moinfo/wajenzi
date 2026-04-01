@@ -19,7 +19,7 @@ class ApiClient {
   ApiClient(this._storageService, this._ref) {
     _dio = Dio(
       BaseOptions(
-        baseUrl: AppConfig.baseUrl,
+        baseUrl: _normalizeBaseUrl(AppConfig.baseUrl),
         connectTimeout: AppConfig.connectionTimeout,
         receiveTimeout: AppConfig.receiveTimeout,
         headers: {
@@ -37,6 +37,25 @@ class ApiClient {
 
   Dio get dio => _dio;
 
+  String _normalizeBaseUrl(String url) {
+    final trimmed = url.trim();
+    if (trimmed.endsWith('/')) {
+      return trimmed;
+    }
+    return '$trimmed/';
+  }
+
+  String _normalizePath(String path) {
+    final trimmed = path.trim();
+    final uri = Uri.tryParse(trimmed);
+
+    if (uri != null && uri.hasScheme) {
+      return trimmed;
+    }
+
+    return trimmed.replaceFirst(RegExp(r'^/+'), '');
+  }
+
   // GET request
   Future<Response<T>> get<T>(
     String path, {
@@ -44,7 +63,7 @@ class ApiClient {
     Options? options,
   }) async {
     return _dio.get<T>(
-      path,
+      _normalizePath(path),
       queryParameters: queryParameters,
       options: options,
     );
@@ -58,7 +77,7 @@ class ApiClient {
     Options? options,
   }) async {
     return _dio.post<T>(
-      path,
+      _normalizePath(path),
       data: data,
       queryParameters: queryParameters,
       options: options,
@@ -73,7 +92,7 @@ class ApiClient {
     Options? options,
   }) async {
     return _dio.put<T>(
-      path,
+      _normalizePath(path),
       data: data,
       queryParameters: queryParameters,
       options: options,
@@ -88,7 +107,7 @@ class ApiClient {
     Options? options,
   }) async {
     return _dio.delete<T>(
-      path,
+      _normalizePath(path),
       data: data,
       queryParameters: queryParameters,
       options: options,
@@ -103,7 +122,7 @@ class ApiClient {
     ProgressCallback? onSendProgress,
   }) async {
     return _dio.post<T>(
-      path,
+      _normalizePath(path),
       data: data,
       options: options,
       onSendProgress: onSendProgress,
@@ -183,6 +202,7 @@ class _LoggingInterceptor extends Interceptor {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     if (!AppConfig.isRelease) {
       debugPrint('REQUEST[${options.method}] => PATH: ${options.path}');
+      debugPrint('REQUEST[${options.method}] => URI: ${options.uri}');
       debugPrint('Headers: ${_redactHeaders(options.headers)}');
       if (options.data != null) {
         debugPrint('Data: ${_redactData(options.data)}');
@@ -197,6 +217,9 @@ class _LoggingInterceptor extends Interceptor {
       debugPrint(
         'RESPONSE[${response.statusCode}] => PATH: ${response.requestOptions.path}',
       );
+      debugPrint(
+        'RESPONSE[${response.statusCode}] => URI: ${response.requestOptions.uri}',
+      );
     }
     handler.next(response);
   }
@@ -206,6 +229,9 @@ class _LoggingInterceptor extends Interceptor {
     if (!AppConfig.isRelease) {
       debugPrint(
         'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}',
+      );
+      debugPrint(
+        'ERROR[${err.response?.statusCode}] => URI: ${err.requestOptions.uri}',
       );
       debugPrint('Message: ${err.message}');
     }

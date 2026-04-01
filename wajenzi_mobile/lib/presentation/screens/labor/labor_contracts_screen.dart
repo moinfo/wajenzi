@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
 final laborContractsProjectFilterProvider = StateProvider.autoDispose<int?>(
@@ -14,17 +16,23 @@ final laborContractsStatusFilterProvider = StateProvider.autoDispose<String?>(
   (ref) => null,
 );
 
+final laborContractsDateRangeProvider =
+    StateProvider.autoDispose<Map<String, String>?>((ref) => null);
+
 final _laborContractsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
       final projectId = ref.watch(laborContractsProjectFilterProvider);
       final status = ref.watch(laborContractsStatusFilterProvider);
+      final dateRange = ref.watch(laborContractsDateRangeProvider);
 
       final response = await api.get(
         '/labor/contracts',
         queryParameters: {
           if (projectId != null) 'project_id': projectId,
           if (status != null) 'status': status,
+          if (dateRange?['start'] != null) 'start_date': dateRange!['start'],
+          if (dateRange?['end'] != null) 'end_date': dateRange!['end'],
         },
       );
       return response.data['data'] as Map<String, dynamic>? ?? const {};
@@ -37,21 +45,51 @@ final _laborContractsReferenceProvider =
       return response.data['data'] as Map<String, dynamic>? ?? const {};
     });
 
-class LaborContractsScreen extends ConsumerWidget {
+class LaborContractsScreen extends ConsumerStatefulWidget {
   const LaborContractsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LaborContractsScreen> createState() =>
+      _LaborContractsScreenState();
+}
+
+class _LaborContractsScreenState extends ConsumerState<LaborContractsScreen> {
+  @override
+  Widget build(BuildContext context) {
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final contractsAsync = ref.watch(_laborContractsProvider);
     final selectedProject = ref.watch(laborContractsProjectFilterProvider);
     final selectedStatus = ref.watch(laborContractsStatusFilterProvider);
+    final dateRange = ref.watch(laborContractsDateRangeProvider);
     final referenceDataAsync = ref.watch(_laborContractsReferenceProvider);
+
+    final now = DateTime.now();
+    final startDate =
+        dateRange?['start'] ??
+        DateFormat('yyyy-MM-dd').format(DateTime(now.year, now.month, 1));
+    final endDate = dateRange?['end'] ?? DateFormat('yyyy-MM-dd').format(now);
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () =>
+              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Mikataba ya Labor' : 'Labor Contracts'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.dashboard_rounded),
+            tooltip: isSwahili ? 'Dashibodi' : 'Dashboard',
+            onPressed: () => context.go('/labor-dashboard'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            tooltip: isSwahili ? 'Chuja Tarehe' : 'Filter Date',
+            onPressed: () => _selectDateRange(context, ref),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -83,6 +121,73 @@ class LaborContractsScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               children: [
+                _SectionCard(
+                  isDarkMode: isDarkMode,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isSwahili ? 'Tarehe' : 'Date Range',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _DateFilterField(
+                              label: isSwahili ? 'Tangu' : 'From',
+                              value: startDate,
+                              onChanged: (val) =>
+                                  ref
+                                      .read(
+                                        laborContractsDateRangeProvider
+                                            .notifier,
+                                      )
+                                      .state = val != null
+                                  ? {
+                                      ...?ref.read(
+                                        laborContractsDateRangeProvider,
+                                      ),
+                                      'start': val,
+                                    }
+                                  : null,
+                              isDarkMode: isDarkMode,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _DateFilterField(
+                              label: isSwahili ? 'Hadi' : 'To',
+                              value: endDate,
+                              onChanged: (val) =>
+                                  ref
+                                      .read(
+                                        laborContractsDateRangeProvider
+                                            .notifier,
+                                      )
+                                      .state = val != null
+                                  ? {
+                                      ...?ref.read(
+                                        laborContractsDateRangeProvider,
+                                      ),
+                                      'end': val,
+                                    }
+                                  : null,
+                              isDarkMode: isDarkMode,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
                 _SectionCard(
                   isDarkMode: isDarkMode,
                   child: Column(
@@ -247,6 +352,41 @@ class LaborContractsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _selectDateRange(BuildContext context, WidgetRef ref) async {
+    final now = DateTime.now();
+    final initialRange = DateTimeRange(
+      start: DateTime(now.year, now.month, 1),
+      end: now,
+    );
+
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: now,
+      initialDateRange: initialRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF2563EB),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      ref.read(laborContractsDateRangeProvider.notifier).state = {
+        'start': DateFormat('yyyy-MM-dd').format(picked.start),
+        'end': DateFormat('yyyy-MM-dd').format(picked.end),
+      };
+    }
   }
 }
 
@@ -652,6 +792,62 @@ class _ContractErrorView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DateFilterField extends StatelessWidget {
+  final String label;
+  final String? value;
+  final Function(String?) onChanged;
+  final bool isDarkMode;
+
+  const _DateFilterField({
+    required this.label,
+    this.value,
+    required this.onChanged,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () async {
+        final date = await showDatePicker(
+          context: context,
+          initialDate: value != null
+              ? DateTime.tryParse(value!) ?? DateTime.now()
+              : DateTime.now(),
+          firstDate: DateTime(2021),
+          lastDate: DateTime(2030),
+        );
+        if (date != null) {
+          onChanged(date.toIso8601String().split('T')[0]);
+        }
+      },
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: isDarkMode ? const Color(0xFF252540) : Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          suffixIcon: value != null
+              ? IconButton(
+                  icon: const Icon(Icons.clear, size: 18),
+                  onPressed: () => onChanged(null),
+                )
+              : const Icon(Icons.calendar_today, size: 18),
+        ),
+        child: Text(
+          value ?? '-',
+          style: TextStyle(
+            color: isDarkMode ? Colors.white : AppColors.textPrimary,
+          ),
+        ),
+      ),
     );
   }
 }

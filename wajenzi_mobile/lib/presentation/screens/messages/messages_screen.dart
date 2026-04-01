@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
+import '../../providers/settings_provider.dart';
 
-final _messagesProvider =
-    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final _messagesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/messages', queryParameters: {'per_page': 50});
+  final response = await api.get(
+    '/messages',
+    queryParameters: {'per_page': 50},
+  );
   final data = response.data is Map<String, dynamic>
       ? response.data as Map<String, dynamic>
       : const <String, dynamic>{};
@@ -18,44 +25,57 @@ final _messagesProvider =
 
 final _messageReferenceProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/messages/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/messages/reference-data');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
 final _birthdaysProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/messages/birthdays');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/messages/birthdays');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
-class MessagesScreen extends ConsumerWidget {
+class MessagesScreen extends ConsumerStatefulWidget {
   const MessagesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MessagesScreen> createState() => _MessagesScreenState();
+}
+
+class _MessagesScreenState extends ConsumerState<MessagesScreen> {
+  @override
+  Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+    final isDarkMode = ref.watch(isDarkModeProvider);
     final messagesAsync = ref.watch(_messagesProvider);
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () =>
+              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
+        ),
         title: const Text('eSMS'),
         actions: [
           IconButton(
             onPressed: () => _showBirthdays(context, ref),
             icon: const Icon(Icons.cake_outlined),
+            tooltip: isSwahili ? 'Siku ya Kuzaliwa' : 'Birthdays',
           ),
           IconButton(
             onPressed: () => ref.invalidate(_messagesProvider),
@@ -104,24 +124,30 @@ class MessagesScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
               children: [
-                _SmsHero(stats: stats),
+                _SmsHero(stats: stats, isSwahili: isSwahili),
                 const SizedBox(height: 16),
-                _StatsGrid(stats: stats),
+                _StatsGrid(stats: stats, isSwahili: isSwahili),
                 const SizedBox(height: 16),
                 _SectionHeader(
-                  title: 'Message History',
+                  title: isSwahili ? 'Historia ya Ujumbe' : 'Message History',
                   subtitle:
-                      '${stats['this_month_messages'] ?? 0} sent this month',
+                      '${stats['this_month_messages'] ?? 0} ${isSwahili ? 'ujumbe mwezi huu' : 'sent this month'}',
                 ),
                 const SizedBox(height: 12),
                 if (items.isEmpty)
-                  const _EmptyCard(
+                  _EmptyCard(
                     icon: Icons.mark_email_read_outlined,
-                    title: 'No SMS history yet',
-                    subtitle: 'Sent messages will appear here.',
+                    title: isSwahili
+                        ? 'Hakuna historia ya SMS'
+                        : 'No SMS history yet',
+                    subtitle: isSwahili
+                        ? 'Ujumbe uliotumwa utaonekana hapa.'
+                        : 'Sent messages will appear here.',
                   )
                 else
-                  ...items.map((item) => _MessageCard(message: item)),
+                  ...items.map(
+                    (item) => _MessageCard(message: item, isSwahili: isSwahili),
+                  ),
               ],
             );
           },
@@ -133,7 +159,8 @@ class MessagesScreen extends ConsumerWidget {
 
 class _SmsHero extends StatelessWidget {
   final Map<String, dynamic> stats;
-  const _SmsHero({required this.stats});
+  final bool isSwahili;
+  const _SmsHero({required this.stats, required this.isSwahili});
 
   @override
   Widget build(BuildContext context) {
@@ -150,18 +177,20 @@ class _SmsHero extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'SMS Messaging',
-            style: TextStyle(
+          Text(
+            isSwahili ? 'Ujumbe wa SMS' : 'SMS Messaging',
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Send messages and track delivery across your organization',
-            style: TextStyle(color: Colors.white70),
+          Text(
+            isSwahili
+                ? 'Tuma ujumbe na ufuatilia ugavi kwa urahisi katika shirika lako'
+                : 'Send messages and track delivery across your organization',
+            style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 18),
           Text(
@@ -173,7 +202,10 @@ class _SmsHero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          const Text('SMS balance', style: TextStyle(color: Colors.white70)),
+          Text(
+            isSwahili ? 'Salio la SMS' : 'SMS balance',
+            style: const TextStyle(color: Colors.white70),
+          ),
         ],
       ),
     );
@@ -182,7 +214,8 @@ class _SmsHero extends StatelessWidget {
 
 class _StatsGrid extends StatelessWidget {
   final Map<String, dynamic> stats;
-  const _StatsGrid({required this.stats});
+  final bool isSwahili;
+  const _StatsGrid({required this.stats, required this.isSwahili});
 
   @override
   Widget build(BuildContext context) {
@@ -195,25 +228,25 @@ class _StatsGrid extends StatelessWidget {
       childAspectRatio: 1.45,
       children: [
         _StatCard(
-          label: 'Sent Today',
+          label: isSwahili ? 'Imetuma Leo' : 'Sent Today',
           value: '${stats['today_messages'] ?? 0}',
           color: AppColors.success,
           icon: Icons.calendar_today_rounded,
         ),
         _StatCard(
-          label: 'This Week',
+          label: isSwahili ? 'Wiki Hii' : 'This Week',
           value: '${stats['this_week_messages'] ?? 0}',
           color: AppColors.warning,
           icon: Icons.date_range_rounded,
         ),
         _StatCard(
-          label: 'Total Messages',
+          label: isSwahili ? 'Jumla ya Ujumbe' : 'Total Messages',
           value: '${stats['total_messages'] ?? 0}',
           color: AppColors.textPrimary,
           icon: Icons.bar_chart_rounded,
         ),
         _StatCard(
-          label: 'This Month',
+          label: isSwahili ? 'Mwezi Huu' : 'This Month',
           value: '${stats['this_month_messages'] ?? 0}',
           color: AppColors.info,
           icon: Icons.event_note_rounded,
@@ -291,7 +324,8 @@ class _SectionHeader extends StatelessWidget {
 
 class _MessageCard extends ConsumerWidget {
   final Map<String, dynamic> message;
-  const _MessageCard({required this.message});
+  final bool isSwahili;
+  const _MessageCard({required this.message, required this.isSwahili});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -326,9 +360,15 @@ class _MessageCard extends ConsumerWidget {
                     await _deleteMessage(context, ref, _toInt(message['id']));
                   }
                 },
-                itemBuilder: (context) => const [
-                  PopupMenuItem<String>(value: 'edit', child: Text('Edit')),
-                  PopupMenuItem<String>(value: 'delete', child: Text('Delete')),
+                itemBuilder: (context) => [
+                  PopupMenuItem<String>(
+                    value: 'edit',
+                    child: Text(isSwahili ? 'Hariri' : 'Edit'),
+                  ),
+                  PopupMenuItem<String>(
+                    value: 'delete',
+                    child: Text(isSwahili ? 'Futa' : 'Delete'),
+                  ),
                 ],
               ),
             ],
@@ -446,8 +486,10 @@ Future<void> _showBirthdays(BuildContext context, WidgetRef ref) async {
                   children: [
                     const Text(
                       'Employee Birthdays',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     if (items.isEmpty)
@@ -617,12 +659,15 @@ class _MessageFormSheet extends ConsumerStatefulWidget {
 
 class _MessageFormSheetState extends ConsumerState<_MessageFormSheet> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameController =
-      TextEditingController(text: widget.message?['name']?.toString() ?? '');
-  late final TextEditingController _phoneController =
-      TextEditingController(text: widget.message?['phone']?.toString() ?? '');
-  late final TextEditingController _messageController =
-      TextEditingController(text: widget.message?['message']?.toString() ?? '');
+  late final TextEditingController _nameController = TextEditingController(
+    text: widget.message?['name']?.toString() ?? '',
+  );
+  late final TextEditingController _phoneController = TextEditingController(
+    text: widget.message?['phone']?.toString() ?? '',
+  );
+  late final TextEditingController _messageController = TextEditingController(
+    text: widget.message?['message']?.toString() ?? '',
+  );
   bool _saving = false;
 
   @override
@@ -682,8 +727,8 @@ class _MessageFormSheetState extends ConsumerState<_MessageFormSheet> {
                   color: smsCount <= 1
                       ? AppColors.success
                       : smsCount <= 3
-                          ? AppColors.warning
-                          : AppColors.error,
+                      ? AppColors.warning
+                      : AppColors.error,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -700,7 +745,8 @@ class _MessageFormSheetState extends ConsumerState<_MessageFormSheet> {
                         ),
                       )
                     : Text(
-                        widget.message == null ? 'Send SMS' : 'Update Record'),
+                        widget.message == null ? 'Send SMS' : 'Update Record',
+                      ),
               ),
             ],
           ),
@@ -732,7 +778,9 @@ class _MessageFormSheetState extends ConsumerState<_MessageFormSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.success,
-          content: Text(id > 0 ? 'SMS record updated' : 'SMS sent successfully'),
+          content: Text(
+            id > 0 ? 'SMS record updated' : 'SMS sent successfully',
+          ),
         ),
       );
     } catch (error) {
@@ -760,7 +808,7 @@ class _BulkMessageSheet extends ConsumerStatefulWidget {
 class _BulkMessageSheetState extends ConsumerState<_BulkMessageSheet> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _messageController = TextEditingController();
-  int _departmentId = 0;
+  int? _departmentId;
   bool _saving = false;
 
   @override
@@ -800,22 +848,23 @@ class _BulkMessageSheetState extends ConsumerState<_BulkMessageSheet> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 18),
-              DropdownButtonFormField<int>(
+              DropdownButtonFormField<int?>(
                 value: _departmentId,
                 decoration: _inputDecoration('Department'),
                 items: [
-                  const DropdownMenuItem<int>(
-                    value: 0,
+                  const DropdownMenuItem<int?>(
+                    value: null,
                     child: Text('All Departments'),
                   ),
-                  ...departments.map(
-                    (item) => DropdownMenuItem<int>(
-                      value: _toInt(item['id']),
+                  ...departments.map((item) {
+                    final id = _toInt(item['id']);
+                    return DropdownMenuItem<int?>(
+                      value: id == 0 ? null : id,
                       child: Text(_text(item['name'])),
-                    ),
-                  ),
+                    );
+                  }),
                 ],
-                onChanged: (value) => setState(() => _departmentId = value ?? 0),
+                onChanged: (value) => setState(() => _departmentId = value),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -833,8 +882,8 @@ class _BulkMessageSheetState extends ConsumerState<_BulkMessageSheet> {
                   color: smsCount <= 1
                       ? AppColors.success
                       : smsCount <= 3
-                          ? AppColors.warning
-                          : AppColors.error,
+                      ? AppColors.warning
+                      : AppColors.error,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -864,13 +913,15 @@ class _BulkMessageSheetState extends ConsumerState<_BulkMessageSheet> {
     setState(() => _saving = true);
 
     try {
-      await ref.read(apiClientProvider).post(
-        '/messages/bulk',
-        data: {
-          'department_id': _departmentId,
-          'message': _messageController.text.trim(),
-        },
-      );
+      await ref
+          .read(apiClientProvider)
+          .post(
+            '/messages/bulk',
+            data: {
+              'department_id': _departmentId,
+              'message': _messageController.text.trim(),
+            },
+          );
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -894,14 +945,14 @@ class _BulkMessageSheetState extends ConsumerState<_BulkMessageSheet> {
 }
 
 InputDecoration _inputDecoration(String label) => InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: Colors.grey.withValues(alpha: 0.08),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
-      ),
-    );
+  labelText: label,
+  filled: true,
+  fillColor: Colors.grey.withValues(alpha: 0.08),
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide.none,
+  ),
+);
 
 Widget _sheetField({
   required TextEditingController controller,
