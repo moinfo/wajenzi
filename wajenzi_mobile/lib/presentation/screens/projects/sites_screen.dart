@@ -46,28 +46,53 @@ final _sitesFilterProvider = StateProvider.autoDispose<_SitesFilter>(
   (ref) => _SitesFilter(),
 );
 
-final _sitesProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+final _sitesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
   final api = ref.watch(apiClientProvider);
   final filter = ref.watch(_sitesFilterProvider);
   final search = ref.watch(_sitesSearchProvider);
 
-  final response = await api.get(
-    '/projects/sites',
-    queryParameters: {
-      if (search.isNotEmpty) 'search': search,
-      ...filter.toQueryParams(),
-    },
-  );
+  try {
+    final response = await api.get(
+      '/sites',
+      queryParameters: {
+        if (search.isNotEmpty) 'search': search,
+        ...filter.toQueryParams(),
+      },
+    );
 
-  return (response.data['data']['sites'] as List?)
-          ?.cast<Map<String, dynamic>>() ??
-      [];
+    final data = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final payload = data['data'] is Map
+        ? Map<String, dynamic>.from(data['data'] as Map)
+        : const <String, dynamic>{};
+
+    return {
+      'items': (payload['sites'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(),
+      'stats': payload['stats'] is Map
+          ? Map<String, dynamic>.from(payload['stats'] as Map)
+          : const <String, dynamic>{},
+      'unavailable_on_live': false,
+    };
+  } on Exception catch (e) {
+    if ('$e'.contains('404')) {
+      return {
+        'items': const <Map<String, dynamic>>[],
+        'stats': const <String, dynamic>{},
+        'unavailable_on_live': true,
+      };
+    }
+    rethrow;
+  }
 });
 
 final _siteDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>?, int>((ref, id) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/projects/sites/$id');
+      final response = await api.get('/sites/$id');
       return response.data['data'] as Map<String, dynamic>?;
     });
 
@@ -171,7 +196,41 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                   onRetry: () => ref.invalidate(_sitesProvider),
                 ),
               ),
-              data: (allItems) {
+              data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.location_off_rounded,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Project Sites haipatikani kwenye live API kwa sasa.'
+                                  : 'Project Sites is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final allItems = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
                 final sites = search.isEmpty
                     ? allItems
                     : allItems.where((site) {
@@ -626,11 +685,11 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                             try {
                               if (isEdit) {
                                 await api.put(
-                                  '/projects/sites/${site!['id']}',
+                                  '/sites/${site!['id']}',
                                   data: data,
                                 );
                               } else {
-                                await api.post('/projects/sites', data: data);
+                                await api.post('/sites', data: data);
                               }
                               ref.invalidate(_sitesProvider);
                               if (ctx.mounted) Navigator.pop(ctx);
@@ -721,7 +780,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
 
     try {
       final api = ref.read(apiClientProvider);
-      await api.delete('/projects/sites/${site['id']}');
+      await api.delete('/sites/${site['id']}');
       ref.invalidate(_sitesProvider);
     } catch (e) {
       if (context.mounted) {

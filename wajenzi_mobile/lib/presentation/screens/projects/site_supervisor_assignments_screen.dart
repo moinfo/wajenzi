@@ -21,16 +21,55 @@ final _assignmentsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   final api = ref.watch(apiClientProvider);
   final filter = ref.watch(_assignmentsFilterProvider);
 
-  final response = await api.get(
-    '/site-supervisor-assignments',
-    queryParameters: {
-      if (filter.siteId != null) 'site_id': filter.siteId.toString(),
-      if (filter.supervisorId != null)
-        'supervisor_id': filter.supervisorId.toString(),
-    },
-  );
+  try {
+    final response = await api.get(
+      '/site-supervisor-assignments',
+      queryParameters: {
+        if (filter.siteId != null) 'site_id': filter.siteId.toString(),
+        if (filter.supervisorId != null)
+          'supervisor_id': filter.supervisorId.toString(),
+      },
+    );
 
-  return response.data['data'] as Map<String, dynamic>;
+    final data = response.data['data'] is Map
+        ? Map<String, dynamic>.from(response.data['data'] as Map)
+        : <String, dynamic>{};
+
+    return {
+      'assignments': (data['assignments'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(),
+      'unassigned_sites': (data['unassigned_sites'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(),
+      'sites': (data['sites'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(),
+      'supervisors': (data['supervisors'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(),
+      'stats': data['stats'] is Map
+          ? Map<String, dynamic>.from(data['stats'] as Map)
+          : const <String, dynamic>{},
+      'unavailable_on_live': false,
+    };
+  } on DioException catch (error) {
+    if ((error.response?.statusCode ?? 0) == 404) {
+      return {
+        'assignments': const <Map<String, dynamic>>[],
+        'unassigned_sites': const <Map<String, dynamic>>[],
+        'sites': const <Map<String, dynamic>>[],
+        'supervisors': const <Map<String, dynamic>>[],
+        'stats': const <String, dynamic>{},
+        'unavailable_on_live': true,
+      };
+    }
+    rethrow;
+  }
 });
 
 class AssignmentsFilter {
@@ -174,6 +213,38 @@ class _SiteSupervisorAssignmentsScreenState
                 ),
               ),
               data: (data) {
+                if (data['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.assignment_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Site Supervisor Assignments haipatikani kwenye live API kwa sasa.'
+                                  : 'Site Supervisor Assignments is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
                 final unassignedSites =
                     (data['unassigned_sites'] as List?)
                         ?.cast<Map<String, dynamic>>() ??

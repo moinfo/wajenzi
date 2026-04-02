@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,30 +11,50 @@ import '../vat/vat_shared.dart';
 final _boqItemsSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
 final _boqItemsProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/boq-items');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      final items = data['data'] as List? ?? const [];
-      return items
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      try {
+        final response = await api.get('/boq-items');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final items = data['data'] as List? ?? const [];
+        return {
+          'items': items
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
+          'unavailable_on_live': false,
+        };
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return {
+            'items': const <Map<String, dynamic>>[],
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 final _boqItemRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/boq-items/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
+  try {
+    final response = await api.get('/boq-items/reference-data');
+    final data = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : const <String, dynamic>{};
+    return data['data'] is Map
+        ? Map<String, dynamic>.from(data['data'] as Map)
+        : const <String, dynamic>{};
+  } on DioException catch (error) {
+    if ((error.response?.statusCode ?? 0) == 404) {
+      return const <String, dynamic>{};
+    }
+    rethrow;
+  }
 });
 
 class BoqItemsScreen extends ConsumerStatefulWidget {
@@ -60,12 +81,24 @@ class _BoqItemsScreenState extends ConsumerState<BoqItemsScreen> {
         ),
         title: Text(isSwahili ? 'BOQ Items' : 'BOQ Items'),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: FloatingActionButton(
-          onPressed: () => _openForm(context, ref),
-          child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Add BOQ Item' : 'Add BOQ Item',
+      floatingActionButton: itemsAsync.maybeWhen(
+        data: (payload) => payload['unavailable_on_live'] == true
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(bottom: 80),
+                child: FloatingActionButton(
+                  onPressed: () => _openForm(context, ref),
+                  child: const Icon(Icons.add_rounded),
+                  tooltip: isSwahili ? 'Add BOQ Item' : 'Add BOQ Item',
+                ),
+              ),
+        orElse: () => Padding(
+          padding: const EdgeInsets.only(bottom: 80),
+          child: FloatingActionButton(
+            onPressed: () => _openForm(context, ref),
+            child: const Icon(Icons.add_rounded),
+            tooltip: isSwahili ? 'Add BOQ Item' : 'Add BOQ Item',
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -121,7 +154,41 @@ class _BoqItemsScreenState extends ConsumerState<BoqItemsScreen> {
                   onRetry: () => ref.invalidate(_boqItemsProvider),
                 ),
               ),
-              data: (items) {
+              data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.inventory_2_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'BOQ Items haipatikani kwenye live API kwa sasa.'
+                                  : 'BOQ Items is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final items = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
                 final filteredItems = items.where((item) {
                   if (search.isNotEmpty) {
                     final haystack = [

@@ -111,6 +111,7 @@ import '../../presentation/screens/staff/staff_bank_details_screen.dart';
 import '../../presentation/screens/staff/adjustments_screen.dart';
 import '../../presentation/screens/staff/payroll_screen.dart';
 import '../../presentation/screens/staff/payroll_administration_screen.dart';
+import '../../presentation/screens/staff/salary_slips_screen.dart';
 import '../../presentation/screens/staff/allowances_screen.dart';
 import '../../presentation/screens/staff/advance_salaries_screen.dart';
 import '../../presentation/screens/staff/attendance_types_screen.dart';
@@ -279,6 +280,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/project-reports',
             name: 'project-reports',
+            builder: (context, state) => const ProjectReportsScreen(),
+          ),
+          GoRoute(
+            path: '/site-daily-reports',
+            name: 'site-daily-reports',
             builder: (context, state) => const ProjectReportsScreen(),
           ),
           GoRoute(
@@ -1104,6 +1110,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const PayrollScreen(),
           ),
           GoRoute(
+            path: '/salary-slips',
+            name: 'salary-slips',
+            builder: (context, state) => const SalarySlipsScreen(),
+          ),
+          GoRoute(
             path: '/payroll-crdb-bank-file',
             name: 'payroll-crdb-bank-file',
             builder: (context, state) => const CrdbBankFileScreen(),
@@ -1890,6 +1901,14 @@ String? _mapWebRoute(String webRoute) {
     'reports_transaction_movement_report': '/accounting',
     'projects': '/staff-projects',
     'leads': '/leads',
+    'leads.index': '/leads',
+    'leads_index': '/leads',
+    'leads.create': '/leads',
+    'leads_create': '/leads',
+    'leads.show': '/leads',
+    'leads_show': '/leads',
+    'leads.edit': '/leads',
+    'leads_edit': '/leads',
     'staff': '/employee-profile',
     'project_clients': '/project-clients',
     'project_documents': '/project-documents',
@@ -1898,6 +1917,8 @@ String? _mapWebRoute(String webRoute) {
     'project_reports': '/project-reports',
     'project-report': '/project-reports',
     'project-reports': '/project-reports',
+    'projects/site-reports/site-daily-reports': '/site-daily-reports',
+    'projects_site_reports_site_daily_reports': '/site-daily-reports',
     'project_types': '/project-types',
     'project-type': '/project-types',
     'project-types': '/project-types',
@@ -1938,10 +1959,11 @@ String? _mapWebRoute(String webRoute) {
     'leave-dashboard': '/leave-dashboard',
     'leaves_leave_dashboard': '/leave-dashboard',
     'leaves/leave_dashboard': '/leave-dashboard',
-    'salary_slips': '/payroll',
-    'salary-slips': '/payroll',
-    'payroll_salary_slips': '/payroll',
-    'payroll/salary_slips': '/payroll',
+    'salary_slips': '/salary-slips',
+    'salary-slips': '/salary-slips',
+    'payroll_salary_slips': '/salary-slips',
+    'payroll/salary_slips': '/salary-slips',
+    'payroll/salary-slips': '/salary-slips',
     'employee_salary_slip': '/payroll',
     'payroll_employee_salary_slip': '/payroll',
     'crdb_bank_file': '/payroll-crdb-bank-file',
@@ -1958,18 +1980,26 @@ String? _mapWebRoute(String webRoute) {
     'payroll': '/payroll',
     'payroll_administration': '/payroll-administration',
     'payroll-administration': '/payroll-administration',
+    'payroll/payroll_administration': '/payroll-administration',
+    'payroll/payroll-administration': '/payroll-administration',
     'allowances': '/allowances',
     'settings_allowances': '/allowances',
     'hr_settings_allowances': '/allowances',
+    'settings/allowances': '/allowances',
     'deductions': '/deductions',
     'settings_deductions': '/deductions',
     'hr_settings_deductions': '/deductions',
+    'settings/deductions': '/deductions',
     'deduction_subscriptions': '/deduction-subscriptions',
     'deduction-subscriptions': '/deduction-subscriptions',
     'settings_deduction_subscriptions': '/deduction-subscriptions',
     'hr_settings_deduction_subscriptions': '/deduction-subscriptions',
+    'settings/deduction_subscriptions': '/deduction-subscriptions',
+    'settings/deduction-subscriptions': '/deduction-subscriptions',
     'payroll_staff_bank_details': '/staff-bank-details',
     'staff_bank_details': '/staff-bank-details',
+    'payroll/staff_bank_details': '/staff-bank-details',
+    'payroll/staff-bank-details': '/staff-bank-details',
     'adjustment': '/adjustments',
     'adjustments': '/adjustments',
     'expenses': '/expenses',
@@ -1977,47 +2007,74 @@ String? _mapWebRoute(String webRoute) {
     'account_types': '/account-types',
     'account-types': '/account-types',
     'finance_financial_settings_account_types': '/account-types',
+    'finance/financial_settings/account_types': '/account-types',
+    'finance/financial-settings/account-types': '/account-types',
     'charts_of_accounts': '/charts-of-accounts',
     'charts-of-accounts': '/charts-of-accounts',
     'finance_financial_settings_charts_of_accounts': '/charts-of-accounts',
+    'finance/financial_settings/charts_of_accounts': '/charts-of-accounts',
+    'finance/financial-settings/charts-of-accounts': '/charts-of-accounts',
     'charts_of_account_usages': '/chart-account-usages',
     'charts-of-account-usages': '/chart-account-usages',
     'finance_financial_settings_charts_of_account_usages':
         '/chart-account-usages',
+    'finance/financial_settings/charts_of_account_usages':
+        '/chart-account-usages',
+    'finance/financial-settings/charts-of-account-usages':
+        '/chart-account-usages',
     'exchange_rates': '/exchange-rates',
     'exchange-rates': '/exchange-rates',
     'finance_financial_settings_exchange_rates': '/exchange-rates',
+    'finance/financial_settings/exchange_rates': '/exchange-rates',
+    'finance/financial-settings/exchange-rates': '/exchange-rates',
     'chart_of_account_variables': '/chart-account-variables',
     'chart-account-variables': '/chart-account-variables',
     'finance_financial_settings_chart_of_account_variables':
+        '/chart-account-variables',
+    'finance/financial_settings/chart_of_account_variables':
+        '/chart-account-variables',
+    'finance/financial-settings/chart-of-account-variables':
         '/chart-account-variables',
     'building_types': '/building-types',
     'building-types': '/building-types',
     'settings_building_types': '/building-types',
     'hr_settings_building_types': '/building-types',
+    'settings/building_types': '/building-types',
+    'settings/building-types': '/building-types',
     'boq_item_categories': '/boq-item-categories',
     'boq-item-categories': '/boq-item-categories',
     'settings_boq_item_categories': '/boq-item-categories',
     'hr_settings_boq_item_categories': '/boq-item-categories',
+    'settings/boq_item_categories': '/boq-item-categories',
+    'settings/boq-item-categories': '/boq-item-categories',
     'boq_items': '/boq-items',
     'boq-items': '/boq-items',
     'settings_boq_items': '/boq-items',
     'hr_settings_boq_items': '/boq-items',
+    'settings/boq_items': '/boq-items',
+    'settings/boq-items': '/boq-items',
     'boq_templates': '/boq-templates',
     'boq-templates': '/boq-templates',
     'settings_boq_templates': '/boq-templates',
     'hr_settings_boq_templates': '/boq-templates',
+    'settings/boq_templates': '/boq-templates',
+    'settings/boq-templates': '/boq-templates',
     'construction_stages': '/construction-stages',
     'construction-stages': '/construction-stages',
     'settings_construction_stages': '/construction-stages',
     'hr_settings_construction_stages': '/construction-stages',
+    'settings/construction_stages': '/construction-stages',
+    'settings/construction-stages': '/construction-stages',
     'activities': '/settings-activities',
     'settings_activities': '/settings-activities',
     'hr_settings_activities': '/settings-activities',
+    'settings/activities': '/settings-activities',
     'sub_activities': '/settings-sub-activities',
     'sub-activities': '/settings-sub-activities',
     'settings_sub_activities': '/settings-sub-activities',
     'hr_settings_sub_activities': '/settings-sub-activities',
+    'settings/sub_activities': '/settings-sub-activities',
+    'settings/sub-activities': '/settings-sub-activities',
     'procurement_dashboard': '/procurement',
     'client_dashboard': '/dashboard',
     'client_projects': '/projects',
@@ -2054,26 +2111,38 @@ String? _mapWebRoute(String webRoute) {
     'staff-salaries': '/staff-salaries',
     'settings_staff_salaries': '/staff-salaries',
     'hr_settings_staff_salary': '/staff-salaries',
+    'settings/staff_salaries': '/staff-salaries',
+    'settings/staff-salaries': '/staff-salaries',
     'advance_salaries': '/advance-salaries',
     'advance-salaries': '/advance-salaries',
     'settings_advance_salaries': '/advance-salaries',
     'hr_settings_advance_salary': '/advance-salaries',
+    'settings/advance_salaries': '/advance-salaries',
+    'settings/advance-salaries': '/advance-salaries',
     'advance_salary': '/advance-salaries',
     'settings_advance_salaries_6': '/advance-salaries',
     'staff_loans': '/staff-loans',
     'staff-loans': '/staff-loans',
     'settings_staff_loans': '/staff-loans',
     'hr_settings_staff_loan': '/staff-loans',
+    'settings/staff_loans': '/staff-loans',
+    'settings/staff-loans': '/staff-loans',
     'staff_loan': '/staff-loans',
     'petty_cash_refill_requests': '/petty-cash-refill-requests',
     'petty_cash_refill_request': '/petty-cash-refill-requests',
     'petty-cash-refill-requests': '/petty-cash-refill-requests',
     'finance_petty_cash_management_petty_cash_refill_requests':
         '/petty-cash-refill-requests',
+    'finance/petty_cash_management/petty_cash_refill_requests':
+        '/petty-cash-refill-requests',
+    'finance/petty-cash-management/petty-cash-refill-requests':
+        '/petty-cash-refill-requests',
     'imprest_requests': '/imprest-requests',
     'imprest_request': '/imprest-requests',
     'imprest-requests': '/imprest-requests',
     'finance_imprest_management_imprest_requests': '/imprest-requests',
+    'finance/imprest_management/imprest_requests': '/imprest-requests',
+    'finance/imprest-management/imprest-requests': '/imprest-requests',
     'statutory_payment': '/accounting',
     'hr_settings_statutory_payment': '/accounting',
     'client_sources': '/settings',
@@ -2225,6 +2294,12 @@ String? _resolveWebRoute(String webRoute) {
   if (route.contains('billing.') || route.contains('billing_')) {
     return '/staff-billing';
   }
+  if (route.contains('site-reports/site-daily-reports') ||
+      route.contains('site_reports_site_daily_reports') ||
+      route.contains('site-daily-reports') ||
+      route.contains('site_daily_reports')) {
+    return '/site-daily-reports';
+  }
   if (route.contains('project')) return '/staff-projects';
   if (route.contains('billing') || route.contains('invoice')) {
     return '/staff-billing';
@@ -2261,6 +2336,12 @@ String? _resolveWebRoute(String webRoute) {
     return '/payroll-crdb-bank-file';
   }
   if (route.contains('payroll')) return '/payroll';
+  if (route.contains('site-reports/site-daily-reports') ||
+      route.contains('site_reports_site_daily_reports') ||
+      route.contains('site-daily-reports') ||
+      route.contains('site_daily_reports')) {
+    return '/site-daily-reports';
+  }
   if (route.contains('attendance') ||
       route.contains('site_visit') ||
       route.contains('site-visit') ||

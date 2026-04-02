@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -11,33 +12,61 @@ final _leaveBalanceProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/leave-requests/balance');
-  return response.data is Map<String, dynamic>
-      ? Map<String, dynamic>.from(response.data as Map<String, dynamic>)
-      : <String, dynamic>{};
+  try {
+    final response = await api.get('/leave-requests/balance');
+    final data = response.data is Map<String, dynamic>
+        ? Map<String, dynamic>.from(response.data as Map<String, dynamic>)
+        : <String, dynamic>{};
+    return {
+      ...data,
+      'unavailable_on_live': false,
+    };
+  } on DioException catch (error) {
+    if ((error.response?.statusCode ?? 0) == 404) {
+      return const {
+        'data': <String, dynamic>{'balances': <Map<String, dynamic>>[]},
+        'unavailable_on_live': true,
+      };
+    }
+    rethrow;
+  }
 });
 
 final _recentLeaveRequestsProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/leave-requests');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      final items = data['data'] as List? ?? const [];
-      return items
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList()
-        ..sort((a, b) {
-          final dateA =
-              DateTime.tryParse(a['created_at']?.toString() ?? '') ??
-              DateTime(2000);
-          final dateB =
-              DateTime.tryParse(b['created_at']?.toString() ?? '') ??
-              DateTime(2000);
-          return dateB.compareTo(dateA);
-        });
+      try {
+        final response = await api.get('/leave-requests');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final items = data['data'] as List? ?? const [];
+        final mapped = items
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList()
+          ..sort((a, b) {
+            final dateA =
+                DateTime.tryParse(a['created_at']?.toString() ?? '') ??
+                DateTime(2000);
+            final dateB =
+                DateTime.tryParse(b['created_at']?.toString() ?? '') ??
+                DateTime(2000);
+            return dateB.compareTo(dateA);
+          });
+        return {
+          'items': mapped,
+          'unavailable_on_live': false,
+        };
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return {
+            'items': const <Map<String, dynamic>>[],
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 final _leaveTypesProvider =
@@ -107,6 +136,15 @@ class _LeaveDashboardScreenState extends ConsumerState<LeaveDashboardScreen> {
                   isSwahili: isSwahili,
                 ),
                 data: (balanceData) {
+                  if (balanceData['unavailable_on_live'] == true) {
+                    return _ErrorCard(
+                      message: isSwahili
+                          ? 'Leave Dashboard haipatikani kwenye live API kwa sasa.'
+                          : 'Leave Dashboard is not available on the live API right now.',
+                      onRetry: () => ref.invalidate(_leaveBalanceProvider),
+                      isSwahili: isSwahili,
+                    );
+                  }
                   final balances = balanceData['data'] is Map
                       ? (balanceData['data'] as Map)['balances'] as List? ?? []
                       : <dynamic>[];
@@ -164,7 +202,10 @@ class _LeaveDashboardScreenState extends ConsumerState<LeaveDashboardScreen> {
                   onRetry: () => ref.invalidate(_recentLeaveRequestsProvider),
                   isSwahili: isSwahili,
                 ),
-                data: (requests) {
+                data: (payload) {
+                  final requests = (payload['items'] as List? ?? const [])
+                      .whereType<Map<String, dynamic>>()
+                      .toList();
                   if (requests.isEmpty) {
                     return _EmptyRequestsCard(
                       isSwahili: isSwahili,

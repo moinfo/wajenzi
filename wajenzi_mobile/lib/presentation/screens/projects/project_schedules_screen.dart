@@ -48,22 +48,35 @@ final _schedulesFilterProvider = StateProvider.autoDispose<_ScheduleFilter>(
 );
 
 final _projectSchedulesProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
       final filter = ref.watch(_schedulesFilterProvider);
-      final response = await api.get(
-        '/project-schedules',
-        queryParameters: filter.toQueryParams(),
-      );
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      final items = data['data'] as List? ?? const [];
+      try {
+        final response = await api.get(
+          '/project-schedules',
+          queryParameters: filter.toQueryParams(),
+        );
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final items = data['data'] as List? ?? const [];
 
-      return items
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+        return {
+          'items': items
+              .whereType<Map>()
+              .map((item) => _normalizeSchedule(Map<String, dynamic>.from(item)))
+              .toList(),
+          'unavailable_on_live': false,
+        };
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return {
+            'items': const <Map<String, dynamic>>[],
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 final _projectScheduleDetailProvider = FutureProvider.autoDispose
@@ -74,7 +87,7 @@ final _projectScheduleDetailProvider = FutureProvider.autoDispose
           ? response.data as Map<String, dynamic>
           : const <String, dynamic>{};
       return data['data'] is Map
-          ? Map<String, dynamic>.from(data['data'] as Map)
+          ? _normalizeSchedule(Map<String, dynamic>.from(data['data'] as Map))
           : const <String, dynamic>{};
     });
 
@@ -185,7 +198,52 @@ class _ProjectSchedulesScreenState
                   onRetry: () => ref.invalidate(_projectSchedulesProvider),
                 ),
               ),
-              data: (allItems) {
+              data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.calendar_month_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Project Schedules haipatikani kwenye live API kwa sasa.'
+                                  : 'Project Schedules is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              isSwahili
+                                  ? 'Njia ya /api/v1/project-schedules haipo live, kwa hiyo screen ya native haiwezi kupakia data bado.'
+                                  : 'The /api/v1/project-schedules route is missing on live, so the native screen cannot load data yet.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final allItems = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
                 final schedules = search.isEmpty
                     ? allItems
                     : allItems.where((schedule) {
@@ -258,6 +316,7 @@ class _ProjectSchedulesScreenState
                         ),
                         onDelete: () =>
                             _deleteSchedule(context, schedules[index]),
+                        canDelete: schedules[index]['can_delete'] == true,
                       );
                     }, childCount: schedules.length),
                   ),
@@ -571,6 +630,7 @@ class _ScheduleCard extends StatelessWidget {
   final bool isDarkMode;
   final VoidCallback onView;
   final VoidCallback onDelete;
+  final bool canDelete;
 
   const _ScheduleCard({
     required this.schedule,
@@ -578,6 +638,7 @@ class _ScheduleCard extends StatelessWidget {
     required this.isDarkMode,
     required this.onView,
     required this.onDelete,
+    required this.canDelete,
   });
 
   @override
@@ -635,35 +696,42 @@ class _ScheduleCard extends StatelessWidget {
                       else if (value == 'delete')
                         onDelete();
                     },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'view',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.visibility, size: 20),
-                            const SizedBox(width: 8),
-                            Text(isSwahili ? 'Tazama' : 'View'),
-                          ],
+                    itemBuilder: (_) {
+                      final items = <PopupMenuEntry<String>>[
+                        PopupMenuItem(
+                          value: 'view',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.visibility, size: 20),
+                              const SizedBox(width: 8),
+                              Text(isSwahili ? 'Tazama' : 'View'),
+                            ],
+                          ),
                         ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.delete,
-                              size: 20,
-                              color: AppColors.error,
+                      ];
+                      if (canDelete) {
+                        items.add(
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.delete,
+                                  size: 20,
+                                  color: AppColors.error,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isSwahili ? 'Futa' : 'Delete',
+                                  style: const TextStyle(color: AppColors.error),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              isSwahili ? 'Futa' : 'Delete',
-                              style: const TextStyle(color: AppColors.error),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+                        );
+                      }
+                      return items;
+                    },
                   ),
                 ],
               ),
@@ -1146,4 +1214,36 @@ double _toDouble(dynamic value) {
 int _toInt(dynamic value) {
   if (value is int) return value;
   return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+Map<String, dynamic> _normalizeSchedule(Map<String, dynamic> raw) {
+  final progress = raw['progress'] is Map
+      ? Map<String, dynamic>.from(raw['progress'] as Map)
+      : const <String, dynamic>{};
+
+  return {
+    ...raw,
+    'id': _toInt(raw['id']),
+    'lead_number': raw['lead_number']?.toString() ?? '',
+    'lead_name': raw['lead_name']?.toString() ?? '',
+    'client_name': raw['client_name']?.toString() ?? '',
+    'assigned_architect_name': raw['assigned_architect_name']?.toString() ?? '',
+    'start_date': raw['start_date']?.toString() ?? '',
+    'end_date': raw['end_date']?.toString() ?? '',
+    'status': raw['status']?.toString() ?? '',
+    'notes': raw['notes']?.toString() ?? '',
+    'progress': {
+      'total': _toInt(progress['total']),
+      'completed': _toInt(progress['completed']),
+      'in_progress': _toInt(progress['in_progress']),
+      'pending': _toInt(progress['pending']),
+      'overdue': _toInt(progress['overdue']),
+      'percentage': _toDouble(progress['percentage']),
+    },
+    'activities': (raw['activities'] as List? ?? const [])
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(),
+    'can_delete': raw['can_delete'] == true,
+  };
 }

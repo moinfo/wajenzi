@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -17,29 +18,49 @@ final _payrollAdminStatusFilterProvider = StateProvider.autoDispose<String?>(
 );
 
 final _payrollAdminProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/payroll-administration');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      final items = data['data'] as List? ?? const [];
-      return items
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      try {
+        final response = await api.get('/payroll-administration');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final items = data['data'] as List? ?? const [];
+        return {
+          'items': items
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
+          'unavailable_on_live': false,
+        };
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return {
+            'items': const <Map<String, dynamic>>[],
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 final _payrollAdminRefsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/payroll-administration/reference-data');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      return data['data'] is Map
-          ? Map<String, dynamic>.from(data['data'] as Map)
-          : const <String, dynamic>{};
+      try {
+        final response = await api.get('/payroll-administration/reference-data');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        return data['data'] is Map
+            ? Map<String, dynamic>.from(data['data'] as Map)
+            : const <String, dynamic>{};
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return const <String, dynamic>{};
+        }
+        rethrow;
+      }
     });
 
 class PayrollAdministrationScreen extends ConsumerStatefulWidget {
@@ -71,12 +92,24 @@ class _PayrollAdministrationScreenState
           isSwahili ? 'Usimamizi wa Payroll' : 'Payroll Administration',
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: FloatingActionButton(
-          onPressed: () => _openForm(context, ref),
-          child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza Payroll' : 'Add Payroll',
+      floatingActionButton: payrollsAsync.maybeWhen(
+        data: (payload) => payload['unavailable_on_live'] == true
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(bottom: 80),
+                child: FloatingActionButton(
+                  onPressed: () => _openForm(context, ref),
+                  child: const Icon(Icons.add_rounded),
+                  tooltip: isSwahili ? 'Ongeza Payroll' : 'Add Payroll',
+                ),
+              ),
+        orElse: () => Padding(
+          padding: const EdgeInsets.only(bottom: 80),
+          child: FloatingActionButton(
+            onPressed: () => _openForm(context, ref),
+            child: const Icon(Icons.add_rounded),
+            tooltip: isSwahili ? 'Ongeza Payroll' : 'Add Payroll',
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -217,7 +250,41 @@ class _PayrollAdministrationScreenState
                   onRetry: () => ref.invalidate(_payrollAdminProvider),
                 ),
               ),
-              data: (payrolls) {
+              data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.payments_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Payroll Administration haipatikani kwenye live API kwa sasa.'
+                                  : 'Payroll Administration is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final payrolls = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
                 final filteredPayrolls = payrolls.where((payroll) {
                   if (search.isNotEmpty) {
                     final haystack = [

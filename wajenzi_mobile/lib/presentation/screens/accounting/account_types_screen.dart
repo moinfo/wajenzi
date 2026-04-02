@@ -12,17 +12,30 @@ final _accountTypesSearchProvider = StateProvider.autoDispose<String>(
 );
 
 final _accountTypesProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/account-types');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      final items = data['data'] as List? ?? const [];
-      return items
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      try {
+        final response = await api.get('/account-types');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final items = data['data'] as List? ?? const [];
+        return {
+          'items': items
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
+          'unavailable_on_live': false,
+        };
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return {
+            'items': const <Map<String, dynamic>>[],
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 String _accountTypeErrorMessage(Object error, bool isSwahili) {
@@ -126,7 +139,41 @@ class _AccountTypesScreenState extends ConsumerState<AccountTypesScreen> {
                   onRetry: () => ref.invalidate(_accountTypesProvider),
                 ),
               ),
-              data: (types) {
+              data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.category_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Account Types haipatikani kwenye live API kwa sasa.'
+                                  : 'Account Types is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final types = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
                 final filteredTypes = search.isEmpty
                     ? types
                     : types.where((type) {

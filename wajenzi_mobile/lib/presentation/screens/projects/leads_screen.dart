@@ -57,37 +57,68 @@ final _leadsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
 ) async {
   final api = ref.watch(apiClientProvider);
   final filter = ref.watch(_leadsFilterProvider);
-  final response = await api.get(
-    '/leads',
-    queryParameters: filter.toQueryParams(),
-  );
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
+  try {
+    final response = await api.get(
+      '/leads',
+      queryParameters: filter.toQueryParams(),
+    );
+    final data = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : const <String, dynamic>{};
 
-  return {
-    'items': (data['data'] as List? ?? const [])
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList(),
-    'meta': data['meta'] is Map
-        ? Map<String, dynamic>.from(data['meta'] as Map)
-        : const <String, dynamic>{},
-  };
+    return {
+      'items': (data['data'] as List? ?? const [])
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(),
+      'meta': data['meta'] is Map
+          ? Map<String, dynamic>.from(data['meta'] as Map)
+          : const <String, dynamic>{},
+      'unavailable_on_live': false,
+    };
+  } on DioException catch (error) {
+    if ((error.response?.statusCode ?? 0) == 404) {
+      return {
+        'items': const <Map<String, dynamic>>[],
+        'meta': const <String, dynamic>{},
+        'unavailable_on_live': true,
+      };
+    }
+    rethrow;
+  }
 });
 
 final _leadRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/leads/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
+  try {
+    final response = await api.get('/leads/reference-data');
+    final data = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : const <String, dynamic>{};
 
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
+    final refs = data['data'] is Map
+        ? Map<String, dynamic>.from(data['data'] as Map)
+        : const <String, dynamic>{};
+
+    return {
+      ...refs,
+      'unavailable_on_live': false,
+    };
+  } on DioException catch (error) {
+    if ((error.response?.statusCode ?? 0) == 404) {
+      return const {
+        'lead_sources': <Map<String, dynamic>>[],
+        'lead_statuses': <Map<String, dynamic>>[],
+        'service_interesteds': <Map<String, dynamic>>[],
+        'salespeople': <Map<String, dynamic>>[],
+        'clients': <Map<String, dynamic>>[],
+        'unavailable_on_live': true,
+      };
+    }
+    rethrow;
+  }
 });
 
 String _leadMessage(Object error, bool isSwahili) {
@@ -129,14 +160,6 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Lead' : 'Leads'),
-      ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: FloatingActionButton(
-          onPressed: () => _openForm(context),
-          child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza' : 'Add',
-        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_leadsProvider),
@@ -184,12 +207,43 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                     refsAsync.when(
                       loading: () => const SizedBox.shrink(),
                       error: (_, __) => const SizedBox.shrink(),
-                      data: (refs) => _LeadFilters(
-                        refs: refs,
-                        filter: filter,
-                        isSwahili: isSwahili,
-                        isDarkMode: isDarkMode,
-                      ),
+                      data: (refs) {
+                        final refsUnavailable =
+                            refs['unavailable_on_live'] == true;
+
+                        return Column(
+                          children: [
+                            if (refsUnavailable)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  isSwahili
+                                      ? 'Lead helpers hazipo kwenye live API kwa sasa. Unaweza kutazama lead zilizopo, lakini filters za reference data na form ya kuongeza zimezimwa.'
+                                      : 'Lead helper endpoints are missing on the live API right now. You can still view existing leads, but reference-data filters and the add form are disabled.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            if (refsUnavailable) const SizedBox(height: 12),
+                            if (!refsUnavailable)
+                              _LeadFilters(
+                                refs: refs,
+                                filter: filter,
+                                isSwahili: isSwahili,
+                                isDarkMode: isDarkMode,
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -207,6 +261,49 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                 ),
               ),
               data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.person_search_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Lead Management haipatikani kwenye live API kwa sasa.'
+                                  : 'Lead Management is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              isSwahili
+                                  ? 'Njia ya /api/v1/leads haipo live, kwa hiyo screen ya native haiwezi kupakia data bado.'
+                                  : 'The /api/v1/leads route is missing on live, so the native screen cannot load data yet.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
                 final allItems = (payload['items'] as List)
                     .cast<Map<String, dynamic>>();
                 final total = payload['meta'] is Map<String, dynamic>
@@ -306,6 +403,29 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
               },
             ),
           ],
+        ),
+      ),
+      floatingActionButton: refsAsync.maybeWhen(
+        data: (refs) {
+          if (refs['unavailable_on_live'] == true) {
+            return null;
+          }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 80),
+            child: FloatingActionButton(
+              onPressed: () => _openForm(context),
+              child: const Icon(Icons.add_rounded),
+              tooltip: isSwahili ? 'Ongeza' : 'Add',
+            ),
+          );
+        },
+        orElse: () => Padding(
+          padding: const EdgeInsets.only(bottom: 80),
+          child: FloatingActionButton(
+            onPressed: () => _openForm(context),
+            child: const Icon(Icons.add_rounded),
+            tooltip: isSwahili ? 'Ongeza' : 'Add',
+          ),
         ),
       ),
     );

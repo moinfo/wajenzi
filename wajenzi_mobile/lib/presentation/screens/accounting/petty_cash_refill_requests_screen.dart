@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -18,35 +19,54 @@ final _pettyCashStatusFilterProvider = StateProvider.autoDispose<String?>(
 final _pettyCashRefillRequestsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/petty-cash-refill-requests');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      final items = data['data'] as List? ?? const [];
+      try {
+        final response = await api.get('/petty-cash-refill-requests');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final items = data['data'] as List? ?? const [];
 
-      return {
-        'items': items
-            .whereType<Map>()
-            .map((item) => Map<String, dynamic>.from(item))
-            .toList(),
-        'meta': data['meta'] is Map
-            ? Map<String, dynamic>.from(data['meta'] as Map)
-            : const <String, dynamic>{},
-      };
+        return {
+          'items': items
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
+          'meta': data['meta'] is Map
+              ? Map<String, dynamic>.from(data['meta'] as Map)
+              : const <String, dynamic>{},
+          'unavailable_on_live': false,
+        };
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return {
+            'items': const <Map<String, dynamic>>[],
+            'meta': const <String, dynamic>{},
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 final _pettyCashRefillRefsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get(
-        '/petty-cash-refill-requests/reference-data',
-      );
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      return data['data'] is Map
-          ? Map<String, dynamic>.from(data['data'] as Map)
-          : const <String, dynamic>{};
+      try {
+        final response = await api.get(
+          '/petty-cash-refill-requests/reference-data',
+        );
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        return data['data'] is Map
+            ? Map<String, dynamic>.from(data['data'] as Map)
+            : const <String, dynamic>{};
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return const <String, dynamic>{};
+        }
+        rethrow;
+      }
     });
 
 class PettyCashRefillRequestsScreen extends ConsumerStatefulWidget {
@@ -76,12 +96,24 @@ class _PettyCashRefillRequestsScreenState
         ),
         title: Text(isSwahili ? 'Petty Cash Refill' : 'Petty Cash Refill'),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: FloatingActionButton(
-          onPressed: () => _openForm(context, ref),
-          child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza' : 'Add',
+      floatingActionButton: requestsAsync.maybeWhen(
+        data: (payload) => payload['unavailable_on_live'] == true
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(bottom: 80),
+                child: FloatingActionButton(
+                  onPressed: () => _openForm(context, ref),
+                  child: const Icon(Icons.add_rounded),
+                  tooltip: isSwahili ? 'Ongeza' : 'Add',
+                ),
+              ),
+        orElse: () => Padding(
+          padding: const EdgeInsets.only(bottom: 80),
+          child: FloatingActionButton(
+            onPressed: () => _openForm(context, ref),
+            child: const Icon(Icons.add_rounded),
+            tooltip: isSwahili ? 'Ongeza' : 'Add',
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -209,6 +241,38 @@ class _PettyCashRefillRequestsScreenState
                 ),
               ),
               data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.account_balance_wallet_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Petty Cash Refill Requests haipatikani kwenye live API kwa sasa.'
+                                  : 'Petty Cash Refill Requests is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
                 final items =
                     (payload['items'] as List?)
                         ?.whereType<Map<String, dynamic>>()

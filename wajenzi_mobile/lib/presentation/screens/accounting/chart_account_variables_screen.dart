@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,17 +13,30 @@ final _chartAccountVariablesSearchProvider = StateProvider.autoDispose<String>(
 );
 
 final _chartAccountVariablesProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/chart-account-variables');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      final items = data['data'] as List? ?? const [];
-      return items
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      try {
+        final response = await api.get('/chart-account-variables');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final items = data['data'] as List? ?? const [];
+        return {
+          'items': items
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
+          'unavailable_on_live': false,
+        };
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return {
+            'items': const <Map<String, dynamic>>[],
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 class ChartAccountVariablesScreen extends ConsumerStatefulWidget {
@@ -56,12 +70,24 @@ class _ChartAccountVariablesScreenState
           isSwahili ? 'Mabadiliko ya Akaunti' : 'Chart Account Variables',
         ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: FloatingActionButton(
-          onPressed: () => _openForm(context, ref),
-          child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza Kigezo' : 'Add Variable',
+      floatingActionButton: variablesAsync.maybeWhen(
+        data: (payload) => payload['unavailable_on_live'] == true
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(bottom: 80),
+                child: FloatingActionButton(
+                  onPressed: () => _openForm(context, ref),
+                  child: const Icon(Icons.add_rounded),
+                  tooltip: isSwahili ? 'Ongeza Kigezo' : 'Add Variable',
+                ),
+              ),
+        orElse: () => Padding(
+          padding: const EdgeInsets.only(bottom: 80),
+          child: FloatingActionButton(
+            onPressed: () => _openForm(context, ref),
+            child: const Icon(Icons.add_rounded),
+            tooltip: isSwahili ? 'Ongeza Kigezo' : 'Add Variable',
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -125,7 +151,41 @@ class _ChartAccountVariablesScreenState
                   onRetry: () => ref.invalidate(_chartAccountVariablesProvider),
                 ),
               ),
-              data: (variables) {
+              data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.tune_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Chart Account Variables haipatikani kwenye live API kwa sasa.'
+                                  : 'Chart Account Variables is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final variables = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
                 final filteredVariables = variables.where((variable) {
                   if (search.isNotEmpty) {
                     final haystack = [

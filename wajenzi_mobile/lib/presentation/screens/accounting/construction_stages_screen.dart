@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,29 +13,49 @@ final _constructionStagesSearchProvider = StateProvider.autoDispose<String>(
 );
 
 final _constructionStagesProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/construction-stages');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      final items = data['data'] as List? ?? const [];
-      return items
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList();
+      try {
+        final response = await api.get('/construction-stages');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final items = data['data'] as List? ?? const [];
+        return {
+          'items': items
+              .whereType<Map>()
+              .map((item) => Map<String, dynamic>.from(item))
+              .toList(),
+          'unavailable_on_live': false,
+        };
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return {
+            'items': const <Map<String, dynamic>>[],
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 final _constructionStageRefsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/construction-stages/reference-data');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      return data['data'] is Map
-          ? Map<String, dynamic>.from(data['data'] as Map)
-          : const <String, dynamic>{};
+      try {
+        final response = await api.get('/construction-stages/reference-data');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        return data['data'] is Map
+            ? Map<String, dynamic>.from(data['data'] as Map)
+            : const <String, dynamic>{};
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return const <String, dynamic>{};
+        }
+        rethrow;
+      }
     });
 
 class ConstructionStagesScreen extends ConsumerStatefulWidget {
@@ -66,12 +87,24 @@ class _ConstructionStagesScreenState
         ),
         title: Text(isSwahili ? 'Hatua za Ujenzi' : 'Construction Stages'),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 80),
-        child: FloatingActionButton(
-          onPressed: () => _openForm(context, ref),
-          child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza Hatua' : 'Add Stage',
+      floatingActionButton: stagesAsync.maybeWhen(
+        data: (payload) => payload['unavailable_on_live'] == true
+            ? null
+            : Padding(
+                padding: const EdgeInsets.only(bottom: 80),
+                child: FloatingActionButton(
+                  onPressed: () => _openForm(context, ref),
+                  child: const Icon(Icons.add_rounded),
+                  tooltip: isSwahili ? 'Ongeza Hatua' : 'Add Stage',
+                ),
+              ),
+        orElse: () => Padding(
+          padding: const EdgeInsets.only(bottom: 80),
+          child: FloatingActionButton(
+            onPressed: () => _openForm(context, ref),
+            child: const Icon(Icons.add_rounded),
+            tooltip: isSwahili ? 'Ongeza Hatua' : 'Add Stage',
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -133,7 +166,41 @@ class _ConstructionStagesScreenState
                   onRetry: () => ref.invalidate(_constructionStagesProvider),
                 ),
               ),
-              data: (stages) {
+              data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.layers_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Construction Stages haipatikani kwenye live API kwa sasa.'
+                                  : 'Construction Stages is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                final stages = (payload['items'] as List)
+                    .cast<Map<String, dynamic>>();
                 final sorted = _sortStages(stages);
                 final filteredStages = sorted.where((stage) {
                   if (search.isNotEmpty) {

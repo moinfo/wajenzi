@@ -18,13 +18,28 @@ final _chartsStatusFilterProvider = StateProvider.autoDispose<String?>(
 final _chartsOfAccountsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/charts-of-accounts');
-      final data = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      return data['data'] is Map
-          ? Map<String, dynamic>.from(data['data'] as Map)
-          : const <String, dynamic>{};
+      try {
+        final response = await api.get('/charts-of-accounts');
+        final data = response.data is Map<String, dynamic>
+            ? response.data as Map<String, dynamic>
+            : const <String, dynamic>{};
+        final payload = data['data'] is Map
+            ? Map<String, dynamic>.from(data['data'] as Map)
+            : const <String, dynamic>{};
+        return {
+          ...payload,
+          'unavailable_on_live': false,
+        };
+      } on DioException catch (error) {
+        if ((error.response?.statusCode ?? 0) == 404) {
+          return const {
+            'accounts': <Map<String, dynamic>>[],
+            'account_types': <Map<String, dynamic>>[],
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 String _chartErrorMessage(Object error, bool isSwahili) {
@@ -190,6 +205,38 @@ class _ChartsOfAccountsScreenState
                 ),
               ),
               data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.account_tree_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Charts of Accounts haipatikani kwenye live API kwa sasa.'
+                                  : 'Charts of Accounts is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
                 final accountTypes = _toMaps(payload['account_types']);
                 final accounts = _toMaps(payload['accounts']);
 

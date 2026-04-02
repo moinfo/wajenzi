@@ -20,35 +20,48 @@ final _leaveRequestsProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
     final api = ref.watch(apiClientProvider);
     final status = ref.watch(_leaveRequestStatusProvider);
 
-    final responses = await Future.wait([
-      api.get(
-        '/leave-requests',
-        queryParameters: {
-          if (status != null && status.isNotEmpty) 'status': status,
-        },
-      ),
-      api.get('/leave-requests/balance'),
-    ]);
+    try {
+      final responses = await Future.wait([
+        api.get(
+          '/leave-requests',
+          queryParameters: {
+            if (status != null && status.isNotEmpty) 'status': status,
+          },
+        ),
+        api.get('/leave-requests/balance'),
+      ]);
 
-    final listData = responses[0].data is Map<String, dynamic>
-        ? responses[0].data as Map<String, dynamic>
-        : const <String, dynamic>{};
-    final balanceData = responses[1].data is Map<String, dynamic>
-        ? responses[1].data as Map<String, dynamic>
-        : const <String, dynamic>{};
+      final listData = responses[0].data is Map<String, dynamic>
+          ? responses[0].data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final balanceData = responses[1].data is Map<String, dynamic>
+          ? responses[1].data as Map<String, dynamic>
+          : const <String, dynamic>{};
 
-    return {
-      'items': (listData['data'] as List? ?? const [])
-          .whereType<Map>()
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList(),
-      'meta': listData['meta'] is Map
-          ? Map<String, dynamic>.from(listData['meta'] as Map)
-          : const <String, dynamic>{},
-      'balance': balanceData['data'] is Map
-          ? Map<String, dynamic>.from(balanceData['data'] as Map)
-          : const <String, dynamic>{},
-    };
+      return {
+        'items': (listData['data'] as List? ?? const [])
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(),
+        'meta': listData['meta'] is Map
+            ? Map<String, dynamic>.from(listData['meta'] as Map)
+            : const <String, dynamic>{},
+        'balance': balanceData['data'] is Map
+            ? Map<String, dynamic>.from(balanceData['data'] as Map)
+            : const <String, dynamic>{},
+        'unavailable_on_live': false,
+      };
+    } on DioException catch (error) {
+      if ((error.response?.statusCode ?? 0) == 404) {
+        return {
+          'items': const <Map<String, dynamic>>[],
+          'meta': const <String, dynamic>{},
+          'balance': const <String, dynamic>{},
+          'unavailable_on_live': true,
+        };
+      }
+      rethrow;
+    }
   },
 );
 
@@ -229,6 +242,36 @@ class _LeaveRequestsScreenState extends ConsumerState<LeaveRequestsScreen> {
                   onRetry: () => ref.invalidate(_leaveRequestsProvider),
                 ),
                 data: (payload) {
+                  if (payload['unavailable_on_live'] == true) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.event_note_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Leave Requests haipatikani kwenye live API kwa sasa.'
+                                  : 'Leave Requests is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
                   final items = payload['items'] as List? ?? [];
                   final meta =
                       payload['meta'] as Map<String, dynamic>? ?? const {};

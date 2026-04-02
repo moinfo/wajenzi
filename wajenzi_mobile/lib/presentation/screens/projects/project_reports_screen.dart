@@ -41,18 +41,72 @@ final _projectReportsFilterProvider = StateProvider.autoDispose<_ReportFilter>(
 final _projectReportsProjectsProvider =
     FutureProvider.autoDispose<List<dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/projects');
-      return response.data['data'] as List? ?? [];
+      try {
+        final response = await api.get('/projects');
+        return response.data['data'] as List? ?? [];
+      } catch (_) {
+        return const [];
+      }
     });
 
 final _projectReportsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/project-reports');
-      return {
-        'items': response.data['data'] as List? ?? const [],
-        'meta': response.data['meta'] as Map<String, dynamic>? ?? const {},
-      };
+      try {
+        final response = await api.get(
+          '/site-daily-reports',
+          queryParameters: {'per_page': 100},
+        );
+        final rawItems = response.data['data'] as List? ?? const [];
+        final items = rawItems.whereType<Map>().map((item) {
+          final map = Map<String, dynamic>.from(item);
+          final site = map['site'] is Map
+              ? Map<String, dynamic>.from(map['site'] as Map)
+              : const <String, dynamic>{};
+          final preparedBy = map['prepared_by_user'] is Map
+              ? Map<String, dynamic>.from(map['prepared_by_user'] as Map)
+              : const <String, dynamic>{};
+          return {
+            ...map,
+            'project_name':
+                site['name']?.toString() ??
+                map['project_name']?.toString() ??
+                '-',
+            'summary':
+                map['next_steps']?.toString() ??
+                map['challenges']?.toString() ??
+                map['status']?.toString() ??
+                '-',
+            'author_name':
+                preparedBy['name']?.toString() ??
+                map['prepared_by_name']?.toString() ??
+                '-',
+            'type': 'site_daily_report',
+            'report_date': map['report_date']?.toString() ?? '',
+          };
+        }).toList();
+
+        final meta = response.data['meta'] as Map<String, dynamic>? ?? const {};
+        return {
+          'items': items,
+          'meta': {
+            ...meta,
+            'total': meta['total'] ?? items.length,
+            'daily_reports': items.length,
+            'site_visits': 0,
+          },
+          'unavailable_on_live': false,
+        };
+      } catch (e) {
+        if ('$e'.contains('404')) {
+          return {
+            'items': const <Map<String, dynamic>>[],
+            'meta': const <String, dynamic>{},
+            'unavailable_on_live': true,
+          };
+        }
+        rethrow;
+      }
     });
 
 class ProjectReportsScreen extends ConsumerStatefulWidget {
@@ -137,12 +191,14 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                     projectsAsync.when(
                       loading: () => const SizedBox.shrink(),
                       error: (_, __) => const SizedBox.shrink(),
-                      data: (projects) => _ReportFilters(
-                        projects: projects as List,
-                        filter: filter,
-                        isSwahili: isSwahili,
-                        isDarkMode: isDarkMode,
-                      ),
+                      data: (projects) => (projects as List).isEmpty
+                          ? const SizedBox.shrink()
+                          : _ReportFilters(
+                              projects: projects,
+                              filter: filter,
+                              isSwahili: isSwahili,
+                              isDarkMode: isDarkMode,
+                            ),
                     ),
                   ],
                 ),
@@ -160,6 +216,38 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                 ),
               ),
               data: (payload) {
+                if (payload['unavailable_on_live'] == true) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.assessment_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isSwahili
+                                  ? 'Site Daily Reports haipatikani kwenye live API kwa sasa.'
+                                  : 'Site Daily Reports is not available on the live API right now.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
                 final allItems = (payload['items'] as List)
                     .cast<Map<String, dynamic>>();
                 final meta = payload['meta'] as Map<String, dynamic>;
