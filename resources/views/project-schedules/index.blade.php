@@ -4,11 +4,10 @@
 <div class="container-fluid">
     <div class="content">
         <div class="content-heading d-flex justify-content-between align-items-center mb-3">
-            <h2 class="flex-grow-1">
-                <i class="fa fa-calendar-alt text-primary mr-2"></i> Project Schedules
-            </h2>
+            <h2 class="flex-grow-1"><i class="fa fa-calendar-alt text-primary mr-2"></i> Project Schedules</h2>
         </div>
 
+        <!-- Filters -->
         <div class="block block-themed">
             <div class="block-content">
                 <form method="GET" class="row">
@@ -29,6 +28,7 @@
             </div>
         </div>
 
+        <!-- Schedules List -->
         <div class="block block-themed">
             <div class="block-header bg-primary">
                 <h3 class="block-title">All Schedules</h3>
@@ -38,7 +38,7 @@
                     <table class="table table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>Lead</th>
+                                <th>Project / Lead</th>
                                 <th>Client</th>
                                 <th>Architect</th>
                                 <th>Start Date</th>
@@ -52,14 +52,22 @@
                             @forelse($schedules as $schedule)
                                 <tr>
                                     <td>
-                                        <a href="{{ route('leads.show', $schedule->lead_id) }}">
-                                            {{ $schedule->lead->lead_number ?? $schedule->lead->name ?? 'N/A' }}
-                                        </a>
+                                        @if($schedule->project)
+                                            <i class="fa fa-building text-primary mr-1"></i>
+                                            {{ $schedule->project->project_name }}
+                                        @elseif($schedule->lead)
+                                            <a href="{{ route('leads.show', $schedule->lead_id) }}">
+                                                <i class="fa fa-bullseye text-info mr-1"></i>
+                                                {{ $schedule->lead->lead_number ?? $schedule->lead->name ?? 'N/A' }}
+                                            </a>
+                                        @else
+                                            N/A
+                                        @endif
                                     </td>
-                                    <td>{{ $schedule->client ? trim(($schedule->client->first_name ?? '') . ' ' . ($schedule->client->last_name ?? '')) : 'N/A' }}</td>
+                                    <td>{{ $schedule->client ? $schedule->client->first_name . ' ' . $schedule->client->last_name : 'N/A' }}</td>
                                     <td>{{ $schedule->assignedArchitect->name ?? 'Unassigned' }}</td>
-                                    <td>{{ optional($schedule->start_date)->format('d/m/Y') ?? 'N/A' }}</td>
-                                    <td>{{ optional($schedule->end_date)->format('d/m/Y') ?? 'N/A' }}</td>
+                                    <td>{{ $schedule->start_date->format('d/m/Y') }}</td>
+                                    <td>{{ $schedule->end_date ? $schedule->end_date->format('d/m/Y') : 'N/A' }}</td>
                                     <td>
                                         <div class="progress" style="height: 20px;">
                                             <div class="progress-bar bg-success" role="progressbar" style="width: {{ $schedule->progress }}%">
