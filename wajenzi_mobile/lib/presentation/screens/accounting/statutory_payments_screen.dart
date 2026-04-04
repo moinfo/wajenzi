@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../../core/services/external_launcher_service.dart';
 import '../../providers/settings_provider.dart';
 import '../vat/vat_shared.dart';
@@ -50,19 +51,25 @@ class StatutoryPaymentsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final paymentsAsync = ref.watch(_statutoryPaymentsProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Malipo ya Kisheria' : 'Statutory Payments'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _openForm(context, ref),
-          ),
-        ],
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _openForm(context, ref),
+          child: const Icon(Icons.add_rounded),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_statutoryPaymentsProvider),

@@ -33,6 +33,13 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
 
+  static const List<String> _importantReportDestinations = [
+    '/architect-bonus/report',
+    '/reports-statutory-category',
+    '/reports-statutory-payment',
+    '/reports-statutory-schedules',
+  ];
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -95,6 +102,9 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
                       controller: _searchController,
                       onChanged: (value) => setState(() => _query = value),
                       totalCount: reports.length,
+                      subtitleOverride: isSwahili
+                          ? 'Ripoti muhimu zilizo tayari kwa simu'
+                          : 'Important reports available on mobile',
                     ),
                   ),
                 ),
@@ -166,6 +176,11 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
       final supportsMobile =
           mobileDestination != null && mobileDestination != '/reports';
 
+      if (!supportsMobile ||
+          !_importantReportDestinations.contains(mobileDestination)) {
+        return;
+      }
+
       final reportKey = '${name.toLowerCase()}|${route.toLowerCase()}|$url';
       if (seen.contains(reportKey)) return;
       seen.add(reportKey);
@@ -188,7 +203,18 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
       }
     }
 
-    items.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    items.sort((a, b) {
+      final aDestination = a.mobileDestination ?? '';
+      final bDestination = b.mobileDestination ?? '';
+      final aIndex = _importantReportDestinations.indexOf(aDestination);
+      final bIndex = _importantReportDestinations.indexOf(bDestination);
+      final normalizedA = aIndex < 0 ? 999 : aIndex;
+      final normalizedB = bIndex < 0 ? 999 : bIndex;
+      if (normalizedA != normalizedB) {
+        return normalizedA.compareTo(normalizedB);
+      }
+      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+    });
     return items;
   }
 
@@ -462,6 +488,7 @@ class _ReportsHeader extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final int totalCount;
+  final String? subtitleOverride;
 
   const _ReportsHeader({
     required this.isDarkMode,
@@ -469,14 +496,17 @@ class _ReportsHeader extends StatelessWidget {
     required this.controller,
     required this.onChanged,
     required this.totalCount,
+    this.subtitleOverride,
   });
 
   @override
   Widget build(BuildContext context) {
-    final heading = isSwahili ? 'Ripoti zinazohusiana' : 'Related Reports';
-    final summary = isSwahili
-        ? '$totalCount ripoti zimepatikana'
-        : '$totalCount reports available';
+    final heading = isSwahili ? 'Ripoti Muhimu' : 'Important Reports';
+    final summary =
+        subtitleOverride ??
+        (isSwahili
+            ? '$totalCount ripoti zimepatikana'
+            : '$totalCount reports available');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

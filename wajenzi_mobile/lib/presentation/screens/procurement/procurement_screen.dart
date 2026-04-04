@@ -2389,14 +2389,25 @@ Future<void> _showMaterialRequestForm(
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  isEdit
-                      ? (isSwahili ? 'Hariri Ombi' : 'Edit Request')
-                      : (isSwahili ? 'Ombi Jipya' : 'New Request'),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        isEdit
+                            ? (isSwahili ? 'Hariri Ombi' : 'Edit Request')
+                            : (isSwahili ? 'Ombi Jipya' : 'New Request'),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
@@ -2768,14 +2779,25 @@ Future<void> _showSupplierQuotationForm(
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  isEdit
-                      ? (isSwahili ? 'Hariri Nukuu' : 'Edit Quotation')
-                      : (isSwahili ? 'Nukuu Mpya' : 'New Quotation'),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        isEdit
+                            ? (isSwahili ? 'Hariri Nukuu' : 'Edit Quotation')
+                            : (isSwahili ? 'Nukuu Mpya' : 'New Quotation'),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
@@ -3401,12 +3423,23 @@ Future<void> _showRecordDeliveryForm(
                 children: [
                   _SheetHandle(isDarkMode: false),
                   const SizedBox(height: 12),
-                  Text(
-                    isSwahili ? 'Rekodi Delivery' : 'Record Delivery',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          isSwahili ? 'Rekodi Delivery' : 'Record Delivery',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -4061,13 +4094,31 @@ class _ProcurementDetailSheet extends ConsumerWidget {
               children: [
                 _SheetHandle(isDarkMode: isDarkMode),
                 const SizedBox(height: 12),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: isDarkMode
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.close,
+                        color: isDarkMode
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 18),
                 ...builder(detail),

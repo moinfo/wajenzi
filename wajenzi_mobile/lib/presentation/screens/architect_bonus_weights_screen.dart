@@ -1,12 +1,13 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
 import '../../core/network/api_client.dart';
 import '../../core/router/app_router.dart';
-import '../providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/common/loading_widget.dart';
-import '../widgets/common/error_widget.dart';
 
 class ArchitectBonusWeightsScreen extends ConsumerStatefulWidget {
   const ArchitectBonusWeightsScreen({super.key});
@@ -18,11 +19,11 @@ class ArchitectBonusWeightsScreen extends ConsumerStatefulWidget {
 
 class _ArchitectBonusWeightsScreenState
     extends ConsumerState<ArchitectBonusWeightsScreen> {
+  final NumberFormat _money = NumberFormat('#,##0');
   bool _isLoading = false;
-  bool _isSaving = false;
-  Map<String, dynamic> _weightsData = {};
-  Map<String, double> _weights = {};
-  List<dynamic> _tiers = [];
+  bool _isSavingWeights = false;
+  Map<String, double> _weights = <String, double>{};
+  List<Map<String, dynamic>> _tiers = <Map<String, dynamic>>[];
 
   @override
   void initState() {
@@ -38,110 +39,62 @@ class _ArchitectBonusWeightsScreenState
     try {
       final api = ref.read(apiClientProvider);
       final response = await api.get('/architect-bonus/weights');
+      final data = response.data['data'] as Map<String, dynamic>? ?? {};
+      final weights = (data['weights'] as List<dynamic>? ?? <dynamic>[])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      final tiers = (data['tiers'] as List<dynamic>? ?? <dynamic>[])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
 
-      if (response.statusCode == 200) {
-        final data = response.data['data'];
-
-        setState(() {
-          _weightsData = data;
-          _weights = {
-            for (var weight in data['weights'])
-              weight['factor']: weight['weight'].toDouble(),
-          };
-          _tiers = data['tiers'] ?? [];
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
+      setState(() {
+        _weights = {
+          for (final weight in weights)
+            '${weight['factor']}':
+                double.tryParse('${weight['weight'] ?? 0}') ?? 0,
+        };
+        _tiers = tiers;
+        _isLoading = false;
+      });
+    } catch (error) {
       setState(() {
         _isLoading = false;
       });
-
-      String errorMessage = 'Error loading weights configuration';
-
-      if (e.toString().contains('401') ||
-          e.toString().contains('Unauthorized')) {
-        errorMessage = 'Authentication required. Please login again.';
-      } else if (e.toString().contains('403') ||
-          e.toString().contains('Forbidden')) {
-        errorMessage =
-            'Permission denied. You may not have access to weights configuration.';
-      } else if (e.toString().contains('404')) {
-        errorMessage =
-            'Weights endpoint not found. Please check API configuration.';
-      } else if (e.toString().contains('Connection')) {
-        errorMessage =
-            'Cannot connect to server. Please check your internet connection.';
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: () => _loadWeights(),
-            ),
-          ),
-        );
-      }
+      _showSnackBar(_humanizeError(error), isError: true);
     }
   }
 
-  Future<void> _saveWeights() async {
-    // Validate weights sum to 1.0
-    final total = _weights.values.fold<double>(
-      0.0,
-      (sum, weight) => sum + weight,
+  String _humanizeError(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        final message = data['message']?.toString();
+        if (message != null && message.isNotEmpty) return message;
+      }
+      switch (error.response?.statusCode) {
+        case 401:
+          return 'Authentication required. Please login again.';
+        case 403:
+          return 'Permission denied. You may not have access to bonus settings.';
+        case 404:
+          return 'Bonus settings endpoint not found.';
+      }
+    }
+    return 'Error loading bonus settings.';
+  }
+
+  void _showSnackBar(String message, {required bool isError}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+      ),
     );
-    if ((total - 1.0).abs() > 0.01) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Weights must sum to 100%. Current total: ${(total * 100).toStringAsFixed(1)}%',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+  }
 
-    setState(() {
-      _isSaving = true;
-    });
-
-    try {
-      final api = ref.read(apiClientProvider);
-      final response = await api.put(
-        '/architect-bonus/weights',
-        data: {'weights': _weights.map((key, value) => MapEntry(key, value))},
-      );
-
-      if (response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Bonus weights updated successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating weights: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setState(() {
-        _isSaving = false;
-      });
-    }
+  double _totalWeight() {
+    return _weights.values.fold<double>(0, (sum, weight) => sum + weight);
   }
 
   void _updateWeight(String factor, double value) {
@@ -150,15 +103,284 @@ class _ArchitectBonusWeightsScreenState
     });
   }
 
-  double _getTotalWeight() {
-    return _weights.values.fold<double>(0.0, (sum, weight) => sum + weight);
+  Future<void> _saveWeights() async {
+    final total = _totalWeight();
+    if ((total - 1.0).abs() > 0.01) {
+      _showSnackBar(
+        'Weights must sum to 100%. Current total: ${(total * 100).toStringAsFixed(1)}%',
+        isError: true,
+      );
+      return;
+    }
+
+    setState(() {
+      _isSavingWeights = true;
+    });
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.put(
+        '/architect-bonus/weights',
+        data: {'weights': _weights},
+      );
+      _showSnackBar(
+        response.data['message']?.toString() ??
+            'Bonus weights updated successfully.',
+        isError: false,
+      );
+      await _loadWeights();
+    } catch (error) {
+      _showSnackBar(_humanizeError(error), isError: true);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingWeights = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showEditTierSheet(Map<String, dynamic> tier) async {
+    final isSwahili = ref.read(isSwahiliProvider);
+    final formKey = GlobalKey<FormState>();
+    final minController = TextEditingController(
+      text: '${(double.tryParse('${tier['min_amount'] ?? 0}') ?? 0).toStringAsFixed(0)}',
+    );
+    final maxController = TextEditingController(
+      text: '${(double.tryParse('${tier['max_amount'] ?? 0}') ?? 0).toStringAsFixed(0)}',
+    );
+    final unitsController = TextEditingController(
+      text: '${tier['max_units'] ?? 0}',
+    );
+    var isSaving = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setSheetState) {
+            final maxUnits = int.tryParse(unitsController.text.trim()) ?? 0;
+            final maxBonus = maxUnits * 10000;
+
+            Future<void> saveTier() async {
+              if (!formKey.currentState!.validate()) return;
+
+              setSheetState(() {
+                isSaving = true;
+              });
+
+              try {
+                final api = ref.read(apiClientProvider);
+                final response = await api.put(
+                  '/architect-bonus/tier/${tier['id']}',
+                  data: {
+                    'min_amount':
+                        double.parse(minController.text.trim()),
+                    'max_amount':
+                        double.parse(maxController.text.trim()),
+                    'max_units': int.parse(unitsController.text.trim()),
+                  },
+                );
+
+                if (!mounted) return;
+                Navigator.pop(sheetContext);
+                _showSnackBar(
+                  response.data['message']?.toString() ??
+                      'Tier updated successfully.',
+                  isError: false,
+                );
+                await _loadWeights();
+              } catch (error) {
+                setSheetState(() {
+                  isSaving = false;
+                });
+                _showSnackBar(_humanizeError(error), isError: true);
+              }
+            }
+
+            return SafeArea(
+              top: false,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(sheetContext).scaffoldBackgroundColor,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  16,
+                  20,
+                  20 + MediaQuery.of(sheetContext).viewInsets.bottom,
+                ),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[400],
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              isSwahili ? 'Hariri Tier' : 'Edit Tier',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => Navigator.pop(sheetContext),
+                            icon: const Icon(Icons.close),
+                            label: Text(isSwahili ? 'Funga' : 'Close'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: minController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Min Amount (TZS) *',
+                        ),
+                        validator: (value) {
+                          final parsed = double.tryParse((value ?? '').trim());
+                          if (parsed == null || parsed < 0) {
+                            return 'Enter a valid minimum amount';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: maxController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Max Amount (TZS) *',
+                        ),
+                        validator: (value) {
+                          final parsed = double.tryParse((value ?? '').trim());
+                          final minParsed = double.tryParse(
+                            minController.text.trim(),
+                          );
+                          if (parsed == null || minParsed == null) {
+                            return 'Enter a valid maximum amount';
+                          }
+                          if (parsed <= minParsed) {
+                            return 'Max amount must be greater than min amount';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: unitsController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Max Units *',
+                        ),
+                        validator: (value) {
+                          final parsed = int.tryParse((value ?? '').trim());
+                          if (parsed == null || parsed < 1) {
+                            return 'Enter valid max units';
+                          }
+                          return null;
+                        },
+                        onChanged: (_) => setSheetState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Max Bonus: TZS ${_money.format(maxBonus)}',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: () => Navigator.pop(sheetContext),
+                              icon: const Icon(Icons.close),
+                              label: Text(isSwahili ? 'Funga' : 'Close'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: isSaving ? null : saveTier,
+                              icon: isSaving
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Icon(Icons.save),
+                              label: Text(isSwahili ? 'Hifadhi' : 'Save'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _weightDescription(String factor, bool isSwahili) {
+    switch (factor) {
+      case 'schedule':
+        return isSwahili
+            ? 'Utendaji wa ratiba na kukamilisha kwa wakati.'
+            : 'Schedule performance and on-time completion.';
+      case 'quality':
+        return isSwahili
+            ? 'Ubora wa muundo na viwango vya kitaalamu.'
+            : 'Design quality and technical standards.';
+      case 'client':
+        return isSwahili
+            ? 'Ufanisi wa idhini ya mteja na marekebisho.'
+            : 'Client approval efficiency and revision count.';
+      default:
+        return isSwahili
+            ? 'Uzito wa utendaji.'
+            : 'Performance weight.';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isSwahili = ref.watch(isSwahiliProvider);
-    final totalWeight = _getTotalWeight();
-    final isTotalValid = (totalWeight - 1.0).abs() <= 0.01;
+    final total = _totalWeight();
+    final isTotalValid = (total - 1.0).abs() <= 0.01;
 
     return Scaffold(
       appBar: AppBar(
@@ -169,379 +391,334 @@ class _ArchitectBonusWeightsScreenState
         ),
         title: Text(
           isSwahili
-              ? 'Mipangilio ya Uzito wa Bonasi'
-              : 'Bonus Weights Configuration',
+              ? 'Mipangilio ya Bonasi'
+              : 'Bonus Settings',
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
             onPressed: _isLoading ? null : _loadWeights,
+            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
           ),
         ],
       ),
       body: _isLoading
           ? LoadingWidget(
               message: isSwahili
-                  ? 'Inapakia mipangilio ya uzito...'
-                  : 'Loading weights configuration...',
+                  ? 'Inapakia mipangilio ya bonasi...'
+                  : 'Loading bonus settings...',
             )
-          : SingleChildScrollView(
+          : ListView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Weights Configuration Card
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isSwahili
-                                ? 'Uzito wa Vifactori vya Utendaji'
-                                : 'Performance Factor Weights',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+              children: [
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isSwahili
+                              ? 'Performance Weights'
+                              : 'Performance Weights',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isSwahili
+                              ? 'Jumla ya uzito lazima iwe 100% kama kwenye web.'
+                              : 'Weights must total 100%, matching the web settings page.',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 16),
+                        ..._weights.entries.map(
+                          (entry) => _WeightEditor(
+                            factor: entry.key,
+                            value: entry.value,
+                            description: _weightDescription(
+                              entry.key,
+                              isSwahili,
+                            ),
+                            onChanged: (value) =>
+                                _updateWeight(entry.key, value),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: (isTotalValid ? Colors.green : Colors.red)
+                                .withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isTotalValid ? Colors.green : Colors.red,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            isSwahili
-                                ? 'Rekebisha uzito wa kila factor katika hesabu ya bonasi. Jumla lazima iwe 100%.'
-                                : 'Adjust the weight of each factor in bonus calculation. Weights must sum to 100%.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Weight Sliders
-                          ..._weights.entries.map((entry) {
-                            return _WeightSlider(
-                              factor: entry.key,
-                              value: entry.value,
-                              description: _getWeightDescription(
-                                entry.key,
-                                isSwahili,
-                              ),
-                              onChanged: (value) =>
-                                  _updateWeight(entry.key, value),
-                              isSwahili: isSwahili,
-                            );
-                          }).toList(),
-
-                          const SizedBox(height: 20),
-
-                          // Total Weight Indicator
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isTotalValid
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
+                          child: Row(
+                            children: [
+                              Icon(
+                                isTotalValid
+                                    ? Icons.check_circle
+                                    : Icons.error_outline,
                                 color: isTotalValid ? Colors.green : Colors.red,
-                                width: 1,
                               ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
                                   isTotalValid
-                                      ? Icons.check_circle
-                                      : Icons.error,
-                                  color: isTotalValid
-                                      ? Colors.green
-                                      : Colors.red,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    '${isSwahili ? 'Jumla' : 'Total'}: ${(totalWeight * 100).toStringAsFixed(1)}%',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: isTotalValid
-                                          ? Colors.green
-                                          : Colors.red,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
+                                      ? 'Total ${(total * 100).toStringAsFixed(1)}% - Valid'
+                                      : 'Total ${(total * 100).toStringAsFixed(1)}% - Must equal 100%',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color:
+                                        isTotalValid ? Colors.green : Colors.red,
                                   ),
                                 ),
-                                if (!isTotalValid) ...[
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    isSwahili
-                                        ? 'Lazima iwe 100%'
-                                        : 'Must be 100%',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.red,
-                                      fontWeight: FontWeight.w600,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed:
+                                (_isSavingWeights || !isTotalValid)
+                                ? null
+                                : _saveWeights,
+                            icon: _isSavingWeights
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
                                     ),
-                                  ),
-                                ],
-                              ],
+                                  )
+                                : const Icon(Icons.save),
+                            label: Text(
+                              isSwahili ? 'Hifadhi Uzito' : 'Save Weights',
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  // Bonus Tiers Card
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isSwahili
-                                ? 'Kiwango cha Vifurushi vya Bonasi'
-                                : 'Bonus Unit Tiers',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isSwahili
+                              ? 'Unit Tiers'
+                              : 'Unit Tiers (1 Unit = TZS 10,000)',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isSwahili
+                              ? 'Hariri min amount, max amount, na max units kama kwenye web.'
+                              : 'Edit min amount, max amount, and max units just like the web page.',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 16),
+                        ..._tiers.map(
+                          (tier) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _TierCard(
+                              tier: tier,
+                              formatMoney: (value) => _money.format(
+                                value is num
+                                    ? value
+                                    : double.tryParse('$value') ?? 0,
+                              ),
+                              onEdit: () => _showEditTierSheet(tier),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            isSwahili
-                                ? 'Kiwango cha sasa cha hesabu ya bonasi kulingana na vitengo vya utendaji.'
-                                : 'Current bonus calculation tiers based on performance units.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Tiers List
-                          ..._tiers
-                              .map(
-                                (tier) =>
-                                    _TierCard(tier: tier, isSwahili: isSwahili),
-                              )
-                              .toList(),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 20),
-
-                  // Save Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: (_isSaving || !isTotalValid)
-                          ? null
-                          : _saveWeights,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: _isSaving
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(isSwahili ? 'Inahifadhi...' : 'Saving...'),
-                              ],
-                            )
-                          : Text(isSwahili ? 'Hifadhi Uzito' : 'Save Weights'),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
     );
   }
-
-  String _getWeightDescription(String factor, bool isSwahili) {
-    switch (factor) {
-      case 'schedule':
-        return isSwahili
-            ? 'Utendaji wa Ratiba - Kumaliza kwa wakati na kushikamana na makasha'
-            : 'Schedule Performance - On-time completion and deadline adherence';
-      case 'quality':
-        return isSwahili
-            ? 'Ubora wa Muundo - Ubora wa kiufundi na viwango vya usanifu'
-            : 'Design Quality - Technical excellence and design standards';
-      case 'client':
-        return isSwahili
-            ? 'Ufanisi wa Idhini ya Mteja - Kuridhika kwa mteja na idadi ya marekebisho'
-            : 'Client Approval Efficiency - Client satisfaction and revision count';
-      default:
-        return isSwahili
-            ? 'Uzito wa factori ya utendaji'
-            : 'Performance factor weight';
-    }
-  }
 }
 
-class _WeightSlider extends StatelessWidget {
-  final String factor;
-  final double value;
-  final String description;
-  final ValueChanged<double> onChanged;
-  final bool isSwahili;
-
-  const _WeightSlider({
-    super.key,
+class _WeightEditor extends StatelessWidget {
+  const _WeightEditor({
     required this.factor,
     required this.value,
     required this.description,
     required this.onChanged,
-    required this.isSwahili,
   });
+
+  final String factor;
+  final double value;
+  final String description;
+  final ValueChanged<double> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final displayName = factor
+    final title = factor
         .split('_')
         .map((word) => word[0].toUpperCase() + word.substring(1))
         .join(' ');
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                displayName,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '${(value * 100).toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11,
-                  color: Theme.of(context).colorScheme.primary,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          description,
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-        ),
-        const SizedBox(height: 12),
-        Slider(
-          value: value,
-          min: 0.0,
-          max: 1.0,
-          divisions: 20,
-          onChanged: onChanged,
-        ),
-        const SizedBox(height: 16),
-      ],
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${(value * 100).toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(description, style: TextStyle(color: Colors.grey[600])),
+          Slider(
+            value: value,
+            min: 0,
+            max: 1,
+            divisions: 20,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _TierCard extends StatelessWidget {
-  final dynamic tier;
-  final bool isSwahili;
+  const _TierCard({
+    required this.tier,
+    required this.formatMoney,
+    required this.onEdit,
+  });
 
-  const _TierCard({super.key, required this.tier, required this.isSwahili});
+  final Map<String, dynamic> tier;
+  final String Function(dynamic value) formatMoney;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxBonus = tier['max_bonus_amount'] ??
+        ((int.tryParse('${tier['max_units'] ?? 0}') ?? 0) * 10000);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${tier['name'] ?? 'Tier'}',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                label: const Text('Edit'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _TierMetric(
+                label: 'Min Amount',
+                value: 'TZS ${formatMoney(tier['min_amount'])}',
+              ),
+              _TierMetric(
+                label: 'Max Amount',
+                value: 'TZS ${formatMoney(tier['max_amount'])}',
+              ),
+              _TierMetric(
+                label: 'Max Units',
+                value: '${tier['max_units'] ?? 0}',
+              ),
+              _TierMetric(
+                label: 'Max Bonus',
+                value: 'TZS ${formatMoney(maxBonus)}',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TierMetric extends StatelessWidget {
+  const _TierMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.grey.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Icon(
-              Icons.trending_up,
-              color: Theme.of(context).colorScheme.primary,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  tier['name'] ??
-                      (isSwahili ? 'Kiwango Kisichojulikana' : 'Unknown Tier'),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${isSwahili ? 'Vitengo' : 'Units'}: ${tier['min_amount']?.toString() ?? '0'} - ${tier['max_amount']?.toString() ?? '∞'}',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '${tier['bonus_percentage']?.toString() ?? '0'}%',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+          const SizedBox(height: 2),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
         ],
       ),
     );

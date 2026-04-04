@@ -504,15 +504,20 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('architect-bonus/weights', [ArchitectBonusApiController::class, 'weights']);
     Route::post('architect-bonus', [ArchitectBonusApiController::class, 'store']);
     Route::put('architect-bonus/weights', [ArchitectBonusApiController::class, 'updateWeights']);
+    Route::put('architect-bonus/tier/{id}', [ArchitectBonusApiController::class, 'updateTier']);
     Route::get('architect-bonus/{id}', [ArchitectBonusApiController::class, 'show']);
     Route::put('architect-bonus/{id}', [ArchitectBonusApiController::class, 'update']);
     Route::delete('architect-bonus/{id}', [ArchitectBonusApiController::class, 'destroy']);
+    Route::post('architect-bonus/{id}/start', [ArchitectBonusApiController::class, 'start']);
+    Route::post('architect-bonus/{id}/score', [ArchitectBonusApiController::class, 'score']);
+    Route::post('architect-bonus/{id}/paid', [ArchitectBonusApiController::class, 'markPaid']);
 
     // Provision Tax CRUD
     Route::get('provision-tax/reference-data', [ProvisionTaxApiController::class, 'referenceData']);
     Route::get('provision-tax', [ProvisionTaxApiController::class, 'index']);
     Route::post('provision-tax', [ProvisionTaxApiController::class, 'store']);
     Route::get('provision-tax/{id}', [ProvisionTaxApiController::class, 'show']);
+    Route::post('provision-tax/{id}', [ProvisionTaxApiController::class, 'update']);
     Route::put('provision-tax/{id}', [ProvisionTaxApiController::class, 'update']);
     Route::delete('provision-tax/{id}', [ProvisionTaxApiController::class, 'destroy']);
 

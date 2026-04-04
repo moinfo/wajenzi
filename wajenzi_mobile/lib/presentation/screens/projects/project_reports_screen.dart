@@ -42,7 +42,7 @@ final _projectReportsProjectsProvider =
     FutureProvider.autoDispose<List<dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
       try {
-        final response = await api.get('/projects');
+        final response = await api.get('/project-daily-reports/projects');
         return response.data['data'] as List? ?? [];
       } catch (_) {
         return const [];
@@ -54,34 +54,25 @@ final _projectReportsProvider =
       final api = ref.watch(apiClientProvider);
       try {
         final response = await api.get(
-          '/site-daily-reports',
+          '/project-daily-reports',
           queryParameters: {'per_page': 100},
         );
         final rawItems = response.data['data'] as List? ?? const [];
         final items = rawItems.whereType<Map>().map((item) {
           final map = Map<String, dynamic>.from(item);
-          final site = map['site'] is Map
-              ? Map<String, dynamic>.from(map['site'] as Map)
-              : const <String, dynamic>{};
-          final preparedBy = map['prepared_by_user'] is Map
-              ? Map<String, dynamic>.from(map['prepared_by_user'] as Map)
-              : const <String, dynamic>{};
           return {
             ...map,
-            'project_name':
-                site['name']?.toString() ??
-                map['project_name']?.toString() ??
-                '-',
+            'project_name': map['project_name']?.toString() ?? '-',
             'summary':
-                map['next_steps']?.toString() ??
-                map['challenges']?.toString() ??
-                map['status']?.toString() ??
+                map['work_completed']?.toString() ??
+                map['issues_faced']?.toString() ??
+                map['materials_used']?.toString() ??
                 '-',
             'author_name':
-                preparedBy['name']?.toString() ??
-                map['prepared_by_name']?.toString() ??
+                map['supervisor_name']?.toString() ??
                 '-',
-            'type': 'site_daily_report',
+            'status': 'CREATED',
+            'type': 'project_daily_report',
             'report_date': map['report_date']?.toString() ?? '',
           };
         }).toList();
@@ -118,6 +109,38 @@ class ProjectReportsScreen extends ConsumerStatefulWidget {
 }
 
 class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
+  void _openReportForm({Map<String, dynamic>? report}) {
+    showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ProjectDailyReportFormSheet(report: report),
+    ).then((result) {
+      if (result == true) {
+        ref.invalidate(_projectReportsProvider);
+      }
+    });
+  }
+
+  void _openReportDetails(Map<String, dynamic> report) {
+    final id = report['id'] as int?;
+    if (id == null) return;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ProjectDailyReportDetailSheet(
+        reportId: id,
+        fallback: report,
+        onEdit: () {
+          Navigator.pop(context);
+          _openReportForm(report: report);
+        },
+        onDeleted: () => ref.invalidate(_projectReportsProvider),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
@@ -137,7 +160,16 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Ripoti za Miradi' : 'Project Reports'),
+        title: Text(
+          isSwahili ? 'Ripoti za Kila Siku za Miradi' : 'Project Daily Reports',
+        ),
+      ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _openReportForm(),
+          child: const Icon(Icons.add_rounded),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_projectReportsProvider),
@@ -232,8 +264,8 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                             const SizedBox(height: 16),
                             Text(
                               isSwahili
-                                  ? 'Site Daily Reports haipatikani kwenye live API kwa sasa.'
-                                  : 'Site Daily Reports is not available on the live API right now.',
+                                  ? 'Project Daily Reports haipatikani kwenye live API kwa sasa.'
+                                  : 'Project Daily Reports is not available on the live API right now.',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -280,8 +312,8 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                           Text(
                             allItems.isEmpty
                                 ? (isSwahili
-                                      ? 'Hakuna ripoti za miradi'
-                                      : 'No project reports found')
+                                      ? 'Hakuna ripoti za kila siku za miradi'
+                                      : 'No project daily reports found')
                                 : (isSwahili
                                       ? 'Hakuna matokeo yanayolingana'
                                       : 'No reports match your search'),
@@ -347,6 +379,9 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                           item: item,
                           isSwahili: isSwahili,
                           isDarkMode: isDarkMode,
+                          onTap: () => _openReportDetails(item),
+                          onEdit: () => _openReportForm(report: item),
+                          onDelete: () => _deleteReport(item),
                         ),
                       ),
                       const SizedBox(height: 80),
@@ -359,6 +394,60 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _deleteReport(Map<String, dynamic> item) async {
+    final isSwahili = ref.read(isSwahiliProvider);
+    final id = item['id'] as int?;
+    if (id == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          isSwahili ? 'Futa Ripoti ya Mradi' : 'Delete Project Daily Report',
+        ),
+        content: Text(
+          isSwahili
+              ? 'Una uhakika unataka kufuta ripoti hii?'
+              : 'Are you sure you want to delete this report?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(isSwahili ? 'Futa' : 'Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.delete('/project-daily-reports/$id');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isSwahili ? 'Ripoti imefutwa' : 'Report deleted successfully',
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+      ref.invalidate(_projectReportsProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -600,11 +689,17 @@ class _ReportItemCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final bool isSwahili;
   final bool isDarkMode;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _ReportItemCard({
     required this.item,
     required this.isSwahili,
     required this.isDarkMode,
+    required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -614,7 +709,10 @@ class _ReportItemCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -633,7 +731,9 @@ class _ReportItemCard extends StatelessWidget {
                   child: Text(
                     isVisit
                         ? (isSwahili ? 'Ziara ya Tovuti' : 'Site Visit')
-                        : (isSwahili ? 'Ripoti ya Siku' : 'Daily Report'),
+                        : (isSwahili
+                              ? 'Ripoti ya Kila Siku ya Mradi'
+                              : 'Project Daily Report'),
                     style: TextStyle(
                       color: accent,
                       fontSize: 11,
@@ -642,6 +742,27 @@ class _ReportItemCard extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'view') onTap();
+                    if (value == 'edit') onEdit();
+                    if (value == 'delete') onDelete();
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'view',
+                      child: Text(isSwahili ? 'Tazama' : 'View'),
+                    ),
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Text(isSwahili ? 'Hariri' : 'Edit'),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(isSwahili ? 'Futa' : 'Delete'),
+                    ),
+                  ],
+                ),
                 Text(
                   item['report_date'] as String? ?? '-',
                   style: TextStyle(
@@ -700,8 +821,493 @@ class _ReportItemCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
+}
+
+class _ProjectDailyReportDetailSheet extends ConsumerWidget {
+  final int reportId;
+  final Map<String, dynamic> fallback;
+  final VoidCallback onEdit;
+  final VoidCallback onDeleted;
+
+  const _ProjectDailyReportDetailSheet({
+    required this.reportId,
+    required this.fallback,
+    required this.onEdit,
+    required this.onDeleted,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+    return FutureBuilder<Map<String, dynamic>>(
+      future: () async {
+        try {
+          final api = ref.read(apiClientProvider);
+          final response = await api.get('/project-daily-reports/$reportId');
+          return Map<String, dynamic>.from(
+            response.data['data'] as Map? ?? fallback,
+          );
+        } catch (_) {
+          return fallback;
+        }
+      }(),
+      builder: (context, snapshot) {
+        final data = snapshot.data ?? fallback;
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _ProjectDailyReportHeader(
+                  title: isSwahili
+                      ? 'Maelezo ya Ripoti ya Mradi'
+                      : 'Project Daily Report Details',
+                  onBack: () => Navigator.pop(context),
+                ),
+                Flexible(
+                  child: ListView(
+                    padding: const EdgeInsets.all(20),
+                    shrinkWrap: true,
+                    children: [
+                      _ReportDetailRow(
+                        'Project',
+                        data['project_name']?.toString() ?? '-',
+                      ),
+                      _ReportDetailRow(
+                        'Supervisor',
+                        data['supervisor_name']?.toString() ?? '-',
+                      ),
+                      _ReportDetailRow(
+                        'Report Date',
+                        data['report_date']?.toString() ?? '-',
+                      ),
+                      _ReportDetailRow(
+                        'Weather Conditions',
+                        data['weather_conditions']?.toString() ?? '-',
+                      ),
+                      _ReportDetailRow(
+                        'Work Completed',
+                        data['work_completed']?.toString() ?? '-',
+                      ),
+                      _ReportDetailRow(
+                        'Materials Used',
+                        data['materials_used']?.toString() ?? '-',
+                      ),
+                      _ReportDetailRow(
+                        'Labor Hours',
+                        data['labor_hours']?.toString() ?? '-',
+                      ),
+                      _ReportDetailRow(
+                        'Issues Faced',
+                        data['issues_faced']?.toString() ?? '-',
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: onEdit,
+                              child: Text(isSwahili ? 'Hariri' : 'Edit'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                onDeleted();
+                              },
+                              child: Text(isSwahili ? 'Funga' : 'Close'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ProjectDailyReportFormSheet extends ConsumerStatefulWidget {
+  final Map<String, dynamic>? report;
+  const _ProjectDailyReportFormSheet({this.report});
+
+  @override
+  ConsumerState<_ProjectDailyReportFormSheet> createState() =>
+      _ProjectDailyReportFormSheetState();
+}
+
+class _ProjectDailyReportFormSheetState
+    extends ConsumerState<_ProjectDailyReportFormSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _reportDate;
+  late final TextEditingController _weatherConditions;
+  late final TextEditingController _workCompleted;
+  late final TextEditingController _materialsUsed;
+  late final TextEditingController _laborHours;
+  late final TextEditingController _issuesFaced;
+  int? _projectId;
+  bool _loading = false;
+
+  bool get _isNew => widget.report == null;
+
+  @override
+  void initState() {
+    super.initState();
+    final report = widget.report;
+    _projectId = _toInt(report?['project_id']);
+    _reportDate = TextEditingController(
+      text: report?['report_date']?.toString() ??
+          DateFormat('yyyy-MM-dd').format(DateTime.now()),
+    );
+    _weatherConditions = TextEditingController(
+      text: report?['weather_conditions']?.toString() ?? '',
+    );
+    _workCompleted = TextEditingController(
+      text: report?['work_completed']?.toString() ?? '',
+    );
+    _materialsUsed = TextEditingController(
+      text: report?['materials_used']?.toString() ?? '',
+    );
+    _laborHours = TextEditingController(
+      text: report?['labor_hours']?.toString() ?? '',
+    );
+    _issuesFaced = TextEditingController(
+      text: report?['issues_faced']?.toString() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _reportDate.dispose();
+    _weatherConditions.dispose();
+    _workCompleted.dispose();
+    _materialsUsed.dispose();
+    _laborHours.dispose();
+    _issuesFaced.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+    final projectsAsync = ref.watch(_projectReportsProjectsProvider);
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SafeArea(
+        top: false,
+        child: projectsAsync.when(
+          loading: () => const SizedBox(
+            height: 320,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (e, _) => SizedBox(height: 320, child: Center(child: Text('$e'))),
+          data: (projects) => SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _ProjectDailyReportHeader(
+                    title: _isNew
+                        ? (isSwahili
+                              ? 'Ripoti Mpya ya Mradi'
+                              : 'New Project Daily Report')
+                        : (isSwahili
+                              ? 'Hariri Ripoti ya Mradi'
+                              : 'Edit Project Daily Report'),
+                    onBack: () => Navigator.pop(context),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        _Drop<int>(
+                          label: 'Project',
+                          value: _projectId,
+                          items: (projects as List)
+                              .cast<Map<String, dynamic>>(),
+                          onChanged: (v) => setState(() => _projectId = v),
+                          displayField: 'project_name',
+                        ),
+                        _DateInput(
+                          label: 'Report Date',
+                          controller: _reportDate,
+                        ),
+                        TextFormField(
+                          controller: _weatherConditions,
+                          decoration: const InputDecoration(
+                            labelText: 'Weather Conditions',
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _workCompleted,
+                          decoration: const InputDecoration(
+                            labelText: 'Work Completed',
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _materialsUsed,
+                          decoration: const InputDecoration(
+                            labelText: 'Materials Used',
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _laborHours,
+                          decoration: const InputDecoration(
+                            labelText: 'Labor Hours',
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _issuesFaced,
+                          decoration: const InputDecoration(
+                            labelText: 'Issues Faced',
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : _submit,
+                            child: _loading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    _isNew
+                                        ? (isSwahili ? 'Hifadhi' : 'Save')
+                                        : (isSwahili ? 'Sasisha' : 'Update'),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (_projectId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Project is required')),
+      );
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      final api = ref.read(apiClientProvider);
+      final data = {
+        'project_id': _projectId,
+        'report_date': _reportDate.text.trim(),
+        'weather_conditions': _weatherConditions.text.trim().isEmpty
+            ? null
+            : _weatherConditions.text.trim(),
+        'work_completed': _workCompleted.text.trim().isEmpty
+            ? null
+            : _workCompleted.text.trim(),
+        'materials_used': _materialsUsed.text.trim().isEmpty
+            ? null
+            : _materialsUsed.text.trim(),
+        'labor_hours': _laborHours.text.trim().isEmpty
+            ? null
+            : int.tryParse(_laborHours.text.trim()),
+        'issues_faced': _issuesFaced.text.trim().isEmpty
+            ? null
+            : _issuesFaced.text.trim(),
+      };
+      if (_isNew) {
+        await api.post('/project-daily-reports', data: data);
+      } else {
+        await api.put(
+          '/project-daily-reports/${widget.report!['id']}',
+          data: data,
+        );
+      }
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+}
+
+class _ProjectDailyReportHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+
+  const _ProjectDailyReportHeader({
+    required this.title,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Center(
+            child: Container(
+              width: 42,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white38,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              IconButton(
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              Expanded(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 48),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateInput extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  const _DateInput({required this.label, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: const Icon(Icons.calendar_today_rounded),
+        ),
+        onTap: () async {
+          final initial = DateTime.tryParse(controller.text.trim()) ?? DateTime.now();
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: initial,
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
+          );
+          if (picked != null) {
+            controller.text = DateFormat('yyyy-MM-dd').format(picked);
+          }
+        },
+      ),
+    );
+  }
+}
+
+class _ReportDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _ReportDetailRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+int? _toInt(dynamic value) {
+  if (value is int) return value;
+  if (value is num) return value.toInt();
+  return int.tryParse('$value');
 }
 
 class _ReportsErrorView extends StatelessWidget {

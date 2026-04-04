@@ -16,42 +16,50 @@ class SupplierQuotationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = SupplierQuotation::with(['supplier', 'materialRequest.project'])
-            ->orderBy('created_at', 'desc');
+        try {
+            $query = SupplierQuotation::with(['supplier', 'materialRequest.project'])
+                ->orderBy('created_at', 'desc');
 
-        if ($request->material_request_id) {
-            $query->where('material_request_id', $request->material_request_id);
+            if ($request->material_request_id) {
+                $query->where('material_request_id', $request->material_request_id);
+            }
+
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('quotation_number', 'like', "%{$search}%")
+                      ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
+                          $supplierQuery->where('name', 'like', "%{$search}%");
+                      })
+                      ->orWhereHas('materialRequest', function ($mrQuery) use ($search) {
+                          $mrQuery->where('request_number', 'like', "%{$search}%");
+                      });
+                });
+            }
+
+            $quotations = $query->paginate($request->per_page ?? 20);
+
+            return response()->json([
+                'success' => true,
+                'data' => SupplierQuotationResource::collection($quotations),
+                'meta' => [
+                    'current_page' => $quotations->currentPage(),
+                    'last_page' => $quotations->lastPage(),
+                    'per_page' => $quotations->perPage(),
+                    'total' => $quotations->total(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'data' => [],
+            ], 500);
         }
-
-        if ($request->status) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->search) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('quotation_number', 'like', "%{$search}%")
-                  ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
-                      $supplierQuery->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('materialRequest', function ($mrQuery) use ($search) {
-                      $mrQuery->where('request_number', 'like', "%{$search}%");
-                  });
-            });
-        }
-
-        $quotations = $query->paginate($request->per_page ?? 20);
-
-        return response()->json([
-            'success' => true,
-            'data' => SupplierQuotationResource::collection($quotations),
-            'meta' => [
-                'current_page' => $quotations->currentPage(),
-                'last_page' => $quotations->lastPage(),
-                'per_page' => $quotations->perPage(),
-                'total' => $quotations->total(),
-            ],
-        ]);
     }
 
     public function referenceData(): JsonResponse

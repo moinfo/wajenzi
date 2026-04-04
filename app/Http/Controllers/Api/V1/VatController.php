@@ -160,7 +160,7 @@ class VatController extends Controller
         $startDate = $request->input('start_date', date('Y-m-01'));
         $endDate = $request->input('end_date', date('Y-m-d'));
 
-        $purchases = Purchase::with(['supplier', 'item'])
+        $purchases = Purchase::with(['supplier', 'item', 'approvalStatus'])
             ->whereNotNull('item_id')
             ->where('date', '>=', $startDate)
             ->where('date', '<=', $endDate)
@@ -220,13 +220,13 @@ class VatController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $this->formatPurchase($purchase->load(['supplier', 'item'])),
+            'data' => $this->formatPurchase($purchase->load(['supplier', 'item', 'approvalStatus'])),
         ], 201);
     }
 
     public function showPurchase(int $id): JsonResponse
     {
-        $purchase = Purchase::with(['supplier', 'item'])->findOrFail($id);
+        $purchase = Purchase::with(['supplier', 'item', 'approvalStatus'])->findOrFail($id);
         return response()->json([
             'success' => true,
             'data' => $this->formatPurchase($purchase),
@@ -252,7 +252,7 @@ class VatController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $this->formatPurchase($purchase->load(['supplier', 'item'])),
+            'data' => $this->formatPurchase($purchase->load(['supplier', 'item', 'approvalStatus'])),
         ]);
     }
 
@@ -264,6 +264,8 @@ class VatController extends Controller
 
     private function formatPurchase(Purchase $p): array
     {
+        $status = strtoupper($p->approvalStatus?->status ?? $p->status ?? 'CREATED');
+
         return [
             'id' => $p->id,
             'date' => $p->date,
@@ -279,7 +281,17 @@ class VatController extends Controller
             'total_amount' => (float) $p->total_amount,
             'amount_vat_exc' => (float) $p->amount_vat_exc,
             'vat_amount' => (float) $p->vat_amount,
-            'status' => $p->status,
+            'status' => $status,
+            'approval_status' => $status,
+            'approval_summary' => match ($status) {
+                'CREATED', 'PENDING' => 'Waiting for submission/approval',
+                'SUBMITTED' => 'Submitted into approval workflow',
+                'APPROVED', 'COMPLETED' => 'Approval completed',
+                'REJECTED' => 'Rejected in approval workflow',
+                'DISCARDED' => 'Discarded from approval workflow',
+                'PAID' => 'Processed and paid',
+                default => $status,
+            },
             'has_attachment' => !empty($p->file),
             'document_number' => $p->document_number,
         ];

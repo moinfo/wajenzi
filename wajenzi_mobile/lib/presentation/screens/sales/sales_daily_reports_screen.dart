@@ -129,6 +129,13 @@ class SalesDailyReportsScreen extends ConsumerWidget {
         ),
         title: Text(isSwahili ? 'Ripoti za Mauzo' : 'Sales Daily Reports'),
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton(
+          onPressed: () => _showSalesDailyReportForm(context, ref),
+          child: const Icon(Icons.add_rounded),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_salesDailyReportsProvider),
         child: CustomScrollView(
@@ -296,6 +303,14 @@ class SalesDailyReportsScreen extends ConsumerWidget {
                             ref,
                             item,
                           ),
+                          onEdit: () =>
+                              _showSalesDailyReportForm(context, ref, report: item),
+                          onDelete: () => _deleteSalesDailyReport(
+                            context,
+                            ref,
+                            item,
+                            isSwahili,
+                          ),
                         ),
                       ),
                     ]),
@@ -458,12 +473,16 @@ class _SalesDailyReportCard extends StatelessWidget {
   final bool isSwahili;
   final bool isDarkMode;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const _SalesDailyReportCard({
     required this.item,
     required this.isSwahili,
     required this.isDarkMode,
     required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -505,6 +524,54 @@ class _SalesDailyReportCard extends StatelessWidget {
                       color:
                           isDarkMode ? Colors.white54 : AppColors.textSecondary,
                     ),
+                  ),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'view') onTap();
+                      if (value == 'edit') onEdit();
+                      if (value == 'delete') onDelete();
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 'view',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.visibility_outlined, size: 18),
+                            const SizedBox(width: 8),
+                            Text(isSwahili ? 'Tazama' : 'View'),
+                          ],
+                        ),
+                      ),
+                      if (item['can_edit'] == true)
+                        PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              const Icon(Icons.edit_outlined, size: 18),
+                              const SizedBox(width: 8),
+                              Text(isSwahili ? 'Hariri' : 'Edit'),
+                            ],
+                          ),
+                        ),
+                      if ((item['status'] as String? ?? '').toLowerCase() == 'draft')
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: Colors.red,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                isSwahili ? 'Futa' : 'Delete',
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -712,6 +779,12 @@ class _SalesDailyReportDetailSheet extends ConsumerWidget {
                   isSwahili: isSwahili,
                   isDarkMode: isDarkMode,
                 ),
+                _SalesDailyReportCrudCard(
+                  detail: detail,
+                  reportId: reportId,
+                  isSwahili: isSwahili,
+                  isDarkMode: isDarkMode,
+                ),
                 _DetailCard(
                   title: '1. DAILY SUMMARY',
                   isDarkMode: isDarkMode,
@@ -856,6 +929,464 @@ class _SalesDailyReportDetailSheet extends ConsumerWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+Future<void> _showSalesDailyReportForm(
+  BuildContext context,
+  WidgetRef ref, {
+  Map<String, dynamic>? report,
+}) async {
+  final result = await showModalBottomSheet<bool>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => _SalesDailyReportFormSheet(report: report),
+  );
+
+  if (result == true) {
+    ref.invalidate(_salesDailyReportsProvider);
+    final id = report == null ? null : _asInt(report['id']);
+    if (id != null) {
+      ref.invalidate(_salesDailyReportDetailProvider(id));
+    }
+  }
+}
+
+Future<void> _deleteSalesDailyReport(
+  BuildContext context,
+  WidgetRef ref,
+  Map<String, dynamic> report,
+  bool isSwahili,
+  {bool closeOnSuccess = false}
+) async {
+  final reportId = _asInt(report['id']);
+  if (reportId == null) return;
+
+  final status = (report['status'] as String? ?? '').toLowerCase();
+  if (status != 'draft') {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isSwahili
+              ? 'Ni ripoti za rasimu pekee zinaweza kufutwa.'
+              : 'Only draft reports can be deleted.',
+        ),
+        backgroundColor: AppColors.error,
+      ),
+    );
+    return;
+  }
+
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(isSwahili ? 'Thibitisha Kufuta' : 'Confirm Delete'),
+      content: Text(
+        isSwahili
+            ? 'Una uhakika unataka kufuta ripoti hii ya mauzo?'
+            : 'Are you sure you want to delete this sales daily report?',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: Text(
+            isSwahili ? 'Futa' : 'Delete',
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true) return;
+
+  try {
+    final api = ref.read(apiClientProvider);
+    await api.delete('/sales-daily-reports/$reportId');
+    ref.invalidate(_salesDailyReportsProvider);
+    ref.invalidate(_salesDailyReportDetailProvider(reportId));
+    if (context.mounted) {
+      if (closeOnSuccess) {
+        Navigator.of(context).pop();
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isSwahili
+                ? 'Ripoti imefutwa kikamilifu.'
+                : 'Report deleted successfully.',
+          ),
+        ),
+      );
+    }
+  } catch (error) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_salesDailyReportErrorMessage(error, isSwahili)),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+}
+
+class _SalesDailyReportCrudCard extends ConsumerWidget {
+  final Map<String, dynamic> detail;
+  final int reportId;
+  final bool isSwahili;
+  final bool isDarkMode;
+
+  const _SalesDailyReportCrudCard({
+    required this.detail,
+    required this.reportId,
+    required this.isSwahili,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final canEdit = detail['can_edit'] == true;
+    final canDelete = (detail['status'] as String? ?? '').toLowerCase() == 'draft';
+
+    if (!canEdit && !canDelete) {
+      return const SizedBox.shrink();
+    }
+
+    return _DetailCard(
+      title: isSwahili ? 'Usimamizi' : 'Manage',
+      isDarkMode: isDarkMode,
+      children: [
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            if (canEdit)
+              OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _showSalesDailyReportForm(context, ref, report: detail);
+                },
+                icon: const Icon(Icons.edit_outlined),
+                label: Text(isSwahili ? 'Hariri' : 'Edit'),
+              ),
+            if (canDelete)
+              OutlinedButton.icon(
+                onPressed: () => _deleteSalesDailyReport(
+                  context,
+                  ref,
+                  detail,
+                  isSwahili,
+                  closeOnSuccess: true,
+                ),
+                icon: const Icon(Icons.delete_outline),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error),
+                ),
+                label: Text(isSwahili ? 'Futa' : 'Delete'),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SalesDailyReportFormSheet extends ConsumerStatefulWidget {
+  final Map<String, dynamic>? report;
+
+  const _SalesDailyReportFormSheet({this.report});
+
+  @override
+  ConsumerState<_SalesDailyReportFormSheet> createState() =>
+      _SalesDailyReportFormSheetState();
+}
+
+class _SalesDailyReportFormSheetState
+    extends ConsumerState<_SalesDailyReportFormSheet> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _dateController;
+  late final TextEditingController _notesController;
+  late final TextEditingController _nextStepsController;
+  late final TextEditingController _challengesController;
+  bool _saving = false;
+
+  bool get _isEditing => widget.report != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _dateController = TextEditingController(
+      text: widget.report?['report_date']?.toString() ??
+          DateFormat('yyyy-MM-dd').format(DateTime.now()),
+    );
+    _notesController = TextEditingController(
+      text: widget.report?['notes']?.toString() ?? '',
+    );
+    _nextStepsController = TextEditingController(
+      text: widget.report?['next_steps']?.toString() ?? '',
+    );
+    _challengesController = TextEditingController(
+      text: widget.report?['challenges']?.toString() ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    _notesController.dispose();
+    _nextStepsController.dispose();
+    _challengesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isSwahili = ref.watch(isSwahiliProvider);
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                _SalesDailyReportFormHeader(
+                  title: _isEditing
+                      ? (isSwahili
+                            ? 'Hariri Ripoti ya Mauzo'
+                            : 'Edit Sales Daily Report')
+                      : (isSwahili
+                            ? 'Ripoti Mpya ya Mauzo'
+                            : 'New Sales Daily Report'),
+                  onBack: () => Navigator.pop(context),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      _SalesDailyReportDateField(
+                        label: isSwahili ? 'Tarehe ya Ripoti' : 'Report Date',
+                        controller: _dateController,
+                      ),
+                      TextFormField(
+                        controller: _notesController,
+                        maxLines: 5,
+                        decoration: InputDecoration(
+                          labelText: isSwahili ? 'Muhtasari wa Siku' : 'Daily Summary',
+                        ),
+                        validator: (value) {
+                          if ((value ?? '').trim().isEmpty) {
+                            return isSwahili
+                                ? 'Muhtasari wa siku unahitajika'
+                                : 'Daily summary is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _nextStepsController,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          labelText: isSwahili ? 'Hatua Zifuatazo' : 'Next Steps',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _challengesController,
+                        maxLines: 4,
+                        decoration: InputDecoration(
+                          labelText: isSwahili ? 'Changamoto' : 'Challenges',
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _saving ? null : _submit,
+                          child: _saving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  _isEditing
+                                      ? (isSwahili ? 'Sasisha' : 'Update')
+                                      : (isSwahili ? 'Hifadhi' : 'Save'),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _saving = true);
+    final isSwahili = ref.read(isSwahiliProvider);
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final data = {
+        'report_date': _dateController.text.trim(),
+        'notes': _notesController.text.trim(),
+        'next_steps': _nextStepsController.text.trim().isEmpty
+            ? null
+            : _nextStepsController.text.trim(),
+        'challenges': _challengesController.text.trim().isEmpty
+            ? null
+            : _challengesController.text.trim(),
+      };
+
+      if (_isEditing) {
+        final reportId = _asInt(widget.report?['id']);
+        if (reportId == null) {
+          throw Exception('Invalid report id');
+        }
+        await api.put('/sales-daily-reports/$reportId', data: data);
+      } else {
+        await api.post('/sales-daily-reports', data: data);
+      }
+
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_salesDailyReportErrorMessage(error, isSwahili)),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+}
+
+class _SalesDailyReportFormHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+
+  const _SalesDailyReportFormHeader({
+    required this.title,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 42,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.white38,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              IconButton(
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              Expanded(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 48),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SalesDailyReportDateField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+
+  const _SalesDailyReportDateField({
+    required this.label,
+    required this.controller,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: const Icon(Icons.calendar_today_rounded),
+        ),
+        onTap: () async {
+          final initial =
+              DateTime.tryParse(controller.text.trim()) ?? DateTime.now();
+          final picked = await showDatePicker(
+            context: context,
+            initialDate: initial,
+            firstDate: DateTime(2000),
+            lastDate: DateTime(2100),
+          );
+          if (picked != null) {
+            controller.text = DateFormat('yyyy-MM-dd').format(picked);
+          }
+        },
       ),
     );
   }

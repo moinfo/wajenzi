@@ -1,10 +1,13 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../providers/settings_provider.dart';
-import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
+import '../../widgets/common/loading_widget.dart';
 
 class ArchitectBonusReportScreen extends ConsumerStatefulWidget {
   const ArchitectBonusReportScreen({super.key});
@@ -16,15 +19,15 @@ class ArchitectBonusReportScreen extends ConsumerStatefulWidget {
 
 class _ArchitectBonusReportScreenState
     extends ConsumerState<ArchitectBonusReportScreen> {
+  final NumberFormat _money = NumberFormat('#,##0.##');
   bool _isLoading = false;
-  Map<String, dynamic> _reportData = {};
-  String? _selectedMonth;
+  Map<String, dynamic> _reportData = <String, dynamic>{};
+  String _selectedMonth = DateFormat('yyyy-MM').format(DateTime.now());
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _selectedMonth = DateTime.now().toString().substring(0, 7); // YYYY-MM
     _loadReport();
   }
 
@@ -41,407 +44,110 @@ class _ArchitectBonusReportScreenState
         queryParameters: {'month': _selectedMonth},
       );
 
-      if (response.statusCode == 200) {
-        setState(() {
-          _reportData = response.data['data'] is Map
-              ? Map<String, dynamic>.from(response.data['data'] as Map)
-              : <String, dynamic>{};
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      String errorMessage = 'Error loading bonus report';
-
-      if (e.toString().contains('401') ||
-          e.toString().contains('Unauthorized')) {
-        errorMessage = 'Authentication required. Please login again.';
-      } else if (e.toString().contains('403') ||
-          e.toString().contains('Forbidden')) {
-        errorMessage =
-            'Permission denied. You may not have access to bonus reports.';
-      } else if (e.toString().contains('404')) {
-        errorMessage =
-            'Bonus report endpoint not found. Please check API configuration.';
-      } else if (e.toString().contains('Connection')) {
-        errorMessage =
-            'Cannot connect to server. Please check your internet connection.';
-      }
-
+      setState(() {
+        _reportData = response.data['data'] is Map
+            ? Map<String, dynamic>.from(response.data['data'] as Map)
+            : <String, dynamic>{};
+        _isLoading = false;
+      });
+    } catch (error) {
       setState(() {
         _isLoading = false;
-        _errorMessage = errorMessage;
+        _errorMessage = _humanizeError(error);
       });
+    }
+  }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: 'Retry',
-              onPressed: () => _loadReport(),
-            ),
-          ),
-        );
+  String _humanizeError(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        final message = data['message']?.toString();
+        if (message != null && message.isNotEmpty) {
+          return message;
+        }
+      }
+
+      switch (error.response?.statusCode) {
+        case 401:
+          return 'Authentication required. Please login again.';
+        case 403:
+          return 'Permission denied. You may not have access to bonus reports.';
+        case 404:
+          return 'Bonus report endpoint not found. Please check API configuration.';
       }
     }
+
+    return 'Error loading bonus report.';
   }
 
-  Future<void> _selectMonth() async {
-    final DateTime? picked = await showDatePicker(
+  Future<void> _pickMonth() async {
+    final now = DateTime.now();
+    final current = DateTime.parse('$_selectedMonth-01');
+    final months = List<DateTime>.generate(
+      24,
+      (index) => DateTime(now.year, now.month - index, 1),
+    );
+
+    final picked = await showModalBottomSheet<DateTime>(
       context: context,
-      initialDate: DateTime.parse('${_selectedMonth}-01'),
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: months.length,
+            itemBuilder: (context, index) {
+              final month = months[index];
+              final selected =
+                  month.year == current.year && month.month == current.month;
+              return ListTile(
+                title: Text(DateFormat('MMMM yyyy').format(month)),
+                trailing: selected
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
+                onTap: () => Navigator.pop(sheetContext, month),
+              );
+            },
+          ),
+        );
+      },
     );
 
-    if (picked != null) {
-      setState(() {
-        _selectedMonth = picked.toString().substring(0, 7); // YYYY-MM
-      });
-      _loadReport();
-    }
-  }
+    if (picked == null) return;
 
-  @override
-  Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final nextMonth = DateFormat('yyyy-MM').format(picked);
+    if (nextMonth == _selectedMonth) return;
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/reports'),
-        ),
-        title: Text(isSwahili ? 'Ripoti ya Bonasi' : 'Bonus Report'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_today),
-            onPressed: _selectMonth,
-            tooltip: isSwahili ? 'Chagua Mwezi' : 'Select Month',
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
-            onPressed: _loadReport,
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? LoadingWidget(
-              message: isSwahili ? 'Inapakia ripoti...' : 'Loading report...',
-            )
-          : _errorMessage != null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 52,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(_errorMessage!, textAlign: TextAlign.center),
-                  ],
-                ),
-              ),
-            )
-          : _reportData.isEmpty
-          ? EmptyStateWidget(
-              message: isSwahili
-                  ? 'Hakuna data ya ripoti'
-                  : 'No report data available',
-              icon: Icons.bar_chart,
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Report Header
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isSwahili ? 'Ripoti ya Bonasi' : 'Bonus Report',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${isSwahili ? 'Mwezi' : 'Month'}: ${_formatMonth(_selectedMonth ?? '')}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _SummaryCard(
-                          title: isSwahili ? 'Jumla ya Kazi' : 'Total Tasks',
-                          value: (_reportData['total_tasks'] ?? 0).toString(),
-                          icon: Icons.task_alt,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Architect Summary
-                  Text(
-                    isSwahili ? 'Muhtasari wa Mapatanzio' : 'Architect Summary',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Architect Cards
-                  ...(_reportData['architect_summary'] as List? ?? []).map((
-                    architect,
-                  ) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: _ArchitectSummaryCard(
-                        architect: architect,
-                        isSwahili: isSwahili,
-                      ),
-                    );
-                  }).toList(),
-                  const SizedBox(height: 8),
-                  Text(
-                    isSwahili ? 'Maelezo ya Kazi' : 'Task Details',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  ...(_reportData['tasks'] as List? ?? []).map((task) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _TaskDetailCard(
-                        task: Map<String, dynamic>.from(task as Map),
-                        isSwahili: isSwahili,
-                      ),
-                    );
-                  }).toList(),
-                ],
-              ),
-            ),
-    );
-  }
-
-  String _formatMonth(String monthString) {
-    if (monthString.length < 7) return monthString;
-
-    final year = monthString.substring(0, 4);
-    final month = monthString.substring(5, 7);
-
-    final months = [
-      '01',
-      '02',
-      '03',
-      '04',
-      '05',
-      '06',
-      '07',
-      '08',
-      '09',
-      '10',
-      '11',
-      '12',
-    ];
-    final monthNames = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-
-    final monthIndex = months.indexOf(month);
-    if (monthIndex < 0) return monthString;
-    return '${monthNames[monthIndex]} $year';
+    setState(() {
+      _selectedMonth = nextMonth;
+    });
+    _loadReport();
   }
 
   String _formatCurrency(dynamic value) {
     final number = value is num
         ? value.toDouble()
         : double.tryParse(value?.toString() ?? '') ?? 0;
-    return number.toStringAsFixed(number.truncateToDouble() == number ? 0 : 2);
+    return _money.format(number);
   }
-}
 
-class _SummaryCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
+  String _formatPercent(dynamic value) {
+    final number = value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? '') ?? 0;
+    if (number <= 0) return '-';
+    return '${(number * 100).round()}%';
+  }
 
-  const _SummaryCard({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: color, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
+  String _formatDecimal(dynamic value) {
+    final number = value is num
+        ? value.toDouble()
+        : double.tryParse(value?.toString() ?? '') ?? 0;
+    return number.toStringAsFixed(
+      number.truncateToDouble() == number ? 0 : 3,
     );
   }
-}
-
-class _ArchitectSummaryCard extends StatelessWidget {
-  final dynamic architect;
-  final bool isSwahili;
-
-  const _ArchitectSummaryCard({
-    super.key,
-    required this.architect,
-    required this.isSwahili,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  child: Text(
-                    architect['architect']?['name']
-                            ?.substring(0, 1)
-                            .toUpperCase() ??
-                        'A',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  backgroundColor: Colors.blue,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        architect['architect']?['name'] ??
-                            (isSwahili
-                                ? 'Mapatanzio Haijulikani'
-                                : 'Unknown Architect'),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${isSwahili ? 'Alama ya Utendaji' : 'Performance Score'}: ${architect['avg_performance']?.toString() ?? '0'}',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _MetricItem(
-                  label: isSwahili ? 'Kazi' : 'Tasks',
-                  value: architect['tasks_count']?.toString() ?? '0',
-                  icon: Icons.task_alt,
-                ),
-                _MetricItem(
-                  label: isSwahili ? 'Vifurushi' : 'Units',
-                  value: architect['total_units']?.toString() ?? '0',
-                  icon: Icons.work,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _MetricItem(
-                  label: isSwahili ? 'Bonasi' : 'Bonus',
-                  value: 'TZS ${_formatNumber(architect['total_bonus'])}',
-                  icon: Icons.trending_up,
-                  color: Colors.green,
-                ),
-                _MetricItem(
-                  label: isSwahili ? 'Wastani wa Utendaji' : 'Avg Performance',
-                  value: architect['avg_performance']?.toString() ?? '0',
-                  icon: Icons.speed,
-                  color: Colors.orange,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TaskDetailCard extends StatelessWidget {
-  final Map<String, dynamic> task;
-  final bool isSwahili;
-
-  const _TaskDetailCard({required this.task, required this.isSwahili});
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {
@@ -457,11 +163,249 @@ class _TaskDetailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final architect = task['architect'] is Map
-        ? Map<String, dynamic>.from(task['architect'] as Map)
+    final isSwahili = ref.watch(isSwahiliProvider);
+    final architectSummary =
+        _reportData['architect_summary'] as List<dynamic>? ?? <dynamic>[];
+    final tasks = _reportData['tasks'] as List<dynamic>? ?? <dynamic>[];
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.go('/reports'),
+        ),
+        title: Text(isSwahili ? 'Ripoti ya Bonasi' : 'Bonus Report'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            onPressed: _pickMonth,
+            tooltip: isSwahili ? 'Chagua Mwezi' : 'Select Month',
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadReport,
+            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? LoadingWidget(
+              message: isSwahili ? 'Inapakia ripoti...' : 'Loading report...',
+            )
+          : _errorMessage != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.error_outline, size: 52, color: Colors.red),
+                    const SizedBox(height: 12),
+                    Text(_errorMessage!, textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: _loadReport,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Ripoti ya Bonasi' : 'Bonus Report',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${isSwahili ? 'Mwezi' : 'Month'}: ${DateFormat('MMMM yyyy').format(DateTime.parse('$_selectedMonth-01'))}',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SummaryCard(
+                          title: isSwahili ? 'Jumla ya Kazi' : 'Total Tasks',
+                          value: '${_reportData['total_tasks'] ?? 0}',
+                          icon: Icons.task_alt,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _SummaryCard(
+                          title: isSwahili ? 'Jumla ya Units' : 'Total Units',
+                          value: '${_reportData['grand_total_units'] ?? 0}',
+                          icon: Icons.work_outline,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  _SummaryCard(
+                    title: isSwahili ? 'Jumla ya Bonasi' : 'Total Bonus',
+                    value:
+                        'TZS ${_formatCurrency(_reportData['grand_total_bonus'])}',
+                    icon: Icons.payments_outlined,
+                    color: Colors.green,
+                  ),
+                  const SizedBox(height: 24),
+                  if (architectSummary.isEmpty && tasks.isEmpty)
+                    EmptyStateWidget(
+                      message: isSwahili
+                          ? 'Hakuna kazi zilizopimwa kwa mwezi huu'
+                          : 'No scored tasks found for this month',
+                      icon: Icons.bar_chart,
+                    )
+                  else ...[
+                    Text(
+                      isSwahili
+                          ? 'Muhtasari wa Architect'
+                          : 'Architect Summary',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...architectSummary.map((architect) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _ArchitectSummaryCard(
+                          architect: Map<String, dynamic>.from(architect as Map),
+                          isSwahili: isSwahili,
+                          formatCurrency: _formatCurrency,
+                          formatPercent: _formatPercent,
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 12),
+                    Text(
+                      isSwahili ? 'Maelezo ya Kazi' : 'Task Details',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...tasks.map((task) {
+                      final item = Map<String, dynamic>.from(task as Map);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _TaskDetailCard(
+                          task: item,
+                          isSwahili: isSwahili,
+                          statusColor: _statusColor(
+                            item['status']?.toString() ?? '',
+                          ),
+                          formatCurrency: _formatCurrency,
+                          formatPercent: _formatPercent,
+                          formatDecimal: _formatDecimal,
+                        ),
+                      );
+                    }),
+                  ],
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ArchitectSummaryCard extends StatelessWidget {
+  const _ArchitectSummaryCard({
+    required this.architect,
+    required this.isSwahili,
+    required this.formatCurrency,
+    required this.formatPercent,
+  });
+
+  final Map<String, dynamic> architect;
+  final bool isSwahili;
+  final String Function(dynamic value) formatCurrency;
+  final String Function(dynamic value) formatPercent;
+
+  @override
+  Widget build(BuildContext context) {
+    final architectInfo = architect['architect'] is Map
+        ? Map<String, dynamic>.from(architect['architect'] as Map)
         : const <String, dynamic>{};
-    final status =
-        task['status_label']?.toString() ?? task['status']?.toString() ?? '-';
+    final name = architectInfo['name']?.toString() ?? 'Unknown';
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -470,22 +414,114 @@ class _TaskDetailCard extends StatelessWidget {
           children: [
             Row(
               children: [
+                CircleAvatar(
+                  backgroundColor: Colors.blue,
+                  child: Text(
+                    name.isEmpty ? 'A' : name.substring(0, 1).toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 12,
+              runSpacing: 10,
+              children: [
+                _MetricChip(
+                  label: isSwahili ? 'Kazi' : 'Tasks',
+                  value: '${architect['tasks_count'] ?? 0}',
+                ),
+                _MetricChip(
+                  label: isSwahili ? 'Units' : 'Units',
+                  value: '${architect['total_units'] ?? 0}',
+                ),
+                _MetricChip(
+                  label: isSwahili ? 'Bonasi' : 'Bonus',
+                  value: 'TZS ${formatCurrency(architect['total_bonus'])}',
+                ),
+                _MetricChip(
+                  label: isSwahili
+                      ? 'Wastani wa Utendaji'
+                      : 'Avg Performance',
+                  value: formatPercent(architect['avg_performance']),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TaskDetailCard extends StatelessWidget {
+  const _TaskDetailCard({
+    required this.task,
+    required this.isSwahili,
+    required this.statusColor,
+    required this.formatCurrency,
+    required this.formatPercent,
+    required this.formatDecimal,
+  });
+
+  final Map<String, dynamic> task;
+  final bool isSwahili;
+  final Color statusColor;
+  final String Function(dynamic value) formatCurrency;
+  final String Function(dynamic value) formatPercent;
+  final String Function(dynamic value) formatDecimal;
+
+  @override
+  Widget build(BuildContext context) {
+    final architect = task['architect'] is Map
+        ? Map<String, dynamic>.from(task['architect'] as Map)
+        : const <String, dynamic>{};
+    final status =
+        task['status_label']?.toString() ?? task['status']?.toString() ?? '-';
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        task['task_number']?.toString() ??
-                            (isSwahili ? 'Kazi Isiyojulikana' : 'Unknown Task'),
+                        task['task_number']?.toString() ?? '-',
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         task['project_name']?.toString() ?? '-',
                         style: TextStyle(color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${isSwahili ? 'Architect' : 'Architect'}: ${architect['name'] ?? '-'}',
+                        style: TextStyle(color: Colors.grey[700]),
                       ),
                     ],
                   ),
@@ -496,52 +532,35 @@ class _TaskDetailCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: _statusColor(status).withOpacity(0.12),
+                    color: statusColor.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    status,
+                    status.toUpperCase(),
                     style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: _statusColor(status),
+                      fontWeight: FontWeight.w700,
+                      color: statusColor,
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              '${isSwahili ? 'Mapatanzio' : 'Architect'}: ${architect['name'] ?? '-'}',
-              style: TextStyle(color: Colors.grey[700]),
-            ),
-            const SizedBox(height: 10),
             Wrap(
-              spacing: 12,
+              spacing: 10,
               runSpacing: 10,
               children: [
+                _MetricChip(label: 'SP', value: formatDecimal(task['schedule_performance'])),
+                _MetricChip(label: 'DQ', value: formatDecimal(task['design_quality_score'])),
+                _MetricChip(label: 'CA', value: formatDecimal(task['client_approval_efficiency'])),
+                _MetricChip(label: 'PS', value: formatPercent(task['performance_score'])),
                 _MetricChip(
-                  label: isSwahili ? 'UP' : 'SP',
-                  value: _formatNumber(task['schedule_performance']),
-                ),
-                _MetricChip(
-                  label: isSwahili ? 'UB' : 'DQ',
-                  value: _formatNumber(task['design_quality_score']),
-                ),
-                _MetricChip(
-                  label: isSwahili ? 'UP' : 'CA',
-                  value: _formatNumber(task['client_approval_efficiency']),
-                ),
-                _MetricChip(
-                  label: isSwahili ? 'UT' : 'PS',
-                  value: _formatPercent(task['performance_score']),
-                ),
-                _MetricChip(
-                  label: isSwahili ? 'Vifurushi' : 'Units',
-                  value: _formatNumber(task['final_units']),
+                  label: isSwahili ? 'Units' : 'Units',
+                  value: '${task['final_units'] ?? '-'}',
                 ),
                 _MetricChip(
                   label: isSwahili ? 'Bonasi' : 'Bonus',
-                  value: 'TZS ${_formatNumber(task['bonus_amount'])}',
+                  value: 'TZS ${formatCurrency(task['bonus_amount'])}',
                 ),
               ],
             ),
@@ -553,10 +572,10 @@ class _TaskDetailCard extends StatelessWidget {
 }
 
 class _MetricChip extends StatelessWidget {
+  const _MetricChip({required this.label, required this.value});
+
   final String label;
   final String value;
-
-  const _MetricChip({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -572,58 +591,9 @@ class _MetricChip extends StatelessWidget {
         children: [
           Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[600])),
           const SizedBox(height: 2),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
         ],
       ),
     );
   }
-}
-
-class _MetricItem extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color? color;
-
-  const _MetricItem({
-    super.key,
-    required this.label,
-    required this.value,
-    required this.icon,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 20, color: color ?? Colors.grey[600]),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color ?? Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-String _formatNumber(dynamic value) {
-  final number = value is num
-      ? value.toDouble()
-      : double.tryParse(value?.toString() ?? '') ?? 0;
-  return number.toStringAsFixed(number.truncateToDouble() == number ? 0 : 2);
-}
-
-String _formatPercent(dynamic value) {
-  final number = value is num
-      ? value.toDouble()
-      : double.tryParse(value?.toString() ?? '') ?? 0;
-  if (number <= 0) return '-';
-  return '${(number * 100).round()}%';
 }

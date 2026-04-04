@@ -238,6 +238,23 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
   ) async {
     final isSwahili = ref.read(isSwahiliProvider);
     final isDarkMode = ref.read(isDarkModeProvider);
+    final typeId = _projectTypeId(type);
+
+    if (typeId == null || typeId <= 0) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isSwahili
+                  ? 'Aina hii ya mradi ina kitambulisho batili'
+                  : 'This project type has an invalid ID',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -276,7 +293,7 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
     if (confirmed == true && context.mounted) {
       try {
         final api = ref.read(apiClientProvider);
-        await api.delete('/project-types/${type['id']}');
+        await api.delete('/project-types/$typeId');
         ref.invalidate(_projectTypesProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -602,7 +619,7 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
     super.initState();
     _isEditing = widget.type != null;
     if (_isEditing) {
-      _typeId = widget.type!['id'] as int?;
+      _typeId = _projectTypeId(widget.type!);
       _nameController.text = widget.type!['name'] as String? ?? '';
       _descriptionController.text =
           widget.type!['description'] as String? ?? '';
@@ -796,6 +813,14 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
       if (mounted) setState(() => _loading = false);
     }
   }
+}
+
+int? _projectTypeId(Map<String, dynamic> type) {
+  final raw = type['id'];
+  if (raw is int) return raw;
+  if (raw is num) return raw.toInt();
+  if (raw is String) return int.tryParse(raw.trim());
+  return null;
 }
 
 class _ErrorView extends StatelessWidget {

@@ -738,7 +738,7 @@ class _ProjectFormSheetState extends ConsumerState<_ProjectFormSheet> {
               child: Column(
                 children: [
                   _SheetHeader(
-                    title: _isNew ? 'Create New Project' : 'Edit ${widget.project?['project_name'] ?? 'Project'}',
+                    title: _isNew ? 'Create New Project' : 'Edit Project',
                     onBack: () => Navigator.pop(context),
                   ),
                   Padding(

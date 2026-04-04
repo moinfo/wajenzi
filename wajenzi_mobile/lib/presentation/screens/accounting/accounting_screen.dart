@@ -4,10 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
-final _accountingProvider =
-    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final _accountingProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
   final response = await api.get('/accounting');
   return response.data['data'] as Map<String, dynamic>;
@@ -18,12 +20,17 @@ class AccountingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final accountingAsync = ref.watch(_accountingProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+        ),
         title: Text(isSwahili ? 'Uhasibu' : 'Accounting'),
       ),
       body: RefreshIndicator(
@@ -61,7 +68,8 @@ class _AccountingBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final outstanding =
         data['outstanding_invoices'] as Map<String, dynamic>? ?? const {};
-    final overdue = data['overdue_invoices'] as Map<String, dynamic>? ?? const {};
+    final overdue =
+        data['overdue_invoices'] as Map<String, dynamic>? ?? const {};
     final recentInvoices =
         (data['recent_invoices'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     final recentPayments =
@@ -69,7 +77,8 @@ class _AccountingBody extends StatelessWidget {
     final revenue =
         (data['revenue_by_month'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     final collections =
-        (data['collections_by_month'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+        (data['collections_by_month'] as List?)?.cast<Map<String, dynamic>>() ??
+        [];
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -104,11 +113,13 @@ class _AccountingBody extends StatelessWidget {
               ? _EmptySection(label: isSwahili ? 'Hakuna data' : 'No data')
               : Column(
                   children: revenue
-                      .map((row) => _MonthRow(
-                            label: _monthLabel(row),
-                            amount: _money(row['total']),
-                            isDarkMode: isDarkMode,
-                          ))
+                      .map(
+                        (row) => _MonthRow(
+                          label: _monthLabel(row),
+                          amount: _money(row['total']),
+                          isDarkMode: isDarkMode,
+                        ),
+                      )
                       .toList(),
                 ),
         ),
@@ -120,11 +131,13 @@ class _AccountingBody extends StatelessWidget {
               ? _EmptySection(label: isSwahili ? 'Hakuna data' : 'No data')
               : Column(
                   children: collections
-                      .map((row) => _MonthRow(
-                            label: _monthLabel(row),
-                            amount: _money(row['total']),
-                            isDarkMode: isDarkMode,
-                          ))
+                      .map(
+                        (row) => _MonthRow(
+                          label: _monthLabel(row),
+                          amount: _money(row['total']),
+                          isDarkMode: isDarkMode,
+                        ),
+                      )
                       .toList(),
                 ),
         ),
@@ -133,13 +146,17 @@ class _AccountingBody extends StatelessWidget {
           title: isSwahili ? 'Ankara za Hivi Karibuni' : 'Recent Invoices',
           isDarkMode: isDarkMode,
           child: recentInvoices.isEmpty
-              ? _EmptySection(label: isSwahili ? 'Hakuna ankara' : 'No invoices')
+              ? _EmptySection(
+                  label: isSwahili ? 'Hakuna ankara' : 'No invoices',
+                )
               : Column(
                   children: recentInvoices
-                      .map((invoice) => _InvoiceRow(
-                            invoice: invoice,
-                            isDarkMode: isDarkMode,
-                          ))
+                      .map(
+                        (invoice) => _InvoiceRow(
+                          invoice: invoice,
+                          isDarkMode: isDarkMode,
+                        ),
+                      )
                       .toList(),
                 ),
         ),
@@ -148,21 +165,22 @@ class _AccountingBody extends StatelessWidget {
           title: isSwahili ? 'Malipo ya Hivi Karibuni' : 'Recent Payments',
           isDarkMode: isDarkMode,
           child: recentPayments.isEmpty
-              ? _EmptySection(label: isSwahili ? 'Hakuna malipo' : 'No payments')
+              ? _EmptySection(
+                  label: isSwahili ? 'Hakuna malipo' : 'No payments',
+                )
               : Column(
                   children: recentPayments
-                      .map((payment) => _PaymentRow(
-                            payment: payment,
-                            isDarkMode: isDarkMode,
-                          ))
+                      .map(
+                        (payment) => _PaymentRow(
+                          payment: payment,
+                          isDarkMode: isDarkMode,
+                        ),
+                      )
                       .toList(),
                 ),
         ),
         const SizedBox(height: 16),
-        _ProvisionTaxSection(
-          isSwahili: isSwahili,
-          isDarkMode: isDarkMode,
-        ),
+        _ProvisionTaxSection(isSwahili: isSwahili, isDarkMode: isDarkMode),
         const SizedBox(height: 90),
       ],
     );
@@ -196,7 +214,10 @@ class _MetricCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -244,9 +265,9 @@ class _SectionCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                  ),
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : AppColors.textPrimary,
+              ),
             ),
             const SizedBox(height: 12),
             child,
@@ -310,13 +331,31 @@ class _InvoiceRow extends StatelessWidget {
         context,
         title: invoice['document_number'] as String? ?? 'Invoice',
         rows: [
-          _AccountingSheetRow('Client', invoice['client_name'] as String? ?? 'N/A'),
-          _AccountingSheetRow('Project', invoice['project_name'] as String? ?? 'N/A'),
+          _AccountingSheetRow(
+            'Client',
+            invoice['client_name'] as String? ?? 'N/A',
+          ),
+          _AccountingSheetRow(
+            'Project',
+            invoice['project_name'] as String? ?? 'N/A',
+          ),
           _AccountingSheetRow('Status', status.toUpperCase()),
-          _AccountingSheetRow('Issue Date', invoice['issue_date'] as String? ?? '-'),
-          _AccountingSheetRow('Due Date', invoice['due_date'] as String? ?? '-'),
-          _AccountingSheetRow('Balance', 'TZS ${_money(invoice['balance_amount'])}'),
-          _AccountingSheetRow('Total Amount', 'TZS ${_money(invoice['total_amount'])}'),
+          _AccountingSheetRow(
+            'Issue Date',
+            invoice['issue_date'] as String? ?? '-',
+          ),
+          _AccountingSheetRow(
+            'Due Date',
+            invoice['due_date'] as String? ?? '-',
+          ),
+          _AccountingSheetRow(
+            'Balance',
+            'TZS ${_money(invoice['balance_amount'])}',
+          ),
+          _AccountingSheetRow(
+            'Total Amount',
+            'TZS ${_money(invoice['total_amount'])}',
+          ),
         ],
       ),
       contentPadding: EdgeInsets.zero,
@@ -374,10 +413,19 @@ class _PaymentRow extends StatelessWidget {
         context,
         title: payment['invoice_number'] as String? ?? 'Payment',
         rows: [
-          _AccountingSheetRow('Invoice', payment['invoice_number'] as String? ?? 'N/A'),
+          _AccountingSheetRow(
+            'Invoice',
+            payment['invoice_number'] as String? ?? 'N/A',
+          ),
           _AccountingSheetRow('Amount', 'TZS ${_money(payment['amount'])}'),
-          _AccountingSheetRow('Method', payment['payment_method'] as String? ?? 'N/A'),
-          _AccountingSheetRow('Collected By', payment['collected_by'] as String? ?? 'N/A'),
+          _AccountingSheetRow(
+            'Method',
+            payment['payment_method'] as String? ?? 'N/A',
+          ),
+          _AccountingSheetRow(
+            'Collected By',
+            payment['collected_by'] as String? ?? 'N/A',
+          ),
           _AccountingSheetRow('Date', payment['date'] as String? ?? '-'),
         ],
       ),
@@ -532,7 +580,9 @@ String _monthLabel(Map<String, dynamic> row) {
 }
 
 String _money(dynamic value) {
-  final amount = value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
+  final amount = value is num
+      ? value.toDouble()
+      : double.tryParse('$value') ?? 0;
   return NumberFormat('#,##0.00', 'en_US').format(amount);
 }
 
@@ -559,7 +609,8 @@ class _ProvisionTaxSection extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<_ProvisionTaxSection> createState() => _ProvisionTaxSectionState();
+  ConsumerState<_ProvisionTaxSection> createState() =>
+      _ProvisionTaxSectionState();
 }
 
 class _ProvisionTaxSectionState extends ConsumerState<_ProvisionTaxSection> {
@@ -580,9 +631,12 @@ class _ProvisionTaxSectionState extends ConsumerState<_ProvisionTaxSection> {
 
     try {
       final api = ref.read(apiClientProvider);
-      final response = await api.get('/provision-tax', queryParameters: {
-        'per_page': '5', // Only show recent ones in accounting screen
-      });
+      final response = await api.get(
+        '/provision-tax',
+        queryParameters: {
+          'per_page': '5', // Only show recent ones in accounting screen
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
@@ -621,7 +675,9 @@ class _ProvisionTaxSectionState extends ConsumerState<_ProvisionTaxSection> {
               Expanded(
                 child: _ProvisionTaxMetric(
                   label: widget.isSwahili ? 'Jumla Kuu' : 'Total Amount',
-                  value: _formatCurrency(_summary['total_amount'] ?? 0),
+                  value: _formatCurrency(
+                    (_summary['total_amount'] ?? 0).toDouble(),
+                  ),
                   color: AppColors.info,
                 ),
               ),
@@ -643,11 +699,16 @@ class _ProvisionTaxSectionState extends ConsumerState<_ProvisionTaxSection> {
             _EmptySection(label: widget.isSwahili ? 'Hakuna data' : 'No data')
           else
             Column(
-              children: _taxes.take(3).map((tax) => _ProvisionTaxRow(
-                tax: tax,
-                isDarkMode: widget.isDarkMode,
-                isSwahili: widget.isSwahili,
-              )).toList(),
+              children: _taxes
+                  .take(3)
+                  .map(
+                    (tax) => _ProvisionTaxRow(
+                      tax: tax,
+                      isDarkMode: widget.isDarkMode,
+                      isSwahili: widget.isSwahili,
+                    ),
+                  )
+                  .toList(),
             ),
           const SizedBox(height: 8),
           // View All Button
@@ -784,7 +845,11 @@ class _ProvisionTaxRow extends StatelessWidget {
           const SizedBox(height: 4),
           Row(
             children: [
-              Icon(Icons.calendar_today, size: 12, color: AppColors.textSecondary),
+              Icon(
+                Icons.calendar_today,
+                size: 12,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -798,7 +863,11 @@ class _ProvisionTaxRow extends StatelessWidget {
               ),
               if (tax['bank'] != null) ...[
                 const SizedBox(width: 8),
-                Icon(Icons.account_balance, size: 12, color: AppColors.textSecondary),
+                Icon(
+                  Icons.account_balance,
+                  size: 12,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(

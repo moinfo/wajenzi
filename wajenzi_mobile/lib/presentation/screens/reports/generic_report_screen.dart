@@ -4,23 +4,57 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
 
-final _genericReportDataProvider = FutureProvider.family
-    .autoDispose<Map<String, dynamic>, Map<String, String>>((
-      ref,
-      params,
-    ) async {
+final _genericReportDataProvider =
+    FutureProvider.family<Map<String, dynamic>, String>((ref, cacheKey) async {
+      final params = cacheKey.split('|');
+      final endpoint = params.isNotEmpty ? params[0] : '';
+      final queryParams = <String, String>{};
+      for (var i = 1; i < params.length; i++) {
+        final parts = params[i].split('=');
+        if (parts.length == 2) {
+          queryParams[parts[0]] = parts[1];
+        }
+      }
+      debugPrint('=== PROVIDER: Fetching $endpoint with params $queryParams');
+
       final api = ref.watch(apiClientProvider);
-      final endpoint = params['endpoint'] ?? '';
-      final queryParams = Map<String, String>.from(params)..remove('endpoint');
       final response = await api.get(endpoint, queryParameters: queryParams);
-      return response.data is Map<String, dynamic>
-          ? Map<String, dynamic>.from(response.data as Map)
-          : {};
+      debugPrint('=== PROVIDER: Response status: ${response.statusCode}');
+
+      final responseData = response.data;
+      if (responseData is Map) {
+        final data = responseData['data'];
+        if (data is Map) {
+          debugPrint(
+            '=== PROVIDER: Returning data with keys: ${data.keys.toList()}',
+          );
+          return Map<String, dynamic>.from(data);
+        }
+        return Map<String, dynamic>.from(responseData);
+      }
+      return <String, dynamic>{};
     });
+
+String _buildCacheKey(
+  String endpoint, {
+  int? year,
+  DateTimeRange? dateRange,
+  bool isStatutoryReport = false,
+}) {
+  final parts = <String>[endpoint];
+  if (year != null) {
+    parts.add('year=$year');
+  } else if (dateRange != null && !isStatutoryReport) {
+    parts.add('start=${DateFormat('yyyy-MM-dd').format(dateRange.start)}');
+    parts.add('end=${DateFormat('yyyy-MM-dd').format(dateRange.end)}');
+  }
+  return parts.join('|');
+}
 
 class GenericReportScreen extends ConsumerStatefulWidget {
   final String title;
@@ -41,52 +75,104 @@ class GenericReportScreen extends ConsumerStatefulWidget {
 
 class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
   DateTimeRange? _dateRange;
+  int? _selectedYear;
 
   @override
   void initState() {
     super.initState();
+    _selectedYear = DateTime.now().year;
     _dateRange = DateTimeRange(
-      start: DateTime.now().subtract(const Duration(days: 30)),
-      end: DateTime.now(),
+      start: DateTime(_selectedYear!),
+      end: DateTime(_selectedYear!, 12, 31),
     );
   }
 
-  Map<String, String> _buildParams() {
-    return {
-      'endpoint': widget.apiEndpoint,
-      'start_date': DateFormat('yyyy-MM-dd').format(_dateRange!.start),
-      'end_date': DateFormat('yyyy-MM-dd').format(_dateRange!.end),
-    };
+  String _buildParams() {
+    final isStatutory =
+        widget.apiEndpoint == '/reports/statutory-category-report' ||
+        widget.apiEndpoint == '/reports/statutory-payment-report' ||
+        widget.apiEndpoint == '/reports/statutory-schedules-report';
+    return _buildCacheKey(
+      widget.apiEndpoint,
+      year: isStatutory ? _selectedYear : null,
+      dateRange: isStatutory ? null : _dateRange,
+      isStatutoryReport: isStatutory,
+    );
+  }
+
+  Future<void> _showYearPicker(BuildContext context) async {
+    final isSwahili = ref.read(isSwahiliProvider);
+    final currentYear = DateTime.now().year;
+    final years = List.generate(10, (i) => currentYear - i);
+    final picked = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(isSwahili ? 'Chagua Mwaka' : 'Select Year'),
+        content: SizedBox(
+          width: 200,
+          height: 300,
+          child: ListView.builder(
+            itemCount: years.length,
+            itemBuilder: (context, index) => ListTile(
+              title: Text('${years[index]}'),
+              selected: years[index] == _selectedYear,
+              onTap: () => Navigator.pop(context, years[index]),
+            ),
+          ),
+        ),
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedYear = picked;
+        _dateRange = DateTimeRange(
+          start: DateTime(picked),
+          end: DateTime(picked, 12, 31),
+        );
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final dataAsync = ref.watch(_genericReportDataProvider(_buildParams()));
+
+    debugPrint('=== ASYNC STATE ===');
+    debugPrint('isLoading: ${dataAsync.isLoading}');
+    debugPrint('isError: ${dataAsync.hasError}');
+    if (dataAsync.hasValue) {
+      debugPrint('hasValue: true');
+      debugPrint('value keys: ${dataAsync.value?.keys.toList()}');
+    }
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/reports'),
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? widget.titleSw : widget.title),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_today),
-            tooltip: isSwahili ? 'Chagua Tarehe' : 'Select Date',
-            onPressed: () async {
-              final picked = await showDateRangePicker(
-                context: context,
-                firstDate: DateTime(2020),
-                lastDate: DateTime.now(),
-                initialDateRange: _dateRange,
-              );
-              if (picked != null) {
-                setState(() => _dateRange = picked);
-              }
-            },
-          ),
+          if (widget.apiEndpoint != '/reports/statutory-category-report' &&
+              widget.apiEndpoint != '/reports/statutory-payment-report' &&
+              widget.apiEndpoint != '/reports/statutory-schedules-report')
+            IconButton(
+              icon: const Icon(Icons.calendar_today),
+              tooltip: isSwahili ? 'Chagua Tarehe' : 'Select Date',
+              onPressed: () async {
+                final picked = await showDateRangePicker(
+                  context: context,
+                  firstDate: DateTime(2020),
+                  lastDate: DateTime.now(),
+                  initialDateRange: _dateRange,
+                );
+                if (picked != null) {
+                  setState(() => _dateRange = picked);
+                }
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
@@ -97,30 +183,71 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
       ),
       body: Column(
         children: [
-          if (_dateRange != null)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.date_range,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${DateFormat('MMM d, yyyy').format(_dateRange!.start)} - ${DateFormat('MMM d, yyyy').format(_dateRange!.end)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child:
+                widget.apiEndpoint == '/reports/statutory-category-report' ||
+                    widget.apiEndpoint == '/reports/statutory-payment-report' ||
+                    widget.apiEndpoint == '/reports/statutory-schedules-report'
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => _showYearPicker(context),
+                        child: Row(
+                          children: [
+                            Text(
+                              '${isSwahili ? 'Mwaka' : 'Year'}: $_selectedYear',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : _dateRange != null
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.date_range,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${DateFormat('MMM d, yyyy').format(_dateRange!.start)} - ${DateFormat('MMM d, yyyy').format(_dateRange!.end)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
           Expanded(
             child: dataAsync.when(
               loading: () => LoadingWidget(
@@ -170,6 +297,10 @@ class _ReportContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('=== REPORT DATA ===');
+    debugPrint('Keys: ${data.keys.toList()}');
+    debugPrint('Data: $data');
+
     final summaryItems = <Widget>[];
     final listItems = <Widget>[];
 

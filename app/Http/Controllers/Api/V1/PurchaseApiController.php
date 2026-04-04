@@ -22,9 +22,6 @@ class PurchaseApiController extends Controller
                 'supplier',
                 'item',
                 'project',
-                'materialRequest',
-                'quotationComparison',
-                'purchaseItems.boqItem',
                 'user',
                 'approvalStatus',
             ]);
@@ -63,7 +60,7 @@ class PurchaseApiController extends Controller
                 $query->where('status', $request->status);
             }
 
-            $purchases = $query->orderBy('date', 'desc')->get();
+            $purchases = $query->orderBy('date', 'desc')->limit(500)->get();
             $items = collect($purchases)->map(fn($p) => $this->formatPurchase($p));
             $totals = [
                 'total_amount' => (float) $items->sum(fn ($item) => (float) ($item['total_amount'] ?? 0)),
@@ -107,7 +104,6 @@ class PurchaseApiController extends Controller
                 'purchaseItems.boqItem',
                 'user',
                 'approvalStatus',
-                'approvals.user',
             ])->findOrFail($id);
 
             return response()->json([
@@ -684,17 +680,18 @@ class PurchaseApiController extends Controller
     {
         $steps = collect($purchase->approvalStatus?->steps ?? [])->map(function ($step) {
             $flowStep = ProcessApprovalFlowStep::with('role')->find($step['id']);
-            $approval = !empty($step['process_approval_id'])
-                ? $purchase->approvals->firstWhere('id', $step['process_approval_id'])
-                : null;
+            $approval = null;
+            if (!empty($step['process_approval_id']) && $purchase->relationLoaded('approvals')) {
+                $approval = $purchase->approvals->firstWhere('id', $step['process_approval_id'], null);
+            }
 
             return [
                 'step_id' => $step['id'] ?? null,
                 'role_name' => $flowStep?->role?->name ?? ('Step ' . ($step['id'] ?? '')),
                 'action' => $step['process_approval_action'] ?? 'Pending',
-                'approver_name' => $approval?->user?->name ?? $approval?->approver_name,
-                'date' => $approval?->created_at?->format('d F, Y'),
-                'comment' => $approval?->comment,
+                'approver_name' => $approval?->user?->name ?? $approval?->approver_name ?? null,
+                'date' => $approval?->created_at?->format('d F, Y') ?? null,
+                'comment' => $approval?->comment ?? null,
             ];
         })->values();
 

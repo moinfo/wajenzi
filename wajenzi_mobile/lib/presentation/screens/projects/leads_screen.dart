@@ -77,7 +77,7 @@ final _leadsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
       'unavailable_on_live': false,
     };
   } on DioException catch (error) {
-    if ((error.response?.statusCode ?? 0) == 404) {
+    final statusCode = error.response?.statusCode ?? 0; if (statusCode == 404 || statusCode >= 500) {
       return {
         'items': const <Map<String, dynamic>>[],
         'meta': const <String, dynamic>{},
@@ -107,7 +107,7 @@ final _leadRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
       'unavailable_on_live': false,
     };
   } on DioException catch (error) {
-    if ((error.response?.statusCode ?? 0) == 404) {
+    final statusCode = error.response?.statusCode ?? 0; if (statusCode == 404 || statusCode >= 500) {
       return const {
         'lead_sources': <Map<String, dynamic>>[],
         'lead_statuses': <Map<String, dynamic>>[],
@@ -439,10 +439,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.94,
-        child: _LeadFormSheet(lead: lead),
-      ),
+      builder: (_) => _LeadFormSheet(lead: lead),
     );
 
     if (result == true) {
@@ -526,98 +523,75 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => FractionallySizedBox(
-        heightFactor: 0.88,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Column(
-              children: [
-                const SizedBox(height: 12),
-                Container(
-                  width: 44,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: isDarkMode ? Colors.white24 : Colors.black12,
-                    borderRadius: BorderRadius.circular(999),
+      builder: (_) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
+        ),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              _LeadSheetHeader(
+                title: lead['name'] as String? ?? '-',
+                onBack: () => Navigator.pop(context),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _info('Lead No', lead['lead_number']),
+                      _info(
+                        isSwahili ? 'Hali' : 'Status',
+                        lead['lead_status_name'] ?? lead['status'],
+                      ),
+                      _info(
+                        isSwahili ? 'Chanzo' : 'Source',
+                        lead['lead_source_name'],
+                      ),
+                      _info(
+                        isSwahili ? 'Huduma' : 'Service',
+                        lead['service_interested_name'],
+                      ),
+                      _info(
+                        isSwahili ? 'Muuza' : 'Salesperson',
+                        lead['salesperson_name'],
+                      ),
+                      _info(
+                        isSwahili ? 'Mteja' : 'Client',
+                        lead['client_name'],
+                      ),
+                      _info(isSwahili ? 'Simu' : 'Phone', lead['phone']),
+                      _info('Email', lead['email']),
+                      _info(
+                        isSwahili ? 'Anwani' : 'Address',
+                        lead['address'],
+                      ),
+                      _info(isSwahili ? 'Mji' : 'City', lead['city']),
+                      _info(
+                        isSwahili ? 'Eneo' : 'Site Location',
+                        lead['site_location'],
+                      ),
+                      _info(
+                        isSwahili
+                            ? 'Thamani ya Makadirio'
+                            : 'Estimated Value',
+                        lead['estimated_value'],
+                      ),
+                      _info(
+                        isSwahili ? 'Kumbukumbu' : 'Notes',
+                        lead['notes'],
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                lead['name'] as String? ?? '-',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _info('Lead No', lead['lead_number']),
-                        _info(
-                          isSwahili ? 'Hali' : 'Status',
-                          lead['lead_status_name'] ?? lead['status'],
-                        ),
-                        _info(
-                          isSwahili ? 'Chanzo' : 'Source',
-                          lead['lead_source_name'],
-                        ),
-                        _info(
-                          isSwahili ? 'Huduma' : 'Service',
-                          lead['service_interested_name'],
-                        ),
-                        _info(
-                          isSwahili ? 'Muuza' : 'Salesperson',
-                          lead['salesperson_name'],
-                        ),
-                        _info(
-                          isSwahili ? 'Mteja' : 'Client',
-                          lead['client_name'],
-                        ),
-                        _info(isSwahili ? 'Simu' : 'Phone', lead['phone']),
-                        _info('Email', lead['email']),
-                        _info(
-                          isSwahili ? 'Anwani' : 'Address',
-                          lead['address'],
-                        ),
-                        _info(isSwahili ? 'Mji' : 'City', lead['city']),
-                        _info(
-                          isSwahili ? 'Eneo' : 'Site Location',
-                          lead['site_location'],
-                        ),
-                        _info(
-                          isSwahili
-                              ? 'Thamani ya Makadirio'
-                              : 'Estimated Value',
-                          lead['estimated_value'],
-                        ),
-                        _info(
-                          isSwahili ? 'Kumbukumbu' : 'Notes',
-                          lead['notes'],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -733,25 +707,31 @@ class _LeadFilters extends ConsumerWidget {
                     children: [
                       const Icon(Icons.calendar_today, size: 20),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[600],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[600],
+                              ),
                             ),
-                          ),
-                          Text(
-                            filter.startDate != null
-                                ? DateFormat(
-                                    'dd MMM yyyy',
-                                  ).format(filter.startDate!)
-                                : '-',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
+                            Text(
+                              filter.startDate != null
+                                  ? DateFormat(
+                                      'dd MMM yyyy',
+                                    ).format(filter.startDate!)
+                                  : '-',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -782,25 +762,31 @@ class _LeadFilters extends ConsumerWidget {
                     children: [
                       const Icon(Icons.calendar_today, size: 20),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey[600],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[600],
+                              ),
                             ),
-                          ),
-                          Text(
-                            filter.endDate != null
-                                ? DateFormat(
-                                    'dd MMM yyyy',
-                                  ).format(filter.endDate!)
-                                : '-',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ],
+                            Text(
+                              filter.endDate != null
+                                  ? DateFormat(
+                                      'dd MMM yyyy',
+                                    ).format(filter.endDate!)
+                                  : '-',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -865,6 +851,16 @@ class _Drop<T> extends StatelessWidget {
             ),
           ),
         ],
+        selectedItemBuilder: (context) => [
+          const Text('All', maxLines: 1, overflow: TextOverflow.ellipsis),
+          ...items.map(
+            (item) => Text(
+              item[displayField]?.toString() ?? '-',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
         onChanged: onChanged,
       ),
     );
@@ -924,6 +920,8 @@ class _LeadCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${lead['lead_number'] ?? '-'} - ${lead['phone'] ?? '-'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 6),
@@ -1007,6 +1005,65 @@ class _LeadCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _LeadSheetHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+
+  const _LeadSheetHeader({
+    required this.title,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 44,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.white38,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              IconButton(
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              Expanded(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 48),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -1099,6 +1156,9 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
     final refsAsync = ref.watch(_leadRefsProvider);
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.94,
+      ),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1116,14 +1176,11 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
           ),
           data: (refs) => Column(
             children: [
-              const SizedBox(height: 12),
-              Container(
-                width: 44,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.white24 : Colors.black12,
-                  borderRadius: BorderRadius.circular(999),
-                ),
+              _LeadSheetHeader(
+                title: widget.lead == null
+                    ? (isSwahili ? 'Lead Mpya' : 'New Lead')
+                    : (isSwahili ? 'Hariri Lead' : 'Edit Lead'),
+                onBack: () => Navigator.pop(context),
               ),
               Expanded(
                 child: SingleChildScrollView(
@@ -1138,17 +1195,6 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          widget.lead == null
-                              ? (isSwahili ? 'Lead Mpya' : 'New Lead')
-                              : (isSwahili ? 'Hariri Lead' : 'Edit Lead'),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
                         _input(
                           _nameController,
                           isSwahili ? 'Jina *' : 'Name *',
@@ -1305,6 +1351,7 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
     final items = _mapOptions(rawItems);
 
     return DropdownButtonFormField<int>(
+      isExpanded: true,
       value: items.any((item) => _toInt(item['id']) == value) ? value : null,
       validator: required
           ? (selected) => selected == null ? 'Required' : null
@@ -1318,7 +1365,20 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
           .map(
             (item) => DropdownMenuItem<int>(
               value: _toInt(item['id']),
-              child: Text(item['name']?.toString() ?? '-'),
+              child: Text(
+                item['name']?.toString() ?? '-',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          )
+          .toList(),
+      selectedItemBuilder: (context) => items
+          .map(
+            (item) => Text(
+              item['name']?.toString() ?? '-',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           )
           .toList(),

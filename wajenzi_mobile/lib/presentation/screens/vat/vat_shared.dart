@@ -87,6 +87,12 @@ String vatErrorMessage(Object error, {bool isSwahili = false}) {
       return isSwahili ? 'Hakuna matokeo yaliyopatikana.' : 'Not found.';
     }
   }
+  if (error is Exception) {
+    final message = error.toString().replaceFirst('Exception: ', '').trim();
+    if (message.isNotEmpty) {
+      return message;
+    }
+  }
   return isSwahili
       ? 'Hitilafu imetokea. Jaribu tena.'
       : 'Something went wrong. Please try again.';
@@ -758,8 +764,15 @@ class VatStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final normalizedStatus = status.trim().toUpperCase();
     Color color;
-    switch (status.toUpperCase()) {
+    switch (normalizedStatus) {
+      case 'CREATED':
+        color = const Color(0xFF6B7280);
+        break;
+      case 'SUBMITTED':
+        color = const Color(0xFF3B82F6);
+        break;
       case 'APPROVED':
         color = const Color(0xFF27AE60);
         break;
@@ -781,7 +794,7 @@ class VatStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        status.toUpperCase(),
+        normalizedStatus,
         style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w700,

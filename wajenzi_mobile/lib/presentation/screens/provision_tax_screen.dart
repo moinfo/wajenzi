@@ -21,7 +21,12 @@ class ProvisionTaxScreen extends ConsumerStatefulWidget {
 class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _taxes = [];
-  Map<String, dynamic> _filters = {};
+  Map<String, dynamic> _filters = {
+    'start_date': DateFormat('yyyy-MM-01').format(DateTime.now()),
+    'end_date': DateFormat('yyyy-MM-dd').format(
+      DateTime(DateTime.now().year, DateTime.now().month + 1, 0),
+    ),
+  };
   Map<String, dynamic> _referenceData = {};
   Map<String, dynamic> _summary = {};
   bool _isLoading = false;
@@ -183,6 +188,15 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
     // Convert reference data to options format expected by FilterBottomSheet
     Map<String, Map<String, dynamic>> options = {};
 
+    options['start_date'] = {
+      'label': 'Start Date',
+      'type': 'date',
+    };
+    options['end_date'] = {
+      'label': 'End Date',
+      'type': 'date',
+    };
+
     if (_referenceData['banks'] != null) {
       options['bank_id'] = {
         'label': 'Bank',
@@ -207,7 +221,12 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
         },
         onReset: () {
           setState(() {
-            _filters = {};
+            _filters = {
+              'start_date': DateFormat('yyyy-MM-01').format(DateTime.now()),
+              'end_date': DateFormat('yyyy-MM-dd').format(
+                DateTime(DateTime.now().year, DateTime.now().month + 1, 0),
+              ),
+            };
           });
           _loadData(refresh: true);
           Navigator.pop(context);
@@ -230,26 +249,15 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
 
   Future<void> _openTaxForm({
     Map<String, dynamic>? tax,
+    int? forcedEditId,
     bool isSwahili = false,
   }) async {
-    final isEdit = tax != null;
+    final editId = forcedEditId ?? _resolveProvisionTaxId(tax);
+    final isEdit = editId > 0;
     final banks = (_referenceData['banks'] as List? ?? const [])
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
         .toList();
-
-    if (banks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isSwahili
-                ? 'Hakuna benki zinazopatikana kwa kodi ya akiba.'
-                : 'No banks available for provision tax.',
-          ),
-        ),
-      );
-      return;
-    }
 
     final formKey = GlobalKey<FormState>();
     final dateCtrl = TextEditingController(
@@ -268,6 +276,7 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
     );
     int? selectedBankId = _toNullableInt(tax?['bank_id']);
     File? selectedFile;
+    bool isSubmitting = false;
 
     final result = await showModalBottomSheet<bool>(
       context: context,
@@ -321,32 +330,54 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                          const SizedBox(height: 18),
-                          vatDropdown<int>(
-                            value: selectedBankId,
-                            items: banks
-                                .map((bank) => _toInt(bank['id']))
-                                .where((id) => id > 0)
-                                .toList(),
-                            label: isSwahili ? 'Benki *' : 'Bank *',
-                            isDark: false,
-                            labelBuilder: (id) {
-                              final bank = banks.firstWhere(
-                                (item) => _toInt(item['id']) == id,
-                                orElse: () => const <String, dynamic>{},
-                              );
-                              return (bank['bank_name'] ??
-                                      bank['name'] ??
-                                      bank['label'] ??
-                                      '-')
-                                  .toString();
-                            },
-                            onChanged: (value) =>
-                                setSheetState(() => selectedBankId = value),
-                            validator: (value) => value == null
-                                ? (isSwahili ? 'Inahitajika' : 'Required')
-                                : null,
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton.icon(
+                              onPressed: () => Navigator.of(sheetContext).pop(),
+                              icon: const Icon(Icons.close),
+                              label: Text(isSwahili ? 'Funga' : 'Close'),
+                            ),
                           ),
+                          const SizedBox(height: 18),
+                          if (banks.isNotEmpty)
+                            vatDropdown<int>(
+                              value: selectedBankId,
+                              items: banks
+                                  .map((bank) => _toInt(bank['id']))
+                                  .where((id) => id > 0)
+                                  .toList(),
+                              label: isSwahili ? 'Benki' : 'Bank',
+                              isDark: false,
+                              labelBuilder: (id) {
+                                final bank = banks.firstWhere(
+                                  (item) => _toInt(item['id']) == id,
+                                  orElse: () => const <String, dynamic>{},
+                                );
+                                return (bank['bank_name'] ??
+                                        bank['name'] ??
+                                        bank['label'] ??
+                                        '-')
+                                    .toString();
+                              },
+                              onChanged: (value) =>
+                                  setSheetState(() => selectedBankId = value),
+                            )
+                          else
+                            Container(
+                              width: double.infinity,
+                              margin: const EdgeInsets.only(bottom: 14),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.orange.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                isSwahili
+                                    ? 'Hakuna benki zilizopatikana. Unaweza kuendelea bila kuchagua benki.'
+                                    : 'No banks were found. You can continue without selecting a bank.',
+                                style: TextStyle(color: Colors.grey[800]),
+                              ),
+                            ),
                           vatTextField(
                             controller: amountCtrl,
                             label: isSwahili ? 'Kiasi *' : 'Amount *',
@@ -406,11 +437,14 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () async {
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () async {
                                 if (!formKey.currentState!.validate()) return;
-                                if (selectedBankId == null) return;
+                                setSheetState(() => isSubmitting = true);
 
                                 final fields = <String, dynamic>{
+                                  if (isEdit) 'id': editId,
                                   'date': dateCtrl.text.trim(),
                                   'amount':
                                       double.tryParse(amountCtrl.text.trim()) ??
@@ -430,12 +464,12 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                                         selectedFile,
                                       );
                                       await api.uploadFile(
-                                        '/provision-tax/${tax['id']}',
+                                        '/provision-tax/$editId',
                                         data: formData,
                                       );
                                     } else {
                                       await api.put(
-                                        '/provision-tax/${tax['id']}',
+                                        '/provision-tax/$editId',
                                         data: fields,
                                       );
                                     }
@@ -462,6 +496,9 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                                   }
                                 } catch (e) {
                                   if (sheetContext.mounted) {
+                                    setSheetState(() => isSubmitting = false);
+                                  }
+                                  if (sheetContext.mounted) {
                                     ScaffoldMessenger.of(
                                       sheetContext,
                                     ).showSnackBar(
@@ -474,10 +511,23 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                                 }
                               },
                               child: Text(
-                                isEdit
+                                isSubmitting
+                                    ? (isSwahili ? 'Inahifadhi...' : 'Saving...')
+                                    : isEdit
                                     ? (isSwahili ? 'Sasisha' : 'Update')
                                     : (isSwahili ? 'Hifadhi' : 'Save'),
                               ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () => Navigator.of(sheetContext).pop(),
+                              icon: const Icon(Icons.close),
+                              label: Text(isSwahili ? 'Funga' : 'Close'),
                             ),
                           ),
                         ],
@@ -491,11 +541,6 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
         );
       },
     );
-
-    dateCtrl.dispose();
-    amountCtrl.dispose();
-    descriptionCtrl.dispose();
-    debitCtrl.dispose();
 
     if (result == true) {
       _loadData(refresh: true);
@@ -531,8 +576,36 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
     if (confirmed != true) return;
 
     try {
-      await ref.read(apiClientProvider).delete('/provision-tax/${tax['id']}');
+      final deletedId = _toInt(tax['id']);
+      final deletedAmount = (tax['amount'] is num)
+          ? (tax['amount'] as num).toDouble()
+          : double.tryParse('${tax['amount'] ?? 0}') ?? 0;
+
+      await ref.read(apiClientProvider).delete('/provision-tax/$deletedId');
       if (!mounted) return;
+      setState(() {
+        _taxes = _taxes.where((item) {
+          if (item is Map) {
+            return _toInt(item['id']) != deletedId;
+          }
+          return true;
+        }).toList();
+
+        final currentCount =
+            int.tryParse('${_summary['count'] ?? 0}') ?? _taxes.length;
+        final currentAmount = (_summary['total_amount'] is num)
+            ? (_summary['total_amount'] as num).toDouble()
+            : double.tryParse('${_summary['total_amount'] ?? 0}') ?? 0;
+
+        _summary = {
+          ..._summary,
+          'count': currentCount > 0 ? currentCount - 1 : 0,
+          'total_amount': (currentAmount - deletedAmount).clamp(
+            0,
+            double.infinity,
+          ),
+        };
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.green,
@@ -553,6 +626,131 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _showTaxDetails(
+    Map<String, dynamic> tax, {
+    bool isSwahili = false,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(sheetContext).size.height * 0.9,
+        ),
+        decoration: BoxDecoration(
+          color: Theme.of(sheetContext).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              children: [
+                Container(
+                  width: 44,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.black12,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        isSwahili ? 'Maelezo ya Kodi' : 'Provision Tax Details',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => Navigator.of(sheetContext).pop(),
+                      icon: const Icon(Icons.close),
+                      label: Text(isSwahili ? 'Funga' : 'Close'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        _ProvisionDetailCard(
+                          children: [
+                            _ProvisionDetailRow(
+                              label: isSwahili ? 'Tarehe' : 'Date',
+                              value: '${tax['date'] ?? '-'}',
+                            ),
+                            _ProvisionDetailRow(
+                              label: isSwahili ? 'Kiasi' : 'Amount',
+                              value: _formatCurrency(tax['amount'] ?? 0),
+                            ),
+                            _ProvisionDetailRow(
+                              label: isSwahili ? 'Maelezo' : 'Description',
+                              value: '${tax['description'] ?? '-'}',
+                            ),
+                            _ProvisionDetailRow(
+                              label: isSwahili ? 'Debit Number' : 'Debit Number',
+                              value: '${tax['debit_number'] ?? '-'}',
+                            ),
+                            _ProvisionDetailRow(
+                              label: isSwahili ? 'Bank' : 'Bank',
+                              value: '${tax['bank']?['bank_name'] ?? '-'}',
+                            ),
+                            _ProvisionDetailRow(
+                              label: isSwahili ? 'Attachment' : 'Attachment',
+                              value: tax['file'] != null
+                                  ? (isSwahili
+                                        ? 'Kiambatanisho kinapatikana'
+                                        : 'Attachment available')
+                                  : (isSwahili ? 'Hakuna' : 'None'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          Navigator.of(sheetContext).pop();
+                          await _openTaxForm(
+                            tax: Map<String, dynamic>.from(tax),
+                            forcedEditId: _toInt(tax['id']),
+                            isSwahili: isSwahili,
+                          );
+                        },
+                        icon: const Icon(Icons.edit_outlined),
+                        label: Text(isSwahili ? 'Hariri' : 'Edit'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        icon: const Icon(Icons.close),
+                        label: Text(isSwahili ? 'Funga' : 'Close'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -667,8 +865,13 @@ class _ProvisionTaxScreenState extends ConsumerState<ProvisionTaxScreen> {
                               return ProvisionTaxCard(
                                 tax: Map<String, dynamic>.from(tax as Map),
                                 isSwahili: isSwahili,
-                                onTap: () => _openTaxForm(
+                                onTap: () => _showTaxDetails(
+                                  Map<String, dynamic>.from(tax as Map),
+                                  isSwahili: isSwahili,
+                                ),
+                                onEdit: () => _openTaxForm(
                                   tax: Map<String, dynamic>.from(tax as Map),
+                                  forcedEditId: _toInt((tax as Map)['id']),
                                   isSwahili: isSwahili,
                                 ),
                                 onDelete: () => _deleteTax(
@@ -743,6 +946,7 @@ class _SummaryCard extends StatelessWidget {
 class ProvisionTaxCard extends StatelessWidget {
   final Map<String, dynamic> tax;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
   final bool isSwahili;
 
@@ -750,17 +954,19 @@ class ProvisionTaxCard extends StatelessWidget {
     super.key,
     required this.tax,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
     this.isSwahili = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final hasAttachment = tax['file'] != null;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -796,13 +1002,19 @@ class ProvisionTaxCard extends StatelessWidget {
                   ),
                   PopupMenuButton<String>(
                     onSelected: (value) {
-                      if (value == 'edit') {
+                      if (value == 'view') {
                         onTap();
+                      } else if (value == 'edit') {
+                        onEdit();
                       } else if (value == 'delete') {
                         onDelete();
                       }
                     },
                     itemBuilder: (context) => [
+                      PopupMenuItem<String>(
+                        value: 'view',
+                        child: Text(isSwahili ? 'Tazama' : 'View'),
+                      ),
                       PopupMenuItem<String>(
                         value: 'edit',
                         child: Text(isSwahili ? 'Hariri' : 'Edit'),
@@ -816,36 +1028,20 @@ class ProvisionTaxCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Row(
+              Wrap(
+                spacing: 12,
+                runSpacing: 10,
                 children: [
-                  Icon(Icons.attach_money, size: 16, color: Colors.green),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      _formatCurrency(tax['amount'] ?? 0),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  _ProvisionInfoChip(
+                    icon: Icons.attach_money,
+                    color: Colors.green,
+                    label: _formatCurrency(tax['amount'] ?? 0),
                   ),
                   if (tax['bank'] != null) ...[
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.account_balance,
-                      size: 16,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        tax['bank']['bank_name'] ?? 'Unknown Bank',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
+                    _ProvisionInfoChip(
+                      icon: Icons.account_balance,
+                      color: Colors.grey[700]!,
+                      label: '${tax['bank']['bank_name'] ?? 'Unknown Bank'}',
                     ),
                   ],
                 ],
@@ -866,24 +1062,14 @@ class ProvisionTaxCard extends StatelessWidget {
                   ],
                 ),
               ],
-              if (tax['file'] != null) ...[
+              if (hasAttachment) ...[
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.attach_file, size: 16, color: Colors.blue),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        isSwahili
-                            ? 'Kiambatanisho kinapatikana'
-                            : 'Attachment available',
-                        style: TextStyle(fontSize: 12, color: Colors.blue),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.download, size: 16, color: Colors.blue),
-                  ],
+                _ProvisionInfoChip(
+                  icon: Icons.attach_file,
+                  color: Colors.blue,
+                  label: isSwahili
+                      ? 'Kiambatanisho kinapatikana'
+                      : 'Attachment available',
                 ),
               ],
             ],
@@ -906,9 +1092,113 @@ class ProvisionTaxCard extends StatelessWidget {
   }
 }
 
+class _ProvisionInfoChip extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  const _ProvisionInfoChip({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w600,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProvisionDetailCard extends StatelessWidget {
+  final List<Widget> children;
+
+  const _ProvisionDetailCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(children: children),
+      ),
+    );
+  }
+}
+
+class _ProvisionDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _ProvisionDetailRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 4,
+            child: Text(label, style: TextStyle(color: Colors.grey[600])),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 5,
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 int _toInt(dynamic value) {
   if (value is int) return value;
   return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int _resolveProvisionTaxId(Map<String, dynamic>? tax) {
+  if (tax == null) return 0;
+
+  final directId = _toInt(tax['id']);
+  if (directId > 0) return directId;
+
+  final nestedData = tax['data'];
+  if (nestedData is Map) {
+    final nestedId = _toInt(nestedData['id']);
+    if (nestedId > 0) return nestedId;
+  }
+
+  return 0;
 }
 
 int? _toNullableInt(dynamic value) {

@@ -228,53 +228,91 @@ Future<void> _showAutoPurchaseForm(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: isDark ? vatDarkCard : Colors.white,
+    backgroundColor: Colors.transparent,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (ctx) {
       return StatefulBuilder(
         builder: (ctx, setState) {
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              16,
-              20,
-              MediaQuery.of(ctx).viewInsets.bottom + 100,
+          return Container(
+            decoration: BoxDecoration(
+              color: isDark ? vatDarkCard : Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            child: Form(
-              key: formKey,
-              child: SingleChildScrollView(
-                child: Column(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: SafeArea(
+              top: false,
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[400],
-                          borderRadius: BorderRadius.circular(2),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                      decoration: BoxDecoration(
+                        color: isDark ? vatDarkCard : AppColors.primary,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(24),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      isEdit
-                          ? (isSwahili
-                              ? 'Hariri Manunuzi ya EFD'
-                              : 'Edit ${receipt?['company_name'] ?? ''} Receipt')
-                          : (isSwahili
-                              ? 'Ongeza Manunuzi ya EFD'
-                              : 'Add EFD Auto Purchase'),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textPrimary,
+                      child: Column(
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 42,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.35),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          Row(
+                            children: [
+                              IconButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                icon: const Icon(
+                                  Icons.arrow_back_rounded,
+                                  color: Colors.white,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  isEdit
+                                      ? (isSwahili
+                                            ? 'Hariri Manunuzi ya EFD'
+                                            : 'Edit Auto Purchase')
+                                      : (isSwahili
+                                            ? 'Ongeza Manunuzi ya EFD'
+                                            : 'Add Auto Purchase'),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 48),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                     Row(
                       children: [
                         Text(
@@ -526,10 +564,14 @@ Future<void> _showAutoPurchaseForm(
                         ),
                       ),
                     ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
+          ),
           );
         },
       );

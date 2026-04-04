@@ -1222,34 +1222,23 @@ class _VisitFormSheetState extends ConsumerState<_VisitFormSheet> {
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  _isEditing
+                _VisitSheetHeader(
+                  title: _isEditing
                       ? (isSwahili ? 'Hariri Visit' : 'Edit Site Visit')
                       : (isSwahili ? 'Visit Mpya' : 'New Site Visit'),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  onBack: () => Navigator.pop(context),
                 ),
-                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                 Text(
                   isSwahili ? 'Mradi *' : 'Project *',
                   style: const TextStyle(
@@ -1403,6 +1392,9 @@ class _VisitFormSheetState extends ConsumerState<_VisitFormSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -1459,5 +1451,63 @@ class _VisitFormSheetState extends ConsumerState<_VisitFormSheet> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+}
+
+class _VisitSheetHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+
+  const _VisitSheetHeader({required this.title, required this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Center(
+            child: Container(
+              width: 42,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white38,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              IconButton(
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              Expanded(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 48),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

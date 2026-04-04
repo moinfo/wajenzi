@@ -50,7 +50,8 @@ class Utility
     }
 
     public static function getLastId($class_name){
-        return self::getLastRow($class_name)->id ?? 0;
+        $lastRow = self::getLastRow($class_name);
+        return $lastRow ? ($lastRow->id ?? 0) : 0;
     }
 
 

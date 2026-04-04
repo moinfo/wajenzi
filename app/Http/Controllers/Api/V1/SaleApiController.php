@@ -120,7 +120,7 @@ class SaleApiController extends Controller
             $validated['status'] = 'PENDING';
 
             $sale = Sale::create($validated);
-            $sale->load(['efd', 'creator']);
+            $sale->load(['efd', 'user']);
 
             return response()->json([
                 'success' => true,
@@ -163,7 +163,7 @@ class SaleApiController extends Controller
             }
 
             $sale->update($validated);
-            $sale->load(['efd', 'creator']);
+            $sale->load(['efd', 'user']);
 
             return response()->json([
                 'success' => true,

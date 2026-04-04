@@ -110,6 +110,11 @@ class ProvisionTaxApiController extends Controller
     public function store(Request $request): JsonResponse
     {
         try {
+            $existingId = (int) $request->input('id', 0);
+            if ($existingId > 0 && ProvisionTax::whereKey($existingId)->exists()) {
+                return $this->update($request, $existingId);
+            }
+
             $validated = $request->validate([
                 'date' => 'required|date',
                 'amount' => 'required|numeric|min:0',

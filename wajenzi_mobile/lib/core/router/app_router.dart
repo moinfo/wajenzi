@@ -63,6 +63,7 @@ import '../../presentation/screens/projects/project_clients_screen.dart';
 import '../../presentation/screens/projects/project_documents_screen.dart';
 import '../../presentation/screens/projects/leads_screen.dart';
 import '../../presentation/screens/projects/project_reports_screen.dart';
+import '../../presentation/screens/projects/project_summary_reports_screen.dart';
 import '../../presentation/screens/projects/project_schedules_screen.dart';
 import '../../presentation/screens/projects/project_types_screen.dart';
 import '../../presentation/screens/projects/sites_screen.dart';
@@ -71,6 +72,7 @@ import '../../presentation/screens/projects/boq_list_screen.dart';
 import '../../presentation/screens/materials/project_materials_screen.dart';
 import '../../presentation/screens/materials/material_inventory_screen.dart';
 import '../../presentation/screens/sales/sales_screen.dart';
+import '../../presentation/screens/sales/sales_daily_reports_screen.dart';
 import '../../presentation/screens/purchases/purchases_screen.dart';
 import '../../presentation/screens/attendance/site_visits_screen.dart';
 import '../../presentation/screens/billing/staff_billing_screen.dart';
@@ -280,6 +282,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/project-reports',
             name: 'project-reports',
+            builder: (context, state) => const ProjectSummaryReportsScreen(),
+          ),
+          GoRoute(
+            path: '/project-daily-reports',
+            name: 'project-daily-reports',
             builder: (context, state) => const ProjectReportsScreen(),
           ),
           GoRoute(
@@ -327,6 +334,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/sales',
             name: 'sales',
             builder: (context, state) => const SalesScreen(),
+          ),
+          GoRoute(
+            path: '/sales-daily-reports',
+            name: 'sales-daily-reports',
+            builder: (context, state) => const SalesDailyReportsScreen(),
           ),
           GoRoute(
             path: '/purchases',
@@ -1917,6 +1929,16 @@ String? _mapWebRoute(String webRoute) {
     'project_reports': '/project-reports',
     'project-report': '/project-reports',
     'project-reports': '/project-reports',
+    'project_daily_reports': '/project-daily-reports',
+    'project-daily-reports': '/project-daily-reports',
+    'project-daily-reports.index': '/project-daily-reports',
+    'project_daily_reports_index': '/project-daily-reports',
+    'sales_daily_reports': '/sales-daily-reports',
+    'sales-daily-reports': '/sales-daily-reports',
+    'sales-daily-reports.index': '/sales-daily-reports',
+    'sales_daily_reports_index': '/sales-daily-reports',
+    'sales_daily_report': '/sales-daily-reports',
+    'sales-daily-report': '/sales-daily-reports',
     'projects/site-reports/site-daily-reports': '/site-daily-reports',
     'projects_site_reports_site_daily_reports': '/site-daily-reports',
     'project_types': '/project-types',
@@ -2258,20 +2280,38 @@ String? _resolveWebRoute(String webRoute) {
   if (route.contains('sms') || route.contains('message')) {
     return '/messages';
   }
+  if (route.contains('statutory_category') ||
+      route.contains('statutory-category')) {
+    return '/reports-statutory-category';
+  }
+  if (route.contains('statutory_payment_report') ||
+      route.contains('statutory-payment-report')) {
+    return '/reports-statutory-payment';
+  }
+  if (route.contains('statutory_schedules') ||
+      route.contains('statutory-schedules')) {
+    return '/reports-statutory-schedules';
+  }
   if (route.contains('statutory_payment') ||
       route.contains('statutory-payment')) {
     return '/statutory-payments';
   }
   if (route.contains('expense')) return '/expenses';
   if (route.contains('approval')) return '/approvals';
-  if (route.contains('procurement') ||
+  if (route.contains('supplier_quotation') ||
+      route.contains('supplier-quotation')) {
+    return '/supplier-quotations';
+  }
+  if (route.contains('quotation') ||
+      route.contains('procurement') ||
       route.contains('purchase') ||
-      route.contains('quotation') ||
       route.contains('inspection') ||
       route.contains('receiving') ||
       route.contains('material_request')) {
     return route.contains('material_request')
         ? '/material-requests'
+        : route.contains('quotation') && route.contains('comparison')
+        ? '/quotation-comparisons'
         : '/procurement';
   }
   if (route.contains('labor') && route.contains('request'))
@@ -2299,6 +2339,16 @@ String? _resolveWebRoute(String webRoute) {
       route.contains('site-daily-reports') ||
       route.contains('site_daily_reports')) {
     return '/site-daily-reports';
+  }
+  if (route.contains('sales-daily-reports') ||
+      route.contains('sales_daily_reports') ||
+      route.contains('sales-daily-report') ||
+      route.contains('sales_daily_report')) {
+    return '/sales-daily-reports';
+  }
+  if (route.contains('project-daily-reports') ||
+      route.contains('project_daily_reports')) {
+    return '/project-daily-reports';
   }
   if (route.contains('project')) return '/staff-projects';
   if (route.contains('billing') || route.contains('invoice')) {
@@ -2341,6 +2391,16 @@ String? _resolveWebRoute(String webRoute) {
       route.contains('site-daily-reports') ||
       route.contains('site_daily_reports')) {
     return '/site-daily-reports';
+  }
+  if (route.contains('sales-daily-reports') ||
+      route.contains('sales_daily_reports') ||
+      route.contains('sales-daily-report') ||
+      route.contains('sales_daily_report')) {
+    return '/sales-daily-reports';
+  }
+  if (route.contains('project-daily-reports') ||
+      route.contains('project_daily_reports')) {
+    return '/project-daily-reports';
   }
   if (route.contains('attendance') ||
       route.contains('site_visit') ||
