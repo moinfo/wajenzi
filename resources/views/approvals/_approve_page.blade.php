@@ -295,6 +295,147 @@
             </div>
             @endif
 
+            {{-- Project Schedule Section (only for Project model) --}}
+            @if(isset($model) && $model === 'Project')
+                @php
+                    // Look for schedule linked directly to this project
+                    $projectSchedule = \App\Models\ProjectSchedule::with(['assignedArchitect', 'activities'])
+                        ->where('project_id', $approval_data->id)
+                        ->first();
+
+                    // If not found, check via linked leads
+                    if (!$projectSchedule) {
+                        $linkedLeadIds = \App\Models\Lead::where('project_id', $approval_data->id)->pluck('id');
+                        if ($linkedLeadIds->isNotEmpty()) {
+                            $projectSchedule = \App\Models\ProjectSchedule::with(['assignedArchitect', 'activities'])
+                                ->whereIn('lead_id', $linkedLeadIds)
+                                ->first();
+                        }
+                    }
+
+                    $isApproved = strtoupper($approval_data->status ?? '') === 'APPROVED';
+                @endphp
+
+                @if($projectSchedule)
+                    <div class="details-card" style="margin-bottom: 25px;">
+                        <div class="card-header" style="background-color: #f8f9fa; padding: 15px 25px; border-bottom: 1px solid #e9ecef; display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0; color: #0066cc; font-weight: 600; font-size: 18px;">
+                                <i class="fa fa-calendar-alt mr-2"></i> Project Schedule
+                            </h3>
+                            <a href="{{ route('project-schedules.show', $projectSchedule) }}" class="btn btn-sm btn-info">
+                                <i class="fa fa-eye mr-1"></i> View Full Schedule
+                            </a>
+                        </div>
+                        <div class="card-body" style="padding: 25px;">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Status:</strong><br>
+                                    @php
+                                        $schedColors = ['draft' => 'secondary', 'pending_confirmation' => 'warning', 'confirmed' => 'info', 'in_progress' => 'primary', 'completed' => 'success', 'cancelled' => 'danger'];
+                                    @endphp
+                                    <span class="badge badge-{{ $schedColors[$projectSchedule->status] ?? 'secondary' }}">
+                                        {{ ucwords(str_replace('_', ' ', $projectSchedule->status)) }}
+                                    </span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Architect:</strong><br>
+                                    {{ $projectSchedule->assignedArchitect->name ?? 'Unassigned' }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Start:</strong><br>
+                                    {{ $projectSchedule->start_date->format('d/m/Y') }}
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>End:</strong><br>
+                                    {{ $projectSchedule->end_date ? $projectSchedule->end_date->format('d/m/Y') : 'N/A' }}
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <strong>Progress:</strong>
+                                    <div class="progress mt-1" style="height: 22px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ $projectSchedule->progress }}%">
+                                            {{ $projectSchedule->progress }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @if(in_array($projectSchedule->status, ['draft', 'pending_confirmation']))
+                                <div class="alert alert-warning mt-3 mb-0">
+                                    <i class="fa fa-exclamation-triangle mr-2"></i>
+                                    Schedule is not yet confirmed. <a href="{{ route('project-schedules.show', $projectSchedule) }}">Review and confirm</a> to activate activities.
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                @elseif($isApproved)
+                    <div class="details-card" style="margin-bottom: 25px;">
+                        <div class="card-header" style="background-color: #f8f9fa; padding: 15px 25px; border-bottom: 1px solid #e9ecef;">
+                            <h3 style="margin: 0; color: #0066cc; font-weight: 600; font-size: 18px;">
+                                <i class="fa fa-calendar-alt mr-2"></i> Project Schedule
+                            </h3>
+                        </div>
+                        <div class="card-body" style="padding: 25px; text-align: center;">
+                            <p class="text-muted mb-3">No schedule has been created for this project yet.</p>
+                            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#createProjectScheduleModal">
+                                <i class="fa fa-plus mr-1"></i> Create Project Schedule
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Create Schedule Modal --}}
+                    <div class="modal fade" id="createProjectScheduleModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form action="{{ route('projects.schedule.create', $approval_data->id) }}" method="POST">
+                                    @csrf
+                                    <div class="modal-header" style="background: #0066cc; color: white;">
+                                        <h5 class="modal-title"><i class="fa fa-calendar-alt mr-2"></i>Create Project Schedule</h5>
+                                        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                                    </div>
+                                    <div class="modal-body">
+                                        @if($errors->any())
+                                            <div class="alert alert-danger">
+                                                @foreach($errors->all() as $error)
+                                                    <div>{{ $error }}</div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        <p>This will create a project schedule with all activities based on the standard template.</p>
+                                        <div class="form-group">
+                                            <label for="schedule_start_date"><strong>Project Start Date</strong> <span class="text-danger">*</span></label>
+                                            <input type="text" name="start_date" id="schedule_start_date" class="form-control datepicker"
+                                                   value="{{ date('Y-m-d') }}" required>
+                                            <small class="text-muted">All activity dates will be calculated from this date (excluding weekends and holidays).</small>
+                                        </div>
+                                        <div class="form-group mt-3">
+                                            <label for="assigned_architect_id"><strong>Assign Architect</strong> <small class="text-muted">(optional - auto-assigned if left empty)</small></label>
+                                            <select name="assigned_architect_id" id="assigned_architect_id" class="form-control">
+                                                <option value="">-- Auto-assign (least workload) --</option>
+                                                @php
+                                                    $architects = \App\Models\User::whereHas('roles', function($q) {
+                                                        $q->whereIn('name', ['Architect', 'Admin', 'Super Admin', 'Project Manager']);
+                                                    })->orWhere('designation', 'like', '%architect%')->orderBy('name')->get();
+                                                @endphp
+                                                @foreach($architects as $architect)
+                                                    <option value="{{ $architect->id }}">
+                                                        {{ $architect->name }} ({{ $architect->designation ?? $architect->roles->first()->name ?? 'Staff' }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-success"><i class="fa fa-check mr-1"></i> Create Schedule</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @endif
+
             <!-- Approvals Section -->
             <div class="approvals-section">
                 <style>
@@ -423,4 +564,34 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('js_after')
+<style>
+    .datepicker { z-index: 1060 !important; }
+</style>
+<script>
+    $(function(){
+        // Re-init datepicker inside modal and fix z-index
+        $('#createProjectScheduleModal').on('shown.bs.modal', function () {
+            var $dp = $('#schedule_start_date');
+            $dp.datepicker('destroy').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true,
+                container: '#createProjectScheduleModal'
+            });
+        });
+
+        // Ensure form submits
+        $('#createProjectScheduleModal form').on('submit', function(e) {
+            var dateVal = $('#schedule_start_date').val();
+            if (!dateVal) {
+                e.preventDefault();
+                alert('Please select a start date');
+                return false;
+            }
+        });
+    });
+</script>
 @endsection

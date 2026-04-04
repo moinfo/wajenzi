@@ -11,7 +11,7 @@
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
-                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Role">Submit</button>
+                <button type="submit" class="btn btn-alt-primary col" name="addItem" value="Permission">Submit</button>
             @endif
         </div>
     </form>

@@ -24,26 +24,14 @@ $document_id = \App\Classes\Utility::getLastId('Project')+1;
             </div>
             <div class="col-sm-12">
                 <div class="form-group">
-                    <label for="description" class="control-label">Description</label>
-                    <textarea class="form-control" id="input-description" name="description" rows="3" placeholder="Site visit description">{{ $object->description ?? '' }}</textarea>
+                    <label for="description" class="control-label required">Description</label>
+                    <input type="text" class="form-control" id="input-description" required="required" name="description" value="{{ $object->description ?? '' }}" placeholder="Site visit description">
                 </div>
             </div>
             <div class="col-sm-12">
                 <div class="form-group">
                     <label for="visit_date" class="control-label required">Visit Date</label>
                     <input type="text" class="form-control datepicker" id="input-visit-date" name="visit_date" value="{{ $object->visit_date ?? date('Y-m-d') }}" required="required">
-                </div>
-            </div>
-            <div class="col-sm-12">
-                <div class="form-group">
-                    <label for="findings" class="control-label">Findings</label>
-                    <textarea class="form-control" id="input-findings" name="findings" rows="3" placeholder="Site visit findings">{{ $object->findings ?? '' }}</textarea>
-                </div>
-            </div>
-            <div class="col-sm-12">
-                <div class="form-group">
-                    <label for="recommendations" class="control-label">Recommendations</label>
-                    <textarea class="form-control" id="input-recommendations" name="recommendations" rows="3" placeholder="Site visit recommendations">{{ $object->recommendations ?? '' }}</textarea>
                 </div>
             </div>
         </div>
