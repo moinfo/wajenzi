@@ -397,7 +397,7 @@
                             </div>
                             <div class="followup-content">
                                 <span class="followup-lead-name">{{ $activity->activity_code }}: {{ Str::limit($activity->name, 30) }}</span>
-                                <span class="followup-details">{{ $activity->schedule->lead->lead_number ?? '' }} - {{ Str::limit($activity->schedule->lead->name ?? '', 25) }}</span>
+                                <span class="followup-details">{{ $activity->schedule->display_name }}</span>
                                 <span class="followup-assignee">
                                     <i class="fa fa-layer-group"></i> {{ $activity->phase }}
                                     @if($activity->assignedUser)
@@ -593,8 +593,8 @@
                         <a href="{{ route('project-schedules.show', $schedule) }}" class="project-progress-item">
                             <div class="project-progress-header">
                                 <div class="project-info">
-                                    <span class="project-name">{{ $schedule->lead->lead_number ?? 'N/A' }}</span>
-                                    <span class="project-client">{{ \Illuminate\Support\Str::limit($schedule->lead->name ?? 'Unknown', 30) }}</span>
+                                    <span class="project-name">{{ $schedule->display_name }}</span>
+                                    <span class="project-client">{{ $schedule->client ? \Illuminate\Support\Str::limit($schedule->client->first_name . ' ' . $schedule->client->last_name, 30) : '' }}</span>
                                 </div>
                                 <div class="project-percentage {{ $progressClass }}">
                                     {{ $progressDetails['percentage'] }}%
@@ -858,7 +858,7 @@
                             @foreach($todayActivitiesList as $tact)
                                 <a href="{{ route('project-schedules.show', $tact->project_schedule_id) }}" class="today-item activity-item {{ $tact->status === 'completed' ? 'completed' : ($tact->status === 'in_progress' ? 'in-progress' : '') }}">
                                     <span class="lead-name">{{ $tact->activity_code }}: {{ Str::limit($tact->name, 25) }}</span>
-                                    <span class="lead-action">{{ $tact->schedule->lead->lead_number ?? '' }}</span>
+                                    <span class="lead-action">{{ $tact->schedule->display_name }}</span>
                                     @if($tact->status === 'completed')
                                         <span class="completed-badge"><i class="fa fa-check"></i> Done</span>
                                     @elseif($tact->status === 'in_progress')

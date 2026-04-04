@@ -59,7 +59,7 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Created By:</strong></td>
-                                    <td>{{ $site->createdBy?->name ?? 'N/A' }}</td>
+                                    <td>{{ $site->createdBy->name }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Created:</strong></td>
@@ -149,8 +149,8 @@
                                     @foreach($recentReports as $report)
                                         <tr>
                                             <td>{{ $report->report_date->format('M d, Y') }}</td>
-                                            <td>{{ $report->supervisor?->name ?? 'N/A' }}</td>
-                                            <td>{{ Str::limit($report->work_activities ?? '', 50) }}</td>
+                                            <td>{{ $report->supervisor->name ?? 'N/A' }}</td>
+                                            <td>{{ Str::limit($report->work_activities, 50) }}</td>
                                             <td>{{ $report->progress_percentage }}%</td>
                                             <td>
                                                 <a href="{{ route('site-daily-reports.show', $report) }}" class="btn btn-sm btn-primary">
@@ -201,7 +201,7 @@
                             <div class="mb-3 p-2 border rounded">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
-                                        <strong>{{ $assignment->supervisor?->name ?? 'N/A' }}</strong>
+                                        <strong>{{ $assignment->supervisor->name }}</strong>
                                         @if($assignment->is_active)
                                             <span class="badge badge-success ml-1">Current</span>
                                         @endif

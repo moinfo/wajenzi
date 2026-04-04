@@ -109,7 +109,7 @@
                                         <td class="text-right">{{ number_format($sale->turn_over, 2) }}</td>
                                         <td class="text-center">
                                             @if($sale->file != null)
-                                                <a href="{{ $sale->live_attachment_url }}" target="_blank" rel="noopener noreferrer">Attachment</a>
+                                                <a href="{{ url("$sale->file") }}">Attachment</a>
                                             @else
                                                 No File
                                             @endif
