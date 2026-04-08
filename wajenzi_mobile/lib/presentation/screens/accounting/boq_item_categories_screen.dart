@@ -914,15 +914,18 @@ class _BoqItemCategoryFormSheetState
 
     try {
       final api = ref.read(apiClientProvider);
-      final data = {
+      final Map<String, dynamic> data = {
         'name': _nameController.text.trim(),
-        'parent_id': _parentId,
         'description': _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
         'sort_order': int.tryParse(_sortOrderController.text.trim()) ?? 0,
         'is_active': _isActive,
       };
+
+      if (_parentId != null) {
+        data['parent_id'] = _parentId;
+      }
 
       if (_isEdit) {
         await api.put(

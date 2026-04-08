@@ -68,6 +68,7 @@ import '../../presentation/screens/projects/project_schedules_screen.dart';
 import '../../presentation/screens/projects/project_types_screen.dart';
 import '../../presentation/screens/projects/sites_screen.dart';
 import '../../presentation/screens/projects/site_supervisor_assignments_screen.dart';
+import '../../presentation/screens/projects/site_daily_reports_screen.dart';
 import '../../presentation/screens/projects/boq_list_screen.dart';
 import '../../presentation/screens/materials/project_materials_screen.dart';
 import '../../presentation/screens/materials/material_inventory_screen.dart';
@@ -122,6 +123,7 @@ import '../../presentation/screens/staff/staff_salaries_screen.dart';
 import '../../presentation/screens/staff/staff_loans_screen.dart';
 import '../../presentation/screens/staff/deductions_screen.dart';
 import '../../presentation/screens/staff/deduction_subscriptions_screen.dart';
+import '../../presentation/screens/staff/leave_dashboard_screen.dart';
 import '../../presentation/screens/staff/leave_managements_screen.dart';
 import '../../presentation/screens/staff/leave_requests_screen.dart';
 import '../../presentation/screens/staff/leave_types_screen.dart';
@@ -134,13 +136,32 @@ final rootScaffoldKeyProvider = Provider<GlobalKey<ScaffoldState>>((ref) {
   return GlobalKey<ScaffoldState>();
 });
 
+final _routerRefreshNotifierProvider = Provider<_RouterRefreshNotifier>((ref) {
+  final notifier = _RouterRefreshNotifier(ref);
+  ref.onDispose(notifier.dispose);
+  return notifier;
+});
+
+class _RouterRefreshNotifier extends ChangeNotifier {
+  _RouterRefreshNotifier(Ref ref) {
+    ref.listen(authStateProvider, (_, __) {
+      notifyListeners();
+    });
+  }
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final refreshNotifier = ref.watch(_routerRefreshNotifierProvider);
 
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
-      final isLoggedIn = authState.valueOrNull?.isAuthenticated ?? false;
+      final authState = ref.read(authStateProvider);
+      final authSnapshot = authState.valueOrNull;
+      final isResolvingAuth =
+          authState.isLoading || (authSnapshot?.isLoading ?? false);
+      final isLoggedIn = authSnapshot?.isAuthenticated ?? false;
       final isOnLanding = state.matchedLocation == '/';
       final isOnLogin = state.matchedLocation == '/login';
       final isOnAbout = state.matchedLocation == '/about';
@@ -154,6 +175,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           isOnServices ||
           isOnProjects ||
           isOnAwards;
+
+      if (isResolvingAuth) {
+        return null;
+      }
 
       // Allow access to public pages without auth
       if (!isLoggedIn && !isOnPublicPage) {
@@ -287,11 +312,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/project-daily-reports',
             name: 'project-daily-reports',
-            builder: (context, state) => const ProjectReportsScreen(),
-          ),
-          GoRoute(
-            path: '/site-daily-reports',
-            name: 'site-daily-reports',
             builder: (context, state) => const ProjectReportsScreen(),
           ),
           GoRoute(
@@ -486,6 +506,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/architect-bonus/report',
             name: 'architect-bonus-report',
             builder: (context, state) => const ArchitectBonusReportScreen(),
+          ),
+          GoRoute(
+            path: '/architect-bonus/module-report',
+            name: 'architect-bonus-module-report',
+            builder: (context, state) => const ArchitectBonusReportScreen(
+              useDrawerMenu: true,
+            ),
           ),
           GoRoute(
             path: '/reports-vat-analysis',
@@ -915,6 +942,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 const SiteSupervisorAssignmentsScreen(),
           ),
           GoRoute(
+            path: '/site-daily-reports',
+            name: 'site-daily-reports',
+            builder: (context, state) => const SiteDailyReportsScreen(),
+          ),
+          GoRoute(
             path: '/expenses',
             name: 'expenses',
             builder: (context, state) => const ExpenseListScreen(),
@@ -1184,7 +1216,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/leave-dashboard',
             name: 'leave-dashboard',
-            builder: (context, state) => const LeaveRequestsScreen(),
+            builder: (context, state) => const LeaveDashboardScreen(),
           ),
           GoRoute(
             path: '/accounting',
@@ -2128,7 +2160,8 @@ String? _mapWebRoute(String webRoute) {
     'expense': '/expenses',
     'expense_adjustable': '/adjustments',
     'site_management': '/attendance',
-    'site_supervisor_assignments': '/attendance',
+    'site_supervisor_assignments': '/site-supervisor-assignments',
+    'site_daily_reports': '/site-daily-reports',
     'staff_salaries': '/staff-salaries',
     'staff-salaries': '/staff-salaries',
     'settings_staff_salaries': '/staff-salaries',

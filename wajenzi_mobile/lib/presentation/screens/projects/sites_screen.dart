@@ -46,7 +46,9 @@ final _sitesFilterProvider = StateProvider.autoDispose<_SitesFilter>(
   (ref) => _SitesFilter(),
 );
 
-final _sitesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
+final _sitesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
   final filter = ref.watch(_sitesFilterProvider);
   final search = ref.watch(_sitesSearchProvider);
@@ -97,6 +99,17 @@ final _siteDetailProvider = FutureProvider.autoDispose
     });
 
 String _siteErrorMessage(Object error, bool isSwahili) {
+  final errStr = error.toString();
+  if (errStr.contains('422')) {
+    if (errStr.contains('name')) {
+      return isSwahili
+          ? 'Jina la eneo limewahi kutumika'
+          : 'Site name already exists';
+    }
+    if (errStr.contains('location')) {
+      return isSwahili ? 'Mahali ni lazima' : 'Location is required';
+    }
+  }
   return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
 }
 
@@ -683,11 +696,9 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                                 'actual_end_date': actualEndDateCtrl.text,
                             };
                             try {
-                              if (isEdit) {
-                                await api.put(
-                                  '/sites/${site!['id']}',
-                                  data: data,
-                                );
+                              final siteId = site?['id'];
+                              if (isEdit && siteId != null && siteId != 0) {
+                                await api.put('/sites/$siteId', data: data);
                               } else {
                                 await api.post('/sites', data: data);
                               }
@@ -1057,19 +1068,8 @@ class _SiteCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.location_on_rounded,
-                      color: Color(0xFF3B82F6),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1099,51 +1099,53 @@ class _SiteCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'view')
-                        onView();
-                      else if (value == 'edit')
-                        onEdit();
-                      else if (value == 'delete')
-                        onDelete();
-                    },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'view',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.visibility, size: 20),
-                            const SizedBox(width: 8),
-                            Text(isSwahili ? 'Tazama' : 'View'),
-                          ],
+                  Column(
+                    children: [
+                      GestureDetector(
+                        onTap: onEdit,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit, size: 14, color: Colors.white),
+                              Text(
+                                isSwahili ? ' Edit' : ' Edit',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            const Icon(Icons.edit, size: 20),
-                            const SizedBox(width: 8),
-                            Text(isSwahili ? 'Hariri' : 'Edit'),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.delete,
-                              size: 20,
-                              color: Colors.red,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              isSwahili ? 'Futa' : 'Delete',
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          ],
+                      const SizedBox(height: 6),
+                      GestureDetector(
+                        onTap: onDelete,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, size: 14, color: Colors.white),
+                              Text(
+                                isSwahili ? ' Del' : ' Del',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],

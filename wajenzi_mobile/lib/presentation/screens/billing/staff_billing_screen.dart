@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -14,12 +17,35 @@ final _billingStatusProvider = StateProvider.autoDispose<String?>(
 
 final _billingTypeProvider = StateProvider.autoDispose<String?>((ref) => null);
 
+Future<dynamic> _getWithRetry(
+  ApiClient api,
+  String path, {
+  Map<String, dynamic>? queryParameters,
+}) async {
+  try {
+    return await api.get(path, queryParameters: queryParameters);
+  } on DioException catch (error) {
+    final shouldRetry =
+        error.response?.statusCode == null &&
+        (error.type == DioExceptionType.connectionError ||
+            error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.receiveTimeout ||
+            error.type == DioExceptionType.unknown);
+
+    if (!shouldRetry) rethrow;
+
+    await Future.delayed(const Duration(milliseconds: 250));
+    return api.get(path, queryParameters: queryParameters);
+  }
+}
+
 final _billingDocumentsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
       final status = ref.watch(_billingStatusProvider);
       final type = ref.watch(_billingTypeProvider);
-      final response = await api.get(
+      final response = await _getWithRetry(
+        api,
         '/billing/documents',
         queryParameters: {
           if (status != null && status.isNotEmpty) 'status': status,
@@ -55,7 +81,7 @@ final _billingDetailProvider = FutureProvider.autoDispose
 final _billingPaymentsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/billing/payments');
+      final response = await _getWithRetry(api, '/billing/payments');
       final data = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>
           : const <String, dynamic>{};
@@ -73,7 +99,7 @@ final _billingPaymentsProvider =
 final _billingClientsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/billing/clients');
+      final response = await _getWithRetry(api, '/billing/clients');
       final data = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>
           : const <String, dynamic>{};
@@ -87,7 +113,7 @@ final _billingClientsProvider =
 final _billingDashboardProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/billing/dashboard');
+      final response = await _getWithRetry(api, '/billing/dashboard');
       final data = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>
           : const <String, dynamic>{};

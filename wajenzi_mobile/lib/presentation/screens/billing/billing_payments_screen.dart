@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,10 +16,33 @@ final _paymentStatusProvider = StateProvider.autoDispose<String?>(
   (ref) => null,
 );
 
+Future<dynamic> _getWithRetry(
+  ApiClient api,
+  String path, {
+  Map<String, dynamic>? queryParameters,
+}) async {
+  try {
+    return await api.get(path, queryParameters: queryParameters);
+  } on DioException catch (error) {
+    final shouldRetry =
+        error.response?.statusCode == null &&
+        (error.type == DioExceptionType.connectionError ||
+            error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.receiveTimeout ||
+            error.type == DioExceptionType.unknown);
+
+    if (!shouldRetry) rethrow;
+
+    await Future.delayed(const Duration(milliseconds: 250));
+    return api.get(path, queryParameters: queryParameters);
+  }
+}
+
 final _paymentListProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get(
+      final response = await _getWithRetry(
+        api,
         '/billing/payments',
         queryParameters: {'per_page': 100},
       );
@@ -34,7 +60,7 @@ final _paymentRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/billing/payments/reference-data');
+  final response = await _getWithRetry(api, '/billing/payments/reference-data');
   final data = response.data is Map<String, dynamic>
       ? response.data as Map<String, dynamic>
       : const <String, dynamic>{};
@@ -46,7 +72,7 @@ final _paymentRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
 final _paymentDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/billing/payments/$id');
+      final response = await _getWithRetry(api, '/billing/payments/$id');
       final data = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>
           : const <String, dynamic>{};

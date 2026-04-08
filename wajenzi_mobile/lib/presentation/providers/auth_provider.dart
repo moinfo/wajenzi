@@ -51,7 +51,15 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
   }
 
   Future<bool> login(String login, String password) async {
-    state = const AsyncValue.loading();
+    final currentState = state.valueOrNull ?? const AuthState();
+    state = AsyncValue.data(
+      AuthState(
+        user: currentState.user,
+        token: currentState.token,
+        isLoading: true,
+        error: null,
+      ),
+    );
 
     try {
       final deviceId = await _storageService.getDeviceId();
@@ -101,7 +109,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
         return true;
       } else {
         state = AsyncValue.data(
-          AuthState(error: response.message ?? 'Login failed'),
+          AuthState(
+            user: currentState.user,
+            token: currentState.token,
+            error: response.message ?? 'Login failed',
+          ),
         );
         return false;
       }
@@ -113,7 +125,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
           errorMessage = data['message'];
         }
       }
-      state = AsyncValue.data(AuthState(error: errorMessage));
+      state = AsyncValue.data(
+        AuthState(
+          user: currentState.user,
+          token: currentState.token,
+          error: errorMessage,
+        ),
+      );
       return false;
     }
   }
@@ -229,6 +247,29 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
         newPasswordConfirmation: newPasswordConfirmation,
       );
       return null; // success
+    } catch (e) {
+      if (e is DioException) {
+        return _extractDioErrorMessage(
+          e,
+          fallback: 'Failed to change password',
+        );
+      }
+      return 'Failed to change password';
+    }
+  }
+
+  Future<String?> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    try {
+      await _authApi.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        newPasswordConfirmation: newPasswordConfirmation,
+      );
+      return null;
     } catch (e) {
       if (e is DioException) {
         return _extractDioErrorMessage(

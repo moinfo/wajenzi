@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,10 +16,33 @@ final _invoiceStatusProvider = StateProvider.autoDispose<String?>(
   (ref) => null,
 );
 
+Future<dynamic> _getWithRetry(
+  ApiClient api,
+  String path, {
+  Map<String, dynamic>? queryParameters,
+}) async {
+  try {
+    return await api.get(path, queryParameters: queryParameters);
+  } on DioException catch (error) {
+    final shouldRetry =
+        error.response?.statusCode == null &&
+        (error.type == DioExceptionType.connectionError ||
+            error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.receiveTimeout ||
+            error.type == DioExceptionType.unknown);
+
+    if (!shouldRetry) rethrow;
+
+    await Future.delayed(const Duration(milliseconds: 250));
+    return api.get(path, queryParameters: queryParameters);
+  }
+}
+
 final _invoiceListProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get(
+      final response = await _getWithRetry(
+        api,
         '/billing/documents',
         queryParameters: {'document_type': 'invoice', 'per_page': 100},
       );
@@ -35,7 +61,7 @@ final _invoiceRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/billing/reference-data');
+  final response = await _getWithRetry(api, '/billing/reference-data');
   final data = response.data is Map<String, dynamic>
       ? response.data as Map<String, dynamic>
       : const <String, dynamic>{};
@@ -47,7 +73,7 @@ final _invoiceRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
 final _invoiceDetailProvider = FutureProvider.autoDispose
     .family<Map<String, dynamic>, int>((ref, id) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/billing/documents/$id');
+      final response = await _getWithRetry(api, '/billing/documents/$id');
       final data = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>
           : const <String, dynamic>{};
@@ -1134,10 +1160,7 @@ class _InvoiceFormSheetState extends ConsumerState<_InvoiceFormSheet> {
   Widget build(BuildContext context) {
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
-    final clients = (widget.refs['clients'] as List? ?? const [])
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList();
+    final clients = _uniqueRefOptions(widget.refs['clients'] as List? ?? const []);
 
     return Container(
       decoration: BoxDecoration(
@@ -1202,7 +1225,7 @@ class _InvoiceFormSheetState extends ConsumerState<_InvoiceFormSheet> {
                             (item) => DropdownMenuItem<int?>(
                               value: _toNullableInt(item['id']),
                               child: Text(
-                                _text(item['name']),
+                                _displayRefName(item, fallback: 'Client'),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -1692,10 +1715,41 @@ int _toInt(dynamic value) {
 
 int? _toNullableInt(dynamic value) {
   if (value == null) return null;
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  if (value is String) return int.tryParse(value);
+  if (value is int) return value <= 0 ? null : value;
+  if (value is num) {
+    final parsed = value.toInt();
+    return parsed <= 0 ? null : parsed;
+  }
+  if (value is String) {
+    final parsed = int.tryParse(value);
+    if (parsed == null || parsed <= 0) return null;
+    return parsed;
+  }
   return null;
+}
+
+List<Map<String, dynamic>> _uniqueRefOptions(List? rawItems) {
+  final seenIds = <int>{};
+  final items = <Map<String, dynamic>>[];
+
+  for (final raw in rawItems ?? const []) {
+    if (raw is! Map) continue;
+    final item = Map<String, dynamic>.from(raw);
+    final id = _toNullableInt(item['id']);
+    if (id == null || seenIds.contains(id)) continue;
+
+    seenIds.add(id);
+    items.add(item);
+  }
+
+  return items;
+}
+
+String _displayRefName(Map<String, dynamic> item, {required String fallback}) {
+  final name = _text(item['name']).trim();
+  if (name.isNotEmpty) return name;
+  final id = _toNullableInt(item['id']);
+  return id == null ? fallback : '$fallback #$id';
 }
 
 String? _blankToNull(String? value) {

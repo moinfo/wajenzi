@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
@@ -185,7 +186,7 @@ class _LeaveDashboardScreenState extends ConsumerState<LeaveDashboardScreen> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // Navigate to all requests
+                      context.push('/leave-requests');
                     },
                     child: Text(
                       isSwahili ? 'Tazama Zote' : 'View All',

@@ -1034,6 +1034,38 @@ class _ImprestFormSheetState extends ConsumerState<_ImprestFormSheet> {
                     DropdownButtonFormField<int>(
                       isExpanded: true,
                       value:
+                          subcategories.any(
+                            (item) => _toInt(item['id']) == _subcategoryId,
+                          )
+                          ? _subcategoryId
+                          : null,
+                      validator: (value) => value == null
+                          ? (isSwahili ? 'Hitajiwa' : 'Required')
+                          : null,
+                      decoration: inputStyle(
+                        isSwahili
+                            ? 'Kundi la Masuala *'
+                            : 'Expenses Sub Category *',
+                      ),
+                      dropdownColor: bgColor,
+                      items: subcategories
+                          .map(
+                            (item) => DropdownMenuItem<int>(
+                              value: _toInt(item['id']),
+                              child: Text(
+                                item['name']?.toString() ?? '-',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) =>
+                          setState(() => _subcategoryId = value),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<int>(
+                      isExpanded: true,
+                      value:
                           projects.any(
                             (item) => _toInt(item['id']) == _projectId,
                           )
@@ -1060,36 +1092,6 @@ class _ImprestFormSheetState extends ConsumerState<_ImprestFormSheet> {
                       onChanged: (value) => setState(() => _projectId = value),
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<int>(
-                      isExpanded: true,
-                      value:
-                          subcategories.any(
-                            (item) => _toInt(item['id']) == _subcategoryId,
-                          )
-                          ? _subcategoryId
-                          : null,
-                      validator: (value) => value == null
-                          ? (isSwahili ? 'Hitajiwa' : 'Required')
-                          : null,
-                      decoration: inputStyle(
-                        isSwahili ? 'Kundi la Masuala *' : 'Expense Category *',
-                      ),
-                      dropdownColor: bgColor,
-                      items: subcategories
-                          .map(
-                            (item) => DropdownMenuItem<int>(
-                              value: _toInt(item['id']),
-                              child: Text(
-                                item['name']?.toString() ?? '-',
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) =>
-                          setState(() => _subcategoryId = value),
-                    ),
-                    const SizedBox(height: 12),
                     TextFormField(
                       controller: _descriptionController,
                       maxLines: 3,
@@ -1104,141 +1106,48 @@ class _ImprestFormSheetState extends ConsumerState<_ImprestFormSheet> {
                       ),
                       style: TextStyle(color: textColor),
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: inputBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                isSwahili ? 'Salio la sasa' : 'Current Balance',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: textColor.withValues(alpha: 0.7),
-                                ),
-                              ),
-                              Text(
-                                vatMoney(num.tryParse(balance) ?? 0),
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.success,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          TextFormField(
-                            controller: _amountController,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            onChanged: (_) => setState(() {}),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return isSwahili
-                                    ? 'Kiasi kinahitajika'
-                                    : 'Amount is required';
-                              }
-                              final amount = double.tryParse(value.trim());
-                              final currentBalance =
-                                  double.tryParse(balance) ?? 0;
-                              if (amount == null || amount <= 0) {
-                                return isSwahili
-                                    ? 'Kiasi batili'
-                                    : 'Invalid amount';
-                              }
-                              if (amount > currentBalance) {
-                                return isSwahili
-                                    ? 'Kiasi hakikizi salio'
-                                    : 'Amount exceeds balance';
-                              }
-                              return null;
-                            },
-                            decoration: inputStyle(
-                              isSwahili
-                                  ? 'Kiasi cha Ombi *'
-                                  : 'Request Amount *',
-                            ),
-                            style: TextStyle(color: textColor, fontSize: 16),
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: (() {
-                                final entered =
-                                    double.tryParse(
-                                      _amountController.text.trim(),
-                                    ) ??
-                                    0;
-                                final bal = double.tryParse(balance) ?? 0;
-                                if (entered > bal)
-                                  return AppColors.error.withValues(
-                                    alpha: 0.15,
-                                  );
-                                if (entered > 0)
-                                  return AppColors.success.withValues(
-                                    alpha: 0.15,
-                                  );
-                                return Colors.transparent;
-                              })(),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  isSwahili
-                                      ? 'Salio linalobaki'
-                                      : 'Remaining Balance',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: textColor,
-                                  ),
-                                ),
-                                Text(
-                                  () {
-                                    final entered =
-                                        double.tryParse(
-                                          _amountController.text.trim(),
-                                        ) ??
-                                        0;
-                                    final bal = double.tryParse(balance) ?? 0;
-                                    return vatMoney(bal - entered);
-                                  }(),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: (() {
-                                      final entered =
-                                          double.tryParse(
-                                            _amountController.text.trim(),
-                                          ) ??
-                                          0;
-                                      final bal = double.tryParse(balance) ?? 0;
-                                      if (entered > bal) return AppColors.error;
-                                      if (entered > 0) return AppColors.success;
-                                      return textColor;
-                                    })(),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      readOnly: true,
+                      initialValue: vatMoney(num.tryParse(balance) ?? 0),
+                      decoration: inputStyle(
+                        isSwahili ? 'Salio' : 'Balance',
+                      ).copyWith(filled: true, enabled: false),
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      onChanged: (_) => setState(() {}),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return isSwahili
+                              ? 'Kiasi kinahitajika'
+                              : 'Amount is required';
+                        }
+                        final amount = double.tryParse(value.trim());
+                        final currentBalance = double.tryParse(balance) ?? 0;
+                        if (amount == null || amount <= 0) {
+                          return isSwahili ? 'Kiasi batili' : 'Invalid amount';
+                        }
+                        if (amount > currentBalance) {
+                          return isSwahili
+                              ? 'Kiasi hakikizi salio'
+                              : 'Amount exceeds balance';
+                        }
+                        return null;
+                      },
+                      decoration: inputStyle(
+                        isSwahili ? 'Kiasi *' : 'Amount *',
+                      ),
+                      style: TextStyle(color: textColor, fontSize: 16),
+                    ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _dateController,

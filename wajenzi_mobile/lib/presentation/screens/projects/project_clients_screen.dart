@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -15,11 +18,29 @@ final _clientReferenceDataProvider =
       return response.data['data'] as Map<String, dynamic>? ?? {};
     });
 
+Future<dynamic> _getWithRetry(ApiClient api, String path) async {
+  try {
+    return await api.get(path);
+  } on DioException catch (error) {
+    final shouldRetry =
+        error.response?.statusCode == null &&
+        (error.type == DioExceptionType.connectionError ||
+            error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.receiveTimeout ||
+            error.type == DioExceptionType.unknown);
+
+    if (!shouldRetry) rethrow;
+
+    await Future.delayed(const Duration(milliseconds: 250));
+    return api.get(path);
+  }
+}
+
 final _clientsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/project-clients');
+  final response = await _getWithRetry(api, '/project-clients');
 
   final payload = response.data['data'];
   final collection = payload is Map<String, dynamic> ? payload : null;
@@ -56,7 +77,7 @@ class ProjectClientsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Wateja' : 'Clients'),
+        title: Text(isSwahili ? 'Wateja wa Miradi' : 'Project Clients'),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),

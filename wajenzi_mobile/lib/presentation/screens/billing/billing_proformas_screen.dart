@@ -730,14 +730,11 @@ class _ProformaFormSheetState extends ConsumerState<_ProformaFormSheet> {
   Widget build(BuildContext context) {
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
-    final clients = (widget.refs['clients'] as List? ?? const [])
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList();
-    final projects = (widget.refs['projects'] as List? ?? const [])
-        .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
-        .toList();
+    final clients = _uniqueRefOptions(widget.refs['clients'] as List? ?? const []);
+    final projects = _uniqueRefOptions(
+      widget.refs['projects'] as List? ?? const [],
+      allowEmptyName: true,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -793,7 +790,7 @@ class _ProformaFormSheetState extends ConsumerState<_ProformaFormSheet> {
                             (item) => DropdownMenuItem<int?>(
                               value: _toNullableInt(item['id']),
                               child: Text(
-                                _text(item['name']),
+                                _displayRefName(item, fallback: 'Client'),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -820,7 +817,7 @@ class _ProformaFormSheetState extends ConsumerState<_ProformaFormSheet> {
                           (item) => DropdownMenuItem<int?>(
                             value: _toNullableInt(item['id']),
                             child: Text(
-                              _text(item['name']),
+                              _displayRefName(item, fallback: 'Project'),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -1803,6 +1800,36 @@ int _toInt(dynamic value) {
 int? _toNullableInt(dynamic value) {
   final parsed = _toInt(value);
   return parsed <= 0 ? null : parsed;
+}
+
+List<Map<String, dynamic>> _uniqueRefOptions(
+  List? rawItems, {
+  bool allowEmptyName = false,
+}) {
+  final seenIds = <int>{};
+  final items = <Map<String, dynamic>>[];
+
+  for (final raw in rawItems ?? const []) {
+    if (raw is! Map) continue;
+    final item = Map<String, dynamic>.from(raw);
+    final id = _toNullableInt(item['id']);
+    if (id == null || seenIds.contains(id)) continue;
+
+    final name = _text(item['name']).trim();
+    if (!allowEmptyName && name.isEmpty) continue;
+
+    seenIds.add(id);
+    items.add(item);
+  }
+
+  return items;
+}
+
+String _displayRefName(Map<String, dynamic> item, {required String fallback}) {
+  final name = _text(item['name']).trim();
+  if (name.isNotEmpty) return name;
+  final id = _toNullableInt(item['id']);
+  return id == null ? fallback : '$fallback #$id';
 }
 
 String? _blankToNull(String? value) {

@@ -14,25 +14,6 @@ final _salarySlipsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
 ) async {
   final api = ref.watch(apiClientProvider);
   try {
-    final response = await api.get('/payroll/payslips');
-    final data = response.data is Map<String, dynamic>
-        ? response.data as Map<String, dynamic>
-        : const <String, dynamic>{};
-    final items = _toMaps(data['data']);
-    return {
-      'mode': 'live',
-      'items': items,
-      'meta': data['meta'] is Map
-          ? Map<String, dynamic>.from(data['meta'] as Map)
-          : const <String, dynamic>{},
-      'unavailable_on_live': false,
-    };
-  } on DioException catch (error) {
-    final statusCode = error.response?.statusCode ?? 0;
-    if (statusCode != 404 && statusCode < 500) rethrow;
-  }
-
-  try {
     final response = await api.get('/salary-slips');
     final data = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
@@ -67,38 +48,6 @@ final _payslipProvider = FutureProvider.autoDispose
       params,
     ) async {
       final api = ref.watch(apiClientProvider);
-      final salarySlipsData = await ref.watch(_salarySlipsProvider.future);
-
-      if (salarySlipsData['mode'] == 'live') {
-        final items = _toMaps(salarySlipsData['items']);
-        final match = items.cast<Map<String, dynamic>?>().firstWhere(
-          (item) =>
-              item != null &&
-              _toInt(item['month']) == params.month &&
-              _toInt(item['year']) == params.year,
-          orElse: () => null,
-        );
-        if (match == null) return null;
-
-        try {
-          final response = await api.get('/payroll/payslips/${match['id']}');
-          final data = response.data is Map<String, dynamic>
-              ? response.data as Map<String, dynamic>
-              : const <String, dynamic>{};
-          if (data['success'] == true) {
-            final detail = data['data'] is Map
-                ? Map<String, dynamic>.from(data['data'] as Map)
-                : const <String, dynamic>{};
-            return _normalizeLivePayslipDetail(detail);
-          }
-        } on DioException catch (error) {
-          final statusCode = error.response?.statusCode ?? 0;
-          if (statusCode == 404 || statusCode >= 500) return null;
-          rethrow;
-        }
-        return null;
-      }
-
       try {
         final response = await api.get(
           '/salary-slips/payslip',
@@ -117,6 +66,12 @@ final _payslipProvider = FutureProvider.autoDispose
               : null;
         }
         return null;
+      } on DioException catch (error) {
+        final statusCode = error.response?.statusCode ?? 0;
+        if (statusCode == 404 || statusCode >= 500) {
+          return null;
+        }
+        rethrow;
       } catch (e) {
         return null;
       }
@@ -136,31 +91,20 @@ class _SalarySlipsScreenState extends ConsumerState<SalarySlipsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final data = ref.read(_salarySlipsProvider).valueOrNull;
       if (data != null) {
-        if (data['mode'] == 'live') {
-          final items = _toMaps(data['items']);
-          final months = _buildMonthsFromPayslips(items);
-          final years = _buildYearsFromPayslips(items);
-          if (months.isNotEmpty) {
-            ref.read(_selectedMonthProvider.notifier).state =
-                _toInt(months.first['id']);
-          }
-          if (years.isNotEmpty) {
-            ref.read(_selectedYearProvider.notifier).state =
-                _toInt(years.first['id']);
-          }
-          ref.read(_selectedStaffProvider.notifier).state = 1;
-          return;
-        }
-
         final months = data['months'] as List? ?? [];
         final years = data['years'] as List? ?? [];
+        final staffs = data['staffs'] as List? ?? [];
+        if (staffs.isNotEmpty) {
+          ref.read(_selectedStaffProvider.notifier).state =
+              _toInt(staffs.first['id']);
+        }
         if (months.isNotEmpty) {
           ref.read(_selectedMonthProvider.notifier).state =
-              months.first['id'] as int;
+              _toInt(months.first['id']);
         }
         if (years.isNotEmpty) {
           ref.read(_selectedYearProvider.notifier).state =
-              years.first['id'] as int;
+              _toInt(years.first['id']);
         }
       }
     });
@@ -182,7 +126,7 @@ class _SalarySlipsScreenState extends ConsumerState<SalarySlipsScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Vilipous' : 'Salary Slips'),
+        title: Text(isSwahili ? 'Salary Slips' : 'Salary Slips'),
       ),
       body: dataAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -218,15 +162,9 @@ class _SalarySlipsScreenState extends ConsumerState<SalarySlipsScreen> {
             );
           }
 
-          final isLiveMode = data['mode'] == 'live';
-          final liveItems = _toMaps(data['items']);
           final staffs = _toMaps(data['staffs']);
-          final months = isLiveMode
-              ? _buildMonthsFromPayslips(liveItems)
-              : _toMaps(data['months']);
-          final years = isLiveMode
-              ? _buildYearsFromPayslips(liveItems)
-              : _toMaps(data['years']);
+          final months = _toMaps(data['months']);
+          final years = _toMaps(data['years']);
 
           return CustomScrollView(
             slivers: [
@@ -236,73 +174,72 @@ class _SalarySlipsScreenState extends ConsumerState<SalarySlipsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (!isLiveMode) ...[
-                        Text(
-                          isSwahili ? 'Chagua Muajiriwa' : 'Select Employee',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                      Text(
+                        isSwahili ? 'Chagua Muajiriwa' : 'Select Employee',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF0F1923)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
                             color: isDarkMode
-                                ? Colors.white70
-                                : AppColors.textSecondary,
+                                ? Colors.white24
+                                : Colors.grey[300]!,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: isDarkMode
-                                ? const Color(0xFF0F1923)
-                                : Colors.grey[100],
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isDarkMode
-                                  ? Colors.white24
-                                  : Colors.grey[300]!,
-                            ),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<int?>(
-                              isExpanded: true,
-                              value: selectedStaff,
-                              hint: Text(
-                                isSwahili
-                                    ? 'Chagua muajiriwa...'
-                                    : 'Select employee...',
-                                style: TextStyle(
-                                  color: isDarkMode
-                                      ? Colors.white54
-                                      : AppColors.textHint,
-                                ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int?>(
+                            isExpanded: true,
+                            value: selectedStaff,
+                            hint: Text(
+                              isSwahili
+                                  ? 'Chagua muajiriwa...'
+                                  : 'Select employee...',
+                              style: TextStyle(
+                                color: isDarkMode
+                                    ? Colors.white54
+                                    : AppColors.textHint,
                               ),
-                              dropdownColor: isDarkMode
-                                  ? const Color(0xFF1A1A2E)
-                                  : Colors.white,
-                              items: staffs
-                                  .map(
-                                    (item) => DropdownMenuItem<int?>(
-                                      value: item['id'] as int,
-                                      child: Text(
-                                        item['name']?.toString() ?? '-',
-                                        style: TextStyle(
-                                          color: isDarkMode
-                                              ? Colors.white
-                                              : AppColors.textPrimary,
-                                        ),
+                            ),
+                            dropdownColor: isDarkMode
+                                ? const Color(0xFF1A1A2E)
+                                : Colors.white,
+                            items: staffs
+                                .map(
+                                  (item) => DropdownMenuItem<int?>(
+                                    value: _toInt(item['id']),
+                                    child: Text(
+                                      item['name']?.toString() ?? '-',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: isDarkMode
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
                                       ),
                                     ),
-                                  )
-                                  .toList(),
-                              onChanged: (value) =>
-                                  ref
-                                          .read(_selectedStaffProvider.notifier)
-                                          .state =
-                                      value,
-                            ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) =>
+                                ref
+                                        .read(_selectedStaffProvider.notifier)
+                                        .state =
+                                    value,
                           ),
                         ),
-                        const SizedBox(height: 16),
-                      ],
+                      ),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(

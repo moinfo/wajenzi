@@ -1376,6 +1376,30 @@ class _AssignmentCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: onEdit,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(Icons.edit, size: 14, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: onEnd,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(Icons.delete, size: 14, color: Colors.white),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -1436,53 +1460,6 @@ class _AssignmentCard extends StatelessWidget {
                 ),
               ],
             ),
-            if (isActive) ...[
-              const SizedBox(height: 12),
-              const Divider(height: 1),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton.icon(
-                      onPressed: onEdit,
-                      icon: const Icon(Icons.edit, size: 16),
-                      label: Text(
-                        isSwahili ? 'Hariri' : 'Edit',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 24,
-                    color: isDark
-                        ? Colors.white24
-                        : Colors.grey.withValues(alpha: 0.2),
-                  ),
-                  Expanded(
-                    child: TextButton.icon(
-                      onPressed: onEnd,
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        size: 16,
-                        color: Colors.red,
-                      ),
-                      label: Text(
-                        isSwahili ? 'Malizia' : 'End',
-                        style: const TextStyle(fontSize: 12, color: Colors.red),
-                      ),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ],
         ),
       ),

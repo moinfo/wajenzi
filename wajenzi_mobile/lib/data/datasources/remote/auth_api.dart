@@ -144,6 +144,18 @@ class AuthApi {
     });
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String newPasswordConfirmation,
+  }) async {
+    await _apiClient.put('/auth/password', data: {
+      'current_password': currentPassword,
+      'new_password': newPassword,
+      'new_password_confirmation': newPasswordConfirmation,
+    });
+  }
+
   Future<void> registerDeviceToken({
     required String deviceId,
     required String fcmToken,

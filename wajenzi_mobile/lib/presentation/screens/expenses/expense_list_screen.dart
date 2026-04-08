@@ -778,7 +778,9 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
 
       if (mounted) {
         setState(() {
-          _projects = (projectsRes.data['data'] as List? ?? [])
+          // The API response has nested structure: data.data.data
+          final projectsData = projectsRes.data['data']?['data'] as List? ?? [];
+          _projects = projectsData
               .map((p) => {'id': p['id'], 'project_name': p['project_name']})
               .toList();
           final data =
@@ -793,7 +795,15 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
             _descriptionController.text = e['description'] as String? ?? '';
             _amountController.text = _toDouble(e['amount']).toString();
             _remarksController.text = e['remarks'] as String? ?? '';
+            
+            // Debug: Log the original project_id
+            print('DEBUG: Original expense project_id: ${e['project_id']}');
+            
             _selectedProjectId = e['project_id'] as int?;
+            
+            // Debug: Log the selected project_id
+            print('DEBUG: Selected _selectedProjectId: $_selectedProjectId');
+            
             final subCategory =
                 e['expenses_sub_category'] as Map<String, dynamic>?;
             _selectedSubCategoryId =
@@ -1201,7 +1211,12 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedProjectId == null) {
+    
+    // Debug: Log the current state
+    print('DEBUG: _submit - _isEditing: $_isEditing, _selectedProjectId: $_selectedProjectId');
+    
+    // For edit mode, project_id is not required if it wasn't changed
+    if (!_isEditing && _selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -1234,9 +1249,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
         'amount': double.parse(_amountController.text),
         'date': DateFormat('yyyy-MM-dd').format(_selectedDate),
         'expenses_sub_category_id': _selectedSubCategoryId,
-        'project_id': _selectedProjectId,
         'remarks': _remarksController.text.trim(),
       };
+      
+      // Only include project_id if it's selected or if it's a new expense
+      if (_selectedProjectId != null || !_isEditing) {
+        data['project_id'] = _selectedProjectId;
+      }
 
       if (_isEditing && _expenseId != null) {
         await api.put('/expenses/$_expenseId', data: data);

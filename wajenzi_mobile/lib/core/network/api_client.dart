@@ -147,7 +147,17 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
-    if (err.response?.statusCode == 401) {
+    final path = err.requestOptions.path;
+    final isAuthLoginRequest =
+        path == 'auth/login' ||
+        path == '/auth/login' ||
+        path.endsWith('/auth/login');
+    final isPasswordChangeRequest =
+        path == '/auth/password' || path.endsWith('/auth/password');
+
+    if (err.response?.statusCode == 401 &&
+        !isPasswordChangeRequest &&
+        !isAuthLoginRequest) {
       // Token expired or invalid - clear storage and redirect to login
       await _storageService.clearAll();
       _ref.read(authInvalidationProvider.notifier).state++;
@@ -235,6 +245,20 @@ class _LoggingInterceptor extends Interceptor {
       );
       debugPrint('Message: ${err.message}');
     }
+    
+    // For timeout errors, provide a more user-friendly message
+    if (err.type == DioExceptionType.receiveTimeout || 
+        err.type == DioExceptionType.sendTimeout ||
+        err.type == DioExceptionType.connectionTimeout) {
+      final timeoutError = DioException(
+        requestOptions: err.requestOptions,
+        message: 'Request timeout. The server is taking too long to respond. Please try again.',
+        type: err.type,
+      );
+      handler.next(timeoutError);
+      return;
+    }
+    
     handler.next(err);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,32 +13,34 @@ final _chartAccountVariablesSearchProvider = StateProvider.autoDispose<String>(
   (ref) => '',
 );
 
-final _chartAccountVariablesProvider =
-    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-      final api = ref.watch(apiClientProvider);
-      try {
-        final response = await api.get('/chart-account-variables');
-        final data = response.data is Map<String, dynamic>
-            ? response.data as Map<String, dynamic>
-            : const <String, dynamic>{};
-        final items = data['data'] as List? ?? const [];
-        return {
-          'items': items
-              .whereType<Map>()
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList(),
-          'unavailable_on_live': false,
-        };
-      } on DioException catch (error) {
-        if ((error.response?.statusCode ?? 0) == 404) {
-          return {
-            'items': const <Map<String, dynamic>>[],
-            'unavailable_on_live': true,
-          };
-        }
-        rethrow;
-      }
-    });
+final _chartAccountVariablesProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
+  final api = ref.watch(apiClientProvider);
+  try {
+    final response = await api.get('/chart-account-variables');
+    final data = response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : const <String, dynamic>{};
+    final items = data['data'] as List? ?? const [];
+    return {
+      'items': items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .where((item) => item['id'] != null && item['id'] != 0)
+          .toList(),
+      'unavailable_on_live': false,
+    };
+  } on DioException catch (error) {
+    if ((error.response?.statusCode ?? 0) == 404) {
+      return {
+        'items': const <Map<String, dynamic>>[],
+        'unavailable_on_live': true,
+      };
+    }
+    rethrow;
+  }
+});
 
 class ChartAccountVariablesScreen extends ConsumerStatefulWidget {
   const ChartAccountVariablesScreen({super.key});
@@ -282,7 +285,9 @@ class _ChartAccountVariablesScreenState
       isScrollControlled: true,
       builder: (_) => _ChartAccountVariableFormSheet(variable: variable),
     );
-    if (result == true) ref.invalidate(_chartAccountVariablesProvider);
+    if (result == true) {
+      ref.invalidate(_chartAccountVariablesProvider);
+    }
   }
 
   Future<void> _deleteVariable(
@@ -532,9 +537,9 @@ class _ChartAccountVariableFormSheetState
     );
 
     return Container(
-      height: _isEdit
-          ? 0.55 * MediaQuery.of(context).size.height
-          : 0.65 * MediaQuery.of(context).size.height,
+      constraints: BoxConstraints(
+        maxHeight: (_isEdit ? 0.55 : 0.65) * MediaQuery.of(context).size.height,
+      ),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -543,14 +548,11 @@ class _ChartAccountVariableFormSheetState
         top: false,
         child: Column(
           children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: isDarkMode ? Colors.white24 : Colors.black12,
-                borderRadius: BorderRadius.circular(999),
-              ),
+            _ChartAccountVariableSheetHeader(
+              title: _isEdit
+                  ? (isSwahili ? 'Hariri Kigezo' : 'Edit Variable')
+                  : (isSwahili ? 'Kigezo Kipya' : 'New Variable'),
+              onBack: () => Navigator.pop(context),
             ),
             Expanded(
               child: Form(
@@ -563,18 +565,6 @@ class _ChartAccountVariableFormSheetState
                     MediaQuery.of(context).viewInsets.bottom + 24,
                   ),
                   children: [
-                    Text(
-                      _isEdit
-                          ? (isSwahili ? 'Hariri Kigezo' : 'Edit Variable')
-                          : (isSwahili ? 'Kigezo Kipya' : 'New Variable'),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
                     TextFormField(
                       controller: _variableController,
                       readOnly: _isEdit,
@@ -644,11 +634,15 @@ class _ChartAccountVariableFormSheetState
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
+    final isSwahili = ref.read(isSwahiliProvider);
+
     try {
       final api = ref.read(apiClientProvider);
+
       if (_isEdit) {
+        final variableId = widget.variable!['id'];
         await api.put(
-          '/chart-account-variables/${widget.variable!['id']}',
+          '/chart-account-variables/$variableId',
           data: {'value': _valueController.text.trim()},
         );
       } else {
@@ -666,9 +660,7 @@ class _ChartAccountVariableFormSheetState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              vatErrorMessage(error, isSwahili: ref.read(isSwahiliProvider)),
-            ),
+            content: Text(vatErrorMessage(error, isSwahili: isSwahili)),
             backgroundColor: AppColors.error,
           ),
         );
@@ -676,6 +668,65 @@ class _ChartAccountVariableFormSheetState
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+class _ChartAccountVariableSheetHeader extends StatelessWidget {
+  final String title;
+  final VoidCallback onBack;
+
+  const _ChartAccountVariableSheetHeader({
+    required this.title,
+    required this.onBack,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 44,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.white38,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              IconButton(
+                onPressed: onBack,
+                icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              Expanded(
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 48),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 

@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
-import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
@@ -135,7 +134,6 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final dataAsync = ref.watch(_genericReportDataProvider(_buildParams()));
 
@@ -150,8 +148,8 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded),
-          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+          icon: const Icon(Icons.arrow_back_rounded),
+          onPressed: () => context.go('/reports'),
         ),
         title: Text(isSwahili ? widget.titleSw : widget.title),
         actions: [

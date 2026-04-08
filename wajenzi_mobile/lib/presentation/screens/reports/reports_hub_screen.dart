@@ -33,11 +33,35 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
 
-  static const List<String> _importantReportDestinations = [
-    '/architect-bonus/report',
-    '/reports-statutory-category',
-    '/reports-statutory-payment',
-    '/reports-statutory-schedules',
+  static const List<_SupportedReportDefinition> _supportedReports = [
+    _SupportedReportDefinition(
+      fallbackName: 'Architect Bonus Report',
+      mobileDestination: '/architect-bonus/report',
+      routeAliases: {
+        'architect.bonus.report',
+        'architect_bonus_report',
+        'architect-bonus/report',
+      },
+      pathAliases: {'/architect-bonus/report'},
+    ),
+    _SupportedReportDefinition(
+      fallbackName: 'Statutory Category Report',
+      mobileDestination: '/reports-statutory-category',
+      routeAliases: {'reports_statutory_category_report'},
+      pathAliases: {'/reports/statutory-category-report'},
+    ),
+    _SupportedReportDefinition(
+      fallbackName: 'Statutory Payment Report',
+      mobileDestination: '/reports-statutory-payment',
+      routeAliases: {'reports_statutory_payment_report'},
+      pathAliases: {'/reports/statutory-payment-report'},
+    ),
+    _SupportedReportDefinition(
+      fallbackName: 'Statutory Schedules Report',
+      mobileDestination: '/reports-statutory-schedules',
+      routeAliases: {'reports_statutory_schedules_report'},
+      pathAliases: {'/reports/statutory-schedules-report'},
+    ),
   ];
 
   @override
@@ -162,59 +186,55 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
   }
 
   List<_ReportItem> _buildReportItems(List<dynamic> payload) {
-    final seen = <String>{};
     final items = <_ReportItem>[];
+    final rawReports = payload
+        .whereType<Map>()
+        .map((raw) => Map<String, dynamic>.from(raw))
+        .toList();
 
-    void addMenuItem(Map<String, dynamic> raw) {
-      final name = (raw['name'] ?? '').toString().trim();
-      final route = (raw['route'] ?? '').toString().trim();
-      final url = raw['url']?.toString();
-
-      if (name.isEmpty) return;
-
-      final mobileDestination = _resolveMobileReportRoute(route, url);
-      final supportsMobile =
-          mobileDestination != null && mobileDestination != '/reports';
-
-      if (!supportsMobile ||
-          !_importantReportDestinations.contains(mobileDestination)) {
-        return;
+    for (final supported in _supportedReports) {
+      Map<String, dynamic>? match;
+      for (final report in rawReports) {
+        final route = (report['route'] ?? '').toString().trim().toLowerCase();
+        final url = report['url']?.toString() ?? '';
+        final path = Uri.tryParse(url)?.path.toLowerCase() ?? '';
+        if (supported.routeAliases.contains(route) ||
+            supported.pathAliases.contains(path)) {
+          match = report;
+          break;
+        }
       }
 
-      final reportKey = '${name.toLowerCase()}|${route.toLowerCase()}|$url';
-      if (seen.contains(reportKey)) return;
-      seen.add(reportKey);
+      if (match == null) continue;
 
+      final name = (match['name'] ?? '').toString().trim();
+      final route = (match['route'] ?? '').toString().trim();
+      final url = match['url']?.toString();
       items.add(
         _ReportItem(
-          name: name,
+          name: name.isNotEmpty ? name : supported.fallbackName,
           route: route,
           url: url,
-          mobileDestination: mobileDestination,
-          supportsMobile: supportsMobile,
+          mobileDestination: supported.mobileDestination,
+          supportsMobile: true,
         ),
       );
     }
 
-    for (final rawReport in payload.whereType<Map>()) {
-      final report = Map<String, dynamic>.from(rawReport);
-      if ((report['name'] ?? '').toString().trim().isNotEmpty) {
-        addMenuItem(report);
+    if (items.isEmpty) {
+      for (final supported in _supportedReports) {
+        items.add(
+          _ReportItem(
+            name: supported.fallbackName,
+            route: '',
+            url: null,
+            mobileDestination: supported.mobileDestination,
+            supportsMobile: true,
+          ),
+        );
       }
     }
 
-    items.sort((a, b) {
-      final aDestination = a.mobileDestination ?? '';
-      final bDestination = b.mobileDestination ?? '';
-      final aIndex = _importantReportDestinations.indexOf(aDestination);
-      final bIndex = _importantReportDestinations.indexOf(bDestination);
-      final normalizedA = aIndex < 0 ? 999 : aIndex;
-      final normalizedB = bIndex < 0 ? 999 : bIndex;
-      if (normalizedA != normalizedB) {
-        return normalizedA.compareTo(normalizedB);
-      }
-      return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-    });
     return items;
   }
 
@@ -757,5 +777,19 @@ class _ReportItem {
     required this.url,
     required this.mobileDestination,
     required this.supportsMobile,
+  });
+}
+
+class _SupportedReportDefinition {
+  final String fallbackName;
+  final String mobileDestination;
+  final Set<String> routeAliases;
+  final Set<String> pathAliases;
+
+  const _SupportedReportDefinition({
+    required this.fallbackName,
+    required this.mobileDestination,
+    required this.routeAliases,
+    required this.pathAliases,
   });
 }

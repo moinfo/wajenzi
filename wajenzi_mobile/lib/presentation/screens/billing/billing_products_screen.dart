@@ -681,7 +681,11 @@ Future<void> _openProductForm(
     isScrollControlled: true,
     builder: (_) => FractionallySizedBox(
       heightFactor: 0.94,
-      child: _ProductFormSheet(refs: refs, product: initialProduct),
+      child: _ProductFormSheet(
+        refs: refs,
+        product: initialProduct,
+        forcedProductId: productId > 0 ? productId : null,
+      ),
     ),
   );
   if (result == true) {
@@ -1232,8 +1236,13 @@ class _BottomLoading extends StatelessWidget {
 class _ProductFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic> refs;
   final Map<String, dynamic>? product;
+  final int? forcedProductId;
 
-  const _ProductFormSheet({required this.refs, this.product});
+  const _ProductFormSheet({
+    required this.refs,
+    this.product,
+    this.forcedProductId,
+  });
 
   @override
   ConsumerState<_ProductFormSheet> createState() => _ProductFormSheetState();
@@ -1260,6 +1269,7 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
   bool _trackInventory = true;
   bool _isActive = true;
   bool _saving = false;
+  String? _originalCode;
 
   @override
   void initState() {
@@ -1273,6 +1283,7 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
     _nameController = TextEditingController(
       text: product?['name']?.toString() ?? '',
     );
+    _originalCode = _blankToNull(product?['code']?.toString());
     _codeController = TextEditingController(
       text: product?['code']?.toString() ?? '',
     );
@@ -1443,6 +1454,9 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
                       label: isSwahili ? 'Kodi' : 'Code',
                       isDarkMode: isDarkMode,
                       isRequired: false,
+                      hintText: isSwahili
+                          ? 'Iache wazi itengenezwe yenyewe'
+                          : 'Auto-generated if empty',
                     ),
                     const SizedBox(height: 12),
                     _textField(
@@ -1610,10 +1624,12 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _saving = true);
+    final id = widget.forcedProductId ?? _toInt(widget.product?['id']);
+    final isUpdate = id > 0;
+    final normalizedCode = _blankToNull(_codeController.text);
     final payload = <String, dynamic>{
       'type': _type,
       'name': _nameController.text.trim(),
-      'code': _blankToNull(_codeController.text),
       'description': _blankToNull(_descriptionController.text),
       'category': _blankToNull(_categoryController.text),
       'unit_of_measure': _unitController.text.trim().isEmpty
@@ -1648,10 +1664,12 @@ class _ProductFormSheetState extends ConsumerState<_ProductFormSheet> {
       'is_active': _isActive,
     };
 
+    if (!isUpdate || normalizedCode != _originalCode) {
+      payload['code'] = normalizedCode;
+    }
+
     try {
       final api = ref.read(apiClientProvider);
-      final id = _toInt(widget.product?['id']);
-      final isUpdate = id > 0;
       Map<String, dynamic>? resultData;
       if (isUpdate) {
         final response = await api.put('/billing/products/$id', data: payload);
@@ -1734,6 +1752,7 @@ Widget _textField({
   bool isRequired = true,
   int maxLines = 1,
   TextInputType? keyboardType,
+  String? hintText,
 }) {
   return TextFormField(
     controller: controller,

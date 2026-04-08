@@ -1502,7 +1502,7 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
             IconButton(
               icon: const Icon(Icons.bar_chart),
               tooltip: isSwahili ? 'Ripoti' : 'Report',
-              onPressed: () => context.push('/architect-bonus/report'),
+              onPressed: () => context.push('/architect-bonus/module-report'),
             ),
           IconButton(
             icon: const Icon(Icons.filter_list),
@@ -1519,10 +1519,10 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
       floatingActionButton: _isAdmin
           ? Padding(
               padding: const EdgeInsets.only(bottom: 80),
-              child: FloatingActionButton.extended(
+              child: FloatingActionButton(
                 onPressed: () => _showTaskFormSheet(),
-                icon: const Icon(Icons.add),
-                label: Text(isSwahili ? 'Kazi' : 'New Task'),
+                tooltip: isSwahili ? 'Ongeza Kazi' : 'Add Task',
+                child: const Icon(Icons.add),
               ),
             )
           : null,
@@ -1609,6 +1609,13 @@ class _ArchitectBonusScreenState extends ConsumerState<ArchitectBonusScreen> {
                                 formatMoney: _formatMoney,
                                 formatDate: _formatDate,
                                 onTap: () => _showTaskDetails(task),
+                                onView: () => _showTaskDetails(task),
+                                onEdit: (task['can_edit'] == true)
+                                    ? () => _showTaskFormSheet(existingTask: task)
+                                    : null,
+                                onDelete: (task['can_delete'] == true)
+                                    ? () => _confirmDelete(task)
+                                    : null,
                               );
                             },
                           ),
@@ -1675,6 +1682,9 @@ class _BonusTaskCard extends StatelessWidget {
     required this.formatMoney,
     required this.formatDate,
     required this.onTap,
+    required this.onView,
+    this.onEdit,
+    this.onDelete,
   });
 
   final Map<String, dynamic> task;
@@ -1683,6 +1693,9 @@ class _BonusTaskCard extends StatelessWidget {
   final String Function(dynamic value) formatMoney;
   final String Function(dynamic value) formatDate;
   final VoidCallback onTap;
+  final VoidCallback onView;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -1772,6 +1785,30 @@ class _BonusTaskCard extends StatelessWidget {
                     'Units: ${task['final_units'] ?? task['max_units'] ?? '-'}',
                     style: TextStyle(color: Colors.grey[700], fontSize: 13),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: onView,
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: Text(isSwahili ? 'Tazama' : 'View'),
+                  ),
+                  if (onEdit != null)
+                    OutlinedButton.icon(
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit_outlined),
+                      label: Text(isSwahili ? 'Hariri' : 'Edit'),
+                    ),
+                  if (onDelete != null)
+                    OutlinedButton.icon(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline),
+                      label: Text(isSwahili ? 'Futa' : 'Delete'),
+                    ),
                 ],
               ),
             ],

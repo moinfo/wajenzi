@@ -34,11 +34,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
     setState(() => _isSaving = true);
 
-    final error = await ref.read(authStateProvider.notifier).changeClientPassword(
-      currentPassword: _currentPasswordController.text,
-      newPassword: _newPasswordController.text,
-      newPasswordConfirmation: _confirmPasswordController.text,
-    );
+    final error = await ref.read(authStateProvider.notifier).changePassword(
+          currentPassword: _currentPasswordController.text,
+          newPassword: _newPasswordController.text,
+          newPasswordConfirmation: _confirmPasswordController.text,
+        );
 
     setState(() => _isSaving = false);
 

@@ -86,8 +86,8 @@ class AppConfig {
     defaultValue: '',
   );
 
-  static const Duration connectionTimeout = Duration(seconds: 30);
-  static const Duration receiveTimeout = Duration(seconds: 30);
+  static const Duration connectionTimeout = Duration(seconds: 60);
+  static const Duration receiveTimeout = Duration(seconds: 60);
 
   static const Duration syncInterval = Duration(minutes: 15);
   static const int maxSyncRetries = 3;

@@ -5,12 +5,18 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/loading_widget.dart';
 
 class ArchitectBonusReportScreen extends ConsumerStatefulWidget {
-  const ArchitectBonusReportScreen({super.key});
+  const ArchitectBonusReportScreen({
+    super.key,
+    this.useDrawerMenu = false,
+  });
+
+  final bool useDrawerMenu;
 
   @override
   ConsumerState<ArchitectBonusReportScreen> createState() =>
@@ -171,8 +177,18 @@ class _ArchitectBonusReportScreenState
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/reports'),
+          icon: Icon(
+            widget.useDrawerMenu
+                ? Icons.menu_rounded
+                : Icons.arrow_back_rounded,
+          ),
+          onPressed: () {
+            if (widget.useDrawerMenu) {
+              ref.read(rootScaffoldKeyProvider).currentState?.openDrawer();
+            } else {
+              context.go('/reports');
+            }
+          },
         ),
         title: Text(isSwahili ? 'Ripoti ya Bonasi' : 'Bonus Report'),
         actions: [
