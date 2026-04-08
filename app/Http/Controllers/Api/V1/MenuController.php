@@ -24,41 +24,61 @@ class MenuController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user();
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated',
+                ], 401);
+            }
 
-        $menus = Menu::with('children')
-            ->whereNull('parent_id')
-            ->where('status', 'ACTIVE')
-            ->orderBy('list_order')
-            ->get();
+            $menus = Menu::with('children')
+                ->whereNull('parent_id')
+                ->where('status', 'ACTIVE')
+                ->orderBy('list_order')
+                ->get();
 
-        $filtered = $menus->filter(fn($menu) => $user->can($menu->name))
-            ->map(function ($menu) use ($user) {
-                $children = $menu->children
-                    ->filter(fn($child) => $user->can($child->name))
-                    ->values()
-                    ->map(fn($child) => [
-                        'id' => $child->id,
-                        'name' => $child->name,
-                        'icon' => $child->icon,
-                        'route' => $child->route,
-                        'url' => $this->resolveMenuUrl($child->route),
-                    ]);
+            $filtered = $menus->filter(fn($menu) => $user->can($menu->name))
+                ->map(function ($menu) use ($user) {
+                    $children = $menu->children
+                        ->filter(fn($child) => $user->can($child->name))
+                        ->values()
+                        ->map(fn($child) => [
+                            'id' => $child->id,
+                            'name' => $child->name,
+                            'icon' => $child->icon,
+                            'route' => $child->route,
+                            'url' => $this->resolveMenuUrl($child->route),
+                        ]);
 
-                return [
-                    'id' => $menu->id,
-                    'name' => $menu->name,
-                    'icon' => $menu->icon,
-                    'route' => $menu->route,
-                    'url' => $this->resolveMenuUrl($menu->route),
-                    'children' => $children,
-                ];
-            })
-            ->values();
+                    return [
+                        'id' => $menu->id,
+                        'name' => $menu->name,
+                        'icon' => $menu->icon,
+                        'route' => $menu->route,
+                        'url' => $this->resolveMenuUrl($menu->route),
+                        'children' => $children,
+                    ];
+                })
+                ->values();
 
-        return response()->json([
-            'success' => true,
-            'data' => $filtered,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $filtered,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Menu API Error: ' . $e->getMessage(), [
+                'user_id' => $request->user()?->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load menus: ' . $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
 }

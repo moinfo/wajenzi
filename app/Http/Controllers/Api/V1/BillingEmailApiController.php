@@ -78,7 +78,27 @@ class BillingEmailApiController extends Controller
                 }
             }
 
-            $mail->send(new InvoiceEmail($document, $validated['subject'], $validated['message']));
+            $resentViaFallback = false;
+            $mailMessage = new InvoiceEmail($document, $validated['subject'], $validated['message']);
+            try {
+                $mail->send($mailMessage);
+            } catch (\Throwable $mailException) {
+                if (!app()->environment('local')) {
+                    throw $mailException;
+                }
+
+                Mail::mailer('log')
+                    ->to($validated['email'])
+                    ->when(!empty($validated['cc']), function ($pendingMail) use ($validated) {
+                        $ccEmails = array_filter(array_map('trim', explode(',', (string) $validated['cc'])));
+                        if (!empty($ccEmails)) {
+                            $pendingMail->cc($ccEmails);
+                        }
+                    })
+                    ->send($mailMessage);
+
+                $resentViaFallback = true;
+            }
 
             $newEmail = $document->emails()->create([
                 'document_type' => $document->document_type,
@@ -104,7 +124,9 @@ class BillingEmailApiController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Email resent successfully.',
+                'message' => $resentViaFallback
+                    ? 'Email recorded successfully using the local log mailer.'
+                    : 'Email resent successfully.',
                 'data' => $this->serializeEmail($newEmail->load(['document.client', 'sender'])),
             ]);
         } catch (\Exception $e) {

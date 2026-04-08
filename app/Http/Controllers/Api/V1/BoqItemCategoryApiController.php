@@ -61,8 +61,18 @@ class BoqItemCategoryApiController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $name = $request->input('name');
+        
+        $exists = BoqItemCategory::where('name', $name)->exists();
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A BOQ item category with this name already exists',
+            ], 422);
+        }
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:boq_item_categories,name',
+            'name' => 'required|string|max:255',
             'parent_id' => 'nullable|exists:boq_item_categories,id',
             'description' => 'nullable|string',
             'sort_order' => 'nullable|integer',

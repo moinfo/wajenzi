@@ -284,18 +284,18 @@
                     $this_employee = $_POST['staff_id'] ?? 11;
                     $staff_id = $this_employee;
                     $payroll = \App\Models\Payroll::getThisPayrollApproved($this_month,$this_year);
-                    $payroll_id = $payroll['id'];
+                    $payroll_id = $payroll['id'] ?? null;
                     $employee = \App\Models\User::find($this_employee);
-                    $employee_bank_details = \App\Models\StaffBankDetail::where('staff_id',$this_employee)->get()->first();
-                    $basic_salary = \App\Models\Staff::getStaffSalaryPaid($this_employee,$payroll_id);
+                    $employee_bank_details = \App\Models\StaffBankDetail::where('staff_id',$this_employee)->first();
+                    $basic_salary = \App\Models\Staff::getStaffSalaryPaid($this_employee,$payroll_id ?? 0);
                     $total_deduction = 0;
-                    $gross_salary = \App\Models\Staff::getStaffGrossPayPaid($this_employee,$payroll_id) ?? 0;
-                    $net_salary = \App\Models\Staff::getStaffNetPaid($staff_id,$payroll_id) ?? 0;
-                    $advance_salary = \App\Models\Staff::getStaffAdvanceSalaryPaid($staff_id,$payroll_id) ?? 0;
-                    $loan_balance = \App\Models\Staff::getStaffLoanBalancePaid($staff_id,$payroll_id) ?? 0;
-                    $current_loan = \App\Models\Staff::getStaffLoanPaid($staff_id,$payroll_id) ?? 0;
-                    $loan_deduction = \App\Models\Staff::getStaffLoanDeductionPaid($staff_id,$payroll_id) ?? 0;
-                    $taxable = \App\Models\Staff::getStaffTaxablePaid($staff_id,$payroll_id) ?? 0;
+                    $gross_salary = \App\Models\Staff::getStaffGrossPayPaid($this_employee,$payroll_id ?? 0) ?? 0;
+                    $net_salary = \App\Models\Staff::getStaffNetPaid($staff_id,$payroll_id ?? 0) ?? 0;
+                    $advance_salary = \App\Models\Staff::getStaffAdvanceSalaryPaid($staff_id,$payroll_id ?? 0) ?? 0;
+                    $loan_balance = \App\Models\Staff::getStaffLoanBalancePaid($staff_id,$payroll_id ?? 0) ?? 0;
+                    $current_loan = \App\Models\Staff::getStaffLoanPaid($staff_id,$payroll_id ?? 0) ?? 0;
+                    $loan_deduction = \App\Models\Staff::getStaffLoanDeductionPaid($staff_id,$payroll_id ?? 0) ?? 0;
+                    $taxable = \App\Models\Staff::getStaffTaxablePaid($staff_id,$payroll_id ?? 0) ?? 0;
 
 
 
@@ -534,16 +534,16 @@
                                                     <table class="employee-details-table">
                                                         <tr>
                                                             <td class="detail-label">Payroll Number:</td>
-                                                            <td class="detail-value">{{$payroll['payroll_number']}}</td>
+                                                            <td class="detail-value">{{$payroll['payroll_number'] ?? '-'}}</td>
                                                             <td class="detail-label">Payroll Month:</td>
-                                                            <td class="detail-value">{{date('F',strtotime($payroll->year.'-'.$payroll->month.'-'.'01')).' - '.$payroll->year}}</td>
+                                                            <td class="detail-value">{{$payroll ? date('F',strtotime($payroll->year.'-'.$payroll->month.'-'.'01')).' - '.$payroll->year : '-'}}</td>
                                                         </tr>
                                                         <tr>
                                                             <td class="detail-label">Employee Number:</td>
                                                             <td class="detail-value">
-                                                                HRM/LE/PO-{{$employee->employee_number ?? null}}</td>
+                                                                HRM/LE/PO-{{$employee->employee_number ?? '-'}}</td>
                                                             <td class="detail-label">Employee Name:</td>
-                                                            <td class="detail-value">{{$employee->name ?? null}}</td>
+                                                            <td class="detail-value">{{$employee->name ?? '-'}}</td>
                                                         </tr>
                                                         <tr>
                                                             <td class="detail-label">Department:</td>
@@ -551,13 +551,13 @@
                                                                 Administration (HRA)
                                                             </td>
                                                             <td class="detail-label">Designation:</td>
-                                                            <td class="detail-value">{{$employee->designation ?? null}}</td>
+                                                            <td class="detail-value">{{$employee?->designation ?? '-'}}</td>
                                                         </tr>
                                                         <tr>
                                                             <td class="detail-label">Bank Name:</td>
-                                                            <td class="detail-value">{{$employee_bank_details->bank->name ?? null}}</td>
+                                                            <td class="detail-value">{{$employee_bank_details?->bank?->name ?? '-'}}</td>
                                                             <td class="detail-label">Account Number:</td>
-                                                            <td class="detail-value">{{$employee_bank_details->account_number ?? null}}</td>
+                                                            <td class="detail-value">{{$employee_bank_details?->account_number ?? '-'}}</td>
                                                         </tr>
                                                     </table>
                                                 </div>

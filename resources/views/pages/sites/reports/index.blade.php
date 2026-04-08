@@ -118,10 +118,10 @@
                             <tr>
                                 <td>{{ $report->report_date->format('M d, Y') }}</td>
                                 <td>
-                                    <strong>{{ $report->site->name }}</strong>
-                                    <br><small class="text-muted">{{ $report->site->location }}</small>
+                                    <strong>{{ $report->site?->name ?? 'N/A' }}</strong>
+                                    <br><small class="text-muted">{{ $report->site?->location ?? '' }}</small>
                                 </td>
-                                <td>{{ $report->supervisor->name }}</td>
+                                <td>{{ $report->supervisor?->name ?? 'N/A' }}</td>
                                 <td>
                                     <div class="progress" style="height: 20px;">
                                         <div class="progress-bar" role="progressbar" 

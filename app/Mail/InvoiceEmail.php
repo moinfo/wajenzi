@@ -5,6 +5,7 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Attachment;
@@ -36,8 +37,11 @@ class InvoiceEmail extends Mailable
     public function envelope(): Envelope
     {
         $subject = $this->customSubject ?? ucfirst($this->document->document_type) . ' ' . $this->document->document_number;
+        $fromAddress = config('mail.from.address') ?: 'noreply@wajenziprosystem.co.tz';
+        $fromName = config('mail.from.name') ?: config('app.name', 'Wajenzi');
         
         return new Envelope(
+            from: new Address($fromAddress, $fromName),
             subject: $subject,
         );
     }

@@ -63,11 +63,19 @@ class StaffBankDetailController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'staff_id' => 'required|exists:users,id|unique:staff_bank_details,staff_id',
+            'staff_id' => 'required|exists:users,id',
             'bank_id' => 'required|exists:banks,id',
             'account_number' => 'required|string|max:255',
             'branch' => 'required|string',
         ]);
+
+        $exists = StaffBankDetail::where('staff_id', $validated['staff_id'])->exists();
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A bank detail for this staff member already exists',
+            ], 422);
+        }
 
         $detail = StaffBankDetail::create($validated);
         $detail->load(['staff', 'bank']);
@@ -84,11 +92,21 @@ class StaffBankDetailController extends Controller
         $detail = StaffBankDetail::with(['staff', 'bank'])->findOrFail($id);
 
         $validated = $request->validate([
-            'staff_id' => 'required|exists:users,id|unique:staff_bank_details,staff_id,' . $id,
+            'staff_id' => 'required|exists:users,id',
             'bank_id' => 'required|exists:banks,id',
             'account_number' => 'required|string|max:255',
             'branch' => 'required|string',
         ]);
+
+        $exists = StaffBankDetail::where('staff_id', $validated['staff_id'])
+            ->where('id', '!=', $id)
+            ->exists();
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A bank detail for this staff member already exists',
+            ], 422);
+        }
 
         $detail->update($validated);
         $detail->load(['staff', 'bank']);

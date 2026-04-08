@@ -7,6 +7,7 @@ use App\Models\BillingProduct;
 use App\Models\BillingTaxRate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class BillingProductApiController extends Controller
 {
@@ -167,7 +168,12 @@ class BillingProductApiController extends Controller
         return $request->validate([
             'type' => 'required|in:product,service',
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:100|unique:billing_products_services,code' . ($productId ? ',' . $productId : ''),
+            'code' => [
+                'nullable',
+                'string',
+                'max:100',
+                Rule::unique('billing_products_services', 'code')->ignore($productId),
+            ],
             'description' => 'nullable|string',
             'category' => 'nullable|string|max:100',
             'unit_of_measure' => 'nullable|string|max:50',
@@ -186,6 +192,14 @@ class BillingProductApiController extends Controller
 
     private function normalizePayload(array $validated): array
     {
+        if (empty($validated['code'] ?? null)) {
+            $validated['code'] = null;
+        }
+
+        if (($validated['tax_rate_id'] ?? null) !== null && (int) $validated['tax_rate_id'] <= 0) {
+            $validated['tax_rate_id'] = null;
+        }
+
         $validated['track_inventory'] = (bool) ($validated['track_inventory'] ?? false);
         $validated['is_active'] = (bool) ($validated['is_active'] ?? true);
 

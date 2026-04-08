@@ -116,15 +116,18 @@ class BillingDocumentController extends Controller
 
                 BillingDocumentItem::create([
                     'document_id' => $document->id,
+                    'item_type' => 'custom',
+                    'item_name' => mb_substr((string) $itemData['description'], 0, 255),
                     'description' => $itemData['description'],
                     'quantity' => $quantity,
-                    'unit' => $itemData['unit'] ?? null,
+                    'unit_of_measure' => $itemData['unit'] ?? null,
                     'unit_price' => $unitPrice,
-                    'discount_percentage' => $discountPct,
+                    'discount_type' => $discountPct > 0 ? 'percentage' : null,
+                    'discount_value' => $discountPct > 0 ? $discountPct : null,
                     'discount_amount' => $discountAmount,
                     'tax_percentage' => $taxPct,
                     'tax_amount' => $taxAmount,
-                    'total_amount' => $totalAmount,
+                    'line_total' => $afterDiscount,
                     'sort_order' => $index,
                 ]);
             }
@@ -211,15 +214,18 @@ class BillingDocumentController extends Controller
 
                     BillingDocumentItem::create([
                         'document_id' => $document->id,
+                        'item_type' => 'custom',
+                        'item_name' => mb_substr((string) $itemData['description'], 0, 255),
                         'description' => $itemData['description'],
                         'quantity' => $quantity,
-                        'unit' => $itemData['unit'] ?? null,
+                        'unit_of_measure' => $itemData['unit'] ?? null,
                         'unit_price' => $unitPrice,
-                        'discount_percentage' => $discountPct,
+                        'discount_type' => $discountPct > 0 ? 'percentage' : null,
+                        'discount_value' => $discountPct > 0 ? $discountPct : null,
                         'discount_amount' => $discountAmount,
                         'tax_percentage' => $taxPct,
                         'tax_amount' => $taxAmount,
-                        'total_amount' => $totalAmount,
+                        'line_total' => $afterDiscount,
                         'sort_order' => $index,
                     ]);
                 }

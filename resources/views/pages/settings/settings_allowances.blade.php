@@ -65,9 +65,9 @@
                                                 <td class="text-center">
                                                     {{$loop->index + 1}}
                                                 </td>
-                                                <td class="font-w600">{{ $allowance->name }}</td>
-                                                <td class="font-w600">{{ $allowance->allowance_type }}</td>
-                                                <td class="d-none d-sm-table-cell">{{ $allowance->description }}
+                                                <td class="font-w600">{{ $allowance->name ?? '-' }}</td>
+                                                <td class="font-w600">{{ $allowance->allowance_type ?? '-' }}</td>
+                                                <td class="d-none d-sm-table-cell">{{ $allowance->description ?? '-' }}
                                                 </td>
                                                 <td class="text-center" >
                                                     <div class="btn-group">
@@ -158,10 +158,10 @@
                                                 @php
                                                     $month = date('m');
                                                     $staff_id = $staff->id ?? null;
-                                                    $allowance_type = $allowance_subscription->allowance->allowance_type;
+                                                    $allowance_type = $allowance_subscription->allowance?->allowance_type;
                                                     $allowance_amount_first = $allowance_subscription->amount;
-                                                        $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType($allowance_type,$allowance_amount_first,$month);
-                                                   $sum += $allowance_amount;
+                                                    $allowance_amount = $allowance_type ? \App\Models\Allowance::getAllowanceAmountPerType($allowance_type,$allowance_amount_first,$month) : 0;
+                                                    $sum += $allowance_amount;
                                                 @endphp
                                                 <tr id="staff-tr-{{$allowance_subscription->id}}">
                                                     <td class="font-w600"></td>
@@ -438,11 +438,11 @@
                                                 @foreach($allowances as $allowance)
                                                     @php
                                                         $monthly = $_POST['monthly'] ?? date('m');
-                                                        $staff_id = $staff->id;
-                                                        $allowance_id = $allowance->id;
-                                                        $allowance_amount_first = \App\Models\Staff::getStaffAllowanceSubscribed($staff_id, $allowance_id);
+                                                        $staff_id = $staff->id ?? 0;
+                                                        $allowance_id = $allowance->id ?? 0;
+                                                        $allowance_amount_first = \App\Models\Staff::getStaffAllowanceSubscribed($staff_id, $allowance_id) ?? 0;
                                                         $allowance_type = \App\Models\Allowance::getAllowanceType($allowance_id);
-                                                        $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType($allowance_type, $allowance_amount_first, $monthly);
+                                                        $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType($allowance_type, $allowance_amount_first, $monthly) ?? 0;
                                                         $total_allowance_amount += $allowance_amount;
                                                         $sum_allowance_amount += $allowance_amount;
                                                     @endphp

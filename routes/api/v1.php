@@ -128,6 +128,11 @@ Route::post('auth/login', [AuthController::class, 'login']);
 
 // Protected routes (require Sanctum authentication)
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('auth/logout', [AuthController::class, 'logout']);
+    Route::get('auth/user', [AuthController::class, 'user']);
+    Route::post('auth/device-token', [AuthController::class, 'registerDeviceToken']);
+    Route::post('auth/profile', [AuthController::class, 'updateProfile']);
+    Route::put('auth/password', [AuthController::class, 'changePassword']);
 
     // Menus (permission-filtered sidebar)
     Route::get('menus', [MenuController::class, 'index']);

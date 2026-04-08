@@ -88,31 +88,52 @@ class SiteApiController extends Controller
 
         $validated['created_by'] = Auth::id();
         $site = Site::create($validated);
+        $site->load(['createdBy', 'currentSupervisor']);
 
         return response()->json([
             'success' => true,
-            'data' => $this->formatSite($site->fresh(['createdBy', 'currentSupervisor'])),
+            'data' => $this->formatSite($site),
             'message' => 'Site created successfully.',
         ]);
     }
 
     public function update(Request $request, Site $site): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:sites,name,' . $site->id,
-            'location' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|in:ACTIVE,INACTIVE,COMPLETED',
-            'start_date' => 'nullable|date',
-            'expected_end_date' => 'nullable|date|after_or_equal:start_date',
-            'actual_end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
-
-        $site->update($validated);
+        $routeId = $request->route('id'); // Get 'id' parameter from route
+        \Illuminate\Support\Facades\Log::info("UPDATE: route id param=$routeId, site object id=" . ($site?->id ?? 'null'));
+        
+        if (!$site || $site->id === null) {
+            // Try manual lookup
+            if ($routeId) {
+                $site = Site::find($routeId);
+                \Illuminate\Support\Facades\Log::info("UPDATE: Manual lookup for id=$routeId, found: " . ($site ? $site->id : 'null'));
+            }
+            if (!$site || $site->id === null) {
+                \Illuminate\Support\Facades\Log->error("UPDATE: Site not found for route id=$routeId");
+                return response()->json(['success' => false, 'message' => 'Site not found'], 404);
+            }
+        }
+        
+        $name = $request->input('name');
+        $existingSite = Site::where('name', $name)
+            ->where('id', '!=', $site->id)
+            ->first();
+        
+        if ($existingSite) {
+            \Illuminate\Support\Facades\Log::error("UPDATE: Duplicate name found. Request name=$name, existing id=" . $existingSite->id);
+            return response()->json([
+                'success' => false,
+                'message' => 'Site name already exists',
+                'errors' => ['name' => ['The name has already been taken.']]
+            ], 422);
+        }
+        
+        $site->update($request->all());
+        $site->load(['createdBy', 'currentSupervisor']);
 
         return response()->json([
             'success' => true,
-            'data' => $this->formatSite($site->fresh(['createdBy', 'currentSupervisor'])),
+            'data' => $this->formatSite($site),
             'message' => 'Site updated successfully.',
         ]);
     }

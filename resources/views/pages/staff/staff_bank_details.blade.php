@@ -40,14 +40,14 @@
                                     <td class="text-center">
                                         {{$loop->iteration}}
                                     </td>
-                                    <td class="font-w600">{{ $staff_bank_detail->staff->name ?? null }}</td>
-                                    <td class="font-w600">{{ $staff_bank_detail->bank->name  ?? null}}</td>
+                                    <td class="font-w600">{{ $staff_bank_detail->staff?->name ?? '-' }}</td>
+                                    <td class="font-w600">{{ $staff_bank_detail->bank?->name ?? '-' }}</td>
                                     <td class="font-w600">{{ $staff_bank_detail->account_number}}</td>
                                     <td class="font-w600">{{ $staff_bank_detail->branch}}</td>
                                     <td class="text-center" >
                                         <div class="btn-group">
                                         @can('Edit Staff Bank Detail')
-                                                <button type="button" onclick="loadFormModal('settings_staff_bank_detail_form', {className: 'StaffBankDetail', id: {{$staff_bank_detail->id}}}, 'Edit {{$staff_bank_detail->staff->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                <button type="button" onclick="loadFormModal('settings_staff_bank_detail_form', {className: 'StaffBankDetail', id: {{$staff_bank_detail->id}}}, 'Edit Bank Detail', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
                                                     <i class="fa fa-pencil"></i>
                                                 </button>
                                             @endcan
