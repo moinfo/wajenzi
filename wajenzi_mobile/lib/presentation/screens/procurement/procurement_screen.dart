@@ -501,35 +501,6 @@ class ProcurementScreen extends ConsumerWidget {
               : (isSwahili ? 'Ununuzi' : 'Procurement'),
         ),
       ),
-      floatingActionButton:
-          purchaseOrdersOnly ||
-              recordDeliveriesOnly ||
-              supplierReceivingsOnly ||
-              materialInspectionsOnly
-          ? null
-          : Padding(
-              padding: const EdgeInsets.only(bottom: 80),
-              child: FloatingActionButton(
-                onPressed: () {
-                  if (supplierQuotationsOnly) {
-                    _showSupplierQuotationForm(
-                      context,
-                      ref,
-                      isSwahili: isSwahili,
-                    );
-                  } else if (quotationComparisonsOnly) {
-                    // TODO: Add quotation comparison form
-                  } else {
-                    _showMaterialRequestForm(
-                      context,
-                      ref,
-                      isSwahili: isSwahili,
-                    );
-                  }
-                },
-                child: const Icon(Icons.add),
-              ),
-            ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(_materialRequestsProvider);
@@ -1310,6 +1281,30 @@ class ProcurementScreen extends ConsumerWidget {
           },
         ),
       ),
+      floatingActionButton: materialRequestsOnly || supplierQuotationsOnly
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 80),
+              child: FloatingActionButton(
+                heroTag: 'procurement_fab',
+                onPressed: () {
+                  if (materialRequestsOnly) {
+                    _showMaterialRequestForm(
+                      context,
+                      ref,
+                      isSwahili: isSwahili,
+                    );
+                  } else if (supplierQuotationsOnly) {
+                    _showSupplierQuotationForm(
+                      context,
+                      ref,
+                      isSwahili: isSwahili,
+                    );
+                  }
+                },
+                child: const Icon(Icons.add),
+              ),
+            )
+          : null,
     );
   }
 }
@@ -2802,6 +2797,7 @@ Future<void> _showSupplierQuotationForm(
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   value: selectedRequestId,
+                  isExpanded: true,
                   items: materialRequests
                       .map(
                         (item) => DropdownMenuItem<int>(

@@ -192,6 +192,7 @@ class BoqController extends Controller
                 'project_id' => 'sometimes|exists:projects,id',
                 'version' => 'sometimes|integer|min:1',
                 'type' => 'sometimes|in:client,internal',
+                'status' => 'sometimes|nullable|in:draft,submitted,approved',
             ]);
 
             $boq->update($validated);

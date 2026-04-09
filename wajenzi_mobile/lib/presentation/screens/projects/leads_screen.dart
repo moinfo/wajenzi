@@ -58,13 +58,39 @@ final _leadsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   final api = ref.watch(apiClientProvider);
   final filter = ref.watch(_leadsFilterProvider);
   try {
-    final response = await api.get(
-      '/leads',
-      queryParameters: filter.toQueryParams(),
-    );
+    late final dynamic response;
+    int retryCount = 0;
+    const maxRetries = 2;
+
+    while (true) {
+      try {
+        response = await api.get(
+          '/leads',
+          queryParameters: {...filter.toQueryParams(), 'per_page': '50'},
+        );
+        break;
+      } on DioException catch (error) {
+        final shouldRetry =
+            error.response?.statusCode == null &&
+            (error.type == DioExceptionType.connectionError ||
+                error.type == DioExceptionType.connectionTimeout ||
+                error.type == DioExceptionType.receiveTimeout ||
+                error.type == DioExceptionType.unknown);
+
+        if (!shouldRetry || retryCount >= maxRetries) rethrow;
+
+        retryCount++;
+        final delay = Duration(milliseconds: 250 * (1 << retryCount));
+        await Future.delayed(delay);
+      }
+    }
     final data = response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
         : const <String, dynamic>{};
+
+    if (data['success'] == false) {
+      throw Exception(data['message'] ?? 'Unknown error');
+    }
 
     return {
       'items': (data['data'] as List? ?? const [])
@@ -77,7 +103,8 @@ final _leadsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
       'unavailable_on_live': false,
     };
   } on DioException catch (error) {
-    final statusCode = error.response?.statusCode ?? 0; if (statusCode == 404 || statusCode >= 500) {
+    final statusCode = error.response?.statusCode ?? 0;
+    if (statusCode == 404 || statusCode >= 500) {
       return {
         'items': const <Map<String, dynamic>>[],
         'meta': const <String, dynamic>{},
@@ -102,12 +129,10 @@ final _leadRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
         ? Map<String, dynamic>.from(data['data'] as Map)
         : const <String, dynamic>{};
 
-    return {
-      ...refs,
-      'unavailable_on_live': false,
-    };
+    return {...refs, 'unavailable_on_live': false};
   } on DioException catch (error) {
-    final statusCode = error.response?.statusCode ?? 0; if (statusCode == 404 || statusCode >= 500) {
+    final statusCode = error.response?.statusCode ?? 0;
+    if (statusCode == 404 || statusCode >= 500) {
       return const {
         'lead_sources': <Map<String, dynamic>>[],
         'lead_statuses': <Map<String, dynamic>>[],
@@ -125,6 +150,19 @@ String _leadMessage(Object error, bool isSwahili) {
   if (error is DioException) {
     final data = error.response?.data;
     if (data is Map) {
+      final errors = data['errors'];
+      if (errors is Map && errors.isNotEmpty) {
+        final first = errors.values.first;
+        if (first is List && first.isNotEmpty) {
+          final message = first.first?.toString();
+          if (message != null && message.trim().isNotEmpty) {
+            return message;
+          }
+        }
+        if (first is String && first.trim().isNotEmpty) {
+          return first;
+        }
+      }
       final message = data['message'];
       if (message is String && message.trim().isNotEmpty) {
         return message;
@@ -568,25 +606,17 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                       ),
                       _info(isSwahili ? 'Simu' : 'Phone', lead['phone']),
                       _info('Email', lead['email']),
-                      _info(
-                        isSwahili ? 'Anwani' : 'Address',
-                        lead['address'],
-                      ),
+                      _info(isSwahili ? 'Anwani' : 'Address', lead['address']),
                       _info(isSwahili ? 'Mji' : 'City', lead['city']),
                       _info(
                         isSwahili ? 'Eneo' : 'Site Location',
                         lead['site_location'],
                       ),
                       _info(
-                        isSwahili
-                            ? 'Thamani ya Makadirio'
-                            : 'Estimated Value',
+                        isSwahili ? 'Thamani ya Makadirio' : 'Estimated Value',
                         lead['estimated_value'],
                       ),
-                      _info(
-                        isSwahili ? 'Kumbukumbu' : 'Notes',
-                        lead['notes'],
-                      ),
+                      _info(isSwahili ? 'Kumbukumbu' : 'Notes', lead['notes']),
                     ],
                   ),
                 ),
@@ -1014,10 +1044,7 @@ class _LeadSheetHeader extends StatelessWidget {
   final String title;
   final VoidCallback onBack;
 
-  const _LeadSheetHeader({
-    required this.title,
-    required this.onBack,
-  });
+  const _LeadSheetHeader({required this.title, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
@@ -1212,13 +1239,44 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
                           _emailController,
                           'Email',
                           keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            final text = value?.trim() ?? '';
+                            if (text.isEmpty) return null;
+                            final emailPattern = RegExp(
+                              r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                            );
+                            if (!emailPattern.hasMatch(text)) {
+                              return isSwahili
+                                  ? 'Weka barua pepe sahihi'
+                                  : 'Enter a valid email';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 12),
                         _input(
                           _dateController,
-                          isSwahili
-                              ? 'Tarehe (YYYY-MM-DD)'
-                              : 'Date (YYYY-MM-DD)',
+                          isSwahili ? 'Tarehe' : 'Date',
+                          readOnly: true,
+                          suffixIcon: const Icon(Icons.calendar_today_rounded),
+                          onTap: () async {
+                            final initialDate =
+                                DateTime.tryParse(_dateController.text) ??
+                                DateTime.now();
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: initialDate,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now().add(
+                                const Duration(days: 3650),
+                              ),
+                            );
+                            if (picked != null) {
+                              _dateController.text = DateFormat(
+                                'yyyy-MM-dd',
+                              ).format(picked);
+                            }
+                          },
                         ),
                         const SizedBox(height: 12),
                         _input(
@@ -1321,6 +1379,10 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
     bool required = false,
     int maxLines = 1,
     TextInputType? keyboardType,
+    bool readOnly = false,
+    Widget? suffixIcon,
+    VoidCallback? onTap,
+    String? Function(String?)? validator,
   }) {
     final isDarkMode = ref.read(isDarkModeProvider);
 
@@ -1328,12 +1390,17 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      validator: required
-          ? (value) =>
-                (value == null || value.trim().isEmpty) ? 'Required' : null
-          : null,
+      readOnly: readOnly,
+      onTap: onTap,
+      validator:
+          validator ??
+          (required
+              ? (value) =>
+                    (value == null || value.trim().isEmpty) ? 'Required' : null
+              : null),
       decoration: InputDecoration(
         labelText: label,
+        suffixIcon: suffixIcon,
         filled: true,
         fillColor: isDarkMode ? const Color(0xFF2A2A3E) : Colors.grey[100],
       ),

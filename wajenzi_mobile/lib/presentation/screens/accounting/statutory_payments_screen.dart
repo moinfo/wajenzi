@@ -865,7 +865,8 @@ double _toDouble(dynamic value) {
 int _toInt(dynamic value) {
   if (value == null) return 0;
   if (value is int) return value;
-  return int.tryParse(value.toString()) ?? 0;
+  if (value is num) return value.toInt();
+  return int.tryParse(value.toString().replaceAll(',', '')) ?? 0;
 }
 
 int? _toNullableInt(dynamic value) {

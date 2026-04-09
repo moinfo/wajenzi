@@ -18,32 +18,33 @@ final _exchangeRatesMonthFilterProvider = StateProvider.autoDispose<int?>(
   (ref) => null,
 );
 
-final _exchangeRatesProvider =
-    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-      final api = ref.watch(apiClientProvider);
-      try {
-        final response = await api.get('/exchange-rates');
-        final data = response.data is Map<String, dynamic>
-            ? response.data as Map<String, dynamic>
-            : const <String, dynamic>{};
-        final items = data['data'] as List? ?? const [];
+final _exchangeRatesProvider = FutureProvider.autoDispose<Map<String, dynamic>>(
+  (ref) async {
+    final api = ref.watch(apiClientProvider);
+    try {
+      final response = await api.get('/exchange-rates');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return {
+        'items': items
+            .whereType<Map>()
+            .map((item) => Map<String, dynamic>.from(item))
+            .toList(),
+        'unavailable_on_live': false,
+      };
+    } on DioException catch (error) {
+      if ((error.response?.statusCode ?? 0) == 404) {
         return {
-          'items': items
-              .whereType<Map>()
-              .map((item) => Map<String, dynamic>.from(item))
-              .toList(),
-          'unavailable_on_live': false,
+          'items': const <Map<String, dynamic>>[],
+          'unavailable_on_live': true,
         };
-      } on DioException catch (error) {
-        if ((error.response?.statusCode ?? 0) == 404) {
-          return {
-            'items': const <Map<String, dynamic>>[],
-            'unavailable_on_live': true,
-          };
-        }
-        rethrow;
       }
-    });
+      rethrow;
+    }
+  },
+);
 
 final _exchangeRateRefsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
@@ -825,8 +826,8 @@ class _ExchangeRateFormSheetState
     _yearController = TextEditingController(
       text: widget.rate?['year']?.toString() ?? DateTime.now().year.toString(),
     );
-    _foreignCurrencyId = _toNullableInt(widget.rate?['foreign_currency_id']);
-    _baseCurrencyId = _toNullableInt(widget.rate?['base_currency_id']);
+    _foreignCurrencyId = _parseNullableInt(widget.rate?['foreign_currency_id']);
+    _baseCurrencyId = _parseNullableInt(widget.rate?['base_currency_id']);
   }
 
   @override
@@ -1158,7 +1159,16 @@ List<Map<String, dynamic>> _toMaps(dynamic value) {
 
 int _toInt(dynamic value) {
   if (value is int) return value;
+  if (value is num) return value.toInt();
   return int.tryParse(value?.toString() ?? '') ?? 0;
+}
+
+int? _parseNullableInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value == 0 ? null : value;
+  if (value is num) return value.toInt() == 0 ? null : value.toInt();
+  final parsed = int.tryParse(value.toString());
+  return parsed == null || parsed == 0 ? null : parsed;
 }
 
 int? _toNullableInt(dynamic value) {

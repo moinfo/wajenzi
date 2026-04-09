@@ -9,14 +9,18 @@ sealed class UserModel with _$UserModel {
     required int id,
     required String name,
     required String email,
+    @JsonKey(name: 'employee_number')
     String? employeeNumber,
     String? designation,
     String? department,
+    @JsonKey(name: 'profile_url')
     String? profileUrl,
+    @JsonKey(name: 'signature_url')
     String? signatureUrl,
     String? status,
     List<String>? roles,
     List<String>? permissions,
+    @JsonKey(name: 'created_at')
     DateTime? createdAt,
   }) = _UserModel;
 

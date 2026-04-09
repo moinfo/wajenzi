@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
@@ -455,23 +457,9 @@ class _ProfileCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
         child: Column(
           children: [
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: Colors.white.withValues(alpha: 0.2),
-              backgroundImage:
-                  profilePhoto != null ? NetworkImage(profilePhoto) : null,
-              onBackgroundImageError:
-                  profilePhoto != null ? (_, __) {} : null,
-              child: profilePhoto == null
-                  ? Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    )
-                  : null,
+            _EmployeeProfileAvatar(
+              imageUrl: profilePhoto,
+              fallbackText: name.isNotEmpty ? name[0].toUpperCase() : '?',
             ),
           const SizedBox(height: 8),
           Text(
@@ -807,6 +795,62 @@ Color _statusBadgeColor(String status) {
 
 String? _profilePhotoUrl(String? path) {
   return AppConfig.resolvePortalMediaUrl(path);
+}
+
+class _EmployeeProfileAvatar extends StatelessWidget {
+  const _EmployeeProfileAvatar({
+    required this.imageUrl,
+    required this.fallbackText,
+  });
+
+  final String? imageUrl;
+  final String fallbackText;
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor = Colors.white.withValues(alpha: 0.2);
+
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: backgroundColor,
+      ),
+      child: ClipOval(
+        child: imageUrl == null
+            ? Center(
+                child: Text(
+                  fallbackText,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              )
+            : CachedNetworkImage(
+                imageUrl: imageUrl!,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: Colors.white.withValues(alpha: 0.16),
+                  highlightColor: Colors.white.withValues(alpha: 0.30),
+                  child: Container(color: backgroundColor),
+                ),
+                errorWidget: (context, url, error) => Center(
+                  child: Text(
+                    fallbackText,
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+      ),
+    );
+  }
 }
 
 class _InfoRow {

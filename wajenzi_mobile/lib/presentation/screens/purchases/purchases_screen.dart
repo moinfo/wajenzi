@@ -24,6 +24,21 @@ Future<Response<dynamic>> _getWithFallback(
       queryParameters: queryParameters,
     );
   } on DioException catch (e) {
+    final shouldRetry =
+        e.response?.statusCode == null &&
+        (e.type == DioExceptionType.connectionError ||
+            e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.unknown);
+
+    if (shouldRetry) {
+      await Future.delayed(const Duration(milliseconds: 250));
+      return api.get(
+        primaryPath,
+        queryParameters: queryParameters,
+      );
+    }
+
     if (e.response?.statusCode == 404 && fallbackPath != null) {
       return api.get(
         fallbackPath,

@@ -112,7 +112,7 @@
                                         <td>
                                             @if($purchase->receipt_verification_code)
                                                 @php
-                                                    $time = explode(':',$receipt_time);
+                                                    $time = array_pad(explode(':', (string) $receipt_time), 3, '00');
                                                 @endphp
                                                 <a href="https://verify.tra.go.tz/{{$purchase->receipt_verification_code}}_{{$time[0]}}{{$time[1]}}{{$time[2]}}">{{$purchase->receipt_verification_code}}</a>
                                             @endif

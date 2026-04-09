@@ -736,8 +736,10 @@ class _BoqFormSheet extends ConsumerStatefulWidget {
 class _BoqFormSheetState extends ConsumerState<_BoqFormSheet> {
   final _formKey = GlobalKey<FormState>();
   final _versionController = TextEditingController();
+  final _totalAmountController = TextEditingController();
   int? _selectedProjectId;
   String _selectedType = 'client';
+  String _selectedStatus = 'draft';
   bool _loading = false;
   List<dynamic> _projects = [];
   bool _loadingProjects = true;
@@ -752,9 +754,11 @@ class _BoqFormSheetState extends ConsumerState<_BoqFormSheet> {
     _versionController.text = _isEditing
         ? (widget.boq!['version'] ?? 1).toString()
         : '1';
+    _totalAmountController.text = _formatAmount(widget.boq?['total_amount']);
     _selectedType = _isEditing
         ? ((widget.boq!['type'] as String?)?.toLowerCase() ?? 'client')
         : 'client';
+    _selectedStatus = _normalizeStatus(widget.boq?['status']?.toString());
     _loadProjects();
   }
 
@@ -780,7 +784,49 @@ class _BoqFormSheetState extends ConsumerState<_BoqFormSheet> {
   @override
   void dispose() {
     _versionController.dispose();
+    _totalAmountController.dispose();
     super.dispose();
+  }
+
+  String _normalizeStatus(String? value) {
+    final normalized = (value ?? 'draft').trim().toLowerCase();
+    switch (normalized) {
+      case 'approved':
+        return 'approved';
+      case 'submitted':
+      case 'pending':
+        return 'submitted';
+      default:
+        return 'draft';
+    }
+  }
+
+  String _formatAmount(dynamic value) {
+    final amount = _toDouble(value);
+    return amount.toStringAsFixed(2);
+  }
+
+  double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  Future<void> _fetchNextVersion(int projectId) async {
+    if (_isEditing) return;
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.get(
+        '/boqs/next-version',
+        queryParameters: {'project_id': projectId},
+      );
+      final parsed = int.tryParse('${response.data['version'] ?? ''}');
+      if (!mounted || parsed == null || parsed <= 0) return;
+      setState(() {
+        _versionController.text = parsed.toString();
+      });
+    } catch (_) {
+      // Keep default version if helper endpoint fails.
+    }
   }
 
   @override
@@ -872,8 +918,12 @@ class _BoqFormSheetState extends ConsumerState<_BoqFormSheet> {
                                   ),
                                 )
                                 .toList(),
-                            onChanged: (v) =>
-                                setState(() => _selectedProjectId = v),
+                            onChanged: (v) async {
+                              setState(() => _selectedProjectId = v);
+                              if (v != null) {
+                                await _fetchNextVersion(v);
+                              }
+                            },
                           ),
                         ),
                 ),
@@ -973,6 +1023,97 @@ class _BoqFormSheetState extends ConsumerState<_BoqFormSheet> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Hali' : 'Status',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedStatus,
+                                isExpanded: true,
+                                dropdownColor: isDarkMode
+                                    ? const Color(0xFF2A2A3E)
+                                    : Colors.white,
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 'draft',
+                                    child: Text('Draft'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'submitted',
+                                    child: Text('Submitted'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'approved',
+                                    child: Text('Approved'),
+                                  ),
+                                ],
+                                onChanged: (v) => setState(
+                                  () => _selectedStatus = v ?? 'draft',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSwahili ? 'Jumla ya Kiasi' : 'Total Amount',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _totalAmountController,
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
@@ -1037,6 +1178,7 @@ class _BoqFormSheetState extends ConsumerState<_BoqFormSheet> {
         'project_id': _selectedProjectId,
         'version': int.parse(_versionController.text.trim()),
         'type': _selectedType,
+        'status': _selectedStatus,
       };
 
       if (_isEditing && _boqId != null) {

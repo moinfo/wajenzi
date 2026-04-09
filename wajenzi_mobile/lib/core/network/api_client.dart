@@ -137,7 +137,10 @@ class _AuthInterceptor extends Interceptor {
   _AuthInterceptor(this._storageService, this._ref);
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  void onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     final token = await _storageService.getToken();
     if (token != null) {
       options.headers['Authorization'] = 'Bearer $token';
@@ -237,28 +240,31 @@ class _LoggingInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (!AppConfig.isRelease) {
+      final statusCode = err.response?.statusCode;
       debugPrint(
-        'ERROR[${err.response?.statusCode}] => PATH: ${err.requestOptions.path}',
+        'ERROR${statusCode != null ? '[$statusCode]' : '[CONNECTION]'} => PATH: ${err.requestOptions.path}',
       );
       debugPrint(
-        'ERROR[${err.response?.statusCode}] => URI: ${err.requestOptions.uri}',
+        'ERROR${statusCode != null ? '[$statusCode]' : '[CONNECTION]'} => URI: ${err.requestOptions.uri}',
       );
-      debugPrint('Message: ${err.message}');
+      debugPrint('Error Type: ${err.type}');
+      debugPrint('Message: ${err.message ?? "No response from server"}');
     }
-    
+
     // For timeout errors, provide a more user-friendly message
-    if (err.type == DioExceptionType.receiveTimeout || 
+    if (err.type == DioExceptionType.receiveTimeout ||
         err.type == DioExceptionType.sendTimeout ||
         err.type == DioExceptionType.connectionTimeout) {
       final timeoutError = DioException(
         requestOptions: err.requestOptions,
-        message: 'Request timeout. The server is taking too long to respond. Please try again.',
+        message:
+            'Request timeout. The server is taking too long to respond. Please try again.',
         type: err.type,
       );
       handler.next(timeoutError);
       return;
     }
-    
+
     handler.next(err);
   }
 }

@@ -12,6 +12,7 @@ use App\Models\StaffSalary;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class EmployeeProfileController extends Controller
 {
@@ -20,10 +21,19 @@ class EmployeeProfileController extends Controller
      */
     public function staffList(Request $request): JsonResponse
     {
-        $staff = User::where('status', 'ACTIVE')
+        $hasSystemId = Schema::hasColumn('users', 'system_id');
+
+        $staffQuery = User::where('status', 'ACTIVE')
             ->where('type', 'STAFF')
-            ->select('id', 'name', 'employee_number', 'designation', 'department_id', 'system_id')
-            ->with(['department:id,name', 'system:id,name'])
+            ->select('id', 'name', 'employee_number', 'designation', 'department_id');
+
+        if ($hasSystemId) {
+            $staffQuery->addSelect('system_id')
+                ->with(['system:id,name']);
+        }
+
+        $staff = $staffQuery
+            ->with(['department:id,name'])
             ->orderBy('name')
             ->get()
             ->map(fn($u) => [
@@ -32,7 +42,7 @@ class EmployeeProfileController extends Controller
                 'employee_number' => $u->employee_number,
                 'designation' => $u->designation,
                 'department' => $u->department->name ?? null,
-                'system' => $u->system->name ?? null,
+                'system' => $hasSystemId ? ($u->system->name ?? null) : null,
             ]);
 
         return response()->json([

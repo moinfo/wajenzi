@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -791,15 +792,71 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
 
     try {
       final api = ref.read(apiClientProvider);
-      await api.delete('/sites/${site['id']}');
-      ref.invalidate(_sitesProvider);
-    } catch (e) {
+      final response = await api.delete('/sites/${site['id']}');
+
+      // Debug: log raw response
+      debugPrint('DELETE RESPONSE: ${response.data}');
+      debugPrint('DELETE STATUS: ${response.statusCode}');
+
+      Map<String, dynamic>? data;
+      if (response.data is Map<String, dynamic>) {
+        data = response.data;
+      } else if (response.data is Map) {
+        data = Map<String, dynamic>.from(response.data);
+      }
+
+      final success = data?['success'] == true;
+      final message = data?['message']?.toString() ?? '';
+
+      debugPrint('DELETE success: $success, message: $message');
+
+      if (success) {
+        ref.invalidate(_sitesProvider);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isSwahili ? 'Eneo limefutwa' : 'Site deleted'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          String errorMsg;
+          if (message.contains('reports')) {
+            errorMsg = isSwahili
+                ? 'Hauwezi kufuta eneo lenye ripoti. Futa ripoti kwanza.'
+                : 'Cannot delete site with reports. Delete reports first.';
+          } else {
+            errorMsg = message.isNotEmpty
+                ? message
+                : (isSwahili ? 'Hitilafu' : 'Error');
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } on DioException catch (e) {
       if (context.mounted) {
+        String errorMsg;
+        if (e.response?.statusCode == 422) {
+          final errData = e.response?.data as Map<String, dynamic>?;
+          final msg = errData?['message']?.toString() ?? '';
+          if (msg.contains('reports')) {
+            errorMsg = isSwahili
+                ? 'Hauwezi kufuta eneo lenye ripoti. Futa ripoti kwanza.'
+                : 'Cannot delete site with reports. Delete reports first.';
+          } else {
+            errorMsg = msg.isNotEmpty
+                ? msg
+                : (isSwahili ? 'Hauwezi kufuta' : 'Cannot delete');
+          }
+        } else {
+          errorMsg = _siteErrorMessage(e, isSwahili);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_siteErrorMessage(e, isSwahili)),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
         );
       }
     }

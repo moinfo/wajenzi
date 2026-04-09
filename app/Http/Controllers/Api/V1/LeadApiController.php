@@ -16,47 +16,63 @@ class LeadApiController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Lead::with([
-            'leadSource:id,name',
-            'leadStatus:id,name',
-            'serviceInterested:id,name',
-            'salesperson:id,name',
-            'project:id,project_name',
-            'client:id,first_name,last_name',
-            'latestFollowup',
-        ]);
+        try {
+            $perPage = min((int) $request->get('per_page', 50), 100);
+            $query = Lead::query()
+                ->select('leads.*')
+                ->leftJoin('lead_sources', 'leads.lead_source_id', '=', 'lead_sources.id')
+                ->leftJoin('lead_statuses', 'leads.lead_status_id', '=', 'lead_statuses.id')
+                ->leftJoin('users as salespersons', 'leads.salesperson_id', '=', 'salespersons.id')
+                ->addSelect(
+                    'lead_sources.name as lead_source_name',
+                    'lead_statuses.name as lead_status_name',
+                    'salespersons.name as salesperson_name'
+                );
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('lead_number', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('city', 'like', "%{$search}%");
-            });
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('leads.name', 'like', "%{$search}%")
+                        ->orWhere('leads.lead_number', 'like', "%{$search}%")
+                        ->orWhere('leads.phone', 'like', "%{$search}%")
+                        ->orWhere('leads.city', 'like', "%{$search}%");
+                });
+            }
+
+            if ($request->filled('lead_status_id')) {
+                $query->where('leads.lead_status_id', $request->lead_status_id);
+            }
+
+            if ($request->filled('lead_source_id')) {
+                $query->where('leads.lead_source_id', $request->lead_source_id);
+            }
+
+            if ($request->filled('salesperson_id')) {
+                $query->where('leads.salesperson_id', $request->salesperson_id);
+            }
+
+            $leads = $query
+                ->orderBy('leads.lead_date', 'desc')
+                ->orderBy('leads.id', 'desc')
+                ->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $leads->items(),
+                'meta' => [
+                    'total' => $leads->total(),
+                    'per_page' => $leads->perPage(),
+                    'current_page' => $leads->currentPage(),
+                    'last_page' => $leads->lastPage(),
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('LeadApiController@index: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch leads: ' . $e->getMessage(),
+            ], 500);
         }
-
-        if ($request->filled('lead_status_id')) {
-            $query->where('lead_status_id', $request->lead_status_id);
-        }
-
-        if ($request->filled('lead_source_id')) {
-            $query->where('lead_source_id', $request->lead_source_id);
-        }
-
-        if ($request->filled('salesperson_id')) {
-            $query->where('salesperson_id', $request->salesperson_id);
-        }
-
-        $leads = $query->orderBy('lead_date', 'desc')->orderBy('id', 'desc')->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $leads->map(fn (Lead $lead) => $this->transformLead($lead)),
-            'meta' => [
-                'total' => $leads->count(),
-            ],
-        ]);
     }
 
     public function show(int $id): JsonResponse

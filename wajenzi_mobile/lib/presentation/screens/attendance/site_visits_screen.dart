@@ -266,10 +266,20 @@ class SiteVisitsScreen extends ConsumerWidget {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final visit = visits[index];
+                      final status =
+                          visit['status'] as String? ?? 'CREATED';
+                      final canManage = _canVisitCardEditOrDelete(status);
                       return _SiteVisitCard(
                         visit: visit,
                         isSwahili: isSwahili,
                         onTap: () => _showVisitDetail(context, ref, visit),
+                        onView: () => _showVisitDetail(context, ref, visit),
+                        onEdit: canManage
+                            ? () => _showVisitForm(context, ref, visit: visit)
+                            : null,
+                        onDelete: canManage
+                            ? () => _showVisitDetail(context, ref, visit)
+                            : null,
                       );
                     }, childCount: visits.length),
                   ),
@@ -553,15 +563,26 @@ String getVisitStatusLabel(String status, bool isSwahili) {
   }
 }
 
+bool _canVisitCardEditOrDelete(String status) {
+  final normalized = status.toUpperCase();
+  return normalized == 'CREATED' || normalized == 'PENDING';
+}
+
 class _SiteVisitCard extends StatelessWidget {
   final Map<String, dynamic> visit;
   final bool isSwahili;
   final VoidCallback onTap;
+  final VoidCallback onView;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const _SiteVisitCard({
     required this.visit,
     required this.isSwahili,
     required this.onTap,
+    required this.onView,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
@@ -705,6 +726,28 @@ class _SiteVisitCard extends StatelessWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: onView,
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: Text(isSwahili ? 'Tazama' : 'View'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: Text(isSwahili ? 'Hariri' : 'Edit'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete_outline),
+                    label: Text(isSwahili ? 'Futa' : 'Delete'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

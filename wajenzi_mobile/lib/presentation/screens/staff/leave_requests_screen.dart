@@ -456,61 +456,6 @@ class _LeaveRequestsScreenState extends ConsumerState<LeaveRequestsScreen> {
                                       ],
                                     ),
                                   ),
-                                  if (isPending)
-                                    PopupMenuButton<String>(
-                                      onSelected: (value) async {
-                                        Navigator.pop(context);
-                                        if (value == 'edit') {
-                                          await _openLeaveRequestForm(
-                                            context,
-                                            ref,
-                                            request: detail,
-                                          );
-                                        } else if (value == 'delete') {
-                                          await _deleteLeaveRequest(
-                                            context,
-                                            ref,
-                                            detail,
-                                          );
-                                        }
-                                      },
-                                      itemBuilder: (_) => [
-                                        PopupMenuItem(
-                                          value: 'edit',
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.edit_outlined,
-                                                size: 20,
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Text(
-                                                isSwahili ? 'Hariri' : 'Edit',
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        PopupMenuItem(
-                                          value: 'delete',
-                                          child: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.delete_outlined,
-                                                size: 20,
-                                                color: AppColors.error,
-                                              ),
-                                              const SizedBox(width: 10),
-                                              Text(
-                                                isSwahili ? 'Ghairi' : 'Cancel',
-                                                style: const TextStyle(
-                                                  color: AppColors.error,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
                                 ],
                               ),
                               const SizedBox(height: 20),

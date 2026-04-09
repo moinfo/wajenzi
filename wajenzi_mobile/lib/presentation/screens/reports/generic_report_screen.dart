@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../../widgets/common/empty_state_widget.dart';
@@ -145,13 +146,40 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
       debugPrint('value keys: ${dataAsync.value?.keys.toList()}');
     }
 
+    String title = isSwahili ? widget.titleSw : widget.title;
+    if (dataAsync.hasValue && dataAsync.value != null) {
+      final data = dataAsync.value!;
+      if (data.containsKey('sub_category_name') &&
+          data['sub_category_name'] != null) {
+        title = data['sub_category_name'].toString();
+      } else if (data.containsKey('category_name') &&
+          data['category_name'] != null) {
+        title = data['category_name'].toString();
+      } else if (data.containsKey('name') && data['name'] != null) {
+        title = data['name'].toString();
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.go('/reports'),
-        ),
-        title: Text(isSwahili ? widget.titleSw : widget.title),
+        leading:
+            widget.apiEndpoint == '/reports/statutory-category-report' ||
+                widget.apiEndpoint == '/reports/statutory-payment-report' ||
+                widget.apiEndpoint == '/reports/statutory-schedules-report'
+            ? Consumer(
+                builder: (context, ref, _) {
+                  final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
+                  return IconButton(
+                    icon: const Icon(Icons.menu_rounded),
+                    onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+                  );
+                },
+              )
+            : IconButton(
+                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: () => context.go('/reports'),
+              ),
+        title: Text(title),
         actions: [
           if (widget.apiEndpoint != '/reports/statutory-category-report' &&
               widget.apiEndpoint != '/reports/statutory-payment-report' &&

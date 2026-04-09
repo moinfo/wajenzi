@@ -22,21 +22,31 @@ Future<dynamic> _getWithRetry(
   String path, {
   Map<String, dynamic>? queryParameters,
 }) async {
-  try {
-    return await api.get(path, queryParameters: queryParameters);
-  } on DioException catch (error) {
-    final shouldRetry =
-        error.response?.statusCode == null &&
-        (error.type == DioExceptionType.connectionError ||
-            error.type == DioExceptionType.connectionTimeout ||
-            error.type == DioExceptionType.receiveTimeout ||
-            error.type == DioExceptionType.unknown);
+  const retryDelays = <Duration>[
+    Duration(milliseconds: 250),
+    Duration(milliseconds: 600),
+  ];
 
-    if (!shouldRetry) rethrow;
+  for (var attempt = 0; attempt <= retryDelays.length; attempt++) {
+    try {
+      return await api.get(path, queryParameters: queryParameters);
+    } on DioException catch (error) {
+      final shouldRetry =
+          error.response?.statusCode == null &&
+          (error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.receiveTimeout ||
+              error.type == DioExceptionType.unknown);
 
-    await Future.delayed(const Duration(milliseconds: 250));
-    return api.get(path, queryParameters: queryParameters);
+      if (!shouldRetry || attempt == retryDelays.length) {
+        rethrow;
+      }
+
+      await Future.delayed(retryDelays[attempt]);
+    }
   }
+
+  throw StateError('Unreachable retry state for $path');
 }
 
 final _billingDocumentsProvider =

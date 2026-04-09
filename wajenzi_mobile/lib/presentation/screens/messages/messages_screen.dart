@@ -83,23 +83,26 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
           ),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton.small(
-            heroTag: 'bulk_sms',
-            backgroundColor: AppColors.secondary,
-            onPressed: () => _openBulkSheet(context, ref),
-            child: const Icon(Icons.groups_rounded),
-          ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: 'new_sms',
-            onPressed: () => _openMessageSheet(context, ref),
-            child: const Icon(Icons.add_comment_rounded),
-          ),
-        ],
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            FloatingActionButton.small(
+              heroTag: 'bulk_sms',
+              backgroundColor: AppColors.secondary,
+              onPressed: () => _openBulkSheet(context, ref),
+              child: const Icon(Icons.groups_rounded),
+            ),
+            const SizedBox(height: 10),
+            FloatingActionButton(
+              heroTag: 'new_sms',
+              onPressed: () => _openMessageSheet(context, ref),
+              child: const Icon(Icons.add_comment_rounded),
+            ),
+          ],
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -985,7 +988,17 @@ int _toInt(dynamic value) {
 }
 
 String _errorText(Object error) {
-  return error.toString().trim().isEmpty
+  final errStr = error.toString();
+  if (errStr.contains('422')) {
+    if (errStr.contains('Insufficient SMS balance')) {
+      return 'Cannot send SMS. Insufficient SMS balance.';
+    }
+    if (errStr.contains('validation failed')) {
+      return 'Validation failed. Please check your input.';
+    }
+    return 'Failed to send SMS. Please try again.';
+  }
+  return errStr.trim().isEmpty
       ? 'Something went wrong. Please try again.'
-      : error.toString();
+      : errStr;
 }

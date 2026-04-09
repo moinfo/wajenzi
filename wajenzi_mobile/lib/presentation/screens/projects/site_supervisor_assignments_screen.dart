@@ -657,6 +657,7 @@ class _SiteSupervisorAssignmentsScreenState
     int? selectedSupervisorId;
     final notesCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
 
     await showModalBottomSheet(
       context: context,
@@ -666,7 +667,7 @@ class _SiteSupervisorAssignmentsScreenState
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => Padding(
+        builder: (ctx, setSheetState) => Padding(
           padding: EdgeInsets.fromLTRB(
             20,
             16,
@@ -678,7 +679,7 @@ class _SiteSupervisorAssignmentsScreenState
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
                     child: Container(
@@ -690,7 +691,7 @@ class _SiteSupervisorAssignmentsScreenState
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
                     isSwahili ? 'Ongeza Kabidhi' : 'Assign Supervisor',
                     style: TextStyle(
@@ -698,15 +699,22 @@ class _SiteSupervisorAssignmentsScreenState
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   DropdownButtonFormField<int>(
                     value: selectedSiteId,
                     decoration: InputDecoration(
                       labelText: isSwahili ? 'Eneo *' : 'Site *',
                       labelStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.white54 : AppColors.textHint,
+                        fontSize: 13,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSecondary,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
                       ),
                       filled: true,
                       fillColor: isDark
@@ -714,6 +722,24 @@ class _SiteSupervisorAssignmentsScreenState
                           : Colors.grey.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.red),
                       ),
                     ),
                     dropdownColor: isDark
@@ -726,21 +752,33 @@ class _SiteSupervisorAssignmentsScreenState
                             child: Text(
                               '${s['name']} - ${s['location'] ?? ''}',
                               overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                              ),
                             ),
                           ),
                         )
                         .toList(),
-                    onChanged: (v) => setState(() => selectedSiteId = v),
-                    validator: (v) => v == null ? 'Required' : null,
+                    onChanged: (v) => setSheetState(() => selectedSiteId = v),
+                    validator: (v) =>
+                        v == null ? (isSwahili ? 'Lazima' : 'Required') : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
                     value: selectedSupervisorId,
                     decoration: InputDecoration(
                       labelText: isSwahili ? 'Msimamizi *' : 'Supervisor *',
                       labelStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.white54 : AppColors.textHint,
+                        fontSize: 13,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSecondary,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
                       ),
                       filled: true,
                       fillColor: isDark
@@ -748,6 +786,24 @@ class _SiteSupervisorAssignmentsScreenState
                           : Colors.grey.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.red),
                       ),
                     ),
                     dropdownColor: isDark
@@ -760,26 +816,39 @@ class _SiteSupervisorAssignmentsScreenState
                             child: Text(
                               '${s['name']}',
                               overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                              ),
                             ),
                           ),
                         )
                         .toList(),
-                    onChanged: (v) => setState(() => selectedSupervisorId = v),
-                    validator: (v) => v == null ? 'Required' : null,
+                    onChanged: (v) =>
+                        setSheetState(() => selectedSupervisorId = v),
+                    validator: (v) =>
+                        v == null ? (isSwahili ? 'Lazima' : 'Required') : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: notesCtrl,
-                    maxLines: 2,
+                    maxLines: 3,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 14,
                       color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                     decoration: InputDecoration(
                       labelText: isSwahili ? 'Maelezo' : 'Notes',
                       labelStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.white54 : AppColors.textHint,
+                        fontSize: 13,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSecondary,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
                       ),
                       filled: true,
                       fillColor: isDark
@@ -787,73 +856,109 @@ class _SiteSupervisorAssignmentsScreenState
                           : Colors.grey.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   SizedBox(
-                    width: double.infinity,
+                    height: 50,
                     child: ElevatedButton(
-                      onPressed: () async {
-                        if (!formKey.currentState!.validate()) return;
-                        try {
-                          final api = ref.read(apiClientProvider);
-                          final today = DateTime.now();
-                          final dateStr =
-                              '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-                          await api.post(
-                            '/site-supervisor-assignments',
-                            data: {
-                              'site_id': selectedSiteId,
-                              'user_id': selectedSupervisorId,
-                              'assigned_from': dateStr,
-                              'notes': notesCtrl.text,
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              if (!formKey.currentState!.validate()) return;
+                              setSheetState(() => isSubmitting = true);
+                              try {
+                                final api = ref.read(apiClientProvider);
+                                final today = DateTime.now();
+                                final dateStr =
+                                    '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+                                await api.post(
+                                  '/site-supervisor-assignments',
+                                  data: {
+                                    'site_id': selectedSiteId,
+                                    'user_id': selectedSupervisorId,
+                                    'assigned_from': dateStr,
+                                    'notes': notesCtrl.text,
+                                  },
+                                );
+                                ref.invalidate(_assignmentsProvider);
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                if (context.mounted)
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        isSwahili ? 'Imefanikiwa' : 'Success',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                              } on DioException catch (e) {
+                                setSheetState(() => isSubmitting = false);
+                                if (ctx.mounted) {
+                                  final msg =
+                                      e.response?.data?['message'] ??
+                                      (isSwahili ? 'Hitilafu' : 'Error');
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(
+                                      content: Text(msg),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                setSheetState(() => isSubmitting = false);
+                                if (ctx.mounted)
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        isSwahili ? 'Hitilafu' : 'Error',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                              }
                             },
-                          );
-                          ref.invalidate(_assignmentsProvider);
-                          if (ctx.mounted) Navigator.pop(ctx);
-                          if (context.mounted)
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isSwahili ? 'Imefanikiwa' : 'Success',
-                                ),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                        } on DioException catch (e) {
-                          if (ctx.mounted) {
-                            final msg =
-                                e.response?.data?['message'] ??
-                                (isSwahili ? 'Hitilafu' : 'Error');
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text(msg),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (ctx.mounted)
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text(isSwahili ? 'Hitilafu' : 'Error'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                        }
-                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: Text(isSwahili ? 'Hifadhi' : 'Save'),
+                      child: isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              isSwahili ? 'Hifadhi' : 'Save',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -885,8 +990,17 @@ class _SiteSupervisorAssignmentsScreenState
       return;
     }
 
+    final data = ref.read(_assignmentsProvider).valueOrNull;
+    final allSites =
+        (data?['sites'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final supervisors =
+        (data?['supervisors'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+    int? selectedSiteId = assignment['site_id'] as int?;
+    int? selectedSupervisorId = assignment['supervisor_id'] as int?;
     final notesCtrl = TextEditingController(text: assignment['notes'] ?? '');
     final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
 
     await showModalBottomSheet(
       context: context,
@@ -896,7 +1010,7 @@ class _SiteSupervisorAssignmentsScreenState
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => Padding(
+        builder: (ctx, setSheetState) => Padding(
           padding: EdgeInsets.fromLTRB(
             20,
             16,
@@ -908,7 +1022,7 @@ class _SiteSupervisorAssignmentsScreenState
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Center(
                     child: Container(
@@ -920,7 +1034,7 @@ class _SiteSupervisorAssignmentsScreenState
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   Text(
                     isSwahili ? 'Hariri Kabidhi' : 'Edit Assignment',
                     style: TextStyle(
@@ -928,53 +1042,22 @@ class _SiteSupervisorAssignmentsScreenState
                       fontWeight: FontWeight.w700,
                       color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF0F1923)
-                          : Colors.grey.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          assignment['site_name'] ?? '-',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: isDark
-                                ? Colors.white
-                                : AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          assignment['supervisor_name'] ?? '-',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark
-                                ? Colors.white54
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: notesCtrl,
-                    maxLines: 2,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark ? Colors.white : AppColors.textPrimary,
-                    ),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<int>(
+                    value: selectedSiteId,
                     decoration: InputDecoration(
-                      labelText: isSwahili ? 'Maelezo' : 'Notes',
+                      labelText: isSwahili ? 'Eneo *' : 'Site *',
                       labelStyle: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? Colors.white54 : AppColors.textHint,
+                        fontSize: 13,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSecondary,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
                       ),
                       filled: true,
                       fillColor: isDark
@@ -982,65 +1065,239 @@ class _SiteSupervisorAssignmentsScreenState
                           : Colors.grey.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
+                    ),
+                    dropdownColor: isDark
+                        ? const Color(0xFF1A2332)
+                        : Colors.white,
+                    items: allSites
+                        .map<DropdownMenuItem<int>>(
+                          (s) => DropdownMenuItem(
+                            value: s['id'],
+                            child: Text(
+                              '${s['name']} - ${s['location'] ?? ''}',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) => setSheetState(() => selectedSiteId = v),
+                    validator: (v) =>
+                        v == null ? (isSwahili ? 'Lazima' : 'Required') : null,
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<int>(
+                    value: selectedSupervisorId,
+                    decoration: InputDecoration(
+                      labelText: isSwahili ? 'Msimamizi *' : 'Supervisor *',
+                      labelStyle: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSecondary,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF0F1923)
+                          : Colors.grey.withValues(alpha: 0.05),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
+                    ),
+                    dropdownColor: isDark
+                        ? const Color(0xFF1A2332)
+                        : Colors.white,
+                    items: supervisors
+                        .map<DropdownMenuItem<int>>(
+                          (s) => DropdownMenuItem(
+                            value: s['id'],
+                            child: Text(
+                              '${s['name']}',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (v) =>
+                        setSheetState(() => selectedSupervisorId = v),
+                    validator: (v) =>
+                        v == null ? (isSwahili ? 'Lazima' : 'Required') : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: notesCtrl,
+                    maxLines: 3,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: isSwahili ? 'Maelezo' : 'Notes',
+                      labelStyle: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? Colors.white70
+                            : AppColors.textSecondary,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      filled: true,
+                      fillColor: isDark
+                          ? const Color(0xFF0F1923)
+                          : Colors.grey.withValues(alpha: 0.05),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: isDark ? Colors.white24 : Colors.grey.shade300,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   SizedBox(
-                    width: double.infinity,
+                    height: 50,
                     child: ElevatedButton(
-                      onPressed: () async {
-                        if (!formKey.currentState!.validate()) return;
-                        try {
-                          final api = ref.read(apiClientProvider);
-                          await api.put(
-                            '/site-supervisor-assignments/$assignmentId',
-                            data: {'notes': notesCtrl.text},
-                          );
-                          ref.invalidate(_assignmentsProvider);
-                          if (ctx.mounted) Navigator.pop(ctx);
-                          if (context.mounted)
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isSwahili ? 'Imesasishwa' : 'Updated',
-                                ),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                        } on DioException catch (e) {
-                          if (ctx.mounted) {
-                            final msg =
-                                e.response?.data?['message'] ??
-                                (isSwahili ? 'Hitilafu' : 'Error');
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text(msg),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (ctx.mounted)
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text(isSwahili ? 'Hitilafu' : 'Error'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                        }
-                      },
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              if (!formKey.currentState!.validate()) return;
+                              setSheetState(() => isSubmitting = true);
+                              try {
+                                final api = ref.read(apiClientProvider);
+                                await api.put(
+                                  '/site-supervisor-assignments/$assignmentId',
+                                  data: {
+                                    'site_id': selectedSiteId,
+                                    'user_id': selectedSupervisorId,
+                                    'notes': notesCtrl.text,
+                                  },
+                                );
+                                ref.invalidate(_assignmentsProvider);
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                if (context.mounted)
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        isSwahili ? 'Imesasishwa' : 'Updated',
+                                      ),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                              } on DioException catch (e) {
+                                setSheetState(() => isSubmitting = false);
+                                if (ctx.mounted) {
+                                  final msg =
+                                      e.response?.data?['message'] ??
+                                      (isSwahili ? 'Hitilafu' : 'Error');
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(
+                                      content: Text(msg),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                setSheetState(() => isSubmitting = false);
+                                if (ctx.mounted)
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        isSwahili ? 'Hitilafu' : 'Error',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                              }
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: Text(isSwahili ? 'Sasisha' : 'Update'),
+                      child: isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              isSwahili ? 'Sasisha' : 'Update',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),

@@ -758,12 +758,12 @@ Route::middleware('auth:sanctum')->group(function () {
     // BOQ Management
     Route::prefix('boqs')->group(function () {
         Route::get('projects', [BoqController::class, 'projects']);
+        Route::get('next-version', [BoqController::class, 'nextVersion']);
         Route::get('/', [BoqController::class, 'index']);
         Route::post('/', [BoqController::class, 'store']);
         Route::get('{id}', [BoqController::class, 'show']);
         Route::put('{id}', [BoqController::class, 'update']);
         Route::delete('{id}', [BoqController::class, 'destroy']);
-        Route::get('next-version', [BoqController::class, 'nextVersion']);
         Route::post('{id}/submit', [BoqController::class, 'submit']);
         Route::post('{id}/approve', [BoqController::class, 'approve']);
         Route::post('{id}/reject', [BoqController::class, 'reject']);

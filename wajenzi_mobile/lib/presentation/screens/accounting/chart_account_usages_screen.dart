@@ -650,7 +650,14 @@ class _ChartAccountUsageFormSheetState
   @override
   void initState() {
     super.initState();
-    _chartAccountId = _toNullableInt(widget.usage?['charts_account_id']);
+    final rawId = widget.usage?['charts_account_id'];
+    if (rawId is int) {
+      _chartAccountId = rawId;
+    } else if (rawId is num) {
+      _chartAccountId = rawId.toInt();
+    } else if (rawId != null) {
+      _chartAccountId = int.tryParse(rawId.toString());
+    }
   }
 
   @override

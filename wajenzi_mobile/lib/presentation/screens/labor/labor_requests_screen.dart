@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -342,8 +343,16 @@ class LaborRequestsScreen extends ConsumerWidget {
                         item: Map<String, dynamic>.from(item as Map),
                         isSwahili: isSwahili,
                         isDarkMode: isDarkMode,
-                        onEdit: () => _editLaborRequest(context, ref, Map<String, dynamic>.from(item)),
-                        onDelete: () => _deleteLaborRequest(context, ref, Map<String, dynamic>.from(item)),
+                        onEdit: () => _editLaborRequest(
+                          context,
+                          ref,
+                          Map<String, dynamic>.from(item),
+                        ),
+                        onDelete: () => _deleteLaborRequest(
+                          context,
+                          ref,
+                          Map<String, dynamic>.from(item),
+                        ),
                       ),
                     ),
                   ),
@@ -356,7 +365,11 @@ class LaborRequestsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _editLaborRequest(BuildContext context, WidgetRef ref, Map<String, dynamic> request) async {
+  Future<void> _editLaborRequest(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> request,
+  ) async {
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -373,7 +386,11 @@ class LaborRequestsScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _deleteLaborRequest(BuildContext context, WidgetRef ref, Map<String, dynamic> request) async {
+  Future<void> _deleteLaborRequest(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> request,
+  ) async {
     final isSwahili = ref.read(isSwahiliProvider);
     final confirmed = await showDialog<bool>(
       context: context,
@@ -402,8 +419,21 @@ class LaborRequestsScreen extends ConsumerWidget {
 
     try {
       final api = ref.read(apiClientProvider);
-      final response = await api.delete('/labor/requests/${request['id']}');
-      
+      final id = request['id'];
+      if (id == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isSwahili ? 'Hitilafu: Hakuna ID' : 'Error: No ID'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+
+      await api.delete('/labor/requests/$id');
+
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -414,11 +444,34 @@ class LaborRequestsScreen extends ConsumerWidget {
       }
 
       ref.invalidate(_laborRequestsProvider);
+    } on DioException catch (e) {
+      String message;
+      if (e.response?.statusCode == 400) {
+        final data = e.response?.data;
+        if (data is Map &&
+            (data['message']?.toString() ?? '').contains('draft')) {
+          message = isSwahili
+              ? 'Hauwezi kufuta maombi yasiyo ya draft'
+              : 'Only draft requests can be deleted';
+        } else {
+          message = data is Map
+              ? data['message']?.toString() ??
+                    (isSwahili ? 'Hitilafu' : 'Error')
+              : (isSwahili ? 'Hitilafu' : 'Error');
+        }
+      } else {
+        message = isSwahili ? 'Hitilafu' : 'Error';
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: AppColors.error),
+        );
+      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(isSwahili ? 'Hitilafu' : 'Error'),
             backgroundColor: AppColors.error,
           ),
         );
@@ -659,7 +712,10 @@ class _RequestCard extends StatelessWidget {
                     ),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -675,7 +731,10 @@ class _RequestCard extends StatelessWidget {
                     ),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.error,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -896,27 +955,35 @@ class _LaborRequestFormSheetState
     if (widget.existingRequest != null) {
       final request = widget.existingRequest!;
       _locationController.text = request['work_location']?.toString() ?? '';
-      _descriptionController.text = request['work_description']?.toString() ?? '';
-      _durationController.text = request['estimated_duration_days']?.toString() ?? '';
+      _descriptionController.text =
+          request['work_description']?.toString() ?? '';
+      _durationController.text =
+          request['estimated_duration_days']?.toString() ?? '';
       _startDateController.text = request['start_date']?.toString() ?? '';
       _endDateController.text = request['end_date']?.toString() ?? '';
-      _proposedAmountController.text = request['proposed_amount']?.toString() ?? '';
-      _negotiatedAmountController.text = request['negotiated_amount']?.toString() ?? '';
-      _materialsController.text = request['materials_included'] == true ? 'Yes' : '';
+      _proposedAmountController.text =
+          request['proposed_amount']?.toString() ?? '';
+      _negotiatedAmountController.text =
+          request['negotiated_amount']?.toString() ?? '';
+      _materialsController.text = request['materials_included'] == true
+          ? 'Yes'
+          : '';
       _paymentTermsController.text = request['payment_terms']?.toString() ?? '';
       _notesController.text = request['artisan_assessment']?.toString() ?? '';
-      
+
       // Debug: Log the original project_id
       print('DEBUG: Original project_id: ${request['project_id']}');
-      
+
       _selectedProjectId = _normalizeNullableInt(request['project_id']);
-      _selectedPhaseId = _normalizeNullableInt(request['construction_phase_id']);
+      _selectedPhaseId = _normalizeNullableInt(
+        request['construction_phase_id'],
+      );
       _selectedArtisanId = _normalizeNullableInt(request['artisan_id']);
       _currency = request['currency'] as String? ?? 'TZS';
-      
+
       // Debug: Log the normalized project_id
       print('DEBUG: Normalized _selectedProjectId: $_selectedProjectId');
-      
+
       if (request['start_date'] != null) {
         try {
           _startDate = DateTime.parse(request['start_date'] as String);
@@ -997,11 +1064,11 @@ class _LaborRequestFormSheetState
                     Text(
                       widget.existingRequest != null
                           ? (widget.isSwahili
-                              ? 'Hariri Ombi la Labor'
-                              : 'Edit Labor Request')
+                                ? 'Hariri Ombi la Labor'
+                                : 'Edit Labor Request')
                           : (widget.isSwahili
-                              ? 'Ombi Jipya la Labor'
-                              : 'New Labor Request'),
+                                ? 'Ombi Jipya la Labor'
+                                : 'New Labor Request'),
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -1032,7 +1099,9 @@ class _LaborRequestFormSheetState
                               .map(
                                 (p) => DropdownMenuItem(
                                   value: p['id'] as int,
-                                  child: Text(p['project_name']?.toString() ?? '-'),
+                                  child: Text(
+                                    p['project_name']?.toString() ?? '-',
+                                  ),
                                 ),
                               )
                               .toList(),
@@ -1119,9 +1188,9 @@ class _LaborRequestFormSheetState
                                     : 'Start Date',
                                 selectedDate: _startDate,
                                 onDateSelected: (date) => setState(() {
-                              _startDate = date;
-                              _startDateError = null;
-                            }),
+                                  _startDate = date;
+                                  _startDateError = null;
+                                }),
                                 isDarkMode: widget.isDarkMode,
                                 errorText: _startDateError,
                               ),
@@ -1359,10 +1428,12 @@ class _LaborRequestFormSheetState
   Future<void> _submitForm() async {
     // For edit mode, project_id is not required if it wasn't changed
     final isEdit = widget.existingRequest != null;
-    
+
     // Debug: Log the current state
-    print('DEBUG: _submitForm - isEdit: $isEdit, _selectedProjectId: $_selectedProjectId');
-    
+    print(
+      'DEBUG: _submitForm - isEdit: $isEdit, _selectedProjectId: $_selectedProjectId',
+    );
+
     if (!isEdit && _selectedProjectId == null) {
       _showError(widget.isSwahili ? 'Chagua mradi' : 'Select project');
       return;
@@ -1376,55 +1447,95 @@ class _LaborRequestFormSheetState
       return;
     }
     if (_startDate == null) {
-      setState(() => _startDateError = widget.isSwahili ? 'Tarehe ya kuanza inahitajika' : 'Start date is required');
-      _showError(widget.isSwahili ? 'Chagua tarehe ya kuanza' : 'Select start date');
+      setState(
+        () => _startDateError = widget.isSwahili
+            ? 'Tarehe ya kuanza inahitajika'
+            : 'Start date is required',
+      );
+      _showError(
+        widget.isSwahili ? 'Chagua tarehe ya kuanza' : 'Select start date',
+      );
       return;
     }
     if (_endDate == null) {
-      setState(() => _endDateError = widget.isSwahili ? 'Tarehe ya mwisho inahitajika' : 'End date is required');
-      _showError(widget.isSwahili ? 'Chagua tarehe ya mwisho' : 'Select end date');
+      setState(
+        () => _endDateError = widget.isSwahili
+            ? 'Tarehe ya mwisho inahitajika'
+            : 'End date is required',
+      );
+      _showError(
+        widget.isSwahili ? 'Chagua tarehe ya mwisho' : 'Select end date',
+      );
       return;
     }
     if (_endDate!.isBefore(_startDate!)) {
-      setState(() => _endDateError = widget.isSwahili ? 'Tarehe ya mwisho lazima iwe baada ya tarehe ya kuanza' : 'End date must be after start date');
-      _showError(widget.isSwahili ? 'Tarehe ya mwisho lazima iwe baada ya tarehe ya kuanza' : 'End date must be after start date');
+      setState(
+        () => _endDateError = widget.isSwahili
+            ? 'Tarehe ya mwisho lazima iwe baada ya tarehe ya kuanza'
+            : 'End date must be after start date',
+      );
+      _showError(
+        widget.isSwahili
+            ? 'Tarehe ya mwisho lazima iwe baada ya tarehe ya kuanza'
+            : 'End date must be after start date',
+      );
       return;
     }
-    
+
     // Validate work description minimum length
     if (_descriptionController.text.length < 10) {
-      _showError(widget.isSwahili ? 'Maelezo ya kazi yanahitaji angalau herufi 10' : 'Work description must be at least 10 characters');
+      _showError(
+        widget.isSwahili
+            ? 'Maelezo ya kazi yanahitaji angalau herufi 10'
+            : 'Work description must be at least 10 characters',
+      );
       return;
     }
-    
+
     // Validate duration if provided
     final durationText = _durationController.text.trim();
     if (durationText.isNotEmpty) {
       final duration = int.tryParse(durationText);
       if (duration == null || duration < 1) {
-        _showError(widget.isSwahili ? 'Muda lazima uwe nambari chanya zaidi ya 0' : 'Duration must be a positive number greater than 0');
+        _showError(
+          widget.isSwahili
+              ? 'Muda lazima uwe nambari chanya zaidi ya 0'
+              : 'Duration must be a positive number greater than 0',
+        );
         return;
       }
     }
-    
+
     // Validate proposed amount
     final proposedAmountText = _proposedAmountController.text.trim();
     if (proposedAmountText.isEmpty) {
-      _showError(widget.isSwahili ? 'Kiasi kilichopendekezwa kinahitajika' : 'Proposed amount is required');
+      _showError(
+        widget.isSwahili
+            ? 'Kiasi kilichopendekezwa kinahitajika'
+            : 'Proposed amount is required',
+      );
       return;
     }
     final proposedAmount = double.tryParse(proposedAmountText);
     if (proposedAmount == null || proposedAmount < 0) {
-      _showError(widget.isSwahili ? 'Kiasi halisi cha nambari chanya kinahitajika' : 'Valid positive amount required');
+      _showError(
+        widget.isSwahili
+            ? 'Kiasi halisi cha nambari chanya kinahitajika'
+            : 'Valid positive amount required',
+      );
       return;
     }
-    
+
     // Validate negotiated amount if provided
     final negotiatedAmountText = _negotiatedAmountController.text.trim();
     if (negotiatedAmountText.isNotEmpty) {
       final negotiatedAmount = double.tryParse(negotiatedAmountText);
       if (negotiatedAmount == null || negotiatedAmount < 0) {
-        _showError(widget.isSwahili ? 'Kiasi halisi cha nambari chanya kinahitajika' : 'Valid positive negotiated amount required');
+        _showError(
+          widget.isSwahili
+              ? 'Kiasi halisi cha nambari chanya kinahitajika'
+              : 'Valid positive negotiated amount required',
+        );
         return;
       }
     }
@@ -1432,15 +1543,15 @@ class _LaborRequestFormSheetState
     try {
       final api = ref.read(apiClientProvider);
       final isEdit = widget.existingRequest != null;
-      
+
       if (isEdit) {
         // Update existing request - include required fields and optional fields with values
         final Map<String, dynamic> updateData = {};
-        
+
         // Always include required fields for updates
         updateData['work_description'] = _descriptionController.text;
         updateData['proposed_amount'] = _proposedAmountController.text;
-        
+
         // Always include project_id in edit mode (preserve existing if not changed)
         if (isEdit) {
           // In edit mode, always include project_id to preserve the relationship
@@ -1449,23 +1560,35 @@ class _LaborRequestFormSheetState
           }
         } else {
           // In create mode, only include if selected
-          if (_selectedProjectId != null) updateData['project_id'] = _selectedProjectId;
+          if (_selectedProjectId != null)
+            updateData['project_id'] = _selectedProjectId;
         }
-        if (_selectedPhaseId != null) updateData['construction_phase_id'] = _selectedPhaseId;
-        if (_selectedArtisanId != null) updateData['artisan_id'] = _selectedArtisanId;
-        if (_locationController.text.isNotEmpty) updateData['work_location'] = _locationController.text;
+        if (_selectedPhaseId != null)
+          updateData['construction_phase_id'] = _selectedPhaseId;
+        if (_selectedArtisanId != null)
+          updateData['artisan_id'] = _selectedArtisanId;
+        if (_locationController.text.isNotEmpty)
+          updateData['work_location'] = _locationController.text;
         if (_durationController.text.isNotEmpty) {
           final duration = int.tryParse(_durationController.text);
-          if (duration != null && duration > 0) updateData['estimated_duration_days'] = duration;
+          if (duration != null && duration > 0)
+            updateData['estimated_duration_days'] = duration;
         }
-        if (_startDateController.text.isNotEmpty) updateData['start_date'] = _startDateController.text;
-        if (_endDateController.text.isNotEmpty) updateData['end_date'] = _endDateController.text;
-        if (_currency != 'TZS') updateData['currency'] = _currency; // Only send if not default
-        if (_negotiatedAmountController.text.isNotEmpty) updateData['negotiated_amount'] = _negotiatedAmountController.text;
-        if (_materialsController.text.isNotEmpty) updateData['materials_included'] = true;
-        if (_paymentTermsController.text.isNotEmpty) updateData['payment_terms'] = _paymentTermsController.text;
-        if (_notesController.text.isNotEmpty) updateData['artisan_assessment'] = _notesController.text;
-        
+        if (_startDateController.text.isNotEmpty)
+          updateData['start_date'] = _startDateController.text;
+        if (_endDateController.text.isNotEmpty)
+          updateData['end_date'] = _endDateController.text;
+        if (_currency != 'TZS')
+          updateData['currency'] = _currency; // Only send if not default
+        if (_negotiatedAmountController.text.isNotEmpty)
+          updateData['negotiated_amount'] = _negotiatedAmountController.text;
+        if (_materialsController.text.isNotEmpty)
+          updateData['materials_included'] = true;
+        if (_paymentTermsController.text.isNotEmpty)
+          updateData['payment_terms'] = _paymentTermsController.text;
+        if (_notesController.text.isNotEmpty)
+          updateData['artisan_assessment'] = _notesController.text;
+
         await api.put(
           '/labor/requests/${widget.existingRequest!['id']}',
           data: updateData,
@@ -1496,16 +1619,18 @@ class _LaborRequestFormSheetState
           },
         );
       }
-      
+
       if (mounted) {
         ref.invalidate(_laborRequestsProvider);
         Navigator.of(context).pop(true); // Return true to indicate success
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isEdit 
+              isEdit
                   ? (widget.isSwahili ? 'Ombi limehaririwa' : 'Request updated')
-                  : (widget.isSwahili ? 'Ombi limewasilishwa' : 'Request submitted'),
+                  : (widget.isSwahili
+                        ? 'Ombi limewasilishwa'
+                        : 'Request submitted'),
             ),
           ),
         );
@@ -1514,10 +1639,10 @@ class _LaborRequestFormSheetState
       // Handle API validation errors specifically
       if (e.toString().contains('422')) {
         // Try to extract validation errors from the response
-        String errorMessage = widget.isSwahili 
-            ? 'Tafadhali angalia fomu kwa makosa ya uhalalishaji' 
+        String errorMessage = widget.isSwahili
+            ? 'Tafadhali angalia fomu kwa makosa ya uhalalishaji'
             : 'Please check the form for validation errors';
-        
+
         // Try to parse the error response for more details
         if (e.toString().contains('errors')) {
           // This is a rough attempt to extract validation errors

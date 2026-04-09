@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../core/config/app_config.dart';
 import '../../core/network/api_client.dart';
 import '../services/external_launcher_service.dart';
 import '../../presentation/providers/auth_provider.dart';
@@ -510,9 +514,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/architect-bonus/module-report',
             name: 'architect-bonus-module-report',
-            builder: (context, state) => const ArchitectBonusReportScreen(
-              useDrawerMenu: true,
-            ),
+            builder: (context, state) =>
+                const ArchitectBonusReportScreen(useDrawerMenu: true),
           ),
           GoRoute(
             path: '/reports-vat-analysis',
@@ -889,8 +892,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/reports-statutory-category',
             name: 'reports-statutory-category',
             builder: (context, state) => const GenericReportScreen(
-              title: 'Statutory Category Report',
-              titleSw: 'Ripoti ya Kategoria ya Kisheria',
+              title: 'Sub Category Report',
+              titleSw: 'Ripoti ya Kategoria ndogo',
               apiEndpoint: '/reports/statutory-category-report',
             ),
           ),
@@ -1390,7 +1393,22 @@ final _drawerMenusProvider = FutureProvider.autoDispose<List<dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
-  final response = await api.get('/menus');
+  late final dynamic response;
+  try {
+    response = await api.get('/menus');
+  } on DioException catch (error) {
+    final shouldRetry =
+        error.response?.statusCode == null &&
+        (error.type == DioExceptionType.connectionError ||
+            error.type == DioExceptionType.connectionTimeout ||
+            error.type == DioExceptionType.receiveTimeout ||
+            error.type == DioExceptionType.unknown);
+
+    if (!shouldRetry) rethrow;
+
+    await Future.delayed(const Duration(milliseconds: 250));
+    response = await api.get('/menus');
+  }
   return response.data['data'] as List? ?? [];
 });
 
@@ -1440,6 +1458,7 @@ class MainDrawer extends ConsumerWidget {
     final userInitial = (user?.name.isNotEmpty ?? false)
         ? user!.name.substring(0, 1).toUpperCase()
         : 'U';
+    final profileImageUrl = AppConfig.resolvePortalMediaUrl(user?.profileUrl);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final menusAsync = isClient ? null : ref.watch(_drawerMenusProvider);
@@ -1469,19 +1488,10 @@ class MainDrawer extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
-                    radius: 35,
-                    backgroundColor: isDarkMode
-                        ? const Color(0xFF1ABC9C).withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.2),
-                    child: Text(
-                      userInitial,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                  _DrawerProfileAvatar(
+                    imageUrl: profileImageUrl,
+                    fallbackText: userInitial,
+                    isDarkMode: isDarkMode,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -1722,6 +1732,63 @@ class MainDrawer extends ConsumerWidget {
           }).toList(),
         );
       },
+    );
+  }
+}
+
+class _DrawerProfileAvatar extends StatelessWidget {
+  const _DrawerProfileAvatar({
+    required this.imageUrl,
+    required this.fallbackText,
+    required this.isDarkMode,
+  });
+
+  final String? imageUrl;
+  final String fallbackText;
+  final bool isDarkMode;
+
+  @override
+  Widget build(BuildContext context) {
+    final backgroundColor = isDarkMode
+        ? const Color(0xFF1ABC9C).withValues(alpha: 0.3)
+        : Colors.white.withValues(alpha: 0.2);
+
+    return Container(
+      width: 70,
+      height: 70,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: backgroundColor),
+      child: ClipOval(
+        child: imageUrl == null
+            ? Center(
+                child: Text(
+                  fallbackText,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              )
+            : CachedNetworkImage(
+                imageUrl: imageUrl!,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: Colors.white.withValues(alpha: 0.16),
+                  highlightColor: Colors.white.withValues(alpha: 0.30),
+                  child: Container(color: backgroundColor),
+                ),
+                errorWidget: (context, url, error) => Center(
+                  child: Text(
+                    fallbackText,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+      ),
     );
   }
 }
