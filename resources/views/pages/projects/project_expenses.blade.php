@@ -128,10 +128,10 @@
                                                 <span class="text-muted">-</span>
                                             @endif
                                         </td>
-                                        <td>{{ Str::limit($expense->description, 50) }}</td>
+                                        <td>{{ Str::limit($expense->description ?? '', 50) }}</td>
                                         <td>{{ $expense->expense_date->format('d/m/Y') }}</td>
                                         <td class="text-right font-w600">{{ number_format($expense->amount, 2) }}</td>
-                                        <td>{{ Str::limit($expense->remarks, 30) ?? '-' }}</td>
+                                        <td>{{ Str::limit($expense->remarks ?? '', 30) ?: '-' }}</td>
                                         <td class="text-center">
                                             <div class="btn-group">
                                                 @can('Edit Project Cost')

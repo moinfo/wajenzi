@@ -20,6 +20,7 @@ class ExpenseController extends Controller
             $query = Expense::with([
                 'expensesSubCategory.expensesCategory',
                 'approvalStatus',
+                'project',
             ])->orderByDesc('date')->orderByDesc('id');
 
             if ($request->filled('expenses_category_id')) {
@@ -27,6 +28,10 @@ class ExpenseController extends Controller
                 $query->whereHas('expensesSubCategory', function ($subQuery) use ($categoryId) {
                     $subQuery->where('expenses_category_id', $categoryId);
                 });
+            }
+
+            if ($request->filled('project_id')) {
+                $query->where('project_id', (int) $request->input('project_id'));
             }
 
             if ($request->filled('expenses_sub_category_id')) {
@@ -70,6 +75,7 @@ class ExpenseController extends Controller
             $expense = Expense::with([
                 'expensesSubCategory.expensesCategory',
                 'approvalStatus',
+                'project',
             ])->findOrFail($id);
 
             return response()->json([
@@ -89,6 +95,7 @@ class ExpenseController extends Controller
     {
         try {
             $validated = $request->validate([
+                'project_id' => 'nullable|exists:projects,id',
                 'expenses_sub_category_id' => 'required|exists:expenses_sub_categories,id',
                 'description' => 'required|string|max:500',
                 'amount' => 'required|numeric|min:0',
@@ -98,6 +105,9 @@ class ExpenseController extends Controller
 
             $nextId = ((int) Expense::max('id')) + 1;
             $expense = new Expense();
+            $expense->project_id = array_key_exists('project_id', $validated)
+                ? ($validated['project_id'] !== null ? (int) $validated['project_id'] : null)
+                : null;
             $expense->expenses_sub_category_id = (int) $validated['expenses_sub_category_id'];
             $expense->description = $validated['description'];
             $expense->amount = $validated['amount'];
@@ -111,7 +121,7 @@ class ExpenseController extends Controller
             }
 
             $expense->save();
-            $expense->load(['expensesSubCategory.expensesCategory', 'approvalStatus']);
+            $expense->load(['expensesSubCategory.expensesCategory', 'approvalStatus', 'project']);
 
             return response()->json([
                 'success' => true,
@@ -136,9 +146,10 @@ class ExpenseController extends Controller
     public function update(Request $request, int $id): JsonResponse
     {
         try {
-            $expense = Expense::with(['expensesSubCategory.expensesCategory', 'approvalStatus'])->findOrFail($id);
+            $expense = Expense::with(['expensesSubCategory.expensesCategory', 'approvalStatus', 'project'])->findOrFail($id);
 
             $validated = $request->validate([
+                'project_id' => 'nullable|exists:projects,id',
                 'expenses_sub_category_id' => 'required|exists:expenses_sub_categories,id',
                 'description' => 'required|string|max:500',
                 'amount' => 'required|numeric|min:0',
@@ -146,6 +157,9 @@ class ExpenseController extends Controller
                 'receipt' => 'nullable|file|max:5120',
             ]);
 
+            if ($request->has('project_id')) {
+                $expense->project_id = $validated['project_id'] !== null ? (int) $validated['project_id'] : null;
+            }
             $expense->expenses_sub_category_id = (int) $validated['expenses_sub_category_id'];
             $expense->description = $validated['description'];
             $expense->amount = $validated['amount'];
@@ -157,7 +171,7 @@ class ExpenseController extends Controller
             }
 
             $expense->save();
-            $expense->load(['expensesSubCategory.expensesCategory', 'approvalStatus']);
+            $expense->load(['expensesSubCategory.expensesCategory', 'approvalStatus', 'project']);
 
             return response()->json([
                 'success' => true,
@@ -241,7 +255,7 @@ class ExpenseController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Expense submitted successfully.',
-                'data' => $this->transform($expense->load(['expensesSubCategory.expensesCategory', 'approvalStatus'])),
+                'data' => $this->transform($expense->load(['expensesSubCategory.expensesCategory', 'approvalStatus', 'project'])),
             ]);
         } catch (\Throwable $e) {
             Log::error('Expense submit error: ' . $e->getMessage());
@@ -282,6 +296,8 @@ class ExpenseController extends Controller
             'status' => $status,
             'receipt_path' => $expense->file,
             'file' => $expense->file,
+            'project_id' => $expense->project_id,
+            'project_name' => $expense->project?->project_name,
             'expenses_sub_category_id' => $expense->expenses_sub_category_id,
             'expenses_sub_category' => [
                 'id' => $expense->expensesSubCategory?->id,

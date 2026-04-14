@@ -11,12 +11,14 @@ class ExpenseFilter {
   final DateTime? endDate;
   final int? categoryId;
   final int? subCategoryId;
+  final int? projectId;
 
   ExpenseFilter({
     this.startDate,
     this.endDate,
     this.categoryId,
     this.subCategoryId,
+    this.projectId,
   });
 
   ExpenseFilter copyWith({
@@ -24,10 +26,12 @@ class ExpenseFilter {
     DateTime? endDate,
     int? categoryId,
     int? subCategoryId,
+    int? projectId,
     bool clearStartDate = false,
     bool clearEndDate = false,
     bool clearCategory = false,
     bool clearSubCategory = false,
+    bool clearProject = false,
   }) {
     return ExpenseFilter(
       startDate: clearStartDate ? null : (startDate ?? this.startDate),
@@ -36,10 +40,11 @@ class ExpenseFilter {
       subCategoryId: clearSubCategory
           ? null
           : (subCategoryId ?? this.subCategoryId),
+      projectId: clearProject ? null : (projectId ?? this.projectId),
     );
   }
 
-  Map<String, String> toQueryParams() {
+  Map<String, String> toQueryParams({bool projectExpensesMode = false}) {
     final params = <String, String>{'per_page': '100'};
     if (startDate != null) {
       params['start_date'] = DateFormat('yyyy-MM-dd').format(startDate!);
@@ -48,10 +53,16 @@ class ExpenseFilter {
       params['end_date'] = DateFormat('yyyy-MM-dd').format(endDate!);
     }
     if (categoryId != null) {
-      params['expenses_category_id'] = categoryId.toString();
+      params[projectExpensesMode
+          ? 'cost_category_id'
+          : 'expenses_category_id'] = categoryId
+          .toString();
     }
     if (subCategoryId != null) {
       params['expenses_sub_category_id'] = subCategoryId.toString();
+    }
+    if (projectId != null) {
+      params['project_id'] = projectId.toString();
     }
     return params;
   }
@@ -61,14 +72,21 @@ final expenseFilterProvider = StateProvider.autoDispose<ExpenseFilter>((ref) {
   return ExpenseFilter();
 });
 
+final projectExpensesModeProvider = StateProvider.autoDispose<bool>((ref) {
+  return false;
+});
+
 final _expensesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
 ) async {
   final api = ref.watch(apiClientProvider);
   final filter = ref.watch(expenseFilterProvider);
+  final projectExpensesMode = ref.watch(projectExpensesModeProvider);
   final response = await api.get(
-    '/expenses',
-    queryParameters: filter.toQueryParams(),
+    projectExpensesMode ? '/project-expenses' : '/expenses',
+    queryParameters: filter.toQueryParams(
+      projectExpensesMode: projectExpensesMode,
+    ),
   );
   final payload = response.data['data'];
   final collection = payload is Map<String, dynamic> ? payload : null;
@@ -112,13 +130,25 @@ final _expensesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
 final _expenseReferencesProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
-      final response = await api.get('/expenses/categories');
+      final projectExpensesMode = ref.watch(projectExpensesModeProvider);
+      final response = await api.get(
+        projectExpensesMode
+            ? '/project-expenses/categories'
+            : '/expenses/categories',
+      );
       final data = response.data['data'];
       return data is Map<String, dynamic> ? data : <String, dynamic>{};
     });
 
 class ExpenseListScreen extends ConsumerStatefulWidget {
-  const ExpenseListScreen({super.key});
+  final int? projectId;
+  final bool projectExpensesMode;
+
+  const ExpenseListScreen({
+    super.key,
+    this.projectId,
+    this.projectExpensesMode = false,
+  });
 
   @override
   ConsumerState<ExpenseListScreen> createState() => _ExpenseListScreenState();
@@ -126,6 +156,22 @@ class ExpenseListScreen extends ConsumerStatefulWidget {
 
 class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
   final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.projectId != null) {
+        ref.read(expenseFilterProvider.notifier).state = ref
+            .read(expenseFilterProvider)
+            .copyWith(projectId: widget.projectId);
+      }
+      if (widget.projectExpensesMode) {
+        ref.read(projectExpensesModeProvider.notifier).state = true;
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -137,7 +183,6 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
   Widget build(BuildContext context) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final expensesAsync = ref.watch(_expensesProvider);
-    final filter = ref.watch(expenseFilterProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
@@ -147,7 +192,11 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Matumizi' : 'Expenses'),
+        title: Text(
+          isSwahili
+              ? (widget.projectExpensesMode ? 'Matumizi za Mradi' : 'Matumizi')
+              : (widget.projectExpensesMode ? 'Project Expenses' : 'Expenses'),
+        ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
@@ -160,6 +209,22 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
       body: Column(
         children: [
           _ExpenseStatsSection(isSwahili: isSwahili, isDarkMode: isDarkMode),
+          if (widget.projectExpensesMode)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Chip(
+                  label: Text(
+                    isSwahili ? 'Matumizi za Mradi' : 'Project Expenses',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  backgroundColor: isDarkMode
+                      ? Colors.white10
+                      : Colors.grey.withOpacity(0.18),
+                ),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
@@ -286,6 +351,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                         expense: expense,
                         isSwahili: isSwahili,
                         isDarkMode: isDarkMode,
+                        isProjectExpenses: widget.projectExpensesMode,
                         onEdit: () =>
                             _showExpenseForm(context, expense: expense),
                         onDelete: () => _deleteExpense(context, ref, expense),
@@ -315,7 +381,10 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => _ExpenseFormSheet(expense: expense),
+      builder: (ctx) => _ExpenseFormSheet(
+        expense: expense,
+        projectExpensesMode: widget.projectExpensesMode,
+      ),
     ).then((result) {
       if (result == true) ref.invalidate(_expensesProvider);
     });
@@ -366,7 +435,11 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
     if (confirm == true && context.mounted) {
       try {
         final api = ref.read(apiClientProvider);
-        await api.delete('/expenses/${expense['id']}');
+        await api.delete(
+          widget.projectExpensesMode
+              ? '/project-expenses/${expense['id']}'
+              : '/expenses/${expense['id']}',
+        );
         ref.invalidate(_expensesProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -525,6 +598,7 @@ class _FilterSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final isProjectExpenses = ref.watch(projectExpensesModeProvider);
     final filter = ref.watch(expenseFilterProvider);
     final referencesAsync = ref.watch(_expenseReferencesProvider);
 
@@ -628,84 +702,88 @@ class _FilterSheet extends ConsumerWidget {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                isSwahili ? 'Sub Category' : 'Sub Category',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: isDarkMode
-                      ? const Color(0xFF2A2A3E)
-                      : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: referencesAsync.when(
-                  loading: () => const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),
+              if (!isProjectExpenses) ...[
+                const SizedBox(height: 16),
+                Text(
+                  isSwahili ? 'Sub Category' : 'Sub Category',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode
+                        ? Colors.white70
+                        : AppColors.textSecondary,
                   ),
-                  error: (_, __) => Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(isSwahili ? 'Imeshindikana' : 'Failed'),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  data: (refs) {
-                    final subCategories =
-                        (refs['sub_categories'] as List? ?? const [])
-                            .cast<dynamic>()
-                            .where(
-                              (item) =>
-                                  filter.categoryId == null ||
-                                  item['expenses_category_id'] ==
-                                      filter.categoryId,
-                            )
-                            .toList();
-                    return DropdownButtonHideUnderline(
-                      child: DropdownButton<int?>(
-                        value: filter.subCategoryId,
-                        hint: Text(
-                          isSwahili
-                              ? 'All Sub Categories'
-                              : 'All Sub Categories',
+                  child: referencesAsync.when(
+                    loading: () => const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(),
+                    ),
+                    error: (_, __) => Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(isSwahili ? 'Imeshindikana' : 'Failed'),
+                    ),
+                    data: (refs) {
+                      final subCategories =
+                          (refs['sub_categories'] as List? ?? const [])
+                              .cast<dynamic>()
+                              .where(
+                                (item) =>
+                                    filter.categoryId == null ||
+                                    item['expenses_category_id'] ==
+                                        filter.categoryId,
+                              )
+                              .toList();
+                      return DropdownButtonHideUnderline(
+                        child: DropdownButton<int?>(
+                          value: filter.subCategoryId,
+                          hint: Text(
+                            isSwahili
+                                ? 'All Sub Categories'
+                                : 'All Sub Categories',
+                          ),
+                          isExpanded: true,
+                          dropdownColor: isDarkMode
+                              ? const Color(0xFF2A2A3E)
+                              : Colors.white,
+                          items: [
+                            DropdownMenuItem(
+                              value: null,
+                              child: Text(
+                                isSwahili
+                                    ? 'All Sub Categories'
+                                    : 'All Sub Categories',
+                              ),
+                            ),
+                            ...subCategories.map(
+                              (c) => DropdownMenuItem(
+                                value: c['id'] as int,
+                                child: Text(c['name'] as String? ?? '-'),
+                              ),
+                            ),
+                          ],
+                          onChanged: (v) =>
+                              parentRef
+                                  .read(expenseFilterProvider.notifier)
+                                  .state = filter.copyWith(
+                                subCategoryId: v,
+                                clearSubCategory: v == null,
+                              ),
                         ),
-                        isExpanded: true,
-                        dropdownColor: isDarkMode
-                            ? const Color(0xFF2A2A3E)
-                            : Colors.white,
-                        items: [
-                          DropdownMenuItem(
-                            value: null,
-                            child: Text(
-                              isSwahili
-                                  ? 'All Sub Categories'
-                                  : 'All Sub Categories',
-                            ),
-                          ),
-                          ...subCategories.map(
-                            (c) => DropdownMenuItem(
-                              value: c['id'] as int,
-                              child: Text(c['name'] as String? ?? '-'),
-                            ),
-                          ),
-                        ],
-                        onChanged: (v) =>
-                            parentRef
-                                .read(expenseFilterProvider.notifier)
-                                .state = filter.copyWith(
-                              subCategoryId: v,
-                              clearSubCategory: v == null,
-                            ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ],
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -738,8 +816,9 @@ class _FilterSheet extends ConsumerWidget {
 
 class _ExpenseFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic>? expense;
+  final bool projectExpensesMode;
 
-  const _ExpenseFormSheet({this.expense});
+  const _ExpenseFormSheet({this.expense, this.projectExpensesMode = false});
 
   @override
   ConsumerState<_ExpenseFormSheet> createState() => _ExpenseFormSheetState();
@@ -751,6 +830,7 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
   final _amountController = TextEditingController();
   final _remarksController = TextEditingController();
   int? _selectedProjectId;
+  int? _selectedCategoryId;
   int? _selectedSubCategoryId;
   DateTime _selectedDate = DateTime.now();
   bool _loading = false;
@@ -773,7 +853,11 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
   Future<void> _loadData() async {
     try {
       final api = ref.read(apiClientProvider);
-      final response = await api.get('/expenses/categories');
+      final response = await api.get(
+        widget.projectExpensesMode
+            ? '/project-expenses/categories'
+            : '/expenses/categories',
+      );
       final projectsRes = await api.get('/projects');
 
       if (mounted) {
@@ -795,20 +879,26 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
             _descriptionController.text = e['description'] as String? ?? '';
             _amountController.text = _toDouble(e['amount']).toString();
             _remarksController.text = e['remarks'] as String? ?? '';
-            
+
             // Debug: Log the original project_id
             print('DEBUG: Original expense project_id: ${e['project_id']}');
-            
+
             _selectedProjectId = e['project_id'] as int?;
-            
+
             // Debug: Log the selected project_id
             print('DEBUG: Selected _selectedProjectId: $_selectedProjectId');
-            
-            final subCategory =
-                e['expenses_sub_category'] as Map<String, dynamic>?;
-            _selectedSubCategoryId =
-                subCategory?['id'] as int? ??
-                e['expenses_sub_category_id'] as int?;
+
+            if (widget.projectExpensesMode) {
+              _selectedCategoryId =
+                  e['expenses_category']?['id'] as int? ??
+                  e['cost_category_id'] as int?;
+            } else {
+              final subCategory =
+                  e['expenses_sub_category'] as Map<String, dynamic>?;
+              _selectedSubCategoryId =
+                  subCategory?['id'] as int? ??
+                  e['expenses_sub_category_id'] as int?;
+            }
 
             final dateStr = e['expense_date'] as String?;
             if (dateStr != null && dateStr.isNotEmpty) {
@@ -1074,8 +1164,12 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                       const SizedBox(height: 16),
                       Text(
                         isSwahili
-                            ? 'Expense Sub Category *'
-                            : 'Expense Sub Category *',
+                            ? (widget.projectExpensesMode
+                                  ? 'Category *'
+                                  : 'Expense Sub Category *')
+                            : (widget.projectExpensesMode
+                                  ? 'Category *'
+                                  : 'Expense Sub Category *'),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1095,34 +1189,51 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<int?>(
-                            value: _selectedSubCategoryId,
+                            value: widget.projectExpensesMode
+                                ? _selectedCategoryId
+                                : _selectedSubCategoryId,
                             hint: Text(
                               isSwahili
-                                  ? 'Chagua sub category'
-                                  : 'Select sub category',
+                                  ? (widget.projectExpensesMode
+                                        ? 'Chagua Category'
+                                        : 'Chagua sub category')
+                                  : (widget.projectExpensesMode
+                                        ? 'Select Category'
+                                        : 'Select sub category'),
                             ),
                             isExpanded: true,
                             dropdownColor: isDarkMode
                                 ? const Color(0xFF2A2A3E)
                                 : Colors.white,
-                            items: _subCategories
-                                .map(
-                                  (c) => DropdownMenuItem(
-                                    value: c['id'] as int,
-                                    child: Text(
-                                      '${c['name'] ?? '-'}${(c['category_name'] as String?)?.isNotEmpty == true ? ' - ${c['category_name']}' : ''}',
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (v) =>
-                                setState(() => _selectedSubCategoryId = v),
+                            items:
+                                (widget.projectExpensesMode
+                                        ? _categories
+                                        : _subCategories)
+                                    .map(
+                                      (c) => DropdownMenuItem(
+                                        value: c['id'] as int,
+                                        child: Text(
+                                          widget.projectExpensesMode
+                                              ? (c['name'] as String? ?? '-')
+                                              : '${c['name'] ?? '-'}${(c['category_name'] as String?)?.isNotEmpty == true ? ' - ${c['category_name']}' : ''}',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (v) => setState(() {
+                              if (widget.projectExpensesMode) {
+                                _selectedCategoryId = v;
+                              } else {
+                                _selectedSubCategoryId = v;
+                              }
+                            }),
                           ),
                         ),
                       ),
                       const SizedBox(height: 16),
-                      if (_selectedSubCategoryId != null) ...[
+                      if (!widget.projectExpensesMode &&
+                          _selectedSubCategoryId != null) ...[
                         Text(
                           isSwahili ? 'Category' : 'Category',
                           style: TextStyle(
@@ -1211,10 +1322,12 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     // Debug: Log the current state
-    print('DEBUG: _submit - _isEditing: $_isEditing, _selectedProjectId: $_selectedProjectId');
-    
+    print(
+      'DEBUG: _submit - _isEditing: $_isEditing, _selectedProjectId: $_selectedProjectId',
+    );
+
     // For edit mode, project_id is not required if it wasn't changed
     if (!_isEditing && _selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1227,40 +1340,68 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
       );
       return;
     }
-    if (_selectedSubCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            ref.read(isSwahiliProvider)
-                ? 'Chagua sub category'
-                : 'Select a sub category',
+    if (widget.projectExpensesMode) {
+      if (_selectedCategoryId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ref.read(isSwahiliProvider)
+                  ? 'Chagua category'
+                  : 'Select a category',
+            ),
+            backgroundColor: Colors.red,
           ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
+        );
+        return;
+      }
+    } else {
+      if (_selectedSubCategoryId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ref.read(isSwahiliProvider)
+                  ? 'Chagua sub category'
+                  : 'Select a sub category',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
     }
 
     setState(() => _loading = true);
     try {
       final api = ref.read(apiClientProvider);
-      final data = {
+      final Map<String, dynamic> data = {
         'description': _descriptionController.text.trim(),
         'amount': double.parse(_amountController.text),
         'date': DateFormat('yyyy-MM-dd').format(_selectedDate),
-        'expenses_sub_category_id': _selectedSubCategoryId,
         'remarks': _remarksController.text.trim(),
       };
-      
-      // Only include project_id if it's selected or if it's a new expense
+
+      if (widget.projectExpensesMode) {
+        data['cost_category_id'] = _selectedCategoryId;
+      } else {
+        data['expenses_sub_category_id'] = _selectedSubCategoryId;
+      }
+
       if (_selectedProjectId != null || !_isEditing) {
         data['project_id'] = _selectedProjectId;
       }
 
       if (_isEditing && _expenseId != null) {
-        await api.put('/expenses/$_expenseId', data: data);
+        await api.put(
+          widget.projectExpensesMode
+              ? '/project-expenses/$_expenseId'
+              : '/expenses/$_expenseId',
+          data: data,
+        );
       } else {
-        await api.post('/expenses', data: data);
+        await api.post(
+          widget.projectExpensesMode ? '/project-expenses' : '/expenses',
+          data: data,
+        );
       }
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -1274,6 +1415,14 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
   }
 
   String _selectedCategoryName() {
+    if (widget.projectExpensesMode) {
+      final selected = _categories.cast<Map>().firstWhere(
+        (item) => item['id'] == _selectedCategoryId,
+        orElse: () => <String, dynamic>{},
+      );
+      return selected['name'] as String? ?? '-';
+    }
+
     final selected = _subCategories.cast<Map>().firstWhere(
       (item) => item['id'] == _selectedSubCategoryId,
       orElse: () => <String, dynamic>{},
@@ -1286,6 +1435,7 @@ class _ExpenseCard extends StatelessWidget {
   final Map<String, dynamic> expense;
   final bool isSwahili;
   final bool isDarkMode;
+  final bool isProjectExpenses;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -1293,6 +1443,7 @@ class _ExpenseCard extends StatelessWidget {
     required this.expense,
     required this.isSwahili,
     required this.isDarkMode,
+    required this.isProjectExpenses,
     required this.onEdit,
     required this.onDelete,
   });
@@ -1418,31 +1569,29 @@ class _ExpenseCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
-              ...[
-                const Divider(height: 20),
-                Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    TextButton.icon(
-                      onPressed: onEdit,
-                      icon: const Icon(Icons.edit, size: 16),
-                      label: Text(isSwahili ? 'Hariri' : 'Edit'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF1ABC9C),
-                      ),
+              const Divider(height: 20),
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  TextButton.icon(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit, size: 16),
+                    label: Text(isSwahili ? 'Hariri' : 'Edit'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF1ABC9C),
                     ),
-                    const SizedBox(width: 8),
-                    TextButton.icon(
-                      onPressed: onDelete,
-                      icon: const Icon(Icons.delete, size: 16),
-                      label: Text(isSwahili ? 'Futa' : 'Delete'),
-                      style: TextButton.styleFrom(foregroundColor: Colors.red),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: onDelete,
+                    icon: const Icon(Icons.delete, size: 16),
+                    label: Text(isSwahili ? 'Futa' : 'Delete'),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

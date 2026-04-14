@@ -79,9 +79,9 @@
                                 @foreach($reports as $report)
                                     <tr id="report-tr-{{$report->id}}">
                                         <td class="text-center">{{$loop->index + 1}}</td>
-                                        <td>{{ $report->project->project_name }}</td>
+                                        <td>{{ optional($report->project)->project_name ?? 'N/A' }}</td>
                                         <td>{{ $report->report_date }}</td>
-                                        <td>{{ $report->supervisor->name }}</td>
+                                        <td>{{ optional($report->supervisor)->name ?? 'N/A' }}</td>
                                         <td>{{ $report->weather_conditions }}</td>
                                         <td class="text-right">{{ $report->labor_hours }}</td>
                                         <td class="text-center">

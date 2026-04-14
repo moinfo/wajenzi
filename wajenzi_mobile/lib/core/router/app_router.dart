@@ -950,9 +950,27 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const SiteDailyReportsScreen(),
           ),
           GoRoute(
+            path: '/project-expenses',
+            name: 'project-expenses',
+            builder: (context, state) {
+              final projectId = int.tryParse(
+                state.uri.queryParameters['project_id'] ?? '',
+              );
+              return ExpenseListScreen(
+                projectId: projectId,
+                projectExpensesMode: true,
+              );
+            },
+          ),
+          GoRoute(
             path: '/expenses',
             name: 'expenses',
-            builder: (context, state) => const ExpenseListScreen(),
+            builder: (context, state) {
+              final projectId = int.tryParse(
+                state.uri.queryParameters['project_id'] ?? '',
+              );
+              return ExpenseListScreen(projectId: projectId);
+            },
           ),
           GoRoute(
             path: '/approvals',
@@ -1930,6 +1948,14 @@ String? _mapWebRoute(String webRoute) {
     'billing-products': '/billing-products',
     'billing/products': '/billing-products',
     'billing.clients.index': '/staff-billing',
+    'project_expenses': '/project-expenses',
+    'project-expenses': '/project-expenses',
+    'project_expense': '/project-expenses',
+    'project-expense': '/project-expenses',
+    'project_expenses.index': '/project-expenses',
+    'project_expense.create': '/project-expenses',
+    'project_expense.edit': '/project-expenses',
+    'project_expense.show': '/project-expenses',
     'transaction_movement': '/accounting',
     'transaction_movements': '/accounting',
     'gross': '/accounting',
@@ -1974,7 +2000,6 @@ String? _mapWebRoute(String webRoute) {
     'reports_gross_summary_report': '/accounting',
     'reports_expenses_report': '/expenses',
     'reports_expenses_per_system_report': '/expenses',
-    'project_expenses': '/expenses',
     'reports_expenses_categories_report': '/expenses',
     'reports_expenses_sub_categories_report': '/expenses',
     'reports_purchases_report': '/procurement',
@@ -2396,6 +2421,16 @@ String? _resolveWebRoute(String webRoute) {
       route.contains('statutory-payment')) {
     return '/statutory-payments';
   }
+  if ((route.contains('project') || route.contains('project_')) &&
+      (route.contains('expense') || route.contains('expenses'))) {
+    return '/project-expenses';
+  }
+  if (route.contains('project-expenses') ||
+      route.contains('project_expenses') ||
+      route.contains('project-expense') ||
+      route.contains('project_expense')) {
+    return '/project-expenses';
+  }
   if (route.contains('expense')) return '/expenses';
   if (route.contains('approval')) return '/approvals';
   if (route.contains('supplier_quotation') ||
@@ -2527,6 +2562,11 @@ String? resolveMobileMenuDestination({String? route, String? url}) {
 String? _resolveMenuDestination({String? route, String? url}) {
   final normalizedRoute = route?.trim();
   if (normalizedRoute != null && normalizedRoute.isNotEmpty) {
+    final routeLower = normalizedRoute.toLowerCase();
+    if (routeLower.contains('project') && routeLower.contains('expense')) {
+      return '/project-expenses';
+    }
+
     final direct = _resolveWebRoute(normalizedRoute);
     if (direct != null) return direct;
   }
@@ -2534,6 +2574,11 @@ String? _resolveMenuDestination({String? route, String? url}) {
   final normalizedUrl = url?.trim();
   if (normalizedUrl == null || normalizedUrl.isEmpty) {
     return null;
+  }
+
+  final urlLower = normalizedUrl.toLowerCase();
+  if (urlLower.contains('project') && urlLower.contains('expense')) {
+    return '/project-expenses';
   }
 
   final uri = Uri.tryParse(normalizedUrl);

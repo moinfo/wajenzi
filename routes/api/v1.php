@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\AttendanceTypeApiController;
 use App\Http\Controllers\Api\V1\SiteDailyReportController;
 use App\Http\Controllers\Api\V1\SalesDailyReportController;
 use App\Http\Controllers\Api\V1\ExpenseController;
+use App\Http\Controllers\Api\V1\ProjectExpenseController;
 use App\Http\Controllers\Api\V1\LaborDashboardApiController;
 use App\Http\Controllers\Api\V1\LaborContractApiController;
 use App\Http\Controllers\Api\V1\LaborRequestApiController;
@@ -437,6 +438,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{id}/submit', [ExpenseController::class, 'submit']);
         Route::post('{id}/approve', [ExpenseController::class, 'approve']);
         Route::post('{id}/reject', [ExpenseController::class, 'reject']);
+    });
+
+    Route::prefix('project-expenses')->group(function () {
+        Route::get('/', [ProjectExpenseController::class, 'index']);
+        Route::post('/', [ProjectExpenseController::class, 'store']);
+        Route::get('categories', [ProjectExpenseController::class, 'categories']);
+        Route::get('{id}', [ProjectExpenseController::class, 'show']);
+        Route::put('{id}', [ProjectExpenseController::class, 'update']);
+        Route::delete('{id}', [ProjectExpenseController::class, 'destroy']);
     });
 
     Route::prefix('labor')->group(function () {

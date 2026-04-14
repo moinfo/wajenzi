@@ -11,7 +11,7 @@ use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 class Expense extends Model implements ApprovableModel
 {
     use HasFactory,Approvable;
-    public $fillable = ['id', 'expenses_sub_category_id', 'amount', 'description', 'date', 'file', 'status','document_number'];
+    public $fillable = ['id', 'project_id', 'expenses_sub_category_id', 'amount', 'description', 'date', 'file', 'status', 'document_number'];
 
 
     /**
@@ -35,9 +35,16 @@ class Expense extends Model implements ApprovableModel
     public function expensesCategory(){
         return $this->belongsTo(ExpensesCategory::class);
     }
+
     public function expensesSubCategory(){
         return $this->belongsTo(ExpensesSubCategory::class);
     }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     public function supervisor(){
         return $this->belongsTo(Supervisor::class);
     }
