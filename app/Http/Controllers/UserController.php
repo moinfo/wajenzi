@@ -16,7 +16,9 @@ class UserController extends Controller
         return view('pages.user.user_index')->with($data);
     }
     public function profile(Request $request) {
-        $data = [];
+        $data = [
+            'user' => Auth::user(),
+        ];
         return view('pages.user.user_profile')->with($data);
     }
     public function settings(Request $request) {

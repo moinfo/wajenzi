@@ -115,12 +115,12 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="push">
-                                        <img class="img-avatar" src="{{ asset($user->profile) }}" alt="">
+                                        <img class="img-avatar" src="{{ asset($user->profile ?? 'media/avatars/avatar15.jpg') }}" alt="">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="push">
-                                        <img class="img-" src="{{ asset($user->file) }}" alt="" width="200">
+                                        <img class="img-" src="{{ $user->file ? asset($user->file) : '' }}" alt="" width="200">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
