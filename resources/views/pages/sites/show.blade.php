@@ -150,7 +150,7 @@
                                         <tr>
                                             <td>{{ $report->report_date->format('M d, Y') }}</td>
                                             <td>{{ $report->supervisor->name ?? 'N/A' }}</td>
-                                            <td>{{ Str::limit($report->work_activities, 50) }}</td>
+                                            <td>{{ Str::limit($report->work_activities ?? '', 50) }}</td>
                                             <td>{{ $report->progress_percentage }}%</td>
                                             <td>
                                                 <a href="{{ route('site-daily-reports.show', $report) }}" class="btn btn-sm btn-primary">

@@ -9,6 +9,7 @@ use App\Models\ServiceType;
 use App\Models\User;
 use App\Services\ApprovalService;
 use Illuminate\Http\Request;
+use PDF;
 
 class ProjectController extends Controller
 {
