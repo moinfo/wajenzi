@@ -5,13 +5,85 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 
 class Project extends Model implements ApprovableModel
 {
-    use HasFactory,Approvable;
+    use HasFactory, Approvable;
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::deleting(function (Project $project) {
+            $id = $project->id;
+
+            // ── Procurement chain (deepest children first) ──────────────────
+            // labor_contracts → labor_requests
+            DB::table('labor_contracts')->where('project_id', $id)->delete();
+            DB::table('labor_requests')->where('project_id', $id)->delete();
+
+            // material_inspections reference supplier_receivings; delete before receivings
+            DB::table('material_inspections')->where('project_id', $id)->delete();
+
+            $purchaseIds = DB::table('purchases')->where('project_id', $id)->pluck('id');
+            if ($purchaseIds->isNotEmpty()) {
+                // purchase_items cascade from purchase_id, but delete explicitly to be safe
+                DB::table('purchase_items')->whereIn('purchase_id', $purchaseIds)->delete();
+                DB::table('supplier_receivings')->whereIn('purchase_id', $purchaseIds)->delete();
+                DB::table('purchases')->whereIn('id', $purchaseIds)->delete();
+            }
+
+            // ── Material requests chain ──────────────────────────────────────
+            $requestIds = DB::table('project_material_requests')->where('project_id', $id)->pluck('id');
+            if ($requestIds->isNotEmpty()) {
+                DB::table('project_material_request_items')->whereIn('material_request_id', $requestIds)->delete();
+                $quotationIds = DB::table('supplier_quotations')->whereIn('material_request_id', $requestIds)->pluck('id');
+                if ($quotationIds->isNotEmpty()) {
+                    DB::table('supplier_quotation_items')->whereIn('supplier_quotation_id', $quotationIds)->delete();
+                }
+                DB::table('supplier_quotations')->whereIn('material_request_id', $requestIds)->delete();
+                DB::table('quotation_comparisons')->whereIn('material_request_id', $requestIds)->delete();
+            }
+            DB::table('project_material_requests')->where('project_id', $id)->delete();
+
+            // ── BOQ chain ────────────────────────────────────────────────────
+            $boqIds = DB::table('project_boqs')->where('project_id', $id)->pluck('id');
+            if ($boqIds->isNotEmpty()) {
+                DB::table('project_boq_items')->whereIn('boq_id', $boqIds)->delete();
+                DB::table('project_boq_sections')->whereIn('boq_id', $boqIds)->delete();
+            }
+            DB::table('project_boqs')->where('project_id', $id)->delete();
+
+            // ── Other project children ───────────────────────────────────────
+            DB::table('project_material_inventory')->where('project_id', $id)->delete();
+            DB::table('project_material_movements')->where('project_id', $id)->delete();
+            DB::table('project_expenses')->where('project_id', $id)->delete();
+            DB::table('project_invoices')->where('project_id', $id)->delete();
+            DB::table('project_construction_phases')->where('project_id', $id)->delete();
+            DB::table('project_daily_reports')->where('project_id', $id)->delete();
+            DB::table('project_designs')->where('project_id', $id)->delete();
+            DB::table('project_documents')->where('project_id', $id)->delete();
+            DB::table('project_progress_images')->where('project_id', $id)->delete();
+            DB::table('project_site_visits')->where('project_id', $id)->delete();
+            DB::table('users_permissions')->where('project_id', $id)->delete();
+            DB::table('imprest_requests')->where('project_id', $id)->delete();
+
+            // ── Billing documents ────────────────────────────────────────────
+            $billingDocIds = DB::table('billing_documents')->where('project_id', $id)->pluck('id');
+            if ($billingDocIds->isNotEmpty()) {
+                DB::table('billing_payments')->whereIn('document_id', $billingDocIds)->delete();
+                DB::table('billing_document_items')->whereIn('document_id', $billingDocIds)->delete();
+                DB::table('billing_documents')->where('project_id', $id)->delete();
+            }
+
+            // ── Nullify loose references ─────────────────────────────────────
+            DB::table('leads')->where('project_id', $id)->update(['project_id' => null]);
+        });
+    }
 
 
     protected $table = 'projects';

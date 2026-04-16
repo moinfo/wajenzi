@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
@@ -37,6 +38,34 @@ class ProjectClient extends Authenticatable implements ApprovableModel
         'password',
         'remember_token',
     ];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::deleting(function (ProjectClient $client) {
+            // Nullify nullable references that should not be deleted
+            DB::table('leads')->where('client_id', $client->id)->update(['client_id' => null]);
+            DB::table('project_schedules')->where('client_id', $client->id)->update(['client_id' => null]);
+
+            // Delete sales records tied to this client
+            DB::table('sales_lead_followups')->where('client_id', $client->id)->delete();
+            DB::table('sales_client_concerns')->where('client_id', $client->id)->delete();
+
+            // Delete billing payments first (references billing_documents), then the documents
+            $billingDocIds = DB::table('billing_documents')->where('client_id', $client->id)->pluck('id');
+            if ($billingDocIds->isNotEmpty()) {
+                DB::table('billing_payments')->whereIn('document_id', $billingDocIds)->delete();
+                DB::table('billing_document_items')->whereIn('document_id', $billingDocIds)->delete();
+                DB::table('billing_documents')->where('client_id', $client->id)->delete();
+            }
+
+            // Delete each project individually so Project::deleting fires and cascades further
+            $client->projects()->each(fn(Project $project) => $project->delete());
+
+            // project_client_documents are handled by DB-level cascade
+        });
+    }
 
     public function getFullNameAttribute(): string
     {
