@@ -241,42 +241,55 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final cards = [
-      ('Total', '${stats['total'] ?? 0}'),
-      ('Active', '${stats['active'] ?? 0}'),
-      ('Completed', '${stats['completed'] ?? 0}'),
-      ('Delayed', '${stats['delayed'] ?? 0}'),
-      ('Value', NumberFormat.compact().format(_toDouble(stats['total_value']))),
+      ('Total', '${stats['total'] ?? 0}', const Color(0xFF3498DB), Icons.folder_rounded),
+      ('Active', '${stats['active'] ?? 0}', const Color(0xFF1ABC9C), Icons.construction_rounded),
+      ('Completed', '${stats['completed'] ?? 0}', const Color(0xFF27AE60), Icons.check_circle_rounded),
+      ('Delayed', '${stats['delayed'] ?? 0}', const Color(0xFFE74C3C), Icons.warning_amber_rounded),
+      ('Value', 'TZS ${NumberFormat.compact().format(_toDouble(stats['total_value']))}', const Color(0xFF9B59B6), Icons.monetization_on_rounded),
     ];
     return SizedBox(
       height: 110,
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
         scrollDirection: Axis.horizontal,
-        itemBuilder: (_, index) => Container(
-          width: 120,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(cards[index].$2, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 6),
-              Text(cards[index].$1, style: const TextStyle(color: AppColors.textSecondary)),
-            ],
-          ),
-        ),
+        itemBuilder: (_, index) {
+          final (label, value, color, icon) = cards[index];
+          return Container(
+            width: 130,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border(left: BorderSide(color: color, width: 4)),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.10),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: color, size: 28),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: color)),
+                      const SizedBox(height: 4),
+                      Text(label, style: TextStyle(fontSize: 11, color: cs.onSurface.withValues(alpha: 0.55))),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemCount: cards.length,
       ),
@@ -292,13 +305,14 @@ class _Filters extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final filters = ref.watch(_filtersProvider);
     final search = ref.watch(_searchProvider);
+    final surface = Theme.of(context).colorScheme.surface;
     return ExpansionTile(
       title: const Text('All Projects'),
       subtitle: const Text('Filters'),
       initiallyExpanded: filters.isNotEmpty,
       childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      backgroundColor: Colors.white,
-      collapsedBackgroundColor: Colors.white,
+      backgroundColor: surface,
+      collapsedBackgroundColor: surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       children: [
@@ -416,20 +430,55 @@ class _ProjectCard extends StatelessWidget {
     required this.onDelete,
   });
 
+  Color _statusColor(String status) {
+    final s = status.toUpperCase();
+    return switch (s) {
+      'APPROVED' => const Color(0xFF27AE60),
+      'COMPLETED' => const Color(0xFF9B59B6),
+      'REJECTED' => const Color(0xFFE74C3C),
+      'IN_PROGRESS' || 'SUBMITTED' => const Color(0xFF3498DB),
+      _ => const Color(0xFFF39C12),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final status = (project['approval_status'] ?? project['status'] ?? 'pending').toString();
-    return Card(
+    final accent = _statusColor(status);
+    final client = (project['client'] as Map<String, dynamic>?)?['name']?.toString() ?? '-';
+    final category = (project['project_type'] as Map<String, dynamic>?)?['name']?.toString() ?? '';
+    final serviceType = (project['service_type'] as Map<String, dynamic>?)?['name']?.toString() ?? '';
+    final salesperson = (project['salesperson'] as Map<String, dynamic>?)?['name']?.toString() ?? '';
+    final manager = (project['project_manager'] as Map<String, dynamic>?)?['name']?.toString() ?? '';
+    final contractValue = _money(project['contract_value']);
+    final delayDays = _toInt(project['delay_days']) ?? 0;
+    final hasDelay = delayDays > 0;
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(left: BorderSide(color: accent, width: 4)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: onView,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        borderRadius: BorderRadius.circular(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Header ──────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 8, 0),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
@@ -440,12 +489,14 @@ class _ProjectCard extends StatelessWidget {
                           project['document_number']?.toString().isNotEmpty == true
                               ? project['document_number'].toString()
                               : 'PRJ-${project['id']}',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 11, color: accent, fontWeight: FontWeight.w600, letterSpacing: 0.5),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           project['project_name']?.toString() ?? '-',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -471,23 +522,200 @@ class _ProjectCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              _InfoLine('Client', (project['client'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
-              _InfoLine('Category', (project['project_type'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
-              _InfoLine('Service Type', (project['service_type'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
-              _InfoLine('Start Date', _formatDate(project['start_date']?.toString())),
-              _InfoLine('Expected End', _formatDate(project['expected_end_date']?.toString())),
-              _InfoLine('Actual End', _formatDate(project['actual_end_date']?.toString())),
-              _InfoLine('Planned (Days)', _display(project['planned_duration'])),
-              _InfoLine('Actual (Days)', _display(project['actual_duration'])),
-              _InfoLine('Delay (Days)', _display(project['delay_days'])),
-              _InfoLine('Contract Value', _money(project['contract_value'])),
-              _InfoLine('Salesperson', (project['salesperson'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
-              _InfoLine('Project Manager', (project['project_manager'] as Map<String, dynamic>?)?['name']?.toString() ?? '-'),
-            ],
-          ),
+            ),
+
+            // ── Client + category tags ───────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Row(
+                children: [
+                  Icon(Icons.person_rounded, size: 14, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      client,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: accent),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (category.isNotEmpty || serviceType.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    if (category.isNotEmpty) _Tag(category, color: const Color(0xFF3498DB)),
+                    if (serviceType.isNotEmpty) _Tag(serviceType, color: const Color(0xFF9B59B6)),
+                  ],
+                ),
+              ),
+
+            // ── Date range ───────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_today_rounded, size: 13, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45)),
+                  const SizedBox(width: 4),
+                  Text(
+                    _formatDate(project['start_date']?.toString()),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Icon(Icons.arrow_forward_rounded, size: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45)),
+                  ),
+                  Text(
+                    _formatDate(project['expected_end_date']?.toString()),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)),
+                  ),
+                  if (project['actual_end_date'] != null) ...[
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 6),
+                      child: Icon(Icons.check_rounded, size: 12, color: Color(0xFF27AE60)),
+                    ),
+                    Text(
+                      _formatDate(project['actual_end_date']?.toString()),
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF27AE60)),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // ── Metrics row ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+              child: Row(
+                children: [
+                  _Metric(label: 'Planned', value: _display(project['planned_duration']), icon: Icons.schedule_rounded, color: const Color(0xFF3498DB)),
+                  const SizedBox(width: 8),
+                  _Metric(label: 'Actual', value: _display(project['actual_duration']), icon: Icons.timer_rounded, color: const Color(0xFF1ABC9C)),
+                  const SizedBox(width: 8),
+                  _Metric(
+                    label: 'Delay',
+                    value: _display(project['delay_days']),
+                    icon: hasDelay ? Icons.warning_rounded : Icons.check_rounded,
+                    color: hasDelay ? const Color(0xFFE74C3C) : const Color(0xFF27AE60),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Contract value ───────────────────────────────────────────
+            if (contractValue != '-')
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.monetization_on_rounded, size: 14, color: Color(0xFF27AE60)),
+                    const SizedBox(width: 4),
+                    Text(
+                      contractValue,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF27AE60)),
+                    ),
+                  ],
+                ),
+              ),
+
+            // ── People ───────────────────────────────────────────────────
+            if (salesperson.isNotEmpty || manager.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    if (salesperson.isNotEmpty)
+                      _PersonChip(icon: Icons.sell_rounded, label: salesperson, color: const Color(0xFFF39C12)),
+                    if (manager.isNotEmpty)
+                      _PersonChip(icon: Icons.manage_accounts_rounded, label: manager, color: const Color(0xFF3498DB)),
+                  ],
+                ),
+              )
+            else
+              const SizedBox(height: 14),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _Tag(this.label, {required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const _Metric({required this.label, required this.value, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+                  Text(label, style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55))),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PersonChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _PersonChip({required this.icon, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65))),
+      ],
     );
   }
 }
@@ -507,10 +735,11 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
   @override
   Widget build(BuildContext context) {
     final detailAsync = ref.watch(_projectDetailProvider(widget.projectId));
+    final cs = Theme.of(context).colorScheme;
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         top: false,
@@ -549,7 +778,7 @@ class _ProjectDetailSheetState extends ConsumerState<_ProjectDetailSheet> {
                       const SizedBox(height: 12),
                       Text(
                         ((project['approval_flow'] as Map<String, dynamic>?)?['message']?.toString() ?? ''),
-                        style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 14, color: cs.onSurface.withValues(alpha: 0.55)),
                       ),
                       if (_busy) ...[
                         const SizedBox(height: 12),
@@ -722,9 +951,9 @@ class _ProjectFormSheetState extends ConsumerState<_ProjectFormSheet> {
   Widget build(BuildContext context) {
     final referenceAsync = ref.watch(_referenceProvider);
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SafeArea(
@@ -981,7 +1210,7 @@ class _StatusPill extends StatelessWidget {
       'REJECTED' => AppColors.error,
       'PENDING' || 'CREATED' => const Color(0xFFF39C12),
       'IN_PROGRESS' || 'SUBMITTED' => const Color(0xFF3498DB),
-      _ => AppColors.textSecondary,
+      _ => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -992,32 +1221,6 @@ class _StatusPill extends StatelessWidget {
       child: Text(
         normalized.replaceAll('_', ' '),
         style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
-      ),
-    );
-  }
-}
-
-class _InfoLine extends StatelessWidget {
-  final String label;
-  final String value;
-  const _InfoLine(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: RichText(
-        text: TextSpan(
-          style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-          children: [
-            const TextSpan(style: TextStyle(fontWeight: FontWeight.w700)),
-            TextSpan(
-              text: '$label: ',
-              style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textSecondary),
-            ),
-            TextSpan(text: value),
-          ],
-        ),
       ),
     );
   }
@@ -1040,17 +1243,17 @@ class _DetailLine extends StatelessWidget {
               width: 130,
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
                 ),
               ),
             ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
         ],
@@ -1161,20 +1364,20 @@ class _ApprovalStepCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${step['role_name'] ?? '-'}',
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)),
           ),
           if ((step['date']?.toString().isNotEmpty ?? false)) ...[
             const SizedBox(height: 4),
             Text(
               '${step['date']}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55)),
             ),
           ],
           if ((step['comment']?.toString().isNotEmpty ?? false)) ...[
             const SizedBox(height: 4),
             Text(
               '${step['comment']}',
-              style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
             ),
           ],
         ],

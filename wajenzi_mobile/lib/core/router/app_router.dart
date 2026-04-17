@@ -1560,7 +1560,7 @@ class MainDrawer extends ConsumerWidget {
             // Menu items
             Expanded(
               child: isClient
-                  ? _buildClientMenu(context, isDarkMode, isSwahili)
+                  ? _buildClientMenu(context, ref, isDarkMode, isSwahili)
                   : _buildStaffMenu(
                       context,
                       ref,
@@ -1646,12 +1646,37 @@ class MainDrawer extends ConsumerWidget {
 
   Widget _buildClientMenu(
     BuildContext context,
+    WidgetRef ref,
     bool isDarkMode,
     bool isSwahili,
   ) {
+    final labelColor = isDarkMode ? Colors.white : const Color(0xFF2C3E50);
+    final mutedColor = isDarkMode ? Colors.white54 : const Color(0xFF7F8C8D);
+    final sectionBg = isDarkMode
+        ? const Color(0xFF0D1B2A)
+        : const Color(0xFFF0F4F8);
+    final dividerColor = isDarkMode
+        ? Colors.white.withValues(alpha: 0.06)
+        : const Color(0xFFE2E8F0);
+
+    Widget sectionHeader(String title) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+          child: Text(
+            title.toUpperCase(),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: mutedColor,
+              letterSpacing: 1.1,
+            ),
+          ),
+        );
+
     return ListView(
-      padding: EdgeInsets.zero,
+      padding: const EdgeInsets.only(bottom: 8),
       children: [
+        // ── Navigation ─────────────────────────────────────────────────
+        sectionHeader(isSwahili ? 'Urambazaji' : 'Navigation'),
         _DrawerItem(
           icon: Icons.dashboard_rounded,
           label: isSwahili ? 'Dashibodi' : 'Dashboard',
@@ -1659,16 +1684,135 @@ class MainDrawer extends ConsumerWidget {
           onTap: () => _navigateFromDrawer(context, '/dashboard'),
         ),
         _DrawerItem(
+          icon: Icons.folder_special_rounded,
+          label: isSwahili ? 'Miradi' : 'Projects',
+          isDarkMode: isDarkMode,
+          onTap: () => _navigateFromDrawer(context, '/projects'),
+        ),
+        _DrawerItem(
           icon: Icons.receipt_long_rounded,
           label: isSwahili ? 'Ankara' : 'Billing',
           isDarkMode: isDarkMode,
           onTap: () => _navigateFromDrawer(context, '/billing'),
         ),
+        Divider(color: dividerColor, height: 16, indent: 20, endIndent: 20),
+
+        // ── Account ─────────────────────────────────────────────────────
+        sectionHeader(isSwahili ? 'Akaunti' : 'Account'),
         _DrawerItem(
-          icon: Icons.settings_rounded,
-          label: isSwahili ? 'Mipangilio' : 'Settings',
+          icon: Icons.person_outline_rounded,
+          label: isSwahili ? 'Wasifu Wangu' : 'My Profile',
           isDarkMode: isDarkMode,
-          onTap: () => _navigateFromDrawer(context, '/settings'),
+          onTap: () => _navigateFromDrawer(context, '/profile'),
+        ),
+        _DrawerItem(
+          icon: Icons.lock_outline_rounded,
+          label: isSwahili ? 'Badilisha Nenosiri' : 'Change Password',
+          isDarkMode: isDarkMode,
+          onTap: () => _navigateFromDrawer(context, '/change-password'),
+        ),
+        Divider(color: dividerColor, height: 16, indent: 20, endIndent: 20),
+
+        // ── Appearance ──────────────────────────────────────────────────
+        sectionHeader(isSwahili ? 'Mandhari' : 'Appearance'),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: sectionBg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                size: 20,
+                color: isDarkMode ? const Color(0xFF1ABC9C) : const Color(0xFFF39C12),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  isDarkMode
+                      ? (isSwahili ? 'Hali ya Giza' : 'Dark Mode')
+                      : (isSwahili ? 'Hali ya Mwanga' : 'Light Mode'),
+                  style: TextStyle(
+                    color: labelColor,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Switch.adaptive(
+                value: isDarkMode,
+                onChanged: (v) =>
+                    ref.read(settingsProvider.notifier).setDarkMode(v),
+                activeThumbColor: const Color(0xFF1ABC9C),
+                activeTrackColor: const Color(0xFF1ABC9C).withValues(alpha: 0.4),
+              ),
+            ],
+          ),
+        ),
+
+        // ── Language ────────────────────────────────────────────────────
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: sectionBg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.translate_rounded, size: 20, color: const Color(0xFF3498DB)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  isSwahili ? 'Kiswahili' : 'English',
+                  style: TextStyle(
+                    color: labelColor,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => ref
+                    .read(settingsProvider.notifier)
+                    .setLanguage(!isSwahili),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3498DB).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    isSwahili ? 'EN' : 'SW',
+                    style: const TextStyle(
+                      color: Color(0xFF3498DB),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Divider(color: dividerColor, height: 16, indent: 20, endIndent: 20),
+
+        // ── Legal ───────────────────────────────────────────────────────
+        sectionHeader(isSwahili ? 'Kisheria' : 'Legal'),
+        _DrawerItem(
+          icon: Icons.privacy_tip_outlined,
+          label: isSwahili ? 'Sera ya Faragha' : 'Privacy Policy',
+          isDarkMode: isDarkMode,
+          onTap: () => _navigateFromDrawer(context, '/privacy-policy'),
+        ),
+        _DrawerItem(
+          icon: Icons.description_outlined,
+          label: isSwahili ? 'Masharti ya Huduma' : 'Terms of Service',
+          isDarkMode: isDarkMode,
+          onTap: () => _navigateFromDrawer(context, '/terms-of-service'),
         ),
       ],
     );

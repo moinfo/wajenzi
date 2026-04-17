@@ -18,7 +18,10 @@ final authStateProvider =
     });
 
 final userTypeProvider = Provider<String?>((ref) {
-  return ref.watch(authStateProvider.notifier).userType;
+  // Watch the state so this provider rebuilds after _init() completes
+  // and _userType is set, then read the actual value from the notifier.
+  ref.watch(authStateProvider);
+  return ref.read(authStateProvider.notifier).userType;
 });
 
 class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
@@ -118,13 +121,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthState>> {
         return false;
       }
     } catch (e) {
-      String errorMessage = 'Login failed';
-      if (e is DioException) {
-        final data = e.response?.data;
-        if (data is Map<String, dynamic> && data['message'] != null) {
-          errorMessage = data['message'];
-        }
-      }
+      final errorMessage = e is DioException
+          ? _extractDioErrorMessage(e, fallback: 'Login failed')
+          : 'Login failed';
       state = AsyncValue.data(
         AuthState(
           user: currentState.user,

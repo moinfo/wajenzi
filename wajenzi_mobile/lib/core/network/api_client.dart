@@ -249,6 +249,9 @@ class _LoggingInterceptor extends Interceptor {
       );
       debugPrint('Error Type: ${err.type}');
       debugPrint('Message: ${err.message ?? "No response from server"}');
+      if (err.response?.data != null) {
+        debugPrint('Response Body: ${err.response!.data}');
+      }
     }
 
     // For timeout errors, provide a more user-friendly message
