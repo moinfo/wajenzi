@@ -27,20 +27,26 @@ class PurchaseController extends Controller
         if($this->handleCrud($request, 'Purchase')) {
             return back();
         }
-        $start_date = $request->input('start_date');
-        $end_date = $request->input('end_date');
-        $suppliers = Supplier::all();
-        
-        $query = Purchase::with(['supplier', 'item']);
-        
-        if ($start_date && $end_date) {
-            $query->where('date','>=',$start_date)->where('date','<=',$end_date);
+        $start_date = $request->input('start_date') ?: date('Y-m-d');
+        $end_date = $request->input('end_date') ?: date('Y-m-d');
+
+        if ($start_date && $end_date && $start_date > $end_date) {
+            [$start_date, $end_date] = [$end_date, $start_date];
         }
-        
+
+        $suppliers = Supplier::all();
+
+        $query = Purchase::with(['supplier', 'item']);
+
+        $query->whereDate('date', '>=', $start_date)
+            ->whereDate('date', '<=', $end_date);
+
         $purchases = $query->orderBy('date', 'desc')->get();
         $data = [
             'suppliers' => $suppliers,
-            'purchases' => $purchases
+            'purchases' => $purchases,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
         ];
         return view('pages.purchases.purchases_index')->with($data);
     }

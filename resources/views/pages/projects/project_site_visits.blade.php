@@ -28,7 +28,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">Start Date</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form  datepicker" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form  datepicker" value="{{ $start_date ?? '' }}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -36,7 +36,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text">End Date</span>
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form  datepicker" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form  datepicker" value="{{ $end_date ?? '' }}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-3">
@@ -47,7 +47,7 @@
                                                     <select name="project_id" id="input-project" class="form-control">
                                                         <option value="">All Projects</option>
                                                         @foreach ($projects as $project)
-                                                            <option value="{{ $project->id }}">{{ $project->project_name }}</option>
+                                                            <option value="{{ $project->id }}" {{ (string) $project->id === (string) request('project_id') ? 'selected' : '' }}>{{ $project->project_name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>

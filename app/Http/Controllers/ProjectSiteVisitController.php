@@ -26,13 +26,16 @@ class ProjectSiteVisitController extends Controller
             return back();
         }
 
+        $start_date = $request->input('start_date') ?: date('Y-m-d');
+        $end_date = $request->input('end_date') ?: date('Y-m-d');
+
+        if ($start_date && $end_date && $start_date > $end_date) {
+            [$start_date, $end_date] = [$end_date, $start_date];
+        }
+
         $visits = ProjectSiteVisit::with(['project', 'inspector'])
-            ->when($request->start_date, function($query) use ($request) {
-                return $query->whereDate('visit_date', '>=', $request->start_date);
-            })
-            ->when($request->end_date, function($query) use ($request) {
-                return $query->whereDate('visit_date', '<=', $request->end_date);
-            })
+            ->whereDate('visit_date', '>=', $start_date)
+            ->whereDate('visit_date', '<=', $end_date)
             ->when($request->project_id, function($query) use ($request) {
                 return $query->where('project_id', $request->project_id);
             })
@@ -49,6 +52,8 @@ class ProjectSiteVisitController extends Controller
         $data = [
             'visits' => $visits,
             'projects' => $projects,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
 //            'inspectors' => $inspectors
         ];
         return view('pages.projects.project_site_visits')->with($data);

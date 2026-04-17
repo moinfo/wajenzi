@@ -30,7 +30,7 @@
                                                     </div>
                                                     <input type="text" name="start_date" id="start_date"
                                                            class="form-control datepicker-index-form datepicker"
-                                                           aria-describedby="basic-addon1" value="{{date('Y-01-01')}}">
+                                                           aria-describedby="basic-addon1" value="{{ $start_date ?? '' }}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-4">
@@ -40,7 +40,7 @@
                                                     </div>
                                                     <input type="text" name="end_date" id="end_date"
                                                            class="form-control datepicker-index-form datepicker"
-                                                           aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
+                                                           aria-describedby="basic-addon2" value="{{ $end_date ?? '' }}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-2">
