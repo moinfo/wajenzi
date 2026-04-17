@@ -73,7 +73,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon1">Start Date</span>
                                                     </div>
-                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="start_date" id="start_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon1" value="{{ $start_date ?? '' }}">
                                                 </div>
                                             </div>
                                             <div class="class col-md-4">
@@ -81,7 +81,7 @@
                                                     <div class="input-group-prepend">
                                                         <span class="input-group-text" id="basic-addon2">End Date</span>
                                                     </div>
-                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{date('Y-m-d')}}">
+                                                    <input type="text" name="end_date" id="end_date" class="form-control datepicker-index-form datepicker" aria-describedby="basic-addon2" value="{{ $end_date ?? '' }}">
                                                 </div>
                                             </div>
 {{--                                            <div class="class col-md-4">--}}
