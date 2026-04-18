@@ -549,6 +549,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('project-schedules/activity/{activity}/days', [App\Http\Controllers\ProjectScheduleController::class, 'updateActivityDays'])->name('project-schedules.activity.update-days');
     Route::delete('project-schedules/activity/{activity}', [App\Http\Controllers\ProjectScheduleController::class, 'removeActivity'])->name('project-schedules.activity.remove');
     Route::patch('project-schedules/activity/{activity}/assign', [App\Http\Controllers\ProjectScheduleController::class, 'assignActivity'])->name('project-schedules.activity.assign');
+    Route::post('project-schedules/{projectSchedule}/activities/bulk-assign', [App\Http\Controllers\ProjectScheduleController::class, 'bulkAssignActivities'])->name('project-schedules.activities.bulk-assign');
     Route::patch('project-schedules/{projectSchedule}/change-architect', [App\Http\Controllers\ProjectScheduleController::class, 'changeArchitect'])->name('project-schedules.change-architect');
     Route::get('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'showForLead'])->name('leads.schedule');
     Route::post('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForLead'])->name('leads.schedule.create');

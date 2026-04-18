@@ -299,6 +299,50 @@ class ProjectScheduleController extends Controller
     }
 
     /**
+     * Bulk-assign multiple activities to one user
+     */
+    public function bulkAssignActivities(Request $request, ProjectSchedule $projectSchedule)
+    {
+        if (!auth()->user()->can('Assign Project Activities')) {
+            return back()->with('error', 'You do not have permission to assign activities.');
+        }
+
+        $request->validate([
+            'activity_ids'   => 'required|array|min:1',
+            'activity_ids.*' => 'integer|exists:project_schedule_activities,id',
+            'assigned_to'    => 'nullable|exists:users,id',
+        ]);
+
+        // Scope to this schedule only — prevents cross-schedule tampering
+        $activities = ProjectScheduleActivity::whereIn('id', $request->activity_ids)
+            ->where('project_schedule_id', $projectSchedule->id)
+            ->get();
+
+        if ($activities->isEmpty()) {
+            return back()->with('error', 'No valid activities found for this schedule.');
+        }
+
+        $activities->each->update(['assigned_to' => $request->assigned_to]);
+
+        if ($request->assigned_to) {
+            $assignedUser = User::find($request->assigned_to);
+            foreach ($activities as $activity) {
+                $notification = new ActivityReassignedNotification($activity, auth()->user());
+                try {
+                    $assignedUser->notifyNow((clone $notification)->onlyDatabase());
+                } catch (\Exception $e) {
+                    \Log::warning("Bulk assign notification failed: " . $e->getMessage());
+                }
+            }
+            $name = $assignedUser->name;
+        } else {
+            $name = $projectSchedule->assignedArchitect->name ?? 'Default Architect';
+        }
+
+        return back()->with('success', "Reassigned {$activities->count()} activities to {$name}.");
+    }
+
+    /**
      * Show schedule for a specific lead
      */
     public function showForLead(Lead $lead)

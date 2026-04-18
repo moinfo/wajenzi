@@ -257,21 +257,32 @@
                         <table class="table table-sm table-hover">
                             <thead>
                                 <tr>
+                                    @can('Assign Project Activities')
+                                    <th width="3%" class="text-center">
+                                        <input type="checkbox" class="select-all-activities" title="Select all in this phase">
+                                    </th>
+                                    @endcan
                                     <th width="6%">Code</th>
-                                    <th width="16%">Activity</th>
-                                    <th width="10%">Discipline</th>
+                                    <th width="15%">Activity</th>
+                                    <th width="9%">Discipline</th>
                                     <th width="8%">Role</th>
-                                    <th width="12%">Assigned To</th>
-                                    <th width="8%">Start</th>
-                                    <th width="8%">End</th>
+                                    <th width="11%">Assigned To</th>
+                                    <th width="7%">Start</th>
+                                    <th width="7%">End</th>
                                     <th width="6%">Days</th>
                                     <th width="9%">Status</th>
-                                    <th width="17%">Actions</th>
+                                    <th width="@can('Assign Project Activities')16%@else19%@endcan">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($activities as $activity)
                                     <tr class="{{ $activity->isOverdue() ? 'table-danger' : '' }}">
+                                        @can('Assign Project Activities')
+                                        <td class="text-center">
+                                            <input type="checkbox" class="activity-checkbox" value="{{ $activity->id }}"
+                                                   data-name="{{ $activity->activity_code }}: {{ $activity->name }}">
+                                        </td>
+                                        @endcan
                                         <td><strong>{{ $activity->activity_code }}</strong></td>
                                         <td>
                                             {{ $activity->name }}
@@ -577,6 +588,56 @@
 </div>
 @endforeach
 
+{{-- Bulk Action Floating Bar --}}
+@can('Assign Project Activities')
+<div id="bulkActionBar" class="d-none"
+     style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1050;
+            background:#2c3e50;color:#fff;padding:12px 20px;border-radius:10px;
+            box-shadow:0 4px 20px rgba(0,0,0,0.35);white-space:nowrap;">
+    <i class="fa fa-check-square mr-2 text-info"></i>
+    <span id="selectedCount">0</span> activities selected &nbsp;
+    <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#bulkAssignModal">
+        <i class="fa fa-exchange-alt mr-1"></i> Bulk Reassign
+    </button>
+    <button type="button" class="btn btn-sm btn-secondary ml-1" id="clearSelectionBtn">
+        <i class="fa fa-times"></i>
+    </button>
+</div>
+
+{{-- Bulk Reassign Modal --}}
+<div class="modal fade" id="bulkAssignModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <form action="{{ route('project-schedules.activities.bulk-assign', $projectSchedule) }}" method="POST" id="bulkAssignForm">
+                @csrf
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="fa fa-exchange-alt mr-2"></i>Bulk Reassign Activities</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div id="bulkAssignSummary" class="alert alert-info border-0 mb-3"></div>
+                    <div id="bulkActivityList" class="mb-3" style="max-height:160px;overflow-y:auto;font-size:12px;"></div>
+                    <div class="form-group mb-0">
+                        <label><i class="fa fa-user-plus text-primary mr-1"></i>Assign all selected to</label>
+                        <select name="assigned_to" class="form-control">
+                            <option value="">-- Reset to Default Architect ({{ $projectSchedule->assignedArchitect->name ?? 'Default' }}) --</option>
+                            @foreach($users as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }} – {{ $user->roles->pluck('name')->implode(', ') ?: 'No Role' }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div id="bulkActivityIds"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info"><i class="fa fa-check mr-1"></i>Reassign All</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
+
 {{-- Reassign Activity Modals --}}
 @can('Assign Project Activities')
 @foreach($projectSchedule->activities as $activity)
@@ -645,13 +706,103 @@
 @endcan
 
 <script>
-// Update file input label with selected filename
+// ── File input label ──────────────────────────────────────────────────────────
 document.querySelectorAll('.custom-file-input').forEach(function(input) {
     input.addEventListener('change', function(e) {
         var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose file...';
-        var label = e.target.nextElementSibling;
-        label.textContent = fileName;
+        e.target.nextElementSibling.textContent = fileName;
     });
 });
+
+// ── Bulk activity selection ───────────────────────────────────────────────────
+(function () {
+    var bar          = document.getElementById('bulkActionBar');
+    var countEl      = document.getElementById('selectedCount');
+    var clearBtn     = document.getElementById('clearSelectionBtn');
+    var listEl       = document.getElementById('bulkActivityList');
+    var summaryEl    = document.getElementById('bulkAssignSummary');
+    var idsContainer = document.getElementById('bulkActivityIds');
+
+    if (!bar) return; // user lacks permission
+
+    function getChecked() {
+        return Array.from(document.querySelectorAll('.activity-checkbox:checked'));
+    }
+
+    function refreshBar() {
+        var checked = getChecked();
+        if (checked.length > 0) {
+            bar.classList.remove('d-none');
+            countEl.textContent = checked.length;
+        } else {
+            bar.classList.add('d-none');
+        }
+    }
+
+    // Per-phase "select all" checkboxes
+    document.querySelectorAll('.select-all-activities').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            var table = this.closest('table');
+            table.querySelectorAll('.activity-checkbox').forEach(function(c) {
+                c.checked = cb.checked;
+            });
+            refreshBar();
+        });
+    });
+
+    // Individual checkboxes — also update phase select-all indeterminate state
+    document.querySelectorAll('.activity-checkbox').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            refreshBar();
+            var table    = this.closest('table');
+            var all      = table.querySelectorAll('.activity-checkbox');
+            var checked  = table.querySelectorAll('.activity-checkbox:checked');
+            var selectAll = table.querySelector('.select-all-activities');
+            if (selectAll) {
+                selectAll.checked       = all.length === checked.length;
+                selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+            }
+        });
+    });
+
+    // Clear all selections
+    clearBtn.addEventListener('click', function() {
+        document.querySelectorAll('.activity-checkbox, .select-all-activities').forEach(function(c) {
+            c.checked = false;
+            c.indeterminate = false;
+        });
+        bar.classList.add('d-none');
+    });
+
+    // Populate bulk modal when the trigger button is clicked (avoids jQuery $ dependency)
+    function populateBulkModal() {
+        var checked = getChecked();
+
+        // Rebuild hidden activity_ids[] inputs
+        while (idsContainer.firstChild) { idsContainer.removeChild(idsContainer.firstChild); }
+        checked.forEach(function(cb) {
+            var inp   = document.createElement('input');
+            inp.type  = 'hidden';
+            inp.name  = 'activity_ids[]';
+            inp.value = cb.value;
+            idsContainer.appendChild(inp);
+        });
+
+        // Summary line
+        summaryEl.textContent = checked.length + ' activities will be reassigned.';
+
+        // Activity badge list — textContent only, safe against XSS
+        while (listEl.firstChild) { listEl.removeChild(listEl.firstChild); }
+        checked.forEach(function(cb) {
+            var badge         = document.createElement('span');
+            badge.className   = 'badge badge-light border mr-1 mb-1';
+            badge.textContent = cb.dataset.name;
+            listEl.appendChild(badge);
+        });
+    }
+
+    var bulkTrigger = bar.querySelector('[data-target="#bulkAssignModal"]');
+    if (bulkTrigger) { bulkTrigger.addEventListener('click', populateBulkModal); }
+}());
 </script>
 @endsection
