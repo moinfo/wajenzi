@@ -3,6 +3,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Auth;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalActionEnum;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
+use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApprovalFlowStep;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApprovalStatus;
 
@@ -10,20 +14,32 @@ class FixStuckApprovals extends Command
 {
     protected $signature = 'approvals:fix-stuck
                             {model? : Fully-qualified model class, e.g. "App\\Models\\ProjectClient"}
-                            {--dry-run : Preview what would be fixed without writing anything}';
+                            {--dry-run : Preview what would be fixed without writing anything}
+                            {--force-complete : Force-approve any remaining unapproved steps and mark APPROVED}
+                            {--user= : User ID to record as approver when using --force-complete (defaults to user 1)}';
 
     protected $description = 'Fix approval records stuck because a flow step was deleted mid-approval';
 
     public function handle(): int
     {
-        $modelClass = $this->argument('model');
-        $dryRun     = $this->option('dry-run');
+        $modelClass    = $this->argument('model');
+        $dryRun        = $this->option('dry-run');
+        $forceComplete = $this->option('force-complete');
+        $userId        = $this->option('user') ?? 1;
 
         if ($dryRun) {
             $this->warn('DRY RUN — no changes will be saved.');
         }
 
-        // Collect all approvable types to process
+        if ($forceComplete && !$dryRun) {
+            $approver = \App\Models\User::find($userId);
+            if (!$approver) {
+                $this->error("User ID {$userId} not found. Use --user=ID to specify a valid approver.");
+                return self::FAILURE;
+            }
+            $this->warn("Force-complete mode: unapproved steps will be recorded as approved by \"{$approver->name}\".");
+        }
+
         $types = $modelClass
             ? [$modelClass]
             : $this->getAllApprovableTypes();
@@ -39,7 +55,6 @@ class FixStuckApprovals extends Command
         foreach ($types as $type) {
             $this->line("\nProcessing: <info>{$type}</info>");
 
-            // Active step IDs for this approvable type
             $activeStepIds = ProcessApprovalFlowStep::query()
                 ->join('process_approval_flows', 'process_approval_flows.id', 'process_approval_flow_steps.process_approval_flow_id')
                 ->where('process_approval_flows.approvable_type', $type)
@@ -51,7 +66,6 @@ class FixStuckApprovals extends Command
                 continue;
             }
 
-            // Find non-completed approval statuses for this type
             $statuses = ProcessApprovalStatus::query()
                 ->where('approvable_type', $type)
                 ->whereNotIn('status', ['APPROVED', 'REJECTED', 'DISCARDED'])
@@ -60,7 +74,6 @@ class FixStuckApprovals extends Command
             foreach ($statuses as $status) {
                 $steps = collect($status->steps ?? []);
 
-                // Check if any step references a deleted flow step with a null action
                 $hasGhostStep = $steps->contains(function ($s) use ($activeStepIds) {
                     return !in_array($s['id'] ?? null, $activeStepIds)
                         && ($s['process_approval_action'] === null || $s['process_approval_id'] === null);
@@ -71,20 +84,6 @@ class FixStuckApprovals extends Command
                     continue;
                 }
 
-                // Strip ghost steps
-                $filtered = $steps
-                    ->filter(fn($s) => in_array($s['id'] ?? null, $activeStepIds))
-                    ->values()
-                    ->toArray();
-
-                // Check if all remaining active steps are approved
-                $allApproved = collect($filtered)->every(function ($s) {
-                    return $s['process_approval_action'] !== null
-                        && $s['process_approval_id'] !== null
-                        && $s['process_approval_action'] !== 'RETURNED'
-                        && $s['process_approval_action'] !== 'REJECTED';
-                });
-
                 $model = $type::find($status->approvable_id);
                 if (!$model) {
                     $this->warn("  [{$type} #{$status->approvable_id}] Model not found — skipping.");
@@ -92,20 +91,60 @@ class FixStuckApprovals extends Command
                     continue;
                 }
 
-                $this->line("  [{$type} #{$status->approvable_id}] Ghost step removed."
-                    . ($allApproved ? ' → Will mark APPROVED.' : ' → Still pending other steps.'));
+                // Strip ghost steps
+                $filtered = $steps
+                    ->filter(fn($s) => in_array($s['id'] ?? null, $activeStepIds))
+                    ->values();
 
-                if (!$dryRun) {
-                    $status->update(['steps' => $filtered]);
-                    $model->unsetRelation('approvalStatus');
+                $pendingSteps = $filtered->filter(
+                    fn($s) => $s['process_approval_action'] === null || $s['process_approval_id'] === null
+                );
 
-                    if ($allApproved) {
-                        $lastApproval = $model->approvals()->latest()->first();
-                        if ($lastApproval) {
-                            $model->onApprovalCompleted($lastApproval);
+                $label = "  [{$type} #{$status->approvable_id}] Ghost step removed.";
+
+                if ($pendingSteps->isEmpty()) {
+                    $this->line($label . ' → All active steps approved. Will mark APPROVED.');
+                } elseif ($forceComplete) {
+                    $this->line($label . " → {$pendingSteps->count()} step(s) force-approved. Will mark APPROVED.");
+                } else {
+                    $this->line($label . " → {$pendingSteps->count()} step(s) still pending (use --force-complete to auto-approve).");
+                }
+
+                if ($dryRun) {
+                    $fixed++;
+                    continue;
+                }
+
+                // Force-approve any remaining null steps
+                if ($forceComplete && $pendingSteps->isNotEmpty()) {
+                    $approver = \App\Models\User::find($userId);
+                    $filtered = $filtered->map(function ($s) use ($model, $approver, $status) {
+                        if ($s['process_approval_action'] === null || $s['process_approval_id'] === null) {
+                            $approval = ProcessApproval::create([
+                                'approvable_type'               => $model->getMorphClass(),
+                                'approvable_id'                 => $model->id,
+                                'process_approval_flow_step_id' => $s['id'],
+                                'approval_action'               => ApprovalActionEnum::APPROVED->value,
+                                'comment'                       => 'Auto-approved by fix-stuck command',
+                                'user_id'                       => $approver->id,
+                                'approver_name'                 => $approver->name,
+                            ]);
+                            $s['process_approval_id']     = $approval->id;
+                            $s['process_approval_action'] = ApprovalActionEnum::APPROVED->value;
                         }
-                        $status->update(['status' => 'APPROVED']);
+                        return $s;
+                    });
+                }
+
+                $status->update(['steps' => $filtered->toArray()]);
+                $model->unsetRelation('approvalStatus');
+
+                if ($forceComplete || $pendingSteps->isEmpty()) {
+                    $lastApproval = $model->approvals()->latest()->first();
+                    if ($lastApproval) {
+                        $model->onApprovalCompleted($lastApproval);
                     }
+                    $status->update(['status' => ApprovalStatusEnum::APPROVED->value]);
                 }
 
                 $fixed++;
