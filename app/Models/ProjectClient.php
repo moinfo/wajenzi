@@ -45,6 +45,18 @@ class ProjectClient extends Authenticatable implements ApprovableModel
     {
         parent::boot();
 
+        // Approvable::boot() is suppressed because this model defines boot().
+        // Re-register the created hook so approval_statuses records are created.
+        static::created(static function (ProjectClient $model) {
+            if (!$model->bypassApprovalProcess()) {
+                $model->approvalStatus()->create([
+                    'steps'      => $model->approvalFlowSteps()->map(fn($s) => $s->toApprovalStatusArray()),
+                    'status'     => 'Created',
+                    'creator_id' => \Illuminate\Support\Facades\Auth::id(),
+                ]);
+            }
+        });
+
         static::deleting(function (ProjectClient $client) {
             // Nullify nullable references that should not be deleted
             DB::table('leads')->where('client_id', $client->id)->update(['client_id' => null]);

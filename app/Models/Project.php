@@ -18,6 +18,18 @@ class Project extends Model implements ApprovableModel
     {
         parent::boot();
 
+        // Approvable::boot() is suppressed because this model defines boot().
+        // Re-register the created hook so approval_statuses records are created.
+        static::created(static function (Project $model) {
+            if (!$model->bypassApprovalProcess()) {
+                $model->approvalStatus()->create([
+                    'steps'      => $model->approvalFlowSteps()->map(fn($s) => $s->toApprovalStatusArray()),
+                    'status'     => 'Created',
+                    'creator_id' => \Illuminate\Support\Facades\Auth::id(),
+                ]);
+            }
+        });
+
         static::deleting(function (Project $project) {
             $id = $project->id;
 
