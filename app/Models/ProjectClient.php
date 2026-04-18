@@ -84,6 +84,38 @@ class ProjectClient extends Authenticatable implements ApprovableModel
      * @return bool Whether the approval completion logic succeeded
      */
     /**
+     * Treat deleted flow steps as completed so the approval isn't stuck
+     * when an admin removes a step mid-flow.
+     */
+    public function isApprovalCompleted(array $currentSteps = null): bool
+    {
+        $activeStepIds = $this->approvalFlowSteps()->pluck('id')->toArray();
+
+        $allSteps = $currentSteps
+            ? collect($currentSteps)
+            : collect($this->approvalStatus->steps ?? []);
+
+        // Exclude ghost steps whose flow step has been deleted
+        $registeredSteps = $allSteps
+            ->filter(fn($item) => in_array($item['id'] ?? null, $activeStepIds))
+            ->values();
+
+        if ($registeredSteps->isEmpty()) {
+            return true;
+        }
+
+        foreach ($registeredSteps as $item) {
+            if ($item['process_approval_action'] === null
+                || $item['process_approval_id'] === null
+                || $item['process_approval_action'] === 'RETURNED') {
+                return false;
+            }
+        }
+
+        return $registeredSteps->last()['process_approval_action'] !== 'REJECTED';
+    }
+
+    /**
      * Allow any authenticated user to submit — not restricted to the creator.
      */
     public function canBeSubmittedBy(\Illuminate\Contracts\Auth\Authenticatable $user): bool
