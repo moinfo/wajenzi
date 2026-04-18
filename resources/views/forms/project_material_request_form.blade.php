@@ -55,29 +55,36 @@
             <table class="table table-bordered table-sm" id="items-table">
                 <thead class="thead-light">
                     <tr>
-                        <th style="width:50%">BOQ Item</th>
-                        <th style="width:20%">Qty Requested</th>
-                        <th style="width:15%">Unit</th>
-                        <th style="width:15%"></th>
+                        <th style="width:46%">BOQ Item / Description</th>
+                        <th style="width:18%">Qty Requested</th>
+                        <th style="width:13%">Unit</th>
+                        <th style="width:15%" class="text-center text-nowrap" title="Tick to enter item not in BOQ">
+                            <small>Not in BOQ</small>
+                        </th>
+                        <th style="width:8%"></th>
                     </tr>
                 </thead>
                 <tbody id="items-tbody">
                     {{-- First row rendered by PHP so it can use Blade @foreach for options --}}
                     <tr class="item-row" data-index="0">
                         <td>
-                            <select name="items[0][boq_item_id]" class="form-control select2 boq-item-select" required
-                                data-row="0" style="width:100%">
-                                <option value="">Select BOQ Item</option>
-                                @foreach ($project_boq_items ?? [] as $boqItem)
-                                    <option value="{{ $boqItem->id }}"
-                                        data-project-id="{{ $boqItem->boq->project_id ?? '' }}"
-                                        data-unit="{{ $boqItem->unit }}"
-                                        data-available="{{ $boqItem->quantity_remaining ?? ($boqItem->quantity - $boqItem->quantity_requested) }}">
-                                        {{ $boqItem->item_code ?? '' }} - {{ Str::limit($boqItem->description, 45) }} ({{ $boqItem->unit }})
-                                    </option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted avail-text"></small>
+                            <div class="boq-field">
+                                <select name="items[0][boq_item_id]" class="form-control select2 boq-item-select" style="width:100%">
+                                    <option value="">Select BOQ Item</option>
+                                    @foreach ($project_boq_items ?? [] as $boqItem)
+                                        <option value="{{ $boqItem->id }}"
+                                            data-unit="{{ $boqItem->unit }}"
+                                            data-available="{{ max(0, ($boqItem->quantity ?? 0) - ($boqItem->quantity_requested ?? 0)) }}">
+                                            {{ $boqItem->item_code ?? '' }} - {{ Str::limit($boqItem->description, 45) }} ({{ $boqItem->unit }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted avail-text"></small>
+                            </div>
+                            <div class="custom-field" style="display:none;">
+                                <input type="text" class="form-control custom-desc-input" name="items[0][description]"
+                                    placeholder="Item name / description">
+                            </div>
                         </td>
                         <td>
                             <input type="number" step="0.01" min="0.01" class="form-control qty-input"
@@ -86,6 +93,9 @@
                         <td>
                             <input type="text" class="form-control unit-input" name="items[0][unit]"
                                 placeholder="unit" required>
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" class="custom-toggle" title="Item not in BOQ" style="width:18px;height:18px;cursor:pointer;">
                         </td>
                         <td class="text-center">
                             <button type="button" class="btn btn-sm btn-outline-danger remove-row-btn" title="Remove" disabled>
@@ -161,16 +171,19 @@
     }
 
     function bindRowEvents(row) {
-        var $row  = $(row);
-        var $sel  = $row.find('.boq-item-select');
-        var $qty  = $row.find('.qty-input');
-        var $unit = $row.find('.unit-input');
+        var $row   = $(row);
+        var $sel   = $row.find('.boq-item-select');
+        var $qty   = $row.find('.qty-input');
+        var $unit  = $row.find('.unit-input');
         var $avail = $row.find('.avail-text');
+        var $toggle = $row.find('.custom-toggle');
+        var $boqField    = $row.find('.boq-field');
+        var $customField = $row.find('.custom-field');
 
         $sel.on('change', function () {
             var opt = $sel.find(':selected');
             var unit = opt.data('unit') || '';
-            var avail = opt.data('available') ?? '';
+            var avail = opt.data('available') !== undefined ? opt.data('available') : '';
             $unit.val(unit);
             if (opt.val()) {
                 $avail.text('Available: ' + avail + ' ' + unit);
@@ -181,10 +194,48 @@
             }
         });
 
+        $toggle.on('change', function () {
+            if ($toggle.is(':checked')) {
+                // Switch to free-text mode
+                $sel.val('').trigger('change');
+                $sel.select2('destroy');
+                $boqField.hide();
+                $customField.show();
+                $customField.find('.custom-desc-input').prop('required', true);
+                $avail.text('');
+                $qty.removeAttr('max');
+            } else {
+                // Switch back to BOQ mode
+                $customField.hide();
+                $customField.find('.custom-desc-input').prop('required', false).val('');
+                $boqField.show();
+                initSelect2($sel[0]);
+                bindBoqSelectEvent($sel, $qty, $unit, $avail);
+            }
+        });
+
         $row.find('.remove-row-btn').on('click', function () {
-            $sel.select2('destroy');
+            if (!$toggle.is(':checked')) {
+                $sel.select2('destroy');
+            }
             $row.remove();
             updateRemoveButtons();
+        });
+    }
+
+    function bindBoqSelectEvent($sel, $qty, $unit, $avail) {
+        $sel.off('change').on('change', function () {
+            var opt = $sel.find(':selected');
+            var unit = opt.data('unit') || '';
+            var avail = opt.data('available') !== undefined ? opt.data('available') : '';
+            $unit.val(unit);
+            if (opt.val()) {
+                $avail.text('Available: ' + avail + ' ' + unit);
+                $qty.attr('max', avail);
+            } else {
+                $avail.text('');
+                $qty.removeAttr('max');
+            }
         });
     }
 
@@ -197,7 +248,9 @@
         var projectId = getSelectedProjectId();
         var options   = buildOptions(projectId);
         $('#items-tbody .item-row').each(function () {
-            var $row = $(this);
+            var $row    = $(this);
+            var $toggle = $row.find('.custom-toggle');
+            if ($toggle.is(':checked')) return; // leave custom rows alone
             var $sel = $row.find('.boq-item-select');
             $sel.select2('destroy');
             $sel.html(options);
@@ -238,13 +291,21 @@
 
         var $newRow = $('<tr class="item-row" data-index="' + idx + '">'
             + '<td>'
-            +   '<select name="items[' + idx + '][boq_item_id]" class="form-control select2 boq-item-select" required style="width:100%">'
-            +     options
-            +   '</select>'
-            +   '<small class="text-muted avail-text"></small>'
+            +   '<div class="boq-field">'
+            +     '<select name="items[' + idx + '][boq_item_id]" class="form-control select2 boq-item-select" style="width:100%">'
+            +       options
+            +     '</select>'
+            +     '<small class="text-muted avail-text"></small>'
+            +   '</div>'
+            +   '<div class="custom-field" style="display:none;">'
+            +     '<input type="text" class="form-control custom-desc-input" name="items[' + idx + '][description]" placeholder="Item name / description">'
+            +   '</div>'
             + '</td>'
             + '<td><input type="number" step="0.01" min="0.01" class="form-control qty-input" name="items[' + idx + '][quantity_requested]" required></td>'
             + '<td><input type="text" class="form-control unit-input" name="items[' + idx + '][unit]" placeholder="unit" required></td>'
+            + '<td class="text-center">'
+            +   '<input type="checkbox" class="custom-toggle" title="Item not in BOQ" style="width:18px;height:18px;cursor:pointer;">'
+            + '</td>'
             + '<td class="text-center">'
             +   '<button type="button" class="btn btn-sm btn-outline-danger remove-row-btn" title="Remove"><i class="fa fa-times"></i></button>'
             + '</td>'
