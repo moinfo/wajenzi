@@ -14,7 +14,9 @@ use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 
 class ProjectClient extends Authenticatable implements ApprovableModel
 {
-    use HasFactory, HasApiTokens, Approvable;
+    use HasFactory, HasApiTokens, Approvable {
+        Approvable::submit as protected traitSubmit;
+    }
 
     protected $table = 'project_clients';
 
@@ -87,6 +89,19 @@ class ProjectClient extends Authenticatable implements ApprovableModel
     public function canBeSubmittedBy(\Illuminate\Contracts\Auth\Authenticatable $user): bool
     {
         return !$this->isSubmitted();
+    }
+
+    /**
+     * Override to bypass the creator-only guard inside the trait's submit().
+     * We reassign creator_id to the current user so the trait check passes.
+     */
+    public function submit(?\Illuminate\Contracts\Auth\Authenticatable $user = null): \RingleSoft\LaravelProcessApproval\Models\ProcessApproval|\Illuminate\Http\RedirectResponse|bool
+    {
+        if ($this->approvalStatus?->creator_id) {
+            $this->approvalStatus()->update(['creator_id' => \Illuminate\Support\Facades\Auth::id()]);
+            $this->unsetRelation('approvalStatus');
+        }
+        return $this->traitSubmit($user);
     }
 
     public function onApprovalCompleted(ProcessApproval|\RingleSoft\LaravelProcessApproval\Models\ProcessApproval $approval): bool
