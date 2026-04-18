@@ -281,8 +281,16 @@
                                     <td colspan="6" class="text-right" style="padding: 8px;"><strong>Subtotal</strong></td>
                                     <td class="text-right" style="padding: 8px;"><strong id="subtotal-display">0.00</strong></td>
                                 </tr>
-                                <tr>
-                                    <td colspan="6" class="text-right" style="padding: 6px 8px;">VAT (18%)</td>
+                                <tr id="vat-row">
+                                    <td colspan="6" class="text-right" style="padding: 6px 8px;">
+                                        <label class="mb-0" style="font-weight:normal; cursor:pointer;">
+                                            <input type="checkbox" id="vat-enabled" style="vertical-align:middle; margin-right:4px;">
+                                            VAT
+                                        </label>
+                                        <input type="number" id="vat-rate" value="18" min="0" max="100" step="0.01"
+                                            style="width:60px; display:inline-block; padding:2px 4px; font-size:13px; border:1px solid #ccc; border-radius:3px; text-align:right; margin-left:4px;" disabled>
+                                        <span style="margin-left:2px;">%</span>
+                                    </td>
                                     <td class="text-right" style="padding: 8px;">
                                         <span id="vat-display">0.00</span>
                                         <input type="hidden" name="vat_amount" id="input-vat" value="0">
@@ -363,11 +371,14 @@
         form.find('.item-unit-price').val('');
         form.find('.item-line-total').text('0.00');
         $('#subtotal-display').text('0.00');
+        $('#vat-display').text('0.00');
         $('#grand-total-display').text('0.00');
         $('#input-quotation-date').val('{{ date("Y-m-d") }}');
         $('#input-valid-until').val('{{ date("Y-m-d", strtotime("+30 days")) }}');
         $('#input-delivery-time').val(7);
         $('#input-vat').val(0);
+        $('#vat-enabled').prop('checked', false);
+        $('#vat-rate').val(18).prop('disabled', true);
 
         if (isEdit && quotationsData[quotationId]) {
             var data = quotationsData[quotationId];
@@ -381,7 +392,16 @@
             $('#input-valid-until').val(data.valid_until || '');
             $('#input-delivery-time').val(data.delivery_time_days || 7);
             $('#input-payment-terms').val(data.payment_terms || '');
-            $('#input-vat').val(data.vat_amount || 0);
+            // Restore VAT state from saved vat_amount
+            var savedVat = parseFloat(data.vat_amount) || 0;
+            if (savedVat > 0) {
+                $('#vat-enabled').prop('checked', true);
+                $('#vat-rate').prop('disabled', false);
+                // Back-calculate the rate after prices are filled (done below after trigger)
+            } else {
+                $('#vat-enabled').prop('checked', false);
+                $('#vat-rate').val(18).prop('disabled', true);
+            }
             form.find('textarea[name="notes"]').val(data.notes || '');
 
             // Fill item prices
@@ -389,9 +409,19 @@
                 var mrItemId = $(this).closest('tr').find('input[name$="[material_request_item_id]"]').val();
                 if (data.items[mrItemId]) {
                     $(this).val(parseFloat(data.items[mrItemId].unit_price).toFixed(2));
-                    $(this).trigger('input');
                 }
             });
+
+            // Trigger recalculate; then fix rate if VAT was applied
+            recalculate();
+            if (savedVat > 0) {
+                var subtotal = parseFloat($('#subtotal-display').text()) || 0;
+                if (subtotal > 0) {
+                    var inferredRate = (savedVat / subtotal) * 100;
+                    $('#vat-rate').val(inferredRate.toFixed(2));
+                }
+                recalculate();
+            }
         } else {
             $('#quotation-modal-title').text('Add Quotation');
             $('#quotation-submit-btn').html('<i class="si si-plus"></i> Add Quotation');
@@ -415,20 +445,35 @@
             var subtotal = 0;
             $('.item-unit-price').each(function() {
                 var price = parseFloat($(this).val()) || 0;
-                var qty = parseFloat($(this).data('qty')) || 0;
+                var qty   = parseFloat($(this).data('qty')) || 0;
                 var lineTotal = price * qty;
                 var index = $(this).data('index');
-                $('#line-total-' + index).text(lineTotal.toFixed(2));
+                $('#line-total-' + index).text(lineTotal.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2}));
                 subtotal += lineTotal;
             });
             $('#subtotal-display').text(subtotal.toFixed(2));
-            var vat = subtotal * 0.18;
+
+            var vat = 0;
+            if ($('#vat-enabled').is(':checked')) {
+                var rate = parseFloat($('#vat-rate').val()) || 0;
+                vat = subtotal * (rate / 100);
+            }
             $('#input-vat').val(vat.toFixed(2));
             $('#vat-display').text(vat.toFixed(2));
             $('#grand-total-display').text((subtotal + vat).toFixed(2));
         }
 
         $(document).on('input', '.item-unit-price', recalculate);
+
+        // VAT checkbox toggle
+        $(document).on('change', '#vat-enabled', function () {
+            var checked = $(this).is(':checked');
+            $('#vat-rate').prop('disabled', !checked);
+            recalculate();
+        });
+
+        // VAT rate change
+        $(document).on('input', '#vat-rate', recalculate);
     });
 </script>
 @endsection
