@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 // Public routes (no authentication required)
 Route::get('/i/{token}', [App\Http\Controllers\Billing\InvoiceController::class, 'publicPDF'])->name('invoice.public');
+Route::view('/privacy-policy', 'pages.privacy-policy')->name('privacy.policy');
 
 Route::get('/system-overview', function () {
     $markdown = file_get_contents(base_path('docs/system-overview.md'));
