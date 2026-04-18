@@ -81,6 +81,14 @@ class ProjectClient extends Authenticatable implements ApprovableModel
      * @param ProcessApproval $approval The approval object
      * @return bool Whether the approval completion logic succeeded
      */
+    /**
+     * Allow any authenticated user to submit — not restricted to the creator.
+     */
+    public function canBeSubmittedBy(\Illuminate\Contracts\Auth\Authenticatable $user): bool
+    {
+        return !$this->isSubmitted();
+    }
+
     public function onApprovalCompleted(ProcessApproval|\RingleSoft\LaravelProcessApproval\Models\ProcessApproval $approval): bool
     {
 
