@@ -3,6 +3,12 @@
 -keep class io.flutter.plugins.** { *; }
 -dontwarn io.flutter.embedding.**
 
+# App MainActivity (must not be removed by R8)
+-keep class com.moinfotech.wajenzi.** { *; }
+-keep public class * extends android.app.Activity
+-keep public class * extends android.app.Application
+-keep public class * extends android.app.Service
+
 # flutter_secure_storage
 -keep class com.it_nomads.fluttersecurestorage.** { *; }
 
