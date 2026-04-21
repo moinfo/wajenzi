@@ -67,12 +67,22 @@ class ProjectMaterialRequestController extends Controller
         $request->validate([
             'project_id' => 'required|exists:projects,id',
             'items' => 'required|array|min:1',
-            'items.*.boq_item_id' => 'required|exists:project_boq_items,id',
+            'items.*.boq_item_id' => 'nullable|exists:project_boq_items,id',
+            'items.*.description' => 'nullable|string|max:255',
             'items.*.quantity_requested' => 'required|numeric|min:0.01',
             'items.*.unit' => 'required|string',
             'required_date' => 'required|date',
             'priority' => 'required|in:low,medium,high,urgent',
         ]);
+
+        // Each item must have either a BOQ item or a custom description
+        foreach ($request->items as $i => $itemData) {
+            if (empty($itemData['boq_item_id']) && empty(trim($itemData['description'] ?? ''))) {
+                return back()->withErrors([
+                    "items.{$i}.description" => "Item #" . ($i + 1) . ": provide a BOQ item or enter a description."
+                ])->withInput();
+            }
+        }
 
         // Collect BOQ item IDs that already have pending requests
         $pendingBoqItemIds = ProjectMaterialRequestItem::whereHas('materialRequest', function ($q) use ($request) {
@@ -80,8 +90,12 @@ class ProjectMaterialRequestController extends Controller
               ->whereRaw('UPPER(status) NOT IN (?, ?)', ['APPROVED', 'COMPLETED']);
         })->pluck('boq_item_id')->filter()->unique()->all();
 
-        // Validate each item quantity and check for pending duplicates
+        // Validate BOQ-linked items: no duplicates, quantity within available
         foreach ($request->items as $i => $itemData) {
+            if (empty($itemData['boq_item_id'])) {
+                continue; // custom items skip BOQ checks
+            }
+
             if (in_array($itemData['boq_item_id'], $pendingBoqItemIds)) {
                 $boqItem = ProjectBoqItem::find($itemData['boq_item_id']);
                 return back()->withErrors([
@@ -111,14 +125,16 @@ class ProjectMaterialRequestController extends Controller
             ]);
 
             foreach ($request->items as $i => $itemData) {
-                $boqItem = ProjectBoqItem::find($itemData['boq_item_id']);
+                $boqItem = !empty($itemData['boq_item_id'])
+                    ? ProjectBoqItem::find($itemData['boq_item_id'])
+                    : null;
 
                 ProjectMaterialRequestItem::create([
                     'material_request_id' => $materialRequest->id,
-                    'boq_item_id' => $itemData['boq_item_id'],
+                    'boq_item_id' => $boqItem?->id ?? null,
                     'quantity_requested' => $itemData['quantity_requested'],
                     'unit' => $itemData['unit'],
-                    'description' => $boqItem->description ?? null,
+                    'description' => $boqItem ? ($boqItem->description ?? null) : ($itemData['description'] ?? null),
                     'specification' => $boqItem->specification ?? null,
                     'sort_order' => $i,
                 ]);

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,114 +16,113 @@ class LandingScreen extends ConsumerStatefulWidget {
 class _LandingScreenState extends ConsumerState<LandingScreen> {
   int _selectedMenuIndex = 0;
 
-  // Use global settings from provider
   bool get _isDarkMode => ref.watch(isDarkModeProvider);
   bool get _isSwahili => ref.watch(isSwahiliProvider);
 
   final List<ProjectShowcase> _projects = [
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.10.png',
-      title: 'HOTEL CONSTRUCTION',
+      title: 'Hotel Construction',
       priceTZS: '6,911,200,000',
       priceUSD: '2,764,480',
-      features: 'Bedrooms, restaurant, bar, parking, gym and spa',
-      category: '3D DESIGN',
+      features: ['Bedrooms', 'Restaurant', 'Bar', 'Parking', 'Gym', 'Spa'],
+      category: '3D Design',
       likes: 156,
       timeAgo: '2 days ago',
-      description:
-          'Luxury hotel project featuring modern architecture with premium amenities.',
+      description: 'Luxury hotel project featuring modern architecture with premium amenities.',
+      isFeatured: true,
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.20.png',
-      title: 'RESIDENTIAL VILLA',
+      title: 'Residential Villa',
       priceTZS: '850,000,000',
       priceUSD: '340,000',
-      features: '5 Bedrooms, swimming pool, garden, garage',
-      category: 'COMPLETED',
+      features: ['5 Bedrooms', 'Swimming Pool', 'Garden', 'Garage'],
+      category: 'Completed',
       likes: 243,
       timeAgo: '1 week ago',
-      description:
-          'Beautiful modern villa in Dar es Salaam with stunning views.',
+      description: 'Beautiful modern villa in Dar es Salaam with stunning views.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.28.png',
-      title: 'OFFICE COMPLEX',
+      title: 'Office Complex',
       priceTZS: '2,500,000,000',
       priceUSD: '1,000,000',
-      features: 'Open offices, meeting rooms, cafeteria, parking',
-      category: 'IN PROGRESS',
+      features: ['Open Offices', 'Meeting Rooms', 'Cafeteria', 'Parking'],
+      category: 'In Progress',
       likes: 89,
       timeAgo: '3 days ago',
-      description:
-          'State-of-the-art commercial office building in the business district.',
+      description: 'State-of-the-art commercial office building in the business district.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.31.png',
-      title: 'APARTMENT COMPLEX',
+      title: 'Apartment Complex',
       priceTZS: '4,200,000,000',
       priceUSD: '1,680,000',
-      features: '24 Units, gym, rooftop lounge, security',
-      category: 'DESIGN',
+      features: ['24 Units', 'Gym', 'Rooftop Lounge', 'Security'],
+      category: 'Design',
       likes: 178,
       timeAgo: '5 days ago',
       description: 'Modern apartment living with premium shared amenities.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.40.png',
-      title: 'SHOPPING MALL',
+      title: 'Shopping Mall',
       priceTZS: '12,500,000,000',
       priceUSD: '5,000,000',
-      features: '150 shops, cinema, food court, parking',
-      category: '3D DESIGN',
+      features: ['150 Shops', 'Cinema', 'Food Court', 'Parking'],
+      category: '3D Design',
       likes: 312,
       timeAgo: '1 day ago',
-      description: 'Modern shopping center with entertainment facilities.',
+      description: 'Modern shopping center with entertainment and retail facilities.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.51.07.png',
-      title: 'SCHOOL BUILDING',
+      title: 'School Building',
       priceTZS: '1,800,000,000',
       priceUSD: '720,000',
-      features: '30 classrooms, library, labs, sports field',
-      category: 'COMPLETED',
+      features: ['30 Classrooms', 'Library', 'Labs', 'Sports Field'],
+      category: 'Completed',
       likes: 198,
       timeAgo: '2 weeks ago',
       description: 'Educational facility with modern learning environments.',
     ),
   ];
 
-  // Dark mode colors
   Color get _bgColor =>
-      _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
-  Color get _textSecondaryColor =>
-      _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
-  Color get _appBarBgColor =>
-      _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+      _isDarkMode ? const Color(0xFF0F0F1A) : const Color(0xFFF0F4F8);
 
-  // Launch WhatsApp with pre-filled message about a project
+  Color get _surfaceColor =>
+      _isDarkMode ? const Color(0xFF1A1A2E) : Colors.white;
+
   Future<void> _launchWhatsApp(String projectName) async {
     final message = _isSwahili
         ? 'Habari! Napenda kupata taarifa zaidi kuhusu mradi: $projectName'
         : 'Hello! I am interested in learning more about the project: $projectName';
     final opened = await ExternalLauncherService.openWhatsApp(message);
-
-    if (!opened) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isSwahili
-                  ? 'Imeshindwa kufungua WhatsApp'
-                  : 'Could not open WhatsApp',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isSwahili
+              ? 'Imeshindwa kufungua WhatsApp'
+              : 'Could not open WhatsApp'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
-  // Consistent top bar button builder
+  Future<void> _launchPhone() async {
+    final opened = await ExternalLauncherService.callCompany();
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isSwahili ? 'Imeshindwa kupiga simu' : 'Could not open dialer'),
+        ),
+      );
+    }
+  }
+
   Widget _buildTopBarButton({
     required VoidCallback onTap,
     required Widget child,
@@ -143,7 +141,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             color: _isDarkMode
                 ? Colors.white.withValues(alpha: 0.15)
                 : Colors.grey.withValues(alpha: 0.25),
-            width: 1,
           ),
         ),
         child: child,
@@ -158,16 +155,17 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       extendBody: true,
       body: CustomScrollView(
         slivers: [
-          // App Bar
+          // ── App Bar ─────────────────────────────────────────────────
           SliverAppBar(
             floating: true,
             snap: true,
-            backgroundColor: _appBarBgColor,
+            backgroundColor: _isDarkMode
+                ? const Color(0xFF1A1A2E)
+                : const Color(0xFFF0F4F8),
             elevation: 0,
             toolbarHeight: 70,
             title: Row(
               children: [
-                // Logo
                 Container(
                   width: 42,
                   height: 42,
@@ -195,7 +193,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                // Name and Motto
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +212,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                             ? 'Mabingwa wa Uthabiti na Ubora'
                             : 'Masters of Consistency and Quality',
                         style: TextStyle(
-                          color: _textSecondaryColor,
+                          color: _isDarkMode ? Colors.white54 : Colors.grey[500],
                           fontSize: 8,
                           fontStyle: FontStyle.italic,
                         ),
@@ -228,7 +225,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               ],
             ),
             actions: [
-              // Language Toggle with National Flags
               _buildTopBarButton(
                 onTap: () =>
                     ref.read(settingsProvider.notifier).toggleLanguage(),
@@ -241,9 +237,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       child: SizedBox(
                         width: 20,
                         height: 13,
-                        child: _isSwahili
-                            ? const TanzaniaFlag()
-                            : const UKFlag(),
+                        child: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
                       ),
                     ),
                     const SizedBox(width: 3),
@@ -252,9 +246,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: _isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF2C3E50),
+                        color:
+                            _isDarkMode ? Colors.white : const Color(0xFF2C3E50),
                       ),
                     ),
                   ],
@@ -262,12 +255,11 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 isWide: true,
               ),
               const SizedBox(width: 8),
-              // Dark Mode Toggle
               _buildTopBarButton(
                 onTap: () =>
                     ref.read(settingsProvider.notifier).toggleDarkMode(),
                 child: Icon(
-                  _isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                  _isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
                   size: 20,
                   color: _isDarkMode
                       ? const Color(0xFF1ABC9C)
@@ -275,7 +267,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              // Login Icon Button
               _buildTopBarButton(
                 onTap: () => context.go('/login'),
                 child: Icon(
@@ -288,33 +279,107 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             ],
           ),
 
-          // Project Posts
+          // ── Hero stats banner ────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: _HeroStats(
+              isDarkMode: _isDarkMode,
+              isSwahili: _isSwahili,
+              surfaceColor: _surfaceColor,
+            ),
+          ),
+
+          // ── Section header ───────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+              child: Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1ABC9C), Color(0xFF3498DB)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _isSwahili ? 'Kazi Zetu' : 'Our Portfolio',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: _isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF1A1A2E),
+                          ),
+                        ),
+                        Text(
+                          _isSwahili
+                              ? '${_projects.length} miradi iliyochaguliwa'
+                              : '${_projects.length} featured projects',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _isDarkMode ? Colors.white54 : Colors.grey[500],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Project cards ────────────────────────────────────────────
           SliverList(
             delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildProjectPost(_projects[index]),
+              (context, index) => _ProjectCard(
+                project: _projects[index],
+                index: index,
+                total: _projects.length,
+                isDarkMode: _isDarkMode,
+                isSwahili: _isSwahili,
+                onWhatsApp: () => _launchWhatsApp(_projects[index].title),
+                onCall: _launchPhone,
+                onImageTap: () => _showImageModal(
+                  context,
+                  _projects[index].image,
+                  _projects[index].title,
+                ),
+              ),
               childCount: _projects.length,
             ),
           ),
 
-          // Bottom CTA
+          // ── CTA banner ───────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Container(
-              padding: const EdgeInsets.all(20),
-              margin: const EdgeInsets.all(16),
+              margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: _isDarkMode
-                      ? [const Color(0xFF0F3460), const Color(0xFF16213E)]
-                      : [const Color(0xFF3498DB), const Color(0xFF1ABC9C)],
+                      ? [const Color(0xFF0D3B34), const Color(0xFF0A2A40)]
+                      : [const Color(0xFF1ABC9C), const Color(0xFF2980B9)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(16),
-                border: _isDarkMode
-                    ? Border.all(
-                        color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
-                      )
-                    : null,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1ABC9C).withValues(alpha: 0.25),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
@@ -325,68 +390,52 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w800,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     _isSwahili
                         ? 'Jiunge na Wajenzi upate huduma za ujenzi za kitaalamu'
-                        : 'Join Wajenzi and get access to professional construction services',
+                        : 'Join Wajenzi for professional construction services',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 13,
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildStatBadge(
-                        '120+',
-                        _isSwahili ? 'Miradi' : 'Projects',
-                      ),
-                      const SizedBox(width: 16),
-                      _buildStatBadge(
-                        '50+',
-                        _isSwahili ? 'Wataalamu' : 'Experts',
-                      ),
-                      const SizedBox(width: 16),
-                      _buildStatBadge(
-                        '200+',
-                        _isSwahili ? 'Imekamilika' : 'Completed',
-                      ),
+                      _StatBadge('120+', _isSwahili ? 'Miradi' : 'Projects'),
+                      const SizedBox(width: 12),
+                      _StatBadge('50+', _isSwahili ? 'Wataalamu' : 'Experts'),
+                      const SizedBox(width: 12),
+                      _StatBadge('200+', _isSwahili ? 'Imekamilika' : 'Completed'),
                     ],
                   ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: ElevatedButton.icon(
                       onPressed: () => context.go('/login'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isDarkMode
-                            ? const Color(0xFF1ABC9C)
-                            : Colors.white,
-                        foregroundColor: _isDarkMode
-                            ? Colors.white
-                            : const Color(0xFF1ABC9C),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                      icon: const Icon(Icons.arrow_forward_rounded),
+                      label: Text(
+                        _isSwahili ? 'Anza Sasa' : 'Get Started',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _isSwahili ? 'Anza Sasa' : 'Get Started',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward_rounded),
-                        ],
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF1ABC9C),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                     ),
                   ),
@@ -395,28 +444,27 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             ),
           ),
 
-          // Footer
+          // ── Footer ───────────────────────────────────────────────────
           SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 110),
               child: Column(
                 children: [
                   Text(
                     'Powered by Moinfotech',
                     style: TextStyle(
-                      color: _isDarkMode ? Colors.white38 : Colors.grey[500],
-                      fontSize: 12,
+                      color: _isDarkMode ? Colors.white24 : Colors.grey[400],
+                      fontSize: 11,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'v1.0.0',
                     style: TextStyle(
-                      color: _isDarkMode ? Colors.white24 : Colors.grey[400],
+                      color: _isDarkMode ? Colors.white12 : Colors.grey[300],
                       fontSize: 10,
                     ),
                   ),
-                  const SizedBox(height: 100), // Space for bottom nav
                 ],
               ),
             ),
@@ -432,352 +480,14 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     );
   }
 
-  Widget _buildProjectPost(ProjectShowcase project) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: _isDarkMode
-            ? Border.all(color: const Color(0xFF1ABC9C).withValues(alpha: 0.2))
-            : null,
-        boxShadow: [
-          BoxShadow(
-            color: _isDarkMode
-                ? const Color(0xFF1ABC9C).withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          children: [
-            // Background Image (tappable)
-            GestureDetector(
-              onTap: () =>
-                  _showImageModal(context, project.image, project.title),
-              child: AspectRatio(
-                aspectRatio: 0.75,
-                child: Image.asset(
-                  project.image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _buildPlaceholderImage(project),
-                ),
-              ),
-            ),
-
-            // Gradient Overlay
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.3),
-                      Colors.black.withValues(alpha: 0.8),
-                    ],
-                    stops: const [0.3, 0.6, 1.0],
-                  ),
-                ),
-              ),
-            ),
-
-            // Top Header - Glassmorphism
-            Positioned(
-              top: 12,
-              left: 12,
-              right: 12,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(
-                            _getCategoryIcon(project.category),
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                project.title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                project.timeAgo,
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getCategoryColor(project.category),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            project.category,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Bottom Content - Glassmorphism
-            Positioned(
-              bottom: 12,
-              left: 12,
-              right: 12,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.25),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Price Row - Show TZS for Swahili, USD for English
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF1ABC9C),
-                                    Color(0xFF16A085),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                _isSwahili
-                                    ? 'TZS ${_formatPrice(project.priceTZS)}'
-                                    : 'USD ${_formatPrice(project.priceUSD)}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.favorite,
-                                  color: Color(0xFFE74C3C),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${project.likes}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        // Description
-                        Text(
-                          project.description,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 12,
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // Features
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(
-                              0xFFD4AF37,
-                            ).withValues(alpha: 0.3),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: const Color(
-                                0xFFD4AF37,
-                              ).withValues(alpha: 0.5),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle,
-                                size: 14,
-                                color: Color(0xFFD4AF37),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  project.features,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        // Inquiry Button
-                        GestureDetector(
-                          onTap: () => _launchWhatsApp(project.title),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF25D366),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.chat_rounded,
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  _isSwahili ? 'WhatsApp' : 'Inquire',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderImage(ProjectShowcase project) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF2C3E50),
-            _getCategoryColor(project.category).withValues(alpha: 0.7),
-          ],
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              _getCategoryIcon(project.category),
-              size: 60,
-              color: Colors.white.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              project.title,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.6),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _showImageModal(BuildContext context, String imagePath, String title) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
+      builder: (ctx) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(12),
         child: Stack(
           children: [
-            // Image with pinch-to-zoom
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -791,23 +501,19 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       height: 300,
                       color: const Color(0xFF2C3E50),
                       child: const Center(
-                        child: Icon(
-                          Icons.broken_image,
-                          color: Colors.white54,
-                          size: 48,
-                        ),
+                        child: Icon(Icons.broken_image,
+                            color: Colors.white54, size: 48),
                       ),
                     ),
                   ),
                 ),
               ),
             ),
-            // Close button
             Positioned(
               top: 0,
               right: 0,
               child: GestureDetector(
-                onTap: () => Navigator.of(context).pop(),
+                onTap: () => Navigator.of(ctx).pop(),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: const BoxDecoration(
@@ -818,21 +524,16 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 ),
               ),
             ),
-            // Title at bottom
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 16,
-                ),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: const BoxDecoration(
                   color: Colors.black54,
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(16),
-                  ),
+                  borderRadius:
+                      BorderRadius.vertical(bottom: Radius.circular(16)),
                 ),
                 child: Text(
                   title,
@@ -850,13 +551,722 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       ),
     );
   }
+}
 
-  Widget _buildStatBadge(String value, String label) {
+// ─── Hero Stats ───────────────────────────────────────────────────────────────
+
+class _HeroStats extends StatelessWidget {
+  final bool isDarkMode;
+  final bool isSwahili;
+  final Color surfaceColor;
+  const _HeroStats({
+    required this.isDarkMode,
+    required this.isSwahili,
+    required this.surfaceColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(10),
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isDarkMode
+              ? Colors.white.withValues(alpha: 0.07)
+              : Colors.grey.withValues(alpha: 0.12),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _StatItem(
+            icon: Icons.folder_special_rounded,
+            value: '120+',
+            label: isSwahili ? 'Miradi' : 'Projects',
+            color: const Color(0xFF1ABC9C),
+            isDarkMode: isDarkMode,
+          ),
+          _Divider(isDarkMode: isDarkMode),
+          _StatItem(
+            icon: Icons.engineering_rounded,
+            value: '50+',
+            label: isSwahili ? 'Wataalamu' : 'Experts',
+            color: const Color(0xFF3498DB),
+            isDarkMode: isDarkMode,
+          ),
+          _Divider(isDarkMode: isDarkMode),
+          _StatItem(
+            icon: Icons.verified_rounded,
+            value: '200+',
+            label: isSwahili ? 'Imekamilika' : 'Completed',
+            color: const Color(0xFF2ECC71),
+            isDarkMode: isDarkMode,
+          ),
+          _Divider(isDarkMode: isDarkMode),
+          _StatItem(
+            icon: Icons.star_rounded,
+            value: '4.9',
+            label: isSwahili ? 'Ukadiriaji' : 'Rating',
+            color: const Color(0xFFF39C12),
+            isDarkMode: isDarkMode,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatItem extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  final bool isDarkMode;
+  const _StatItem({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.color,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: isDarkMode ? Colors.white : const Color(0xFF1A1A2E),
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9,
+              color: isDarkMode ? Colors.white38 : Colors.grey[500],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  final bool isDarkMode;
+  const _Divider({required this.isDarkMode});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 36,
+      color: isDarkMode
+          ? Colors.white.withValues(alpha: 0.08)
+          : Colors.grey.withValues(alpha: 0.15),
+    );
+  }
+}
+
+// ─── Project Card ─────────────────────────────────────────────────────────────
+
+class _ProjectCard extends StatelessWidget {
+  final ProjectShowcase project;
+  final int index;
+  final int total;
+  final bool isDarkMode;
+  final bool isSwahili;
+  final VoidCallback onWhatsApp;
+  final VoidCallback onCall;
+  final VoidCallback onImageTap;
+
+  const _ProjectCard({
+    required this.project,
+    required this.index,
+    required this.total,
+    required this.isDarkMode,
+    required this.isSwahili,
+    required this.onWhatsApp,
+    required this.onCall,
+    required this.onImageTap,
+  });
+
+  Color get _catColor {
+    switch (project.category.toUpperCase()) {
+      case 'COMPLETED':   return const Color(0xFF2ECC71);
+      case 'IN PROGRESS': return const Color(0xFFF39C12);
+      case '3D DESIGN':   return const Color(0xFF3498DB);
+      case 'DESIGN':      return const Color(0xFF9B59B6);
+      default:            return const Color(0xFF1ABC9C);
+    }
+  }
+
+  IconData get _catIcon {
+    switch (project.category.toUpperCase()) {
+      case 'COMPLETED':   return Icons.home_work_rounded;
+      case 'IN PROGRESS': return Icons.construction_rounded;
+      case '3D DESIGN':   return Icons.view_in_ar_rounded;
+      case 'DESIGN':      return Icons.architecture_rounded;
+      default:            return Icons.business_rounded;
+    }
+  }
+
+  String _fmt(String price) {
+    final n = double.tryParse(price.replaceAll(',', '')) ?? 0;
+    if (n >= 1e9) return '${(n / 1e9).toStringAsFixed(1)}B';
+    if (n >= 1e6) return '${(n / 1e6).toStringAsFixed(0)}M';
+    return price;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final catColor = _catColor;
+    final surfaceColor = isDarkMode ? const Color(0xFF1A1A2E) : Colors.white;
+    final displayPrice = isSwahili
+        ? 'TZS ${_fmt(project.priceTZS)}'
+        : 'USD ${_fmt(project.priceUSD)}';
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: catColor.withValues(alpha: isDarkMode ? 0.18 : 0.12),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Column(
+          children: [
+            // ── Accent top border ──────────────────────────────────────
+            Container(
+              height: 3,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [catColor, catColor.withValues(alpha: 0.4)],
+                ),
+              ),
+            ),
+
+            // ── TOP HEADER ────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              color: surfaceColor,
+              child: Row(
+                children: [
+                  // Gradient icon box
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          catColor,
+                          catColor.withValues(alpha: 0.6),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: catColor.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Icon(_catIcon, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          project.title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF1A1A2E),
+                            letterSpacing: -0.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 11,
+                              color: isDarkMode
+                                  ? Colors.white38
+                                  : Colors.grey[400],
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              project.timeAgo,
+                              style: TextStyle(
+                                color: isDarkMode
+                                    ? Colors.white38
+                                    : Colors.grey[500],
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Category pill with gradient
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [catColor, catColor.withValues(alpha: 0.75)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: catColor.withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      project.category,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ),
+                  if (project.isFeatured) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.star_rounded,
+                          color: Color(0xFFFFD700), size: 16),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // ── IMAGE ─────────────────────────────────────────────────
+            Stack(
+              children: [
+                GestureDetector(
+                  onTap: onImageTap,
+                  child: AspectRatio(
+                    aspectRatio: 16 / 10,
+                    child: Image.asset(
+                      project.image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => _PlaceholderImage(
+                        title: project.title,
+                        color: catColor,
+                        icon: _catIcon,
+                      ),
+                    ),
+                  ),
+                ),
+                // Subtle bottom fade connecting image to panel
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 40,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          (isDarkMode
+                                  ? const Color(0xFF141428)
+                                  : const Color(0xFFF4F6F8))
+                              .withValues(alpha: 0.7),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Counter
+                Positioned(
+                  bottom: 8,
+                  right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${index + 1} / $total',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                // Zoom hint
+                Positioned(
+                  bottom: 8,
+                  left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.zoom_in_rounded,
+                            size: 11, color: Colors.white70),
+                        SizedBox(width: 3),
+                        Text('Tap to zoom',
+                            style: TextStyle(
+                                fontSize: 9, color: Colors.white70)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // ── BOTTOM PANEL ──────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+              color: isDarkMode
+                  ? const Color(0xFF141428)
+                  : const Color(0xFFF4F6F8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Price + likes row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Price pill
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF1ABC9C)
+                                  .withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.monetization_on_rounded,
+                                size: 14, color: Colors.white),
+                            const SizedBox(width: 5),
+                            Text(
+                              displayPrice,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // Likes
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE74C3C).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: const Color(0xFFE74C3C)
+                                .withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.favorite_rounded,
+                                color: Color(0xFFE74C3C), size: 14),
+                            const SizedBox(width: 5),
+                            Text(
+                              '${project.likes}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 12,
+                                color: Color(0xFFE74C3C),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Description
+                  Text(
+                    project.description,
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.white60 : Colors.grey[600],
+                      fontSize: 13,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Feature chips — horizontal scroll, no wrapping
+                  SizedBox(
+                    height: 30,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: project.features.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 6),
+                      itemBuilder: (_, i) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.white.withValues(alpha: 0.07)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : const Color(0xFF1ABC9C)
+                                    .withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.check_circle_rounded,
+                                size: 12, color: Color(0xFF1ABC9C)),
+                            const SizedBox(width: 4),
+                            Text(
+                              project.features[i],
+                              style: TextStyle(
+                                color: isDarkMode
+                                    ? Colors.white70
+                                    : const Color(0xFF2C3E50),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: onWhatsApp,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  Color(0xFF25D366),
+                                  Color(0xFF20B558),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF25D366)
+                                      .withValues(alpha: 0.35),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.chat_rounded,
+                                    color: Colors.white, size: 16),
+                                const SizedBox(width: 7),
+                                Text(
+                                  isSwahili ? 'WhatsApp' : 'Inquire',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: onCall,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 13),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF3498DB), Color(0xFF2980B9)],
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF3498DB)
+                                    .withValues(alpha: 0.35),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.phone_rounded,
+                                  color: Colors.white, size: 15),
+                              SizedBox(width: 5),
+                              Text(
+                                'Call',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Placeholder Image ────────────────────────────────────────────────────────
+
+class _PlaceholderImage extends StatelessWidget {
+  final String title;
+  final Color color;
+  final IconData icon;
+  const _PlaceholderImage({
+    required this.title,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFF2C3E50), color.withValues(alpha: 0.7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 60, color: Colors.white.withValues(alpha: 0.4)),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.6),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Stat Badge (CTA section) ─────────────────────────────────────────────────
+
+class _StatBadge extends StatelessWidget {
+  final String value;
+  final String label;
+  const _StatBadge(this.value, this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
@@ -865,7 +1275,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w800,
             ),
           ),
           Text(
@@ -879,59 +1289,21 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       ),
     );
   }
-
-  String _formatPrice(String price) {
-    final numStr = price.replaceAll(',', '');
-    final num = double.tryParse(numStr) ?? 0;
-    if (num >= 1000000000) {
-      return '${(num / 1000000000).toStringAsFixed(1)}B';
-    } else if (num >= 1000000) {
-      return '${(num / 1000000).toStringAsFixed(0)}M';
-    }
-    return price;
-  }
-
-  Color _getCategoryColor(String category) {
-    switch (category) {
-      case 'COMPLETED':
-        return const Color(0xFF2ECC71);
-      case 'IN PROGRESS':
-        return const Color(0xFFF39C12);
-      case '3D DESIGN':
-        return const Color(0xFF3498DB);
-      case 'DESIGN':
-        return const Color(0xFF9B59B6);
-      default:
-        return const Color(0xFF1ABC9C);
-    }
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category) {
-      case 'COMPLETED':
-        return Icons.home_work;
-      case 'IN PROGRESS':
-        return Icons.construction;
-      case '3D DESIGN':
-        return Icons.view_in_ar;
-      case 'DESIGN':
-        return Icons.architecture;
-      default:
-        return Icons.business;
-    }
-  }
 }
+
+// ─── Data Model ───────────────────────────────────────────────────────────────
 
 class ProjectShowcase {
   final String image;
   final String title;
   final String priceTZS;
   final String priceUSD;
-  final String features;
+  final List<String> features;
   final String category;
   final int likes;
   final String timeAgo;
   final String description;
+  final bool isFeatured;
 
   ProjectShowcase({
     required this.image,
@@ -943,5 +1315,6 @@ class ProjectShowcase {
     required this.likes,
     required this.timeAgo,
     required this.description,
+    this.isFeatured = false,
   });
 }

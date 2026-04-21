@@ -14,7 +14,9 @@ use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 
 class ProjectClient extends Authenticatable implements ApprovableModel
 {
-    use HasFactory, HasApiTokens, Approvable;
+    use HasFactory, HasApiTokens, Approvable {
+        Approvable::submit as protected traitSubmit;
+    }
 
     protected $table = 'project_clients';
 
@@ -42,6 +44,18 @@ class ProjectClient extends Authenticatable implements ApprovableModel
     protected static function boot(): void
     {
         parent::boot();
+
+        // Approvable::boot() is suppressed because this model defines boot().
+        // Re-register the created hook so approval_statuses records are created.
+        static::created(static function (ProjectClient $model) {
+            if (!$model->bypassApprovalProcess()) {
+                $model->approvalStatus()->create([
+                    'steps'      => $model->approvalFlowSteps()->map(fn($s) => $s->toApprovalStatusArray()),
+                    'status'     => 'Created',
+                    'creator_id' => \Illuminate\Support\Facades\Auth::id(),
+                ]);
+            }
+        });
 
         static::deleting(function (ProjectClient $client) {
             // Nullify nullable references that should not be deleted
@@ -81,6 +95,59 @@ class ProjectClient extends Authenticatable implements ApprovableModel
      * @param ProcessApproval $approval The approval object
      * @return bool Whether the approval completion logic succeeded
      */
+    /**
+     * Treat deleted flow steps as completed so the approval isn't stuck
+     * when an admin removes a step mid-flow.
+     */
+    public function isApprovalCompleted(array $currentSteps = null): bool
+    {
+        $activeStepIds = $this->approvalFlowSteps()->pluck('id')->toArray();
+
+        $allSteps = $currentSteps
+            ? collect($currentSteps)
+            : collect($this->approvalStatus->steps ?? []);
+
+        // Exclude ghost steps whose flow step has been deleted
+        $registeredSteps = $allSteps
+            ->filter(fn($item) => in_array($item['id'] ?? null, $activeStepIds))
+            ->values();
+
+        if ($registeredSteps->isEmpty()) {
+            return true;
+        }
+
+        foreach ($registeredSteps as $item) {
+            if ($item['process_approval_action'] === null
+                || $item['process_approval_id'] === null
+                || $item['process_approval_action'] === 'RETURNED') {
+                return false;
+            }
+        }
+
+        return $registeredSteps->last()['process_approval_action'] !== 'REJECTED';
+    }
+
+    /**
+     * Allow any authenticated user to submit — not restricted to the creator.
+     */
+    public function canBeSubmittedBy(\Illuminate\Contracts\Auth\Authenticatable $user): bool
+    {
+        return !$this->isSubmitted();
+    }
+
+    /**
+     * Override to bypass the creator-only guard inside the trait's submit().
+     * We reassign creator_id to the current user so the trait check passes.
+     */
+    public function submit(?\Illuminate\Contracts\Auth\Authenticatable $user = null): \RingleSoft\LaravelProcessApproval\Models\ProcessApproval|\Illuminate\Http\RedirectResponse|bool
+    {
+        if ($this->approvalStatus?->creator_id) {
+            $this->approvalStatus()->update(['creator_id' => \Illuminate\Support\Facades\Auth::id()]);
+            $this->unsetRelation('approvalStatus');
+        }
+        return $this->traitSubmit($user);
+    }
+
     public function onApprovalCompleted(ProcessApproval|\RingleSoft\LaravelProcessApproval\Models\ProcessApproval $approval): bool
     {
 

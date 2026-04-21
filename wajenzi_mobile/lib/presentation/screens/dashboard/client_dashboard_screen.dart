@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -22,43 +21,37 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(clientDashboardProvider.notifier).fetchDashboard();
-    });
+    Future.microtask(
+      () => ref.read(clientDashboardProvider.notifier).fetchDashboard(),
+    );
   }
 
-  String _formatCurrency(double amount) {
-    if (amount >= 1e9) {
-      return 'TZS ${(amount / 1e9).toStringAsFixed(1)}B';
-    } else if (amount >= 1e6) {
-      return 'TZS ${(amount / 1e6).toStringAsFixed(1)}M';
-    } else {
-      final formatter = NumberFormat('#,##0', 'en');
-      return 'TZS ${formatter.format(amount)}';
-    }
+  String _compact(double amount) {
+    if (amount >= 1e9) return 'TZS ${(amount / 1e9).toStringAsFixed(1)}B';
+    if (amount >= 1e6) return 'TZS ${(amount / 1e6).toStringAsFixed(1)}M';
+    if (amount >= 1e3) return 'TZS ${(amount / 1e3).toStringAsFixed(0)}K';
+    return 'TZS ${amount.toStringAsFixed(0)}';
   }
 
-  String _formatFullCurrency(double amount) {
-    final formatter = NumberFormat('#,##0', 'en');
-    return 'TZS ${formatter.format(amount)}';
+  String _full(double amount) {
+    return 'TZS ${NumberFormat('#,##0', 'en').format(amount)}';
   }
 
   @override
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(clientDashboardProvider);
-    final authState = ref.watch(authStateProvider);
-    final user = authState.valueOrNull?.user;
+    final user = ref.watch(authStateProvider).valueOrNull?.user;
     final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
-    final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
-
-    final firstName = user?.name.split(' ').first ?? 'User';
+    final scaffoldKey = ref.read(rootScaffoldKeyProvider);
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: cs.surface,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
-          onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
+          onPressed: () => scaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(isSwahili ? 'Dashibodi' : 'Dashboard'),
         actions: [
@@ -73,196 +66,166 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
             ref.read(clientDashboardProvider.notifier).fetchDashboard(),
         child: dashboardState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _buildErrorView(error, isSwahili),
-          data: (data) => _buildDashboardContent(
-            context,
-            data,
-            firstName,
-            isSwahili,
-            isDarkMode,
+          error: (e, _) => _ErrorView(
+            error: e,
+            isSwahili: isSwahili,
+            onRetry: () =>
+                ref.read(clientDashboardProvider.notifier).fetchDashboard(),
+          ),
+          data: (data) => _DashboardBody(
+            data: data,
+            firstName: user?.name.split(' ').first ?? 'User',
+            isSwahili: isSwahili,
+            isDarkMode: isDarkMode,
+            compact: _compact,
+            full: _full,
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildErrorView(Object error, bool isSwahili) {
-    return ListView(
-      padding: const EdgeInsets.all(32),
-      children: [
-        const SizedBox(height: 100),
-        const Icon(Icons.error_outline, size: 64, color: AppColors.error),
-        const SizedBox(height: 16),
-        Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          isSwahili
-              ? 'Hatukuweza kupakia dashibodi yako kwa sasa.'
-              : 'We could not load your dashboard right now.',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: 24),
-        Center(
-          child: ElevatedButton.icon(
-            onPressed: () =>
-                ref.read(clientDashboardProvider.notifier).fetchDashboard(),
-            icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
-          ),
-        ),
-      ],
-    );
-  }
+// ─── Dashboard Body ───────────────────────────────────────────────────────────
 
-  Widget _buildDashboardContent(
-    BuildContext context,
-    ClientDashboardData data,
-    String firstName,
-    bool isSwahili,
-    bool isDarkMode,
-  ) {
+class _DashboardBody extends StatelessWidget {
+  final ClientDashboardData data;
+  final String firstName;
+  final bool isSwahili;
+  final bool isDarkMode;
+  final String Function(double) compact;
+  final String Function(double) full;
+
+  const _DashboardBody({
+    required this.data,
+    required this.firstName,
+    required this.isSwahili,
+    required this.isDarkMode,
+    required this.compact,
+    required this.full,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Welcome header
-          Text(
-            isSwahili ? 'Karibu tena, $firstName' : 'Welcome back, $firstName',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          // ── Hero banner ────────────────────────────────────────────────
+          _HeroBanner(
+            firstName: firstName,
+            isSwahili: isSwahili,
+            isDarkMode: isDarkMode,
           ),
-          const SizedBox(height: 4),
-          Text(
-            isSwahili
-                ? 'Hapa kuna muhtasari wa miradi yako ya ujenzi'
-                : "Here's an overview of your construction projects",
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 20),
 
-          // Stat cards 2x2
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  title: isSwahili ? 'Miradi Yote' : 'Total Projects',
+          // ── Stats row ──────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+            child: Row(
+              children: [
+                _StatTile(
+                  label: isSwahili ? 'Miradi Yote' : 'Total Projects',
                   value: '${data.totalProjects}',
-                  icon: Icons.folder_rounded,
+                  icon: Icons.folder_copy_rounded,
                   color: AppColors.secondary,
                   isDarkMode: isDarkMode,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  title: isSwahili ? 'Miradi Hai' : 'Active Projects',
+                const SizedBox(width: 12),
+                _StatTile(
+                  label: isSwahili ? 'Miradi Hai' : 'Active',
                   value: '${data.activeProjects}',
-                  icon: Icons.engineering_rounded,
+                  icon: Icons.construction_rounded,
                   color: AppColors.success,
                   isDarkMode: isDarkMode,
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _StatCard(
-                  title: isSwahili ? 'Thamani ya Mkataba' : 'Contract Value',
-                  value: _formatCurrency(data.totalContractValue),
-                  icon: Icons.account_balance_rounded,
-                  color: AppColors.info,
-                  isDarkMode: isDarkMode,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _StatCard(
-                  title: isSwahili ? 'Jumla Ankara' : 'Total Invoiced',
-                  value: _formatCurrency(data.totalInvoiced),
+                const SizedBox(width: 12),
+                _StatTile(
+                  label: isSwahili ? 'Ankara' : 'Invoiced',
+                  value: compact(data.totalInvoiced),
                   icon: Icons.receipt_long_rounded,
                   color: AppColors.warning,
                   isDarkMode: isDarkMode,
+                  compact: true,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 20),
 
-          // Your Projects header with count badge
-          Row(
-            children: [
-              Text(
-                isSwahili ? 'Miradi Yako' : 'Your Projects',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${data.projects.length}',
-                  style: const TextStyle(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+          // ── Contract value banner ──────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: _ContractBanner(
+              value: compact(data.totalContractValue),
+              fullValue: full(data.totalContractValue),
+              isSwahili: isSwahili,
+              isDarkMode: isDarkMode,
+            ),
+          ),
+
+          // ── Projects header ────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isSwahili ? 'Miradi Yako' : 'Your Projects',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                      Text(
+                        isSwahili
+                            ? '${data.projects.length} miradi kwa jumla'
+                            : '${data.projects.length} project${data.projects.length == 1 ? '' : 's'} total',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                if (data.projects.isNotEmpty)
+                  TextButton.icon(
+                    onPressed: () => context.go('/projects'),
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                    label: Text(isSwahili ? 'Zote' : 'View all'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
 
-          // Project cards
+          // ── Project list ───────────────────────────────────────────────
           if (data.projects.isEmpty)
-            _GlassContainer(
-              isDarkMode: isDarkMode,
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Center(
-                  child: Text(
-                    isSwahili ? 'Hakuna miradi bado' : 'No projects yet',
-                    style: const TextStyle(color: AppColors.textSecondary),
-                  ),
-                ),
-              ),
-            )
+            _EmptyProjects(isSwahili: isSwahili, isDarkMode: isDarkMode)
           else
             ...data.projects.map(
-              (project) => GestureDetector(
-                onTap: () => context.push(
-                  '/project/${project.id}',
-                  extra: project.projectName,
-                ),
+              (p) => GestureDetector(
+                onTap: () =>
+                    context.push('/project/${p.id}', extra: p.projectName),
                 child: _ProjectCard(
-                  project: project,
+                  project: p,
                   isSwahili: isSwahili,
                   isDarkMode: isDarkMode,
-                  formatCurrency: _formatFullCurrency,
+                  formatCurrency: full,
                 ),
               ),
             ),
 
-          // Bottom spacing for nav bar
           const SizedBox(height: 100),
         ],
       ),
@@ -270,127 +233,190 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
   }
 }
 
-// ─── Glass Container ─────────────────────────────
+// ─── Hero Banner ──────────────────────────────────────────────────────────────
 
-class _GlassContainer extends StatelessWidget {
-  final Widget child;
+class _HeroBanner extends StatelessWidget {
+  final String firstName;
+  final bool isSwahili;
   final bool isDarkMode;
-  final EdgeInsetsGeometry? margin;
 
-  const _GlassContainer({
-    required this.child,
+  const _HeroBanner({
+    required this.firstName,
+    required this.isSwahili,
     required this.isDarkMode,
-    this.margin,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: margin,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDarkMode
-              ? Colors.white.withValues(alpha: 0.15)
-              : Colors.white.withValues(alpha: 0.6),
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF0D3B34), const Color(0xFF0A2A40)]
+              : [const Color(0xFF1ABC9C), const Color(0xFF2980B9)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: Colors.white.withValues(alpha: 0.18),
+                child: Text(
+                  firstName.isNotEmpty ? firstName[0].toUpperCase() : 'U',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isSwahili ? 'Habari, $firstName!' : 'Welcome back,',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.75),
+                        fontSize: 13,
+                      ),
+                    ),
+                    if (!isSwahili)
+                      Text(
+                        firstName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 22,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 12,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      DateFormat('MMM yyyy').format(DateTime.now()),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            isSwahili
+                ? 'Hapa kuna hali ya miradi yako ya ujenzi'
+                : 'Here\'s an overview of your construction projects',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.75),
+              fontSize: 13,
+              height: 1.4,
+            ),
           ),
         ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDarkMode
-                    ? [
-                        Colors.white.withValues(alpha: 0.08),
-                        Colors.white.withValues(alpha: 0.04),
-                      ]
-                    : [
-                        Colors.white.withValues(alpha: 0.75),
-                        Colors.white.withValues(alpha: 0.55),
-                      ],
-              ),
-            ),
-            child: child,
-          ),
-        ),
       ),
     );
   }
 }
 
-// ─── Stat Card ───────────────────────────────────
+// ─── Stat Tile ────────────────────────────────────────────────────────────────
 
-class _StatCard extends StatelessWidget {
-  final String title;
+class _StatTile extends StatelessWidget {
+  final String label;
   final String value;
   final IconData icon;
   final Color color;
   final bool isDarkMode;
+  final bool compact;
 
-  const _StatCard({
-    required this.title,
+  const _StatTile({
+    required this.label,
     required this.value,
     required this.icon,
     required this.color,
     required this.isDarkMode,
+    this.compact = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return _GlassContainer(
-      isDarkMode: isDarkMode,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
+    final cs = Theme.of(context).colorScheme;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: cs.onSurface.withValues(alpha: 0.07),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDarkMode ? 0.15 : 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isDarkMode
-                          ? Colors.white70
-                          : AppColors.textSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, size: 18, color: color),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 16, color: color),
             ),
             const SizedBox(height: 10),
             Text(
               value,
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : AppColors.textPrimary,
+                fontSize: compact ? 13 : 20,
+                fontWeight: FontWeight.w800,
+                color: cs.onSurface,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: cs.onSurface.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w500,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -402,7 +428,95 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ─── Project Card ────────────────────────────────
+// ─── Contract Banner ──────────────────────────────────────────────────────────
+
+class _ContractBanner extends StatelessWidget {
+  final String value;
+  final String fullValue;
+  final bool isSwahili;
+  final bool isDarkMode;
+
+  const _ContractBanner({
+    required this.value,
+    required this.fullValue,
+    required this.isSwahili,
+    required this.isDarkMode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isDarkMode
+              ? [const Color(0xFF1A3A2A), const Color(0xFF122B20)]
+              : [
+                  AppColors.success.withValues(alpha: 0.08),
+                  AppColors.success.withValues(alpha: 0.03),
+                ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.success.withValues(alpha: isDarkMode ? 0.25 : 0.18),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.success.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.account_balance_rounded,
+              size: 22,
+              color: AppColors.success,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isSwahili ? 'Jumla ya Mikataba' : 'Total Contract Value',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: cs.onSurface.withValues(alpha: 0.55),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.success,
+                  ),
+                ),
+                Text(
+                  fullValue,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: cs.onSurface.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Project Card ─────────────────────────────────────────────────────────────
 
 class _ProjectCard extends StatelessWidget {
   final ClientProject project;
@@ -417,40 +531,29 @@ class _ProjectCard extends StatelessWidget {
     required this.formatCurrency,
   });
 
-  Color _statusColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case 'active':
-      case 'in_progress':
+  Color get _accent {
+    switch (project.status?.toUpperCase()) {
+      case 'APPROVED':
         return AppColors.success;
-      case 'completed':
-        return AppColors.info;
-      case 'on_hold':
-      case 'pending':
-        return AppColors.warning;
-      case 'cancelled':
+      case 'COMPLETED':
+        return const Color(0xFF9B59B6);
+      case 'REJECTED':
         return AppColors.error;
+      case 'IN_PROGRESS':
+      case 'SUBMITTED':
+        return AppColors.secondary;
+      case 'PENDING':
+      case 'CREATED':
+        return AppColors.warning;
       default:
         return AppColors.draft;
     }
   }
 
-  String _statusLabel(String? status) {
-    if (status == null) return '';
-    return status
-        .replaceAll('_', ' ')
-        .split(' ')
-        .map((w) {
-          if (w.isEmpty) return w;
-          return '${w[0].toUpperCase()}${w.substring(1)}';
-        })
-        .join(' ');
-  }
-
   String _formatDate(String? date) {
     if (date == null) return '-';
     try {
-      final parsed = DateTime.parse(date);
-      return DateFormat('dd MMM yyyy').format(parsed);
+      return DateFormat('dd MMM yyyy').format(DateTime.parse(date));
     } catch (_) {
       return date;
     }
@@ -458,131 +561,261 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _statusColor(project.status);
+    final cs = Theme.of(context).colorScheme;
+    final accent = _accent;
+    final statusLabel = (project.status ?? '')
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
 
-    return _GlassContainer(
-      isDarkMode: isDarkMode,
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Name + status badge row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.15 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Left accent bar
+              Container(width: 4, color: accent),
+
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        project.projectName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                        ),
-                      ),
-                      if (project.documentNumber != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          project.documentNumber!,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
+                      // Name + status
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  project.projectName,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: cs.onSurface,
+                                  ),
+                                ),
+                                if (project.documentNumber != null)
+                                  Text(
+                                    project.documentNumber!,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: cs.onSurface.withValues(alpha: 0.45),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              statusLabel,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: accent,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Date range
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.date_range_rounded,
+                            size: 13,
+                            color: cs.onSurface.withValues(alpha: 0.4),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            '${_formatDate(project.startDate)} → ${_formatDate(project.expectedEndDate)}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: cs.onSurface.withValues(alpha: 0.55),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Contract value
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.monetization_on_rounded,
+                            size: 14,
+                            color: AppColors.success,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            formatCurrency(project.contractValue),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.success,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Count chips
+                      Row(
+                        children: [
+                          _Chip(
+                            icon: Icons.list_alt_rounded,
+                            label: 'BOQ',
+                            count: project.boqsCount,
+                          ),
+                          const SizedBox(width: 8),
+                          _Chip(
+                            icon: Icons.receipt_rounded,
+                            label: isSwahili ? 'Ankara' : 'Invoices',
+                            count: project.invoicesCount,
+                          ),
+                          const SizedBox(width: 8),
+                          _Chip(
+                            icon: Icons.assignment_rounded,
+                            label: isSwahili ? 'Ripoti' : 'Reports',
+                            count: project.dailyReportsCount,
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _statusLabel(project.status),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: statusColor,
-                    ),
+              ),
+
+              // Chevron
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: Icon(
+                    Icons.chevron_right_rounded,
+                    color: cs.onSurface.withValues(alpha: 0.3),
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final int count;
+  const _Chip({required this.icon, required this.label, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: AppColors.primary),
+          const SizedBox(width: 4),
+          Text(
+            '$count $label',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: cs.brightness == Brightness.dark
+                  ? AppColors.primaryLight
+                  : AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Empty State ──────────────────────────────────────────────────────────────
+
+class _EmptyProjects extends StatelessWidget {
+  final bool isSwahili;
+  final bool isDarkMode;
+  const _EmptyProjects({required this.isSwahili, required this.isDarkMode});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cs.onSurface.withValues(alpha: 0.07)),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.folder_open_rounded,
+              size: 52,
+              color: cs.onSurface.withValues(alpha: 0.25),
             ),
             const SizedBox(height: 12),
-
-            // Date range
-            Row(
-              children: [
-                Icon(
-                  Icons.calendar_today_rounded,
-                  size: 14,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '${_formatDate(project.startDate)} - ${_formatDate(project.expectedEndDate)}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+            Text(
+              isSwahili ? 'Hakuna miradi bado' : 'No projects yet',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: cs.onSurface.withValues(alpha: 0.6),
+              ),
             ),
-            const SizedBox(height: 8),
-
-            // Contract value
-            Row(
-              children: [
-                Icon(
-                  Icons.payments_rounded,
-                  size: 14,
-                  color: AppColors.textSecondary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  formatCurrency(project.contractValue),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Count chips
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _CountChip(
-                  icon: Icons.list_alt_rounded,
-                  label: isSwahili ? 'BOQ' : 'BOQ',
-                  count: project.boqsCount,
-                ),
-                _CountChip(
-                  icon: Icons.receipt_rounded,
-                  label: isSwahili ? 'Ankara' : 'Invoices',
-                  count: project.invoicesCount,
-                ),
-                _CountChip(
-                  icon: Icons.description_rounded,
-                  label: isSwahili ? 'Ripoti' : 'Reports',
-                  count: project.dailyReportsCount,
-                ),
-              ],
+            const SizedBox(height: 4),
+            Text(
+              isSwahili
+                  ? 'Miradi yako itaonekana hapa'
+                  : 'Your projects will appear here',
+              style: TextStyle(
+                fontSize: 13,
+                color: cs.onSurface.withValues(alpha: 0.4),
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -591,41 +824,53 @@ class _ProjectCard extends StatelessWidget {
   }
 }
 
-// ─── Count Chip ──────────────────────────────────
+// ─── Error View ───────────────────────────────────────────────────────────────
 
-class _CountChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int count;
-
-  const _CountChip({
-    required this.icon,
-    required this.label,
-    required this.count,
+class _ErrorView extends StatelessWidget {
+  final Object error;
+  final bool isSwahili;
+  final VoidCallback onRetry;
+  const _ErrorView({
+    required this.error,
+    required this.isSwahili,
+    required this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.primary),
-          const SizedBox(width: 4),
-          Text(
-            '$count $label',
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: AppColors.primary,
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 56, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text(
+              isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              isSwahili
+                  ? 'Hatukuweza kupakia dashibodi yako.'
+                  : 'Could not load your dashboard.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            ),
+          ],
+        ),
       ),
     );
   }
