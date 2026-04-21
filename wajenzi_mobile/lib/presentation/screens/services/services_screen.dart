@@ -14,8 +14,11 @@ class ServicesScreen extends ConsumerStatefulWidget {
 
 class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   // Use global settings from provider
+  AppLanguage get _language => ref.watch(currentLanguageProvider);
   bool get _isDarkMode => ref.watch(isDarkModeProvider);
   bool get _isSwahili => ref.watch(isSwahiliProvider);
+  bool get _isFrench => _language == AppLanguage.french;
+  bool get _isArabic => _language == AppLanguage.arabic;
 
   // Dark mode colors
   Color get _bgColor =>
@@ -27,15 +30,43 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   Color get _textSecondaryColor =>
       _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
 
+  String _tr({
+    required String en,
+    String? sw,
+    String? fr,
+    String? ar,
+  }) {
+    if (_isSwahili) return sw ?? en;
+    if (_isFrench) return fr ?? en;
+    if (_isArabic) return ar ?? en;
+    return en;
+  }
+
+  Widget _languageFlag() {
+    switch (_language) {
+      case AppLanguage.swahili:
+        return const TanzaniaFlag();
+      case AppLanguage.french:
+        return const FranceFlag();
+      case AppLanguage.arabic:
+        return const ArabicLanguageBadge();
+      case AppLanguage.english:
+        return const UKFlag();
+    }
+  }
+
   Future<void> _launchPhone() async {
     final opened = await ExternalLauncherService.callCompany();
     if (!opened && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isSwahili
-                ? 'Imeshindwa kufungua simu'
-                : 'Could not open the phone app',
+            _tr(
+              en: 'Could not open the phone app',
+              sw: 'Imeshindwa kufungua simu',
+              fr: 'Impossible d\'ouvrir l\'application telephone',
+              ar: 'تعذر فتح تطبيق الاتصال',
+            ),
           ),
           backgroundColor: Colors.red,
         ),
@@ -52,9 +83,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isSwahili
-                ? 'Imeshindwa kufungua WhatsApp'
-                : 'Could not open WhatsApp',
+            _tr(
+              en: 'Could not open WhatsApp',
+              sw: 'Imeshindwa kufungua WhatsApp',
+              fr: 'Impossible d\'ouvrir WhatsApp',
+              ar: 'تعذر فتح واتساب',
+            ),
           ),
           backgroundColor: Colors.red,
         ),
@@ -228,12 +262,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       extendBody: true,
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
-        isSwahili: _isSwahili,
+        language: _language,
         onDarkModeToggle: () =>
             ref.read(settingsProvider.notifier).toggleDarkMode(),
         onLanguageToggle: () =>
             ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
+        flagWidget: _languageFlag(),
       ),
       body: CustomScrollView(
         slivers: [
@@ -274,6 +308,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
         selectedIndex: 2, // Services is index 2
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
+        language: _language,
       ),
     );
   }
@@ -338,7 +373,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _isSwahili ? 'Huduma Zetu' : 'Our Services',
+                  _tr(
+                    en: 'Our Services',
+                    sw: 'Huduma Zetu',
+                    fr: 'Nos Services',
+                    ar: 'خدماتنا',
+                  ),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -348,9 +388,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                _isSwahili
-                    ? 'Suluhisho Kamili za Ujenzi'
-                    : 'Complete Construction Solutions',
+                _tr(
+                  en: 'Complete Construction Solutions',
+                  sw: 'Suluhisho Kamili za Ujenzi',
+                  fr: 'Solutions Completes de Construction',
+                  ar: 'حلول البناء المتكاملة',
+                ),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 26,
@@ -359,9 +402,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _isSwahili
-                    ? 'Kutoka wazo hadi ukweli - tunakuza ndoto zako'
-                    : 'From concept to reality - we build your dreams',
+                _tr(
+                  en: 'From concept to reality - we build your dreams',
+                  sw: 'Kutoka wazo hadi ukweli - tunakuza ndoto zako',
+                  fr: 'Du concept a la realite - nous construisons vos reves',
+                  ar: 'من الفكرة إلى الواقع - نبني أحلامك',
+                ),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 14,
@@ -395,7 +441,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isSwahili ? 'Tunachokifanya' : 'What We Do',
+                    _tr(
+                      en: 'What We Do',
+                      sw: 'Tunachokifanya',
+                      fr: 'Ce Que Nous Faisons',
+                      ar: 'ما الذي نقوم به',
+                    ),
                     style: const TextStyle(
                       color: Color(0xFF1ABC9C),
                       fontSize: 12,
@@ -404,7 +455,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                     ),
                   ),
                   Text(
-                    _isSwahili ? 'Huduma Zetu' : 'Our Services',
+                    _tr(
+                      en: 'Our Services',
+                      sw: 'Huduma Zetu',
+                      fr: 'Nos Services',
+                      ar: 'خدماتنا',
+                    ),
                     style: TextStyle(
                       color: _textPrimaryColor,
                       fontSize: 24,
@@ -417,9 +473,16 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            _isSwahili
-                ? 'Tunatoa huduma mbalimbali za ujenzi na usanifu ili kukidhi mahitaji yako yote ya ujenzi.'
-                : 'We offer a wide range of construction and design services to meet all your building needs.',
+            _tr(
+              en:
+                  'We offer a wide range of construction and design services to meet all your building needs.',
+              sw:
+                  'Tunatoa huduma mbalimbali za ujenzi na usanifu ili kukidhi mahitaji yako yote ya ujenzi.',
+              fr:
+                  'Nous proposons une large gamme de services de construction et de conception pour repondre a tous vos besoins.',
+              ar:
+                  'نقدم مجموعة واسعة من خدمات البناء والتصميم لتلبية جميع احتياجاتك.',
+            ),
             style: TextStyle(
               color: _textSecondaryColor,
               fontSize: 14,
@@ -573,7 +636,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        _isSwahili ? 'Jifunze Zaidi' : 'Learn More',
+                        _tr(
+                          en: 'Learn More',
+                          sw: 'Jifunze Zaidi',
+                          fr: 'En Savoir Plus',
+                          ar: 'اعرف المزيد',
+                        ),
                         style: TextStyle(
                           color: service.color,
                           fontSize: 10,
@@ -709,7 +777,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
 
                     // Features
                     Text(
-                      _isSwahili ? 'Kinachojumuishwa:' : 'What\'s Included:',
+                      _tr(
+                        en: 'What\'s Included:',
+                        sw: 'Kinachojumuishwa:',
+                        fr: 'Ce Qui Est Inclus :',
+                        ar: 'ما الذي يتضمنه:',
+                      ),
                       style: TextStyle(
                         color: _textPrimaryColor,
                         fontSize: 16,
@@ -764,7 +837,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                         ),
                       ),
                       child: Text(
-                        _isSwahili ? 'Omba Huduma Hii' : 'Request This Service',
+                        _tr(
+                          en: 'Request This Service',
+                          sw: 'Omba Huduma Hii',
+                          fr: 'Demander Ce Service',
+                          ar: 'اطلب هذه الخدمة',
+                        ),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -830,7 +908,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _isSwahili ? 'Kwa Nini Utuchague?' : 'Why Choose Us?',
+            _tr(
+              en: 'Why Choose Us?',
+              sw: 'Kwa Nini Utuchague?',
+              fr: 'Pourquoi Nous Choisir ?',
+              ar: 'لماذا تختارنا؟',
+            ),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -918,7 +1001,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _isSwahili ? 'Una mradi akilini?' : 'Have a project in mind?',
+            _tr(
+              en: 'Have a project in mind?',
+              sw: 'Una mradi akilini?',
+              fr: 'Vous avez un projet en tete ?',
+              ar: 'هل لديك مشروع في ذهنك؟',
+            ),
             style: TextStyle(
               color: _textPrimaryColor,
               fontSize: 20,
@@ -928,9 +1016,16 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _isSwahili
-                ? 'Wasiliana nasi leo kwa ushauri wa bure na makadirio ya mradi wako.'
-                : 'Contact us today for a free consultation and estimate for your project.',
+            _tr(
+              en:
+                  'Contact us today for a free consultation and estimate for your project.',
+              sw:
+                  'Wasiliana nasi leo kwa ushauri wa bure na makadirio ya mradi wako.',
+              fr:
+                  'Contactez-nous aujourd\'hui pour une consultation gratuite et une estimation de votre projet.',
+              ar:
+                  'تواصل معنا اليوم للحصول على استشارة مجانية وتقدير لمشروعك.',
+            ),
             style: TextStyle(
               color: _textSecondaryColor,
               fontSize: 14,
@@ -945,7 +1040,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _launchPhone,
                   icon: const Icon(Icons.phone_rounded, size: 18),
-                  label: Text(_isSwahili ? 'Piga Simu' : 'Call Us'),
+                  label: Text(
+                    _tr(
+                      en: 'Call',
+                      sw: 'Piga Simu',
+                      fr: 'Appeler',
+                      ar: 'اتصال',
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF1ABC9C),
                     side: const BorderSide(color: Color(0xFF1ABC9C)),
@@ -961,7 +1063,14 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _launchWhatsApp,
                   icon: const Icon(Icons.message_rounded, size: 18),
-                  label: const Text('WhatsApp'),
+                  label: Text(
+                    _tr(
+                      en: 'WhatsApp',
+                      sw: 'WhatsApp',
+                      fr: 'WhatsApp',
+                      ar: 'واتساب',
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF25D366),
                     foregroundColor: Colors.white,

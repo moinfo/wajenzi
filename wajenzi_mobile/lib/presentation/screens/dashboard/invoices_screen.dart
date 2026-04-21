@@ -6,6 +6,21 @@ import '../../../data/datasources/remote/staff_dashboard_api.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/staff_dashboard_provider.dart';
 
+String _invoicesTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 final _invoicesProvider =
     FutureProvider.autoDispose<List<DashboardInvoice>>((ref) async {
   final api = ref.watch(staffDashboardApiProvider);
@@ -19,14 +34,22 @@ class InvoicesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final invoicesAsync = ref.watch(_invoicesProvider);
     final dashboardState = ref.watch(staffDashboardProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     final summary = dashboardState.valueOrNull?.invoicesSummary;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Ankara za Malipo' : 'Invoice Due Dates'),
+        title: Text(
+          _invoicesTr(
+            language,
+            en: 'Invoice Due Dates',
+            sw: 'Ankara za Malipo',
+            fr: 'Echeances des factures',
+            ar: 'مواعيد استحقاق الفواتير',
+          ),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(_invoicesProvider.future),
@@ -34,13 +57,13 @@ class InvoicesScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _ErrorBody(
             error: e,
-            isSwahili: isSwahili,
+            language: language,
             onRetry: () => ref.invalidate(_invoicesProvider),
           ),
           data: (invoices) => _Body(
             invoices: invoices,
             summary: summary,
-            isSwahili: isSwahili,
+            language: language,
             isDarkMode: isDarkMode,
           ),
         ),
@@ -54,13 +77,13 @@ class InvoicesScreen extends ConsumerWidget {
 class _Body extends StatelessWidget {
   final List<DashboardInvoice> invoices;
   final InvoicesSummary? summary;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _Body({
     required this.invoices,
     this.summary,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
@@ -78,7 +101,13 @@ class _Body extends StatelessWidget {
               children: [
                 _StatusChip(
                   count: summary!.overdue,
-                  label: isSwahili ? 'ZILIZOCHELEWA' : 'OVERDUE',
+                  label: _invoicesTr(
+                    language,
+                    en: 'OVERDUE',
+                    sw: 'ZILIZOCHELEWA',
+                    fr: 'EN RETARD',
+                    ar: 'متأخرة',
+                  ),
                   icon: Icons.warning_rounded,
                   color: const Color(0xFFE74C3C),
                   bgColor: const Color(0xFFFDEDED),
@@ -86,7 +115,13 @@ class _Body extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatusChip(
                   count: summary!.dueToday,
-                  label: isSwahili ? 'LEO' : 'DUE TODAY',
+                  label: _invoicesTr(
+                    language,
+                    en: 'DUE TODAY',
+                    sw: 'LEO',
+                    fr: 'AUJOURD\'HUI',
+                    ar: 'اليوم',
+                  ),
                   icon: Icons.adjust_rounded,
                   color: const Color(0xFFE67E22),
                   bgColor: const Color(0xFFFEF5E7),
@@ -94,7 +129,13 @@ class _Body extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatusChip(
                   count: summary!.upcoming,
-                  label: isSwahili ? 'ZINAKUJA' : 'UPCOMING',
+                  label: _invoicesTr(
+                    language,
+                    en: 'UPCOMING',
+                    sw: 'ZINAKUJA',
+                    fr: 'A VENIR',
+                    ar: 'قادمة',
+                  ),
                   icon: Icons.calendar_today_rounded,
                   color: const Color(0xFF2980B9),
                   bgColor: const Color(0xFFEBF5FB),
@@ -102,7 +143,13 @@ class _Body extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatusChip(
                   count: summary!.paidThisMonth,
-                  label: isSwahili ? 'ZIMELIPWA' : 'PAID',
+                  label: _invoicesTr(
+                    language,
+                    en: 'PAID',
+                    sw: 'ZIMELIPWA',
+                    fr: 'PAYEES',
+                    ar: 'مدفوعة',
+                  ),
                   icon: Icons.check_circle_rounded,
                   color: const Color(0xFF27AE60),
                   bgColor: const Color(0xFFEAFAF1),
@@ -122,9 +169,13 @@ class _Body extends StatelessWidget {
                       size: 56, color: Colors.grey[300]),
                   const SizedBox(height: 12),
                   Text(
-                    isSwahili
-                        ? 'Hakuna ankara kwa sasa'
-                        : 'No invoices at the moment',
+                    _invoicesTr(
+                      language,
+                      en: 'No invoices at the moment',
+                      sw: 'Hakuna ankara kwa sasa',
+                      fr: 'Aucune facture pour le moment',
+                      ar: 'لا توجد فواتير حاليا',
+                    ),
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ],
@@ -135,6 +186,7 @@ class _Body extends StatelessWidget {
           ...invoices.map((inv) => _InvoiceCard(
                 invoice: inv,
                 isDarkMode: isDarkMode,
+                language: language,
               )),
 
         const SizedBox(height: 80),
@@ -212,10 +264,12 @@ class _StatusChip extends StatelessWidget {
 class _InvoiceCard extends StatelessWidget {
   final DashboardInvoice invoice;
   final bool isDarkMode;
+  final AppLanguage language;
 
   const _InvoiceCard({
     required this.invoice,
     required this.isDarkMode,
+    required this.language,
   });
 
   Color get _badgeColor {
@@ -241,13 +295,15 @@ class _InvoiceCard extends StatelessWidget {
   /// Returns a status chip label like "101D OVERDUE" or "5D LEFT"
   String get _dueLabel {
     if (invoice.isOverdue && invoice.daysOverdue > 0) {
-      return '${invoice.daysOverdue}D OVERDUE';
+      return '${invoice.daysOverdue}D ${_invoicesTr(language, en: 'OVERDUE', sw: 'IMECHELEWA', fr: 'EN RETARD', ar: 'متأخرة')}';
     }
     if (invoice.dueDate != null) {
       try {
         final due = DateTime.parse(invoice.dueDate!);
         final daysLeft = due.difference(DateTime.now()).inDays;
-        if (daysLeft >= 0) return '${daysLeft}D LEFT';
+        if (daysLeft >= 0) {
+          return '${daysLeft}D ${_invoicesTr(language, en: 'LEFT', sw: 'IMEBAKI', fr: 'RESTANT', ar: 'متبقي')}';
+        }
       } catch (_) {}
     }
     return '';
@@ -437,7 +493,13 @@ class _InvoiceCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            'Partial',
+                            _invoicesTr(
+                              language,
+                              en: 'Partial',
+                              sw: 'Sehemu',
+                              fr: 'Partiel',
+                              ar: 'جزئي',
+                            ),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
@@ -464,12 +526,12 @@ class _InvoiceCard extends StatelessWidget {
 
 class _ErrorBody extends StatelessWidget {
   final Object error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ErrorBody({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -482,15 +544,25 @@ class _ErrorBody extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _invoicesTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un probleme est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
-          isSwahili
-              ? 'Hatukuweza kupakia ankara kwa sasa.'
-              : 'We could not load invoices right now.',
+          _invoicesTr(
+            language,
+            en: 'We could not load invoices right now.',
+            sw: 'Hatukuweza kupakia ankara kwa sasa.',
+            fr: 'Nous n\'avons pas pu charger les factures pour le moment.',
+            ar: 'تعذر تحميل الفواتير حاليا.',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),
@@ -499,7 +571,15 @@ class _ErrorBody extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _invoicesTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Reessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

@@ -29,7 +29,22 @@ final _projectTypeDetailProvider = FutureProvider.autoDispose
       return payload is Map<String, dynamic> ? payload : const {};
     });
 
-String _projectTypeErrorMessage(Object error, bool isSwahili) {
+String _projectTypeTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
+String _projectTypeErrorMessage(Object error, AppLanguage language) {
   if (error is DioException) {
     final data = error.response?.data;
     if (data is Map<String, dynamic>) {
@@ -40,7 +55,13 @@ String _projectTypeErrorMessage(Object error, bool isSwahili) {
     }
   }
 
-  return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
+  return _projectTypeTr(
+    language,
+    en: 'Something went wrong',
+    sw: 'Hitilafu imetokea',
+    fr: 'Un probleme est survenu',
+    ar: 'حدث خطأ ما',
+  );
 }
 
 class ProjectTypesScreen extends ConsumerStatefulWidget {
@@ -55,7 +76,7 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
   Widget build(BuildContext context) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final typesAsync = ref.watch(_projectTypesProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final search = ref.watch(_projectTypesSearchProvider).trim().toLowerCase();
 
@@ -65,14 +86,28 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Aina za Mradi' : 'Project Types'),
+        title: Text(
+          _projectTypeTr(
+            language,
+            en: 'Project Types',
+            sw: 'Aina za Mradi',
+            fr: 'Types de projets',
+            ar: 'أنواع المشاريع',
+          ),
+        ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
         child: FloatingActionButton(
           onPressed: () => _showTypeForm(context),
           child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza' : 'Add',
+          tooltip: _projectTypeTr(
+            language,
+            en: 'Add',
+            sw: 'Ongeza',
+            fr: 'Ajouter',
+            ar: 'إضافة',
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -88,9 +123,13 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
                       ref.read(_projectTypesSearchProvider.notifier).state =
                           value,
                   decoration: InputDecoration(
-                    hintText: isSwahili
-                        ? 'Tafuta aina za mradi...'
-                        : 'Search project types...',
+                    hintText: _projectTypeTr(
+                      language,
+                      en: 'Search project types...',
+                      sw: 'Tafuta aina za mradi...',
+                      fr: 'Rechercher des types de projets...',
+                      ar: 'ابحث عن أنواع المشاريع...',
+                    ),
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: search.isNotEmpty
                         ? IconButton(
@@ -127,7 +166,7 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
               error: (e, _) => SliverFillRemaining(
                 child: _ErrorView(
                   error: e,
-                  isSwahili: isSwahili,
+                  language: language,
                   onRetry: () => ref.invalidate(_projectTypesProvider),
                 ),
               ),
@@ -156,12 +195,20 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
                           const SizedBox(height: 16),
                           Text(
                             allItems.isEmpty
-                                ? (isSwahili
-                                      ? 'Hakuna aina za mradi zilizopatikana'
-                                      : 'No project types found')
-                                : (isSwahili
-                                      ? 'Hakuna matokeo yanayolingana'
-                                      : 'No types match your search'),
+                                ? _projectTypeTr(
+                                    language,
+                                    en: 'No project types found',
+                                    sw: 'Hakuna aina za mradi zilizopatikana',
+                                    fr: 'Aucun type de projet trouve',
+                                    ar: 'لم يتم العثور على أنواع مشاريع',
+                                  )
+                                : _projectTypeTr(
+                                    language,
+                                    en: 'No types match your search',
+                                    sw: 'Hakuna matokeo yanayolingana',
+                                    fr: 'Aucun type ne correspond a votre recherche',
+                                    ar: 'لا توجد أنواع مطابقة لبحثك',
+                                  ),
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -179,7 +226,15 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
                                           .state =
                                       '',
                               icon: const Icon(Icons.arrow_back_rounded),
-                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                              label: Text(
+                                _projectTypeTr(
+                                  language,
+                                  en: 'Back',
+                                  sw: 'Rudi',
+                                  fr: 'Retour',
+                                  ar: 'رجوع',
+                                ),
+                              ),
                             ),
                           ],
                         ],
@@ -194,7 +249,7 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
                     delegate: SliverChildBuilderDelegate((context, index) {
                       return _TypeCard(
                         type: types[index],
-                        isSwahili: isSwahili,
+                        language: language,
                         isDarkMode: isDarkMode,
                         onTap: () => _showTypeDetail(context, types[index]),
                         onEdit: () =>
@@ -236,7 +291,7 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
     BuildContext context,
     Map<String, dynamic> type,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final isDarkMode = ref.read(isDarkModeProvider);
     final typeId = _projectTypeId(type);
 
@@ -245,9 +300,13 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isSwahili
-                  ? 'Aina hii ya mradi ina kitambulisho batili'
-                  : 'This project type has an invalid ID',
+              _projectTypeTr(
+                language,
+                en: 'This project type has an invalid ID',
+                sw: 'Aina hii ya mradi ina kitambulisho batili',
+                fr: 'Ce type de projet a un identifiant invalide',
+                ar: 'هذا النوع من المشاريع يحتوي على معرّف غير صالح',
+              ),
             ),
             backgroundColor: Colors.red,
           ),
@@ -261,15 +320,25 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
         title: Text(
-          isSwahili ? 'Thibitisha Kufuta' : 'Confirm Delete',
+          _projectTypeTr(
+            language,
+            en: 'Confirm Delete',
+            sw: 'Thibitisha Kufuta',
+            fr: 'Confirmer la suppression',
+            ar: 'تأكيد الحذف',
+          ),
           style: TextStyle(
             color: isDarkMode ? Colors.white : AppColors.textPrimary,
           ),
         ),
         content: Text(
-          isSwahili
-              ? 'Je, una uhakika unataka kufuta aina hii ya mradi?'
-              : 'Are you sure you want to delete this project type?',
+          _projectTypeTr(
+            language,
+            en: 'Are you sure you want to delete this project type?',
+            sw: 'Je, una uhakika unataka kufuta aina hii ya mradi?',
+            fr: 'Voulez-vous vraiment supprimer ce type de projet ?',
+            ar: 'هل أنت متأكد أنك تريد حذف هذا النوع من المشاريع؟',
+          ),
           style: TextStyle(
             color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
           ),
@@ -277,12 +346,26 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isSwahili ? 'Cancel' : 'Cancel'),
+            child: Text(
+              _projectTypeTr(
+                language,
+                en: 'Cancel',
+                sw: 'Ghairi',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              isSwahili ? 'Futa' : 'Delete',
+              _projectTypeTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
               style: const TextStyle(color: Colors.red),
             ),
           ),
@@ -298,7 +381,15 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(isSwahili ? 'Aina imefutwa' : 'Type deleted'),
+              content: Text(
+                _projectTypeTr(
+                  language,
+                  en: 'Type deleted',
+                  sw: 'Aina imefutwa',
+                  fr: 'Type supprime',
+                  ar: 'تم حذف النوع',
+                ),
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -307,7 +398,7 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(_projectTypeErrorMessage(e, isSwahili)),
+              content: Text(_projectTypeErrorMessage(e, language)),
               backgroundColor: Colors.red,
             ),
           );
@@ -319,7 +410,7 @@ class _ProjectTypesScreenState extends ConsumerState<ProjectTypesScreen> {
 
 class _TypeCard extends StatelessWidget {
   final Map<String, dynamic> type;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
   final VoidCallback onTap;
   final VoidCallback onEdit;
@@ -327,7 +418,7 @@ class _TypeCard extends StatelessWidget {
 
   const _TypeCard({
     required this.type,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
     required this.onTap,
     required this.onEdit,
@@ -387,12 +478,13 @@ class _TypeCard extends StatelessWidget {
                   ),
                   PopupMenuButton<String>(
                     onSelected: (value) {
-                      if (value == 'view')
+                      if (value == 'view') {
                         onTap();
-                      else if (value == 'edit')
+                      } else if (value == 'edit') {
                         onEdit();
-                      else if (value == 'delete')
+                      } else if (value == 'delete') {
                         onDelete();
+                      }
                     },
                     itemBuilder: (ctx) => [
                       PopupMenuItem(
@@ -401,7 +493,15 @@ class _TypeCard extends StatelessWidget {
                           children: [
                             const Icon(Icons.visibility, size: 20),
                             const SizedBox(width: 8),
-                            Text(isSwahili ? 'Tazama' : 'View'),
+                            Text(
+                              _projectTypeTr(
+                                language,
+                                en: 'View',
+                                sw: 'Tazama',
+                                fr: 'Voir',
+                                ar: 'عرض',
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -411,7 +511,15 @@ class _TypeCard extends StatelessWidget {
                           children: [
                             const Icon(Icons.edit, size: 20),
                             const SizedBox(width: 8),
-                            Text(isSwahili ? 'Hariri' : 'Edit'),
+                            Text(
+                              _projectTypeTr(
+                                language,
+                                en: 'Edit',
+                                sw: 'Hariri',
+                                fr: 'Modifier',
+                                ar: 'تعديل',
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -426,7 +534,13 @@ class _TypeCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              isSwahili ? 'Futa' : 'Delete',
+                              _projectTypeTr(
+                                language,
+                                en: 'Delete',
+                                sw: 'Futa',
+                                fr: 'Supprimer',
+                                ar: 'حذف',
+                              ),
                               style: const TextStyle(color: Colors.red),
                             ),
                           ],
@@ -446,7 +560,7 @@ class _TypeCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '$projectsCount ${isSwahili ? 'miradi' : 'projects'}',
+                    '$projectsCount ${_projectTypeTr(language, en: 'projects', sw: 'miradi', fr: 'projets', ar: 'مشاريع')}',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -472,7 +586,7 @@ class _TypeDetailSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Container(
@@ -501,7 +615,13 @@ class _TypeDetailSheet extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          isSwahili ? 'Maelezo ya Aina' : 'Type Details',
+                          _projectTypeTr(
+                            language,
+                            en: 'Type Details',
+                            sw: 'Maelezo ya Aina',
+                            fr: 'Details du type',
+                            ar: 'تفاصيل النوع',
+                          ),
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -525,17 +645,17 @@ class _TypeDetailSheet extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                 children: [
                   _DetailRow(
-                    label: isSwahili ? 'Jina' : 'Name',
+                    label: _projectTypeTr(language, en: 'Name', sw: 'Jina', fr: 'Nom', ar: 'الاسم'),
                     value: type['name'] as String? ?? '-',
                     dark: isDarkMode,
                   ),
                   _DetailRow(
-                    label: isSwahili ? 'Maelezo' : 'Description',
+                    label: _projectTypeTr(language, en: 'Description', sw: 'Maelezo', fr: 'Description', ar: 'الوصف'),
                     value: type['description'] as String? ?? '-',
                     dark: isDarkMode,
                   ),
                   _DetailRow(
-                    label: isSwahili ? 'Miradi' : 'Projects',
+                    label: _projectTypeTr(language, en: 'Projects', sw: 'Miradi', fr: 'Projets', ar: 'المشاريع'),
                     value: '${type['projects_count'] ?? 0}',
                     dark: isDarkMode,
                   ),
@@ -635,7 +755,7 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Container(
@@ -668,8 +788,20 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
                 const SizedBox(height: 18),
                 Text(
                   _isEditing
-                      ? (isSwahili ? 'Hariri Aina' : 'Edit Type')
-                      : (isSwahili ? 'Aina Mpya' : 'New Type'),
+                      ? _projectTypeTr(
+                          language,
+                          en: 'Edit Type',
+                          sw: 'Hariri Aina',
+                          fr: 'Modifier le type',
+                          ar: 'تعديل النوع',
+                        )
+                      : _projectTypeTr(
+                          language,
+                          en: 'New Type',
+                          sw: 'Aina Mpya',
+                          fr: 'Nouveau type',
+                          ar: 'نوع جديد',
+                        ),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -678,7 +810,7 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  isSwahili ? 'Jina *' : 'Name *',
+                  _projectTypeTr(language, en: 'Name *', sw: 'Jina *', fr: 'Nom *', ar: 'الاسم *'),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -691,7 +823,13 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    hintText: isSwahili ? 'Jina la aina' : 'Type name',
+                    hintText: _projectTypeTr(
+                      language,
+                      en: 'Type name',
+                      sw: 'Jina la aina',
+                      fr: 'Nom du type',
+                      ar: 'اسم النوع',
+                    ),
                     filled: true,
                     fillColor: isDarkMode
                         ? const Color(0xFF2A2A3E)
@@ -703,14 +841,20 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
                   ),
                   validator: (v) {
                     if (v == null || v.isEmpty) {
-                      return isSwahili ? 'Jina yahitajika' : 'Name required';
+                      return _projectTypeTr(
+                        language,
+                        en: 'Name required',
+                        sw: 'Jina yahitajika',
+                        fr: 'Le nom est requis',
+                        ar: 'الاسم مطلوب',
+                      );
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  isSwahili ? 'Maelezo' : 'Description',
+                  _projectTypeTr(language, en: 'Description', sw: 'Maelezo', fr: 'Description', ar: 'الوصف'),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -724,9 +868,13 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
                   controller: _descriptionController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    hintText: isSwahili
-                        ? 'Maelezo (hiari)'
-                        : 'Description (optional)',
+                    hintText: _projectTypeTr(
+                      language,
+                      en: 'Description (optional)',
+                      sw: 'Maelezo (hiari)',
+                      fr: 'Description (optionnelle)',
+                      ar: 'الوصف (اختياري)',
+                    ),
                     filled: true,
                     fillColor: isDarkMode
                         ? const Color(0xFF2A2A3E)
@@ -761,10 +909,20 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
                           )
                         : Text(
                             _isEditing
-                                ? (isSwahili
-                                      ? 'Hifadhi Mabadiliko'
-                                      : 'Save Changes')
-                                : (isSwahili ? 'Unda Aina' : 'Create Type'),
+                                ? _projectTypeTr(
+                                    language,
+                                    en: 'Save Changes',
+                                    sw: 'Hifadhi Mabadiliko',
+                                    fr: 'Enregistrer les modifications',
+                                    ar: 'حفظ التغييرات',
+                                  )
+                                : _projectTypeTr(
+                                    language,
+                                    en: 'Create Type',
+                                    sw: 'Unda Aina',
+                                    fr: 'Creer le type',
+                                    ar: 'إنشاء النوع',
+                                  ),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -803,7 +961,7 @@ class _TypeFormSheetState extends ConsumerState<_TypeFormSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _projectTypeErrorMessage(e, ref.read(isSwahiliProvider)),
+              _projectTypeErrorMessage(e, ref.read(currentLanguageProvider)),
             ),
             backgroundColor: Colors.red,
           ),
@@ -825,12 +983,12 @@ int? _projectTypeId(Map<String, dynamic> type) {
 
 class _ErrorView extends StatelessWidget {
   final Object error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ErrorView({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -844,7 +1002,13 @@ class _ErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _projectTypeTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un probleme est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -859,7 +1023,15 @@ class _ErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _projectTypeTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Reessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

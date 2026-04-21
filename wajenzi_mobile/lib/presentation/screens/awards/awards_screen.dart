@@ -15,8 +15,11 @@ class AwardsScreen extends ConsumerStatefulWidget {
 
 class _AwardsScreenState extends ConsumerState<AwardsScreen> {
   // Use global settings from provider
+  AppLanguage get _language => ref.watch(currentLanguageProvider);
   bool get _isDarkMode => ref.watch(isDarkModeProvider);
   bool get _isSwahili => ref.watch(isSwahiliProvider);
+  bool get _isFrench => _language == AppLanguage.french;
+  bool get _isArabic => _language == AppLanguage.arabic;
 
   // Featured award carousel
   final PageController _featuredController = PageController();
@@ -59,6 +62,31 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
   Color get _textSecondaryColor =>
       _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
 
+  String _tr({
+    required String en,
+    String? sw,
+    String? fr,
+    String? ar,
+  }) {
+    if (_isSwahili) return sw ?? en;
+    if (_isFrench) return fr ?? en;
+    if (_isArabic) return ar ?? en;
+    return en;
+  }
+
+  Widget _languageFlag() {
+    switch (_language) {
+      case AppLanguage.swahili:
+        return const TanzaniaFlag();
+      case AppLanguage.french:
+        return const FranceFlag();
+      case AppLanguage.arabic:
+        return const ArabicLanguageBadge();
+      case AppLanguage.english:
+        return const UKFlag();
+    }
+  }
+
   Future<void> _launchWhatsApp([String? topic]) async {
     final message = _isSwahili
         ? 'Habari! Nahitaji taarifa zaidi kuhusu ${topic ?? "tuzo zenu"}.'
@@ -68,9 +96,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isSwahili
-                ? 'Imeshindwa kufungua WhatsApp'
-                : 'Could not open WhatsApp',
+            _tr(
+              en: 'Could not open WhatsApp',
+              sw: 'Imeshindwa kufungua WhatsApp',
+              fr: 'Impossible d\'ouvrir WhatsApp',
+              ar: 'تعذر فتح واتساب',
+            ),
           ),
           backgroundColor: Colors.red,
         ),
@@ -154,12 +185,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
       extendBody: true,
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
-        isSwahili: _isSwahili,
+        language: _language,
         onDarkModeToggle: () =>
             ref.read(settingsProvider.notifier).toggleDarkMode(),
         onLanguageToggle: () =>
             ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
+        flagWidget: _languageFlag(),
       ),
       body: CustomScrollView(
         slivers: [
@@ -200,6 +231,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
         selectedIndex: 4, // Awards is index 4
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
+        language: _language,
       ),
     );
   }
@@ -270,7 +302,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      _isSwahili ? 'Kutambuliwa' : 'Recognition',
+                      _tr(
+                        en: 'Recognition',
+                        sw: 'Kutambuliwa',
+                        fr: 'Reconnaissance',
+                        ar: 'التقدير',
+                      ),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -282,9 +319,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                _isSwahili
-                    ? 'Tuzo na Kutambuliwa Kwetu'
-                    : 'Our Awards & Recognition',
+                _tr(
+                  en: 'Our Awards & Recognition',
+                  sw: 'Tuzo na Kutambuliwa Kwetu',
+                  fr: 'Nos Prix et Distinctions',
+                  ar: 'جوائزنا وتقديرنا',
+                ),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -295,7 +335,14 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
               Text(
                 _isSwahili
                     ? 'Kutambuliwa kwa kujitolea kwetu kwa ubora, ubunifu, na ubora katika ujenzi'
-                    : 'Recognition of our commitment to quality, innovation, and excellence in construction',
+                    : _tr(
+                        en:
+                            'Recognition of our commitment to quality, innovation, and excellence in construction',
+                        fr:
+                            'Reconnaissance de notre engagement envers la qualite, l\'innovation et l\'excellence dans la construction',
+                        ar:
+                            'تقدير لالتزامنا بالجودة والابتكار والتميز في البناء',
+                      ),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 13,
@@ -331,11 +378,25 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('4', _isSwahili ? 'Tuzo' : 'Awards'),
+          _buildStatItem(
+            '4',
+            _tr(en: 'Awards', sw: 'Tuzo', fr: 'Prix', ar: 'الجوائز'),
+          ),
           _buildStatDivider(),
-          _buildStatItem('4', _isSwahili ? 'Miaka' : 'Years'),
+          _buildStatItem(
+            '4',
+            _tr(en: 'Years', sw: 'Miaka', fr: 'Ans', ar: 'سنوات'),
+          ),
           _buildStatDivider(),
-          _buildStatItem('3', _isSwahili ? 'Mashirika' : 'Organizations'),
+          _buildStatItem(
+            '3',
+            _tr(
+              en: 'Organizations',
+              sw: 'Mashirika',
+              fr: 'Organisations',
+              ar: 'المؤسسات',
+            ),
+          ),
         ],
       ),
     );
@@ -907,11 +968,16 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 12),
-                  // View Details button
+                  // Systematic approach button
                   Row(
                     children: [
                       Text(
-                        _isSwahili ? 'Angalia Maelezo' : 'View Details',
+                        _tr(
+                          en: 'View Systematic Approach',
+                          sw: 'Angalia Mfumo wa Utekelezaji',
+                          fr: 'Voir l\'approche systematique',
+                          ar: 'عرض المنهجية المنظمة',
+                        ),
                         style: TextStyle(
                           color: award.color,
                           fontSize: 12,

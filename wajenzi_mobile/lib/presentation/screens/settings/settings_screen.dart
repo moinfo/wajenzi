@@ -14,9 +14,23 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider).valueOrNull;
     final user = authState?.user;
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final currentLanguage = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
+
+    String tr({
+      required String en,
+      String? sw,
+      String? fr,
+      String? ar,
+    }) {
+      return switch (currentLanguage) {
+        AppLanguage.swahili => sw ?? en,
+        AppLanguage.french => fr ?? en,
+        AppLanguage.arabic => ar ?? en,
+        AppLanguage.english => en,
+      };
+    }
 
     final backgroundColor = isDarkMode
         ? const Color(0xFF0F172A)
@@ -42,7 +56,14 @@ class SettingsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Mipangilio' : 'Settings'),
+        title: Text(
+          tr(
+            en: 'Settings',
+            sw: 'Mipangilio',
+            fr: 'Parametres',
+            ar: 'الإعدادات',
+          ),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
@@ -86,7 +107,12 @@ class SettingsScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isSwahili ? 'Mapendeleo ya Programu' : 'App Preferences',
+                        tr(
+                          en: 'App Preferences',
+                          sw: 'Mapendeleo ya Programu',
+                          fr: 'Preferences de l\'application',
+                          ar: 'تفضيلات التطبيق',
+                        ),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 22,
@@ -95,11 +121,14 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        user?.name?.trim().isNotEmpty == true
+                        (user?.name.trim().isNotEmpty ?? false)
                             ? user!.name
-                            : (isSwahili
-                                  ? 'Dhibiti mwonekano na akaunti yako'
-                                  : 'Manage your account and app experience'),
+                            : tr(
+                                en: 'Manage your account and app experience',
+                                sw: 'Dhibiti mwonekano na akaunti yako',
+                                fr: 'Gerez votre compte et votre experience dans l\'application',
+                                ar: 'أدر حسابك وتجربتك داخل التطبيق',
+                              ),
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 14,
@@ -124,10 +153,18 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _SectionTitle(
-            title: isSwahili ? 'Akaunti' : 'Account',
-            subtitle: isSwahili
-                ? 'Usalama wa akaunti yako'
-                : 'Keep your account secure',
+            title: tr(
+              en: 'Account',
+              sw: 'Akaunti',
+              fr: 'Compte',
+              ar: 'الحساب',
+            ),
+            subtitle: tr(
+              en: 'Keep your account secure',
+              sw: 'Usalama wa akaunti yako',
+              fr: 'Gardez votre compte en securite',
+              ar: 'حافظ على أمان حسابك',
+            ),
             titleColor: titleColor,
             subtitleColor: subtitleColor,
           ),
@@ -140,10 +177,18 @@ class SettingsScreen extends ConsumerWidget {
                 _ActionRow(
                   icon: Icons.lock_outline_rounded,
                   iconColor: AppColors.primary,
-                  title: isSwahili ? 'Badilisha nenosiri' : 'Change password',
-                  subtitle: isSwahili
-                      ? 'Sasisha nenosiri lako la kuingia'
-                      : 'Update your sign-in password',
+                  title: tr(
+                    en: 'Change password',
+                    sw: 'Badilisha nenosiri',
+                    fr: 'Changer le mot de passe',
+                    ar: 'تغيير كلمة المرور',
+                  ),
+                  subtitle: tr(
+                    en: 'Update your sign-in password',
+                    sw: 'Sasisha nenosiri lako la kuingia',
+                    fr: 'Mettez a jour votre mot de passe de connexion',
+                    ar: 'حدّث كلمة مرور تسجيل الدخول',
+                  ),
                   titleColor: titleColor,
                   subtitleColor: subtitleColor,
                   onTap: () => context.push('/change-password'),
@@ -153,10 +198,18 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _SectionTitle(
-            title: isSwahili ? 'Mandhari' : 'Appearance',
-            subtitle: isSwahili
-                ? 'Chagua mwonekano unaokufaa'
-                : 'Choose the look that works best for you',
+            title: tr(
+              en: 'Appearance',
+              sw: 'Mandhari',
+              fr: 'Apparence',
+              ar: 'المظهر',
+            ),
+            subtitle: tr(
+              en: 'Choose the look that works best for you',
+              sw: 'Chagua mwonekano unaokufaa',
+              fr: 'Choisissez l\'apparence qui vous convient le mieux',
+              ar: 'اختر المظهر الأنسب لك',
+            ),
             titleColor: titleColor,
             subtitleColor: subtitleColor,
           ),
@@ -168,7 +221,12 @@ class SettingsScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isSwahili ? 'Mtindo wa programu' : 'App theme',
+                  tr(
+                    en: 'App theme',
+                    sw: 'Mtindo wa programu',
+                    fr: 'Theme de l\'application',
+                    ar: 'سمة التطبيق',
+                  ),
                   style: TextStyle(
                     color: titleColor,
                     fontSize: 16,
@@ -177,9 +235,12 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  isSwahili
-                      ? 'Badili kati ya mwanga na giza kwa usomaji rahisi.'
-                      : 'Switch between light and dark mode for comfortable viewing.',
+                  tr(
+                    en: 'Switch between light and dark mode for comfortable viewing.',
+                    sw: 'Badili kati ya mwanga na giza kwa usomaji rahisi.',
+                    fr: 'Basculez entre le mode clair et sombre pour un affichage confortable.',
+                    ar: 'بدّل بين الوضع الفاتح والداكن لعرض مريح.',
+                  ),
                   style: TextStyle(
                     color: subtitleColor,
                     fontSize: 13,
@@ -191,7 +252,12 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _ChoiceTile(
-                        label: isSwahili ? 'Mwanga' : 'Light',
+                        label: tr(
+                          en: 'Light',
+                          sw: 'Mwanga',
+                          fr: 'Clair',
+                          ar: 'فاتح',
+                        ),
                         icon: Icons.light_mode_rounded,
                         selected: !isDarkMode,
                         onTap: () =>
@@ -205,7 +271,12 @@ class SettingsScreen extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _ChoiceTile(
-                        label: isSwahili ? 'Giza' : 'Dark',
+                        label: tr(
+                          en: 'Dark',
+                          sw: 'Giza',
+                          fr: 'Sombre',
+                          ar: 'داكن',
+                        ),
                         icon: Icons.dark_mode_rounded,
                         selected: isDarkMode,
                         onTap: () =>
@@ -223,10 +294,18 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _SectionTitle(
-            title: isSwahili ? 'Lugha' : 'Language',
-            subtitle: isSwahili
-                ? 'Chagua lugha ya matumizi'
-                : 'Select your preferred language',
+            title: tr(
+              en: 'Language',
+              sw: 'Lugha',
+              fr: 'Langue',
+              ar: 'اللغة',
+            ),
+            subtitle: tr(
+              en: 'Select your preferred language',
+              sw: 'Chagua lugha ya matumizi',
+              fr: 'Choisissez votre langue preferee',
+              ar: 'اختر لغتك المفضلة',
+            ),
             titleColor: titleColor,
             subtitleColor: subtitleColor,
           ),
@@ -238,7 +317,12 @@ class SettingsScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isSwahili ? 'Lugha ya programu' : 'App language',
+                  tr(
+                    en: 'App language',
+                    sw: 'Lugha ya programu',
+                    fr: 'Langue de l\'application',
+                    ar: 'لغة التطبيق',
+                  ),
                   style: TextStyle(
                     color: titleColor,
                     fontSize: 16,
@@ -247,9 +331,16 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  isSwahili
-                      ? 'Chagua Kiingereza au Kiswahili kwa maandishi ya programu.'
-                      : 'Choose English or Swahili for app labels and messages.',
+                  tr(
+                    en:
+                        'Choose your preferred language for app labels and messages.',
+                    sw:
+                        'Chagua lugha unayopendelea kwa maandishi ya programu.',
+                    fr:
+                        'Choisissez votre langue preferee pour les libelles et messages de l\'application.',
+                    ar:
+                        'اختر لغتك المفضلة لعناوين التطبيق ورسائله.',
+                  ),
                   style: TextStyle(
                     color: subtitleColor,
                     fontSize: 13,
@@ -257,29 +348,64 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
                   children: [
-                    Expanded(
+                    SizedBox(
+                      width: 150,
                       child: _ChoiceTile(
                         label: 'English',
                         icon: Icons.language_rounded,
-                        selected: !isSwahili,
-                        onTap: () =>
-                            ref.read(settingsProvider.notifier).setLanguage(false),
+                        selected: currentLanguage == AppLanguage.english,
+                        onTap: () => ref
+                            .read(settingsProvider.notifier)
+                            .setLanguage(AppLanguage.english),
                         surfaceColor: mutedSurfaceColor,
                         borderColor: borderColor,
                         titleColor: titleColor,
                         subtitleColor: subtitleColor,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                    SizedBox(
+                      width: 150,
                       child: _ChoiceTile(
                         label: 'Kiswahili',
                         icon: Icons.translate_rounded,
-                        selected: isSwahili,
-                        onTap: () =>
-                            ref.read(settingsProvider.notifier).setLanguage(true),
+                        selected: currentLanguage == AppLanguage.swahili,
+                        onTap: () => ref
+                            .read(settingsProvider.notifier)
+                            .setLanguage(AppLanguage.swahili),
+                        surfaceColor: mutedSurfaceColor,
+                        borderColor: borderColor,
+                        titleColor: titleColor,
+                        subtitleColor: subtitleColor,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 150,
+                      child: _ChoiceTile(
+                        label: 'Français',
+                        icon: Icons.flag_rounded,
+                        selected: currentLanguage == AppLanguage.french,
+                        onTap: () => ref
+                            .read(settingsProvider.notifier)
+                            .setLanguage(AppLanguage.french),
+                        surfaceColor: mutedSurfaceColor,
+                        borderColor: borderColor,
+                        titleColor: titleColor,
+                        subtitleColor: subtitleColor,
+                      ),
+                    ),
+                    SizedBox(
+                      width: 150,
+                      child: _ChoiceTile(
+                        label: 'العربية',
+                        icon: Icons.translate_rounded,
+                        selected: currentLanguage == AppLanguage.arabic,
+                        onTap: () => ref
+                            .read(settingsProvider.notifier)
+                            .setLanguage(AppLanguage.arabic),
                         surfaceColor: mutedSurfaceColor,
                         borderColor: borderColor,
                         titleColor: titleColor,

@@ -14,8 +14,36 @@ class AboutScreen extends ConsumerStatefulWidget {
 
 class _AboutScreenState extends ConsumerState<AboutScreen> {
   // Use global settings from provider
+  AppLanguage get _language => ref.watch(currentLanguageProvider);
   bool get _isDarkMode => ref.watch(isDarkModeProvider);
   bool get _isSwahili => ref.watch(isSwahiliProvider);
+  bool get _isFrench => _language == AppLanguage.french;
+  bool get _isArabic => _language == AppLanguage.arabic;
+
+  Widget _languageFlag() {
+    switch (_language) {
+      case AppLanguage.swahili:
+        return const TanzaniaFlag();
+      case AppLanguage.french:
+        return const FranceFlag();
+      case AppLanguage.arabic:
+        return const ArabicLanguageBadge();
+      case AppLanguage.english:
+        return const UKFlag();
+    }
+  }
+
+  String _tr({
+    required String en,
+    String? sw,
+    String? fr,
+    String? ar,
+  }) {
+    if (_isSwahili) return sw ?? en;
+    if (_isFrench) return fr ?? en;
+    if (_isArabic) return ar ?? en;
+    return en;
+  }
 
   // Mission/Vision carousel
   final PageController _missionVisionController = PageController();
@@ -81,10 +109,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       extendBody: true,
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
-        isSwahili: _isSwahili,
+        language: _language,
         onDarkModeToggle: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
         onLanguageToggle: () => ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
+        flagWidget: _languageFlag(),
       ),
       body: CustomScrollView(
         slivers: [
@@ -140,9 +168,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isSwahili
-                        ? 'Mabingwa wa Uthabiti na Ubora'
-                        : 'Masters of Consistency and Quality',
+                    _tr(
+                      en: 'Masters of Consistency and Quality',
+                      sw: 'Mabingwa wa Uthabiti na Ubora',
+                      fr: 'Experts en constance et en qualite',
+                      ar: 'رواد الثبات والجودة',
+                    ),
                     style: TextStyle(
                       color: _textSecondaryColor,
                       fontSize: 12,
@@ -160,6 +191,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         selectedIndex: 3, // About is index 3
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
+        language: _language,
       ),
     );
   }
@@ -221,7 +253,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _isSwahili ? 'Ilianzishwa 2012' : 'Founded in 2012',
+                  _tr(
+                    en: 'Founded in 2012',
+                    sw: 'Ilianzishwa 2012',
+                    fr: 'Fondee en 2012',
+                    ar: 'تأسست عام 2012',
+                  ),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -231,7 +268,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                _isSwahili ? 'Historia Yetu' : 'Our Story',
+                _tr(
+                  en: 'Our Story',
+                  sw: 'Historia Yetu',
+                  fr: 'Notre Histoire',
+                  ar: 'قصتنا',
+                ),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 32,
@@ -240,9 +282,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                _isSwahili
-                    ? 'Kujenga Ndoto, Kuunda Uhalisia'
-                    : 'Building Dreams, Creating Reality',
+                _tr(
+                  en: 'Building Dreams, Creating Reality',
+                  sw: 'Kujenga Ndoto, Kuunda Uhalisia',
+                  fr: 'Construire les reves, creer la realite',
+                  ar: 'نبني الأحلام ونصنع الواقع',
+                ),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 16,
@@ -287,9 +332,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    _isSwahili
-                        ? 'Mkandarasi Bora wa Nyumba 2024 - CCIT'
-                        : 'Outstanding Residential Contractor 2024 - CCIT',
+                    _tr(
+                      en: 'Outstanding Residential Contractor 2024 - CCIT',
+                      sw: 'Mkandarasi Bora wa Nyumba 2024 - CCIT',
+                      fr: 'Entrepreneur residentiel exceptionnel 2024 - CCIT',
+                      ar: 'أفضل مقاول سكني 2024 - CCIT',
+                    ),
                     style: const TextStyle(
                       color: Color(0xFFD4AF37),
                       fontSize: 12,
@@ -303,9 +351,16 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           const SizedBox(height: 20),
           // Story paragraphs
           _buildParagraph(
-            _isSwahili
-                ? 'Wajenzi Professional Co. Ltd inajulikana kama mojawapo ya makampuni yanayoongoza ya ujenzi Afrika Mashariki. Ilianzishwa mwaka 2012 na Mhandisi Eliya N Kishaluli na kusajiliwa rasmi kama kampuni yenye kikomo mwaka 2020, tumekua kuwa kampuni ya ujenzi yenye tuzo.'
-                : 'Wajenzi Professional Co. Ltd is recognized as one of the leading construction companies in East Africa. Founded in 2012 by Engineer Eliya N Kishaluli and officially registered as a company limited in 2020, we have steadily grown to become an award-winning construction firm.',
+            _tr(
+              en:
+                  'Wajenzi Professional Co. Ltd is recognized as one of the leading construction companies in East Africa. Founded in 2012 by Engineer Eliya N Kishaluli and officially registered as a company limited in 2020, we have steadily grown to become an award-winning construction firm.',
+              sw:
+                  'Wajenzi Professional Co. Ltd inajulikana kama mojawapo ya makampuni yanayoongoza ya ujenzi Afrika Mashariki. Ilianzishwa mwaka 2012 na Mhandisi Eliya N Kishaluli na kusajiliwa rasmi kama kampuni yenye kikomo mwaka 2020, tumekua kuwa kampuni ya ujenzi yenye tuzo.',
+              fr:
+                  'Wajenzi Professional Co. Ltd est reconnue comme l\'une des principales entreprises de construction en Afrique de l\'Est. Fondee en 2012 par l\'ingenieur Eliya N Kishaluli et officiellement enregistree comme societe en 2020, elle est devenue une entreprise de construction primee.',
+              ar:
+                  'تُعرف شركة Wajenzi Professional Co. Ltd بأنها واحدة من الشركات الرائدة في مجال البناء في شرق أفريقيا. تأسست عام 2012 على يد المهندس Eliya N Kishaluli وسُجلت رسميًا كشركة محدودة عام 2020، ونمت لتصبح شركة إنشاءات حائزة على جوائز.',
+            ),
           ),
           const SizedBox(height: 16),
           _buildParagraph(
@@ -315,9 +370,16 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ),
           const SizedBox(height: 16),
           _buildParagraph(
-            _isSwahili
-                ? 'Jina la kampuni yetu "Wajenzi," ambalo linamaanisha "Builders" kwa Kiingereza, linaonyesha mizizi yetu ya ndani katika utamaduni wa hapa na dhamira yetu ya kujenga si tu majengo, bali pia mahusiano na jamii.'
-                : 'Our company name "Wajenzi," which means "Builders" in Swahili, reflects our deep roots in the local culture and our commitment to building not just structures, but also relationships and communities.',
+            _tr(
+              en:
+                  'Our company name "Wajenzi," which means "Builders" in Swahili, reflects our deep roots in the local culture and our commitment to building not just structures, but also relationships and communities.',
+              sw:
+                  'Jina la kampuni yetu "Wajenzi," ambalo linamaanisha "Builders" kwa Kiingereza, linaonyesha mizizi yetu ya ndani katika utamaduni wa hapa na dhamira yetu ya kujenga si tu majengo, bali pia mahusiano na jamii.',
+              fr:
+                  'Le nom de notre entreprise, "Wajenzi", qui signifie "constructeurs" en swahili, reflete nos racines profondes dans la culture locale et notre engagement a construire non seulement des structures, mais aussi des relations et des communautes.',
+              ar:
+                  'اسم شركتنا "Wajenzi" الذي يعني "البناؤون" باللغة السواحيلية يعكس جذورنا العميقة في الثقافة المحلية والتزامنا ببناء ليس فقط المنشآت بل أيضًا العلاقات والمجتمعات.',
+            ),
           ),
         ],
       ),
@@ -357,11 +419,33 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('120', '+', _isSwahili ? 'Miradi' : 'Projects'),
+          _buildStatItem(
+            '120',
+            '+',
+            _tr(en: 'Projects', sw: 'Miradi', fr: 'Projets', ar: 'المشاريع'),
+          ),
           _buildStatDivider(),
-          _buildStatItem('50', '+', _isSwahili ? 'Timu' : 'Team Members'),
+          _buildStatItem(
+            '50',
+            '+',
+            _tr(
+              en: 'Team Members',
+              sw: 'Timu',
+              fr: 'Equipe',
+              ar: 'أعضاء الفريق',
+            ),
+          ),
           _buildStatDivider(),
-          _buildStatItem('12', '', _isSwahili ? 'Miaka' : 'Years Experience'),
+          _buildStatItem(
+            '12',
+            '',
+            _tr(
+              en: 'Years Experience',
+              sw: 'Miaka',
+              fr: 'Ans d\'experience',
+              ar: 'سنوات الخبرة',
+            ),
+          ),
         ],
       ),
     );
@@ -421,7 +505,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     final missionVisionData = [
       {
         'icon': Icons.flag_rounded,
-        'title': _isSwahili ? 'Dhamira Yetu' : 'Our Mission',
+        'title': _tr(
+          en: 'Our Mission',
+          sw: 'Dhamira Yetu',
+          fr: 'Notre Mission',
+          ar: 'مهمتنا',
+        ),
         'content': _isSwahili
             ? 'Kutoa suluhisho la ujenzi na usanifu bora, la bei nafuu, na endelevu ambalo linazidi matarajio ya wateja huku tukidumisha viwango vya juu vya uaminifu, taaluma, na uwajibikaji wa mazingira.'
             : 'To deliver affordable, sustainable, and high-quality construction and architectural solutions that exceed client expectations while maintaining the highest standards of integrity, professionalism, and environmental responsibility.',
@@ -432,7 +521,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       },
       {
         'icon': Icons.visibility_rounded,
-        'title': _isSwahili ? 'Maono Yetu' : 'Our Vision',
+        'title': _tr(
+          en: 'Our Vision',
+          sw: 'Maono Yetu',
+          fr: 'Notre Vision',
+          ar: 'رؤيتنا',
+        ),
         'content': _isSwahili
             ? 'Kuwa mtoa huduma wa kimataifa anayeongoza wa huduma za ujenzi na usanifu za ubunifu, zinazotambuliwa kwa ubora, uendelevu, na athari za mabadiliko katika mazingira yaliyojengwa.'
             : 'To become a leading global provider of innovative construction and design services, recognized for excellence, sustainability, and transformative impact on the built environment.',
@@ -1088,7 +1182,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               ),
               const SizedBox(width: 16),
               Text(
-                _isSwahili ? 'Wasiliana Nasi' : 'Contact Us',
+                _tr(
+                  en: 'Contact Us',
+                  sw: 'Wasiliana Nasi',
+                  fr: 'Contactez-nous',
+                  ar: 'اتصل بنا',
+                ),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -1102,7 +1201,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           // Address
           _buildContactItem(
             icon: Icons.location_on_rounded,
-            title: _isSwahili ? 'Anwani' : 'Address',
+            title: _tr(
+              en: 'Address',
+              sw: 'Anwani',
+              fr: 'Adresse',
+              ar: 'العنوان',
+            ),
             content: 'Ground-Floor (07), PSSSF Commercial Complex, Dar es Salaam',
           ),
           const SizedBox(height: 16),
@@ -1110,7 +1214,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           // Phone
           _buildContactItem(
             icon: Icons.phone_rounded,
-            title: _isSwahili ? 'Simu' : 'Phone',
+            title: _tr(en: 'Phone', sw: 'Simu', fr: 'Telephone', ar: 'الهاتف'),
             content: '+255 793 444 400',
           ),
           const SizedBox(height: 16),
@@ -1118,7 +1222,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           // Email
           _buildContactItem(
             icon: Icons.email_rounded,
-            title: _isSwahili ? 'Barua Pepe' : 'Email',
+            title: _tr(
+              en: 'Email',
+              sw: 'Barua Pepe',
+              fr: 'E-mail',
+              ar: 'البريد الإلكتروني',
+            ),
             content: 'info@wajenziprofessional.co.tz',
           ),
           const SizedBox(height: 16),
@@ -1126,7 +1235,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           // Hours
           _buildContactItem(
             icon: Icons.access_time_rounded,
-            title: _isSwahili ? 'Saa za Kazi' : 'Working Hours',
+            title: _tr(
+              en: 'Working Hours',
+              sw: 'Saa za Kazi',
+              fr: 'Heures d\'ouverture',
+              ar: 'ساعات العمل',
+            ),
             content: _isSwahili
                 ? 'Jumatatu - Ijumaa: 8:00 AM - 6:00 PM'
                 : 'Mon - Fri: 8:00 AM - 6:00 PM',

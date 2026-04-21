@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class AppConfig {
-  static const String appName = 'Wajenzi';
+  static const String appName = 'Wajenzi Professionals';
   static const String appVersion = '1.0.0';
   static const String _defaultPortalBaseUrl = 'https://wajenziprosystem.co.tz';
   static const String _apiPath = '/api/v1';

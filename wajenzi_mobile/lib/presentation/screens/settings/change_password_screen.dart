@@ -5,6 +5,21 @@ import '../../../core/config/theme_config.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 
+String _passwordTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
@@ -45,12 +60,20 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
     if (!mounted) return;
 
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
 
     if (error == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isSwahili ? 'Nenosiri limebadilishwa' : 'Password changed successfully'),
+          content: Text(
+            _passwordTr(
+              language,
+              en: 'Password changed successfully',
+              sw: 'Nenosiri limebadilishwa',
+              fr: 'Mot de passe modifie avec succes',
+              ar: 'تم تغيير كلمة المرور بنجاح',
+            ),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -64,11 +87,19 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Badilisha Nenosiri' : 'Change Password'),
+        title: Text(
+          _passwordTr(
+            language,
+            en: 'Change Password',
+            sw: 'Badilisha Nenosiri',
+            fr: 'Changer le mot de passe',
+            ar: 'تغيير كلمة المرور',
+          ),
+        ),
         leading: context.canPop()
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_rounded),
@@ -98,9 +129,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             const SizedBox(height: 8),
             Center(
               child: Text(
-                isSwahili
-                    ? 'Weka nenosiri lako la sasa na nenosiri jipya'
-                    : 'Enter your current password and a new password',
+                _passwordTr(
+                  language,
+                  en: 'Enter your current password and a new password',
+                  sw: 'Weka nenosiri lako la sasa na nenosiri jipya',
+                  fr: 'Saisissez votre mot de passe actuel et un nouveau mot de passe',
+                  ar: 'أدخل كلمة المرور الحالية وكلمة مرور جديدة',
+                ),
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                 textAlign: TextAlign.center,
               ),
@@ -111,7 +146,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               controller: _currentPasswordController,
               obscureText: _obscureCurrent,
               decoration: InputDecoration(
-                labelText: isSwahili ? 'Nenosiri la Sasa' : 'Current Password',
+                labelText: _passwordTr(
+                  language,
+                  en: 'Current Password',
+                  sw: 'Nenosiri la Sasa',
+                  fr: 'Mot de passe actuel',
+                  ar: 'كلمة المرور الحالية',
+                ),
                 prefixIcon: const Icon(Icons.lock_outline),
                 suffixIcon: IconButton(
                   icon: Icon(_obscureCurrent ? Icons.visibility_off : Icons.visibility),
@@ -120,7 +161,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
               validator: (v) => v == null || v.isEmpty
-                  ? (isSwahili ? 'Nenosiri la sasa linahitajika' : 'Current password is required')
+                  ? _passwordTr(
+                      language,
+                      en: 'Current password is required',
+                      sw: 'Nenosiri la sasa linahitajika',
+                      fr: 'Le mot de passe actuel est requis',
+                      ar: 'كلمة المرور الحالية مطلوبة',
+                    )
                   : null,
             ),
             const SizedBox(height: 16),
@@ -129,7 +176,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               controller: _newPasswordController,
               obscureText: _obscureNew,
               decoration: InputDecoration(
-                labelText: isSwahili ? 'Nenosiri Jipya' : 'New Password',
+                labelText: _passwordTr(
+                  language,
+                  en: 'New Password',
+                  sw: 'Nenosiri Jipya',
+                  fr: 'Nouveau mot de passe',
+                  ar: 'كلمة المرور الجديدة',
+                ),
                 prefixIcon: const Icon(Icons.lock_reset),
                 suffixIcon: IconButton(
                   icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility),
@@ -139,10 +192,22 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) {
-                  return isSwahili ? 'Nenosiri jipya linahitajika' : 'New password is required';
+                  return _passwordTr(
+                    language,
+                    en: 'New password is required',
+                    sw: 'Nenosiri jipya linahitajika',
+                    fr: 'Le nouveau mot de passe est requis',
+                    ar: 'كلمة المرور الجديدة مطلوبة',
+                  );
                 }
                 if (v.length < 8) {
-                  return isSwahili ? 'Nenosiri lazima liwe angalau herufi 8' : 'Password must be at least 8 characters';
+                  return _passwordTr(
+                    language,
+                    en: 'Password must be at least 8 characters',
+                    sw: 'Nenosiri lazima liwe angalau herufi 8',
+                    fr: 'Le mot de passe doit comporter au moins 8 caracteres',
+                    ar: 'يجب أن تكون كلمة المرور 8 أحرف على الأقل',
+                  );
                 }
                 return null;
               },
@@ -153,7 +218,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               controller: _confirmPasswordController,
               obscureText: _obscureConfirm,
               decoration: InputDecoration(
-                labelText: isSwahili ? 'Thibitisha Nenosiri Jipya' : 'Confirm New Password',
+                labelText: _passwordTr(
+                  language,
+                  en: 'Confirm New Password',
+                  sw: 'Thibitisha Nenosiri Jipya',
+                  fr: 'Confirmer le nouveau mot de passe',
+                  ar: 'تأكيد كلمة المرور الجديدة',
+                ),
                 prefixIcon: const Icon(Icons.lock_reset),
                 suffixIcon: IconButton(
                   icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
@@ -163,10 +234,22 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) {
-                  return isSwahili ? 'Tafadhali thibitisha nenosiri' : 'Please confirm your password';
+                  return _passwordTr(
+                    language,
+                    en: 'Please confirm your password',
+                    sw: 'Tafadhali thibitisha nenosiri',
+                    fr: 'Veuillez confirmer votre mot de passe',
+                    ar: 'يرجى تأكيد كلمة المرور',
+                  );
                 }
                 if (v != _newPasswordController.text) {
-                  return isSwahili ? 'Nenosiri hazilingani' : 'Passwords do not match';
+                  return _passwordTr(
+                    language,
+                    en: 'Passwords do not match',
+                    sw: 'Nenosiri hazilingani',
+                    fr: 'Les mots de passe ne correspondent pas',
+                    ar: 'كلمتا المرور غير متطابقتين',
+                  );
                 }
                 return null;
               },
@@ -189,8 +272,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
-                    : Text(
-                        isSwahili ? 'Badilisha Nenosiri' : 'Change Password',
+                  : Text(
+                        _passwordTr(
+                          language,
+                          en: 'Change Password',
+                          sw: 'Badilisha Nenosiri',
+                          fr: 'Changer le mot de passe',
+                          ar: 'تغيير كلمة المرور',
+                        ),
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                       ),
               ),

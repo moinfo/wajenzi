@@ -6,6 +6,21 @@ import '../../../data/datasources/remote/staff_dashboard_api.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/staff_dashboard_provider.dart';
 
+String _activitiesTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 /// Provider that fetches the activities list from the API.
 final _activitiesProvider =
     FutureProvider.autoDispose<List<DashboardActivity>>((ref) async {
@@ -20,7 +35,7 @@ class ActivitiesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activitiesAsync = ref.watch(_activitiesProvider);
     final dashboardState = ref.watch(staffDashboardProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     // Summary counts from cached dashboard data
@@ -28,7 +43,15 @@ class ActivitiesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Shughuli za Mradi' : 'Project Activities'),
+        title: Text(
+          _activitiesTr(
+            language,
+            en: 'Project Activities',
+            sw: 'Shughuli za Mradi',
+            fr: 'Activites du projet',
+            ar: 'أنشطة المشروع',
+          ),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(_activitiesProvider.future),
@@ -36,13 +59,13 @@ class ActivitiesScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _ErrorBody(
             error: e,
-            isSwahili: isSwahili,
+            language: language,
             onRetry: () => ref.invalidate(_activitiesProvider),
           ),
           data: (activities) => _Body(
             activities: activities,
             summary: summary,
-            isSwahili: isSwahili,
+            language: language,
             isDarkMode: isDarkMode,
           ),
         ),
@@ -56,13 +79,13 @@ class ActivitiesScreen extends ConsumerWidget {
 class _Body extends StatelessWidget {
   final List<DashboardActivity> activities;
   final ActivitiesSummary? summary;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _Body({
     required this.activities,
     this.summary,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
@@ -80,7 +103,13 @@ class _Body extends StatelessWidget {
               children: [
                 _StatusChip(
                   count: summary!.overdue,
-                  label: isSwahili ? 'ZILIZOCHELEWA' : 'OVERDUE',
+                  label: _activitiesTr(
+                    language,
+                    en: 'OVERDUE',
+                    sw: 'ZILIZOCHELEWA',
+                    fr: 'EN RETARD',
+                    ar: 'متأخرة',
+                  ),
                   icon: Icons.warning_rounded,
                   color: const Color(0xFFE74C3C),
                   bgColor: const Color(0xFFFDEDED),
@@ -88,7 +117,13 @@ class _Body extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatusChip(
                   count: summary!.dueToday,
-                  label: isSwahili ? 'LEO' : 'DUE TODAY',
+                  label: _activitiesTr(
+                    language,
+                    en: 'DUE TODAY',
+                    sw: 'LEO',
+                    fr: 'AUJOURD\'HUI',
+                    ar: 'اليوم',
+                  ),
                   icon: Icons.adjust_rounded,
                   color: const Color(0xFFE67E22),
                   bgColor: const Color(0xFFFEF5E7),
@@ -96,7 +131,13 @@ class _Body extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatusChip(
                   count: summary!.pending,
-                  label: isSwahili ? 'ZINASUBIRI' : 'PENDING',
+                  label: _activitiesTr(
+                    language,
+                    en: 'PENDING',
+                    sw: 'ZINASUBIRI',
+                    fr: 'EN ATTENTE',
+                    ar: 'معلقة',
+                  ),
                   icon: Icons.calendar_today_rounded,
                   color: const Color(0xFF27AE60),
                   bgColor: const Color(0xFFEAFAF1),
@@ -104,7 +145,13 @@ class _Body extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatusChip(
                   count: summary!.inProgress,
-                  label: isSwahili ? 'ZINAENDELEA' : 'IN PROGRESS',
+                  label: _activitiesTr(
+                    language,
+                    en: 'IN PROGRESS',
+                    sw: 'ZINAENDELEA',
+                    fr: 'EN COURS',
+                    ar: 'قيد التنفيذ',
+                  ),
                   icon: Icons.sync_rounded,
                   color: const Color(0xFF2980B9),
                   bgColor: const Color(0xFFEBF5FB),
@@ -124,9 +171,13 @@ class _Body extends StatelessWidget {
                       size: 56, color: Colors.grey[300]),
                   const SizedBox(height: 12),
                   Text(
-                    isSwahili
-                        ? 'Hakuna shughuli kwa sasa'
-                        : 'No activities at the moment',
+                    _activitiesTr(
+                      language,
+                      en: 'No activities at the moment',
+                      sw: 'Hakuna shughuli kwa sasa',
+                      fr: 'Aucune activite pour le moment',
+                      ar: 'لا توجد أنشطة حاليا',
+                    ),
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ],
@@ -137,6 +188,7 @@ class _Body extends StatelessWidget {
           ...activities.map((a) => _ActivityCard(
                 activity: a,
                 isDarkMode: isDarkMode,
+                language: language,
               )),
 
         const SizedBox(height: 80),
@@ -214,10 +266,12 @@ class _StatusChip extends StatelessWidget {
 class _ActivityCard extends StatelessWidget {
   final DashboardActivity activity;
   final bool isDarkMode;
+  final AppLanguage language;
 
   const _ActivityCard({
     required this.activity,
     required this.isDarkMode,
+    required this.language,
   });
 
   Color get _statusColor {
@@ -246,17 +300,39 @@ class _ActivityCard extends StatelessWidget {
   }
 
   String get _statusLabel {
-    if (activity.isOverdue) return 'Overdue';
-    switch (activity.status) {
-      case 'in_progress':
-        return 'In Progress';
-      case 'completed':
-        return 'Completed';
-      case 'pending':
-        return 'Pending';
-      default:
-        return activity.status ?? '';
+    if (activity.isOverdue) {
+      return _activitiesTr(
+        language,
+        en: 'Overdue',
+        sw: 'Imechelewa',
+        fr: 'En retard',
+        ar: 'متأخرة',
+      );
     }
+    return switch (activity.status) {
+      'in_progress' => _activitiesTr(
+        language,
+        en: 'In Progress',
+        sw: 'Inaendelea',
+        fr: 'En cours',
+        ar: 'قيد التنفيذ',
+      ),
+      'completed' => _activitiesTr(
+        language,
+        en: 'Completed',
+        sw: 'Imekamilika',
+        fr: 'Termine',
+        ar: 'مكتمل',
+      ),
+      'pending' => _activitiesTr(
+        language,
+        en: 'Pending',
+        sw: 'Inasubiri',
+        fr: 'En attente',
+        ar: 'معلق',
+      ),
+      _ => activity.status ?? '',
+    };
   }
 
   @override
@@ -457,12 +533,12 @@ class _ActivityCard extends StatelessWidget {
 
 class _ErrorBody extends StatelessWidget {
   final Object error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ErrorBody({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -475,15 +551,25 @@ class _ErrorBody extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _activitiesTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un probleme est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
-          isSwahili
-              ? 'Hatukuweza kupakia shughuli kwa sasa.'
-              : 'We could not load activities right now.',
+          _activitiesTr(
+            language,
+            en: 'We could not load activities right now.',
+            sw: 'Hatukuweza kupakia shughuli kwa sasa.',
+            fr: 'Nous n\'avons pas pu charger les activites pour le moment.',
+            ar: 'تعذر تحميل الأنشطة حاليا.',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),
@@ -492,7 +578,15 @@ class _ErrorBody extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _activitiesTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Reessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

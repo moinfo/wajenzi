@@ -5,6 +5,7 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ExpenseFilter {
   final DateTime? startDate;
@@ -75,6 +76,21 @@ final expenseFilterProvider = StateProvider.autoDispose<ExpenseFilter>((ref) {
 final projectExpensesModeProvider = StateProvider.autoDispose<bool>((ref) {
   return false;
 });
+
+String _expenseTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
 
 final _expensesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
@@ -183,8 +199,10 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
   Widget build(BuildContext context) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final expensesAsync = ref.watch(_expensesProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
+    final isSwahili = language == AppLanguage.swahili;
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final appLocalizations = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -193,22 +211,22 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(
-          isSwahili
-              ? (widget.projectExpensesMode ? 'Matumizi za Mradi' : 'Matumizi')
-              : (widget.projectExpensesMode ? 'Project Expenses' : 'Expenses'),
+          widget.projectExpensesMode
+              ? appLocalizations.expensesProjectExpenses
+              : appLocalizations.expensesTitle,
         ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
         child: FloatingActionButton(
           onPressed: () => _showExpenseForm(context),
-          tooltip: isSwahili ? 'Ongeza' : 'Add Expense',
+          tooltip: appLocalizations.expensesAddExpense,
           child: const Icon(Icons.add_rounded),
         ),
       ),
       body: Column(
         children: [
-          _ExpenseStatsSection(isSwahili: isSwahili, isDarkMode: isDarkMode),
+          _ExpenseStatsSection(language: language, isDarkMode: isDarkMode),
           if (widget.projectExpensesMode)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -216,12 +234,12 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                 alignment: Alignment.centerLeft,
                 child: Chip(
                   label: Text(
-                    isSwahili ? 'Matumizi za Mradi' : 'Project Expenses',
+                    appLocalizations.expensesProjectExpenses,
                     style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   backgroundColor: isDarkMode
                       ? Colors.white10
-                      : Colors.grey.withOpacity(0.18),
+                      : Colors.grey.withValues(alpha: 0.18),
                 ),
               ),
             ),
@@ -230,7 +248,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: isSwahili ? 'Tafuta...' : 'Search...',
+                hintText: appLocalizations.expensesSearchExpenses,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -268,7 +286,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => _ExpenseErrorView(
                   error: error,
-                  isSwahili: isSwahili,
+                  language: language,
                   onRetry: () => ref.invalidate(_expensesProvider),
                 ),
                 data: (payload) {
@@ -316,9 +334,13 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                           searchQuery.isEmpty
                               ? (isSwahili
                                     ? 'Hakuna gharama zilizopatikana'
+                                    : language == AppLanguage.french
+                                    ? 'Aucune depense trouvee'
                                     : 'No costs found')
                               : (isSwahili
                                     ? 'Hakuna matokeo ya utafutaji'
+                                    : language == AppLanguage.french
+                                    ? 'Aucun resultat de recherche'
                                     : 'No search results'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -331,9 +353,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                         ElevatedButton.icon(
                           onPressed: () => _showExpenseForm(context),
                           icon: const Icon(Icons.add),
-                          label: Text(
-                            isSwahili ? 'Ongeza Gharama' : 'Add Cost',
-                          ),
+                          label: Text(appLocalizations.expensesAddExpense),
                         ),
                       ],
                     );
@@ -344,14 +364,16 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
                     padding: const EdgeInsets.all(16),
                     itemCount: expenses.length + 1,
                     itemBuilder: (context, index) {
-                      if (index == expenses.length)
+                      if (index == expenses.length) {
                         return const SizedBox(height: 90);
+                      }
                       final expense = expenses[index];
                       return _ExpenseCard(
                         expense: expense,
-                        isSwahili: isSwahili,
+                        appLocalizations: appLocalizations,
                         isDarkMode: isDarkMode,
                         isProjectExpenses: widget.projectExpensesMode,
+                        language: language,
                         onEdit: () =>
                             _showExpenseForm(context, expense: expense),
                         onDelete: () => _deleteExpense(context, ref, expense),
@@ -372,7 +394,10 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => _FilterSheet(parentRef: ref),
+      builder: (ctx) => _FilterSheet(
+        parentRef: ref,
+        appLocalizations: AppLocalizations.of(context)!,
+      ),
     );
   }
 
@@ -395,7 +420,7 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
     WidgetRef ref,
     Map<String, dynamic> expense,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final isDarkMode = ref.read(isDarkModeProvider);
 
     final confirm = await showDialog<bool>(
@@ -403,15 +428,25 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
         title: Text(
-          isSwahili ? 'Thibitisha Kufuta' : 'Confirm Delete',
+          _expenseTr(
+            language,
+            en: 'Confirm Delete',
+            sw: 'Thibitisha Kufuta',
+            fr: 'Confirmer la suppression',
+            ar: 'تأكيد الحذف',
+          ),
           style: TextStyle(
             color: isDarkMode ? Colors.white : AppColors.textPrimary,
           ),
         ),
         content: Text(
-          isSwahili
-              ? 'Je, una uhakika unataka kufuta gharama hii?'
-              : 'Are you sure you want to delete this cost?',
+          _expenseTr(
+            language,
+            en: 'Are you sure you want to delete this cost?',
+            sw: 'Je, una uhakika unataka kufuta gharama hii?',
+            fr: 'Voulez-vous vraiment supprimer cette depense ?',
+            ar: 'هل أنت متأكد أنك تريد حذف هذه التكلفة؟',
+          ),
           style: TextStyle(
             color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
           ),
@@ -419,12 +454,26 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isSwahili ? 'Cancel' : 'Cancel'),
+            child: Text(
+              _expenseTr(
+                language,
+                en: 'Cancel',
+                sw: 'Ghairi',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              isSwahili ? 'Futa' : 'Delete',
+              _expenseTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
               style: const TextStyle(color: Colors.red),
             ),
           ),
@@ -444,7 +493,15 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(isSwahili ? 'Gharama imefutwa' : 'Cost deleted'),
+              content: Text(
+                _expenseTr(
+                  language,
+                  en: 'Cost deleted',
+                  sw: 'Gharama imefutwa',
+                  fr: 'Depense supprimee',
+                  ar: 'تم حذف التكلفة',
+                ),
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -461,11 +518,11 @@ class _ExpenseListScreenState extends ConsumerState<ExpenseListScreen> {
 }
 
 class _ExpenseStatsSection extends ConsumerWidget {
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _ExpenseStatsSection({
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
@@ -475,7 +532,7 @@ class _ExpenseStatsSection extends ConsumerWidget {
 
     return expensesAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (payload) {
         final totalAmount = payload['total_amount'] as double? ?? 0;
         final recordsCount = payload['records_count'] as int? ?? 0;
@@ -499,7 +556,13 @@ class _ExpenseStatsSection extends ConsumerWidget {
               SizedBox(
                 width: 150,
                 child: _StatCard(
-                  title: isSwahili ? 'Rekodi' : 'Records',
+                  title: _expenseTr(
+                    language,
+                    en: 'Records',
+                    sw: 'Rekodi',
+                    fr: 'Enregistrements',
+                    ar: 'السجلات',
+                  ),
                   value: '$recordsCount',
                   icon: Icons.receipt,
                   color: const Color(0xFF3498DB),
@@ -509,7 +572,13 @@ class _ExpenseStatsSection extends ConsumerWidget {
               SizedBox(
                 width: 150,
                 child: _StatCard(
-                  title: isSwahili ? 'Jumla (TZS)' : 'Total (TZS)',
+                  title: _expenseTr(
+                    language,
+                    en: 'Total (TZS)',
+                    sw: 'Jumla (TZS)',
+                    fr: 'Total (TZS)',
+                    ar: 'الإجمالي (TZS)',
+                  ),
                   value: _formatAmount(totalAmount),
                   icon: Icons.attach_money,
                   color: const Color(0xFF27AE60),
@@ -519,7 +588,13 @@ class _ExpenseStatsSection extends ConsumerWidget {
               SizedBox(
                 width: 150,
                 child: _StatCard(
-                  title: isSwahili ? 'Kategoria' : 'Categories',
+                  title: _expenseTr(
+                    language,
+                    en: 'Categories',
+                    sw: 'Kategoria',
+                    fr: 'Categories',
+                    ar: 'الفئات',
+                  ),
                   value: '$categoriesCount',
                   icon: Icons.category,
                   color: const Color(0xFF9B59B6),
@@ -591,12 +666,13 @@ class _StatCard extends StatelessWidget {
 
 class _FilterSheet extends ConsumerWidget {
   final WidgetRef parentRef;
+  final AppLocalizations appLocalizations;
 
-  const _FilterSheet({required this.parentRef});
+  const _FilterSheet({required this.parentRef, required this.appLocalizations});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final isProjectExpenses = ref.watch(projectExpensesModeProvider);
     final filter = ref.watch(expenseFilterProvider);
@@ -629,7 +705,7 @@ class _FilterSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 18),
               Text(
-                isSwahili ? 'Chuja Gharama' : 'Filter Costs',
+                appLocalizations.commonFilter,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -638,7 +714,7 @@ class _FilterSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                isSwahili ? 'Kategoria' : 'Category',
+                appLocalizations.expensesExpenseCategory,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -659,9 +735,17 @@ class _FilterSheet extends ConsumerWidget {
                     padding: EdgeInsets.all(16),
                     child: CircularProgressIndicator(),
                   ),
-                  error: (_, __) => Padding(
+                  error: (_, _) => Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Text(isSwahili ? 'Imeshindikana' : 'Failed'),
+                    child: Text(
+                      _expenseTr(
+                        language,
+                        en: 'Failed',
+                        sw: 'Imeshindikana',
+                        fr: 'Echec',
+                        ar: 'فشل',
+                      ),
+                    ),
                   ),
                   data: (refs) {
                     final categories = (refs['categories'] as List? ?? const [])
@@ -670,7 +754,13 @@ class _FilterSheet extends ConsumerWidget {
                       child: DropdownButton<int?>(
                         value: filter.categoryId,
                         hint: Text(
-                          isSwahili ? 'All Categories' : 'All Categories',
+                          _expenseTr(
+                            language,
+                            en: 'All Categories',
+                            sw: 'Kategoria Zote',
+                            fr: 'Toutes les categories',
+                            ar: 'كل الفئات',
+                          ),
                         ),
                         isExpanded: true,
                         dropdownColor: isDarkMode
@@ -680,7 +770,13 @@ class _FilterSheet extends ConsumerWidget {
                           DropdownMenuItem(
                             value: null,
                             child: Text(
-                              isSwahili ? 'All Categories' : 'All Categories',
+                              _expenseTr(
+                                language,
+                                en: 'All Categories',
+                                sw: 'Kategoria Zote',
+                                fr: 'Toutes les categories',
+                                ar: 'كل الفئات',
+                              ),
                             ),
                           ),
                           ...categories.map(
@@ -705,7 +801,7 @@ class _FilterSheet extends ConsumerWidget {
               if (!isProjectExpenses) ...[
                 const SizedBox(height: 16),
                 Text(
-                  isSwahili ? 'Sub Category' : 'Sub Category',
+                  appLocalizations.expensesExpenseSubCategory,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -728,9 +824,17 @@ class _FilterSheet extends ConsumerWidget {
                       padding: EdgeInsets.all(16),
                       child: CircularProgressIndicator(),
                     ),
-                    error: (_, __) => Padding(
+                    error: (_, _) => Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text(isSwahili ? 'Imeshindikana' : 'Failed'),
+                      child: Text(
+                        _expenseTr(
+                          language,
+                          en: 'Failed',
+                          sw: 'Imeshindikana',
+                          fr: 'Echec',
+                          ar: 'فشل',
+                        ),
+                      ),
                     ),
                     data: (refs) {
                       final subCategories =
@@ -747,9 +851,13 @@ class _FilterSheet extends ConsumerWidget {
                         child: DropdownButton<int?>(
                           value: filter.subCategoryId,
                           hint: Text(
-                            isSwahili
-                                ? 'All Sub Categories'
-                                : 'All Sub Categories',
+                            _expenseTr(
+                              language,
+                              en: 'All Sub Categories',
+                              sw: 'Kategoria Ndogo Zote',
+                              fr: 'Toutes les sous-categories',
+                              ar: 'كل الفئات الفرعية',
+                            ),
                           ),
                           isExpanded: true,
                           dropdownColor: isDarkMode
@@ -759,9 +867,13 @@ class _FilterSheet extends ConsumerWidget {
                             DropdownMenuItem(
                               value: null,
                               child: Text(
-                                isSwahili
-                                    ? 'All Sub Categories'
-                                    : 'All Sub Categories',
+                                _expenseTr(
+                                  language,
+                                  en: 'All Sub Categories',
+                                  sw: 'Kategoria Ndogo Zote',
+                                  fr: 'Toutes les sous-categories',
+                                  ar: 'كل الفئات الفرعية',
+                                ),
                               ),
                             ),
                             ...subCategories.map(
@@ -798,7 +910,7 @@ class _FilterSheet extends ConsumerWidget {
                     ),
                   ),
                   child: Text(
-                    isSwahili ? 'Omba' : 'Apply Filters',
+                    appLocalizations.expensesApplyFilters,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -880,13 +992,7 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
             _amountController.text = _toDouble(e['amount']).toString();
             _remarksController.text = e['remarks'] as String? ?? '';
 
-            // Debug: Log the original project_id
-            print('DEBUG: Original expense project_id: ${e['project_id']}');
-
             _selectedProjectId = e['project_id'] as int?;
-
-            // Debug: Log the selected project_id
-            print('DEBUG: Selected _selectedProjectId: $_selectedProjectId');
 
             if (widget.projectExpensesMode) {
               _selectedCategoryId =
@@ -921,7 +1027,8 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
+    final isSwahili = language == AppLanguage.swahili;
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Container(
@@ -961,8 +1068,20 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                       const SizedBox(height: 18),
                       Text(
                         _isEditing
-                            ? (isSwahili ? 'Hariri Expense' : 'Edit Expense')
-                            : (isSwahili ? 'Expense Mpya' : 'New Expense'),
+                            ? _expenseTr(
+                                language,
+                                en: 'Edit Expense',
+                                sw: 'Hariri Expense',
+                                fr: 'Modifier la depense',
+                                ar: 'تعديل المصروف',
+                              )
+                            : _expenseTr(
+                                language,
+                                en: 'New Expense',
+                                sw: 'Expense Mpya',
+                                fr: 'Nouvelle depense',
+                                ar: 'مصروف جديد',
+                              ),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -973,7 +1092,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        isSwahili ? 'Mradi *' : 'Project *',
+                        _expenseTr(
+                          language,
+                          en: 'Project *',
+                          sw: 'Mradi *',
+                          fr: 'Projet *',
+                          ar: 'المشروع *',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -995,7 +1120,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                           child: DropdownButton<int?>(
                             value: _selectedProjectId,
                             hint: Text(
-                              isSwahili ? 'Chagua Mradi' : 'Select Project',
+                              _expenseTr(
+                                language,
+                                en: 'Select Project',
+                                sw: 'Chagua Mradi',
+                                fr: 'Selectionner un projet',
+                                ar: 'اختر المشروع',
+                              ),
                             ),
                             isExpanded: true,
                             dropdownColor: isDarkMode
@@ -1019,7 +1150,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        isSwahili ? 'Maelezo *' : 'Description *',
+                        _expenseTr(
+                          language,
+                          en: 'Description *',
+                          sw: 'Maelezo *',
+                          fr: 'Description *',
+                          ar: 'الوصف *',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1034,6 +1171,8 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                         decoration: InputDecoration(
                           hintText: isSwahili
                               ? 'Maelezo ya gharama'
+                              : language == AppLanguage.french
+                              ? 'Description de la depense'
                               : 'Cost description',
                           filled: true,
                           fillColor: isDarkMode
@@ -1047,6 +1186,8 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                         validator: (v) => v == null || v.isEmpty
                             ? (isSwahili
                                   ? 'Maelezo yahitajika'
+                                  : language == AppLanguage.french
+                                  ? 'La description est requise'
                                   : 'Description required')
                             : null,
                       ),
@@ -1060,6 +1201,8 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                                 Text(
                                   isSwahili
                                       ? 'Kiasi (TZS) *'
+                                      : language == AppLanguage.french
+                                      ? 'Montant (TZS) *'
                                       : 'Amount (TZS) *',
                                   style: TextStyle(
                                     fontSize: 14,
@@ -1088,14 +1231,20 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                                     ),
                                   ),
                                   validator: (v) {
-                                    if (v == null || v.isEmpty)
+                                    if (v == null || v.isEmpty) {
                                       return isSwahili
                                           ? 'Kiasi yahitajika'
+                                          : language == AppLanguage.french
+                                          ? 'Le montant est requis'
                                           : 'Amount required';
-                                    if (double.tryParse(v) == null)
+                                    }
+                                    if (double.tryParse(v) == null) {
                                       return isSwahili
                                           ? 'Kiasi batili'
+                                          : language == AppLanguage.french
+                                          ? 'Invalide'
                                           : 'Invalid';
+                                    }
                                     return null;
                                   },
                                 ),
@@ -1108,7 +1257,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isSwahili ? 'Tarehe *' : 'Date *',
+                                  _expenseTr(
+                                    language,
+                                    en: 'Date *',
+                                    sw: 'Tarehe *',
+                                    fr: 'Date *',
+                                    ar: 'التاريخ *',
+                                  ),
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -1163,13 +1318,21 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        isSwahili
-                            ? (widget.projectExpensesMode
-                                  ? 'Category *'
-                                  : 'Expense Sub Category *')
-                            : (widget.projectExpensesMode
-                                  ? 'Category *'
-                                  : 'Expense Sub Category *'),
+                        widget.projectExpensesMode
+                            ? _expenseTr(
+                                language,
+                                en: 'Category *',
+                                sw: 'Category *',
+                                fr: 'Categorie *',
+                                ar: 'الفئة *',
+                              )
+                            : _expenseTr(
+                                language,
+                                en: 'Expense Sub Category *',
+                                sw: 'Expense Sub Category *',
+                                fr: 'Sous-categorie de depense *',
+                                ar: 'الفئة الفرعية للمصروف *',
+                              ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1193,13 +1356,21 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                                 ? _selectedCategoryId
                                 : _selectedSubCategoryId,
                             hint: Text(
-                              isSwahili
-                                  ? (widget.projectExpensesMode
-                                        ? 'Chagua Category'
-                                        : 'Chagua sub category')
-                                  : (widget.projectExpensesMode
-                                        ? 'Select Category'
-                                        : 'Select sub category'),
+                              widget.projectExpensesMode
+                                  ? _expenseTr(
+                                      language,
+                                      en: 'Select Category',
+                                      sw: 'Chagua Category',
+                                      fr: 'Selectionner une categorie',
+                                      ar: 'اختر الفئة',
+                                    )
+                                  : _expenseTr(
+                                      language,
+                                      en: 'Select sub category',
+                                      sw: 'Chagua sub category',
+                                      fr: 'Selectionner une sous-categorie',
+                                      ar: 'اختر الفئة الفرعية',
+                                    ),
                             ),
                             isExpanded: true,
                             dropdownColor: isDarkMode
@@ -1235,7 +1406,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                       if (!widget.projectExpensesMode &&
                           _selectedSubCategoryId != null) ...[
                         Text(
-                          isSwahili ? 'Category' : 'Category',
+                          _expenseTr(
+                            language,
+                            en: 'Category',
+                            sw: 'Category',
+                            fr: 'Categorie',
+                            ar: 'الفئة',
+                          ),
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -1288,12 +1465,20 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
                                 )
                               : Text(
                                   _isEditing
-                                      ? (isSwahili
-                                            ? 'Hifadhi Mabadiliko'
-                                            : 'Save Changes')
-                                      : (isSwahili
-                                            ? 'Unda Expense'
-                                            : 'Create Expense'),
+                                      ? _expenseTr(
+                                          language,
+                                          en: 'Save Changes',
+                                          sw: 'Hifadhi Mabadiliko',
+                                          fr: 'Enregistrer les modifications',
+                                          ar: 'حفظ التغييرات',
+                                        )
+                                      : _expenseTr(
+                                          language,
+                                          en: 'Create Expense',
+                                          sw: 'Unda Expense',
+                                          fr: 'Creer une depense',
+                                          ar: 'إنشاء مصروف',
+                                        ),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -1323,17 +1508,18 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Debug: Log the current state
-    print(
-      'DEBUG: _submit - _isEditing: $_isEditing, _selectedProjectId: $_selectedProjectId',
-    );
-
     // For edit mode, project_id is not required if it wasn't changed
     if (!_isEditing && _selectedProjectId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            ref.read(isSwahiliProvider) ? 'Chagua mradi' : 'Select a project',
+            _expenseTr(
+              ref.read(currentLanguageProvider),
+              en: 'Select a project',
+              sw: 'Chagua mradi',
+              fr: 'Selectionnez un projet',
+              ar: 'اختر مشروعا',
+            ),
           ),
           backgroundColor: Colors.red,
         ),
@@ -1345,9 +1531,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              ref.read(isSwahiliProvider)
-                  ? 'Chagua category'
-                  : 'Select a category',
+              _expenseTr(
+                ref.read(currentLanguageProvider),
+                en: 'Select a category',
+                sw: 'Chagua category',
+                fr: 'Selectionnez une categorie',
+                ar: 'اختر فئة',
+              ),
             ),
             backgroundColor: Colors.red,
           ),
@@ -1359,9 +1549,13 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              ref.read(isSwahiliProvider)
-                  ? 'Chagua sub category'
-                  : 'Select a sub category',
+              _expenseTr(
+                ref.read(currentLanguageProvider),
+                en: 'Select a sub category',
+                sw: 'Chagua sub category',
+                fr: 'Selectionnez une sous-categorie',
+                ar: 'اختر فئة فرعية',
+              ),
             ),
             backgroundColor: Colors.red,
           ),
@@ -1403,14 +1597,19 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
           data: data,
         );
       }
-      if (mounted) Navigator.pop(context, true);
+      if (mounted) {
+        Navigator.pop(context, true);
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
+      }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
 
@@ -1433,17 +1632,19 @@ class _ExpenseFormSheetState extends ConsumerState<_ExpenseFormSheet> {
 
 class _ExpenseCard extends StatelessWidget {
   final Map<String, dynamic> expense;
-  final bool isSwahili;
+  final AppLocalizations appLocalizations;
   final bool isDarkMode;
   final bool isProjectExpenses;
+  final AppLanguage language;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _ExpenseCard({
     required this.expense,
-    required this.isSwahili,
+    required this.appLocalizations,
     required this.isDarkMode,
     required this.isProjectExpenses,
+    required this.language,
     required this.onEdit,
     required this.onDelete,
   });
@@ -1518,7 +1719,7 @@ class _ExpenseCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  _StatusBadge(status: status, isSwahili: isSwahili),
+                  _StatusBadge(status: status),
                 ],
               ),
               const SizedBox(height: 12),
@@ -1578,7 +1779,15 @@ class _ExpenseCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: onEdit,
                     icon: const Icon(Icons.edit, size: 16),
-                    label: Text(isSwahili ? 'Hariri' : 'Edit'),
+                    label: Text(
+                      _expenseTr(
+                        language,
+                        en: 'Edit',
+                        sw: 'Hariri',
+                        fr: 'Modifier',
+                        ar: 'تعديل',
+                      ),
+                    ),
                     style: TextButton.styleFrom(
                       foregroundColor: const Color(0xFF1ABC9C),
                     ),
@@ -1587,7 +1796,15 @@ class _ExpenseCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: onDelete,
                     icon: const Icon(Icons.delete, size: 16),
-                    label: Text(isSwahili ? 'Futa' : 'Delete'),
+                    label: Text(
+                      _expenseTr(
+                        language,
+                        en: 'Delete',
+                        sw: 'Futa',
+                        fr: 'Supprimer',
+                        ar: 'حذف',
+                      ),
+                    ),
                     style: TextButton.styleFrom(foregroundColor: Colors.red),
                   ),
                 ],
@@ -1647,39 +1864,51 @@ class _ExpenseCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               _DetailRow(
-                label: isSwahili ? 'Sub Category' : 'Sub Category',
+                label: appLocalizations.expensesExpenseSubCategory,
                 value: subCategory,
                 isDarkMode: isDarkMode,
               ),
               _DetailRow(
-                label: isSwahili ? 'Kategoria' : 'Category',
+                label: appLocalizations.expensesExpenseCategory,
                 value: category,
                 isDarkMode: isDarkMode,
               ),
               _DetailRow(
-                label: isSwahili ? 'Kiasi' : 'Amount',
+                label: appLocalizations.expensesExpenseAmount,
                 value:
                     'TZS ${NumberFormat('#,##0.00', 'en_US').format(_toDouble(expense['amount']))}',
                 isDarkMode: isDarkMode,
               ),
               _DetailRow(
-                label: isSwahili ? 'Tarehe' : 'Date',
+                label: appLocalizations.expensesExpenseDate,
                 value: _formatDate(expense['expense_date'] as String?),
                 isDarkMode: isDarkMode,
               ),
               _DetailRow(
-                label: isSwahili ? 'Hali' : 'Status',
+                label: appLocalizations.expensesExpenseStatus,
                 value: (expense['status'] as String? ?? '-').toUpperCase(),
                 isDarkMode: isDarkMode,
               ),
               _DetailRow(
-                label: isSwahili ? 'Document No' : 'Document No',
+                label: _expenseTr(
+                  language,
+                  en: 'Document No',
+                  sw: 'Document No',
+                  fr: 'Numero de document',
+                  ar: 'رقم المستند',
+                ),
                 value: documentNumber,
                 isDarkMode: isDarkMode,
               ),
               if (receiptUrl != null && receiptUrl.isNotEmpty)
                 _DetailRow(
-                  label: isSwahili ? 'Receipt' : 'Receipt',
+                  label: _expenseTr(
+                    language,
+                    en: 'Receipt',
+                    sw: 'Receipt',
+                    fr: 'Recu',
+                    ar: 'الإيصال',
+                  ),
                   value: receiptUrl,
                   isDarkMode: isDarkMode,
                 ),
@@ -1693,12 +1922,12 @@ class _ExpenseCard extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   final String status;
-  final bool isSwahili;
 
-  const _StatusBadge({required this.status, required this.isSwahili});
+  const _StatusBadge({required this.status});
 
   @override
   Widget build(BuildContext context) {
+    final appLocalizations = AppLocalizations.of(context)!;
     final color =
         {
           'approved': const Color(0xFF27AE60),
@@ -1713,16 +1942,16 @@ class _StatusBadge extends StatelessWidget {
         : const Color(0xFF95A5A6);
     final label =
         {
-          'approved': isSwahili ? 'IMEIDHINISHWA' : 'APPROVED',
-          'pending': isSwahili ? 'INASUBIRI' : 'PENDING',
-          'rejected': isSwahili ? 'IMEKATALIWA' : 'REJECTED',
+          'approved': appLocalizations.expensesStatusApproved,
+          'pending': appLocalizations.expensesStatusPending,
+          'rejected': appLocalizations.expensesStatusRejected,
         }.containsKey(status)
         ? {
-            'approved': isSwahili ? 'IMEIDHINISHWA' : 'APPROVED',
-            'pending': isSwahili ? 'INASUBIRI' : 'PENDING',
-            'rejected': isSwahili ? 'IMEKATALIWA' : 'REJECTED',
+            'approved': appLocalizations.expensesStatusApproved,
+            'pending': appLocalizations.expensesStatusPending,
+            'rejected': appLocalizations.expensesStatusRejected,
           }[status]
-        : (isSwahili ? 'RASIMU' : 'DRAFT');
+        : appLocalizations.expensesStatusDraft;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1791,12 +2020,12 @@ class _DetailRow extends StatelessWidget {
 
 class _ExpenseErrorView extends StatelessWidget {
   final Object error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ExpenseErrorView({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -1810,7 +2039,13 @@ class _ExpenseErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _expenseTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un probleme est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -1825,7 +2060,15 @@ class _ExpenseErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _expenseTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Reessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

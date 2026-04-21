@@ -1479,7 +1479,22 @@ class MainDrawer extends ConsumerWidget {
     final profileImageUrl = AppConfig.resolvePortalMediaUrl(user?.profileUrl);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final isSwahili = ref.watch(isSwahiliProvider);
+    final currentLanguage = ref.watch(currentLanguageProvider);
     final menusAsync = isClient ? null : ref.watch(_drawerMenusProvider);
+
+    String tr({
+      required String en,
+      String? sw,
+      String? fr,
+      String? ar,
+    }) {
+      return switch (currentLanguage) {
+        AppLanguage.swahili => sw ?? en,
+        AppLanguage.french => fr ?? en,
+        AppLanguage.arabic => ar ?? en,
+        AppLanguage.english => en,
+      };
+    }
 
     return Drawer(
       backgroundColor: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
@@ -1560,13 +1575,19 @@ class MainDrawer extends ConsumerWidget {
             // Menu items
             Expanded(
               child: isClient
-                  ? _buildClientMenu(context, ref, isDarkMode, isSwahili)
+                  ? _buildClientMenu(
+                      context,
+                      ref,
+                      isDarkMode,
+                      currentLanguage,
+                    )
                   : _buildStaffMenu(
                       context,
                       ref,
                       menusAsync,
                       isDarkMode,
                       isSwahili,
+                      currentLanguage,
                     ),
             ),
 
@@ -1584,7 +1605,12 @@ class MainDrawer extends ConsumerWidget {
                             ? const Color(0xFF1A1A2E)
                             : Colors.white,
                         title: Text(
-                          isSwahili ? 'Ondoka' : 'Logout',
+                          tr(
+                            en: 'Logout',
+                            sw: 'Ondoka',
+                            fr: 'Deconnexion',
+                            ar: 'تسجيل الخروج',
+                          ),
                           style: TextStyle(
                             color: isDarkMode
                                 ? Colors.white
@@ -1592,9 +1618,12 @@ class MainDrawer extends ConsumerWidget {
                           ),
                         ),
                         content: Text(
-                          isSwahili
-                              ? 'Una uhakika unataka kuondoka?'
-                              : 'Are you sure you want to logout?',
+                          tr(
+                            en: 'Are you sure you want to logout?',
+                            sw: 'Una uhakika unataka kuondoka?',
+                            fr: 'Voulez-vous vraiment vous deconnecter ?',
+                            ar: 'هل أنت متأكد أنك تريد تسجيل الخروج؟',
+                          ),
                           style: TextStyle(
                             color: isDarkMode
                                 ? Colors.white70
@@ -1604,12 +1633,24 @@ class MainDrawer extends ConsumerWidget {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
-                            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+                            child: Text(
+                              tr(
+                                en: 'Cancel',
+                                sw: 'Ghairi',
+                                fr: 'Annuler',
+                                ar: 'إلغاء',
+                              ),
+                            ),
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, true),
                             child: Text(
-                              isSwahili ? 'Ondoka' : 'Logout',
+                              tr(
+                                en: 'Logout',
+                                sw: 'Ondoka',
+                                fr: 'Deconnexion',
+                                ar: 'تسجيل الخروج',
+                              ),
                               style: const TextStyle(color: Color(0xFFE74C3C)),
                             ),
                           ),
@@ -1625,7 +1666,14 @@ class MainDrawer extends ConsumerWidget {
                     }
                   },
                   icon: const Icon(Icons.logout_rounded, size: 20),
-                  label: Text(isSwahili ? 'Ondoka' : 'Logout'),
+                  label: Text(
+                    tr(
+                      en: 'Logout',
+                      sw: 'Ondoka',
+                      fr: 'Deconnexion',
+                      ar: 'تسجيل الخروج',
+                    ),
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFE74C3C),
                     side: const BorderSide(color: Color(0xFFE74C3C)),
@@ -1648,7 +1696,7 @@ class MainDrawer extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     bool isDarkMode,
-    bool isSwahili,
+    AppLanguage language,
   ) {
     final labelColor = isDarkMode ? Colors.white : const Color(0xFF2C3E50);
     final mutedColor = isDarkMode ? Colors.white54 : const Color(0xFF7F8C8D);
@@ -1672,49 +1720,109 @@ class MainDrawer extends ConsumerWidget {
           ),
         );
 
+    String tr({
+      required String en,
+      String? sw,
+      String? fr,
+      String? ar,
+    }) {
+      return switch (language) {
+        AppLanguage.swahili => sw ?? en,
+        AppLanguage.french => fr ?? en,
+        AppLanguage.arabic => ar ?? en,
+        AppLanguage.english => en,
+      };
+    }
+
     return ListView(
       padding: const EdgeInsets.only(bottom: 8),
       children: [
         // ── Navigation ─────────────────────────────────────────────────
-        sectionHeader(isSwahili ? 'Urambazaji' : 'Navigation'),
+        sectionHeader(
+          tr(
+            en: 'Navigation',
+            sw: 'Urambazaji',
+            fr: 'Navigation',
+            ar: 'التنقل',
+          ),
+        ),
         _DrawerItem(
           icon: Icons.dashboard_rounded,
-          label: isSwahili ? 'Dashibodi' : 'Dashboard',
+          label: tr(
+            en: 'Dashboard',
+            sw: 'Dashibodi',
+            fr: 'Tableau de bord',
+            ar: 'لوحة التحكم',
+          ),
           isDarkMode: isDarkMode,
           onTap: () => _navigateFromDrawer(context, '/dashboard'),
         ),
         _DrawerItem(
           icon: Icons.folder_special_rounded,
-          label: isSwahili ? 'Miradi' : 'Projects',
+          label: tr(
+            en: 'Projects',
+            sw: 'Miradi',
+            fr: 'Projets',
+            ar: 'المشاريع',
+          ),
           isDarkMode: isDarkMode,
           onTap: () => _navigateFromDrawer(context, '/projects'),
         ),
         _DrawerItem(
           icon: Icons.receipt_long_rounded,
-          label: isSwahili ? 'Ankara' : 'Billing',
+          label: tr(
+            en: 'Billing',
+            sw: 'Ankara',
+            fr: 'Facturation',
+            ar: 'الفواتير',
+          ),
           isDarkMode: isDarkMode,
           onTap: () => _navigateFromDrawer(context, '/billing'),
         ),
         Divider(color: dividerColor, height: 16, indent: 20, endIndent: 20),
 
         // ── Account ─────────────────────────────────────────────────────
-        sectionHeader(isSwahili ? 'Akaunti' : 'Account'),
+        sectionHeader(
+          tr(
+            en: 'Account',
+            sw: 'Akaunti',
+            fr: 'Compte',
+            ar: 'الحساب',
+          ),
+        ),
         _DrawerItem(
           icon: Icons.person_outline_rounded,
-          label: isSwahili ? 'Wasifu Wangu' : 'My Profile',
+          label: tr(
+            en: 'My Profile',
+            sw: 'Wasifu Wangu',
+            fr: 'Mon Profil',
+            ar: 'ملفي الشخصي',
+          ),
           isDarkMode: isDarkMode,
           onTap: () => _navigateFromDrawer(context, '/profile'),
         ),
         _DrawerItem(
           icon: Icons.lock_outline_rounded,
-          label: isSwahili ? 'Badilisha Nenosiri' : 'Change Password',
+          label: tr(
+            en: 'Change Password',
+            sw: 'Badilisha Nenosiri',
+            fr: 'Changer le mot de passe',
+            ar: 'تغيير كلمة المرور',
+          ),
           isDarkMode: isDarkMode,
           onTap: () => _navigateFromDrawer(context, '/change-password'),
         ),
         Divider(color: dividerColor, height: 16, indent: 20, endIndent: 20),
 
         // ── Appearance ──────────────────────────────────────────────────
-        sectionHeader(isSwahili ? 'Mandhari' : 'Appearance'),
+        sectionHeader(
+          tr(
+            en: 'Appearance',
+            sw: 'Mandhari',
+            fr: 'Apparence',
+            ar: 'المظهر',
+          ),
+        ),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -1733,8 +1841,18 @@ class MainDrawer extends ConsumerWidget {
               Expanded(
                 child: Text(
                   isDarkMode
-                      ? (isSwahili ? 'Hali ya Giza' : 'Dark Mode')
-                      : (isSwahili ? 'Hali ya Mwanga' : 'Light Mode'),
+                      ? tr(
+                          en: 'Dark Mode',
+                          sw: 'Hali ya Giza',
+                          fr: 'Mode sombre',
+                          ar: 'الوضع الداكن',
+                        )
+                      : tr(
+                          en: 'Light Mode',
+                          sw: 'Hali ya Mwanga',
+                          fr: 'Mode clair',
+                          ar: 'الوضع الفاتح',
+                        ),
                   style: TextStyle(
                     color: labelColor,
                     fontWeight: FontWeight.w500,
@@ -1767,7 +1885,12 @@ class MainDrawer extends ConsumerWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  isSwahili ? 'Kiswahili' : 'English',
+                  tr(
+                    en: 'English',
+                    sw: 'Kiswahili',
+                    fr: 'Français',
+                    ar: 'العربية',
+                  ),
                   style: TextStyle(
                     color: labelColor,
                     fontWeight: FontWeight.w500,
@@ -1776,9 +1899,7 @@ class MainDrawer extends ConsumerWidget {
                 ),
               ),
               GestureDetector(
-                onTap: () => ref
-                    .read(settingsProvider.notifier)
-                    .setLanguage(!isSwahili),
+                onTap: () => ref.read(settingsProvider.notifier).toggleLanguage(),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -1786,7 +1907,12 @@ class MainDrawer extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    isSwahili ? 'EN' : 'SW',
+                    switch (language) {
+                      AppLanguage.english => 'SW',
+                      AppLanguage.swahili => 'FR',
+                      AppLanguage.french => 'AR',
+                      AppLanguage.arabic => 'EN',
+                    },
                     style: const TextStyle(
                       color: Color(0xFF3498DB),
                       fontWeight: FontWeight.w700,
@@ -1801,16 +1927,33 @@ class MainDrawer extends ConsumerWidget {
         Divider(color: dividerColor, height: 16, indent: 20, endIndent: 20),
 
         // ── Legal ───────────────────────────────────────────────────────
-        sectionHeader(isSwahili ? 'Kisheria' : 'Legal'),
+        sectionHeader(
+          tr(
+            en: 'Legal',
+            sw: 'Kisheria',
+            fr: 'Juridique',
+            ar: 'القانونية',
+          ),
+        ),
         _DrawerItem(
           icon: Icons.privacy_tip_outlined,
-          label: isSwahili ? 'Sera ya Faragha' : 'Privacy Policy',
+          label: tr(
+            en: 'Privacy Policy',
+            sw: 'Sera ya Faragha',
+            fr: 'Politique de confidentialite',
+            ar: 'سياسة الخصوصية',
+          ),
           isDarkMode: isDarkMode,
           onTap: () => _navigateFromDrawer(context, '/privacy-policy'),
         ),
         _DrawerItem(
           icon: Icons.description_outlined,
-          label: isSwahili ? 'Masharti ya Huduma' : 'Terms of Service',
+          label: tr(
+            en: 'Terms of Service',
+            sw: 'Masharti ya Huduma',
+            fr: 'Conditions d\'utilisation',
+            ar: 'شروط الخدمة',
+          ),
           isDarkMode: isDarkMode,
           onTap: () => _navigateFromDrawer(context, '/terms-of-service'),
         ),
@@ -1824,6 +1967,7 @@ class MainDrawer extends ConsumerWidget {
     AsyncValue<List<dynamic>>? menusAsync,
     bool isDarkMode,
     bool isSwahili,
+    AppLanguage currentLanguage,
   ) {
     if (menusAsync == null) return const SizedBox.shrink();
 
@@ -1840,13 +1984,23 @@ class MainDrawer extends ConsumerWidget {
           // Fallback to basic items on error
           _DrawerItem(
             icon: Icons.dashboard_rounded,
-            label: 'Dashboard',
+            label: switch (currentLanguage) {
+              AppLanguage.swahili => 'Dashibodi',
+              AppLanguage.french => 'Tableau de bord',
+              AppLanguage.arabic => 'لوحة التحكم',
+              AppLanguage.english => 'Dashboard',
+            },
             isDarkMode: isDarkMode,
             onTap: () => _navigateFromDrawer(context, '/dashboard'),
           ),
           _DrawerItem(
             icon: Icons.settings_rounded,
-            label: isSwahili ? 'Mipangilio' : 'Settings',
+            label: switch (currentLanguage) {
+              AppLanguage.swahili => 'Mipangilio',
+              AppLanguage.french => 'Parametres',
+              AppLanguage.arabic => 'الإعدادات',
+              AppLanguage.english => 'Settings',
+            },
             isDarkMode: isDarkMode,
             onTap: () => _navigateFromDrawer(context, '/settings'),
           ),

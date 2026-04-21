@@ -16,8 +16,11 @@ class LandingScreen extends ConsumerStatefulWidget {
 class _LandingScreenState extends ConsumerState<LandingScreen> {
   int _selectedMenuIndex = 0;
 
+  AppLanguage get _language => ref.watch(currentLanguageProvider);
   bool get _isDarkMode => ref.watch(isDarkModeProvider);
   bool get _isSwahili => ref.watch(isSwahiliProvider);
+  bool get _isFrench => _language == AppLanguage.french;
+  bool get _isArabic => _language == AppLanguage.arabic;
 
   final List<ProjectShowcase> _projects = [
     ProjectShowcase(
@@ -95,6 +98,31 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   Color get _surfaceColor =>
       _isDarkMode ? const Color(0xFF1A1A2E) : Colors.white;
 
+  String _tr({
+    required String en,
+    String? sw,
+    String? fr,
+    String? ar,
+  }) {
+    if (_isSwahili) return sw ?? en;
+    if (_isFrench) return fr ?? en;
+    if (_isArabic) return ar ?? en;
+    return en;
+  }
+
+  Widget _languageFlag() {
+    switch (_language) {
+      case AppLanguage.swahili:
+        return const TanzaniaFlag();
+      case AppLanguage.french:
+        return const FranceFlag();
+      case AppLanguage.arabic:
+        return const ArabicLanguageBadge();
+      case AppLanguage.english:
+        return const UKFlag();
+    }
+  }
+
   Future<void> _launchWhatsApp(String projectName) async {
     final message = _isSwahili
         ? 'Habari! Napenda kupata taarifa zaidi kuhusu mradi: $projectName'
@@ -103,9 +131,14 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     if (!opened && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isSwahili
-              ? 'Imeshindwa kufungua WhatsApp'
-              : 'Could not open WhatsApp'),
+          content: Text(
+            _tr(
+              en: 'Could not open WhatsApp',
+              sw: 'Imeshindwa kufungua WhatsApp',
+              fr: 'Impossible d\'ouvrir WhatsApp',
+              ar: 'تعذر فتح واتساب',
+            ),
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -117,7 +150,14 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     if (!opened && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isSwahili ? 'Imeshindwa kupiga simu' : 'Could not open dialer'),
+          content: Text(
+            _tr(
+              en: 'Could not open dialer',
+              sw: 'Imeshindwa kupiga simu',
+              fr: 'Impossible d\'ouvrir le composeur',
+              ar: 'تعذر فتح تطبيق الاتصال',
+            ),
+          ),
         ),
       );
     }
@@ -199,18 +239,20 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
-                        'WAJENZI',
+                        'Wajenzi Professionals',
                         style: TextStyle(
                           color: Color(0xFF1ABC9C),
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
                         ),
                       ),
                       Text(
-                        _isSwahili
-                            ? 'Mabingwa wa Uthabiti na Ubora'
-                            : 'Masters of Consistency and Quality',
+                        _tr(
+                          en: 'Masters of Consistency and Quality',
+                          sw: 'Mabingwa wa Uthabiti na Ubora',
+                          fr: 'Experts en constance et en qualite',
+                          ar: 'رواد الثبات والجودة',
+                        ),
                         style: TextStyle(
                           color: _isDarkMode ? Colors.white54 : Colors.grey[500],
                           fontSize: 8,
@@ -237,12 +279,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       child: SizedBox(
                         width: 20,
                         height: 13,
-                        child: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
+                        child: _languageFlag(),
                       ),
                     ),
                     const SizedBox(width: 3),
                     Text(
-                      _isSwahili ? 'SW' : 'EN',
+                      _language.code,
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
@@ -312,7 +354,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isSwahili ? 'Kazi Zetu' : 'Our Portfolio',
+                          _tr(
+                            en: 'Our Portfolio',
+                            sw: 'Kazi Zetu',
+                            fr: 'Notre Portefeuille',
+                            ar: 'أعمالنا',
+                          ),
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -324,7 +371,11 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         Text(
                           _isSwahili
                               ? '${_projects.length} miradi iliyochaguliwa'
-                              : '${_projects.length} featured projects',
+                              : _isFrench
+                                  ? '${_projects.length} projets en vedette'
+                                  : _isArabic
+                                      ? '${_projects.length} مشاريع مميزة'
+                                      : '${_projects.length} featured projects',
                           style: TextStyle(
                             fontSize: 12,
                             color: _isDarkMode ? Colors.white54 : Colors.grey[500],
@@ -347,6 +398,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 total: _projects.length,
                 isDarkMode: _isDarkMode,
                 isSwahili: _isSwahili,
+                callLabel: _tr(
+                  en: 'Call',
+                  sw: 'Piga Simu',
+                  fr: 'Appeler',
+                  ar: 'اتصال',
+                ),
                 onWhatsApp: () => _launchWhatsApp(_projects[index].title),
                 onCall: _launchPhone,
                 onImageTap: () => _showImageModal(
@@ -384,9 +441,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               child: Column(
                 children: [
                   Text(
-                    _isSwahili
-                        ? 'Uko Tayari Kujenga Ndoto Yako?'
-                        : 'Ready to Build Your Dream?',
+                    _tr(
+                      en: 'Ready to Build Your Dream?',
+                      sw: 'Uko Tayari Kujenga Ndoto Yako?',
+                      fr: 'Pret a construire votre reve ?',
+                      ar: 'هل أنت مستعد لبناء حلمك؟',
+                    ),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -396,9 +456,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _isSwahili
-                        ? 'Jiunge na Wajenzi upate huduma za ujenzi za kitaalamu'
-                        : 'Join Wajenzi for professional construction services',
+                    _tr(
+                      en: 'Join Wajenzi for professional construction services',
+                      sw: 'Jiunge na Wajenzi upate huduma za ujenzi za kitaalamu',
+                      fr: 'Rejoignez Wajenzi pour des services de construction professionnels',
+                      ar: 'انضم إلى Wajenzi للحصول على خدمات بناء احترافية',
+                    ),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
@@ -409,11 +472,35 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _StatBadge('120+', _isSwahili ? 'Miradi' : 'Projects'),
+                      _StatBadge(
+                        '120+',
+                        _tr(
+                          en: 'Projects',
+                          sw: 'Miradi',
+                          fr: 'Projets',
+                          ar: 'المشاريع',
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      _StatBadge('50+', _isSwahili ? 'Wataalamu' : 'Experts'),
+                      _StatBadge(
+                        '50+',
+                        _tr(
+                          en: 'Experts',
+                          sw: 'Wataalamu',
+                          fr: 'Experts',
+                          ar: 'الخبراء',
+                        ),
+                      ),
                       const SizedBox(width: 12),
-                      _StatBadge('200+', _isSwahili ? 'Imekamilika' : 'Completed'),
+                      _StatBadge(
+                        '200+',
+                        _tr(
+                          en: 'Completed',
+                          sw: 'Imekamilika',
+                          fr: 'Termines',
+                          ar: 'مكتمل',
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -423,7 +510,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       onPressed: () => context.go('/login'),
                       icon: const Icon(Icons.arrow_forward_rounded),
                       label: Text(
-                        _isSwahili ? 'Anza Sasa' : 'Get Started',
+                        _tr(
+                          en: 'Get Started',
+                          sw: 'Anza Sasa',
+                          fr: 'Commencer',
+                          ar: 'ابدأ الآن',
+                        ),
                         style: const TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
@@ -475,6 +567,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
         selectedIndex: _selectedMenuIndex,
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
+        language: _language,
         onItemTapped: (index) => setState(() => _selectedMenuIndex = index),
       ),
     );
@@ -692,6 +785,7 @@ class _ProjectCard extends StatelessWidget {
   final int total;
   final bool isDarkMode;
   final bool isSwahili;
+  final String callLabel;
   final VoidCallback onWhatsApp;
   final VoidCallback onCall;
   final VoidCallback onImageTap;
@@ -702,6 +796,7 @@ class _ProjectCard extends StatelessWidget {
     required this.total,
     required this.isDarkMode,
     required this.isSwahili,
+    required this.callLabel,
     required this.onWhatsApp,
     required this.onCall,
     required this.onImageTap,
@@ -1148,7 +1243,7 @@ class _ProjectCard extends StatelessWidget {
                                     color: Colors.white, size: 16),
                                 const SizedBox(width: 7),
                                 Text(
-                                  isSwahili ? 'WhatsApp' : 'Inquire',
+                                  isSwahili ? 'WhatsApp' : 'WhatsApp',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
@@ -1180,14 +1275,17 @@ class _ProjectCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
-                              Icon(Icons.phone_rounded,
-                                  color: Colors.white, size: 15),
-                              SizedBox(width: 5),
+                              const Icon(
+                                Icons.phone_rounded,
+                                color: Colors.white,
+                                size: 15,
+                              ),
+                              const SizedBox(width: 5),
                               Text(
-                                'Call',
-                                style: TextStyle(
+                                callLabel,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,

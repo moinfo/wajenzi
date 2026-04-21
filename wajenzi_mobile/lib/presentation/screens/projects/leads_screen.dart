@@ -146,7 +146,26 @@ final _leadRefsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   }
 });
 
-String _leadMessage(Object error, bool isSwahili) {
+String _leadTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  switch (language) {
+    case AppLanguage.swahili:
+      return sw ?? en;
+    case AppLanguage.french:
+      return fr ?? en;
+    case AppLanguage.arabic:
+      return ar ?? en;
+    case AppLanguage.english:
+      return en;
+  }
+}
+
+String _leadMessage(Object error, AppLanguage language) {
   if (error is DioException) {
     final data = error.response?.data;
     if (data is Map) {
@@ -170,7 +189,13 @@ String _leadMessage(Object error, bool isSwahili) {
     }
   }
 
-  return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
+  return _leadTr(
+    language,
+    en: 'Something went wrong',
+    sw: 'Hitilafu imetokea',
+    fr: 'Une erreur est survenue',
+    ar: 'حدث خطأ ما',
+  );
 }
 
 class LeadsScreen extends ConsumerStatefulWidget {
@@ -186,7 +211,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final leadsAsync = ref.watch(_leadsProvider);
     final refsAsync = ref.watch(_leadRefsProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final filter = ref.watch(_leadsFilterProvider);
     final search = ref.watch(_leadsSearchProvider).trim().toLowerCase();
@@ -197,7 +222,15 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Lead' : 'Leads'),
+        title: Text(
+          _leadTr(
+            language,
+            en: 'Leads',
+            sw: 'Lead',
+            fr: 'Prospects',
+            ar: 'العملاء المحتملون',
+          ),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_leadsProvider),
@@ -213,9 +246,13 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                       onChanged: (value) =>
                           ref.read(_leadsSearchProvider.notifier).state = value,
                       decoration: InputDecoration(
-                        hintText: isSwahili
-                            ? 'Tafuta lead...'
-                            : 'Search leads...',
+                        hintText: _leadTr(
+                          language,
+                          en: 'Search leads...',
+                          sw: 'Tafuta lead...',
+                          fr: 'Rechercher des prospects...',
+                          ar: 'ابحث عن العملاء المحتملين...',
+                        ),
                         prefixIcon: const Icon(Icons.search_rounded),
                         suffixIcon: search.isNotEmpty
                             ? IconButton(
@@ -260,9 +297,17 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  isSwahili
-                                      ? 'Lead helpers hazipo kwenye live API kwa sasa. Unaweza kutazama lead zilizopo, lakini filters za reference data na form ya kuongeza zimezimwa.'
-                                      : 'Lead helper endpoints are missing on the live API right now. You can still view existing leads, but reference-data filters and the add form are disabled.',
+                                  _leadTr(
+                                    language,
+                                    en:
+                                        'Lead helper endpoints are missing on the live API right now. You can still view existing leads, but reference-data filters and the add form are disabled.',
+                                    sw:
+                                        'Lead helpers hazipo kwenye live API kwa sasa. Unaweza kutazama lead zilizopo, lakini filters za reference data na form ya kuongeza zimezimwa.',
+                                    fr:
+                                        'Les points de terminaison d’assistance des prospects manquent actuellement sur l’API live. Vous pouvez toujours consulter les prospects existants, mais les filtres de donnees de reference et le formulaire d’ajout sont desactives.',
+                                    ar:
+                                        'نقاط نهاية المساعدة الخاصة بالعملاء المحتملين غير متوفرة حاليا في واجهة البرمجة الحية. لا يزال بإمكانك عرض العملاء الحاليين، لكن عوامل التصفية وواجهة الإضافة معطلة.',
+                                  ),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: isDarkMode
@@ -276,7 +321,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                               _LeadFilters(
                                 refs: refs,
                                 filter: filter,
-                                isSwahili: isSwahili,
+                                language: language,
                                 isDarkMode: isDarkMode,
                               ),
                           ],
@@ -293,8 +338,8 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
               ),
               error: (error, _) => SliverFillRemaining(
                 child: _ErrorView(
-                  message: _leadMessage(error, isSwahili),
-                  isSwahili: isSwahili,
+                  message: _leadMessage(error, language),
+                  language: language,
                   onRetry: () => ref.invalidate(_leadsProvider),
                 ),
               ),
@@ -314,9 +359,17 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              isSwahili
-                                  ? 'Lead Management haipatikani kwenye live API kwa sasa.'
-                                  : 'Lead Management is not available on the live API right now.',
+                              _leadTr(
+                                language,
+                                en:
+                                    'Lead Management is not available on the live API right now.',
+                                sw:
+                                    'Lead Management haipatikani kwenye live API kwa sasa.',
+                                fr:
+                                    'La gestion des prospects n’est pas disponible sur l’API live pour le moment.',
+                                ar:
+                                    'إدارة العملاء المحتملين غير متاحة حاليا على واجهة البرمجة الحية.',
+                              ),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -326,9 +379,17 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              isSwahili
-                                  ? 'Njia ya /api/v1/leads haipo live, kwa hiyo screen ya native haiwezi kupakia data bado.'
-                                  : 'The /api/v1/leads route is missing on live, so the native screen cannot load data yet.',
+                              _leadTr(
+                                language,
+                                en:
+                                    'The /api/v1/leads route is missing on live, so the native screen cannot load data yet.',
+                                sw:
+                                    'Njia ya /api/v1/leads haipo live, kwa hiyo screen ya native haiwezi kupakia data bado.',
+                                fr:
+                                    'La route /api/v1/leads est absente en production, donc l’ecran natif ne peut pas encore charger les donnees.',
+                                ar:
+                                    'مسار /api/v1/leads غير موجود على البيئة الحية، لذلك لا يمكن للشاشة الأصلية تحميل البيانات بعد.',
+                              ),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 13,
@@ -377,12 +438,22 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                           const SizedBox(height: 16),
                           Text(
                             allItems.isEmpty
-                                ? (isSwahili
-                                      ? 'Hakuna lead zilizopatikana'
-                                      : 'No leads found')
-                                : (isSwahili
-                                      ? 'Hakuna matokeo yanayolingana'
-                                      : 'No leads match your search'),
+                                ? _leadTr(
+                                    language,
+                                    en: 'No leads found',
+                                    sw: 'Hakuna lead zilizopatikana',
+                                    fr: 'Aucun prospect trouve',
+                                    ar: 'لم يتم العثور على عملاء محتملين',
+                                  )
+                                : _leadTr(
+                                    language,
+                                    en: 'No leads match your search',
+                                    sw: 'Hakuna matokeo yanayolingana',
+                                    fr:
+                                        'Aucun prospect ne correspond a votre recherche',
+                                    ar:
+                                        'لا توجد نتائج مطابقة لبحثك',
+                                  ),
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -397,7 +468,15 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                                           .state =
                                       '',
                               icon: const Icon(Icons.arrow_back_rounded),
-                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                              label: Text(
+                                _leadTr(
+                                  language,
+                                  en: 'Back',
+                                  sw: 'Rudi',
+                                  fr: 'Retour',
+                                  ar: 'رجوع',
+                                ),
+                              ),
                             ),
                           ],
                         ],
@@ -413,9 +492,13 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
-                          isSwahili
-                              ? 'Jumla ya lead: $total'
-                              : 'Total leads: $total',
+                          _leadTr(
+                            language,
+                            en: 'Total leads: $total',
+                            sw: 'Jumla ya lead: $total',
+                            fr: 'Total des prospects : $total',
+                            ar: 'إجمالي العملاء المحتملين: $total',
+                          ),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -428,7 +511,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                       ...leads.map(
                         (lead) => _LeadCard(
                           lead: lead,
-                          isSwahili: isSwahili,
+                          language: language,
                           onView: () => _showDetails(context, lead),
                           onEdit: () => _openForm(context, lead: lead),
                           onDelete: () => _deleteLead(context, lead),
@@ -453,7 +536,13 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
             child: FloatingActionButton(
               onPressed: () => _openForm(context),
               child: const Icon(Icons.add_rounded),
-              tooltip: isSwahili ? 'Ongeza' : 'Add',
+              tooltip: _leadTr(
+                language,
+                en: 'Add',
+                sw: 'Ongeza',
+                fr: 'Ajouter',
+                ar: 'إضافة',
+              ),
             ),
           );
         },
@@ -462,7 +551,13 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
           child: FloatingActionButton(
             onPressed: () => _openForm(context),
             child: const Icon(Icons.add_rounded),
-            tooltip: isSwahili ? 'Ongeza' : 'Add',
+            tooltip: _leadTr(
+              language,
+              en: 'Add',
+              sw: 'Ongeza',
+              fr: 'Ajouter',
+              ar: 'إضافة',
+            ),
           ),
         ),
       ),
@@ -489,7 +584,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
     BuildContext context,
     Map<String, dynamic> lead,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final isDarkMode = ref.read(isDarkModeProvider);
 
     final confirmed = await showDialog<bool>(
@@ -497,15 +592,25 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
         title: Text(
-          isSwahili ? 'Futa Lead' : 'Delete Lead',
+          _leadTr(
+            language,
+            en: 'Delete Lead',
+            sw: 'Futa Lead',
+            fr: 'Supprimer le prospect',
+            ar: 'حذف العميل المحتمل',
+          ),
           style: TextStyle(
             color: isDarkMode ? Colors.white : AppColors.textPrimary,
           ),
         ),
         content: Text(
-          isSwahili
-              ? 'Je, unataka kufuta ${lead['name']}?'
-              : 'Delete ${lead['name']}?',
+          _leadTr(
+            language,
+            en: 'Delete ${lead['name']}?',
+            sw: 'Je, unataka kufuta ${lead['name']}?',
+            fr: 'Supprimer ${lead['name']} ?',
+            ar: 'هل تريد حذف ${lead['name']}؟',
+          ),
           style: TextStyle(
             color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
           ),
@@ -513,12 +618,26 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+            child: Text(
+              _leadTr(
+                language,
+                en: 'Cancel',
+                sw: 'Ghairi',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(
-              isSwahili ? 'Futa' : 'Delete',
+              _leadTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
               style: const TextStyle(color: AppColors.error),
             ),
           ),
@@ -534,7 +653,15 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSwahili ? 'Lead imefutwa' : 'Lead deleted'),
+            content: Text(
+              _leadTr(
+                language,
+                en: 'Lead deleted',
+                sw: 'Lead imefutwa',
+                fr: 'Prospect supprime',
+                ar: 'تم حذف العميل المحتمل',
+              ),
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -545,7 +672,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_leadMessage(error, isSwahili)),
+            content: Text(_leadMessage(error, language)),
             backgroundColor: AppColors.error,
           ),
         );
@@ -554,7 +681,7 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
   }
 
   void _showDetails(BuildContext context, Map<String, dynamic> lead) {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final isDarkMode = ref.read(isDarkModeProvider);
 
     showModalBottomSheet<void>(
@@ -585,38 +712,116 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
                     children: [
                       _info('Lead No', lead['lead_number']),
                       _info(
-                        isSwahili ? 'Hali' : 'Status',
+                        _leadTr(
+                          language,
+                          en: 'Status',
+                          sw: 'Hali',
+                          fr: 'Statut',
+                          ar: 'الحالة',
+                        ),
                         lead['lead_status_name'] ?? lead['status'],
                       ),
                       _info(
-                        isSwahili ? 'Chanzo' : 'Source',
+                        _leadTr(
+                          language,
+                          en: 'Source',
+                          sw: 'Chanzo',
+                          fr: 'Source',
+                          ar: 'المصدر',
+                        ),
                         lead['lead_source_name'],
                       ),
                       _info(
-                        isSwahili ? 'Huduma' : 'Service',
+                        _leadTr(
+                          language,
+                          en: 'Service',
+                          sw: 'Huduma',
+                          fr: 'Service',
+                          ar: 'الخدمة',
+                        ),
                         lead['service_interested_name'],
                       ),
                       _info(
-                        isSwahili ? 'Muuza' : 'Salesperson',
+                        _leadTr(
+                          language,
+                          en: 'Salesperson',
+                          sw: 'Muuza',
+                          fr: 'Commercial',
+                          ar: 'مندوب المبيعات',
+                        ),
                         lead['salesperson_name'],
                       ),
                       _info(
-                        isSwahili ? 'Mteja' : 'Client',
+                        _leadTr(
+                          language,
+                          en: 'Client',
+                          sw: 'Mteja',
+                          fr: 'Client',
+                          ar: 'العميل',
+                        ),
                         lead['client_name'],
                       ),
-                      _info(isSwahili ? 'Simu' : 'Phone', lead['phone']),
-                      _info('Email', lead['email']),
-                      _info(isSwahili ? 'Anwani' : 'Address', lead['address']),
-                      _info(isSwahili ? 'Mji' : 'City', lead['city']),
                       _info(
-                        isSwahili ? 'Eneo' : 'Site Location',
+                        _leadTr(
+                          language,
+                          en: 'Phone',
+                          sw: 'Simu',
+                          fr: 'Telephone',
+                          ar: 'الهاتف',
+                        ),
+                        lead['phone'],
+                      ),
+                      _info('Email', lead['email']),
+                      _info(
+                        _leadTr(
+                          language,
+                          en: 'Address',
+                          sw: 'Anwani',
+                          fr: 'Adresse',
+                          ar: 'العنوان',
+                        ),
+                        lead['address'],
+                      ),
+                      _info(
+                        _leadTr(
+                          language,
+                          en: 'City',
+                          sw: 'Mji',
+                          fr: 'Ville',
+                          ar: 'المدينة',
+                        ),
+                        lead['city'],
+                      ),
+                      _info(
+                        _leadTr(
+                          language,
+                          en: 'Site Location',
+                          sw: 'Eneo',
+                          fr: 'Emplacement du site',
+                          ar: 'موقع المشروع',
+                        ),
                         lead['site_location'],
                       ),
                       _info(
-                        isSwahili ? 'Thamani ya Makadirio' : 'Estimated Value',
+                        _leadTr(
+                          language,
+                          en: 'Estimated Value',
+                          sw: 'Thamani ya Makadirio',
+                          fr: 'Valeur estimee',
+                          ar: 'القيمة التقديرية',
+                        ),
                         lead['estimated_value'],
                       ),
-                      _info(isSwahili ? 'Kumbukumbu' : 'Notes', lead['notes']),
+                      _info(
+                        _leadTr(
+                          language,
+                          en: 'Notes',
+                          sw: 'Kumbukumbu',
+                          fr: 'Notes',
+                          ar: 'ملاحظات',
+                        ),
+                        lead['notes'],
+                      ),
                     ],
                   ),
                 ),
@@ -662,13 +867,13 @@ class _LeadsScreenState extends ConsumerState<LeadsScreen> {
 class _LeadFilters extends ConsumerWidget {
   final Map<String, dynamic> refs;
   final _LeadFilter filter;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _LeadFilters({
     required this.refs,
     required this.filter,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
@@ -680,7 +885,15 @@ class _LeadFilters extends ConsumerWidget {
         .cast<Map<String, dynamic>>();
 
     return ExpansionTile(
-      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      title: Text(
+        _leadTr(
+          language,
+          en: 'Filters',
+          sw: 'Vichungi',
+          fr: 'Filtres',
+          ar: 'عوامل التصفية',
+        ),
+      ),
       initiallyExpanded:
           filter.statusId != null ||
           filter.sourceId != null ||
@@ -697,20 +910,46 @@ class _LeadFilters extends ConsumerWidget {
       ),
       children: [
         _Drop<int>(
-          label: isSwahili ? 'Hali' : 'Status',
+          label: _leadTr(
+            language,
+            en: 'Status',
+            sw: 'Hali',
+            fr: 'Statut',
+            ar: 'الحالة',
+          ),
           value: filter.statusId,
           items: statuses,
           onChanged: (v) => ref.read(_leadsFilterProvider.notifier).state =
               filter.copyWith(statusId: v, clearStatus: v == null),
           displayField: 'name',
+          allLabel: _leadTr(
+            language,
+            en: 'All',
+            sw: 'Zote',
+            fr: 'Tous',
+            ar: 'الكل',
+          ),
         ),
         _Drop<int>(
-          label: isSwahili ? 'Chanzo' : 'Source',
+          label: _leadTr(
+            language,
+            en: 'Source',
+            sw: 'Chanzo',
+            fr: 'Source',
+            ar: 'المصدر',
+          ),
           value: filter.sourceId,
           items: sources,
           onChanged: (v) => ref.read(_leadsFilterProvider.notifier).state =
               filter.copyWith(sourceId: v, clearSource: v == null),
           displayField: 'name',
+          allLabel: _leadTr(
+            language,
+            en: 'All',
+            sw: 'Zote',
+            fr: 'Tous',
+            ar: 'الكل',
+          ),
         ),
         Row(
           children: [
@@ -742,7 +981,13 @@ class _LeadFilters extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                              _leadTr(
+                                language,
+                                en: 'Start Date',
+                                sw: 'Tarehe ya Kuanza',
+                                fr: 'Date de debut',
+                                ar: 'تاريخ البدء',
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -797,7 +1042,13 @@ class _LeadFilters extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                              _leadTr(
+                                language,
+                                en: 'End Date',
+                                sw: 'Tarehe ya Mwisho',
+                                fr: 'Date de fin',
+                                ar: 'تاريخ الانتهاء',
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -834,7 +1085,15 @@ class _LeadFilters extends ConsumerWidget {
             child: OutlinedButton(
               onPressed: () =>
                   ref.read(_leadsFilterProvider.notifier).state = _LeadFilter(),
-              child: Text(isSwahili ? 'Futa' : 'Clear'),
+              child: Text(
+                _leadTr(
+                  language,
+                  en: 'Clear',
+                  sw: 'Futa',
+                  fr: 'Effacer',
+                  ar: 'مسح',
+                ),
+              ),
             ),
           ),
       ],
@@ -848,6 +1107,7 @@ class _Drop<T> extends StatelessWidget {
   final List<Map<String, dynamic>> items;
   final void Function(T?) onChanged;
   final String displayField;
+  final String allLabel;
 
   const _Drop({
     required this.label,
@@ -855,6 +1115,7 @@ class _Drop<T> extends StatelessWidget {
     required this.items,
     required this.onChanged,
     required this.displayField,
+    required this.allLabel,
   });
 
   @override
@@ -868,7 +1129,7 @@ class _Drop<T> extends StatelessWidget {
         items: [
           DropdownMenuItem<T>(
             value: null,
-            child: const Text('All', overflow: TextOverflow.ellipsis),
+            child: Text(allLabel, overflow: TextOverflow.ellipsis),
           ),
           ...items.map(
             (item) => DropdownMenuItem<T>(
@@ -882,7 +1143,7 @@ class _Drop<T> extends StatelessWidget {
           ),
         ],
         selectedItemBuilder: (context) => [
-          const Text('All', maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(allLabel, maxLines: 1, overflow: TextOverflow.ellipsis),
           ...items.map(
             (item) => Text(
               item[displayField]?.toString() ?? '-',
@@ -899,14 +1160,14 @@ class _Drop<T> extends StatelessWidget {
 
 class _LeadCard extends StatelessWidget {
   final Map<String, dynamic> lead;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _LeadCard({
     required this.lead,
-    required this.isSwahili,
+    required this.language,
     required this.onView,
     required this.onEdit,
     required this.onDelete,
@@ -999,7 +1260,15 @@ class _LeadCard extends StatelessWidget {
                       children: [
                         const Icon(Icons.visibility, size: 20),
                         const SizedBox(width: 8),
-                        Text(isSwahili ? 'Tazama' : 'View'),
+                        Text(
+                          _leadTr(
+                            language,
+                            en: 'View',
+                            sw: 'Tazama',
+                            fr: 'Voir',
+                            ar: 'عرض',
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1009,7 +1278,15 @@ class _LeadCard extends StatelessWidget {
                       children: [
                         const Icon(Icons.edit, size: 20),
                         const SizedBox(width: 8),
-                        Text(isSwahili ? 'Hariri' : 'Edit'),
+                        Text(
+                          _leadTr(
+                            language,
+                            en: 'Edit',
+                            sw: 'Hariri',
+                            fr: 'Modifier',
+                            ar: 'تعديل',
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -1024,7 +1301,13 @@ class _LeadCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          isSwahili ? 'Futa' : 'Delete',
+                          _leadTr(
+                            language,
+                            en: 'Delete',
+                            sw: 'Futa',
+                            fr: 'Supprimer',
+                            ar: 'حذف',
+                          ),
                           style: const TextStyle(color: AppColors.error),
                         ),
                       ],
@@ -1178,7 +1461,7 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final refsAsync = ref.watch(_leadRefsProvider);
 
@@ -1199,14 +1482,26 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
           ),
           error: (error, _) => Padding(
             padding: const EdgeInsets.all(24),
-            child: Text(_leadMessage(error, isSwahili)),
+            child: Text(_leadMessage(error, language)),
           ),
           data: (refs) => Column(
             children: [
               _LeadSheetHeader(
                 title: widget.lead == null
-                    ? (isSwahili ? 'Lead Mpya' : 'New Lead')
-                    : (isSwahili ? 'Hariri Lead' : 'Edit Lead'),
+                    ? _leadTr(
+                        language,
+                        en: 'New Lead',
+                        sw: 'Lead Mpya',
+                        fr: 'Nouveau prospect',
+                        ar: 'عميل محتمل جديد',
+                      )
+                    : _leadTr(
+                        language,
+                        en: 'Edit Lead',
+                        sw: 'Hariri Lead',
+                        fr: 'Modifier le prospect',
+                        ar: 'تعديل العميل المحتمل',
+                      ),
                 onBack: () => Navigator.pop(context),
               ),
               Expanded(
@@ -1224,13 +1519,25 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
                       children: [
                         _input(
                           _nameController,
-                          isSwahili ? 'Jina *' : 'Name *',
+                          _leadTr(
+                            language,
+                            en: 'Name *',
+                            sw: 'Jina *',
+                            fr: 'Nom *',
+                            ar: 'الاسم *',
+                          ),
                           required: true,
                         ),
                         const SizedBox(height: 12),
                         _input(
                           _phoneController,
-                          isSwahili ? 'Simu *' : 'Phone *',
+                          _leadTr(
+                            language,
+                            en: 'Phone *',
+                            sw: 'Simu *',
+                            fr: 'Telephone *',
+                            ar: 'الهاتف *',
+                          ),
                           required: true,
                           keyboardType: TextInputType.phone,
                         ),
@@ -1246,9 +1553,13 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
                               r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
                             );
                             if (!emailPattern.hasMatch(text)) {
-                              return isSwahili
-                                  ? 'Weka barua pepe sahihi'
-                                  : 'Enter a valid email';
+                              return _leadTr(
+                                language,
+                                en: 'Enter a valid email',
+                                sw: 'Weka barua pepe sahihi',
+                                fr: 'Entrez une adresse e-mail valide',
+                                ar: 'أدخل بريدا إلكترونيا صالحا',
+                              );
                             }
                             return null;
                           },
@@ -1256,7 +1567,13 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
                         const SizedBox(height: 12),
                         _input(
                           _dateController,
-                          isSwahili ? 'Tarehe' : 'Date',
+                          _leadTr(
+                            language,
+                            en: 'Date',
+                            sw: 'Tarehe',
+                            fr: 'Date',
+                            ar: 'التاريخ',
+                          ),
                           readOnly: true,
                           suffixIcon: const Icon(Icons.calendar_today_rounded),
                           onTap: () async {
@@ -1281,63 +1598,124 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
                         const SizedBox(height: 12),
                         _input(
                           _addressController,
-                          isSwahili ? 'Anwani' : 'Address',
+                          _leadTr(
+                            language,
+                            en: 'Address',
+                            sw: 'Anwani',
+                            fr: 'Adresse',
+                            ar: 'العنوان',
+                          ),
                         ),
                         const SizedBox(height: 12),
                         _dropdown(
-                          isSwahili ? 'Chanzo cha Lead *' : 'Lead Source *',
+                          _leadTr(
+                            language,
+                            en: 'Lead Source *',
+                            sw: 'Chanzo cha Lead *',
+                            fr: 'Source du prospect *',
+                            ar: 'مصدر العميل المحتمل *',
+                          ),
                           refs['lead_sources'],
                           _sourceId,
                           (value) => setState(() => _sourceId = value),
                         ),
                         const SizedBox(height: 12),
                         _dropdown(
-                          isSwahili ? 'Huduma *' : 'Service *',
+                          _leadTr(
+                            language,
+                            en: 'Service *',
+                            sw: 'Huduma *',
+                            fr: 'Service *',
+                            ar: 'الخدمة *',
+                          ),
                           _mapOptions(refs['service_interesteds']),
                           _serviceId,
                           (value) => setState(() => _serviceId = value),
                         ),
                         const SizedBox(height: 12),
                         _dropdown(
-                          isSwahili ? 'Hali *' : 'Status *',
+                          _leadTr(
+                            language,
+                            en: 'Status *',
+                            sw: 'Hali *',
+                            fr: 'Statut *',
+                            ar: 'الحالة *',
+                          ),
                           refs['lead_statuses'],
                           _statusId,
                           (value) => setState(() => _statusId = value),
                         ),
                         const SizedBox(height: 12),
                         _dropdown(
-                          isSwahili ? 'Muuza *' : 'Salesperson *',
+                          _leadTr(
+                            language,
+                            en: 'Salesperson *',
+                            sw: 'Muuza *',
+                            fr: 'Commercial *',
+                            ar: 'مندوب المبيعات *',
+                          ),
                           refs['salespeople'],
                           _salespersonId,
                           (value) => setState(() => _salespersonId = value),
                         ),
                         const SizedBox(height: 12),
                         _dropdown(
-                          isSwahili ? 'Mteja' : 'Client',
+                          _leadTr(
+                            language,
+                            en: 'Client',
+                            sw: 'Mteja',
+                            fr: 'Client',
+                            ar: 'العميل',
+                          ),
                           _clientOptions(refs['clients']),
                           _clientId,
                           (value) => setState(() => _clientId = value),
                           required: false,
                         ),
                         const SizedBox(height: 12),
-                        _input(_cityController, isSwahili ? 'Mji' : 'City'),
+                        _input(
+                          _cityController,
+                          _leadTr(
+                            language,
+                            en: 'City',
+                            sw: 'Mji',
+                            fr: 'Ville',
+                            ar: 'المدينة',
+                          ),
+                        ),
                         const SizedBox(height: 12),
                         _input(
                           _siteController,
-                          isSwahili ? 'Eneo la Site' : 'Site Location',
+                          _leadTr(
+                            language,
+                            en: 'Site Location',
+                            sw: 'Eneo la Site',
+                            fr: 'Emplacement du site',
+                            ar: 'موقع المشروع',
+                          ),
                         ),
                         const SizedBox(height: 12),
                         _input(
                           _estimatedValueController,
-                          isSwahili
-                              ? 'Thamani ya Makadirio'
-                              : 'Estimated Value',
+                          _leadTr(
+                            language,
+                            en: 'Estimated Value',
+                            sw: 'Thamani ya Makadirio',
+                            fr: 'Valeur estimee',
+                            ar: 'القيمة التقديرية',
+                          ),
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 12),
                         _input(
                           _notesController,
-                          isSwahili ? 'Maelezo' : 'Notes',
+                          _leadTr(
+                            language,
+                            en: 'Notes',
+                            sw: 'Maelezo',
+                            fr: 'Notes',
+                            ar: 'ملاحظات',
+                          ),
                           maxLines: 3,
                         ),
                         const SizedBox(height: 20),
@@ -1356,8 +1734,20 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
                                   )
                                 : Text(
                                     widget.lead == null
-                                        ? (isSwahili ? 'Hifadhi' : 'Save')
-                                        : (isSwahili ? 'Sasisha' : 'Update'),
+                                        ? _leadTr(
+                                            language,
+                                            en: 'Save',
+                                            sw: 'Hifadhi',
+                                            fr: 'Enregistrer',
+                                            ar: 'حفظ',
+                                          )
+                                        : _leadTr(
+                                            language,
+                                            en: 'Update',
+                                            sw: 'Sasisha',
+                                            fr: 'Mettre a jour',
+                                            ar: 'تحديث',
+                                          ),
                                   ),
                           ),
                         ),
@@ -1385,6 +1775,7 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
     String? Function(String?)? validator,
   }) {
     final isDarkMode = ref.read(isDarkModeProvider);
+    final language = ref.read(currentLanguageProvider);
 
     return TextFormField(
       controller: controller,
@@ -1396,7 +1787,15 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
           validator ??
           (required
               ? (value) =>
-                    (value == null || value.trim().isEmpty) ? 'Required' : null
+                    (value == null || value.trim().isEmpty)
+                    ? _leadTr(
+                        language,
+                        en: 'Required',
+                        sw: 'Inahitajika',
+                        fr: 'Obligatoire',
+                        ar: 'مطلوب',
+                      )
+                    : null
               : null),
       decoration: InputDecoration(
         labelText: label,
@@ -1415,13 +1814,22 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
     bool required = true,
   }) {
     final isDarkMode = ref.read(isDarkModeProvider);
+    final language = ref.read(currentLanguageProvider);
     final items = _mapOptions(rawItems);
 
     return DropdownButtonFormField<int>(
       isExpanded: true,
       value: items.any((item) => _toInt(item['id']) == value) ? value : null,
       validator: required
-          ? (selected) => selected == null ? 'Required' : null
+          ? (selected) => selected == null
+                ? _leadTr(
+                    language,
+                    en: 'Required',
+                    sw: 'Inahitajika',
+                    fr: 'Obligatoire',
+                    ar: 'مطلوب',
+                  )
+                : null
           : null,
       decoration: InputDecoration(
         labelText: label,
@@ -1512,7 +1920,9 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_leadMessage(error, ref.read(isSwahiliProvider))),
+            content: Text(
+              _leadMessage(error, ref.read(currentLanguageProvider)),
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -1532,12 +1942,12 @@ class _LeadFormSheetState extends ConsumerState<_LeadFormSheet> {
 
 class _ErrorView extends StatelessWidget {
   final String message;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ErrorView({
     required this.message,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -1551,7 +1961,13 @@ class _ErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _leadTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Une erreur est survenue',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -1562,7 +1978,15 @@ class _ErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _leadTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Reessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

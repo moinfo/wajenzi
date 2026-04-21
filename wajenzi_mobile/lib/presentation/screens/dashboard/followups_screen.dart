@@ -6,6 +6,21 @@ import '../../../data/datasources/remote/staff_dashboard_api.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/staff_dashboard_provider.dart';
 
+String _followupsTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 final _followupsProvider =
     FutureProvider.autoDispose<List<DashboardFollowup>>((ref) async {
   final api = ref.watch(staffDashboardApiProvider);
@@ -19,14 +34,22 @@ class FollowupsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final followupsAsync = ref.watch(_followupsProvider);
     final dashboardState = ref.watch(staffDashboardProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     final summary = dashboardState.valueOrNull?.followupSummary;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Ufuatiliaji' : 'Follow-up To-Do'),
+        title: Text(
+          _followupsTr(
+            language,
+            en: 'Follow-up To-Do',
+            sw: 'Ufuatiliaji',
+            fr: 'Suivis a faire',
+            ar: 'مهام المتابعة',
+          ),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(_followupsProvider.future),
@@ -34,13 +57,13 @@ class FollowupsScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _ErrorBody(
             error: e,
-            isSwahili: isSwahili,
+            language: language,
             onRetry: () => ref.invalidate(_followupsProvider),
           ),
           data: (followups) => _Body(
             followups: followups,
             summary: summary,
-            isSwahili: isSwahili,
+            language: language,
             isDarkMode: isDarkMode,
           ),
         ),
@@ -54,13 +77,13 @@ class FollowupsScreen extends ConsumerWidget {
 class _Body extends StatelessWidget {
   final List<DashboardFollowup> followups;
   final StatusSummary? summary;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _Body({
     required this.followups,
     this.summary,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
@@ -78,7 +101,13 @@ class _Body extends StatelessWidget {
               children: [
                 _StatusChip(
                   count: summary!.overdue,
-                  label: isSwahili ? 'ZILIZOCHELEWA' : 'OVERDUE',
+                  label: _followupsTr(
+                    language,
+                    en: 'OVERDUE',
+                    sw: 'ZILIZOCHELEWA',
+                    fr: 'EN RETARD',
+                    ar: 'متأخرة',
+                  ),
                   icon: Icons.warning_rounded,
                   color: const Color(0xFFE74C3C),
                   bgColor: const Color(0xFFFDEDED),
@@ -86,7 +115,13 @@ class _Body extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatusChip(
                   count: summary!.today,
-                  label: isSwahili ? 'LEO' : 'TODAY',
+                  label: _followupsTr(
+                    language,
+                    en: 'TODAY',
+                    sw: 'LEO',
+                    fr: 'AUJOURD\'HUI',
+                    ar: 'اليوم',
+                  ),
                   icon: Icons.adjust_rounded,
                   color: const Color(0xFFE67E22),
                   bgColor: const Color(0xFFFEF5E7),
@@ -94,7 +129,13 @@ class _Body extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatusChip(
                   count: summary!.upcoming,
-                  label: isSwahili ? 'ZINAKUJA' : 'UPCOMING',
+                  label: _followupsTr(
+                    language,
+                    en: 'UPCOMING',
+                    sw: 'ZINAKUJA',
+                    fr: 'A VENIR',
+                    ar: 'قادمة',
+                  ),
                   icon: Icons.calendar_today_rounded,
                   color: const Color(0xFF2980B9),
                   bgColor: const Color(0xFFEBF5FB),
@@ -102,7 +143,13 @@ class _Body extends StatelessWidget {
                 const SizedBox(width: 8),
                 _StatusChip(
                   count: summary!.completedThisMonth,
-                  label: isSwahili ? 'ZIMEKAMILIKA' : 'COMPLETED',
+                  label: _followupsTr(
+                    language,
+                    en: 'COMPLETED',
+                    sw: 'ZIMEKAMILIKA',
+                    fr: 'TERMINES',
+                    ar: 'مكتملة',
+                  ),
                   icon: Icons.check_circle_rounded,
                   color: const Color(0xFF27AE60),
                   bgColor: const Color(0xFFEAFAF1),
@@ -122,9 +169,13 @@ class _Body extends StatelessWidget {
                       size: 56, color: Colors.green[300]),
                   const SizedBox(height: 12),
                   Text(
-                    isSwahili
-                        ? 'Hakuna ufuatiliaji uliopangwa'
-                        : 'No follow-ups scheduled',
+                    _followupsTr(
+                      language,
+                      en: 'No follow-ups scheduled',
+                      sw: 'Hakuna ufuatiliaji uliopangwa',
+                      fr: 'Aucun suivi programme',
+                      ar: 'لا توجد متابعات مجدولة',
+                    ),
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
                 ],
@@ -135,7 +186,7 @@ class _Body extends StatelessWidget {
           ...followups.map((f) => _FollowupCard(
                 followup: f,
                 isDarkMode: isDarkMode,
-                isSwahili: isSwahili,
+                language: language,
               )),
 
         const SizedBox(height: 80),
@@ -213,12 +264,12 @@ class _StatusChip extends StatelessWidget {
 class _FollowupCard extends StatelessWidget {
   final DashboardFollowup followup;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _FollowupCard({
     required this.followup,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   Color get _statusColor {
@@ -342,7 +393,13 @@ class _FollowupCard extends StatelessWidget {
                                   size: 12, color: _statusColor),
                               const SizedBox(width: 4),
                               Text(
-                                isSwahili ? 'Imechelewa' : 'Overdue',
+                                _followupsTr(
+                                  language,
+                                  en: 'Overdue',
+                                  sw: 'Imechelewa',
+                                  fr: 'En retard',
+                                  ar: 'متأخرة',
+                                ),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -439,12 +496,12 @@ class _FollowupCard extends StatelessWidget {
 
 class _ErrorBody extends StatelessWidget {
   final Object error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ErrorBody({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -457,15 +514,25 @@ class _ErrorBody extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _followupsTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un probleme est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
-          isSwahili
-              ? 'Hatukuweza kupakia ufuatiliaji kwa sasa.'
-              : 'We could not load follow-ups right now.',
+          _followupsTr(
+            language,
+            en: 'We could not load follow-ups right now.',
+            sw: 'Hatukuweza kupakia ufuatiliaji kwa sasa.',
+            fr: 'Nous n\'avons pas pu charger les suivis pour le moment.',
+            ar: 'تعذر تحميل المتابعات حاليا.',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),
@@ -474,7 +541,15 @@ class _ErrorBody extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _followupsTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Reessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

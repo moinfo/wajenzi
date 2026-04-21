@@ -8,6 +8,21 @@ final clientProfileProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return ref.watch(authStateProvider.notifier).getClientProfile();
 });
 
+String _profileTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -65,11 +80,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     });
 
     if (mounted) {
-      final isSwahili = ref.read(isSwahiliProvider);
+      final language = ref.read(currentLanguageProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            error ?? (isSwahili ? 'Wasifu umesasishwa' : 'Profile updated successfully'),
+            error ??
+                _profileTr(
+                  language,
+                  en: 'Profile updated successfully',
+                  sw: 'Wasifu umesasishwa',
+                  fr: 'Profil mis a jour avec succes',
+                  ar: 'تم تحديث الملف الشخصي بنجاح',
+                ),
           ),
           backgroundColor: error == null ? AppColors.success : AppColors.error,
         ),
@@ -82,18 +104,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final profileAsync = ref.watch(clientProfileProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Wasifu' : 'Profile'),
+        title: Text(
+          _profileTr(
+            language,
+            en: 'Profile',
+            sw: 'Wasifu',
+            fr: 'Profil',
+            ar: 'الملف الشخصي',
+          ),
+        ),
         actions: [
           if (!_isEditing)
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => setState(() => _isEditing = true),
-              tooltip: isSwahili ? 'Hariri' : 'Edit',
+              tooltip: _profileTr(
+                language,
+                en: 'Edit',
+                sw: 'Hariri',
+                fr: 'Modifier',
+                ar: 'تعديل',
+              ),
             )
           else
             TextButton(
@@ -104,7 +140,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 });
                 ref.invalidate(clientProfileProvider);
               },
-              child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+              child: Text(
+                _profileTr(
+                  language,
+                  en: 'Cancel',
+                  sw: 'Ghairi',
+                  fr: 'Annuler',
+                  ar: 'إلغاء',
+                ),
+              ),
             ),
         ],
       ),
@@ -116,11 +160,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             children: [
               Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 12),
-              Text(isSwahili ? 'Imeshindikana kupakia wasifu' : 'Failed to load profile'),
+              Text(
+                _profileTr(
+                  language,
+                  en: 'Failed to load profile',
+                  sw: 'Imeshindikana kupakia wasifu',
+                  fr: 'Impossible de charger le profil',
+                  ar: 'تعذر تحميل الملف الشخصي',
+                ),
+              ),
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => ref.invalidate(clientProfileProvider),
-                child: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+                child: Text(
+                  _profileTr(
+                    language,
+                    en: 'Retry',
+                    sw: 'Jaribu tena',
+                    fr: 'Reessayer',
+                    ar: 'إعادة المحاولة',
+                  ),
+                ),
               ),
             ],
           ),
@@ -128,14 +188,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         data: (data) {
           _populateFields(data);
 
-          if (_isEditing) return _buildEditForm(isSwahili, data);
-          return _buildProfileView(isSwahili, data);
+          if (_isEditing) return _buildEditForm(language, data);
+          return _buildProfileView(language, data);
         },
       ),
     );
   }
 
-  Widget _buildProfileView(bool isSwahili, Map<String, dynamic> data) {
+  Widget _buildProfileView(AppLanguage language, Map<String, dynamic> data) {
     final fullName = data['full_name'] as String? ?? '';
     final email = data['email'] as String? ?? '';
     final phone = data['phone_number'] as String? ?? '';
@@ -176,7 +236,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '$projectsCount ${isSwahili ? 'miradi' : 'projects'}',
+                  '$projectsCount ${_profileTr(language, en: 'projects', sw: 'miradi', fr: 'projets', ar: 'مشاريع')}',
                   style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13),
                 ),
               ),
@@ -187,21 +247,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         // Info cards
         _ProfileInfoCard(
-          title: isSwahili ? 'Maelezo ya Msingi' : 'Basic Information',
+          title: _profileTr(
+            language,
+            en: 'Basic Information',
+            sw: 'Maelezo ya Msingi',
+            fr: 'Informations de base',
+            ar: 'المعلومات الأساسية',
+          ),
           items: [
             _InfoRow(
               icon: Icons.person_outline,
-              label: isSwahili ? 'Jina la Kwanza' : 'First Name',
+              label: _profileTr(language, en: 'First Name', sw: 'Jina la Kwanza', fr: 'Prenom', ar: 'الاسم الأول'),
               value: data['first_name'] as String? ?? '-',
             ),
             _InfoRow(
               icon: Icons.person_outline,
-              label: isSwahili ? 'Jina la Mwisho' : 'Last Name',
+              label: _profileTr(language, en: 'Last Name', sw: 'Jina la Mwisho', fr: 'Nom', ar: 'اسم العائلة'),
               value: data['last_name'] as String? ?? '-',
             ),
             _InfoRow(
               icon: Icons.badge_outlined,
-              label: isSwahili ? 'Nambari ya Kitambulisho' : 'ID Number',
+              label: _profileTr(language, en: 'ID Number', sw: 'Nambari ya Kitambulisho', fr: 'Numero d\'identite', ar: 'رقم الهوية'),
               value: idNumber.isNotEmpty ? idNumber : '-',
             ),
           ],
@@ -209,21 +275,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: 16),
 
         _ProfileInfoCard(
-          title: isSwahili ? 'Mawasiliano' : 'Contact',
+          title: _profileTr(
+            language,
+            en: 'Contact',
+            sw: 'Mawasiliano',
+            fr: 'Contact',
+            ar: 'التواصل',
+          ),
           items: [
             _InfoRow(
               icon: Icons.email_outlined,
-              label: isSwahili ? 'Barua Pepe' : 'Email',
+              label: _profileTr(language, en: 'Email', sw: 'Barua Pepe', fr: 'E-mail', ar: 'البريد الإلكتروني'),
               value: email.isNotEmpty ? email : '-',
             ),
             _InfoRow(
               icon: Icons.phone_outlined,
-              label: isSwahili ? 'Simu' : 'Phone',
+              label: _profileTr(language, en: 'Phone', sw: 'Simu', fr: 'Telephone', ar: 'الهاتف'),
               value: phone.isNotEmpty ? phone : '-',
             ),
             _InfoRow(
               icon: Icons.location_on_outlined,
-              label: isSwahili ? 'Anwani' : 'Address',
+              label: _profileTr(language, en: 'Address', sw: 'Anwani', fr: 'Adresse', ar: 'العنوان'),
               value: address.isNotEmpty ? address : '-',
             ),
           ],
@@ -232,7 +304,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _buildEditForm(bool isSwahili, Map<String, dynamic> data) {
+  Widget _buildEditForm(AppLanguage language, Map<String, dynamic> data) {
     return Form(
       key: _formKey,
       child: ListView(
@@ -254,12 +326,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           TextFormField(
             controller: _firstNameController,
             decoration: InputDecoration(
-              labelText: isSwahili ? 'Jina la Kwanza' : 'First Name',
+              labelText: _profileTr(language, en: 'First Name', sw: 'Jina la Kwanza', fr: 'Prenom', ar: 'الاسم الأول'),
               prefixIcon: const Icon(Icons.person_outline),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
             validator: (v) => v == null || v.trim().isEmpty
-                ? (isSwahili ? 'Jina la kwanza linahitajika' : 'First name is required')
+                ? _profileTr(language, en: 'First name is required', sw: 'Jina la kwanza linahitajika', fr: 'Le prenom est requis', ar: 'الاسم الأول مطلوب')
                 : null,
           ),
           const SizedBox(height: 16),
@@ -267,12 +339,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           TextFormField(
             controller: _lastNameController,
             decoration: InputDecoration(
-              labelText: isSwahili ? 'Jina la Mwisho' : 'Last Name',
+              labelText: _profileTr(language, en: 'Last Name', sw: 'Jina la Mwisho', fr: 'Nom', ar: 'اسم العائلة'),
               prefixIcon: const Icon(Icons.person_outline),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
             validator: (v) => v == null || v.trim().isEmpty
-                ? (isSwahili ? 'Jina la mwisho linahitajika' : 'Last name is required')
+                ? _profileTr(language, en: 'Last name is required', sw: 'Jina la mwisho linahitajika', fr: 'Le nom est requis', ar: 'اسم العائلة مطلوب')
                 : null,
           ),
           const SizedBox(height: 16),
@@ -281,16 +353,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              labelText: isSwahili ? 'Barua Pepe' : 'Email',
+              labelText: _profileTr(language, en: 'Email', sw: 'Barua Pepe', fr: 'E-mail', ar: 'البريد الإلكتروني'),
               prefixIcon: const Icon(Icons.email_outlined),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
             validator: (v) {
               if (v == null || v.trim().isEmpty) {
-                return isSwahili ? 'Barua pepe inahitajika' : 'Email is required';
+                return _profileTr(language, en: 'Email is required', sw: 'Barua pepe inahitajika', fr: 'L\'e-mail est requis', ar: 'البريد الإلكتروني مطلوب');
               }
               if (!v.contains('@')) {
-                return isSwahili ? 'Barua pepe si sahihi' : 'Invalid email address';
+                return _profileTr(language, en: 'Invalid email address', sw: 'Barua pepe si sahihi', fr: 'Adresse e-mail invalide', ar: 'عنوان البريد الإلكتروني غير صالح');
               }
               return null;
             },
@@ -301,7 +373,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             decoration: InputDecoration(
-              labelText: isSwahili ? 'Nambari ya Simu' : 'Phone Number',
+              labelText: _profileTr(language, en: 'Phone Number', sw: 'Nambari ya Simu', fr: 'Numero de telephone', ar: 'رقم الهاتف'),
               prefixIcon: const Icon(Icons.phone_outlined),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -312,7 +384,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             controller: _addressController,
             maxLines: 2,
             decoration: InputDecoration(
-              labelText: isSwahili ? 'Anwani' : 'Address',
+              labelText: _profileTr(language, en: 'Address', sw: 'Anwani', fr: 'Adresse', ar: 'العنوان'),
               prefixIcon: const Icon(Icons.location_on_outlined),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
@@ -336,7 +408,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                     )
                   : Text(
-                      isSwahili ? 'Hifadhi Mabadiliko' : 'Save Changes',
+                      _profileTr(
+                        language,
+                        en: 'Save Changes',
+                        sw: 'Hifadhi Mabadiliko',
+                        fr: 'Enregistrer les modifications',
+                        ar: 'حفظ التغييرات',
+                      ),
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
             ),

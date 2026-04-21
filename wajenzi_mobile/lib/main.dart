@@ -5,6 +5,7 @@ import 'core/config/app_config.dart';
 import 'core/config/theme_config.dart';
 import 'core/router/app_router.dart';
 import 'presentation/providers/settings_provider.dart';
+import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,18 +32,37 @@ void main() async {
 class WajenziApp extends ConsumerWidget {
   const WajenziApp({super.key});
 
+  Locale _getLocaleFromLanguage(AppLanguage language) {
+    return switch (language) {
+      AppLanguage.english => const Locale('en'),
+      AppLanguage.swahili => const Locale('sw'),
+      AppLanguage.french => const Locale('fr'),
+      AppLanguage.arabic => const Locale('ar'),
+    };
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final language = ref.watch(currentLanguageProvider);
 
     return MaterialApp.router(
-      title: 'Wajenzi',
+      title: AppConfig.appName,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       routerConfig: router,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: _getLocaleFromLanguage(language),
+      builder: (context, child) {
+        return Directionality(
+          textDirection: language.isRtl ? TextDirection.rtl : TextDirection.ltr,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

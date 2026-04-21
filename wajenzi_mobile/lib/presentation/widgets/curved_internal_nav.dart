@@ -23,15 +23,45 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
 
   bool get _isClient => widget.isClient;
 
-  List<String> _getMenuLabels(bool isSwahili) {
+  List<String> _getMenuLabels(AppLanguage language) {
     if (_isClient) {
-      return isSwahili
-          ? ['Nyumbani', 'Ankara', 'Mipangilio']
-          : ['Home', 'Billing', 'Settings'];
+      return switch (language) {
+        AppLanguage.swahili => ['Nyumbani', 'Ankara', 'Mipangilio'],
+        AppLanguage.french => ['Accueil', 'Facturation', 'Parametres'],
+        AppLanguage.arabic => ['الرئيسية', 'الفواتير', 'الإعدادات'],
+        AppLanguage.english => ['Home', 'Billing', 'Settings'],
+      };
     }
-    return isSwahili
-        ? ['Miradi', 'Ankara', 'Nyumbani', 'Ununuzi', 'Mahudhurio']
-        : ['Projects', 'Billing', 'Home', 'Procurement', 'Attendance'];
+    return switch (language) {
+      AppLanguage.swahili => [
+        'Miradi',
+        'Ankara',
+        'Nyumbani',
+        'Ununuzi',
+        'Mahudhurio',
+      ],
+      AppLanguage.french => [
+        'Projets',
+        'Facturation',
+        'Accueil',
+        'Achats',
+        'Presence',
+      ],
+      AppLanguage.arabic => [
+        'المشاريع',
+        'الفواتير',
+        'الرئيسية',
+        'المشتريات',
+        'الحضور',
+      ],
+      AppLanguage.english => [
+        'Projects',
+        'Billing',
+        'Home',
+        'Procurement',
+        'Attendance',
+      ],
+    };
   }
 
   List<IconData> get _menuIcons {
@@ -81,8 +111,8 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final isDarkMode = ref.watch(isDarkModeProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
-    final menuLabels = _getMenuLabels(isSwahili);
+    final currentLanguage = ref.watch(currentLanguageProvider);
+    final menuLabels = _getMenuLabels(currentLanguage);
 
     // Reorder items so active is always in center (index 2)
     List<int> getReorderedIndices() {

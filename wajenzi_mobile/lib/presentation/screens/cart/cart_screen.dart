@@ -28,8 +28,36 @@ class CartScreen extends ConsumerStatefulWidget {
 
 class _CartScreenState extends ConsumerState<CartScreen> {
   // Use global settings from provider
+  AppLanguage get _language => ref.watch(currentLanguageProvider);
   bool get _isDarkMode => ref.watch(isDarkModeProvider);
   bool get _isSwahili => ref.watch(isSwahiliProvider);
+  bool get _isFrench => _language == AppLanguage.french;
+  bool get _isArabic => _language == AppLanguage.arabic;
+
+  Widget _languageFlag() {
+    switch (_language) {
+      case AppLanguage.swahili:
+        return const TanzaniaFlag();
+      case AppLanguage.french:
+        return const FranceFlag();
+      case AppLanguage.arabic:
+        return const ArabicLanguageBadge();
+      case AppLanguage.english:
+        return const UKFlag();
+    }
+  }
+
+  String _tr({
+    required String en,
+    String? sw,
+    String? fr,
+    String? ar,
+  }) {
+    if (_isSwahili) return sw ?? en;
+    if (_isFrench) return fr ?? en;
+    if (_isArabic) return ar ?? en;
+    return en;
+  }
 
   // Dark mode colors
   Color get _bgColor =>
@@ -57,9 +85,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         ? 'TZS ${_formatNumber(ref.read(cartTotalTZSProvider))}'
         : 'USD ${_formatNumber(ref.read(cartTotalUSDProvider))}';
 
-    final message = _isSwahili
-        ? 'Habari! Napenda kupata taarifa zaidi kuhusu miradi ifuatayo:\n\n$itemsList\n\nJumla: $totalPrice'
-        : 'Hello! I am interested in learning more about the following projects:\n\n$itemsList\n\nTotal Value: $totalPrice';
+    final message = _tr(
+      en:
+          'Hello! I am interested in learning more about the following projects:\n\n$itemsList\n\nTotal Value: $totalPrice',
+      sw:
+          'Habari! Napenda kupata taarifa zaidi kuhusu miradi ifuatayo:\n\n$itemsList\n\nJumla: $totalPrice',
+      fr:
+          'Bonjour ! Je souhaite en savoir plus sur les projets suivants :\n\n$itemsList\n\nValeur totale : $totalPrice',
+      ar:
+          'مرحبًا! أرغب في معرفة المزيد عن المشاريع التالية:\n\n$itemsList\n\nالقيمة الإجمالية: $totalPrice',
+    );
 
     final opened = await ExternalLauncherService.openWhatsApp(message);
 
@@ -68,9 +103,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isSwahili
-                  ? 'Imeshindwa kufungua WhatsApp'
-                  : 'Could not open WhatsApp',
+              _tr(
+                en: 'Could not open WhatsApp',
+                sw: 'Imeshindwa kufungua WhatsApp',
+                fr: 'Impossible d\'ouvrir WhatsApp',
+                ar: 'تعذر فتح واتساب',
+              ),
             ),
             backgroundColor: Colors.red,
           ),
@@ -89,12 +127,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       extendBody: true,
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
-        isSwahili: _isSwahili,
+        language: _language,
         onDarkModeToggle: () =>
             ref.read(settingsProvider.notifier).toggleDarkMode(),
         onLanguageToggle: () =>
             ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
+        flagWidget: _languageFlag(),
       ),
       body: cartState.items.isEmpty
           ? _buildEmptyCart()
@@ -103,6 +141,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         selectedIndex: 0, // Cart is not in main nav, default to Home
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
+        language: _language,
       ),
     );
   }
@@ -127,7 +166,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            _isSwahili ? 'Kikapu Kitupu' : 'Your Cart is Empty',
+            _tr(
+              en: 'Your Cart is Empty',
+              sw: 'Kikapu Kitupu',
+              fr: 'Votre panier est vide',
+              ar: 'سلة التسوق فارغة',
+            ),
             style: TextStyle(
               color: _textPrimaryColor,
               fontSize: 22,
@@ -136,9 +180,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _isSwahili
-                ? 'Ongeza miradi unayopenda kwenye kikapu chako'
-                : 'Add projects you\'re interested in to your cart',
+            _tr(
+              en: 'Add projects you\'re interested in to your cart',
+              sw: 'Ongeza miradi unayopenda kwenye kikapu chako',
+              fr: 'Ajoutez au panier les projets qui vous interessent',
+              ar: 'أضف المشاريع التي تهمك إلى سلتك',
+            ),
             style: TextStyle(color: _textSecondaryColor, fontSize: 14),
             textAlign: TextAlign.center,
           ),
@@ -146,7 +193,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           ElevatedButton.icon(
             onPressed: () => context.go('/'),
             icon: const Icon(Icons.explore_rounded),
-            label: Text(_isSwahili ? 'Tafuta Miradi' : 'Explore Projects'),
+            label: Text(
+              _tr(
+                en: 'Explore Projects',
+                sw: 'Tafuta Miradi',
+                fr: 'Explorer les projets',
+                ar: 'استكشف المشاريع',
+              ),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1ABC9C),
               foregroundColor: Colors.white,
@@ -182,7 +236,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isSwahili ? 'Kikapu Chako' : 'Your Cart',
+                    _tr(
+                      en: 'Your Cart',
+                      sw: 'Kikapu Chako',
+                      fr: 'Votre panier',
+                      ar: 'سلتك',
+                    ),
                     style: TextStyle(
                       color: _textPrimaryColor,
                       fontSize: 22,
@@ -192,7 +251,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   Text(
                     _isSwahili
                         ? '${cartState.itemCount} ${cartState.itemCount == 1 ? 'mradi' : 'miradi'}'
-                        : '${cartState.itemCount} ${cartState.itemCount == 1 ? 'project' : 'projects'}',
+                        : _isFrench
+                            ? '${cartState.itemCount} ${cartState.itemCount == 1 ? 'projet' : 'projets'}'
+                            : _isArabic
+                                ? '${cartState.itemCount} ${cartState.itemCount == 1 ? 'مشروع' : 'مشاريع'}'
+                                : '${cartState.itemCount} ${cartState.itemCount == 1 ? 'project' : 'projects'}',
                     style: TextStyle(color: _textSecondaryColor, fontSize: 14),
                   ),
                 ],
@@ -206,20 +269,37 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       builder: (context) => AlertDialog(
                         backgroundColor: _cardBgColor,
                         title: Text(
-                          _isSwahili ? 'Futa Kikapu?' : 'Clear Cart?',
+                          _tr(
+                            en: 'Clear Cart?',
+                            sw: 'Futa Kikapu?',
+                            fr: 'Vider le panier ?',
+                            ar: 'مسح السلة؟',
+                          ),
                           style: TextStyle(color: _textPrimaryColor),
                         ),
                         content: Text(
-                          _isSwahili
-                              ? 'Una uhakika unataka kufuta miradi yote kwenye kikapu?'
-                              : 'Are you sure you want to remove all projects from your cart?',
+                          _tr(
+                            en:
+                                'Are you sure you want to remove all projects from your cart?',
+                            sw:
+                                'Una uhakika unataka kufuta miradi yote kwenye kikapu?',
+                            fr:
+                                'Voulez-vous vraiment supprimer tous les projets de votre panier ?',
+                            ar:
+                                'هل أنت متأكد أنك تريد إزالة جميع المشاريع من سلتك؟',
+                          ),
                           style: TextStyle(color: _textSecondaryColor),
                         ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
                             child: Text(
-                              _isSwahili ? 'Hapana' : 'Cancel',
+                              _tr(
+                                en: 'Cancel',
+                                sw: 'Hapana',
+                                fr: 'Annuler',
+                                ar: 'إلغاء',
+                              ),
                               style: const TextStyle(color: Color(0xFF7F8C8D)),
                             ),
                           ),
@@ -229,7 +309,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                               Navigator.pop(context);
                             },
                             child: Text(
-                              _isSwahili ? 'Futa' : 'Clear',
+                              _tr(
+                                en: 'Clear',
+                                sw: 'Futa',
+                                fr: 'Vider',
+                                ar: 'مسح',
+                              ),
                               style: const TextStyle(color: Color(0xFFE74C3C)),
                             ),
                           ),
@@ -243,7 +328,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     size: 20,
                   ),
                   label: Text(
-                    _isSwahili ? 'Futa Yote' : 'Clear All',
+                    _tr(
+                      en: 'Clear All',
+                      sw: 'Futa Yote',
+                      fr: 'Tout vider',
+                      ar: 'مسح الكل',
+                    ),
                     style: const TextStyle(
                       color: Color(0xFFE74C3C),
                       fontSize: 12,
@@ -287,7 +377,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    _isSwahili ? 'Jumla ya Thamani' : 'Total Value',
+                    _tr(
+                      en: 'Total Value',
+                      sw: 'Jumla ya Thamani',
+                      fr: 'Valeur totale',
+                      ar: 'القيمة الإجمالية',
+                    ),
                     style: TextStyle(color: _textSecondaryColor, fontSize: 14),
                   ),
                   Text(
@@ -310,9 +405,12 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   onPressed: () => _launchWhatsAppWithCart(cartState.items),
                   icon: const Icon(Icons.chat_rounded, size: 22),
                   label: Text(
-                    _isSwahili
-                        ? 'Uliza Yote kupitia WhatsApp'
-                        : 'Inquire All via WhatsApp',
+                    _tr(
+                      en: 'Ask via WhatsApp',
+                      sw: 'Uliza kupitia WhatsApp',
+                      fr: 'Demander via WhatsApp',
+                      ar: 'اسأل عبر واتساب',
+                    ),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

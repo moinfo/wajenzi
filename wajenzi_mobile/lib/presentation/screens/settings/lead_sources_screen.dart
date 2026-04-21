@@ -23,6 +23,25 @@ final _leadSourcesProvider =
           .toList();
     });
 
+String _leadSourceTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  switch (language) {
+    case AppLanguage.swahili:
+      return sw ?? en;
+    case AppLanguage.french:
+      return fr ?? en;
+    case AppLanguage.arabic:
+      return ar ?? en;
+    case AppLanguage.english:
+      return en;
+  }
+}
+
 class LeadSourcesScreen extends ConsumerWidget {
   const LeadSourcesScreen({super.key});
 
@@ -30,7 +49,7 @@ class LeadSourcesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final asyncData = ref.watch(_leadSourcesProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final search = ref.watch(_leadSourcesSearchProvider).trim().toLowerCase();
 
@@ -40,14 +59,28 @@ class LeadSourcesScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Chanzo za Mauzo' : 'Lead Sources'),
+        title: Text(
+          _leadSourceTr(
+            language,
+            en: 'Lead Sources',
+            sw: 'Chanzo za Mauzo',
+            fr: 'Sources de prospects',
+            ar: 'مصادر العملاء المحتملين',
+          ),
+        ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza Chanzo' : 'Add Source',
+          tooltip: _leadSourceTr(
+            language,
+            en: 'Add Source',
+            sw: 'Ongeza Chanzo',
+            fr: 'Ajouter une source',
+            ar: 'إضافة مصدر',
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -63,9 +96,13 @@ class LeadSourcesScreen extends ConsumerWidget {
                       ref.read(_leadSourcesSearchProvider.notifier).state =
                           value,
                   decoration: InputDecoration(
-                    hintText: isSwahili
-                        ? 'Tafuta chanzo...'
-                        : 'Search sources...',
+                    hintText: _leadSourceTr(
+                      language,
+                      en: 'Search sources...',
+                      sw: 'Tafuta chanzo...',
+                      fr: 'Rechercher des sources...',
+                      ar: 'ابحث عن المصادر...',
+                    ),
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: search.isNotEmpty
                         ? IconButton(
@@ -114,7 +151,15 @@ class LeadSourcesScreen extends ConsumerWidget {
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () => ref.invalidate(_leadSourcesProvider),
-                        child: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+                        child: Text(
+                          _leadSourceTr(
+                            language,
+                            en: 'Retry',
+                            sw: 'Jaribu tena',
+                            fr: 'Reessayer',
+                            ar: 'أعد المحاولة',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -143,12 +188,20 @@ class LeadSourcesScreen extends ConsumerWidget {
                           const SizedBox(height: 16),
                           Text(
                             items.isEmpty
-                                ? (isSwahili
-                                      ? 'Hakuna chanzo'
-                                      : 'No lead sources found')
-                                : (isSwahili
-                                      ? 'Hakuna matokeo yanayolingana'
-                                      : 'No matching results'),
+                                ? _leadSourceTr(
+                                    language,
+                                    en: 'No lead sources found',
+                                    sw: 'Hakuna chanzo',
+                                    fr: 'Aucune source de prospect trouvee',
+                                    ar: 'لم يتم العثور على مصادر العملاء المحتملين',
+                                  )
+                                : _leadSourceTr(
+                                    language,
+                                    en: 'No matching results',
+                                    sw: 'Hakuna matokeo yanayolingana',
+                                    fr: 'Aucun resultat correspondant',
+                                    ar: 'لا توجد نتائج مطابقة',
+                                  ),
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -166,7 +219,13 @@ class LeadSourcesScreen extends ConsumerWidget {
                                       '',
                               icon: const Icon(Icons.clear),
                               label: Text(
-                                isSwahili ? 'Futa utafutaji' : 'Clear search',
+                                _leadSourceTr(
+                                  language,
+                                  en: 'Clear search',
+                                  sw: 'Futa utafutaji',
+                                  fr: 'Effacer la recherche',
+                                  ar: 'مسح البحث',
+                                ),
                               ),
                             ),
                           ],
@@ -186,7 +245,7 @@ class LeadSourcesScreen extends ConsumerWidget {
                         index: index,
                         onEdit: () => _openForm(context, ref, item: item),
                         onDelete: () => _deleteItem(context, ref, item),
-                        isSwahili: isSwahili,
+                        language: language,
                         isDarkMode: isDarkMode,
                       );
                     }, childCount: filtered.length),
@@ -224,23 +283,51 @@ class LeadSourcesScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(isSwahili ? 'Futa Chanzo' : 'Delete Lead Source'),
+        title: Text(
+          _leadSourceTr(
+            language,
+            en: 'Delete Lead Source',
+            sw: 'Futa Chanzo',
+            fr: 'Supprimer la source du prospect',
+            ar: 'حذف مصدر العميل المحتمل',
+          ),
+        ),
         content: Text(
-          isSwahili ? 'Futa ${item['name']}?' : 'Delete ${item['name']}?',
+          _leadSourceTr(
+            language,
+            en: 'Delete ${item['name']}?',
+            sw: 'Futa ${item['name']}?',
+            fr: 'Supprimer ${item['name']} ?',
+            ar: 'هل تريد حذف ${item['name']}؟',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+            child: Text(
+              _leadSourceTr(
+                language,
+                en: 'Cancel',
+                sw: 'Ghairi',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(
-              isSwahili ? 'Futa' : 'Delete',
+              _leadSourceTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
               style: const TextStyle(color: AppColors.error),
             ),
           ),
@@ -256,7 +343,13 @@ class LeadSourcesScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isSwahili ? 'Chanzo kimefutwa' : 'Lead source deleted successfully',
+            _leadSourceTr(
+              language,
+              en: 'Lead source deleted successfully',
+              sw: 'Chanzo kimefutwa',
+              fr: 'Source du prospect supprimee avec succes',
+              ar: 'تم حذف مصدر العميل المحتمل بنجاح',
+            ),
           ),
           backgroundColor: AppColors.success,
         ),
@@ -278,7 +371,7 @@ class _LeadSourceCard extends StatelessWidget {
   final int index;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _LeadSourceCard({
@@ -286,7 +379,7 @@ class _LeadSourceCard extends StatelessWidget {
     required this.index,
     required this.onEdit,
     required this.onDelete,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
@@ -337,7 +430,15 @@ class _LeadSourceCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.edit_rounded, size: 20),
                   const SizedBox(width: 8),
-                  Text(isSwahili ? 'Hariri' : 'Edit'),
+                  Text(
+                    _leadSourceTr(
+                      language,
+                      en: 'Edit',
+                      sw: 'Hariri',
+                      fr: 'Modifier',
+                      ar: 'تعديل',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -352,7 +453,13 @@ class _LeadSourceCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isSwahili ? 'Futa' : 'Delete',
+                    _leadSourceTr(
+                      language,
+                      en: 'Delete',
+                      sw: 'Futa',
+                      fr: 'Supprimer',
+                      ar: 'حذف',
+                    ),
                     style: const TextStyle(color: AppColors.error),
                   ),
                 ],
@@ -398,7 +505,7 @@ class _LeadSourceFormSheetState extends ConsumerState<_LeadSourceFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -430,10 +537,20 @@ class _LeadSourceFormSheetState extends ConsumerState<_LeadSourceFormSheet> {
                 const SizedBox(height: 16),
                 Text(
                   _isEdit
-                      ? (isSwahili ? 'Hariri Chanzo' : 'Edit Lead Source')
-                      : (isSwahili
-                            ? 'Unda Chanzo Mpya'
-                            : 'Create New Lead Source'),
+                      ? _leadSourceTr(
+                          language,
+                          en: 'Edit Lead Source',
+                          sw: 'Hariri Chanzo',
+                          fr: 'Modifier la source du prospect',
+                          ar: 'تعديل مصدر العميل المحتمل',
+                        )
+                      : _leadSourceTr(
+                          language,
+                          en: 'Create New Lead Source',
+                          sw: 'Unda Chanzo Mpya',
+                          fr: 'Creer une nouvelle source de prospect',
+                          ar: 'إنشاء مصدر عميل محتمل جديد',
+                        ),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -443,11 +560,23 @@ class _LeadSourceFormSheetState extends ConsumerState<_LeadSourceFormSheet> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: isSwahili ? 'Jina' : 'Name',
+                    labelText: _leadSourceTr(
+                      language,
+                      en: 'Name',
+                      sw: 'Jina',
+                      fr: 'Nom',
+                      ar: 'الاسم',
+                    ),
                     border: const OutlineInputBorder(),
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty)
-                      ? (isSwahili ? 'Jina linahitajika' : 'Name is required')
+                      ? _leadSourceTr(
+                          language,
+                          en: 'Name is required',
+                          sw: 'Jina linahitajika',
+                          fr: 'Le nom est obligatoire',
+                          ar: 'الاسم مطلوب',
+                        )
                       : null,
                 ),
                 const SizedBox(height: 20),
@@ -457,14 +586,28 @@ class _LeadSourceFormSheetState extends ConsumerState<_LeadSourceFormSheet> {
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? (isSwahili ? 'Inahifadhi...' : 'Saving...')
+                          ? _leadSourceTr(
+                              language,
+                              en: 'Saving...',
+                              sw: 'Inahifadhi...',
+                              fr: 'Enregistrement...',
+                              ar: 'جارٍ الحفظ...',
+                            )
                           : (_isEdit
-                                ? (isSwahili
-                                      ? 'Sasisha Chanzo'
-                                      : 'Update Lead Source')
-                                : (isSwahili
-                                      ? 'Hifadhi Chanzo'
-                                      : 'Save Lead Source')),
+                                ? _leadSourceTr(
+                                    language,
+                                    en: 'Update Lead Source',
+                                    sw: 'Sasisha Chanzo',
+                                    fr: 'Mettre a jour la source du prospect',
+                                    ar: 'تحديث مصدر العميل المحتمل',
+                                  )
+                                : _leadSourceTr(
+                                    language,
+                                    en: 'Save Lead Source',
+                                    sw: 'Hifadhi Chanzo',
+                                    fr: 'Enregistrer la source du prospect',
+                                    ar: 'حفظ مصدر العميل المحتمل',
+                                  )),
                     ),
                   ),
                 ),

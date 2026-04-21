@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../config/app_config.dart';
@@ -12,11 +13,21 @@ class ExternalLauncherService {
       kIsWeb ? LaunchMode.platformDefault : LaunchMode.inAppBrowserView;
 
   static Future<bool> openUri(Uri uri) {
-    return launchUrl(uri, mode: _defaultMode);
+    return _tryOpenUri(uri, mode: _defaultMode);
+  }
+
+  static Future<bool> _tryOpenUri(Uri uri, {LaunchMode? mode}) async {
+    try {
+      final supported = await canLaunchUrl(uri);
+      if (!supported) return false;
+      return await launchUrl(uri, mode: mode ?? _defaultMode);
+    } on PlatformException {
+      return false;
+    }
   }
 
   static Future<bool> openUriInApp(Uri uri) {
-    return launchUrl(uri, mode: _inAppMode);
+    return _tryOpenUri(uri, mode: _inAppMode);
   }
 
   static Future<bool> openPortalPath(String path) {
@@ -110,7 +121,8 @@ class ExternalLauncherService {
       'https://api.whatsapp.com/send?phone=$whatsappPhone&text=$encodedMessage',
     );
 
-    return launchUrl(nativeUri, mode: _defaultMode).then((opened) async {
+    final primaryUri = kIsWeb ? waMeUri : nativeUri;
+    return _tryOpenUri(primaryUri, mode: _defaultMode).then((opened) async {
       if (opened) return true;
 
       final waMeOpened = await openUri(waMeUri);

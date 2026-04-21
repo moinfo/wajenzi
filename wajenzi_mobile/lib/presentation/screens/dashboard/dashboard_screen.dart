@@ -10,6 +10,21 @@ import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/staff_dashboard_provider.dart';
 
+String _dashboardTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -43,7 +58,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final dashboardState = ref.watch(staffDashboardProvider);
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull?.user;
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
 
@@ -53,7 +68,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Dashibodi' : 'Dashboard'),
+        title: Text(
+          _dashboardTr(
+            language,
+            en: 'Dashboard',
+            sw: 'Dashibodi',
+            fr: 'Tableau de bord',
+            ar: 'لوحة التحكم',
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -66,12 +89,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ref.read(staffDashboardProvider.notifier).fetchDashboard(),
         child: dashboardState.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _buildErrorView(error, isSwahili),
+          error: (error, _) => _buildErrorView(error, language),
           data: (data) => _buildContent(
             context,
             data,
             user?.name ?? 'User',
-            isSwahili,
+            language,
             isDarkMode,
           ),
         ),
@@ -79,7 +102,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildErrorView(Object error, bool isSwahili) {
+  Widget _buildErrorView(Object error, AppLanguage language) {
     return ListView(
       padding: const EdgeInsets.all(32),
       children: [
@@ -87,15 +110,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _dashboardTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un probleme est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
-          isSwahili
-              ? 'Hatukuweza kupakia dashibodi yako kwa sasa.'
-              : 'We could not load your dashboard right now.',
+          _dashboardTr(
+            language,
+            en: 'We could not load your dashboard right now.',
+            sw: 'Hatukuweza kupakia dashibodi yako kwa sasa.',
+            fr: 'Nous n\'avons pas pu charger votre tableau de bord pour le moment.',
+            ar: 'تعذر تحميل لوحة التحكم الخاصة بك حاليا.',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppColors.textSecondary),
         ),
@@ -105,7 +138,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             onPressed: () =>
                 ref.read(staffDashboardProvider.notifier).fetchDashboard(),
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _dashboardTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Reessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],
@@ -116,7 +157,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     BuildContext context,
     StaffDashboardData data,
     String userName,
-    bool isSwahili,
+    AppLanguage language,
     bool isDarkMode,
   ) {
     final firstName = userName.split(' ').first;
@@ -129,16 +170,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         children: [
           // Welcome header
           Text(
-            isSwahili ? 'Karibu tena, $firstName' : 'Welcome back, $firstName',
+            _dashboardTr(
+              language,
+              en: 'Welcome back, $firstName',
+              sw: 'Karibu tena, $firstName',
+              fr: 'Bon retour, $firstName',
+              ar: 'مرحبا بعودتك، $firstName',
+            ),
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
-            isSwahili
-                ? 'Hapa kuna muhtasari wa biashara yako'
-                : "Here's your business overview",
+            _dashboardTr(
+              language,
+              en: "Here's your business overview",
+              sw: 'Hapa kuna muhtasari wa biashara yako',
+              fr: 'Voici un apercu de votre activite',
+              ar: 'هذه نظرة عامة على أعمالك',
+            ),
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
@@ -150,7 +201,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               Expanded(
                 child: _StatCard(
-                  title: isSwahili ? 'Mapato (Mwezi)' : 'Revenue (MTD)',
+                  title: _dashboardTr(
+                    language,
+                    en: 'Revenue (MTD)',
+                    sw: 'Mapato (Mwezi)',
+                    fr: 'Revenus (mois en cours)',
+                    ar: 'الإيرادات (هذا الشهر)',
+                  ),
                   value: _formatCurrency(data.stats.totalRevenue),
                   icon: Icons.trending_up_rounded,
                   color: AppColors.success,
@@ -166,7 +223,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  title: isSwahili ? 'Miradi Hai' : 'Active Projects',
+                  title: _dashboardTr(
+                    language,
+                    en: 'Active Projects',
+                    sw: 'Miradi Hai',
+                    fr: 'Projets actifs',
+                    ar: 'المشاريع النشطة',
+                  ),
                   value: '${data.stats.activeProjects}',
                   icon: Icons.folder_open_rounded,
                   color: AppColors.secondary,
@@ -184,7 +247,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               Expanded(
                 child: _StatCard(
-                  title: isSwahili ? 'Wafanyakazi' : 'Team Members',
+                  title: _dashboardTr(
+                    language,
+                    en: 'Team Members',
+                    sw: 'Wafanyakazi',
+                    fr: 'Membres de l\'equipe',
+                    ar: 'أعضاء الفريق',
+                  ),
                   value: '${data.stats.teamMembers.total}',
                   icon: Icons.people_rounded,
                   color: AppColors.info,
@@ -194,7 +263,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _StatCard(
-                  title: isSwahili ? 'Bajeti (%)' : 'Budget Used',
+                  title: _dashboardTr(
+                    language,
+                    en: 'Budget Used',
+                    sw: 'Bajeti (%)',
+                    fr: 'Budget utilise',
+                    ar: 'الميزانية المستخدمة',
+                  ),
                   value: '${data.stats.budgetUtilization.percentage}%',
                   icon: Icons.account_balance_wallet_rounded,
                   color: data.stats.budgetUtilization.percentage > 90
@@ -210,7 +285,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           // ─── Pending Approvals ────────────────────────
           if (data.pendingApprovals.total > 0) ...[
             _SectionHeader(
-              title: isSwahili ? 'Idhini Zinazosubiri' : 'Pending Approvals',
+              title: _dashboardTr(
+                language,
+                en: 'Pending Approvals',
+                sw: 'Idhini Zinazosubiri',
+                fr: 'Approbations en attente',
+                ar: 'الموافقات المعلقة',
+              ),
               badge: '${data.pendingApprovals.total}',
             ),
             const SizedBox(height: 12),
@@ -225,7 +306,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         (item) => _ApprovalRow(
                           item: item,
                           isDarkMode: isDarkMode,
-                          isSwahili: isSwahili,
+                          language: language,
                         ),
                       )
                       .toList(),
@@ -242,23 +323,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: GestureDetector(
                   onTap: () => context.push('/dashboard/activities'),
                   child: _MiniSummaryCard(
-                    title: isSwahili ? 'Shughuli' : 'Activities',
+                    title: _dashboardTr(
+                      language,
+                      en: 'Activities',
+                      sw: 'Shughuli',
+                      fr: 'Activites',
+                      ar: 'الأنشطة',
+                    ),
                     icon: Icons.assignment_rounded,
                     color: AppColors.secondary,
                     isDarkMode: isDarkMode,
                     rows: [
                       _SummaryRow(
-                        isSwahili ? 'Zilizochelewa' : 'Overdue',
+                        _dashboardTr(
+                          language,
+                          en: 'Overdue',
+                          sw: 'Zilizochelewa',
+                          fr: 'En retard',
+                          ar: 'متأخرة',
+                        ),
                         data.activitiesSummary.overdue,
                         AppColors.error,
                       ),
                       _SummaryRow(
-                        isSwahili ? 'Zinaendelea' : 'In Progress',
+                        _dashboardTr(
+                          language,
+                          en: 'In Progress',
+                          sw: 'Zinaendelea',
+                          fr: 'En cours',
+                          ar: 'قيد التنفيذ',
+                        ),
                         data.activitiesSummary.inProgress,
                         AppColors.info,
                       ),
                       _SummaryRow(
-                        isSwahili ? 'Zinasubiri' : 'Pending',
+                        _dashboardTr(
+                          language,
+                          en: 'Pending',
+                          sw: 'Zinasubiri',
+                          fr: 'En attente',
+                          ar: 'معلقة',
+                        ),
                         data.activitiesSummary.pending,
                         AppColors.warning,
                       ),
@@ -271,23 +376,47 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: GestureDetector(
                   onTap: () => context.push('/dashboard/invoices'),
                   child: _MiniSummaryCard(
-                    title: isSwahili ? 'Ankara' : 'Invoices',
+                    title: _dashboardTr(
+                      language,
+                      en: 'Invoices',
+                      sw: 'Ankara',
+                      fr: 'Factures',
+                      ar: 'الفواتير',
+                    ),
                     icon: Icons.receipt_long_rounded,
                     color: AppColors.warning,
                     isDarkMode: isDarkMode,
                     rows: [
                       _SummaryRow(
-                        isSwahili ? 'Zilizochelewa' : 'Overdue',
+                        _dashboardTr(
+                          language,
+                          en: 'Overdue',
+                          sw: 'Zilizochelewa',
+                          fr: 'En retard',
+                          ar: 'متأخرة',
+                        ),
                         data.invoicesSummary.overdue,
                         AppColors.error,
                       ),
                       _SummaryRow(
-                        isSwahili ? 'Leo' : 'Due Today',
+                        _dashboardTr(
+                          language,
+                          en: 'Due Today',
+                          sw: 'Leo',
+                          fr: 'Echeance aujourd\'hui',
+                          ar: 'مستحقة اليوم',
+                        ),
                         data.invoicesSummary.dueToday,
                         AppColors.warning,
                       ),
                       _SummaryRow(
-                        isSwahili ? 'Zinakuja' : 'Upcoming',
+                        _dashboardTr(
+                          language,
+                          en: 'Upcoming',
+                          sw: 'Zinakuja',
+                          fr: 'A venir',
+                          ar: 'قادمة',
+                        ),
                         data.invoicesSummary.upcoming,
                         AppColors.info,
                       ),
@@ -300,7 +429,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 24),
 
           // ─── Follow-ups Summary ───────────────────────
-          _SectionHeader(title: isSwahili ? 'Ufuatiliaji' : 'Follow-ups'),
+          _SectionHeader(
+            title: _dashboardTr(
+              language,
+              en: 'Follow-ups',
+              sw: 'Ufuatiliaji',
+              fr: 'Suivis',
+              ar: 'المتابعات',
+            ),
+          ),
           const SizedBox(height: 12),
           GestureDetector(
             onTap: () => context.push('/dashboard/followups'),
@@ -311,22 +448,46 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Row(
                   children: [
                     _FollowupPill(
-                      label: isSwahili ? 'Zilizochelewa' : 'Overdue',
+                      label: _dashboardTr(
+                        language,
+                        en: 'Overdue',
+                        sw: 'Zilizochelewa',
+                        fr: 'En retard',
+                        ar: 'متأخرة',
+                      ),
                       count: data.followupSummary.overdue,
                       color: AppColors.error,
                     ),
                     _FollowupPill(
-                      label: isSwahili ? 'Leo' : 'Today',
+                      label: _dashboardTr(
+                        language,
+                        en: 'Today',
+                        sw: 'Leo',
+                        fr: 'Aujourd\'hui',
+                        ar: 'اليوم',
+                      ),
                       count: data.followupSummary.today,
                       color: AppColors.warning,
                     ),
                     _FollowupPill(
-                      label: isSwahili ? 'Zinakuja' : 'Upcoming',
+                      label: _dashboardTr(
+                        language,
+                        en: 'Upcoming',
+                        sw: 'Zinakuja',
+                        fr: 'A venir',
+                        ar: 'قادمة',
+                      ),
                       count: data.followupSummary.upcoming,
                       color: AppColors.info,
                     ),
                     _FollowupPill(
-                      label: isSwahili ? 'Zimekamilika' : 'Done',
+                      label: _dashboardTr(
+                        language,
+                        en: 'Done',
+                        sw: 'Zimekamilika',
+                        fr: 'Termines',
+                        ar: 'مكتملة',
+                      ),
                       count: data.followupSummary.completedThisMonth,
                       color: AppColors.success,
                     ),
@@ -340,9 +501,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           // ─── Project Progress ─────────────────────────
           if (data.projectProgress.projects.isNotEmpty) ...[
             _SectionHeader(
-              title: isSwahili ? 'Maendeleo ya Miradi' : 'Project Progress',
+              title: _dashboardTr(
+                language,
+                en: 'Project Progress',
+                sw: 'Maendeleo ya Miradi',
+                fr: 'Progression des projets',
+                ar: 'تقدم المشاريع',
+              ),
               badge:
-                  '${data.projectProgress.projects.length} ${isSwahili ? 'Hai' : 'Active'}',
+                  '${data.projectProgress.projects.length} ${_dashboardTr(language, en: 'Active', sw: 'Hai', fr: 'Actifs', ar: 'نشطة')}',
             ),
             const SizedBox(height: 12),
             // Overall ring + status counts
@@ -386,9 +553,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               Expanded(
                                 child: _StatusCountBox(
                                   count: data.projectProgress.completed,
-                                  label: isSwahili
-                                      ? 'Zimekamilika'
-                                      : 'Completed',
+                                  label: _dashboardTr(
+                                    language,
+                                    en: 'Completed',
+                                    sw: 'Zimekamilika',
+                                    fr: 'Termines',
+                                    ar: 'مكتملة',
+                                  ),
                                   color: const Color(0xFF27AE60),
                                   isDarkMode: isDarkMode,
                                 ),
@@ -397,9 +568,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               Expanded(
                                 child: _StatusCountBox(
                                   count: data.projectProgress.inProgress,
-                                  label: isSwahili
-                                      ? 'Zinaendelea'
-                                      : 'In Progress',
+                                  label: _dashboardTr(
+                                    language,
+                                    en: 'In Progress',
+                                    sw: 'Zinaendelea',
+                                    fr: 'En cours',
+                                    ar: 'قيد التنفيذ',
+                                  ),
                                   color: const Color(0xFF3B82F6),
                                   isDarkMode: isDarkMode,
                                 ),
@@ -412,7 +587,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               Expanded(
                                 child: _StatusCountBox(
                                   count: data.projectProgress.pending,
-                                  label: isSwahili ? 'Zinasubiri' : 'Pending',
+                                  label: _dashboardTr(
+                                    language,
+                                    en: 'Pending',
+                                    sw: 'Zinasubiri',
+                                    fr: 'En attente',
+                                    ar: 'معلقة',
+                                  ),
                                   color: const Color(0xFFF59E0B),
                                   isDarkMode: isDarkMode,
                                 ),
@@ -421,9 +602,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               Expanded(
                                 child: _StatusCountBox(
                                   count: data.projectProgress.overdue,
-                                  label: isSwahili
-                                      ? 'Zilizochelewa'
-                                      : 'Overdue',
+                                  label: _dashboardTr(
+                                    language,
+                                    en: 'Overdue',
+                                    sw: 'Zilizochelewa',
+                                    fr: 'En retard',
+                                    ar: 'متأخرة',
+                                  ),
                                   color: const Color(0xFFEF4444),
                                   isDarkMode: isDarkMode,
                                 ),
@@ -446,9 +631,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
 
           // ─── Calendar ─────────────────────────────────
-          _SectionHeader(title: isSwahili ? 'Kalenda' : 'Calendar'),
+          _SectionHeader(
+            title: _dashboardTr(
+              language,
+              en: 'Calendar',
+              sw: 'Kalenda',
+              fr: 'Calendrier',
+              ar: 'التقويم',
+            ),
+          ),
           const SizedBox(height: 12),
-          _CalendarWidget(isDarkMode: isDarkMode, isSwahili: isSwahili),
+          _CalendarWidget(isDarkMode: isDarkMode, language: language),
           const SizedBox(height: 24),
 
           // Bottom spacing for nav bar
@@ -664,12 +857,12 @@ class _SectionHeader extends StatelessWidget {
 class _ApprovalRow extends StatelessWidget {
   final ApprovalItem item;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _ApprovalRow({
     required this.item,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   IconData _iconForType(String icon) {
@@ -753,9 +946,13 @@ class _ApprovalRow extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    isSwahili
-                        ? 'Inahitaji umakini wako'
-                        : 'Requires your attention',
+                    _dashboardTr(
+                      language,
+                      en: 'Requires your attention',
+                      sw: 'Inahitaji umakini wako',
+                      fr: 'Necessite votre attention',
+                      ar: 'يتطلب انتباهك',
+                    ),
                     style: TextStyle(
                       fontSize: 12,
                       color: isDarkMode
@@ -1248,9 +1445,9 @@ class _StatusIconCount extends StatelessWidget {
 
 class _CalendarWidget extends ConsumerStatefulWidget {
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _CalendarWidget({required this.isDarkMode, required this.isSwahili});
+  const _CalendarWidget({required this.isDarkMode, required this.language});
 
   @override
   ConsumerState<_CalendarWidget> createState() => _CalendarWidgetState();
@@ -1314,7 +1511,7 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDarkMode;
-    final isSw = widget.isSwahili;
+    final language = widget.language;
     final now = DateTime.now();
     final firstDay = DateTime(_year, _month, 1);
     final daysInMonth = DateTime(_year, _month + 1, 0).day;
@@ -1390,7 +1587,15 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
 
             // ── Day headers ──
             Row(
-              children: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
+              children: [
+                    _dashboardTr(language, en: 'SUN', sw: 'JPL', fr: 'DIM', ar: 'أحد'),
+                    _dashboardTr(language, en: 'MON', sw: 'JTT', fr: 'LUN', ar: 'اثن'),
+                    _dashboardTr(language, en: 'TUE', sw: 'JNN', fr: 'MAR', ar: 'ثلا'),
+                    _dashboardTr(language, en: 'WED', sw: 'JTN', fr: 'MER', ar: 'أرب'),
+                    _dashboardTr(language, en: 'THU', sw: 'ALH', fr: 'JEU', ar: 'خمي'),
+                    _dashboardTr(language, en: 'FRI', sw: 'IJM', fr: 'VEN', ar: 'جمع'),
+                    _dashboardTr(language, en: 'SAT', sw: 'JMO', fr: 'SAM', ar: 'سبت'),
+                  ]
                   .map(
                     (d) => Expanded(
                       child: Center(
@@ -1434,23 +1639,53 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
               children: [
                 _LegendDot(
                   color: const Color(0xFF3B82F6),
-                  label: isSw ? 'Leo' : 'Today',
+                  label: _dashboardTr(
+                    language,
+                    en: 'Today',
+                    sw: 'Leo',
+                    fr: 'Aujourd\'hui',
+                    ar: 'اليوم',
+                  ),
                 ),
                 _LegendDot(
                   color: const Color(0xFF10B981),
-                  label: isSw ? 'Ufuatiliaji' : 'Follow-up',
+                  label: _dashboardTr(
+                    language,
+                    en: 'Follow-up',
+                    sw: 'Ufuatiliaji',
+                    fr: 'Suivi',
+                    ar: 'متابعة',
+                  ),
                 ),
                 _LegendDot(
                   color: const Color(0xFF60A5FA),
-                  label: isSw ? 'Shughuli' : 'Activity',
+                  label: _dashboardTr(
+                    language,
+                    en: 'Activity',
+                    sw: 'Shughuli',
+                    fr: 'Activite',
+                    ar: 'نشاط',
+                  ),
                 ),
                 _LegendDot(
                   color: const Color(0xFFF59E0B),
-                  label: isSw ? 'Ankara' : 'Invoice',
+                  label: _dashboardTr(
+                    language,
+                    en: 'Invoice',
+                    sw: 'Ankara',
+                    fr: 'Facture',
+                    ar: 'فاتورة',
+                  ),
                 ),
                 _LegendDot(
                   color: const Color(0xFFEF4444),
-                  label: isSw ? 'Zilizochelewa' : 'Overdue',
+                  label: _dashboardTr(
+                    language,
+                    en: 'Overdue',
+                    sw: 'Zilizochelewa',
+                    fr: 'En retard',
+                    ar: 'متأخرة',
+                  ),
                 ),
               ],
             ),
@@ -1467,7 +1702,7 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
     CalendarDayEvents dayEvents,
     bool isDark,
   ) {
-    final isSw = widget.isSwahili;
+    final language = widget.language;
     final allEvents = [
       ...dayEvents.followups,
       ...dayEvents.activities,
@@ -1531,7 +1766,7 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
-                      '${allEvents.length} ${isSw ? 'matukio' : 'events'}',
+                      '${allEvents.length} ${_dashboardTr(language, en: 'events', sw: 'matukio', fr: 'evenements', ar: 'أحداث')}',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -1552,7 +1787,13 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                   if (dayEvents.followups.isNotEmpty) ...[
                     _EventGroupHeader(
                       icon: Icons.phone_callback_rounded,
-                      label: isSw ? 'UFUATILIAJI' : 'FOLLOW-UPS',
+                      label: _dashboardTr(
+                        language,
+                        en: 'FOLLOW-UPS',
+                        sw: 'UFUATILIAJI',
+                        fr: 'SUIVIS',
+                        ar: 'المتابعات',
+                      ),
                       color: const Color(0xFF10B981),
                       isDarkMode: isDark,
                     ),
@@ -1568,7 +1809,13 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                   if (dayEvents.activities.isNotEmpty) ...[
                     _EventGroupHeader(
                       icon: Icons.assignment_rounded,
-                      label: isSw ? 'SHUGHULI' : 'ACTIVITIES',
+                      label: _dashboardTr(
+                        language,
+                        en: 'ACTIVITIES',
+                        sw: 'SHUGHULI',
+                        fr: 'ACTIVITES',
+                        ar: 'الأنشطة',
+                      ),
                       color: const Color(0xFF60A5FA),
                       isDarkMode: isDark,
                     ),
@@ -1584,7 +1831,13 @@ class _CalendarWidgetState extends ConsumerState<_CalendarWidget> {
                   if (dayEvents.invoices.isNotEmpty) ...[
                     _EventGroupHeader(
                       icon: Icons.receipt_long_rounded,
-                      label: isSw ? 'ANKARA ZINAZOTAKIWA' : 'INVOICES DUE',
+                      label: _dashboardTr(
+                        language,
+                        en: 'INVOICES DUE',
+                        sw: 'ANKARA ZINAZOTAKIWA',
+                        fr: 'FACTURES A ECHEANCE',
+                        ar: 'الفواتير المستحقة',
+                      ),
                       color: const Color(0xFFF59E0B),
                       isDarkMode: isDark,
                     ),

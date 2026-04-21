@@ -16,6 +16,21 @@ import '../../../data/datasources/remote/client_api.dart';
 import '../../providers/client_project_detail_provider.dart';
 import '../../providers/settings_provider.dart';
 
+String _projectDetailTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class ClientProjectDetailScreen extends ConsumerStatefulWidget {
   final int projectId;
   final String projectName;
@@ -58,7 +73,7 @@ class _ClientProjectDetailScreenState
     super.dispose();
   }
 
-  String _downloadErrorMessage(Object error, bool isSwahili) {
+  String _downloadErrorMessage(Object error, AppLanguage language) {
     if (error is DioException) {
       final data = error.response?.data;
       if (data is Map<String, dynamic>) {
@@ -69,18 +84,30 @@ class _ClientProjectDetailScreenState
       }
     }
 
-    return isSwahili
-        ? 'Imeshindwa kupakua faili. Jaribu tena.'
-        : 'Could not download the file. Please try again.';
+    return _projectDetailTr(
+      language,
+      en: 'Could not download the file. Please try again.',
+      sw: 'Imeshindwa kupakua faili. Jaribu tena.',
+      fr: 'Impossible de telecharger le fichier. Veuillez reessayer.',
+      ar: 'تعذر تنزيل الملف. يرجى المحاولة مرة أخرى.',
+    );
   }
 
   Future<void> _downloadPdf(String url, String fileName) async {
     final messenger = ScaffoldMessenger.of(context);
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
 
     messenger.showSnackBar(
       SnackBar(
-        content: Text(isSwahili ? 'Inapakua...' : 'Downloading...'),
+        content: Text(
+          _projectDetailTr(
+            language,
+            en: 'Downloading...',
+            sw: 'Inapakua...',
+            fr: 'Telechargement...',
+            ar: 'جارٍ التنزيل...',
+          ),
+        ),
         duration: const Duration(seconds: 1),
       ),
     );
@@ -130,7 +157,13 @@ class _ClientProjectDetailScreenState
           messenger.showSnackBar(
             SnackBar(
               content: Text(
-                isSwahili ? 'Imehifadhiwa: $fileName' : 'Saved: $fileName',
+                _projectDetailTr(
+                  language,
+                  en: 'Saved: $fileName',
+                  sw: 'Imehifadhiwa: $fileName',
+                  fr: 'Enregistre : $fileName',
+                  ar: 'تم الحفظ: $fileName',
+                ),
               ),
             ),
           );
@@ -139,7 +172,7 @@ class _ClientProjectDetailScreenState
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(
-          content: Text(_downloadErrorMessage(e, isSwahili)),
+          content: Text(_downloadErrorMessage(e, language)),
           backgroundColor: AppColors.error,
         ),
       );
@@ -148,7 +181,7 @@ class _ClientProjectDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final overviewAsync = ref.watch(projectOverviewProvider(widget.projectId));
 
     final projectName =
@@ -171,7 +204,7 @@ class _ClientProjectDetailScreenState
             ),
             if (status != null)
               Text(
-                _statusLabel(status),
+                _statusLabel(status, language: language),
                 style: TextStyle(
                   fontSize: 11,
                   color: Colors.white.withValues(alpha: 0.8),
@@ -192,13 +225,61 @@ class _ClientProjectDetailScreenState
           unselectedLabelStyle: const TextStyle(fontSize: 12),
           tabAlignment: TabAlignment.start,
           tabs: [
-            Tab(text: isSwahili ? 'Muhtasari' : 'Overview'),
+            Tab(
+              text: _projectDetailTr(
+                language,
+                en: 'Overview',
+                sw: 'Muhtasari',
+                fr: 'Apercu',
+                ar: 'نظرة عامة',
+              ),
+            ),
             Tab(text: 'BOQ'),
-            Tab(text: isSwahili ? 'Ratiba' : 'Schedule'),
-            Tab(text: isSwahili ? 'Fedha' : 'Financials'),
-            Tab(text: isSwahili ? 'Nyaraka' : 'Documents'),
-            Tab(text: isSwahili ? 'Picha' : 'Gallery'),
-            Tab(text: isSwahili ? 'Ripoti' : 'Reports'),
+            Tab(
+              text: _projectDetailTr(
+                language,
+                en: 'Schedule',
+                sw: 'Ratiba',
+                fr: 'Planning',
+                ar: 'الجدول',
+              ),
+            ),
+            Tab(
+              text: _projectDetailTr(
+                language,
+                en: 'Financials',
+                sw: 'Fedha',
+                fr: 'Finances',
+                ar: 'المالية',
+              ),
+            ),
+            Tab(
+              text: _projectDetailTr(
+                language,
+                en: 'Documents',
+                sw: 'Nyaraka',
+                fr: 'Documents',
+                ar: 'المستندات',
+              ),
+            ),
+            Tab(
+              text: _projectDetailTr(
+                language,
+                en: 'Gallery',
+                sw: 'Picha',
+                fr: 'Galerie',
+                ar: 'المعرض',
+              ),
+            ),
+            Tab(
+              text: _projectDetailTr(
+                language,
+                en: 'Reports',
+                sw: 'Ripoti',
+                fr: 'Rapports',
+                ar: 'التقارير',
+              ),
+            ),
           ],
         ),
       ),
@@ -240,16 +321,28 @@ class _ClientProjectDetailScreenState
 // Shared helpers
 // ═══════════════════════════════════════════════════
 
-String _statusLabel(String? status) {
+String _statusLabel(String? status, {AppLanguage language = AppLanguage.english}) {
   if (status == null) return '';
-  return status
-      .replaceAll('_', ' ')
-      .split(' ')
-      .map((w) {
-        if (w.isEmpty) return w;
-        return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
-      })
-      .join(' ');
+  return switch (status.toLowerCase()) {
+    'active' => _projectDetailTr(language, en: 'Active', sw: 'Hai', fr: 'Actif', ar: 'نشط'),
+    'in_progress' => _projectDetailTr(language, en: 'In Progress', sw: 'Inaendelea', fr: 'En cours', ar: 'قيد التنفيذ'),
+    'approved' => _projectDetailTr(language, en: 'Approved', sw: 'Imeidhinishwa', fr: 'Approuve', ar: 'معتمد'),
+    'completed' => _projectDetailTr(language, en: 'Completed', sw: 'Imekamilika', fr: 'Termine', ar: 'مكتمل'),
+    'on_hold' => _projectDetailTr(language, en: 'On Hold', sw: 'Imesimamishwa', fr: 'En pause', ar: 'معلق'),
+    'pending' => _projectDetailTr(language, en: 'Pending', sw: 'Inasubiri', fr: 'En attente', ar: 'معلق'),
+    'cancelled' => _projectDetailTr(language, en: 'Cancelled', sw: 'Imeghairiwa', fr: 'Annule', ar: 'ملغى'),
+    'overdue' => _projectDetailTr(language, en: 'Overdue', sw: 'Imechelewa', fr: 'En retard', ar: 'متأخر'),
+    'paid' => _projectDetailTr(language, en: 'Paid', sw: 'Imelipwa', fr: 'Paye', ar: 'مدفوع'),
+    'draft' => _projectDetailTr(language, en: 'Draft', sw: 'Rasimu', fr: 'Brouillon', ar: 'مسودة'),
+    _ => status
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) {
+          if (w.isEmpty) return w;
+          return '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}';
+        })
+        .join(' '),
+  };
 }
 
 Color _statusColor(String? status) {
@@ -271,7 +364,7 @@ Color _statusColor(String? status) {
   }
 }
 
-Widget _buildStatusBadge(String? status) {
+Widget _buildStatusBadge(String? status, {AppLanguage language = AppLanguage.english}) {
   final color = _statusColor(status);
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -280,7 +373,7 @@ Widget _buildStatusBadge(String? status) {
       borderRadius: BorderRadius.circular(8),
     ),
     child: Text(
-      _statusLabel(status),
+      _statusLabel(status, language: language),
       style: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w700,
@@ -370,7 +463,7 @@ class _GlassContainer extends StatelessWidget {
   }
 }
 
-Widget _buildTabError(Object error, bool isSwahili, VoidCallback onRetry) {
+Widget _buildTabError(Object error, AppLanguage language, VoidCallback onRetry) {
   return ListView(
     padding: const EdgeInsets.all(32),
     children: [
@@ -378,15 +471,25 @@ Widget _buildTabError(Object error, bool isSwahili, VoidCallback onRetry) {
       const Icon(Icons.error_outline, size: 56, color: AppColors.error),
       const SizedBox(height: 16),
       Text(
-        isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+        _projectDetailTr(
+          language,
+          en: 'Something went wrong',
+          sw: 'Hitilafu imetokea',
+          fr: 'Un probleme est survenu',
+          ar: 'حدث خطأ ما',
+        ),
         textAlign: TextAlign.center,
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       const SizedBox(height: 8),
       Text(
-        isSwahili
-            ? 'Hatukuweza kupakia sehemu hii kwa sasa.'
-            : 'We could not load this section right now.',
+        _projectDetailTr(
+          language,
+          en: 'We could not load this section right now.',
+          sw: 'Hatukuweza kupakia sehemu hii kwa sasa.',
+          fr: 'Nous n\'avons pas pu charger cette section pour le moment.',
+          ar: 'تعذر تحميل هذا القسم حاليا.',
+        ),
         textAlign: TextAlign.center,
         style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
       ),
@@ -395,7 +498,15 @@ Widget _buildTabError(Object error, bool isSwahili, VoidCallback onRetry) {
         child: ElevatedButton.icon(
           onPressed: onRetry,
           icon: const Icon(Icons.refresh, size: 18),
-          label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+          label: Text(
+            _projectDetailTr(
+              language,
+              en: 'Try again',
+              sw: 'Jaribu tena',
+              fr: 'Reessayer',
+              ar: 'حاول مرة أخرى',
+            ),
+          ),
         ),
       ),
     ],
@@ -431,14 +542,14 @@ class _OverviewTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(projectOverviewProvider(projectId));
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return asyncData.when(
       loading: _buildTabLoading,
       error: (e, _) => _buildTabError(
         e,
-        isSwahili,
+        language,
         () => ref.invalidate(projectOverviewProvider(projectId)),
       ),
       data: (data) => RefreshIndicator(
@@ -455,7 +566,7 @@ class _OverviewTab extends ConsumerWidget {
                 _ProgressSection(
                   progress: data.progress!,
                   isDarkMode: isDarkMode,
-                  isSwahili: isSwahili,
+                  language: language,
                 ),
 
               // Progress by phase
@@ -464,7 +575,7 @@ class _OverviewTab extends ConsumerWidget {
                 _ProgressByPhaseSection(
                   progressByPhase: data.progressByPhase,
                   isDarkMode: isDarkMode,
-                  isSwahili: isSwahili,
+                  language: language,
                 ),
               ],
 
@@ -474,7 +585,7 @@ class _OverviewTab extends ConsumerWidget {
               _ProjectDetailsCard(
                 project: data.project,
                 isDarkMode: isDarkMode,
-                isSwahili: isSwahili,
+                language: language,
               ),
 
               const SizedBox(height: 16),
@@ -483,7 +594,7 @@ class _OverviewTab extends ConsumerWidget {
               _TimelineCard(
                 project: data.project,
                 isDarkMode: isDarkMode,
-                isSwahili: isSwahili,
+                language: language,
               ),
 
               // Construction phases
@@ -492,7 +603,7 @@ class _OverviewTab extends ConsumerWidget {
                 _PhasesCard(
                   phases: data.project.phases,
                   isDarkMode: isDarkMode,
-                  isSwahili: isSwahili,
+                  language: language,
                 ),
               ],
 
@@ -521,9 +632,13 @@ class _OverviewTab extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isSwahili
-                                  ? 'Thamani ya Mkataba'
-                                  : 'Contract Value',
+                              _projectDetailTr(
+                                language,
+                                en: 'Contract Value',
+                                sw: 'Thamani ya Mkataba',
+                                fr: 'Valeur du contrat',
+                                ar: 'قيمة العقد',
+                              ),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: isDarkMode
@@ -564,12 +679,12 @@ class _OverviewTab extends ConsumerWidget {
 class _ProgressSection extends StatelessWidget {
   final ProjectProgress progress;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _ProgressSection({
     required this.progress,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -582,7 +697,13 @@ class _ProgressSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isSwahili ? 'Maendeleo ya Jumla' : 'Overall Progress',
+              _projectDetailTr(
+                language,
+                en: 'Overall Progress',
+                sw: 'Maendeleo ya Jumla',
+                fr: 'Progression globale',
+                ar: 'التقدم العام',
+              ),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -619,26 +740,26 @@ class _ProgressSection extends StatelessWidget {
                   child: Column(
                     children: [
                       _ProgressStat(
-                        label: isSwahili ? 'Imekamilika' : 'Completed',
+                        label: _projectDetailTr(language, en: 'Completed', sw: 'Imekamilika', fr: 'Termine', ar: 'مكتمل'),
                         count: progress.completed,
                         color: AppColors.success,
                       ),
                       const SizedBox(height: 8),
                       _ProgressStat(
-                        label: isSwahili ? 'Inaendelea' : 'In Progress',
+                        label: _projectDetailTr(language, en: 'In Progress', sw: 'Inaendelea', fr: 'En cours', ar: 'قيد التنفيذ'),
                         count: progress.inProgress,
                         color: AppColors.info,
                       ),
                       const SizedBox(height: 8),
                       _ProgressStat(
-                        label: isSwahili ? 'Inasubiri' : 'Pending',
+                        label: _projectDetailTr(language, en: 'Pending', sw: 'Inasubiri', fr: 'En attente', ar: 'معلق'),
                         count: progress.pending,
                         color: AppColors.warning,
                       ),
                       if (progress.overdue > 0) ...[
                         const SizedBox(height: 8),
                         _ProgressStat(
-                          label: isSwahili ? 'Imechelewa' : 'Overdue',
+                          label: _projectDetailTr(language, en: 'Overdue', sw: 'Imechelewa', fr: 'En retard', ar: 'متأخر'),
                           count: progress.overdue,
                           color: AppColors.error,
                         ),
@@ -750,12 +871,12 @@ class _ProgressRingPainter extends CustomPainter {
 class _ProgressByPhaseSection extends StatelessWidget {
   final Map<String, dynamic> progressByPhase;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _ProgressByPhaseSection({
     required this.progressByPhase,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -768,7 +889,13 @@ class _ProgressByPhaseSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isSwahili ? 'Maendeleo kwa Awamu' : 'Progress by Phase',
+              _projectDetailTr(
+                language,
+                en: 'Progress by Phase',
+                sw: 'Maendeleo kwa Awamu',
+                fr: 'Progression par phase',
+                ar: 'التقدم حسب المرحلة',
+              ),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -847,12 +974,12 @@ class _ProgressByPhaseSection extends StatelessWidget {
 class _ProjectDetailsCard extends StatelessWidget {
   final ProjectDetail project;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _ProjectDetailsCard({
     required this.project,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -865,7 +992,13 @@ class _ProjectDetailsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isSwahili ? 'Maelezo ya Mradi' : 'Project Details',
+              _projectDetailTr(
+                language,
+                en: 'Project Details',
+                sw: 'Maelezo ya Mradi',
+                fr: 'Details du projet',
+                ar: 'تفاصيل المشروع',
+              ),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -884,23 +1017,23 @@ class _ProjectDetailsCard extends StatelessWidget {
               const SizedBox(height: 12),
             ],
             _DetailRow(
-              label: isSwahili ? 'Aina ya Mradi' : 'Project Type',
+              label: _projectDetailTr(language, en: 'Project Type', sw: 'Aina ya Mradi', fr: 'Type de projet', ar: 'نوع المشروع'),
               value: project.projectType ?? '-',
               isDarkMode: isDarkMode,
             ),
             _DetailRow(
-              label: isSwahili ? 'Huduma' : 'Service Type',
+              label: _projectDetailTr(language, en: 'Service Type', sw: 'Huduma', fr: 'Type de service', ar: 'نوع الخدمة'),
               value: project.serviceType ?? '-',
               isDarkMode: isDarkMode,
             ),
             _DetailRow(
-              label: isSwahili ? 'Msimamizi' : 'Project Manager',
+              label: _projectDetailTr(language, en: 'Project Manager', sw: 'Msimamizi', fr: 'Chef de projet', ar: 'مدير المشروع'),
               value: project.projectManager ?? '-',
               isDarkMode: isDarkMode,
             ),
             _DetailRow(
-              label: isSwahili ? 'Kipaumbele' : 'Priority',
-              value: _statusLabel(project.priority),
+              label: _projectDetailTr(language, en: 'Priority', sw: 'Kipaumbele', fr: 'Priorite', ar: 'الأولوية'),
+              value: _statusLabel(project.priority, language: language),
               isDarkMode: isDarkMode,
             ),
           ],
@@ -915,12 +1048,12 @@ class _ProjectDetailsCard extends StatelessWidget {
 class _TimelineCard extends StatelessWidget {
   final ProjectDetail project;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _TimelineCard({
     required this.project,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -932,9 +1065,9 @@ class _TimelineCard extends StatelessWidget {
         final end = DateTime.parse(project.expectedEndDate!);
         final days = end.difference(start).inDays;
         if (days > 30) {
-          duration = '${(days / 30).round()} ${isSwahili ? "miezi" : "months"}';
+          duration = '${(days / 30).round()} ${_projectDetailTr(language, en: "months", sw: "miezi", fr: "mois", ar: "أشهر")}';
         } else {
-          duration = '$days ${isSwahili ? "siku" : "days"}';
+          duration = '$days ${_projectDetailTr(language, en: "days", sw: "siku", fr: "jours", ar: "أيام")}';
         }
       } catch (_) {}
     }
@@ -947,7 +1080,13 @@ class _TimelineCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isSwahili ? 'Ratiba' : 'Timeline',
+              _projectDetailTr(
+                language,
+                en: 'Timeline',
+                sw: 'Ratiba',
+                fr: 'Chronologie',
+                ar: 'الجدول الزمني',
+              ),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -956,23 +1095,23 @@ class _TimelineCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _DetailRow(
-              label: isSwahili ? 'Kuanza' : 'Start Date',
+              label: _projectDetailTr(language, en: 'Start Date', sw: 'Kuanza', fr: 'Date de debut', ar: 'تاريخ البدء'),
               value: _formatDate(project.startDate),
               isDarkMode: isDarkMode,
             ),
             _DetailRow(
-              label: isSwahili ? 'Mwisho' : 'Expected End',
+              label: _projectDetailTr(language, en: 'Expected End', sw: 'Mwisho', fr: 'Fin prevue', ar: 'الانتهاء المتوقع'),
               value: _formatDate(project.expectedEndDate),
               isDarkMode: isDarkMode,
             ),
             if (project.actualEndDate != null)
               _DetailRow(
-                label: isSwahili ? 'Mwisho Halisi' : 'Actual End',
+                label: _projectDetailTr(language, en: 'Actual End', sw: 'Mwisho Halisi', fr: 'Fin reelle', ar: 'الانتهاء الفعلي'),
                 value: _formatDate(project.actualEndDate),
                 isDarkMode: isDarkMode,
               ),
             _DetailRow(
-              label: isSwahili ? 'Muda' : 'Duration',
+              label: _projectDetailTr(language, en: 'Duration', sw: 'Muda', fr: 'Duree', ar: 'المدة'),
               value: duration,
               isDarkMode: isDarkMode,
             ),
@@ -988,12 +1127,12 @@ class _TimelineCard extends StatelessWidget {
 class _PhasesCard extends StatelessWidget {
   final List<ConstructionPhase> phases;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _PhasesCard({
     required this.phases,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -1006,7 +1145,13 @@ class _PhasesCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isSwahili ? 'Awamu za Ujenzi' : 'Construction Phases',
+              _projectDetailTr(
+                language,
+                en: 'Construction Phases',
+                sw: 'Awamu za Ujenzi',
+                fr: 'Phases de construction',
+                ar: 'مراحل البناء',
+              ),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -1043,7 +1188,7 @@ class _PhasesCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    _buildStatusBadge(phase.status),
+                    _buildStatusBadge(phase.status, language: language),
                   ],
                 ),
               ),
@@ -1067,20 +1212,26 @@ class _BoqTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(projectBoqProvider(projectId));
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return asyncData.when(
       loading: _buildTabLoading,
       error: (e, _) => _buildTabError(
         e,
-        isSwahili,
+        language,
         () => ref.invalidate(projectBoqProvider(projectId)),
       ),
       data: (boqs) {
         if (boqs.isEmpty) {
           return _buildEmpty(
-            isSwahili ? 'Hakuna BOQ bado' : 'No BOQ yet',
+            _projectDetailTr(
+              language,
+              en: 'No BOQ yet',
+              sw: 'Hakuna BOQ bado',
+              fr: 'Aucun BOQ pour le moment',
+              ar: 'لا يوجد BOQ بعد',
+            ),
             Icons.list_alt_rounded,
           );
         }
@@ -1092,7 +1243,7 @@ class _BoqTab extends ConsumerWidget {
                   (boq) => _BoqCard(
                     boq: boq,
                     isDarkMode: isDarkMode,
-                    isSwahili: isSwahili,
+                    language: language,
                   ),
                 )
                 .toList(),
@@ -1106,12 +1257,12 @@ class _BoqTab extends ConsumerWidget {
 class _BoqCard extends StatelessWidget {
   final ProjectBoq boq;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _BoqCard({
     required this.boq,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -1152,12 +1303,12 @@ class _BoqCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                _buildStatusBadge(boq.status),
+                _buildStatusBadge(boq.status, language: language),
               ],
             ),
             const SizedBox(height: 4),
             Text(
-              '${isSwahili ? "Jumla" : "Total"}: ${_formatCurrency(boq.totalAmount)}',
+              '${_projectDetailTr(language, en: "Total", sw: "Jumla", fr: "Total", ar: "الإجمالي")}: ${_formatCurrency(boq.totalAmount)}',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -1171,7 +1322,7 @@ class _BoqCard extends StatelessWidget {
               (section) => _BoqSectionWidget(
                 section: section,
                 isDarkMode: isDarkMode,
-                isSwahili: isSwahili,
+                language: language,
                 depth: 0,
               ),
             ),
@@ -1193,13 +1344,13 @@ class _BoqCard extends StatelessWidget {
 class _BoqSectionWidget extends StatefulWidget {
   final BoqSection section;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final int depth;
 
   const _BoqSectionWidget({
     required this.section,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
     required this.depth,
   });
 
@@ -1264,7 +1415,7 @@ class _BoqSectionWidgetState extends State<_BoqSectionWidget> {
               (child) => _BoqSectionWidget(
                 section: child,
                 isDarkMode: widget.isDarkMode,
-                isSwahili: widget.isSwahili,
+                language: widget.language,
                 depth: widget.depth + 1,
               ),
             ),
@@ -1402,20 +1553,26 @@ class _ScheduleTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(projectScheduleProvider(projectId));
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return asyncData.when(
       loading: _buildTabLoading,
       error: (e, _) => _buildTabError(
         e,
-        isSwahili,
+        language,
         () => ref.invalidate(projectScheduleProvider(projectId)),
       ),
       data: (data) {
         if (data.phases.isEmpty && data.activities.isEmpty) {
           return _buildEmpty(
-            isSwahili ? 'Hakuna ratiba bado' : 'No schedule yet',
+            _projectDetailTr(
+              language,
+              en: 'No schedule yet',
+              sw: 'Hakuna ratiba bado',
+              fr: 'Aucun planning pour le moment',
+              ar: 'لا يوجد جدول بعد',
+            ),
             Icons.schedule_rounded,
           );
         }
@@ -1427,7 +1584,13 @@ class _ScheduleTab extends ConsumerWidget {
               // Phases
               if (data.phases.isNotEmpty) ...[
                 Text(
-                  isSwahili ? 'Awamu za Ujenzi' : 'Construction Phases',
+                  _projectDetailTr(
+                    language,
+                    en: 'Construction Phases',
+                    sw: 'Awamu za Ujenzi',
+                    fr: 'Phases de construction',
+                    ar: 'مراحل البناء',
+                  ),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -1468,7 +1631,7 @@ class _ScheduleTab extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          _buildStatusBadge(phase.status),
+                          _buildStatusBadge(phase.status, language: language),
                         ],
                       ),
                     ),
@@ -1480,7 +1643,13 @@ class _ScheduleTab extends ConsumerWidget {
               if (data.activities.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 Text(
-                  isSwahili ? 'Shughuli' : 'Activities',
+                  _projectDetailTr(
+                    language,
+                    en: 'Activities',
+                    sw: 'Shughuli',
+                    fr: 'Activites',
+                    ar: 'الأنشطة',
+                  ),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -1534,7 +1703,7 @@ class _ScheduleTab extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              _buildStatusBadge(a.status),
+                              _buildStatusBadge(a.status, language: language),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -1557,7 +1726,7 @@ class _ScheduleTab extends ConsumerWidget {
                               _InfoChip(
                                 icon: Icons.timer_rounded,
                                 label:
-                                    '${a.durationDays} ${isSwahili ? "siku" : "days"}',
+                                    '${a.durationDays} ${_projectDetailTr(language, en: "days", sw: "siku", fr: "jours", ar: "أيام")}',
                                 isDarkMode: isDarkMode,
                               ),
                             ],
@@ -1603,14 +1772,14 @@ class _FinancialsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(projectFinancialsProvider(projectId));
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return asyncData.when(
       loading: _buildTabLoading,
       error: (e, _) => _buildTabError(
         e,
-        isSwahili,
+        language,
         () => ref.invalidate(projectFinancialsProvider(projectId)),
       ),
       data: (data) => SingleChildScrollView(
@@ -1623,7 +1792,7 @@ class _FinancialsTab extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _SummaryStatCard(
-                    label: isSwahili ? 'Thamani' : 'Contract Value',
+                    label: _projectDetailTr(language, en: 'Contract Value', sw: 'Thamani', fr: 'Valeur du contrat', ar: 'قيمة العقد'),
                     value: _formatCurrencyShort(data.contractValue),
                     color: isDarkMode ? Colors.white : AppColors.textPrimary,
                     isDarkMode: isDarkMode,
@@ -1632,7 +1801,7 @@ class _FinancialsTab extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _SummaryStatCard(
-                    label: isSwahili ? 'Ankara' : 'Total Invoiced',
+                    label: _projectDetailTr(language, en: 'Total Invoiced', sw: 'Ankara', fr: 'Total facture', ar: 'إجمالي الفواتير'),
                     value: _formatCurrencyShort(data.totalInvoiced),
                     color: AppColors.info,
                     isDarkMode: isDarkMode,
@@ -1645,7 +1814,7 @@ class _FinancialsTab extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _SummaryStatCard(
-                    label: isSwahili ? 'Limelipwa' : 'Total Paid',
+                    label: _projectDetailTr(language, en: 'Total Paid', sw: 'Limelipwa', fr: 'Total paye', ar: 'إجمالي المدفوع'),
                     value: _formatCurrencyShort(data.totalPaid),
                     color: AppColors.success,
                     isDarkMode: isDarkMode,
@@ -1654,7 +1823,7 @@ class _FinancialsTab extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _SummaryStatCard(
-                    label: isSwahili ? 'Deni' : 'Balance Due',
+                    label: _projectDetailTr(language, en: 'Balance Due', sw: 'Deni', fr: 'Solde du', ar: 'الرصيد المستحق'),
                     value: _formatCurrencyShort(data.balanceDue),
                     color: data.balanceDue > 0
                         ? AppColors.error
@@ -1669,7 +1838,7 @@ class _FinancialsTab extends ConsumerWidget {
             // Invoices
             if (data.billingInvoices.isNotEmpty) ...[
               _FinancialSection(
-                title: isSwahili ? 'Ankara' : 'Invoices',
+                title: _projectDetailTr(language, en: 'Invoices', sw: 'Ankara', fr: 'Factures', ar: 'الفواتير'),
                 icon: Icons.receipt_rounded,
                 count: data.billingInvoices.length,
                 isDarkMode: isDarkMode,
@@ -1679,7 +1848,7 @@ class _FinancialsTab extends ConsumerWidget {
                       (doc) => _FinancialDocCard(
                         doc: doc,
                         projectId: projectId,
-                        isSwahili: isSwahili,
+                        language: language,
                         isDarkMode: isDarkMode,
                         downloadPdf: downloadPdf,
                       ),
@@ -1692,7 +1861,7 @@ class _FinancialsTab extends ConsumerWidget {
             if (data.billingQuotes.isNotEmpty) ...[
               const SizedBox(height: 16),
               _FinancialSection(
-                title: isSwahili ? 'Nukuu' : 'Quotations',
+                title: _projectDetailTr(language, en: 'Quotations', sw: 'Nukuu', fr: 'Devis', ar: 'عروض الأسعار'),
                 icon: Icons.request_quote_rounded,
                 count: data.billingQuotes.length,
                 isDarkMode: isDarkMode,
@@ -1701,7 +1870,7 @@ class _FinancialsTab extends ConsumerWidget {
                       (doc) => _FinancialDocCard(
                         doc: doc,
                         projectId: projectId,
-                        isSwahili: isSwahili,
+                        language: language,
                         isDarkMode: isDarkMode,
                         downloadPdf: downloadPdf,
                       ),
@@ -1714,7 +1883,7 @@ class _FinancialsTab extends ConsumerWidget {
             if (data.billingProformas.isNotEmpty) ...[
               const SizedBox(height: 16),
               _FinancialSection(
-                title: isSwahili ? 'Ankara za Awali' : 'Proformas',
+                title: _projectDetailTr(language, en: 'Proformas', sw: 'Ankara za Awali', fr: 'Proformas', ar: 'الفواتير المبدئية'),
                 icon: Icons.description_rounded,
                 count: data.billingProformas.length,
                 isDarkMode: isDarkMode,
@@ -1723,7 +1892,7 @@ class _FinancialsTab extends ConsumerWidget {
                       (doc) => _FinancialDocCard(
                         doc: doc,
                         projectId: projectId,
-                        isSwahili: isSwahili,
+                        language: language,
                         isDarkMode: isDarkMode,
                         downloadPdf: downloadPdf,
                       ),
@@ -1738,7 +1907,7 @@ class _FinancialsTab extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 40),
                 child: _buildEmpty(
-                  isSwahili ? 'Hakuna ankara bado' : 'No billing documents yet',
+                  _projectDetailTr(language, en: 'No billing documents yet', sw: 'Hakuna ankara bado', fr: 'Aucun document de facturation pour le moment', ar: 'لا توجد مستندات فوترة بعد'),
                   Icons.receipt_long_rounded,
                 ),
               ),
@@ -1893,14 +2062,14 @@ class _FinancialSectionState extends State<_FinancialSection> {
 class _FinancialDocCard extends StatelessWidget {
   final BillingDocument doc;
   final int projectId;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
   final Future<void> Function(String url, String fileName) downloadPdf;
 
   const _FinancialDocCard({
     required this.doc,
     required this.projectId,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
     required this.downloadPdf,
   });
@@ -1932,6 +2101,7 @@ class _FinancialDocCard extends StatelessWidget {
                   doc.isOverdue && doc.status != 'paid'
                       ? 'overdue'
                       : doc.status,
+                  language: language,
                 ),
                 const SizedBox(width: 8),
                 GestureDetector(
@@ -1971,7 +2141,7 @@ class _FinancialDocCard extends StatelessWidget {
                   _InfoChip(
                     icon: Icons.event_rounded,
                     label:
-                        '${isSwahili ? "Hadi" : "Due"} ${_formatDate(doc.dueDate)}',
+                        '${_projectDetailTr(language, en: "Due", sw: "Hadi", fr: "Echeance", ar: "مستحق")} ${_formatDate(doc.dueDate)}',
                     isDarkMode: isDarkMode,
                     isWarning: doc.isOverdue,
                   ),
@@ -1984,21 +2154,21 @@ class _FinancialDocCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _AmountCol(
-                      label: isSwahili ? 'Kiasi' : 'Amount',
+                      label: _projectDetailTr(language, en: 'Amount', sw: 'Kiasi', fr: 'Montant', ar: 'المبلغ'),
                       value: _formatCurrency(doc.totalAmount),
                       color: isDarkMode ? Colors.white : AppColors.textPrimary,
                     ),
                   ),
                   Expanded(
                     child: _AmountCol(
-                      label: isSwahili ? 'Limelipwa' : 'Paid',
+                      label: _projectDetailTr(language, en: 'Paid', sw: 'Limelipwa', fr: 'Paye', ar: 'مدفوع'),
                       value: _formatCurrency(doc.paidAmount),
                       color: AppColors.success,
                     ),
                   ),
                   Expanded(
                     child: _AmountCol(
-                      label: isSwahili ? 'Deni' : 'Balance',
+                      label: _projectDetailTr(language, en: 'Balance', sw: 'Deni', fr: 'Solde', ar: 'الرصيد'),
                       value: _formatCurrency(doc.balanceAmount),
                       color: doc.balanceAmount > 0
                           ? AppColors.error
@@ -2070,20 +2240,20 @@ class _DocumentsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(projectDocumentsProvider(projectId));
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return asyncData.when(
       loading: _buildTabLoading,
       error: (e, _) => _buildTabError(
         e,
-        isSwahili,
+        language,
         () => ref.invalidate(projectDocumentsProvider(projectId)),
       ),
       data: (designs) {
         if (designs.isEmpty) {
           return _buildEmpty(
-            isSwahili ? 'Hakuna nyaraka bado' : 'No documents yet',
+            _projectDetailTr(language, en: 'No documents yet', sw: 'Hakuna nyaraka bado', fr: 'Aucun document pour le moment', ar: 'لا توجد مستندات بعد'),
             Icons.folder_open_rounded,
           );
         }
@@ -2109,7 +2279,8 @@ class _DocumentsTab extends ConsumerWidget {
                   ),
                 ),
                 title: Text(
-                  d.designType ?? (isSwahili ? 'Nyaraka' : 'Document'),
+                  d.designType ??
+                      _projectDetailTr(language, en: 'Document', sw: 'Nyaraka', fr: 'Document', ar: 'مستند'),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -2144,13 +2315,17 @@ class _DocumentsTab extends ConsumerWidget {
                             mode: LaunchMode.externalApplication,
                           );
                           if (!opened && context.mounted) {
-                            final isSwahili = ref.read(isSwahiliProvider);
+                            final language = ref.read(currentLanguageProvider);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  isSwahili
-                                      ? 'Imeshindwa kufungua faili la mradi.'
-                                      : 'Could not open the project file.',
+                                  _projectDetailTr(
+                                    language,
+                                    en: 'Could not open the project file.',
+                                    sw: 'Imeshindwa kufungua faili la mradi.',
+                                    fr: 'Impossible d\'ouvrir le fichier du projet.',
+                                    ar: 'تعذر فتح ملف المشروع.',
+                                  ),
                                 ),
                                 backgroundColor: AppColors.error,
                               ),
@@ -2187,20 +2362,20 @@ class _GalleryTabState extends ConsumerState<_GalleryTab> {
   @override
   Widget build(BuildContext context) {
     final asyncData = ref.watch(projectGalleryProvider(widget.projectId));
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return asyncData.when(
       loading: _buildTabLoading,
       error: (e, _) => _buildTabError(
         e,
-        isSwahili,
+        language,
         () => ref.invalidate(projectGalleryProvider(widget.projectId)),
       ),
       data: (data) {
         if (data.images.isEmpty) {
           return _buildEmpty(
-            isSwahili ? 'Hakuna picha bado' : 'No images yet',
+            _projectDetailTr(language, en: 'No images yet', sw: 'Hakuna picha bado', fr: 'Aucune image pour le moment', ar: 'لا توجد صور بعد'),
             Icons.photo_library_rounded,
           );
         }
@@ -2225,7 +2400,9 @@ class _GalleryTabState extends ConsumerState<_GalleryTab> {
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
-                        label: Text(isSwahili ? 'Zote' : 'All'),
+                        label: Text(
+                          _projectDetailTr(language, en: 'All', sw: 'Zote', fr: 'Tous', ar: 'الكل'),
+                        ),
                         selected: _selectedPhase == null,
                         onSelected: (_) =>
                             setState(() => _selectedPhase = null),
@@ -2318,7 +2495,8 @@ class _GalleryTabState extends ConsumerState<_GalleryTab> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  img.title ?? (isSwahili ? 'Picha' : 'Photo'),
+                                  img.title ??
+                                      _projectDetailTr(language, en: 'Photo', sw: 'Picha', fr: 'Photo', ar: 'صورة'),
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -2405,20 +2583,20 @@ class _ReportsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(projectReportsProvider(projectId));
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return asyncData.when(
       loading: _buildTabLoading,
       error: (e, _) => _buildTabError(
         e,
-        isSwahili,
+        language,
         () => ref.invalidate(projectReportsProvider(projectId)),
       ),
       data: (data) {
         if (data.dailyReports.isEmpty && data.siteVisits.isEmpty) {
           return _buildEmpty(
-            isSwahili ? 'Hakuna ripoti bado' : 'No reports yet',
+            _projectDetailTr(language, en: 'No reports yet', sw: 'Hakuna ripoti bado', fr: 'Aucun rapport pour le moment', ar: 'لا توجد تقارير بعد'),
             Icons.assessment_rounded,
           );
         }
@@ -2430,7 +2608,7 @@ class _ReportsTab extends ConsumerWidget {
               // Daily Reports
               if (data.dailyReports.isNotEmpty) ...[
                 Text(
-                  isSwahili ? 'Ripoti za Kila Siku' : 'Daily Reports',
+                  _projectDetailTr(language, en: 'Daily Reports', sw: 'Ripoti za Kila Siku', fr: 'Rapports quotidiens', ar: 'التقارير اليومية'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -2442,7 +2620,7 @@ class _ReportsTab extends ConsumerWidget {
                   (r) => _DailyReportCard(
                     report: r,
                     isDarkMode: isDarkMode,
-                    isSwahili: isSwahili,
+                    language: language,
                   ),
                 ),
               ],
@@ -2451,7 +2629,7 @@ class _ReportsTab extends ConsumerWidget {
               if (data.siteVisits.isNotEmpty) ...[
                 const SizedBox(height: 20),
                 Text(
-                  isSwahili ? 'Ziara za Tovuti' : 'Site Visits',
+                  _projectDetailTr(language, en: 'Site Visits', sw: 'Ziara za Tovuti', fr: 'Visites de site', ar: 'زيارات الموقع'),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -2464,7 +2642,7 @@ class _ReportsTab extends ConsumerWidget {
                     visit: v,
                     projectId: projectId,
                     isDarkMode: isDarkMode,
-                    isSwahili: isSwahili,
+                    language: language,
                     downloadPdf: downloadPdf,
                   ),
                 ),
@@ -2482,12 +2660,12 @@ class _ReportsTab extends ConsumerWidget {
 class _DailyReportCard extends StatefulWidget {
   final DailyReport report;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _DailyReportCard({
     required this.report,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -2580,27 +2758,25 @@ class _DailyReportCardState extends State<_DailyReportCard> {
                   const Divider(),
                   if (r.workCompleted != null)
                     _ReportField(
-                      label: widget.isSwahili
-                          ? 'Kazi Iliyofanywa'
-                          : 'Work Completed',
+                      label: _projectDetailTr(widget.language, en: 'Work Completed', sw: 'Kazi Iliyofanywa', fr: 'Travail realise', ar: 'العمل المنجز'),
                       value: r.workCompleted!,
                       isDarkMode: widget.isDarkMode,
                     ),
                   if (r.materialsUsed != null)
                     _ReportField(
-                      label: widget.isSwahili ? 'Vifaa' : 'Materials Used',
+                      label: _projectDetailTr(widget.language, en: 'Materials Used', sw: 'Vifaa', fr: 'Materiaux utilises', ar: 'المواد المستخدمة'),
                       value: r.materialsUsed!,
                       isDarkMode: widget.isDarkMode,
                     ),
                   if (r.laborHours != null)
                     _ReportField(
-                      label: widget.isSwahili ? 'Saa za Kazi' : 'Labor Hours',
+                      label: _projectDetailTr(widget.language, en: 'Labor Hours', sw: 'Saa za Kazi', fr: 'Heures de travail', ar: 'ساعات العمل'),
                       value: r.laborHours!,
                       isDarkMode: widget.isDarkMode,
                     ),
                   if (r.issuesFaced != null)
                     _ReportField(
-                      label: widget.isSwahili ? 'Changamoto' : 'Issues Faced',
+                      label: _projectDetailTr(widget.language, en: 'Issues Faced', sw: 'Changamoto', fr: 'Problemes rencontres', ar: 'المشكلات التي تمت مواجهتها'),
                       value: r.issuesFaced!,
                       isDarkMode: widget.isDarkMode,
                       isWarning: true,
@@ -2660,14 +2836,14 @@ class _SiteVisitCard extends StatelessWidget {
   final SiteVisit visit;
   final int projectId;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final Future<void> Function(String url, String fileName) downloadPdf;
 
   const _SiteVisitCard({
     required this.visit,
     required this.projectId,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
     required this.downloadPdf,
   });
 
@@ -2689,7 +2865,7 @@ class _SiteVisitCard extends StatelessWidget {
                     children: [
                       Text(
                         visit.documentNumber ??
-                            (isSwahili ? 'Ziara' : 'Site Visit'),
+                            _projectDetailTr(language, en: 'Site Visit', sw: 'Ziara', fr: 'Visite de site', ar: 'زيارة موقع'),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -2708,7 +2884,7 @@ class _SiteVisitCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                _buildStatusBadge(visit.status),
+                _buildStatusBadge(visit.status, language: language),
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
@@ -2746,7 +2922,7 @@ class _SiteVisitCard extends StatelessWidget {
             if (visit.findings != null && visit.findings!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
-                isSwahili ? 'Matokeo:' : 'Findings:',
+                _projectDetailTr(language, en: 'Findings:', sw: 'Matokeo:', fr: 'Constats:', ar: 'النتائج:'),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -2767,7 +2943,7 @@ class _SiteVisitCard extends StatelessWidget {
                 visit.recommendations!.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
-                isSwahili ? 'Mapendekezo:' : 'Recommendations:',
+                _projectDetailTr(language, en: 'Recommendations:', sw: 'Mapendekezo:', fr: 'Recommandations:', ar: 'التوصيات:'),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,

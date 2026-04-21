@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
@@ -20,16 +21,44 @@ final _serviceInterestedsProvider =
       .toList();
 });
 
+String _serviceInterestedTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  switch (language) {
+    case AppLanguage.swahili:
+      return sw ?? en;
+    case AppLanguage.french:
+      return fr ?? en;
+    case AppLanguage.arabic:
+      return ar ?? en;
+    case AppLanguage.english:
+      return en;
+  }
+}
+
 class ServiceInterestedsScreen extends ConsumerWidget {
   const ServiceInterestedsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncData = ref.watch(_serviceInterestedsProvider);
+    final language = ref.watch(currentLanguageProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Services Interested'),
+        title: Text(
+          _serviceInterestedTr(
+            language,
+            en: 'Services Interested',
+            sw: 'Huduma Zinazovutia',
+            fr: 'Services interessants',
+            ar: 'الخدمات المطلوبة',
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -40,7 +69,15 @@ class ServiceInterestedsScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_serviceInterestedsProvider),
         child: asyncData.when(
-          loading: () => const LoadingWidget(message: 'Loading service interesteds...'),
+          loading: () => LoadingWidget(
+            message: _serviceInterestedTr(
+              language,
+              en: 'Loading service interesteds...',
+              sw: 'Inapakia huduma zinazovutia...',
+              fr: 'Chargement des services interessants...',
+              ar: 'جارٍ تحميل الخدمات المطلوبة...',
+            ),
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -48,10 +85,16 @@ class ServiceInterestedsScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               const Icon(Icons.error_outline, size: 56, color: AppColors.error),
               const SizedBox(height: 12),
-              const Text(
-                'Failed to load service interesteds',
+              Text(
+                _serviceInterestedTr(
+                  language,
+                  en: 'Failed to load service interesteds',
+                  sw: 'Imeshindikana kupakia huduma zinazovutia',
+                  fr: 'Impossible de charger les services interessants',
+                  ar: 'فشل تحميل الخدمات المطلوبة',
+                ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               Text(vatErrorMessage(error), textAlign: TextAlign.center),
@@ -73,21 +116,41 @@ class ServiceInterestedsScreen extends ConsumerWidget {
                       children: [
                         const Icon(Icons.design_services_outlined, size: 56, color: AppColors.primary),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No service interesteds found',
+                        Text(
+                          _serviceInterestedTr(
+                            language,
+                            en: 'No service interesteds found',
+                            sw: 'Hakuna huduma zinazovutia zilizopatikana',
+                            fr: 'Aucun service interessant trouve',
+                            ar: 'لم يتم العثور على خدمات مطلوبة',
+                          ),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create a service interested to match the web settings page.',
+                        Text(
+                          _serviceInterestedTr(
+                            language,
+                            en: 'Create a service interested to match the web settings page.',
+                            sw: 'Unda huduma inayovutia ili ilingane na ukurasa wa mipangilio wa web.',
+                            fr: 'Creez un service interessant pour l’aligner avec la page des parametres web.',
+                            ar: 'أنشئ خدمة مطلوبة لتتطابق مع صفحة إعدادات الويب.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New Service Interested'),
+                          label: Text(
+                            _serviceInterestedTr(
+                              language,
+                              en: 'New Service Interested',
+                              sw: 'Huduma Mpya Inayovutia',
+                              fr: 'Nouveau service interessant',
+                              ar: 'خدمة مطلوبة جديدة',
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -128,15 +191,27 @@ class ServiceInterestedsScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Services Interested',
+                            Text(
+                              _serviceInterestedTr(
+                                language,
+                                en: 'Services Interested',
+                                sw: 'Huduma Zinazovutia',
+                                fr: 'Services interessants',
+                                ar: 'الخدمات المطلوبة',
+                              ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${items.length} records',
+                              _serviceInterestedTr(
+                                language,
+                                en: 'Showing ${items.length} records',
+                                sw: 'Inaonyesha rekodi ${items.length}',
+                                fr: '${items.length} enregistrements affiches',
+                                ar: 'يتم عرض ${items.length} سجلات',
+                              ),
                               style: const TextStyle(color: AppColors.textSecondary),
                             ),
                           ],
@@ -182,9 +257,31 @@ class ServiceInterestedsScreen extends ConsumerWidget {
                             _deleteItem(context, ref, item);
                           }
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(
+                              _serviceInterestedTr(
+                                language,
+                                en: 'Edit',
+                                sw: 'Hariri',
+                                fr: 'Modifier',
+                                ar: 'تعديل',
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(
+                              _serviceInterestedTr(
+                                language,
+                                en: 'Delete',
+                                sw: 'Futa',
+                                fr: 'Supprimer',
+                                ar: 'حذف',
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -199,7 +296,15 @@ class ServiceInterestedsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New Service Interested'),
+        label: Text(
+          _serviceInterestedTr(
+            language,
+            en: 'New Service Interested',
+            sw: 'Huduma Mpya Inayovutia',
+            fr: 'Nouveau service interessant',
+            ar: 'خدمة مطلوبة جديدة',
+          ),
+        ),
       ),
     );
   }
@@ -228,19 +333,52 @@ class ServiceInterestedsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final language = ref.read(currentLanguageProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Service Interested'),
-        content: Text('Delete ${item['name']}?'),
+        title: Text(
+          _serviceInterestedTr(
+            language,
+            en: 'Delete Service Interested',
+            sw: 'Futa Huduma Inayovutia',
+            fr: 'Supprimer le service interessant',
+            ar: 'حذف الخدمة المطلوبة',
+          ),
+        ),
+        content: Text(
+          _serviceInterestedTr(
+            language,
+            en: 'Delete ${item['name']}?',
+            sw: 'Futa ${item['name']}?',
+            fr: 'Supprimer ${item['name']} ?',
+            ar: 'هل تريد حذف ${item['name']}؟',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(
+              _serviceInterestedTr(
+                language,
+                en: 'Cancel',
+                sw: 'Ghairi',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(
+              _serviceInterestedTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
+            ),
           ),
         ],
       ),
@@ -252,8 +390,16 @@ class ServiceInterestedsScreen extends ConsumerWidget {
       ref.invalidate(_serviceInterestedsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Service interested deleted successfully'),
+        SnackBar(
+          content: Text(
+            _serviceInterestedTr(
+              language,
+              en: 'Service interested deleted successfully',
+              sw: 'Huduma inayovutia imefutwa kwa mafanikio',
+              fr: 'Le service interessant a ete supprime avec succes',
+              ar: 'تم حذف الخدمة المطلوبة بنجاح',
+            ),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -303,6 +449,7 @@ class _ServiceInterestedFormSheetState
 
   @override
   Widget build(BuildContext context) {
+    final language = ref.watch(currentLanguageProvider);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -334,19 +481,45 @@ class _ServiceInterestedFormSheetState
                 const SizedBox(height: 16),
                 Text(
                   _isEdit
-                      ? 'Edit Service Interested'
-                      : 'Create New Service Interested',
+                      ? _serviceInterestedTr(
+                          language,
+                          en: 'Edit Service Interested',
+                          sw: 'Hariri Huduma Inayovutia',
+                          fr: 'Modifier le service interessant',
+                          ar: 'تعديل الخدمة المطلوبة',
+                        )
+                      : _serviceInterestedTr(
+                          language,
+                          en: 'Create New Service Interested',
+                          sw: 'Unda Huduma Mpya Inayovutia',
+                          fr: 'Creer un nouveau service interessant',
+                          ar: 'إنشاء خدمة مطلوبة جديدة',
+                        ),
                   style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: _serviceInterestedTr(
+                      language,
+                      en: 'Name',
+                      sw: 'Jina',
+                      fr: 'Nom',
+                      ar: 'الاسم',
+                    ),
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Name is required' : null,
+                      (value == null || value.trim().isEmpty)
+                          ? _serviceInterestedTr(
+                              language,
+                              en: 'Name is required',
+                              sw: 'Jina linahitajika',
+                              fr: 'Le nom est obligatoire',
+                              ar: 'الاسم مطلوب',
+                            )
+                          : null,
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -355,10 +528,28 @@ class _ServiceInterestedFormSheetState
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? 'Saving...'
+                          ? _serviceInterestedTr(
+                              language,
+                              en: 'Saving...',
+                              sw: 'Inahifadhi...',
+                              fr: 'Enregistrement...',
+                              ar: 'جارٍ الحفظ...',
+                            )
                           : (_isEdit
-                              ? 'Update Service Interested'
-                              : 'Save Service Interested'),
+                              ? _serviceInterestedTr(
+                                  language,
+                                  en: 'Update Service Interested',
+                                  sw: 'Sasisha Huduma Inayovutia',
+                                  fr: 'Mettre a jour le service interessant',
+                                  ar: 'تحديث الخدمة المطلوبة',
+                                )
+                              : _serviceInterestedTr(
+                                  language,
+                                  en: 'Save Service Interested',
+                                  sw: 'Hifadhi Huduma Inayovutia',
+                                  fr: 'Enregistrer le service interessant',
+                                  ar: 'حفظ الخدمة المطلوبة',
+                                )),
                     ),
                   ),
                 ),

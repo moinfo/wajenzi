@@ -7,36 +7,53 @@ import '../../providers/settings_provider.dart';
 class LegalScreen extends ConsumerWidget {
   final String _titleEn;
   final String _titleSw;
-  final List<_Section> Function(bool isSwahili) _sections;
+  final String? _titleFr;
+  final String? _titleAr;
+  final List<_Section> Function(AppLanguage language) _sections;
 
   const LegalScreen._({
     required String titleEn,
     required String titleSw,
-    required List<_Section> Function(bool isSwahili) sections,
+    String? titleFr,
+    String? titleAr,
+    required List<_Section> Function(AppLanguage language) sections,
   })  : _titleEn = titleEn,
         _titleSw = titleSw,
+        _titleFr = titleFr,
+        _titleAr = titleAr,
         _sections = sections;
 
   static Widget privacyPolicy() => LegalScreen._(
         titleEn: 'Privacy Policy',
         titleSw: 'Sera ya Faragha',
+        titleFr: 'Politique de confidentialite',
+        titleAr: 'سياسة الخصوصية',
         sections: _privacySections,
       );
 
   static Widget termsOfService() => LegalScreen._(
         titleEn: 'Terms of Service',
         titleSw: 'Masharti ya Huduma',
+        titleFr: 'Conditions d\'utilisation',
+        titleAr: 'شروط الخدمة',
         sections: _termsSections,
       );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSwahili = ref.watch(isSwahiliProvider);
-    final sectionList = _sections(isSwahili);
+    final language = ref.watch(currentLanguageProvider);
+    final sectionList = _sections(language);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? _titleSw : _titleEn),
+        title: Text(
+          switch (language) {
+            AppLanguage.swahili => _titleSw,
+            AppLanguage.french => _titleFr ?? _titleEn,
+            AppLanguage.arabic => _titleAr ?? _titleEn,
+            AppLanguage.english => _titleEn,
+          },
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -57,7 +74,12 @@ class LegalScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  isSwahili ? 'Imesasishwa: Februari 2026' : 'Last updated: February 2026',
+                  switch (language) {
+                    AppLanguage.swahili => 'Imesasishwa: Februari 2026',
+                    AppLanguage.french => 'Derniere mise a jour: Fevrier 2026',
+                    AppLanguage.arabic => 'آخر تحديث: فبراير 2026',
+                    AppLanguage.english => 'Last updated: February 2026',
+                  },
                   style: TextStyle(fontSize: 12, color: AppColors.textHint),
                 ),
               ],
@@ -111,8 +133,8 @@ class _SectionWidget extends StatelessWidget {
 
 // ─── Privacy Policy Content ───────────────────────────
 
-List<_Section> _privacySections(bool sw) => sw
-    ? [
+List<_Section> _privacySections(AppLanguage language) => switch (language) {
+      AppLanguage.swahili => [
         const _Section(
           '1. Utangulizi',
           'Wajenzi Professional Co. Ltd ("Wajenzi", "sisi") inaheshimu faragha yako. Sera hii inaeleza jinsi tunavyokusanya, kutumia, na kulinda taarifa zako unapotumia programu yetu ya simu na huduma za portal ya mteja.',
@@ -149,7 +171,45 @@ List<_Section> _privacySections(bool sw) => sw
           'Kwa maswali kuhusu sera hii, tafadhali wasiliana nasi:\nBarua pepe: info@wajenziprofessional.co.tz\nSimu: +255 793 444 400',
         ),
       ]
-    : [
+      ,
+      AppLanguage.french => [
+        const _Section(
+          '1. Introduction',
+          'Wajenzi Professional Co. Ltd ("Wajenzi", "nous") respecte votre vie privee. Cette politique explique comment nous collectons, utilisons et protégeons vos informations lorsque vous utilisez notre application mobile et nos services de portail client.',
+        ),
+        const _Section(
+          '2. Informations que nous collectons',
+          '• Informations personnelles: nom, e-mail, numero de telephone, adresse\n'
+              '• Informations sur le projet: documents, images d\'avancement, rapports\n'
+              '• Informations sur l\'appareil: type d\'appareil, systeme d\'exploitation, identifiant\n'
+              '• Informations d\'utilisation: pages visitees, actions dans l\'application',
+        ),
+        const _Section(
+          '3. Comment nous utilisons vos informations',
+          '• Fournir et maintenir nos services\n'
+              '• Vous envoyer les mises a jour de projet et les factures\n'
+              '• Ameliorer notre application et l\'experience utilisateur\n'
+              '• Vous envoyer des notifications sur l\'etat du projet\n'
+              '• Respecter nos obligations legales',
+        ),
+        const _Section(
+          '4. Securite des donnees',
+          'Nous utilisons des mesures techniques et organisationnelles appropriees pour proteger vos informations personnelles contre tout acces, modification, divulgation ou destruction non autorises. Toutes les communications sont chiffrees en transit.',
+        ),
+        const _Section(
+          '5. Partage des donnees avec des tiers',
+          'Nous ne partageons pas vos informations personnelles avec des tiers sauf avec les prestataires qui nous aident a fournir nos services, lorsque la loi l\'exige, ou avec votre consentement explicite.',
+        ),
+        const _Section(
+          '6. Vos droits',
+          'Vous avez le droit d\'acceder, de corriger ou de supprimer vos informations personnelles a tout moment via les parametres de votre profil ou en nous contactant directement.',
+        ),
+        const _Section(
+          '7. Contactez-nous',
+          'Pour toute question concernant cette politique, veuillez nous contacter:\nE-mail: info@wajenziprofessional.co.tz\nTelephone: +255 793 444 400',
+        ),
+      ],
+      _ => [
         const _Section(
           '1. Introduction',
           'Wajenzi Professional Co. Ltd ("Wajenzi", "we") respects your privacy. This policy explains how we collect, use, and protect your information when you use our mobile application and client portal services.',
@@ -185,12 +245,13 @@ List<_Section> _privacySections(bool sw) => sw
           '7. Contact Us',
           'For questions about this policy, please contact us:\nEmail: info@wajenziprofessional.co.tz\nPhone: +255 793 444 400',
         ),
-      ];
+      ],
+    };
 
 // ─── Terms of Service Content ─────────────────────────
 
-List<_Section> _termsSections(bool sw) => sw
-    ? [
+List<_Section> _termsSections(AppLanguage language) => switch (language) {
+      AppLanguage.swahili => [
         const _Section(
           '1. Kukubali Masharti',
           'Kwa kutumia programu ya Wajenzi, unakubali masharti haya ya huduma. Ikiwa hukubaliani na masharti haya, tafadhali usitumie programu yetu.',
@@ -227,7 +288,45 @@ List<_Section> _termsSections(bool sw) => sw
           'Masharti haya yanatafsiriwa kulingana na sheria za Jamhuri ya Muungano wa Tanzania.',
         ),
       ]
-    : [
+      ,
+      AppLanguage.french => [
+        const _Section(
+          '1. Acceptation des conditions',
+          'En utilisant l\'application Wajenzi, vous acceptez ces conditions d\'utilisation. Si vous n\'etes pas d\'accord avec ces conditions, veuillez ne pas utiliser notre application.',
+        ),
+        const _Section(
+          '2. Description du service',
+          'L\'application Wajenzi vous permet de suivre vos projets de construction, de surveiller l\'avancement, de consulter les factures et paiements, de voir les documents et de communiquer avec votre equipe de projet.',
+        ),
+        const _Section(
+          '3. Compte utilisateur',
+          'Vous etes responsable de la securite de votre compte et de votre mot de passe. Toute activite effectuee sous votre compte releve de votre responsabilite. Veuillez nous signaler immediatement toute utilisation non autorisee.',
+        ),
+        const _Section(
+          '4. Utilisation acceptable',
+          '• Vous ne partagerez pas vos identifiants de connexion\n'
+              '• Vous ne tenterez pas d\'acceder a des zones non autorisees du systeme\n'
+              '• Vous n\'utiliserez pas l\'application a des fins illegales\n'
+              '• Vous ne perturberez pas le fonctionnement de l\'application',
+        ),
+        const _Section(
+          '5. Propriete du contenu',
+          'Les documents, images et rapports de projet partages via l\'application restent la propriete de leurs proprietaires respectifs. Wajenzi ne revendique pas la propriete de votre contenu mais peut l\'utiliser pour fournir ses services.',
+        ),
+        const _Section(
+          '6. Limitation de responsabilite',
+          'Wajenzi Professional Co. Ltd ne pourra etre tenu responsable des dommages indirects, accessoires, speciaux ou consecutifs decoulant de votre utilisation de l\'application.',
+        ),
+        const _Section(
+          '7. Modifications des conditions',
+          'Nous pouvons mettre a jour ces conditions de temps a autre. Nous vous informerons de tout changement important via l\'application ou par e-mail.',
+        ),
+        const _Section(
+          '8. Droit applicable',
+          'Ces conditions sont regies et interpretees conformement aux lois de la Republique-Unie de Tanzanie.',
+        ),
+      ],
+      _ => [
         const _Section(
           '1. Acceptance of Terms',
           'By using the Wajenzi app, you agree to these terms of service. If you do not agree with these terms, please do not use our application.',
@@ -263,4 +362,5 @@ List<_Section> _termsSections(bool sw) => sw
           '8. Governing Law',
           'These terms are governed by and construed in accordance with the laws of the United Republic of Tanzania.',
         ),
-      ];
+      ],
+    };

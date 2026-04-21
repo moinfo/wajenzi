@@ -9,6 +9,21 @@ import '../../providers/client_dashboard_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../../data/datasources/remote/client_api.dart';
 
+String _clientDashboardTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class ClientDashboardScreen extends ConsumerStatefulWidget {
   const ClientDashboardScreen({super.key});
 
@@ -41,7 +56,7 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
   Widget build(BuildContext context) {
     final dashboardState = ref.watch(clientDashboardProvider);
     final user = ref.watch(authStateProvider).valueOrNull?.user;
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final scaffoldKey = ref.read(rootScaffoldKeyProvider);
     final cs = Theme.of(context).colorScheme;
@@ -53,7 +68,15 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => scaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Dashibodi' : 'Dashboard'),
+        title: Text(
+          _clientDashboardTr(
+            language,
+            en: 'Dashboard',
+            sw: 'Dashibodi',
+            fr: 'Tableau de bord',
+            ar: 'لوحة التحكم',
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
@@ -68,14 +91,14 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _ErrorView(
             error: e,
-            isSwahili: isSwahili,
+            language: language,
             onRetry: () =>
                 ref.read(clientDashboardProvider.notifier).fetchDashboard(),
           ),
           data: (data) => _DashboardBody(
             data: data,
             firstName: user?.name.split(' ').first ?? 'User',
-            isSwahili: isSwahili,
+            language: language,
             isDarkMode: isDarkMode,
             compact: _compact,
             full: _full,
@@ -91,7 +114,7 @@ class _ClientDashboardScreenState extends ConsumerState<ClientDashboardScreen> {
 class _DashboardBody extends StatelessWidget {
   final ClientDashboardData data;
   final String firstName;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
   final String Function(double) compact;
   final String Function(double) full;
@@ -99,7 +122,7 @@ class _DashboardBody extends StatelessWidget {
   const _DashboardBody({
     required this.data,
     required this.firstName,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
     required this.compact,
     required this.full,
@@ -108,6 +131,7 @@ class _DashboardBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isSwahili = language == AppLanguage.swahili;
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -117,7 +141,7 @@ class _DashboardBody extends StatelessWidget {
           // ── Hero banner ────────────────────────────────────────────────
           _HeroBanner(
             firstName: firstName,
-            isSwahili: isSwahili,
+            language: language,
             isDarkMode: isDarkMode,
           ),
 
@@ -127,7 +151,13 @@ class _DashboardBody extends StatelessWidget {
             child: Row(
               children: [
                 _StatTile(
-                  label: isSwahili ? 'Miradi Yote' : 'Total Projects',
+                  label: _clientDashboardTr(
+                    language,
+                    en: 'Total Projects',
+                    sw: 'Miradi Yote',
+                    fr: 'Projets au total',
+                    ar: 'إجمالي المشاريع',
+                  ),
                   value: '${data.totalProjects}',
                   icon: Icons.folder_copy_rounded,
                   color: AppColors.secondary,
@@ -135,7 +165,13 @@ class _DashboardBody extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 _StatTile(
-                  label: isSwahili ? 'Miradi Hai' : 'Active',
+                  label: _clientDashboardTr(
+                    language,
+                    en: 'Active',
+                    sw: 'Miradi Hai',
+                    fr: 'Actifs',
+                    ar: 'نشطة',
+                  ),
                   value: '${data.activeProjects}',
                   icon: Icons.construction_rounded,
                   color: AppColors.success,
@@ -143,7 +179,13 @@ class _DashboardBody extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 _StatTile(
-                  label: isSwahili ? 'Ankara' : 'Invoiced',
+                  label: _clientDashboardTr(
+                    language,
+                    en: 'Invoiced',
+                    sw: 'Ankara',
+                    fr: 'Facture',
+                    ar: 'المفوتر',
+                  ),
                   value: compact(data.totalInvoiced),
                   icon: Icons.receipt_long_rounded,
                   color: AppColors.warning,
@@ -160,7 +202,7 @@ class _DashboardBody extends StatelessWidget {
             child: _ContractBanner(
               value: compact(data.totalContractValue),
               fullValue: full(data.totalContractValue),
-              isSwahili: isSwahili,
+              language: language,
               isDarkMode: isDarkMode,
             ),
           ),
@@ -175,7 +217,13 @@ class _DashboardBody extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isSwahili ? 'Miradi Yako' : 'Your Projects',
+                        _clientDashboardTr(
+                          language,
+                          en: 'Your Projects',
+                          sw: 'Miradi Yako',
+                          fr: 'Vos projets',
+                          ar: 'مشاريعك',
+                        ),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -185,6 +233,8 @@ class _DashboardBody extends StatelessWidget {
                       Text(
                         isSwahili
                             ? '${data.projects.length} miradi kwa jumla'
+                            : language == AppLanguage.french
+                            ? '${data.projects.length} projet${data.projects.length == 1 ? '' : 's'} au total'
                             : '${data.projects.length} project${data.projects.length == 1 ? '' : 's'} total',
                         style: TextStyle(
                           fontSize: 12,
@@ -198,7 +248,15 @@ class _DashboardBody extends StatelessWidget {
                   TextButton.icon(
                     onPressed: () => context.go('/projects'),
                     icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                    label: Text(isSwahili ? 'Zote' : 'View all'),
+                    label: Text(
+                      _clientDashboardTr(
+                        language,
+                        en: 'View all',
+                        sw: 'Zote',
+                        fr: 'Tout voir',
+                        ar: 'عرض الكل',
+                      ),
+                    ),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.primary,
                       visualDensity: VisualDensity.compact,
@@ -211,7 +269,7 @@ class _DashboardBody extends StatelessWidget {
 
           // ── Project list ───────────────────────────────────────────────
           if (data.projects.isEmpty)
-            _EmptyProjects(isSwahili: isSwahili, isDarkMode: isDarkMode)
+            _EmptyProjects(language: language, isDarkMode: isDarkMode)
           else
             ...data.projects.map(
               (p) => GestureDetector(
@@ -219,7 +277,7 @@ class _DashboardBody extends StatelessWidget {
                     context.push('/project/${p.id}', extra: p.projectName),
                 child: _ProjectCard(
                   project: p,
-                  isSwahili: isSwahili,
+                  language: language,
                   isDarkMode: isDarkMode,
                   formatCurrency: full,
                 ),
@@ -237,12 +295,12 @@ class _DashboardBody extends StatelessWidget {
 
 class _HeroBanner extends StatelessWidget {
   final String firstName;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _HeroBanner({
     required this.firstName,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
@@ -283,13 +341,19 @@ class _HeroBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isSwahili ? 'Habari, $firstName!' : 'Welcome back,',
+                      _clientDashboardTr(
+                        language,
+                        en: 'Welcome back,',
+                        sw: 'Habari, $firstName!',
+                        fr: 'Bon retour,',
+                        ar: 'مرحبا بعودتك،',
+                      ),
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 13,
                       ),
                     ),
-                    if (!isSwahili)
+                    if (language != AppLanguage.swahili)
                       Text(
                         firstName,
                         style: const TextStyle(
@@ -334,9 +398,13 @@ class _HeroBanner extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            isSwahili
-                ? 'Hapa kuna hali ya miradi yako ya ujenzi'
-                : 'Here\'s an overview of your construction projects',
+            _clientDashboardTr(
+              language,
+              en: 'Here\'s an overview of your construction projects',
+              sw: 'Hapa kuna hali ya miradi yako ya ujenzi',
+              fr: 'Voici un apercu de vos projets de construction',
+              ar: 'هذه نظرة عامة على مشاريع البناء الخاصة بك',
+            ),
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.75),
               fontSize: 13,
@@ -433,13 +501,13 @@ class _StatTile extends StatelessWidget {
 class _ContractBanner extends StatelessWidget {
   final String value;
   final String fullValue;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _ContractBanner({
     required this.value,
     required this.fullValue,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
@@ -484,7 +552,13 @@ class _ContractBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isSwahili ? 'Jumla ya Mikataba' : 'Total Contract Value',
+                  _clientDashboardTr(
+                    language,
+                    en: 'Total Contract Value',
+                    sw: 'Jumla ya Mikataba',
+                    fr: 'Valeur totale des contrats',
+                    ar: 'إجمالي قيمة العقود',
+                  ),
                   style: TextStyle(
                     fontSize: 12,
                     color: cs.onSurface.withValues(alpha: 0.55),
@@ -520,13 +594,13 @@ class _ContractBanner extends StatelessWidget {
 
 class _ProjectCard extends StatelessWidget {
   final ClientProject project;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
   final String Function(double) formatCurrency;
 
   const _ProjectCard({
     required this.project,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
     required this.formatCurrency,
   });
@@ -563,11 +637,44 @@ class _ProjectCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final accent = _accent;
-    final statusLabel = (project.status ?? '')
-        .replaceAll('_', ' ')
-        .split(' ')
-        .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
-        .join(' ');
+    final rawStatus = project.status?.toUpperCase() ?? '';
+    final statusLabel = switch (language) {
+      AppLanguage.swahili => switch (rawStatus) {
+        'APPROVED' => 'Imeidhinishwa',
+        'COMPLETED' => 'Imekamilika',
+        'REJECTED' => 'Imekataliwa',
+        'IN_PROGRESS' => 'Inaendelea',
+        'SUBMITTED' => 'Imewasilishwa',
+        'PENDING' => 'Inasubiri',
+        'CREATED' => 'Imeundwa',
+        _ => rawStatus.replaceAll('_', ' '),
+      },
+      AppLanguage.french => switch (rawStatus) {
+        'APPROVED' => 'Approuve',
+        'COMPLETED' => 'Termine',
+        'REJECTED' => 'Rejete',
+        'IN_PROGRESS' => 'En cours',
+        'SUBMITTED' => 'Soumis',
+        'PENDING' => 'En attente',
+        'CREATED' => 'Cree',
+        _ => rawStatus.replaceAll('_', ' '),
+      },
+      AppLanguage.arabic => switch (rawStatus) {
+        'APPROVED' => 'معتمد',
+        'COMPLETED' => 'مكتمل',
+        'REJECTED' => 'مرفوض',
+        'IN_PROGRESS' => 'قيد التنفيذ',
+        'SUBMITTED' => 'تم الإرسال',
+        'PENDING' => 'معلق',
+        'CREATED' => 'تم الإنشاء',
+        _ => rawStatus.replaceAll('_', ' '),
+      },
+      AppLanguage.english => rawStatus
+          .replaceAll('_', ' ')
+          .split(' ')
+          .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+          .join(' '),
+    };
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -701,13 +808,25 @@ class _ProjectCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           _Chip(
                             icon: Icons.receipt_rounded,
-                            label: isSwahili ? 'Ankara' : 'Invoices',
+                            label: _clientDashboardTr(
+                              language,
+                              en: 'Invoices',
+                              sw: 'Ankara',
+                              fr: 'Factures',
+                              ar: 'الفواتير',
+                            ),
                             count: project.invoicesCount,
                           ),
                           const SizedBox(width: 8),
                           _Chip(
                             icon: Icons.assignment_rounded,
-                            label: isSwahili ? 'Ripoti' : 'Reports',
+                            label: _clientDashboardTr(
+                              language,
+                              en: 'Reports',
+                              sw: 'Ripoti',
+                              fr: 'Rapports',
+                              ar: 'التقارير',
+                            ),
                             count: project.dailyReportsCount,
                           ),
                         ],
@@ -774,9 +893,9 @@ class _Chip extends StatelessWidget {
 // ─── Empty State ──────────────────────────────────────────────────────────────
 
 class _EmptyProjects extends StatelessWidget {
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
-  const _EmptyProjects({required this.isSwahili, required this.isDarkMode});
+  const _EmptyProjects({required this.language, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -799,7 +918,13 @@ class _EmptyProjects extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              isSwahili ? 'Hakuna miradi bado' : 'No projects yet',
+              _clientDashboardTr(
+                language,
+                en: 'No projects yet',
+                sw: 'Hakuna miradi bado',
+                fr: 'Aucun projet pour le moment',
+                ar: 'لا توجد مشاريع بعد',
+              ),
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -808,9 +933,13 @@ class _EmptyProjects extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              isSwahili
-                  ? 'Miradi yako itaonekana hapa'
-                  : 'Your projects will appear here',
+              _clientDashboardTr(
+                language,
+                en: 'Your projects will appear here',
+                sw: 'Miradi yako itaonekana hapa',
+                fr: 'Vos projets apparaitront ici',
+                ar: 'ستظهر مشاريعك هنا',
+              ),
               style: TextStyle(
                 fontSize: 13,
                 color: cs.onSurface.withValues(alpha: 0.4),
@@ -828,11 +957,11 @@ class _EmptyProjects extends StatelessWidget {
 
 class _ErrorView extends StatelessWidget {
   final Object error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
   const _ErrorView({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -847,7 +976,13 @@ class _ErrorView extends StatelessWidget {
             const Icon(Icons.error_outline, size: 56, color: AppColors.error),
             const SizedBox(height: 16),
             Text(
-              isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+              _clientDashboardTr(
+                language,
+                en: 'Something went wrong',
+                sw: 'Hitilafu imetokea',
+                fr: 'Un probleme est survenu',
+                ar: 'حدث خطأ ما',
+              ),
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -855,9 +990,13 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              isSwahili
-                  ? 'Hatukuweza kupakia dashibodi yako.'
-                  : 'Could not load your dashboard.',
+              _clientDashboardTr(
+                language,
+                en: 'Could not load your dashboard.',
+                sw: 'Hatukuweza kupakia dashibodi yako.',
+                fr: 'Impossible de charger votre tableau de bord.',
+                ar: 'تعذر تحميل لوحة التحكم الخاصة بك.',
+              ),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55),
@@ -867,7 +1006,15 @@ class _ErrorView extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+              label: Text(
+                _clientDashboardTr(
+                  language,
+                  en: 'Try again',
+                  sw: 'Jaribu tena',
+                  fr: 'Reessayer',
+                  ar: 'حاول مرة أخرى',
+                ),
+              ),
             ),
           ],
         ),

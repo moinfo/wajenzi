@@ -27,8 +27,11 @@ class ProjectsScreen extends ConsumerStatefulWidget {
 
 class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   // Use global settings from provider
+  AppLanguage get _language => ref.watch(currentLanguageProvider);
   bool get _isDarkMode => ref.watch(isDarkModeProvider);
   bool get _isSwahili => ref.watch(isSwahiliProvider);
+  bool get _isFrench => _language == AppLanguage.french;
+  bool get _isArabic => _language == AppLanguage.arabic;
 
   // Featured project carousel
   final PageController _featuredController = PageController();
@@ -73,9 +76,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isSwahili
-                  ? 'Imeshindwa kufungua WhatsApp'
-                  : 'Could not open WhatsApp',
+              _tr(
+                en: 'Could not open WhatsApp',
+                sw: 'Imeshindwa kufungua WhatsApp',
+                fr: 'Impossible d\'ouvrir WhatsApp',
+                ar: 'تعذر فتح واتساب',
+              ),
             ),
             backgroundColor: Colors.red,
           ),
@@ -93,6 +99,31 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
   Color get _textSecondaryColor =>
       _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+
+  String _tr({
+    required String en,
+    String? sw,
+    String? fr,
+    String? ar,
+  }) {
+    if (_isSwahili) return sw ?? en;
+    if (_isFrench) return fr ?? en;
+    if (_isArabic) return ar ?? en;
+    return en;
+  }
+
+  Widget _languageFlag() {
+    switch (_language) {
+      case AppLanguage.swahili:
+        return const TanzaniaFlag();
+      case AppLanguage.french:
+        return const FranceFlag();
+      case AppLanguage.arabic:
+        return const ArabicLanguageBadge();
+      case AppLanguage.english:
+        return const UKFlag();
+    }
+  }
 
   List<_Project> get _projects => [
     _Project(
@@ -308,12 +339,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       extendBody: true,
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
-        isSwahili: _isSwahili,
+        language: _language,
         onDarkModeToggle: () =>
             ref.read(settingsProvider.notifier).toggleDarkMode(),
         onLanguageToggle: () =>
             ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _isSwahili ? const TanzaniaFlag() : const UKFlag(),
+        flagWidget: _languageFlag(),
       ),
       body: CustomScrollView(
         slivers: [
@@ -351,6 +382,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         selectedIndex: 1, // Projects is index 1
         isDarkMode: _isDarkMode,
         isSwahili: _isSwahili,
+        language: _language,
       ),
     );
   }
@@ -412,7 +444,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  _isSwahili ? 'Kazi Zetu' : 'Our Work',
+                  _tr(
+                    en: 'Our Work',
+                    sw: 'Kazi Zetu',
+                    fr: 'Nos Realisations',
+                    ar: 'أعمالنا',
+                  ),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -422,7 +459,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                _isSwahili ? 'Miradi Yetu' : 'Our Projects',
+                _tr(
+                  en: 'Our Projects',
+                  sw: 'Miradi Yetu',
+                  fr: 'Nos Projets',
+                  ar: 'مشاريعنا',
+                ),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 28,
@@ -431,9 +473,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                _isSwahili
-                    ? 'Angalia miradi yetu iliyokamilishwa na inayoendelea'
-                    : 'Explore our completed and ongoing projects',
+                _tr(
+                  en: 'Explore our completed and ongoing flagship projects',
+                  sw: 'Angalia miradi yetu iliyokamilishwa na inayoendelea',
+                  fr: 'Explorez nos projets phares acheves et en cours',
+                  ar: 'استكشف مشاريعنا الرائدة المكتملة والجارية',
+                ),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 14,
@@ -468,7 +513,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isSwahili ? 'Mradi wa Kipekee' : 'Featured Project',
+                    _tr(
+                      en: 'Featured Projects',
+                      sw: 'Miradi ya Kipekee',
+                      fr: 'Projets Phares',
+                      ar: 'المشاريع الرائدة',
+                    ),
                     style: const TextStyle(
                       color: Color(0xFFD4AF37),
                       fontSize: 12,
@@ -477,7 +527,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     ),
                   ),
                   Text(
-                    _isSwahili ? 'Kazi Yetu ya Kipekee' : 'Our Signature Work',
+                    _tr(
+                      en: 'Our Signature Work',
+                      sw: 'Kazi Yetu ya Kipekee',
+                      fr: 'Nos Realisations Signature',
+                      ar: 'أعمالنا المميزة',
+                    ),
                     style: TextStyle(
                       color: _textPrimaryColor,
                       fontSize: 22,
@@ -490,9 +545,16 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _isSwahili
-                ? 'Angalia mradi wetu unaoonyesha kujitolea kwetu kwa ubora, ubunifu, na mazoea endelevu ya ujenzi.'
-                : 'Explore our flagship project that showcases our commitment to excellence, innovation, and sustainable construction practices.',
+            _tr(
+              en:
+                  'Explore our flagship projects that showcase our commitment to excellence, innovation, and sustainable construction practices.',
+              sw:
+                  'Angalia miradi yetu ya kipekee inayoonyesha kujitolea kwetu kwa ubora, ubunifu, na mazoea endelevu ya ujenzi.',
+              fr:
+                  'Explorez nos projets phares qui illustrent notre engagement envers l\'excellence, l\'innovation et la construction durable.',
+              ar:
+                  'استكشف مشاريعنا الرائدة التي تعكس التزامنا بالتميز والابتكار وممارسات البناء المستدامة.',
+            ),
             style: TextStyle(color: _textSecondaryColor, fontSize: 13),
           ),
           const SizedBox(height: 20),
@@ -598,7 +660,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '${project.yearCompleted} ${_isSwahili ? 'Imekamilika' : 'Year Completed'}',
+                    _tr(
+                      en: 'Completed ${project.yearCompleted}',
+                      sw: 'Imekamilika ${project.yearCompleted}',
+                      fr: 'Termine ${project.yearCompleted}',
+                      ar: 'مكتمل ${project.yearCompleted}',
+                    ),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -745,7 +812,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                _isSwahili ? 'Uliza' : 'Inquire',
+                                _isSwahili ? 'WhatsApp' : 'WhatsApp',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 11,
@@ -814,7 +881,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isSwahili ? 'Miradi Yote' : 'All Projects',
+                _tr(
+                  en: 'All Projects',
+                  sw: 'Miradi Yote',
+                  fr: 'Tous les Projets',
+                  ar: 'كل المشاريع',
+                ),
                 style: const TextStyle(
                   color: Color(0xFF3498DB),
                   fontSize: 12,
@@ -823,7 +895,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 ),
               ),
               Text(
-                _isSwahili ? 'Kazi Zetu' : 'Our Portfolio',
+                _tr(
+                  en: 'Our Portfolio',
+                  sw: 'Kazi Zetu',
+                  fr: 'Notre Portefeuille',
+                  ar: 'أعمالنا',
+                ),
                 style: TextStyle(
                   color: _textPrimaryColor,
                   fontSize: 22,
@@ -1098,9 +1175,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              _isSwahili
-                                  ? 'Uliza WhatsApp'
-                                  : 'Inquire WhatsApp',
+                              _isSwahili ? 'WhatsApp' : 'WhatsApp',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
@@ -1348,7 +1423,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
                     // Description
                     Text(
-                      _isSwahili ? 'Maelezo' : 'Description',
+                      _isSwahili ? 'Mfumo wa Utekelezaji' : 'Systematic Approach',
                       style: TextStyle(
                         color: _textPrimaryColor,
                         fontSize: 16,
@@ -1374,9 +1449,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                       },
                       icon: const Icon(Icons.chat_rounded, size: 20),
                       label: Text(
-                        _isSwahili
-                            ? 'Uliza kupitia WhatsApp'
-                            : 'Inquire via WhatsApp',
+                        _isSwahili ? 'WhatsApp' : 'WhatsApp',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

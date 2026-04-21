@@ -23,6 +23,21 @@ final _projectStatusesProvider =
           .toList();
     });
 
+String _projectStatusTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class ProjectStatusesScreen extends ConsumerWidget {
   const ProjectStatusesScreen({super.key});
 
@@ -30,7 +45,7 @@ class ProjectStatusesScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final asyncData = ref.watch(_projectStatusesProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final search = ref
         .watch(_projectStatusesSearchProvider)
@@ -43,14 +58,28 @@ class ProjectStatusesScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Hali za Mradi' : 'Project Statuses'),
+        title: Text(
+          _projectStatusTr(
+            language,
+            en: 'Project Statuses',
+            sw: 'Hali za Mradi',
+            fr: 'Statuts du projet',
+            ar: 'حالات المشروع',
+          ),
+        ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
         child: FloatingActionButton(
           onPressed: () => _openForm(context, ref),
           child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza Hali' : 'Add Status',
+          tooltip: _projectStatusTr(
+            language,
+            en: 'Add Status',
+            sw: 'Ongeza Hali',
+            fr: 'Ajouter un statut',
+            ar: 'إضافة حالة',
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -66,9 +95,13 @@ class ProjectStatusesScreen extends ConsumerWidget {
                       ref.read(_projectStatusesSearchProvider.notifier).state =
                           value,
                   decoration: InputDecoration(
-                    hintText: isSwahili
-                        ? 'Tafuta hali...'
-                        : 'Search statuses...',
+                    hintText: _projectStatusTr(
+                      language,
+                      en: 'Search statuses...',
+                      sw: 'Tafuta hali...',
+                      fr: 'Rechercher des statuts...',
+                      ar: 'ابحث عن الحالات...',
+                    ),
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: search.isNotEmpty
                         ? IconButton(
@@ -119,7 +152,15 @@ class ProjectStatusesScreen extends ConsumerWidget {
                       ElevatedButton(
                         onPressed: () =>
                             ref.invalidate(_projectStatusesProvider),
-                        child: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+                        child: Text(
+                          _projectStatusTr(
+                            language,
+                            en: 'Retry',
+                            sw: 'Jaribu tena',
+                            fr: 'Reessayer',
+                            ar: 'إعادة المحاولة',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -148,12 +189,20 @@ class ProjectStatusesScreen extends ConsumerWidget {
                           const SizedBox(height: 16),
                           Text(
                             items.isEmpty
-                                ? (isSwahili
-                                      ? 'Hakuna hali'
-                                      : 'No project statuses found')
-                                : (isSwahili
-                                      ? 'Hakuna matokeo yanayolingana'
-                                      : 'No matching results'),
+                                ? _projectStatusTr(
+                                    language,
+                                    en: 'No project statuses found',
+                                    sw: 'Hakuna hali',
+                                    fr: 'Aucun statut de projet trouve',
+                                    ar: 'لم يتم العثور على حالات مشروع',
+                                  )
+                                : _projectStatusTr(
+                                    language,
+                                    en: 'No matching results',
+                                    sw: 'Hakuna matokeo yanayolingana',
+                                    fr: 'Aucun resultat correspondant',
+                                    ar: 'لا توجد نتائج مطابقة',
+                                  ),
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -172,7 +221,13 @@ class ProjectStatusesScreen extends ConsumerWidget {
                                       '',
                               icon: const Icon(Icons.clear),
                               label: Text(
-                                isSwahili ? 'Futa utafutaji' : 'Clear search',
+                                _projectStatusTr(
+                                  language,
+                                  en: 'Clear search',
+                                  sw: 'Futa utafutaji',
+                                  fr: 'Effacer la recherche',
+                                  ar: 'مسح البحث',
+                                ),
                               ),
                             ),
                           ],
@@ -192,7 +247,7 @@ class ProjectStatusesScreen extends ConsumerWidget {
                         index: index,
                         onEdit: () => _openForm(context, ref, item: item),
                         onDelete: () => _deleteItem(context, ref, item),
-                        isSwahili: isSwahili,
+                        language: language,
                         isDarkMode: isDarkMode,
                       );
                     }, childCount: filtered.length),
@@ -230,23 +285,51 @@ class ProjectStatusesScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(isSwahili ? 'Futa Hali' : 'Delete Project Status'),
+        title: Text(
+          _projectStatusTr(
+            language,
+            en: 'Delete Project Status',
+            sw: 'Futa Hali',
+            fr: 'Supprimer le statut du projet',
+            ar: 'حذف حالة المشروع',
+          ),
+        ),
         content: Text(
-          isSwahili ? 'Futa ${item['name']}?' : 'Delete ${item['name']}?',
+          _projectStatusTr(
+            language,
+            en: 'Delete ${item['name']}?',
+            sw: 'Futa ${item['name']}?',
+            fr: 'Supprimer ${item['name']} ?',
+            ar: 'حذف ${item['name']}؟',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+            child: Text(
+              _projectStatusTr(
+                language,
+                en: 'Cancel',
+                sw: 'Ghairi',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(
-              isSwahili ? 'Futa' : 'Delete',
+              _projectStatusTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
               style: const TextStyle(color: AppColors.error),
             ),
           ),
@@ -264,7 +347,13 @@ class ProjectStatusesScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isSwahili ? 'Hali imefutwa' : 'Project status deleted successfully',
+            _projectStatusTr(
+              language,
+              en: 'Project status deleted successfully',
+              sw: 'Hali imefutwa',
+              fr: 'Le statut du projet a ete supprime avec succes',
+              ar: 'تم حذف حالة المشروع بنجاح',
+            ),
           ),
           backgroundColor: AppColors.success,
         ),
@@ -286,7 +375,7 @@ class _ProjectStatusCard extends StatelessWidget {
   final int index;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _ProjectStatusCard({
@@ -294,7 +383,7 @@ class _ProjectStatusCard extends StatelessWidget {
     required this.index,
     required this.onEdit,
     required this.onDelete,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
@@ -345,7 +434,15 @@ class _ProjectStatusCard extends StatelessWidget {
                 children: [
                   const Icon(Icons.edit_rounded, size: 20),
                   const SizedBox(width: 8),
-                  Text(isSwahili ? 'Hariri' : 'Edit'),
+                  Text(
+                    _projectStatusTr(
+                      language,
+                      en: 'Edit',
+                      sw: 'Hariri',
+                      fr: 'Modifier',
+                      ar: 'تعديل',
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -360,7 +457,13 @@ class _ProjectStatusCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isSwahili ? 'Futa' : 'Delete',
+                    _projectStatusTr(
+                      language,
+                      en: 'Delete',
+                      sw: 'Futa',
+                      fr: 'Supprimer',
+                      ar: 'حذف',
+                    ),
                     style: const TextStyle(color: AppColors.error),
                   ),
                 ],
@@ -407,7 +510,7 @@ class _ProjectStatusFormSheetState
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -439,10 +542,20 @@ class _ProjectStatusFormSheetState
                 const SizedBox(height: 16),
                 Text(
                   _isEdit
-                      ? (isSwahili ? 'Hariri Hali' : 'Edit Project Status')
-                      : (isSwahili
-                            ? 'Unda Hali Mpya'
-                            : 'Create New Project Status'),
+                      ? _projectStatusTr(
+                          language,
+                          en: 'Edit Project Status',
+                          sw: 'Hariri Hali',
+                          fr: 'Modifier le statut du projet',
+                          ar: 'تعديل حالة المشروع',
+                        )
+                      : _projectStatusTr(
+                          language,
+                          en: 'Create New Project Status',
+                          sw: 'Unda Hali Mpya',
+                          fr: 'Creer un nouveau statut de projet',
+                          ar: 'إنشاء حالة مشروع جديدة',
+                        ),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -452,11 +565,23 @@ class _ProjectStatusFormSheetState
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: isSwahili ? 'Jina' : 'Name',
+                    labelText: _projectStatusTr(
+                      language,
+                      en: 'Name',
+                      sw: 'Jina',
+                      fr: 'Nom',
+                      ar: 'الاسم',
+                    ),
                     border: const OutlineInputBorder(),
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty)
-                      ? (isSwahili ? 'Jina linahitajika' : 'Name is required')
+                      ? _projectStatusTr(
+                          language,
+                          en: 'Name is required',
+                          sw: 'Jina linahitajika',
+                          fr: 'Le nom est requis',
+                          ar: 'الاسم مطلوب',
+                        )
                       : null,
                 ),
                 const SizedBox(height: 20),
@@ -466,10 +591,28 @@ class _ProjectStatusFormSheetState
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? (isSwahili ? 'Inahifadhi...' : 'Saving...')
+                          ? _projectStatusTr(
+                              language,
+                              en: 'Saving...',
+                              sw: 'Inahifadhi...',
+                              fr: 'Enregistrement...',
+                              ar: 'جارٍ الحفظ...',
+                            )
                           : (_isEdit
-                                ? (isSwahili ? 'Sasisha Hali' : 'Update Status')
-                                : (isSwahili ? 'Hifadhi Hali' : 'Save Status')),
+                                ? _projectStatusTr(
+                                    language,
+                                    en: 'Update Status',
+                                    sw: 'Sasisha Hali',
+                                    fr: 'Mettre a jour le statut',
+                                    ar: 'تحديث الحالة',
+                                  )
+                                : _projectStatusTr(
+                                    language,
+                                    en: 'Save Status',
+                                    sw: 'Hifadhi Hali',
+                                    fr: 'Enregistrer le statut',
+                                    ar: 'حفظ الحالة',
+                                  )),
                     ),
                   ),
                 ),

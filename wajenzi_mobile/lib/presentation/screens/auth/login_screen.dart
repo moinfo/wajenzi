@@ -23,7 +23,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  Future<void> _openPasswordReset(bool isSwahili) async {
+  String _tr(
+    AppLanguage language, {
+    required String en,
+    String? sw,
+    String? fr,
+    String? ar,
+  }) {
+    return switch (language) {
+      AppLanguage.swahili => sw ?? en,
+      AppLanguage.french => fr ?? en,
+      AppLanguage.arabic => ar ?? en,
+      AppLanguage.english => en,
+    };
+  }
+
+  Future<void> _openPasswordReset(AppLanguage language) async {
     final resetUri = Uri.parse(AppConfig.portalUrl('/password/reset'));
     final opened = await launchUrl(
       resetUri,
@@ -34,9 +49,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isSwahili
-                ? 'Imeshindwa kufungua ukurasa wa kurejesha nywila.'
-                : 'Could not open the password reset page.',
+            _tr(
+              language,
+              en: 'Could not open the password reset page.',
+              sw: 'Imeshindwa kufungua ukurasa wa kurejesha nywila.',
+              fr: 'Impossible d\'ouvrir la page de reinitialisation du mot de passe.',
+              ar: 'تعذر فتح صفحة إعادة تعيين كلمة المرور.',
+            ),
           ),
           backgroundColor: AppColors.error,
         ),
@@ -45,25 +64,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   // Translations
-  Map<String, String> _t(bool isSwahili) => isSwahili
-      ? {
-          'welcome': 'Karibu Tena',
-          'signInContinue': 'Ingia kuendelea',
-          'email': 'Barua Pepe au Simu',
-          'password': 'Nywila',
-          'forgotPassword': 'Umesahau Nywila?',
-          'signIn': 'Ingia',
-          'tagline': 'Wataalamu wa Uthabiti na Ubora',
-        }
-      : {
-          'welcome': 'Welcome Back',
-          'signInContinue': 'Sign in to continue',
-          'email': 'Email or Phone',
-          'password': 'Password',
-          'forgotPassword': 'Forgot Password?',
-          'signIn': 'Sign In',
-          'tagline': 'Masters of Consistency and Quality',
-        };
+  Map<String, String> _t(AppLanguage language) => {
+    'welcome': _tr(
+      language,
+      en: 'Welcome Back',
+      sw: 'Karibu Tena',
+      fr: 'Bon Retour',
+      ar: 'مرحبًا بعودتك',
+    ),
+    'signInContinue': _tr(
+      language,
+      en: 'Sign in to continue',
+      sw: 'Ingia kuendelea',
+      fr: 'Connectez-vous pour continuer',
+      ar: 'سجل الدخول للمتابعة',
+    ),
+    'email': _tr(
+      language,
+      en: 'Email or Phone',
+      sw: 'Barua Pepe au Simu',
+      fr: 'E-mail ou Telephone',
+      ar: 'البريد الإلكتروني أو الهاتف',
+    ),
+    'password': _tr(
+      language,
+      en: 'Password',
+      sw: 'Nywila',
+      fr: 'Mot de passe',
+      ar: 'كلمة المرور',
+    ),
+    'forgotPassword': _tr(
+      language,
+      en: 'Forgot Password?',
+      sw: 'Umesahau Nywila?',
+      fr: 'Mot de passe oublie ?',
+      ar: 'هل نسيت كلمة المرور؟',
+    ),
+    'signIn': _tr(
+      language,
+      en: 'Sign In',
+      sw: 'Ingia',
+      fr: 'Se Connecter',
+      ar: 'تسجيل الدخول',
+    ),
+    'tagline': _tr(
+      language,
+      en: 'Masters of Consistency and Quality',
+      sw: 'Wataalamu wa Uthabiti na Ubora',
+      fr: 'Experts en constance et en qualite',
+      ar: 'رواد الثبات والجودة',
+    ),
+  };
 
   @override
   void dispose() {
@@ -97,8 +148,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final error = authState.valueOrNull?.error;
     final size = MediaQuery.of(context).size;
     final isDark = ref.watch(isDarkModeProvider);
-    final isSw = ref.watch(isSwahiliProvider);
-    final t = _t(isSw);
+    final language = ref.watch(currentLanguageProvider);
+    final t = _t(language);
 
     // Dark mode colors
     final gradientColors = isDark
@@ -245,12 +296,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    isSw ? '🇹🇿' : '🇬🇧',
+                                    switch (language) {
+                                      AppLanguage.swahili => '🇹🇿',
+                                      AppLanguage.french => '🇫🇷',
+                                      AppLanguage.arabic => '🌍',
+                                      AppLanguage.english => '🇬🇧',
+                                    },
                                     style: const TextStyle(fontSize: 20),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    isSw ? 'SW' : 'EN',
+                                    language.code,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w600,
@@ -428,7 +484,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 isDarkMode: isDark,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return isSw ? 'Tafadhali weka barua pepe au simu' : 'Please enter your email or phone';
+                                    return _tr(
+                                      language,
+                                      en: 'Please enter your email or phone',
+                                      sw: 'Tafadhali weka barua pepe au simu',
+                                      fr: 'Veuillez entrer votre e-mail ou telephone',
+                                      ar: 'يرجى إدخال بريدك الإلكتروني أو هاتفك',
+                                    );
                                   }
                                   return null;
                                 },
@@ -452,10 +514,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 onSubmit: (_) => _handleLogin(),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return isSw ? 'Tafadhali weka nywila' : 'Please enter your password';
+                                    return _tr(
+                                      language,
+                                      en: 'Please enter your password',
+                                      sw: 'Tafadhali weka nywila',
+                                      fr: 'Veuillez entrer votre mot de passe',
+                                      ar: 'يرجى إدخال كلمة المرور',
+                                    );
                                   }
                                   if (value.length < 6) {
-                                    return isSw ? 'Nywila lazima iwe angalau herufi 6' : 'Password must be at least 6 characters';
+                                    return _tr(
+                                      language,
+                                      en: 'Password must be at least 6 characters',
+                                      sw: 'Nywila lazima iwe angalau herufi 6',
+                                      fr: 'Le mot de passe doit contenir au moins 6 caracteres',
+                                      ar: 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل',
+                                    );
                                   }
                                   return null;
                                 },
@@ -465,7 +539,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               Align(
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
-                                  onPressed: () => _openPasswordReset(isSw),
+                                  onPressed: () => _openPasswordReset(language),
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
                                     minimumSize: Size.zero,

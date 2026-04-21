@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/settings_provider.dart';
+
 class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onDarkModeToggle;
   final VoidCallback onLanguageToggle;
   final bool showBackButton;
@@ -12,16 +14,24 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
   const LandingTopBar({
     super.key,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
     required this.onDarkModeToggle,
     required this.onLanguageToggle,
     this.showBackButton = false,
     this.flagWidget,
   });
 
+  bool get isSwahili => language == AppLanguage.swahili;
   Color get _textPrimaryColor => isDarkMode ? Colors.white : const Color(0xFF2C3E50);
   Color get _textSecondaryColor => isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
   Color get _appBarBgColor => isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+
+  String get _tagline => switch (language) {
+    AppLanguage.swahili => 'Mabingwa wa Uthabiti na Ubora',
+    AppLanguage.french => 'Experts en constance et en qualite',
+    AppLanguage.arabic => 'رواد الثبات والجودة',
+    AppLanguage.english => 'Masters of Consistency and Quality',
+  };
 
   @override
   Size get preferredSize => const Size.fromHeight(70);
@@ -82,18 +92,15 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'WAJENZI',
+                  'Wajenzi Professionals',
                   style: TextStyle(
                     color: Color(0xFF1ABC9C),
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
                   ),
                 ),
                 Text(
-                  isSwahili
-                      ? 'Mabingwa wa Uthabiti na Ubora'
-                      : 'Masters of Consistency and Quality',
+                  _tagline,
                   style: TextStyle(
                     color: _textSecondaryColor,
                     fontSize: 8,
@@ -128,7 +135,7 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
                 const SizedBox(width: 3),
               ],
               Text(
-                isSwahili ? 'SW' : 'EN',
+                language.code,
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
@@ -216,6 +223,37 @@ class UKFlag extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: _UKFlagPainter(),
+    );
+  }
+}
+
+class FranceFlag extends StatelessWidget {
+  const FranceFlag({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _FranceFlagPainter(),
+    );
+  }
+}
+
+class ArabicLanguageBadge extends StatelessWidget {
+  const ArabicLanguageBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF006C35),
+      alignment: Alignment.center,
+      child: const Text(
+        'ع',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }
@@ -350,6 +388,31 @@ class _UKFlagPainter extends CustomPainter {
 
     canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width / 2, size.height), redCross);
     canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), redCross);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _FranceFlagPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bluePaint = Paint()..color = const Color(0xFF0055A4);
+    final whitePaint = Paint()..color = Colors.white;
+    final redPaint = Paint()..color = const Color(0xFFEF4135);
+
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, size.width / 3, size.height),
+      bluePaint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(size.width / 3, 0, size.width / 3, size.height),
+      whitePaint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH((size.width / 3) * 2, 0, size.width / 3, size.height),
+      redPaint,
+    );
   }
 
   @override

@@ -3,29 +3,61 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // Keys for SharedPreferences
 const String _darkModeKey = 'isDarkMode';
-const String _languageKey = 'isSwahili';
+const String _languageKey = 'appLanguage';
+const String _legacyLanguageKey = 'isSwahili';
 const String _notificationsKey = 'enableNotifications';
+
+enum AppLanguage { english, swahili, french, arabic }
+
+extension AppLanguageX on AppLanguage {
+  String get storageValue => switch (this) {
+    AppLanguage.english => 'english',
+    AppLanguage.swahili => 'swahili',
+    AppLanguage.french => 'french',
+    AppLanguage.arabic => 'arabic',
+  };
+
+  String get code => switch (this) {
+    AppLanguage.english => 'EN',
+    AppLanguage.swahili => 'SW',
+    AppLanguage.french => 'FR',
+    AppLanguage.arabic => 'AR',
+  };
+
+  bool get isRtl => this == AppLanguage.arabic;
+}
+
+AppLanguage _languageFromStorage(String? value) {
+  return switch (value) {
+    'swahili' => AppLanguage.swahili,
+    'french' => AppLanguage.french,
+    'arabic' => AppLanguage.arabic,
+    _ => AppLanguage.english,
+  };
+}
 
 // Settings state
 class SettingsState {
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool enableNotifications;
 
   const SettingsState({
     this.isDarkMode = false,
-    this.isSwahili = false,
+    this.language = AppLanguage.english,
     this.enableNotifications = true,
   });
 
+  bool get isSwahili => language == AppLanguage.swahili;
+
   SettingsState copyWith({
     bool? isDarkMode,
-    bool? isSwahili,
+    AppLanguage? language,
     bool? enableNotifications,
   }) {
     return SettingsState(
       isDarkMode: isDarkMode ?? this.isDarkMode,
-      isSwahili: isSwahili ?? this.isSwahili,
+      language: language ?? this.language,
       enableNotifications: enableNotifications ?? this.enableNotifications,
     );
   }
@@ -41,11 +73,16 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   void _loadSettings() {
     final isDarkMode = _prefs.getBool(_darkModeKey) ?? false;
-    final isSwahili = _prefs.getBool(_languageKey) ?? false;
+    final storedLanguage = _prefs.getString(_languageKey);
+    final legacyIsSwahili = _prefs.getBool(_legacyLanguageKey);
     final enableNotifications = _prefs.getBool(_notificationsKey) ?? true;
     state = SettingsState(
       isDarkMode: isDarkMode,
-      isSwahili: isSwahili,
+      language: storedLanguage != null
+          ? _languageFromStorage(storedLanguage)
+          : (legacyIsSwahili == true
+                ? AppLanguage.swahili
+                : AppLanguage.english),
       enableNotifications: enableNotifications,
     );
   }
@@ -57,9 +94,16 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   }
 
   Future<void> toggleLanguage() async {
-    final newValue = !state.isSwahili;
-    await _prefs.setBool(_languageKey, newValue);
-    state = state.copyWith(isSwahili: newValue);
+    const languageOrder = [
+      AppLanguage.english,
+      AppLanguage.swahili,
+      AppLanguage.french,
+      AppLanguage.arabic,
+    ];
+    final currentIndex = languageOrder.indexOf(state.language);
+    final nextLanguage =
+        languageOrder[(currentIndex + 1) % languageOrder.length];
+    await setLanguage(nextLanguage);
   }
 
   Future<void> setDarkMode(bool value) async {
@@ -67,9 +111,10 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(isDarkMode: value);
   }
 
-  Future<void> setLanguage(bool isSwahili) async {
-    await _prefs.setBool(_languageKey, isSwahili);
-    state = state.copyWith(isSwahili: isSwahili);
+  Future<void> setLanguage(AppLanguage language) async {
+    await _prefs.setString(_languageKey, language.storageValue);
+    await _prefs.remove(_legacyLanguageKey);
+    state = state.copyWith(language: language);
   }
 
   Future<void> setNotificationsEnabled(bool value) async {
@@ -100,4 +145,16 @@ final isSwahiliProvider = Provider<bool>((ref) {
 
 final notificationsEnabledProvider = Provider<bool>((ref) {
   return ref.watch(settingsProvider).enableNotifications;
+});
+
+final currentLanguageProvider = Provider<AppLanguage>((ref) {
+  return ref.watch(settingsProvider).language;
+});
+
+final isFrenchProvider = Provider<bool>((ref) {
+  return ref.watch(currentLanguageProvider) == AppLanguage.french;
+});
+
+final isArabicProvider = Provider<bool>((ref) {
+  return ref.watch(currentLanguageProvider) == AppLanguage.arabic;
 });

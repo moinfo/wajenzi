@@ -2,10 +2,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/settings_provider.dart';
+
 class CurvedBottomNav extends StatefulWidget {
   final int selectedIndex;
   final bool isDarkMode;
   final bool isSwahili;
+  final AppLanguage? language;
   final Function(int)? onItemTapped;
 
   const CurvedBottomNav({
@@ -13,6 +16,7 @@ class CurvedBottomNav extends StatefulWidget {
     this.selectedIndex = 0,
     this.isDarkMode = false,
     this.isSwahili = false,
+    this.language,
     this.onItemTapped,
   });
 
@@ -23,9 +27,16 @@ class CurvedBottomNav extends StatefulWidget {
 class _CurvedBottomNavState extends State<CurvedBottomNav> {
   late int _selectedMenuIndex;
 
-  List<String> get _menuLabels => widget.isSwahili
-      ? ['Nyumbani', 'Miradi', 'Huduma', 'Kuhusu', 'Tuzo']
-      : ['Home', 'Projects', 'Services', 'About', 'Awards'];
+  AppLanguage get _language =>
+      widget.language ??
+      (widget.isSwahili ? AppLanguage.swahili : AppLanguage.english);
+
+  List<String> get _menuLabels => switch (_language) {
+    AppLanguage.swahili => ['Nyumbani', 'Miradi', 'Huduma', 'Kuhusu', 'Tuzo'],
+    AppLanguage.french => ['Accueil', 'Projets', 'Services', 'A propos', 'Prix'],
+    AppLanguage.arabic => ['الرئيسية', 'المشاريع', 'الخدمات', 'حول', 'الجوائز'],
+    AppLanguage.english => ['Home', 'Projects', 'Services', 'About', 'Awards'],
+  };
 
   final List<IconData> _menuIcons = [
     Icons.home_rounded,
