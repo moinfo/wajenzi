@@ -34,28 +34,28 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
     }
     return switch (language) {
       AppLanguage.swahili => [
-        'Miradi',
+        'Miradi ya Kipekee',
         'Ankara',
         'Nyumbani',
         'Ununuzi',
         'Mahudhurio',
       ],
       AppLanguage.french => [
-        'Projets',
+        'Projets Phares',
         'Facturation',
         'Accueil',
         'Achats',
         'Presence',
       ],
       AppLanguage.arabic => [
-        'المشاريع',
+        'المشاريع الرائدة',
         'الفواتير',
         'الرئيسية',
         'المشتريات',
         'الحضور',
       ],
       AppLanguage.english => [
-        'Projects',
+        'Flagship Projects',
         'Billing',
         'Home',
         'Procurement',
@@ -85,7 +85,13 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
     if (_isClient) {
       return ['/dashboard', '/billing', '/settings'];
     }
-    return ['/staff-projects', '/staff-billing', '/dashboard', '/procurement', '/attendance'];
+    return [
+      '/staff-projects',
+      '/staff-billing',
+      '/dashboard',
+      '/procurement',
+      '/attendance',
+    ];
   }
 
   @override
@@ -208,7 +214,12 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
     );
   }
 
-  Widget _buildNavItem(int index, bool isCenter, List<String> menuLabels, bool isDarkMode) {
+  Widget _buildNavItem(
+    int index,
+    bool isCenter,
+    List<String> menuLabels,
+    bool isDarkMode,
+  ) {
     return GestureDetector(
       onTap: () => _onItemTapped(index),
       child: AnimatedContainer(
@@ -241,7 +252,9 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
                   boxShadow: isCenter
                       ? [
                           BoxShadow(
-                            color: const Color(0xFF1ABC9C).withValues(alpha: 0.6),
+                            color: const Color(
+                              0xFF1ABC9C,
+                            ).withValues(alpha: 0.6),
                             blurRadius: 20,
                             offset: const Offset(0, 8),
                           ),
@@ -260,8 +273,8 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
                   color: isCenter
                       ? Colors.white
                       : isDarkMode
-                          ? Colors.white.withValues(alpha: 0.7)
-                          : const Color(0xFF2C3E50).withValues(alpha: 0.7),
+                      ? Colors.white.withValues(alpha: 0.7)
+                      : const Color(0xFF2C3E50).withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -277,8 +290,8 @@ class _CurvedInternalNavState extends ConsumerState<CurvedInternalNav> {
                   color: isCenter
                       ? const Color(0xFF1ABC9C)
                       : isDarkMode
-                          ? Colors.white.withValues(alpha: 0.7)
-                          : const Color(0xFF2C3E50).withValues(alpha: 0.7),
+                      ? Colors.white.withValues(alpha: 0.7)
+                      : const Color(0xFF2C3E50).withValues(alpha: 0.7),
                 ),
                 child: Text(menuLabels[index]),
               ),
@@ -313,9 +326,12 @@ class _CurvedNavClipper extends CustomClipper<Path> {
     path.lineTo(centerX - notchRadius - 10, 0);
 
     path.cubicTo(
-      centerX - notchRadius, 0,
-      centerX - notchRadius + 5, notchDepth,
-      centerX - notchRadius + 15, notchDepth + 25,
+      centerX - notchRadius,
+      0,
+      centerX - notchRadius + 5,
+      notchDepth,
+      centerX - notchRadius + 15,
+      notchDepth + 25,
     );
 
     path.arcToPoint(
@@ -325,9 +341,12 @@ class _CurvedNavClipper extends CustomClipper<Path> {
     );
 
     path.cubicTo(
-      centerX + notchRadius - 5, notchDepth,
-      centerX + notchRadius, 0,
-      centerX + notchRadius + 10, 0,
+      centerX + notchRadius - 5,
+      notchDepth,
+      centerX + notchRadius,
+      0,
+      centerX + notchRadius + 10,
+      0,
     );
 
     path.lineTo(size.width - cornerRadius, 0);
@@ -373,9 +392,12 @@ class _CurvedNavBorderPainter extends CustomPainter {
     path.lineTo(centerX - notchRadius - 10, 0);
 
     path.cubicTo(
-      centerX - notchRadius, 0,
-      centerX - notchRadius + 5, notchDepth,
-      centerX - notchRadius + 15, notchDepth + 25,
+      centerX - notchRadius,
+      0,
+      centerX - notchRadius + 5,
+      notchDepth,
+      centerX - notchRadius + 15,
+      notchDepth + 25,
     );
 
     path.arcToPoint(
@@ -385,9 +407,12 @@ class _CurvedNavBorderPainter extends CustomPainter {
     );
 
     path.cubicTo(
-      centerX + notchRadius - 5, notchDepth,
-      centerX + notchRadius, 0,
-      centerX + notchRadius + 10, 0,
+      centerX + notchRadius - 5,
+      notchDepth,
+      centerX + notchRadius,
+      0,
+      centerX + notchRadius + 10,
+      0,
     );
 
     path.lineTo(size.width - cornerRadius, 0);
@@ -420,6 +445,7 @@ class _CurvedNavBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CurvedNavBorderPainter oldDelegate) {
-    return oldDelegate.activeIndex != activeIndex || oldDelegate.isDark != isDark;
+    return oldDelegate.activeIndex != activeIndex ||
+        oldDelegate.isDark != isDark;
   }
 }

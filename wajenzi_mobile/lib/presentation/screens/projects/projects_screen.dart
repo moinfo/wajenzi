@@ -100,12 +100,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   Color get _textSecondaryColor =>
       _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
 
-  String _tr({
-    required String en,
-    String? sw,
-    String? fr,
-    String? ar,
-  }) {
+  String _tr({required String en, String? sw, String? fr, String? ar}) {
     if (_isSwahili) return sw ?? en;
     if (_isFrench) return fr ?? en;
     if (_isArabic) return ar ?? en;
@@ -460,10 +455,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               const SizedBox(height: 10),
               Text(
                 _tr(
-                  en: 'Our Projects',
-                  sw: 'Miradi Yetu',
-                  fr: 'Nos Projets',
-                  ar: 'مشاريعنا',
+                  en: 'Flagship Projects',
+                  sw: 'Miradi ya Kipekee',
+                  fr: 'Projets Phares',
+                  ar: 'المشاريع الرائدة',
                 ),
                 style: const TextStyle(
                   color: Colors.white,
@@ -546,14 +541,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           const SizedBox(height: 8),
           Text(
             _tr(
-              en:
-                  'Explore our flagship projects that showcase our commitment to excellence, innovation, and sustainable construction practices.',
-              sw:
-                  'Angalia miradi yetu ya kipekee inayoonyesha kujitolea kwetu kwa ubora, ubunifu, na mazoea endelevu ya ujenzi.',
-              fr:
-                  'Explorez nos projets phares qui illustrent notre engagement envers l\'excellence, l\'innovation et la construction durable.',
-              ar:
-                  'استكشف مشاريعنا الرائدة التي تعكس التزامنا بالتميز والابتكار وممارسات البناء المستدامة.',
+              en: 'Explore our flagship projects that showcase our commitment to excellence, innovation, and sustainable construction practices.',
+              sw: 'Angalia miradi yetu ya kipekee inayoonyesha kujitolea kwetu kwa ubora, ubunifu, na mazoea endelevu ya ujenzi.',
+              fr: 'Explorez nos projets phares qui illustrent notre engagement envers l\'excellence, l\'innovation et la construction durable.',
+              ar: 'استكشف مشاريعنا الرائدة التي تعكس التزامنا بالتميز والابتكار وممارسات البناء المستدامة.',
             ),
             style: TextStyle(color: _textSecondaryColor, fontSize: 13),
           ),
@@ -660,12 +651,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    _tr(
-                      en: 'Completed ${project.yearCompleted}',
-                      sw: 'Imekamilika ${project.yearCompleted}',
-                      fr: 'Termine ${project.yearCompleted}',
-                      ar: 'مكتمل ${project.yearCompleted}',
-                    ),
+                    'Completed 2023',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -882,10 +868,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             children: [
               Text(
                 _tr(
-                  en: 'All Projects',
-                  sw: 'Miradi Yote',
-                  fr: 'Tous les Projets',
-                  ar: 'كل المشاريع',
+                  en: 'Flagship Projects',
+                  sw: 'Miradi ya Kipekee',
+                  fr: 'Projets Phares',
+                  ar: 'المشاريع الرائدة',
                 ),
                 style: const TextStyle(
                   color: Color(0xFF3498DB),
@@ -1423,7 +1409,9 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
                     // Description
                     Text(
-                      _isSwahili ? 'Mfumo wa Utekelezaji' : 'Systematic Approach',
+                      _isSwahili
+                          ? 'Mfumo wa Utekelezaji'
+                          : 'Systematic Approach',
                       style: TextStyle(
                         color: _textPrimaryColor,
                         fontSize: 16,

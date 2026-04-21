@@ -32,7 +32,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       category: '3D Design',
       likes: 156,
       timeAgo: '2 days ago',
-      description: 'Luxury hotel project featuring modern architecture with premium amenities.',
+      description:
+          'Luxury hotel project featuring modern architecture with premium amenities.',
       isFeatured: true,
     ),
     ProjectShowcase(
@@ -44,7 +45,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       category: 'Completed',
       likes: 243,
       timeAgo: '1 week ago',
-      description: 'Beautiful modern villa in Dar es Salaam with stunning views.',
+      description:
+          'Beautiful modern villa in Dar es Salaam with stunning views.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.28.png',
@@ -55,7 +57,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       category: 'In Progress',
       likes: 89,
       timeAgo: '3 days ago',
-      description: 'State-of-the-art commercial office building in the business district.',
+      description:
+          'State-of-the-art commercial office building in the business district.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.31.png',
@@ -77,7 +80,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       category: '3D Design',
       likes: 312,
       timeAgo: '1 day ago',
-      description: 'Modern shopping center with entertainment and retail facilities.',
+      description:
+          'Modern shopping center with entertainment and retail facilities.',
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.51.07.png',
@@ -98,12 +102,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   Color get _surfaceColor =>
       _isDarkMode ? const Color(0xFF1A1A2E) : Colors.white;
 
-  String _tr({
-    required String en,
-    String? sw,
-    String? fr,
-    String? ar,
-  }) {
+  String _tr({required String en, String? sw, String? fr, String? ar}) {
     if (_isSwahili) return sw ?? en;
     if (_isFrench) return fr ?? en;
     if (_isArabic) return ar ?? en;
@@ -254,7 +253,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                           ar: 'رواد الثبات والجودة',
                         ),
                         style: TextStyle(
-                          color: _isDarkMode ? Colors.white54 : Colors.grey[500],
+                          color: _isDarkMode
+                              ? Colors.white54
+                              : Colors.grey[500],
                           fontSize: 8,
                           fontStyle: FontStyle.italic,
                         ),
@@ -288,8 +289,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color:
-                            _isDarkMode ? Colors.white : const Color(0xFF2C3E50),
+                        color: _isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF2C3E50),
                       ),
                     ),
                   ],
@@ -301,7 +303,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 onTap: () =>
                     ref.read(settingsProvider.notifier).toggleDarkMode(),
                 child: Icon(
-                  _isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                  _isDarkMode
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
                   size: 20,
                   color: _isDarkMode
                       ? const Color(0xFF1ABC9C)
@@ -372,13 +376,15 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                           _isSwahili
                               ? '${_projects.length} miradi iliyochaguliwa'
                               : _isFrench
-                                  ? '${_projects.length} projets en vedette'
-                                  : _isArabic
-                                      ? '${_projects.length} مشاريع مميزة'
-                                      : '${_projects.length} featured projects',
+                              ? '${_projects.length} projets en vedette'
+                              : _isArabic
+                              ? '${_projects.length} مشاريع مميزة'
+                              : '${_projects.length} featured projects',
                           style: TextStyle(
                             fontSize: 12,
-                            color: _isDarkMode ? Colors.white54 : Colors.grey[500],
+                            color: _isDarkMode
+                                ? Colors.white54
+                                : Colors.grey[500],
                           ),
                         ),
                       ],
@@ -475,10 +481,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       _StatBadge(
                         '120+',
                         _tr(
-                          en: 'Projects',
-                          sw: 'Miradi',
-                          fr: 'Projets',
-                          ar: 'المشاريع',
+                          en: 'Flagship Projects',
+                          sw: 'Miradi ya Kipekee',
+                          fr: 'Projets Phares',
+                          ar: 'المشاريع الرائدة',
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -594,8 +600,11 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       height: 300,
                       color: const Color(0xFF2C3E50),
                       child: const Center(
-                        child: Icon(Icons.broken_image,
-                            color: Colors.white54, size: 48),
+                        child: Icon(
+                          Icons.broken_image,
+                          color: Colors.white54,
+                          size: 48,
+                        ),
                       ),
                     ),
                   ),
@@ -622,11 +631,15 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 16,
+                ),
                 decoration: const BoxDecoration(
                   color: Colors.black54,
-                  borderRadius:
-                      BorderRadius.vertical(bottom: Radius.circular(16)),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
                 ),
                 child: Text(
                   title,
@@ -684,7 +697,7 @@ class _HeroStats extends StatelessWidget {
           _StatItem(
             icon: Icons.folder_special_rounded,
             value: '120+',
-            label: isSwahili ? 'Miradi' : 'Projects',
+            label: isSwahili ? 'Miradi ya Kipekee' : 'Flagship Projects',
             color: const Color(0xFF1ABC9C),
             isDarkMode: isDarkMode,
           ),
@@ -804,21 +817,31 @@ class _ProjectCard extends StatelessWidget {
 
   Color get _catColor {
     switch (project.category.toUpperCase()) {
-      case 'COMPLETED':   return const Color(0xFF2ECC71);
-      case 'IN PROGRESS': return const Color(0xFFF39C12);
-      case '3D DESIGN':   return const Color(0xFF3498DB);
-      case 'DESIGN':      return const Color(0xFF9B59B6);
-      default:            return const Color(0xFF1ABC9C);
+      case 'COMPLETED':
+        return const Color(0xFF2ECC71);
+      case 'IN PROGRESS':
+        return const Color(0xFFF39C12);
+      case '3D DESIGN':
+        return const Color(0xFF3498DB);
+      case 'DESIGN':
+        return const Color(0xFF9B59B6);
+      default:
+        return const Color(0xFF1ABC9C);
     }
   }
 
   IconData get _catIcon {
     switch (project.category.toUpperCase()) {
-      case 'COMPLETED':   return Icons.home_work_rounded;
-      case 'IN PROGRESS': return Icons.construction_rounded;
-      case '3D DESIGN':   return Icons.view_in_ar_rounded;
-      case 'DESIGN':      return Icons.architecture_rounded;
-      default:            return Icons.business_rounded;
+      case 'COMPLETED':
+        return Icons.home_work_rounded;
+      case 'IN PROGRESS':
+        return Icons.construction_rounded;
+      case '3D DESIGN':
+        return Icons.view_in_ar_rounded;
+      case 'DESIGN':
+        return Icons.architecture_rounded;
+      default:
+        return Icons.business_rounded;
     }
   }
 
@@ -881,10 +904,7 @@ class _ProjectCard extends StatelessWidget {
                     height: 44,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          catColor,
-                          catColor.withValues(alpha: 0.6),
-                        ],
+                        colors: [catColor, catColor.withValues(alpha: 0.6)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -946,7 +966,9 @@ class _ProjectCard extends StatelessWidget {
                   // Category pill with gradient
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [catColor, catColor.withValues(alpha: 0.75)],
@@ -978,8 +1000,11 @@ class _ProjectCard extends StatelessWidget {
                         color: const Color(0xFFFFD700).withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.star_rounded,
-                          color: Color(0xFFFFD700), size: 16),
+                      child: const Icon(
+                        Icons.star_rounded,
+                        color: Color(0xFFFFD700),
+                        size: 16,
+                      ),
                     ),
                   ],
                 ],
@@ -1032,7 +1057,9 @@ class _ProjectCard extends StatelessWidget {
                   right: 10,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(10),
@@ -1053,7 +1080,9 @@ class _ProjectCard extends StatelessWidget {
                   left: 10,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 7, vertical: 3),
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(10),
@@ -1061,12 +1090,16 @@ class _ProjectCard extends StatelessWidget {
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.zoom_in_rounded,
-                            size: 11, color: Colors.white70),
+                        Icon(
+                          Icons.zoom_in_rounded,
+                          size: 11,
+                          color: Colors.white70,
+                        ),
                         SizedBox(width: 3),
-                        Text('Tap to zoom',
-                            style: TextStyle(
-                                fontSize: 9, color: Colors.white70)),
+                        Text(
+                          'Tap to zoom',
+                          style: TextStyle(fontSize: 9, color: Colors.white70),
+                        ),
                       ],
                     ),
                   ),
@@ -1090,7 +1123,9 @@ class _ProjectCard extends StatelessWidget {
                       // Price pill
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 7),
+                          horizontal: 14,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
@@ -1098,8 +1133,9 @@ class _ProjectCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF1ABC9C)
-                                  .withValues(alpha: 0.3),
+                              color: const Color(
+                                0xFF1ABC9C,
+                              ).withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -1108,8 +1144,11 @@ class _ProjectCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.monetization_on_rounded,
-                                size: 14, color: Colors.white),
+                            const Icon(
+                              Icons.monetization_on_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            ),
                             const SizedBox(width: 5),
                             Text(
                               displayPrice,
@@ -1126,19 +1165,25 @@ class _ProjectCard extends StatelessWidget {
                       // Likes
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFE74C3C).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: const Color(0xFFE74C3C)
-                                .withValues(alpha: 0.2),
+                            color: const Color(
+                              0xFFE74C3C,
+                            ).withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.favorite_rounded,
-                                color: Color(0xFFE74C3C), size: 14),
+                            const Icon(
+                              Icons.favorite_rounded,
+                              color: Color(0xFFE74C3C),
+                              size: 14,
+                            ),
                             const SizedBox(width: 5),
                             Text(
                               '${project.likes}',
@@ -1175,7 +1220,9 @@ class _ProjectCard extends StatelessWidget {
                       separatorBuilder: (_, _) => const SizedBox(width: 6),
                       itemBuilder: (_, i) => Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: isDarkMode
                               ? Colors.white.withValues(alpha: 0.07)
@@ -1184,15 +1231,19 @@ class _ProjectCard extends StatelessWidget {
                           border: Border.all(
                             color: isDarkMode
                                 ? Colors.white.withValues(alpha: 0.1)
-                                : const Color(0xFF1ABC9C)
-                                    .withValues(alpha: 0.3),
+                                : const Color(
+                                    0xFF1ABC9C,
+                                  ).withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.check_circle_rounded,
-                                size: 12, color: Color(0xFF1ABC9C)),
+                            const Icon(
+                              Icons.check_circle_rounded,
+                              size: 12,
+                              color: Color(0xFF1ABC9C),
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               project.features[i],
@@ -1221,16 +1272,14 @@ class _ProjectCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 13),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                colors: [
-                                  Color(0xFF25D366),
-                                  Color(0xFF20B558),
-                                ],
+                                colors: [Color(0xFF25D366), Color(0xFF20B558)],
                               ),
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF25D366)
-                                      .withValues(alpha: 0.35),
+                                  color: const Color(
+                                    0xFF25D366,
+                                  ).withValues(alpha: 0.35),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -1239,8 +1288,11 @@ class _ProjectCard extends StatelessWidget {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.chat_rounded,
-                                    color: Colors.white, size: 16),
+                                const Icon(
+                                  Icons.chat_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                                 const SizedBox(width: 7),
                                 Text(
                                   isSwahili ? 'WhatsApp' : 'WhatsApp',
@@ -1260,7 +1312,9 @@ class _ProjectCard extends StatelessWidget {
                         onTap: onCall,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 13),
+                            horizontal: 20,
+                            vertical: 13,
+                          ),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [Color(0xFF3498DB), Color(0xFF2980B9)],
@@ -1268,8 +1322,9 @@ class _ProjectCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF3498DB)
-                                    .withValues(alpha: 0.35),
+                                color: const Color(
+                                  0xFF3498DB,
+                                ).withValues(alpha: 0.35),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
