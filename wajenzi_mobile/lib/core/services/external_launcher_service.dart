@@ -27,6 +27,17 @@ class ExternalLauncherService {
     return openUriInApp(Uri.parse(AppConfig.portalUrl(path)));
   }
 
+  static String _normalizePhoneNumber(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+
+    final hasLeadingPlus = trimmed.startsWith('+');
+    final digitsOnly = trimmed.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digitsOnly.isEmpty) return '';
+
+    return hasLeadingPlus ? '+$digitsOnly' : digitsOnly;
+  }
+
   static Future<bool> openMenuUrl(
     String? url, {
     String fallbackPath = '/dashboard',
@@ -79,17 +90,41 @@ class ExternalLauncherService {
     String message, {
     String fallbackPath = '/services',
   }) {
-    final phone = AppConfig.whatsAppNumber.trim();
+    final configuredPhone = AppConfig.whatsAppNumber.trim().isNotEmpty
+        ? AppConfig.whatsAppNumber
+        : AppConfig.companyPhoneNumber;
+    final phone = _normalizePhoneNumber(configuredPhone);
     if (phone.isEmpty) {
       return openPortalPath(fallbackPath);
     }
 
     final encodedMessage = Uri.encodeComponent(message);
-    return openUri(Uri.parse('https://wa.me/$phone?text=$encodedMessage'));
+    final whatsappPhone = phone.replaceFirst('+', '');
+    final nativeUri = Uri.parse(
+      'whatsapp://send?phone=$whatsappPhone&text=$encodedMessage',
+    );
+    final waMeUri = Uri.parse(
+      'https://wa.me/$whatsappPhone?text=$encodedMessage',
+    );
+    final webUri = Uri.parse(
+      'https://api.whatsapp.com/send?phone=$whatsappPhone&text=$encodedMessage',
+    );
+
+    return launchUrl(nativeUri, mode: _defaultMode).then((opened) async {
+      if (opened) return true;
+
+      final waMeOpened = await openUri(waMeUri);
+      if (waMeOpened) return true;
+
+      final webOpened = await openUri(webUri);
+      if (webOpened) return true;
+
+      return openPortalPath(fallbackPath);
+    });
   }
 
   static Future<bool> callCompany({String fallbackPath = '/services'}) {
-    final phone = AppConfig.companyPhoneNumber.trim();
+    final phone = _normalizePhoneNumber(AppConfig.companyPhoneNumber);
     if (phone.isEmpty) {
       return openPortalPath(fallbackPath);
     }

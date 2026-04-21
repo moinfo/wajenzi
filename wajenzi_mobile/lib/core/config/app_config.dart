@@ -75,15 +75,15 @@ class AppConfig {
 
   static const String supportEmail = String.fromEnvironment(
     'SUPPORT_EMAIL',
-    defaultValue: 'support@wajenzi.com',
+    defaultValue: 'info@wajenziprofessional.co.tz',
   );
   static const String companyPhoneNumber = String.fromEnvironment(
     'COMPANY_PHONE_NUMBER',
-    defaultValue: '',
+    defaultValue: '+255793444400',
   );
   static const String whatsAppNumber = String.fromEnvironment(
     'WHATSAPP_NUMBER',
-    defaultValue: '',
+    defaultValue: '+255793444400',
   );
 
   static const Duration connectionTimeout = Duration(seconds: 60);
