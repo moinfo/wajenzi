@@ -554,6 +554,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('project-schedules/{projectSchedule}/change-architect', [App\Http\Controllers\ProjectScheduleController::class, 'changeArchitect'])->name('project-schedules.change-architect');
     Route::get('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'showForLead'])->name('leads.schedule');
     Route::post('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForLead'])->name('leads.schedule.create');
+    Route::post('projects/{project}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForProject'])->name('projects.schedule.create');
 
 // Architect Bonus Scheme
     Route::get('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'index'])->name('architect-bonus.index');
