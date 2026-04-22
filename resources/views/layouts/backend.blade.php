@@ -704,33 +704,6 @@ MAIN CONTENT LAYOUT
 </script>
 
 <script>
-        <?php
-        $timer = 1000;
-        $delay = 5000;
-
-    foreach( Auth::user()->unreadNotifications()->take(4)->get() as $notification){
-        $link = $notification->data['link']
-        ?>
-    $.notify({
-            title: "<strong>{{$notification->data['title']}}:</strong></br> ",
-            message: "{{$notification->data['body']}}",
-            url: "{{url("$link")}}",
-        },{
-            type: 'success',
-            placement: {
-                from: "bottom",
-                align: "right"
-            },
-            delay: {{$delay}},
-            timer: {{$timer}},
-        },
-    );
-        <?php
-        $delay+=30;
-        $timer+=30;
-    }
-        ?>
-
     /**
      * Load a form into a modal
      */
