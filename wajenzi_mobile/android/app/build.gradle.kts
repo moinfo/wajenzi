@@ -54,8 +54,13 @@ android {
 
     buildTypes {
         release {
-            if (hasKeyProperties) {
-                signingConfig = signingConfigs.getByName("release")
+            // Keep local release APKs installable even before a production
+            // keystore is configured. If key.properties exists, we still use
+            // the real release signing config.
+            signingConfig = if (hasKeyProperties) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
             }
             isMinifyEnabled = true
             isShrinkResources = true

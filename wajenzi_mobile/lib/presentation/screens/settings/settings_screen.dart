@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/config/theme_config.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/auth_provider.dart';
@@ -192,6 +193,69 @@ class SettingsScreen extends ConsumerWidget {
                   titleColor: titleColor,
                   subtitleColor: subtitleColor,
                   onTap: () => context.push('/change-password'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          _SectionTitle(
+            title: tr(
+              en: 'Environment',
+              sw: 'Mazingira',
+              fr: 'Environnement',
+              ar: 'البيئة',
+            ),
+            subtitle: tr(
+              en: 'Confirm which server this app is using',
+              sw: 'Thibitisha seva inayotumiwa na app hii',
+              fr: 'Confirmez le serveur utilise par cette application',
+              ar: 'تأكد من الخادم الذي يستخدمه هذا التطبيق',
+            ),
+            titleColor: titleColor,
+            subtitleColor: subtitleColor,
+          ),
+          const SizedBox(height: 10),
+          _SettingsCard(
+            color: surfaceColor,
+            borderColor: borderColor,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ActionRow(
+                  icon: AppConfig.isUsingCustomEnvironment
+                      ? Icons.developer_mode_rounded
+                      : Icons.public_rounded,
+                  iconColor: AppConfig.isUsingCustomEnvironment
+                      ? Colors.orange
+                      : Colors.green,
+                  title: tr(
+                    en: 'Current environment: ${AppConfig.environmentLabel}',
+                    sw: 'Mazingira ya sasa: ${AppConfig.environmentLabel}',
+                    fr: 'Environnement actuel: ${AppConfig.environmentLabel}',
+                    ar: 'البيئة الحالية: ${AppConfig.environmentLabel}',
+                  ),
+                  subtitle: AppConfig.activePortalBaseUrl,
+                  titleColor: titleColor,
+                  subtitleColor: subtitleColor,
+                  onTap: () {},
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'API: ${AppConfig.baseUrl}',
+                  style: TextStyle(
+                    color: subtitleColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Client API: ${AppConfig.clientBaseUrl}',
+                  style: TextStyle(
+                    color: subtitleColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),

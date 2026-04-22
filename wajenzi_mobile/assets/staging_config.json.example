@@ -1,0 +1,6 @@
+{
+  "ENVIRONMENT_NAME": "STAGING",
+  "API_BASE_URL": "https://staging.example.com/api/v1",
+  "PORTAL_BASE_URL": "https://staging.example.com",
+  "CLIENT_API_BASE_URL": "https://staging.example.com/api/client"
+}

@@ -7,6 +7,10 @@ import 'package:flutter/services.dart';
 class AppConfig {
   static const String appName = 'Wajenzi Professionals';
   static const String appVersion = '1.0.0';
+  static const String _configAssetPath = String.fromEnvironment(
+    'APP_CONFIG_ASSET',
+    defaultValue: 'assets/local_config.json',
+  );
   static const String _defaultPortalBaseUrl = 'https://wajenziprosystem.co.tz';
   static const String _apiPath = '/api/v1';
   static const String _clientApiPath = '/api/client';
@@ -32,9 +36,7 @@ class AppConfig {
     if (_initialized) return;
     _initialized = true;
     try {
-      final jsonString = await rootBundle.loadString(
-        'assets/local_config.json',
-      );
+      final jsonString = await rootBundle.loadString(_configAssetPath);
       final json = jsonDecode(jsonString) as Map<String, dynamic>;
       _localConfig = json.map((k, v) => MapEntry(k, v.toString()));
     } catch (_) {
@@ -50,6 +52,16 @@ class AppConfig {
   static String _getLocalPortalUrl() {
     if (_localConfig == null) return '';
     return _localConfig!['PORTAL_BASE_URL'] ?? '';
+  }
+
+  static String _getLocalClientApiUrl() {
+    if (_localConfig == null) return '';
+    return _localConfig!['CLIENT_API_BASE_URL'] ?? '';
+  }
+
+  static String _getEnvironmentName() {
+    if (_localConfig == null) return '';
+    return _localConfig!['ENVIRONMENT_NAME'] ?? '';
   }
 
   static const String apiBaseUrl = '$_defaultPortalBaseUrl$_apiPath';
@@ -70,6 +82,10 @@ class AppConfig {
 
   static String get clientApiBaseUrl {
     if (_explicitClientApiBaseUrl.isNotEmpty) return _explicitClientApiBaseUrl;
+    final localUrl = _getLocalClientApiUrl();
+    if (localUrl.isNotEmpty) return _ensureClientApiBaseUrl(localUrl);
+    final localPortalUrl = _getLocalPortalUrl();
+    if (localPortalUrl.isNotEmpty) return _ensureClientApiBaseUrl(localPortalUrl);
     return _defaultClientApiBaseUrl;
   }
 
@@ -162,6 +178,10 @@ class AppConfig {
       return _ensureApiBaseUrl(_explicitApiBaseUrl);
     if (_explicitPortalBaseUrl.isNotEmpty)
       return _ensureApiBaseUrl(_explicitPortalBaseUrl);
+    final localApiUrl = _getLocalApiUrl();
+    if (localApiUrl.isNotEmpty) return _ensureApiBaseUrl(localApiUrl);
+    final localPortalUrl = _getLocalPortalUrl();
+    if (localPortalUrl.isNotEmpty) return _ensureApiBaseUrl(localPortalUrl);
     return _ensureApiBaseUrl(isDebug ? devApiBaseUrl : apiBaseUrl);
   }
 
@@ -189,6 +209,14 @@ class AppConfig {
     }
     if (_explicitPortalBaseUrl.isNotEmpty) {
       return _ensureClientApiBaseUrl(_explicitPortalBaseUrl);
+    }
+    final localClientUrl = _getLocalClientApiUrl();
+    if (localClientUrl.isNotEmpty) {
+      return _ensureClientApiBaseUrl(localClientUrl);
+    }
+    final localPortalUrl = _getLocalPortalUrl();
+    if (localPortalUrl.isNotEmpty) {
+      return _ensureClientApiBaseUrl(localPortalUrl);
     }
     return _ensureClientApiBaseUrl(
       isDebug ? devClientApiBaseUrl : clientApiBaseUrl,
@@ -220,6 +248,20 @@ class AppConfig {
   }
 
   static String get canonicalPortalBaseUrl => _defaultPortalBaseUrl;
+
+  static bool get isUsingCustomEnvironment {
+    return activePortalBaseUrl != canonicalPortalBaseUrl ||
+        baseUrl != apiBaseUrl ||
+        clientBaseUrl != _defaultClientApiBaseUrl;
+  }
+
+  static String get environmentLabel {
+    final configuredName = _getEnvironmentName().trim();
+    if (configuredName.isNotEmpty) return configuredName.toUpperCase();
+    return isUsingCustomEnvironment ? 'DEV' : 'PROD';
+  }
+
+  static String get configAssetPath => _configAssetPath;
 
   static String? resolvePortalMediaUrl(String? path) {
     if (path == null || path.isEmpty) return null;

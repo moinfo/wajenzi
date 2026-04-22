@@ -1,0 +1,6 @@
+{
+  "ENVIRONMENT_NAME": "PROD",
+  "API_BASE_URL": "https://wajenziprosystem.co.tz/api/v1",
+  "PORTAL_BASE_URL": "https://wajenziprosystem.co.tz",
+  "CLIENT_API_BASE_URL": "https://wajenziprosystem.co.tz/api/client"
+}
