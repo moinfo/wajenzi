@@ -151,7 +151,6 @@ class PurchasesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final purchasesAsync = ref.watch(_purchasesProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final searchTerm = ref.watch(_purchasesSearchProvider).trim().toLowerCase();
@@ -162,13 +161,20 @@ class PurchasesScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Manunuzi' : 'Purchases'),
+        title: Text(
+          _trLocale(
+            context,
+            en: 'Purchases',
+            sw: 'Manunuzi',
+            ar: 'المشتريات',
+          ),
+        ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
         child: FloatingActionButton(
           onPressed: () => _showPurchaseForm(context, ref),
-          tooltip: isSwahili ? 'Ongeza' : 'Add',
+          tooltip: _trLocale(context, en: 'Add', sw: 'Ongeza', ar: 'إضافة'),
           child: const Icon(Icons.add),
         ),
       ),
@@ -180,7 +186,7 @@ class PurchasesScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _ErrorView(
             error: e,
-            isSwahili: isSwahili,
+            isSwahili: Localizations.localeOf(context).languageCode == 'sw',
             onRetry: () => ref.invalidate(_purchasesProvider),
           ),
           data: (payload) {
@@ -214,7 +220,7 @@ class PurchasesScreen extends ConsumerWidget {
                 children: [
                   _PurchasesFiltersBar(
                     isDark: isDarkMode,
-                    isSwahili: isSwahili,
+                    isSwahili: Localizations.localeOf(context).languageCode == 'sw',
                   ),
                   const SizedBox(height: 24),
                   const SizedBox(height: 100),
@@ -226,12 +232,18 @@ class PurchasesScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   Text(
                     purchases.isEmpty
-                        ? (isSwahili
-                              ? 'Hakuna manunuzi yoyote'
-                              : 'No purchases found')
-                        : (isSwahili
-                              ? 'Hakuna matokeo yanayolingana'
-                              : 'No purchases match your search'),
+                        ? _trLocale(
+                            context,
+                            en: 'No purchases found',
+                            sw: 'Hakuna manunuzi yoyote',
+                            ar: 'لم يتم العثور على مشتريات',
+                          )
+                        : _trLocale(
+                            context,
+                            en: 'No purchases match your search',
+                            sw: 'Hakuna matokeo yanayolingana',
+                            ar: 'لا توجد مشتريات تطابق بحثك',
+                          ),
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
@@ -241,7 +253,12 @@ class PurchasesScreen extends ConsumerWidget {
                       onPressed: () => _showPurchaseForm(context, ref),
                       icon: const Icon(Icons.add),
                       label: Text(
-                        isSwahili ? 'Ongeza Ununuzi' : 'Add Purchase',
+                        _trLocale(
+                          context,
+                          en: 'Add Purchase',
+                          sw: 'Ongeza Ununuzi',
+                          ar: 'إضافة عملية شراء',
+                        ),
                       ),
                     ),
                   ),
@@ -259,7 +276,7 @@ class PurchasesScreen extends ConsumerWidget {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: _PurchasesFiltersBar(
                       isDark: isDarkMode,
-                      isSwahili: isSwahili,
+                      isSwahili: Localizations.localeOf(context).languageCode == 'sw',
                     ),
                   );
                 }
@@ -278,7 +295,7 @@ class PurchasesScreen extends ConsumerWidget {
                 return _PurchaseCard(
                   index: purchaseIndex + 1,
                   purchase: purchase,
-                  isSwahili: isSwahili,
+                  isSwahili: Localizations.localeOf(context).languageCode == 'sw',
                   isDarkMode: isDarkMode,
                   onEdit: () =>
                       _showPurchaseForm(context, ref, purchase: purchase),
@@ -316,25 +333,38 @@ class PurchasesScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> purchase,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isSwahili ? 'Futa Ununuzi' : 'Delete Purchase'),
+        title: Text(
+          _trLocale(
+            context,
+            en: 'Delete Purchase',
+            sw: 'Futa Ununuzi',
+            ar: 'حذف عملية الشراء',
+          ),
+        ),
         content: Text(
-          isSwahili
-              ? 'Je, una uhakika unataka kufuta ununuzi wa tarehe ${purchase['date']}?'
-              : 'Are you sure you want to delete purchase from ${purchase['date']}?',
+          _trLocale(
+            context,
+            en: 'Are you sure you want to delete purchase from ${purchase['date']}?',
+            sw: 'Je, una uhakika unataka kufuta ununuzi wa tarehe ${purchase['date']}?',
+            ar: 'هل أنت متأكد أنك تريد حذف عملية الشراء بتاريخ ${purchase['date']}؟',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isSwahili ? 'Cancel' : 'Cancel'),
+            child: Text(
+              _trLocale(context, en: 'Cancel', sw: 'Ghairi', ar: 'إلغاء'),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: Text(isSwahili ? 'Futa' : 'Delete'),
+            child: Text(
+              _trLocale(context, en: 'Delete', sw: 'Futa', ar: 'حذف'),
+            ),
           ),
         ],
       ),
@@ -353,7 +383,9 @@ class PurchasesScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSwahili ? 'Umefutwa' : 'Deleted'),
+            content: Text(
+              _trLocale(context, en: 'Deleted', sw: 'Umefutwa', ar: 'تم الحذف'),
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -379,7 +411,6 @@ class PurchasesScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> purchase,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
     final isDarkMode = ref.read(isDarkModeProvider);
     var detail = purchase;
 
@@ -441,9 +472,12 @@ class PurchasesScreen extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            isSwahili
-                                ? 'Maelezo ya Ununuzi'
-                                : 'Purchase Details',
+                            _trLocale(
+                              context,
+                              en: 'Purchase Details',
+                              sw: 'Maelezo ya Ununuzi',
+                              ar: 'تفاصيل الشراء',
+                            ),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -467,11 +501,21 @@ class PurchasesScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                   children: [
                     _SectionTitle(
-                      title: isSwahili ? 'Project Details' : 'Project Details',
+                      title: _trLocale(
+                        context,
+                        en: 'Purchase Details',
+                        sw: 'Maelezo ya Ununuzi',
+                        ar: 'تفاصيل الشراء',
+                      ),
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
-                      label: 'Supplier',
+                      label: _trLocale(
+                        context,
+                        en: 'Supplier',
+                        sw: 'Msambazaji',
+                        ar: 'المورد',
+                      ),
                       value:
                           (detail['supplier'] as Map<String, dynamic>?)?['name']
                               as String? ??
@@ -479,7 +523,12 @@ class PurchasesScreen extends ConsumerWidget {
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
-                      label: 'Supplier VRN',
+                      label: _trLocale(
+                        context,
+                        en: 'Supplier VRN',
+                        sw: 'VRN ya Msambazaji',
+                        ar: 'رقم VRN للمورد',
+                      ),
                       value:
                           (detail['supplier'] as Map<String, dynamic>?)?['vrn']
                               as String? ??
@@ -487,43 +536,83 @@ class PurchasesScreen extends ConsumerWidget {
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
-                      label: 'Tax Invoice',
+                      label: _trLocale(
+                        context,
+                        en: 'Tax Invoice',
+                        sw: 'Ankara ya Kodi',
+                        ar: 'الفاتورة الضريبية',
+                      ),
                       value: detail['tax_invoice'] as String? ?? '-',
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
-                      label: 'Invoice Date',
+                      label: _trLocale(
+                        context,
+                        en: 'Invoice Date',
+                        sw: 'Tarehe ya Ankara',
+                        ar: 'تاريخ الفاتورة',
+                      ),
                       value: _formatDate(detail['invoice_date'] as String?),
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
-                      label: 'Goods',
+                      label: _trLocale(
+                        context,
+                        en: 'Goods',
+                        sw: 'Bidhaa',
+                        ar: 'البضائع',
+                      ),
                       value: detail['goods'] as String? ?? '-',
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
-                      label: 'Total Amount',
+                      label: _trLocale(
+                        context,
+                        en: 'Total Amount',
+                        sw: 'Jumla ya Kiasi',
+                        ar: 'إجمالي المبلغ',
+                      ),
                       value: _formatMoney(_toDouble(detail['total_amount'])),
                       isDarkMode: isDarkMode,
                       valueColor: const Color(0xFF3B82F6),
                     ),
                     _DetailRow(
-                      label: 'Amount VAT EXC',
+                      label: _trLocale(
+                        context,
+                        en: 'Amount VAT EXC',
+                        sw: 'Kiasi Bila VAT',
+                        ar: 'المبلغ بدون ضريبة القيمة المضافة',
+                      ),
                       value: _formatMoney(_toDouble(detail['amount_vat_exc'])),
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
-                      label: 'Date',
+                      label: _trLocale(
+                        context,
+                        en: 'Date',
+                        sw: 'Tarehe',
+                        ar: 'التاريخ',
+                      ),
                       value: _formatDate(detail['date'] as String?),
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
-                      label: 'VAT Amount',
+                      label: _trLocale(
+                        context,
+                        en: 'VAT Amount',
+                        sw: 'Kiasi cha VAT',
+                        ar: 'مبلغ ضريبة القيمة المضافة',
+                      ),
                       value: _formatMoney(_toDouble(detail['vat_amount'])),
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
-                      label: 'Status',
+                      label: _trLocale(
+                        context,
+                        en: 'Status',
+                        sw: 'Hali',
+                        ar: 'الحالة',
+                      ),
                       value: detail['status'] as String? ?? 'PENDING',
                       isDarkMode: isDarkMode,
                     ),
@@ -535,7 +624,7 @@ class PurchasesScreen extends ConsumerWidget {
                           onPressed: () => _openAttachment(
                             context,
                             fileUrl!,
-                            isSwahili: isSwahili,
+                            isSwahili: Localizations.localeOf(context).languageCode == 'sw',
                           ),
                           icon: const Icon(Icons.attach_file_rounded),
                           label: Text(
@@ -551,14 +640,24 @@ class PurchasesScreen extends ConsumerWidget {
                     ],
                     if ((detail['notes'] as String?)?.isNotEmpty ?? false)
                       _DetailRow(
-                        label: isSwahili ? 'Maelezo' : 'Notes',
+                        label: _trLocale(
+                          context,
+                          en: 'Notes',
+                          sw: 'Maelezo',
+                          ar: 'ملاحظات',
+                        ),
                         value: detail['notes'] as String? ?? '-',
                         isDarkMode: isDarkMode,
                       ),
                     if (purchaseItems.isNotEmpty) ...[
                       const SizedBox(height: 16),
                       _SectionTitle(
-                        title: 'Order Items',
+                        title: _trLocale(
+                          context,
+                          en: 'Order Items',
+                          sw: 'Vipengee vya Oda',
+                          ar: 'عناصر الطلب',
+                        ),
                         isDarkMode: isDarkMode,
                       ),
                       const SizedBox(height: 12),
@@ -568,17 +667,32 @@ class PurchasesScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       _DetailRow(
-                        label: 'Subtotal',
+                        label: _trLocale(
+                          context,
+                          en: 'Subtotal',
+                          sw: 'Jumla ndogo',
+                          ar: 'الإجمالي الفرعي',
+                        ),
                         value: _formatMoney(itemsSubtotal),
                         isDarkMode: isDarkMode,
                       ),
                       _DetailRow(
-                        label: 'VAT (18%)',
+                        label: _trLocale(
+                          context,
+                          en: 'VAT (18%)',
+                          sw: 'VAT (18%)',
+                          ar: 'ضريبة القيمة المضافة (18%)',
+                        ),
                         value: _formatMoney(_toDouble(detail['vat_amount'])),
                         isDarkMode: isDarkMode,
                       ),
                       _DetailRow(
-                        label: 'Grand Total',
+                        label: _trLocale(
+                          context,
+                          en: 'Grand Total',
+                          sw: 'Jumla Kuu',
+                          ar: 'الإجمالي الكلي',
+                        ),
                         value: _formatMoney(_toDouble(detail['total_amount'])),
                         isDarkMode: isDarkMode,
                         valueColor: const Color(0xFF3B82F6),
@@ -586,7 +700,12 @@ class PurchasesScreen extends ConsumerWidget {
                     ],
                     const SizedBox(height: 16),
                     _SectionTitle(
-                      title: 'Approval Flow',
+                      title: _trLocale(
+                        context,
+                        en: 'Approval Flow',
+                        sw: 'Mtiririko wa Idhini',
+                        ar: 'سير الموافقات',
+                      ),
                       isDarkMode: isDarkMode,
                     ),
                     _FlowStatusCard(
@@ -598,7 +717,12 @@ class PurchasesScreen extends ConsumerWidget {
                     const SizedBox(height: 12),
                     if (approvalSteps.isNotEmpty) ...[
                       Text(
-                        'Approvals',
+                        _trLocale(
+                          context,
+                          en: 'Approvals',
+                          sw: 'Idhini',
+                          ar: 'الموافقات',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
@@ -615,7 +739,12 @@ class PurchasesScreen extends ConsumerWidget {
                       const SizedBox(height: 10),
                       Text(
                         approvalFlow['status_label'] as String? ??
-                            'Approval completed!',
+                            _trLocale(
+                              context,
+                              en: 'Approval completed!',
+                              sw: 'Idhini imekamilika!',
+                              ar: 'اكتملت الموافقة!',
+                            ),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -628,7 +757,12 @@ class PurchasesScreen extends ConsumerWidget {
                       const SizedBox(height: 12),
                       Text(
                         approvalFlow['status_label'] as String? ??
-                            'Not Submitted',
+                            _trLocale(
+                              context,
+                              en: 'Not Submitted',
+                              sw: 'Haijatumwa',
+                              ar: 'لم يتم الإرسال',
+                            ),
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -682,9 +816,12 @@ class PurchasesScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isSwahili
-                ? 'Imeshindikana kufungua kiambatisho'
-                : 'Failed to open attachment',
+            _trLocale(
+              context,
+              en: 'Failed to open attachment',
+              sw: 'Imeshindikana kufungua kiambatisho',
+              ar: 'فشل فتح المرفق',
+            ),
           ),
           backgroundColor: AppColors.error,
         ),
@@ -716,7 +853,12 @@ class _PurchasesFiltersBar extends ConsumerWidget {
               ref.read(_purchasesSearchProvider.notifier).state = value,
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search_rounded),
-            hintText: 'Search',
+            hintText: _trLocale(
+              context,
+              en: 'Search',
+              sw: 'Tafuta',
+              ar: 'بحث',
+            ),
             filled: true,
             fillColor: isDark ? vatDarkCard : Colors.white,
             border: OutlineInputBorder(
@@ -869,7 +1011,6 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final suppliersAsync = ref.watch(_suppliersProvider);
     final referenceAsync = ref.watch(vatReferenceDataProvider);
@@ -927,12 +1068,18 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                           Expanded(
                             child: Text(
                               widget.isNew
-                                  ? (isSwahili
-                                        ? 'Ununuzi Mpya'
-                                        : 'New Purchase')
-                                  : (isSwahili
-                                        ? 'Hariri Ununuzi'
-                                        : 'Edit Purchase'),
+                                  ? _trLocale(
+                                      context,
+                                      en: 'New Purchase',
+                                      sw: 'Ununuzi Mpya',
+                                      ar: 'عملية شراء جديدة',
+                                    )
+                                  : _trLocale(
+                                      context,
+                                      en: 'Edit Purchase',
+                                      sw: 'Hariri Ununuzi',
+                                      ar: 'تعديل عملية الشراء',
+                                    ),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 20,
@@ -953,7 +1100,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Is Expenses?',
+                        _trLocale(
+                          context,
+                          en: 'Is Expenses?',
+                          sw: 'Je, ni Gharama?',
+                          ar: 'هل هي مصروفات؟',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1012,7 +1164,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Supplier',
+                        _trLocale(
+                          context,
+                          en: 'Supplier',
+                          sw: 'Msambazaji',
+                          ar: 'المورد',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1070,7 +1227,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Item',
+                        _trLocale(
+                          context,
+                          en: 'Item',
+                          sw: 'Bidhaa',
+                          ar: 'الصنف',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1136,7 +1298,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Purchase Type',
+                        _trLocale(
+                          context,
+                          en: 'Purchase Type',
+                          sw: 'Aina ya Ununuzi',
+                          ar: 'نوع الشراء',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1202,7 +1369,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Total Amount',
+                        _trLocale(
+                          context,
+                          en: 'Total Amount',
+                          sw: 'Jumla ya Kiasi',
+                          ar: 'إجمالي المبلغ',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1223,14 +1395,22 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                               : Colors.grey[100],
                         ),
                         validator: (v) => (v == null || v.isEmpty)
-                            ? (isSwahili
-                                  ? 'Kiasi kinahitajika'
-                                  : 'Amount is required')
+                            ? _trLocale(
+                                context,
+                                en: 'Amount is required',
+                                sw: 'Kiasi kinahitajika',
+                                ar: 'المبلغ مطلوب',
+                              )
                             : null,
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Tax Invoice',
+                        _trLocale(
+                          context,
+                          en: 'Tax Invoice',
+                          sw: 'Ankara ya Kodi',
+                          ar: 'الفاتورة الضريبية',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1252,7 +1432,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Invoice Date',
+                        _trLocale(
+                          context,
+                          en: 'Invoice Date',
+                          sw: 'Tarehe ya Ankara',
+                          ar: 'تاريخ الفاتورة',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1309,7 +1494,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Date',
+                        _trLocale(
+                          context,
+                          en: 'Date',
+                          sw: 'Tarehe',
+                          ar: 'التاريخ',
+                        ),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1366,7 +1556,7 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                       VatFilePicker(
                         file: _selectedFile,
                         isDark: isDarkMode,
-                        isSwahili: isSwahili,
+                        isSwahili: Localizations.localeOf(context).languageCode == 'sw',
                         onPicked: (file) =>
                             setState(() => _selectedFile = file),
                       ),
@@ -1394,8 +1584,18 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                                 )
                               : Text(
                                   widget.isNew
-                                      ? (isSwahili ? 'Hifadhi' : 'Save')
-                                      : (isSwahili ? 'Sasisha' : 'Update'),
+                                      ? _trLocale(
+                                          context,
+                                          en: 'Save',
+                                          sw: 'Hifadhi',
+                                          ar: 'حفظ',
+                                        )
+                                      : _trLocale(
+                                          context,
+                                          en: 'Update',
+                                          sw: 'Sasisha',
+                                          ar: 'تحديث',
+                                        ),
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -1421,9 +1621,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            ref.read(isSwahiliProvider)
-                ? 'Chagua Wasambazaji'
-                : 'Select Supplier',
+            _trLocale(
+              context,
+              en: 'Select Supplier',
+              sw: 'Chagua Wasambazaji',
+              ar: 'اختر المورد',
+            ),
           ),
           backgroundColor: AppColors.error,
         ),
@@ -1434,7 +1637,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            ref.read(isSwahiliProvider) ? 'Chagua Item' : 'Select Item',
+            _trLocale(
+              context,
+              en: 'Select Item',
+              sw: 'Chagua Item',
+              ar: 'اختر الصنف',
+            ),
           ),
           backgroundColor: AppColors.error,
         ),
@@ -1445,9 +1653,12 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            ref.read(isSwahiliProvider)
-                ? 'Chagua Purchase Type'
-                : 'Select Purchase Type',
+            _trLocale(
+              context,
+              en: 'Select Purchase Type',
+              sw: 'Chagua Purchase Type',
+              ar: 'اختر نوع الشراء',
+            ),
           ),
           backgroundColor: AppColors.error,
         ),
@@ -1719,7 +1930,14 @@ class _PurchaseCard extends StatelessWidget {
                           children: [
                             const Icon(Icons.edit, size: 20),
                             const SizedBox(width: 8),
-                            Text(isSwahili ? 'Hariri' : 'Edit'),
+                            Text(
+                              _trLocale(
+                                context,
+                                en: 'Edit',
+                                sw: 'Hariri',
+                                ar: 'تعديل',
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1734,7 +1952,12 @@ class _PurchaseCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              isSwahili ? 'Futa' : 'Delete',
+                              _trLocale(
+                                context,
+                                en: 'Delete',
+                                sw: 'Futa',
+                                ar: 'حذف',
+                              ),
                               style: const TextStyle(color: AppColors.error),
                             ),
                           ],
@@ -1746,20 +1969,47 @@ class _PurchaseCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _DetailLine(
-                label: 'Attachment',
-                value: hasAttachment ? 'Attachment' : 'No File',
+                label: _trLocale(
+                  context,
+                  en: 'Attachment',
+                  sw: 'Kiambatisho',
+                  ar: 'المرفق',
+                ),
+                value: hasAttachment
+                    ? _trLocale(
+                        context,
+                        en: 'Attachment',
+                        sw: 'Kiambatisho',
+                        ar: 'مرفق',
+                      )
+                    : _trLocale(
+                        context,
+                        en: 'No File',
+                        sw: 'Hakuna Faili',
+                        ar: 'لا يوجد ملف',
+                      ),
                 isDarkMode: isDarkMode,
                 valueColor: hasAttachment ? vatAccentBlue : null,
               ),
               const SizedBox(height: 6),
               _DetailLine(
-                label: 'Approvals',
+                label: _trLocale(
+                  context,
+                  en: 'Approvals',
+                  sw: 'Idhini',
+                  ar: 'الموافقات',
+                ),
                 value: approvalSummary,
                 isDarkMode: isDarkMode,
               ),
               const SizedBox(height: 6),
               _DetailLine(
-                label: 'Status',
+                label: _trLocale(
+                  context,
+                  en: 'Status',
+                  sw: 'Hali',
+                  ar: 'الحالة',
+                ),
                 value: status,
                 isDarkMode: isDarkMode,
                 valueColor: statusColor,
@@ -2164,7 +2414,12 @@ class _ErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _trLocale(
+            context,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -2179,7 +2434,14 @@ class _ErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _trLocale(
+                context,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

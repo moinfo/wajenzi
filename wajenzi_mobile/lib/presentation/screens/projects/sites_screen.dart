@@ -10,6 +10,21 @@ import '../../providers/settings_provider.dart';
 
 final _sitesSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
+String _sitesTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class _SitesFilter {
   final DateTime? startDate;
   final DateTime? endDate;
@@ -99,19 +114,35 @@ final _siteDetailProvider = FutureProvider.autoDispose
       return response.data['data'] as Map<String, dynamic>?;
     });
 
-String _siteErrorMessage(Object error, bool isSwahili) {
+String _siteErrorMessage(Object error, AppLanguage language) {
   final errStr = error.toString();
   if (errStr.contains('422')) {
     if (errStr.contains('name')) {
-      return isSwahili
-          ? 'Jina la eneo limewahi kutumika'
-          : 'Site name already exists';
+      return _sitesTr(
+        language,
+        en: 'Site name already exists',
+        sw: 'Jina la eneo limewahi kutumika',
+        fr: 'Le nom du site existe déjà',
+        ar: 'اسم الموقع مستخدم بالفعل',
+      );
     }
     if (errStr.contains('location')) {
-      return isSwahili ? 'Mahali ni lazima' : 'Location is required';
+      return _sitesTr(
+        language,
+        en: 'Location is required',
+        sw: 'Mahali ni lazima',
+        fr: 'L’emplacement est requis',
+        ar: 'الموقع مطلوب',
+      );
     }
   }
-  return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
+  return _sitesTr(
+    language,
+    en: 'Something went wrong',
+    sw: 'Hitilafu imetokea',
+    fr: 'Un problème est survenu',
+    ar: 'حدث خطأ ما',
+  );
 }
 
 class SitesScreen extends ConsumerStatefulWidget {
@@ -127,7 +158,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final sitesAsync = ref.watch(_sitesProvider);
     final isDark = ref.watch(isDarkModeProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final filter = ref.watch(_sitesFilterProvider);
     final search = ref.watch(_sitesSearchProvider).trim().toLowerCase();
 
@@ -137,14 +168,28 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Maeneo ya Mradi' : 'Project Sites'),
+        title: Text(
+          _sitesTr(
+            language,
+            en: 'Project Sites',
+            sw: 'Maeneo ya Mradi',
+            fr: 'Sites du projet',
+            ar: 'مواقع المشروع',
+          ),
+        ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
         child: FloatingActionButton(
           onPressed: () => _showSiteForm(context),
           child: const Icon(Icons.add_rounded),
-          tooltip: isSwahili ? 'Ongeza' : 'Add',
+          tooltip: _sitesTr(
+            language,
+            en: 'Add',
+            sw: 'Ongeza',
+            fr: 'Ajouter',
+            ar: 'إضافة',
+          ),
         ),
       ),
       body: RefreshIndicator(
@@ -161,9 +206,13 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                       onChanged: (value) =>
                           ref.read(_sitesSearchProvider.notifier).state = value,
                       decoration: InputDecoration(
-                        hintText: isSwahili
-                            ? 'Tafuta maeneo...'
-                            : 'Search sites...',
+                        hintText: _sitesTr(
+                          language,
+                          en: 'Search sites...',
+                          sw: 'Tafuta maeneo...',
+                          fr: 'Rechercher des sites...',
+                          ar: 'ابحث في المواقع...',
+                        ),
                         prefixIcon: const Icon(Icons.search_rounded),
                         suffixIcon: search.isNotEmpty
                             ? IconButton(
@@ -192,7 +241,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                     const SizedBox(height: 12),
                     _SiteFilters(
                       filter: filter,
-                      isSwahili: isSwahili,
+                      language: language,
                       isDarkMode: isDark,
                     ),
                   ],
@@ -206,7 +255,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
               error: (e, _) => SliverFillRemaining(
                 child: _SitesErrorView(
                   error: e,
-                  isSwahili: isSwahili,
+                  language: language,
                   onRetry: () => ref.invalidate(_sitesProvider),
                 ),
               ),
@@ -226,9 +275,13 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              isSwahili
-                                  ? 'Project Sites haipatikani kwenye live API kwa sasa.'
-                                  : 'Project Sites is not available on the live API right now.',
+                              _sitesTr(
+                                language,
+                                en: 'Project Sites is not available on the live API right now.',
+                                sw: 'Project Sites haipatikani kwenye live API kwa sasa.',
+                                fr: 'Les sites du projet ne sont pas disponibles sur l’API live pour le moment.',
+                                ar: 'مواقع المشروع غير متاحة على واجهة الـ API المباشرة حالياً.',
+                              ),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -270,12 +323,20 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                           const SizedBox(height: 16),
                           Text(
                             allItems.isEmpty
-                                ? (isSwahili
-                                      ? 'Hakuna maeneo'
-                                      : 'No sites found')
-                                : (isSwahili
-                                      ? 'Hakuna matokeo yanayolingana'
-                                      : 'No sites match your search'),
+                                ? _sitesTr(
+                                    language,
+                                    en: 'No sites found',
+                                    sw: 'Hakuna maeneo',
+                                    fr: 'Aucun site trouvé',
+                                    ar: 'لم يتم العثور على مواقع',
+                                  )
+                                : _sitesTr(
+                                    language,
+                                    en: 'No sites match your search',
+                                    sw: 'Hakuna matokeo yanayolingana',
+                                    fr: 'Aucun site ne correspond à votre recherche',
+                                    ar: 'لا توجد مواقع تطابق بحثك',
+                                  ),
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -290,7 +351,15 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                                           .state =
                                       '',
                               icon: const Icon(Icons.arrow_back_rounded),
-                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                              label: Text(
+                                _sitesTr(
+                                  language,
+                                  en: 'Back',
+                                  sw: 'Rudi',
+                                  fr: 'Retour',
+                                  ar: 'رجوع',
+                                ),
+                              ),
                             ),
                           ],
                         ],
@@ -306,7 +375,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                       (context, index) => _SiteCard(
                         site: sites[index],
                         isDark: isDark,
-                        isSwahili: isSwahili,
+                        language: language,
                         onView: () => _showSiteDetail(context, sites[index]),
                         onEdit: () =>
                             _showSiteForm(context, site: sites[index]),
@@ -326,7 +395,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
 
   void _showSiteDetail(BuildContext context, Map<String, dynamic> site) {
     final isDark = ref.read(isDarkModeProvider);
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final detailAsync = ref.read(_siteDetailProvider(site['id'] as int).future);
 
     showModalBottomSheet(
@@ -376,7 +445,14 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  detail['name'] ?? 'Site Details',
+                                  detail['name'] ??
+                                      _sitesTr(
+                                        language,
+                                        en: 'Site Details',
+                                        sw: 'Maelezo ya Tovuti',
+                                        fr: 'Details du site',
+                                        ar: 'تفاصيل الموقع',
+                                      ),
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -401,18 +477,36 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                         children: [
                           _DetailRow(
-                            label: isSwahili ? 'Mahali' : 'Location',
+                            label: _sitesTr(
+                              language,
+                              en: 'Location',
+                              sw: 'Mahali',
+                              fr: 'Emplacement',
+                              ar: 'الموقع',
+                            ),
                             value: detail['location'] ?? '-',
                             isDark: isDark,
                           ),
                           _DetailRow(
-                            label: isSwahili ? 'Hali' : 'Status',
+                            label: _sitesTr(
+                              language,
+                              en: 'Status',
+                              sw: 'Hali',
+                              fr: 'Statut',
+                              ar: 'الحالة',
+                            ),
                             value: detail['status'] ?? '-',
                             isDark: isDark,
                             valueColor: _getStatusColor(detail['status']),
                           ),
                           _DetailRow(
-                            label: isSwahili ? 'Mratibu' : 'Supervisor',
+                            label: _sitesTr(
+                              language,
+                              en: 'Supervisor',
+                              sw: 'Mratibu',
+                              fr: 'Superviseur',
+                              ar: 'المشرف',
+                            ),
                             value:
                                 (detail['current_supervisor']
                                     as Map<String, dynamic>?)?['name'] ??
@@ -420,30 +514,48 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                             isDark: isDark,
                           ),
                           _DetailRow(
-                            label: isSwahili ? 'Maendeleo' : 'Progress',
+                            label: _sitesTr(
+                              language,
+                              en: 'Progress',
+                              sw: 'Maendeleo',
+                              fr: 'Progression',
+                              ar: 'التقدم',
+                            ),
                             value:
                                 '${_toPercent(detail['progress_percentage'], decimals: 1)}%',
                             isDark: isDark,
                           ),
                           _DetailRow(
-                            label: isSwahili
-                                ? 'Tarehe ya Kuanza'
-                                : 'Start Date',
+                            label: _sitesTr(
+                              language,
+                              en: 'Start Date',
+                              sw: 'Tarehe ya Kuanza',
+                              fr: 'Date de début',
+                              ar: 'تاريخ البدء',
+                            ),
                             value: detail['start_date'] ?? '-',
                             isDark: isDark,
                           ),
                           _DetailRow(
-                            label: isSwahili
-                                ? 'Tarehe ya Kukamilika'
-                                : 'Expected End',
+                            label: _sitesTr(
+                              language,
+                              en: 'Expected End',
+                              sw: 'Tarehe ya Kukamilika',
+                              fr: 'Fin prévue',
+                              ar: 'تاريخ الانتهاء المتوقع',
+                            ),
                             value: detail['expected_end_date'] ?? '-',
                             isDark: isDark,
                           ),
                           if (detail['actual_end_date'] != null)
                             _DetailRow(
-                              label: isSwahili
-                                  ? 'Tarehe ya Kumalizia'
-                                  : 'Actual End',
+                              label: _sitesTr(
+                                language,
+                                en: 'Actual End',
+                                sw: 'Tarehe ya Kumalizia',
+                                fr: 'Fin réelle',
+                                ar: 'تاريخ الانتهاء الفعلي',
+                              ),
                               value: detail['actual_end_date'] ?? '-',
                               isDark: isDark,
                             ),
@@ -451,7 +563,13 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                               (detail['description'] as String).isNotEmpty) ...[
                             const SizedBox(height: 16),
                             Text(
-                              isSwahili ? 'Maelezo' : 'Description',
+                              _sitesTr(
+                                language,
+                                en: 'Description',
+                                sw: 'Maelezo',
+                                fr: 'Description',
+                                ar: 'الوصف',
+                              ),
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -483,9 +601,13 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                           if (recentReports.isNotEmpty) ...[
                             const SizedBox(height: 20),
                             Text(
-                              isSwahili
-                                  ? 'Ripoti za Hivi Karibuni'
-                                  : 'Recent Reports',
+                              _sitesTr(
+                                language,
+                                en: 'Recent Reports',
+                                sw: 'Ripoti za Hivi Karibuni',
+                                fr: 'Rapports récents',
+                                ar: 'التقارير الأخيرة',
+                              ),
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -550,7 +672,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
 
   void _showSiteForm(BuildContext context, {Map<String, dynamic>? site}) {
     final isDark = ref.read(isDarkModeProvider);
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final isEdit = site != null;
     final nameCtrl = TextEditingController(text: site?['name'] ?? '');
     final locationCtrl = TextEditingController(text: site?['location'] ?? '');
@@ -604,8 +726,20 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                       const SizedBox(height: 18),
                       Text(
                         isEdit
-                            ? (isSwahili ? 'Hariri Eneo' : 'Edit Site')
-                            : (isSwahili ? 'Ongeza Eneo' : 'Add Site'),
+                            ? _sitesTr(
+                                language,
+                                en: 'Edit Site',
+                                sw: 'Hariri Eneo',
+                                fr: 'Modifier le site',
+                                ar: 'تعديل الموقع',
+                              )
+                            : _sitesTr(
+                                language,
+                                en: 'Add Site',
+                                sw: 'Ongeza Eneo',
+                                fr: 'Ajouter un site',
+                                ar: 'إضافة موقع',
+                              ),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -615,28 +749,62 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                       const SizedBox(height: 24),
                       _FormField(
                         controller: nameCtrl,
-                        label: isSwahili ? 'Jina *' : 'Name *',
+                        label: _sitesTr(
+                          language,
+                          en: 'Name *',
+                          sw: 'Jina *',
+                          fr: 'Nom *',
+                          ar: 'الاسم *',
+                        ),
                         isDark: isDark,
                         validator: (v) =>
-                            (v == null || v.isEmpty) ? 'Required' : null,
+                            (v == null || v.isEmpty)
+                                ? _sitesTr(
+                                    language,
+                                    en: 'Required',
+                                    sw: 'Hitaji',
+                                    fr: 'Obligatoire',
+                                    ar: 'مطلوب',
+                                  )
+                                : null,
                       ),
                       _FormField(
                         controller: locationCtrl,
-                        label: isSwahili ? 'Mahali *' : 'Location *',
+                        label: _sitesTr(
+                          language,
+                          en: 'Location *',
+                          sw: 'Mahali *',
+                          fr: 'Emplacement *',
+                          ar: 'الموقع *',
+                        ),
                         isDark: isDark,
                         validator: (v) =>
-                            (v == null || v.isEmpty) ? 'Required' : null,
+                            (v == null || v.isEmpty)
+                                ? _sitesTr(
+                                    language,
+                                    en: 'Required',
+                                    sw: 'Hitaji',
+                                    fr: 'Obligatoire',
+                                    ar: 'مطلوب',
+                                  )
+                                : null,
                       ),
                       _FormField(
                         controller: descCtrl,
-                        label: isSwahili ? 'Maelezo' : 'Description',
+                        label: _sitesTr(
+                          language,
+                          en: 'Description',
+                          sw: 'Maelezo',
+                          fr: 'Description',
+                          ar: 'الوصف',
+                        ),
                         isDark: isDark,
                         maxLines: 3,
                       ),
                       _StatusDropdown(
                         value: status,
                         isDark: isDark,
-                        isSwahili: isSwahili,
+                        language: language,
                         onChanged: (v) =>
                             setState(() => status = v ?? 'ACTIVE'),
                       ),
@@ -646,9 +814,13 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                           Expanded(
                             child: _DateField(
                               controller: startDateCtrl,
-                              label: isSwahili
-                                  ? 'Tarehe ya Kuanza'
-                                  : 'Start Date',
+                              label: _sitesTr(
+                                language,
+                                en: 'Start Date',
+                                sw: 'Tarehe ya Kuanza',
+                                fr: 'Date de début',
+                                ar: 'تاريخ البدء',
+                              ),
                               isDark: isDark,
                               ctx: ctx,
                             ),
@@ -657,9 +829,13 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                           Expanded(
                             child: _DateField(
                               controller: expectedEndDateCtrl,
-                              label: isSwahili
-                                  ? 'Tarehe ya Kukamilika'
-                                  : 'Expected End',
+                              label: _sitesTr(
+                                language,
+                                en: 'Expected End',
+                                sw: 'Tarehe ya Kukamilika',
+                                fr: 'Fin prévue',
+                                ar: 'تاريخ الانتهاء المتوقع',
+                              ),
                               isDark: isDark,
                               ctx: ctx,
                             ),
@@ -670,9 +846,13 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                         const SizedBox(height: 8),
                         _DateField(
                           controller: actualEndDateCtrl,
-                          label: isSwahili
-                              ? 'Tarehe ya Kumalizia'
-                              : 'Actual End Date',
+                          label: _sitesTr(
+                            language,
+                            en: 'Actual End Date',
+                            sw: 'Tarehe ya Kumalizia',
+                            fr: 'Date de fin réelle',
+                            ar: 'تاريخ الانتهاء الفعلي',
+                          ),
                           isDark: isDark,
                           ctx: ctx,
                         ),
@@ -710,7 +890,7 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                                 ScaffoldMessenger.of(ctx).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      _siteErrorMessage(e, isSwahili),
+                                      _siteErrorMessage(e, language),
                                     ),
                                     backgroundColor: Colors.red,
                                   ),
@@ -728,8 +908,20 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
                           ),
                           child: Text(
                             isEdit
-                                ? (isSwahili ? 'Sasisha' : 'Update')
-                                : (isSwahili ? 'Hifadhi' : 'Save'),
+                                ? _sitesTr(
+                                    language,
+                                    en: 'Update',
+                                    sw: 'Sasisha',
+                                    fr: 'Mettre à jour',
+                                    ar: 'تحديث',
+                                  )
+                                : _sitesTr(
+                                    language,
+                                    en: 'Save',
+                                    sw: 'Hifadhi',
+                                    fr: 'Enregistrer',
+                                    ar: 'حفظ',
+                                  ),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -754,22 +946,32 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
     Map<String, dynamic> site,
   ) async {
     final isDark = ref.read(isDarkModeProvider);
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         title: Text(
-          isSwahili ? 'Thibitisha' : 'Confirm',
+          _sitesTr(
+            language,
+            en: 'Confirm',
+            sw: 'Thibitisha',
+            fr: 'Confirmer',
+            ar: 'تأكيد',
+          ),
           style: TextStyle(
             color: isDark ? Colors.white : AppColors.textPrimary,
           ),
         ),
         content: Text(
-          isSwahili
-              ? 'Una uhakika unataka kufuta eneo hili?'
-              : 'Are you sure you want to delete this site?',
+          _sitesTr(
+            language,
+            en: 'Are you sure you want to delete this site?',
+            sw: 'Una uhakika unataka kufuta eneo hili?',
+            fr: 'Voulez-vous vraiment supprimer ce site ?',
+            ar: 'هل أنت متأكد أنك تريد حذف هذا الموقع؟',
+          ),
           style: TextStyle(
             color: isDark ? Colors.white70 : AppColors.textSecondary,
           ),
@@ -777,12 +979,28 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isSwahili ? 'Hapana' : 'Cancel'),
+            child: Text(
+              _sitesTr(
+                language,
+                en: 'Cancel',
+                sw: 'Hapana',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text(isSwahili ? 'Futa' : 'Delete'),
+            child: Text(
+              _sitesTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
+            ),
           ),
         ],
       ),
@@ -815,7 +1033,15 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(isSwahili ? 'Eneo limefutwa' : 'Site deleted'),
+              content: Text(
+                _sitesTr(
+                  language,
+                  en: 'Site deleted',
+                  sw: 'Eneo limefutwa',
+                  fr: 'Site supprimé',
+                  ar: 'تم حذف الموقع',
+                ),
+              ),
               backgroundColor: AppColors.success,
             ),
           );
@@ -824,13 +1050,23 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
         if (context.mounted) {
           String errorMsg;
           if (message.contains('reports')) {
-            errorMsg = isSwahili
-                ? 'Hauwezi kufuta eneo lenye ripoti. Futa ripoti kwanza.'
-                : 'Cannot delete site with reports. Delete reports first.';
+            errorMsg = _sitesTr(
+              language,
+              en: 'Cannot delete site with reports. Delete reports first.',
+              sw: 'Hauwezi kufuta eneo lenye ripoti. Futa ripoti kwanza.',
+              fr: 'Impossible de supprimer un site avec des rapports. Supprimez d’abord les rapports.',
+              ar: 'لا يمكن حذف موقع يحتوي على تقارير. احذف التقارير أولاً.',
+            );
           } else {
             errorMsg = message.isNotEmpty
                 ? message
-                : (isSwahili ? 'Hitilafu' : 'Error');
+                : _sitesTr(
+                    language,
+                    en: 'Error',
+                    sw: 'Hitilafu',
+                    fr: 'Erreur',
+                    ar: 'خطأ',
+                  );
           }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
@@ -844,16 +1080,26 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
           final errData = e.response?.data as Map<String, dynamic>?;
           final msg = errData?['message']?.toString() ?? '';
           if (msg.contains('reports')) {
-            errorMsg = isSwahili
-                ? 'Hauwezi kufuta eneo lenye ripoti. Futa ripoti kwanza.'
-                : 'Cannot delete site with reports. Delete reports first.';
+            errorMsg = _sitesTr(
+              language,
+              en: 'Cannot delete site with reports. Delete reports first.',
+              sw: 'Hauwezi kufuta eneo lenye ripoti. Futa ripoti kwanza.',
+              fr: 'Impossible de supprimer un site avec des rapports. Supprimez d’abord les rapports.',
+              ar: 'لا يمكن حذف موقع يحتوي على تقارير. احذف التقارير أولاً.',
+            );
           } else {
             errorMsg = msg.isNotEmpty
                 ? msg
-                : (isSwahili ? 'Hauwezi kufuta' : 'Cannot delete');
+                : _sitesTr(
+                    language,
+                    en: 'Cannot delete',
+                    sw: 'Hauwezi kufuta',
+                    fr: 'Impossible de supprimer',
+                    ar: 'لا يمكن الحذف',
+                  );
           }
         } else {
-          errorMsg = _siteErrorMessage(e, isSwahili);
+          errorMsg = _siteErrorMessage(e, language);
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
@@ -886,19 +1132,27 @@ class _SitesScreenState extends ConsumerState<SitesScreen> {
 
 class _SiteFilters extends ConsumerWidget {
   final _SitesFilter filter;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _SiteFilters({
     required this.filter,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ExpansionTile(
-      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      title: Text(
+        _sitesTr(
+          language,
+          en: 'Filters',
+          sw: 'Vichungi',
+          fr: 'Filtres',
+          ar: 'عوامل التصفية',
+        ),
+      ),
       initiallyExpanded:
           filter.status != null ||
           filter.startDate != null ||
@@ -914,7 +1168,7 @@ class _SiteFilters extends ConsumerWidget {
       ),
       children: [
         _StatusFilterChips(
-          isSwahili: isSwahili,
+          language: language,
           isDarkMode: isDarkMode,
           selectedStatus: filter.status,
           onChanged: (value) => ref.read(_sitesFilterProvider.notifier).state =
@@ -949,7 +1203,13 @@ class _SiteFilters extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                            _sitesTr(
+                              language,
+                              en: 'Start Date',
+                              sw: 'Tarehe ya Kuanza',
+                              fr: 'Date de début',
+                              ar: 'تاريخ البدء',
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[600],
@@ -998,7 +1258,13 @@ class _SiteFilters extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                            _sitesTr(
+                              language,
+                              en: 'End Date',
+                              sw: 'Tarehe ya Mwisho',
+                              fr: 'Date de fin',
+                              ar: 'تاريخ الانتهاء',
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[600],
@@ -1029,7 +1295,15 @@ class _SiteFilters extends ConsumerWidget {
             child: OutlinedButton(
               onPressed: () => ref.read(_sitesFilterProvider.notifier).state =
                   _SitesFilter(),
-              child: Text(isSwahili ? 'Futa' : 'Clear'),
+              child: Text(
+                _sitesTr(
+                  language,
+                  en: 'Clear',
+                  sw: 'Futa',
+                  fr: 'Effacer',
+                  ar: 'مسح',
+                ),
+              ),
             ),
           ),
       ],
@@ -1038,13 +1312,13 @@ class _SiteFilters extends ConsumerWidget {
 }
 
 class _StatusFilterChips extends StatelessWidget {
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
   final String? selectedStatus;
   final ValueChanged<String?> onChanged;
 
   const _StatusFilterChips({
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
     required this.selectedStatus,
     required this.onChanged,
@@ -1053,10 +1327,34 @@ class _StatusFilterChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final options = <String?, String>{
-      null: isSwahili ? 'Zote' : 'All',
-      'ACTIVE': isSwahili ? 'Wastani' : 'Active',
-      'INACTIVE': isSwahili ? 'Isiyo Endelevu' : 'Inactive',
-      'COMPLETED': isSwahili ? 'Imalizika' : 'Completed',
+      null: _sitesTr(
+        language,
+        en: 'All',
+        sw: 'Zote',
+        fr: 'Tous',
+        ar: 'الكل',
+      ),
+      'ACTIVE': _sitesTr(
+        language,
+        en: 'Active',
+        sw: 'Hai',
+        fr: 'Actif',
+        ar: 'نشط',
+      ),
+      'INACTIVE': _sitesTr(
+        language,
+        en: 'Inactive',
+        sw: 'Isiyo Endelea',
+        fr: 'Inactif',
+        ar: 'غير نشط',
+      ),
+      'COMPLETED': _sitesTr(
+        language,
+        en: 'Completed',
+        sw: 'Imekamilika',
+        fr: 'Terminé',
+        ar: 'مكتمل',
+      ),
     };
 
     return SingleChildScrollView(
@@ -1098,7 +1396,7 @@ class _StatusFilterChips extends StatelessWidget {
 class _SiteCard extends StatelessWidget {
   final Map<String, dynamic> site;
   final bool isDark;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -1106,7 +1404,7 @@ class _SiteCard extends StatelessWidget {
   const _SiteCard({
     required this.site,
     required this.isDark,
-    required this.isSwahili,
+    required this.language,
     required this.onView,
     required this.onEdit,
     required this.onDelete,
@@ -1170,7 +1468,7 @@ class _SiteCard extends StatelessWidget {
                             children: [
                               Icon(Icons.edit, size: 14, color: Colors.white),
                               Text(
-                                isSwahili ? ' Edit' : ' Edit',
+                                " ${_sitesTr(language, en: 'Edit', sw: 'Hariri', fr: 'Modifier', ar: 'تعديل')}",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
@@ -1194,7 +1492,7 @@ class _SiteCard extends StatelessWidget {
                             children: [
                               Icon(Icons.delete, size: 14, color: Colors.white),
                               Text(
-                                isSwahili ? ' Del' : ' Del',
+                                " ${_sitesTr(language, en: 'Delete', sw: 'Futa', fr: 'Supprimer', ar: 'حذف')}",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
@@ -1304,7 +1602,7 @@ class _SiteCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${isSwahili ? 'Kuanza' : 'Start'}: ${site['start_date'] ?? '-'}',
+                    '${_sitesTr(language, en: 'Start', sw: 'Kuanza', fr: 'Début', ar: 'البداية')}: ${site['start_date'] ?? '-'}',
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? Colors.white38 : AppColors.textSecondary,
@@ -1455,13 +1753,13 @@ class _FormField extends StatelessWidget {
 class _StatusDropdown extends StatelessWidget {
   final String value;
   final bool isDark;
-  final bool isSwahili;
+  final AppLanguage language;
   final ValueChanged<String?> onChanged;
 
   const _StatusDropdown({
     required this.value,
     required this.isDark,
-    required this.isSwahili,
+    required this.language,
     required this.onChanged,
   });
 
@@ -1474,21 +1772,51 @@ class _StatusDropdown extends StatelessWidget {
         items: [
           DropdownMenuItem(
             value: 'ACTIVE',
-            child: Text(isSwahili ? 'Wastani' : 'Active'),
+            child: Text(
+              _sitesTr(
+                language,
+                en: 'Active',
+                sw: 'Wastani',
+                fr: 'Actif',
+                ar: 'نشط',
+              ),
+            ),
           ),
           DropdownMenuItem(
             value: 'INACTIVE',
-            child: Text(isSwahili ? 'Isiyo Endelevu' : 'Inactive'),
+            child: Text(
+              _sitesTr(
+                language,
+                en: 'Inactive',
+                sw: 'Isiyo Endelevu',
+                fr: 'Inactif',
+                ar: 'غير نشط',
+              ),
+            ),
           ),
           DropdownMenuItem(
             value: 'COMPLETED',
-            child: Text(isSwahili ? 'Imalizika' : 'Completed'),
+            child: Text(
+              _sitesTr(
+                language,
+                en: 'Completed',
+                sw: 'Imalizika',
+                fr: 'Termine',
+                ar: 'مكتمل',
+              ),
+            ),
           ),
         ],
         onChanged: onChanged,
         dropdownColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
         decoration: InputDecoration(
-          labelText: isSwahili ? 'Hali' : 'Status',
+          labelText: _sitesTr(
+            language,
+            en: 'Status',
+            sw: 'Hali',
+            fr: 'Statut',
+            ar: 'الحالة',
+          ),
           labelStyle: TextStyle(
             fontSize: 12,
             color: isDark ? Colors.white54 : AppColors.textHint,
@@ -1602,12 +1930,12 @@ class _DateField extends StatelessWidget {
 
 class _SitesErrorView extends StatelessWidget {
   final Object error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _SitesErrorView({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -1621,7 +1949,13 @@ class _SitesErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _sitesTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Une erreur est survenue',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -1630,7 +1964,15 @@ class _SitesErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _sitesTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Reessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

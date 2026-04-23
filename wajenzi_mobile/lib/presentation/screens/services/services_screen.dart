@@ -81,13 +81,24 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   List<_ServiceItem> get _services => [
     _ServiceItem(
       id: 'construction',
-      title: _isSwahili ? 'Kazi za Ujenzi' : 'Construction Work',
-      shortDescription: _isSwahili
-          ? 'Huduma za ujenzi wa kitaalamu kwa miradi ya makazi, biashara, na taasisi kwa umakini na ubora.'
-          : 'Expert construction services for residential, commercial, and institutional projects with attention to detail and quality.',
-      fullDescription: _isSwahili
-          ? 'Timu yetu ya wajenzi wenye uzoefu inatoa huduma kamili za ujenzi kutoka msingi hadi kukamilika. Tunashughulikia miradi yote - kuanzia nyumba za familia moja hadi majengo ya ghorofa nyingi na miundombinu ya kibiashara.'
-          : 'Our experienced team of builders provides comprehensive construction services from foundation to completion. We handle all project types - from single-family homes to multi-story buildings and commercial complexes.',
+      title: _tr(
+        en: 'Construction Work',
+        sw: 'Kazi za Ujenzi',
+        fr: 'Travaux de construction',
+        ar: 'أعمال البناء',
+      ),
+      shortDescription: _tr(
+        en: 'Expert construction services for residential, commercial, and institutional projects with attention to detail and quality.',
+        sw: 'Huduma za ujenzi wa kitaalamu kwa miradi ya makazi, biashara, na taasisi kwa umakini na ubora.',
+        fr: 'Services de construction experts pour des projets résidentiels, commerciaux et institutionnels, avec un grand souci du détail et de la qualité.',
+        ar: 'خدمات بناء احترافية للمشاريع السكنية والتجارية والمؤسسية مع اهتمام كبير بالتفاصيل والجودة.',
+      ),
+      fullDescription: _tr(
+        en: 'Our experienced team of builders provides comprehensive construction services from foundation to completion. We handle all project types - from single-family homes to multi-story buildings and commercial complexes.',
+        sw: 'Timu yetu ya wajenzi wenye uzoefu inatoa huduma kamili za ujenzi kutoka msingi hadi kukamilika. Tunashughulikia miradi yote - kuanzia nyumba za familia moja hadi majengo ya ghorofa nyingi na miundombinu ya kibiashara.',
+        fr: 'Notre équipe expérimentée de constructeurs fournit des services complets de construction, des fondations à la livraison finale. Nous réalisons tous types de projets, des maisons individuelles aux immeubles de plusieurs étages et complexes commerciaux.',
+        ar: 'يقدم فريقنا ذو الخبرة خدمات بناء متكاملة من الأساس حتى التسليم النهائي. ونتعامل مع جميع أنواع المشاريع، من المنازل الفردية إلى المباني متعددة الطوابق والمجمعات التجارية.',
+      ),
       image: 'assets/images/construction_01.png',
       icon: Icons.construction_rounded,
       color: const Color(0xFF3498DB),
@@ -107,7 +118,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     ),
     _ServiceItem(
       id: 'architectural',
-      title: _isSwahili ? 'Usanifu wa Majengo' : 'Architectural Design',
+      title: _tr(
+        en: 'Architectural Design',
+        sw: 'Usanifu wa Majengo',
+        fr: 'Conception architecturale',
+        ar: 'التصميم المعماري',
+      ),
       shortDescription: _isSwahili
           ? 'Miundo ya usanifu ya ubunifu na inayofanya kazi ambayo inabadilisha maono yako kuwa ukweli kwa kuzingatia uendelevu.'
           : 'Creative and functional architectural designs that transform your vision into reality with sustainability in mind.',
@@ -133,7 +149,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     ),
     _ServiceItem(
       id: 'boq',
-      title: _isSwahili ? 'Orodha ya Vifaa' : 'Bill of Quantity',
+      title: _tr(
+        en: 'Bill of Quantity',
+        sw: 'Orodha ya Vifaa',
+        fr: 'Métré quantitatif',
+        ar: 'جدول الكميات',
+      ),
       shortDescription: _isSwahili
           ? 'Huduma sahihi za makadirio ya gharama kukusaidia kupanga na kubajeti mradi wako wa ujenzi kwa ufanisi.'
           : 'Accurate cost estimation services to help you plan and budget your construction project effectively.',
@@ -159,7 +180,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     ),
     _ServiceItem(
       id: 'structural',
-      title: _isSwahili ? 'Usanifu wa Miundo' : 'Structural Design',
+      title: _tr(
+        en: 'Structural Design',
+        sw: 'Usanifu wa Miundo',
+        fr: 'Conception structurelle',
+        ar: 'التصميم الإنشائي',
+      ),
       shortDescription: _isSwahili
           ? 'Huduma za uhandisi wa miundo wa kitaalamu zinazohakikisha majengo yako ni salama, imara, na yaliyojengwa kudumu.'
           : 'Expert structural engineering services that ensure your buildings are safe, stable, and built to last.',
@@ -185,7 +211,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     ),
     _ServiceItem(
       id: 'interior',
-      title: _isSwahili ? 'Muundo wa Ndani' : 'Interior Design',
+      title: _tr(
+        en: 'Interior Design',
+        sw: 'Muundo wa Ndani',
+        fr: 'Design intérieur',
+        ar: 'التصميم الداخلي',
+      ),
       shortDescription: _isSwahili
           ? 'Huduma za kubadilisha nafasi yako ya ndani kuwa mazingira mazuri na yanayofanya kazi yanayoonyesha mtindo wako.'
           : 'Transform your interior spaces into beautiful and functional environments that reflect your personal style.',
@@ -211,7 +242,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     ),
     _ServiceItem(
       id: 'consultation',
-      title: _isSwahili ? 'Ushauri wa Ujenzi' : 'Construction Consultation',
+      title: _tr(
+        en: 'Construction Consultation',
+        sw: 'Ushauri wa Ujenzi',
+        fr: 'Conseil en construction',
+        ar: 'الاستشارات الإنشائية',
+      ),
       shortDescription: _isSwahili
           ? 'Ushauri wa kitaalamu kwa miradi yako ya ujenzi kutoka hatua ya mipango hadi kukamilika.'
           : 'Professional consultation for your construction projects from planning stage to completion.',
@@ -840,24 +876,48 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     final reasons = [
       {
         'icon': Icons.verified_rounded,
-        'title': _isSwahili ? 'Ubora wa Juu' : 'Premium Quality',
-        'description': _isSwahili
-            ? 'Tunatumia vifaa bora na mbinu za kisasa'
-            : 'We use top-quality materials and modern techniques',
+        'title': _tr(
+          en: 'Premium Quality',
+          sw: 'Ubora wa Juu',
+          fr: 'Qualité supérieure',
+          ar: 'جودة فائقة',
+        ),
+        'description': _tr(
+          en: 'We use top-quality materials and modern techniques',
+          sw: 'Tunatumia vifaa bora na mbinu za kisasa',
+          fr: 'Nous utilisons des matériaux de première qualité et des techniques modernes',
+          ar: 'نستخدم مواد عالية الجودة وتقنيات حديثة',
+        ),
       },
       {
         'icon': Icons.schedule_rounded,
-        'title': _isSwahili ? 'Kwa Wakati' : 'On-Time Delivery',
-        'description': _isSwahili
-            ? 'Tunakamilisha miradi kwa wakati uliokubaliwa'
-            : 'We complete projects within agreed timelines',
+        'title': _tr(
+          en: 'On-Time Delivery',
+          sw: 'Kwa Wakati',
+          fr: 'Livraison à temps',
+          ar: 'التسليم في الوقت المحدد',
+        ),
+        'description': _tr(
+          en: 'We complete projects within agreed timelines',
+          sw: 'Tunakamilisha miradi kwa wakati uliokubaliwa',
+          fr: 'Nous achevons les projets dans les délais convenus',
+          ar: 'ننجز المشاريع ضمن الجداول الزمنية المتفق عليها',
+        ),
       },
       {
         'icon': Icons.handshake_rounded,
-        'title': _isSwahili ? 'Tunategemewa' : 'Trusted Partner',
-        'description': _isSwahili
-            ? 'Zaidi ya miradi 120 iliyokamilishwa kwa mafanikio'
-            : 'Over 120 projects completed successfully',
+        'title': _tr(
+          en: 'Trusted Partner',
+          sw: 'Tunategemewa',
+          fr: 'Partenaire de confiance',
+          ar: 'شريك موثوق',
+        ),
+        'description': _tr(
+          en: 'Over 120 projects completed successfully',
+          sw: 'Zaidi ya miradi 120 iliyokamilishwa kwa mafanikio',
+          fr: 'Plus de 120 projets réalisés avec succès',
+          ar: 'أكثر من 120 مشروعًا تم إنجازها بنجاح',
+        ),
       },
     ];
 

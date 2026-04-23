@@ -23,6 +23,21 @@ final _vatAnalysisDataProvider = FutureProvider.family
           : {};
     });
 
+String _vatTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class VatAnalysisReportScreen extends ConsumerStatefulWidget {
   const VatAnalysisReportScreen({super.key});
 
@@ -46,7 +61,7 @@ class _VatAnalysisReportScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final params = {
       'start_date': DateFormat('yyyy-MM-dd').format(_dateRange!.start),
       'end_date': DateFormat('yyyy-MM-dd').format(_dateRange!.end),
@@ -60,12 +75,24 @@ class _VatAnalysisReportScreenState
           onPressed: () => context.go('/reports'),
         ),
         title: Text(
-          isSwahili ? 'Ripoti ya Uchambuzi wa VAT' : 'VAT Analysis Report',
+          _vatTr(
+            language,
+            en: 'VAT Analysis Report',
+            sw: 'Ripoti ya Uchambuzi wa VAT',
+            fr: 'Rapport d’analyse de la TVA',
+            ar: 'تقرير تحليل ضريبة القيمة المضافة',
+          ),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),
-            tooltip: isSwahili ? 'Chagua Tarehe' : 'Select Date',
+            tooltip: _vatTr(
+              language,
+              en: 'Select Date',
+              sw: 'Chagua Tarehe',
+              fr: 'Choisir la date',
+              ar: 'اختر التاريخ',
+            ),
             onPressed: () async {
               final picked = await showDateRangePicker(
                 context: context,
@@ -80,7 +107,13 @@ class _VatAnalysisReportScreenState
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
+            tooltip: _vatTr(
+              language,
+              en: 'Refresh',
+              sw: 'Onyesha Upya',
+              fr: 'Actualiser',
+              ar: 'تحديث',
+            ),
             onPressed: () => ref.invalidate(_vatAnalysisDataProvider(params)),
           ),
         ],
@@ -114,7 +147,13 @@ class _VatAnalysisReportScreenState
           Expanded(
             child: dataAsync.when(
               loading: () => LoadingWidget(
-                message: isSwahili ? 'Inapakia data...' : 'Loading data...',
+                message: _vatTr(
+                  language,
+                  en: 'Loading data...',
+                  sw: 'Inapakia data...',
+                  fr: 'Chargement des données...',
+                  ar: 'جارٍ تحميل البيانات...',
+                ),
               ),
               error: (error, _) => Center(
                 child: Column(
@@ -126,23 +165,37 @@ class _VatAnalysisReportScreenState
                       color: Colors.red,
                     ),
                     const SizedBox(height: 16),
-                    Text(isSwahili ? 'Hitilafu' : 'Error'),
+                    Text(_vatTr(language, en: 'Error', sw: 'Hitilafu', fr: 'Erreur', ar: 'خطأ')),
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
                       onPressed: () =>
                           ref.invalidate(_vatAnalysisDataProvider(params)),
                       icon: const Icon(Icons.refresh),
-                      label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+                      label: Text(
+                        _vatTr(
+                          language,
+                          en: 'Retry',
+                          sw: 'Jaribu tena',
+                          fr: 'Réessayer',
+                          ar: 'أعد المحاولة',
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
               data: (data) => data.isEmpty
                   ? EmptyStateWidget(
-                      message: isSwahili ? 'Hakuna data' : 'No data available',
+                      message: _vatTr(
+                        language,
+                        en: 'No data available',
+                        sw: 'Hakuna data',
+                        fr: 'Aucune donnée disponible',
+                        ar: 'لا توجد بيانات متاحة',
+                      ),
                       icon: Icons.bar_chart,
                     )
-                  : _VatAnalysisContent(data: data, isSwahili: isSwahili),
+                  : _VatAnalysisContent(data: data, language: language),
             ),
           ),
         ],
@@ -153,9 +206,9 @@ class _VatAnalysisReportScreenState
 
 class _VatAnalysisContent extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _VatAnalysisContent({required this.data, required this.isSwahili});
+  const _VatAnalysisContent({required this.data, required this.language});
 
   @override
   Widget build(BuildContext context) {
@@ -164,11 +217,11 @@ class _VatAnalysisContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SummarySection(data: data, isSwahili: isSwahili),
+          _SummarySection(data: data, language: language),
           const SizedBox(height: 16),
-          _SalesTable(data: data, isSwahili: isSwahili),
+          _SalesTable(data: data, language: language),
           const SizedBox(height: 16),
-          _PurchasesTable(data: data, isSwahili: isSwahili),
+          _PurchasesTable(data: data, language: language),
         ],
       ),
     );
@@ -177,9 +230,9 @@ class _VatAnalysisContent extends StatelessWidget {
 
 class _SummarySection extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _SummarySection({required this.data, required this.isSwahili});
+  const _SummarySection({required this.data, required this.language});
 
   @override
   Widget build(BuildContext context) {
@@ -195,24 +248,24 @@ class _SummarySection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isSwahili ? 'Muhtasari' : 'Summary',
+              _vatTr(language, en: 'Summary', sw: 'Muhtasari', fr: 'Résumé', ar: 'الملخص'),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
             _SummaryRow(
-              label: isSwahili ? 'Jumla ya Mauzo' : 'Total Sales',
+              label: _vatTr(language, en: 'Total Sales', sw: 'Jumla ya Mauzo', fr: 'Total des ventes', ar: 'إجمالي المبيعات'),
               value: _formatCurrency(totalSales),
             ),
             _SummaryRow(
-              label: isSwahili ? 'Jumla ya Ununuzi' : 'Total Purchases',
+              label: _vatTr(language, en: 'Total Purchases', sw: 'Jumla ya Ununuzi', fr: 'Total des achats', ar: 'إجمالي المشتريات'),
               value: _formatCurrency(totalPurchases),
             ),
             _SummaryRow(
-              label: isSwahili ? 'Jumla ya VAT' : 'Total VAT',
+              label: _vatTr(language, en: 'Total VAT', sw: 'Jumla ya VAT', fr: 'TVA totale', ar: 'إجمالي ضريبة القيمة المضافة'),
               value: _formatCurrency(totalTax),
             ),
             _SummaryRow(
-              label: isSwahili ? 'VAT Inayotakiwa' : 'VAT Payable',
+              label: _vatTr(language, en: 'VAT Payable', sw: 'VAT Inayotakiwa', fr: 'TVA à payer', ar: 'ضريبة القيمة المضافة المستحقة'),
               value: _formatCurrency(vatPayable),
               isHighlighted: true,
             ),
@@ -268,9 +321,9 @@ class _SummaryRow extends StatelessWidget {
 
 class _SalesTable extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _SalesTable({required this.data, required this.isSwahili});
+  const _SalesTable({required this.data, required this.language});
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +336,7 @@ class _SalesTable extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isSwahili ? 'Mauzo' : 'Sales',
+              _vatTr(language, en: 'Sales', sw: 'Mauzo', fr: 'Ventes', ar: 'المبيعات'),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
@@ -292,7 +345,7 @@ class _SalesTable extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Center(
                   child: Text(
-                    isSwahili ? 'Hakuna mauzo' : 'No sales data',
+                    _vatTr(language, en: 'No sales data', sw: 'Hakuna mauzo', fr: 'Aucune donnée de vente', ar: 'لا توجد بيانات مبيعات'),
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -303,7 +356,7 @@ class _SalesTable extends StatelessWidget {
                   .map(
                     (item) => _TableRow(
                       data: Map<String, dynamic>.from(item as Map),
-                      isSwahili: isSwahili,
+                      language: language,
                     ),
                   ),
           ],
@@ -315,9 +368,9 @@ class _SalesTable extends StatelessWidget {
 
 class _PurchasesTable extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _PurchasesTable({required this.data, required this.isSwahili});
+  const _PurchasesTable({required this.data, required this.language});
 
   @override
   Widget build(BuildContext context) {
@@ -330,7 +383,7 @@ class _PurchasesTable extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              isSwahili ? 'Ununuzi' : 'Purchases',
+              _vatTr(language, en: 'Purchases', sw: 'Ununuzi', fr: 'Achats', ar: 'المشتريات'),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const Divider(),
@@ -339,7 +392,7 @@ class _PurchasesTable extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Center(
                   child: Text(
-                    isSwahili ? 'Hakuna ununuzi' : 'No purchases data',
+                    _vatTr(language, en: 'No purchases data', sw: 'Hakuna ununuzi', fr: 'Aucune donnée d’achat', ar: 'لا توجد بيانات مشتريات'),
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ),
@@ -350,7 +403,7 @@ class _PurchasesTable extends StatelessWidget {
                   .map(
                     (item) => _TableRow(
                       data: Map<String, dynamic>.from(item as Map),
-                      isSwahili: isSwahili,
+                      language: language,
                     ),
                   ),
           ],
@@ -362,9 +415,9 @@ class _PurchasesTable extends StatelessWidget {
 
 class _TableRow extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _TableRow({required this.data, required this.isSwahili});
+  const _TableRow({required this.data, required this.language});
 
   @override
   Widget build(BuildContext context) {

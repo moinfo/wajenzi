@@ -11,6 +11,21 @@ final _projectSummaryReportsSearchProvider = StateProvider.autoDispose<String>(
   (ref) => '',
 );
 
+String _projectSummaryTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class _ProjectSummaryFilter {
   final DateTime? startDate;
   final DateTime? endDate;
@@ -101,7 +116,7 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final reportsAsync = ref.watch(_projectSummaryReportsProvider);
     final projectsAsync = ref.watch(_projectSummaryProjectsProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final filter = ref.watch(_projectSummaryFilterProvider);
     final search = ref
@@ -115,7 +130,15 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Ripoti za Miradi' : 'Project Reports'),
+        title: Text(
+          _projectSummaryTr(
+            language,
+            en: 'Project Reports',
+            sw: 'Ripoti za Miradi',
+            fr: 'Rapports de projet',
+            ar: 'تقارير المشاريع',
+          ),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -140,9 +163,13 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
                             value;
                       },
                       decoration: InputDecoration(
-                        hintText: isSwahili
-                            ? 'Tafuta ripoti za miradi...'
-                            : 'Search project reports...',
+                        hintText: _projectSummaryTr(
+                          language,
+                          en: 'Search project reports...',
+                          sw: 'Tafuta ripoti za miradi...',
+                          fr: 'Rechercher des rapports de projet...',
+                          ar: 'ابحث في تقارير المشاريع...',
+                        ),
                         prefixIcon: const Icon(Icons.search_rounded),
                         suffixIcon: search.isNotEmpty
                             ? IconButton(
@@ -181,7 +208,7 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
                           : _ProjectSummaryFilters(
                               projects: projects,
                               filter: filter,
-                              isSwahili: isSwahili,
+                              language: language,
                               isDarkMode: isDarkMode,
                             ),
                     ),
@@ -196,7 +223,7 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
               error: (error, _) => SliverFillRemaining(
                 child: _ProjectSummaryErrorView(
                   error: '$error',
-                  isSwahili: isSwahili,
+                  language: language,
                   onRetry: () => ref.invalidate(_projectSummaryReportsProvider),
                 ),
               ),
@@ -226,12 +253,20 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
                     child: Center(
                       child: Text(
                         search.isNotEmpty
-                            ? (isSwahili
-                                  ? 'Hakuna matokeo yanayolingana'
-                                  : 'No reports match your search')
-                            : (isSwahili
-                                  ? 'Hakuna ripoti za miradi'
-                                  : 'No project reports found'),
+                            ? _projectSummaryTr(
+                                language,
+                                en: 'No reports match your search',
+                                sw: 'Hakuna matokeo yanayolingana',
+                                fr: 'Aucun rapport ne correspond à votre recherche',
+                                ar: 'لا توجد تقارير تطابق بحثك',
+                              )
+                            : _projectSummaryTr(
+                                language,
+                                en: 'No project reports found',
+                                sw: 'Hakuna ripoti za miradi',
+                                fr: 'Aucun rapport de projet trouvé',
+                                ar: 'لم يتم العثور على تقارير مشاريع',
+                              ),
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[600],
@@ -249,21 +284,39 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
                         children: [
                           Expanded(
                             child: _ProjectSummaryStatChip(
-                              label: isSwahili ? 'Jumla' : 'Total',
+                              label: _projectSummaryTr(
+                                language,
+                                en: 'Total',
+                                sw: 'Jumla',
+                                fr: 'Total',
+                                ar: 'الإجمالي',
+                              ),
                               value: '${meta['total'] ?? items.length}',
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: _ProjectSummaryStatChip(
-                              label: isSwahili ? 'Ripoti za Siku' : 'Daily',
+                              label: _projectSummaryTr(
+                                language,
+                                en: 'Daily',
+                                sw: 'Ripoti za Siku',
+                                fr: 'Quotidien',
+                                ar: 'يومي',
+                              ),
                               value: '${meta['daily_reports'] ?? 0}',
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: _ProjectSummaryStatChip(
-                              label: isSwahili ? 'Ziara' : 'Visits',
+                              label: _projectSummaryTr(
+                                language,
+                                en: 'Visits',
+                                sw: 'Ziara',
+                                fr: 'Visites',
+                                ar: 'الزيارات',
+                              ),
                               value: '${meta['site_visits'] ?? 0}',
                             ),
                           ),
@@ -274,7 +327,7 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
                         (item) => _ProjectSummaryCard(
                           item: item,
                           isDarkMode: isDarkMode,
-                          isSwahili: isSwahili,
+                          language: language,
                         ),
                       ),
                     ]),
@@ -292,20 +345,28 @@ class ProjectSummaryReportsScreen extends ConsumerWidget {
 class _ProjectSummaryFilters extends ConsumerWidget {
   final List<Map<String, dynamic>> projects;
   final _ProjectSummaryFilter filter;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _ProjectSummaryFilters({
     required this.projects,
     required this.filter,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ExpansionTile(
-      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      title: Text(
+        _projectSummaryTr(
+          language,
+          en: 'Filters',
+          sw: 'Vichungi',
+          fr: 'Filtres',
+          ar: 'عوامل التصفية',
+        ),
+      ),
       initiallyExpanded:
           filter.projectId != null ||
           filter.startDate != null ||
@@ -324,12 +385,26 @@ class _ProjectSummaryFilters extends ConsumerWidget {
           isExpanded: true,
           value: filter.projectId,
           decoration: InputDecoration(
-            labelText: isSwahili ? 'Mradi' : 'Project',
+            labelText: _projectSummaryTr(
+              language,
+              en: 'Project',
+              sw: 'Mradi',
+              fr: 'Projet',
+              ar: 'المشروع',
+            ),
           ),
           items: [
             DropdownMenuItem<int?>(
               value: null,
-              child: Text(isSwahili ? 'Miradi yote' : 'All projects'),
+              child: Text(
+                _projectSummaryTr(
+                  language,
+                  en: 'All projects',
+                  sw: 'Miradi yote',
+                  fr: 'Tous les projets',
+                  ar: 'كل المشاريع',
+                ),
+              ),
             ),
             ...projects.map(
               (project) => DropdownMenuItem<int?>(
@@ -351,7 +426,13 @@ class _ProjectSummaryFilters extends ConsumerWidget {
           children: [
             Expanded(
               child: _ProjectSummaryDateField(
-                label: isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                label: _projectSummaryTr(
+                  language,
+                  en: 'Start Date',
+                  sw: 'Tarehe ya Kuanza',
+                  fr: 'Date de début',
+                  ar: 'تاريخ البدء',
+                ),
                 value: filter.startDate,
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -370,7 +451,13 @@ class _ProjectSummaryFilters extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _ProjectSummaryDateField(
-                label: isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                label: _projectSummaryTr(
+                  language,
+                  en: 'End Date',
+                  sw: 'Tarehe ya Mwisho',
+                  fr: 'Date de fin',
+                  ar: 'تاريخ الانتهاء',
+                ),
                 value: filter.endDate,
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -397,7 +484,15 @@ class _ProjectSummaryFilters extends ConsumerWidget {
                   const _ProjectSummaryFilter();
             },
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(isSwahili ? 'Reset' : 'Reset'),
+            label: Text(
+              _projectSummaryTr(
+                language,
+                en: 'Reset',
+                sw: 'Weka Upya',
+                fr: 'Réinitialiser',
+                ar: 'إعادة تعيين',
+              ),
+            ),
           ),
         ),
       ],
@@ -479,12 +574,12 @@ class _ProjectSummaryStatChip extends StatelessWidget {
 class _ProjectSummaryCard extends ConsumerWidget {
   final Map<String, dynamic> item;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _ProjectSummaryCard({
     required this.item,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -503,7 +598,8 @@ class _ProjectSummaryCard extends ConsumerWidget {
             context: context,
             backgroundColor: Colors.transparent,
             isScrollControlled: true,
-            builder: (_) => _ProjectSummaryDetailSheet(item: item),
+            builder: (_) =>
+                _ProjectSummaryDetailSheet(item: item, language: language),
           );
         },
         child: Padding(
@@ -524,7 +620,21 @@ class _ProjectSummaryCard extends ConsumerWidget {
                     ),
                     child: Text(
                       item['title']?.toString() ??
-                          (type == 'site_visit' ? 'Site Visit' : 'Daily Report'),
+                          (type == 'site_visit'
+                              ? _projectSummaryTr(
+                                  language,
+                                  en: 'Site Visit',
+                                  sw: 'Ziara ya Tovuti',
+                                  fr: 'Visite de site',
+                                  ar: 'زيارة ميدانية',
+                                )
+                              : _projectSummaryTr(
+                                  language,
+                                  en: 'Daily Report',
+                                  sw: 'Ripoti ya Siku',
+                                  fr: 'Rapport quotidien',
+                                  ar: 'تقرير يومي',
+                                )),
                       style: TextStyle(
                         color: accent,
                         fontSize: 12,
@@ -599,13 +709,15 @@ class _ProjectSummaryCard extends ConsumerWidget {
 
 class _ProjectSummaryDetailSheet extends ConsumerWidget {
   final Map<String, dynamic> item;
+  final AppLanguage language;
 
-  const _ProjectSummaryDetailSheet({required this.item});
+  const _ProjectSummaryDetailSheet({
+    required this.item,
+    required this.language,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSwahili = ref.watch(isSwahiliProvider);
-
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -647,7 +759,13 @@ class _ProjectSummaryDetailSheet extends ConsumerWidget {
                       ),
                       Expanded(
                         child: Text(
-                          isSwahili ? 'Maelezo ya Ripoti' : 'Report Details',
+                          _projectSummaryTr(
+                            language,
+                            en: 'Report Details',
+                            sw: 'Maelezo ya Ripoti',
+                            fr: 'Détails du rapport',
+                            ar: 'تفاصيل التقرير',
+                          ),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: Colors.white,
@@ -668,27 +786,63 @@ class _ProjectSummaryDetailSheet extends ConsumerWidget {
                 padding: const EdgeInsets.all(20),
                 children: [
                   _ProjectSummaryDetailRow(
-                    label: 'Type',
+                    label: _projectSummaryTr(
+                      language,
+                      en: 'Type',
+                      sw: 'Aina',
+                      fr: 'Type',
+                      ar: 'النوع',
+                    ),
                     value: item['title']?.toString() ?? '-',
                   ),
                   _ProjectSummaryDetailRow(
-                    label: 'Project',
+                    label: _projectSummaryTr(
+                      language,
+                      en: 'Project',
+                      sw: 'Mradi',
+                      fr: 'Projet',
+                      ar: 'المشروع',
+                    ),
                     value: item['project_name']?.toString() ?? '-',
                   ),
                   _ProjectSummaryDetailRow(
-                    label: 'Date',
+                    label: _projectSummaryTr(
+                      language,
+                      en: 'Date',
+                      sw: 'Tarehe',
+                      fr: 'Date',
+                      ar: 'التاريخ',
+                    ),
                     value: item['report_date']?.toString() ?? '-',
                   ),
                   _ProjectSummaryDetailRow(
-                    label: 'Owner',
+                    label: _projectSummaryTr(
+                      language,
+                      en: 'Owner',
+                      sw: 'Mmiliki',
+                      fr: 'Responsable',
+                      ar: 'المالك',
+                    ),
                     value: item['author_name']?.toString() ?? '-',
                   ),
                   _ProjectSummaryDetailRow(
-                    label: 'Status',
+                    label: _projectSummaryTr(
+                      language,
+                      en: 'Status',
+                      sw: 'Hali',
+                      fr: 'Statut',
+                      ar: 'الحالة',
+                    ),
                     value: item['status']?.toString() ?? '-',
                   ),
                   _ProjectSummaryDetailRow(
-                    label: 'Summary',
+                    label: _projectSummaryTr(
+                      language,
+                      en: 'Summary',
+                      sw: 'Muhtasari',
+                      fr: 'Résumé',
+                      ar: 'الملخص',
+                    ),
                     value: item['summary']?.toString() ?? '-',
                   ),
                   const SizedBox(height: 12),
@@ -696,7 +850,15 @@ class _ProjectSummaryDetailSheet extends ConsumerWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text(isSwahili ? 'Funga' : 'Close'),
+                      child: Text(
+                        _projectSummaryTr(
+                          language,
+                          en: 'Close',
+                          sw: 'Funga',
+                          fr: 'Fermer',
+                          ar: 'إغلاق',
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -753,12 +915,12 @@ class _ProjectSummaryDetailRow extends StatelessWidget {
 
 class _ProjectSummaryErrorView extends StatelessWidget {
   final String error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ProjectSummaryErrorView({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -772,7 +934,13 @@ class _ProjectSummaryErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _projectSummaryTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un problème est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -787,7 +955,15 @@ class _ProjectSummaryErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _projectSummaryTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Réessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

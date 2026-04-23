@@ -112,12 +112,30 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       name: _isSwahili
           ? 'Villa ya Kifahari Dar es Salaam'
           : 'Luxury Villa in Dar es Salaam',
-      status: _isSwahili ? 'Inaendelea' : 'In Progress',
-      type: _isSwahili ? 'Makazi' : 'Residential',
-      category: _isSwahili ? 'Makazi ya Kisasa' : 'Modern Residential',
-      description: _isSwahili
-          ? 'Nyumba ya kisasa yenye vyumba 4 vya kulala, sebule, chumba cha kulia, jiko, kufulia, choo cha wageni, chumba cha kusoma na gym.'
-          : 'A modern 4-bedroom residential with living rooms, dining, kitchen, laundry, public toilet, study room and gym.',
+      status: _tr(
+        en: 'In Progress',
+        sw: 'Inaendelea',
+        fr: 'En cours',
+        ar: 'قيد التنفيذ',
+      ),
+      type: _tr(
+        en: 'Residential',
+        sw: 'Makazi',
+        fr: 'Résidentiel',
+        ar: 'سكني',
+      ),
+      category: _tr(
+        en: 'Modern Residential',
+        sw: 'Makazi ya Kisasa',
+        fr: 'Résidentiel moderne',
+        ar: 'سكني حديث',
+      ),
+      description: _tr(
+        en: 'A modern 4-bedroom residential with living rooms, dining, kitchen, laundry, public toilet, study room and gym.',
+        sw: 'Nyumba ya kisasa yenye vyumba 4 vya kulala, sebule, chumba cha kulia, jiko, kufulia, choo cha wageni, chumba cha kusoma na gym.',
+        fr: 'Une résidence moderne de 4 chambres avec salon, salle à manger, cuisine, buanderie, toilettes publiques, bureau et salle de sport.',
+        ar: 'منزل سكني حديث يضم أربع غرف نوم وغرف معيشة وغرفة طعام ومطبخًا وغرفة غسيل ودورة مياه للضيوف وغرفة دراسة وصالة رياضية.',
+      ),
       location: 'Arusha',
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.10.png',
@@ -128,12 +146,30 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     ),
     _Project(
       name: 'Palm Gardens Residences',
-      status: _isSwahili ? 'Inaendelea' : 'In Progress',
-      type: _isSwahili ? 'Makazi' : 'Residential',
-      category: _isSwahili ? 'Makazi ya Kisasa' : 'Modern Residential',
-      description: _isSwahili
-          ? 'Nyumba ya kisasa yenye vyumba 4 vya kulala, sebule, chumba cha kulia, jiko, kufulia, choo cha wageni, chumba cha kusoma, saluni na gym.'
-          : 'A modern 4-bedroom residential with living rooms, dining, kitchen, laundry, public toilet, study room, saloon and gym.',
+      status: _tr(
+        en: 'In Progress',
+        sw: 'Inaendelea',
+        fr: 'En cours',
+        ar: 'قيد التنفيذ',
+      ),
+      type: _tr(
+        en: 'Residential',
+        sw: 'Makazi',
+        fr: 'Résidentiel',
+        ar: 'سكني',
+      ),
+      category: _tr(
+        en: 'Modern Residential',
+        sw: 'Makazi ya Kisasa',
+        fr: 'Résidentiel moderne',
+        ar: 'سكني حديث',
+      ),
+      description: _tr(
+        en: 'A modern 4-bedroom residential with living rooms, dining, kitchen, laundry, public toilet, study room, saloon and gym.',
+        sw: 'Nyumba ya kisasa yenye vyumba 4 vya kulala, sebule, chumba cha kulia, jiko, kufulia, choo cha wageni, chumba cha kusoma, saluni na gym.',
+        fr: 'Une résidence moderne de 4 chambres avec salon, salle à manger, cuisine, buanderie, toilettes publiques, bureau, salon et salle de sport.',
+        ar: 'منزل سكني حديث يضم أربع غرف نوم وغرف معيشة وغرفة طعام ومطبخًا وغرفة غسيل ودورة مياه للضيوف وغرفة دراسة وصالونًا وصالة رياضية.',
+      ),
       location: 'Dar es Salaam',
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.20.png',
@@ -143,13 +179,36 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       likes: 124,
     ),
     _Project(
-      name: _isSwahili ? 'Makazi' : 'Residentials',
-      status: _isSwahili ? 'Imekamilika' : 'Completed',
-      type: _isSwahili ? 'Makazi' : 'Residential',
-      category: _isSwahili ? 'Makazi' : 'Residential',
-      description: _isSwahili
-          ? 'Ina sebule, jiko, vyumba vitatu vya kuishi peke yake, chumba kimoja kikubwa cha kulala, sebule ya familia, saluni, chumba cha kulia, kufulia na stoo.'
-          : 'It contains living room, kitchen, three self contained rooms, one master bed room, family lounge, saloon, dining, laundry and store.',
+      name: _tr(
+        en: 'Residentials',
+        sw: 'Makazi',
+        fr: 'Résidences',
+        ar: 'المجمعات السكنية',
+      ),
+      status: _tr(
+        en: 'Completed',
+        sw: 'Imekamilika',
+        fr: 'Terminé',
+        ar: 'مكتمل',
+      ),
+      type: _tr(
+        en: 'Residential',
+        sw: 'Makazi',
+        fr: 'Résidentiel',
+        ar: 'سكني',
+      ),
+      category: _tr(
+        en: 'Residential',
+        sw: 'Makazi',
+        fr: 'Résidentiel',
+        ar: 'سكني',
+      ),
+      description: _tr(
+        en: 'It contains living room, kitchen, three self contained rooms, one master bed room, family lounge, saloon, dining, laundry and store.',
+        sw: 'Ina sebule, jiko, vyumba vitatu vya kuishi peke yake, chumba kimoja kikubwa cha kulala, sebule ya familia, saluni, chumba cha kulia, kufulia na stoo.',
+        fr: 'Il comprend un salon, une cuisine, trois chambres autonomes, une suite parentale, un salon familial, un salon, une salle à manger, une buanderie et un magasin.',
+        ar: 'يحتوي على غرفة معيشة ومطبخ وثلاث غرف مستقلة وغرفة نوم رئيسية وصالة عائلية وصالون وغرفة طعام وغرفة غسيل ومخزن.',
+      ),
       location: 'Dar es Salaam',
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.28.png',
@@ -160,12 +219,25 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     ),
     _Project(
       name: 'Skyline Business Center',
-      status: _isSwahili ? 'Inaendelea' : 'In Progress',
-      type: _isSwahili ? 'Biashara' : 'Commercial',
+      status: _tr(
+        en: 'In Progress',
+        sw: 'Inaendelea',
+        fr: 'En cours',
+        ar: 'قيد التنفيذ',
+      ),
+      type: _tr(
+        en: 'Commercial',
+        sw: 'Biashara',
+        fr: 'Commercial',
+        ar: 'تجاري',
+      ),
       category: 'Kariakoo Commercial Complex',
-      description: _isSwahili
-          ? 'Ni jengo la biashara lenye maduka arobaini.'
-          : 'A commercial complex that has forty shops.',
+      description: _tr(
+        en: 'A commercial complex that has forty shops.',
+        sw: 'Ni jengo la biashara lenye maduka arobaini.',
+        fr: 'Un complexe commercial comprenant quarante boutiques.',
+        ar: 'مجمع تجاري يضم أربعين متجرًا.',
+      ),
       location: 'Dar es Salaam',
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.31.png',
@@ -176,12 +248,30 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     ),
     _Project(
       name: 'Savannah Shopping Mall',
-      status: _isSwahili ? 'Imekamilika' : 'Completed',
-      type: _isSwahili ? 'Biashara' : 'Commercial',
-      category: _isSwahili ? 'Ghorofa' : 'Apartments',
-      description: _isSwahili
-          ? 'G + Ghorofa mbili yenye ghorofa kumi na mbili, iko Kimara.'
-          : 'G + Two floors Apartment with twelve apartments, located in Kimara.',
+      status: _tr(
+        en: 'Completed',
+        sw: 'Imekamilika',
+        fr: 'Terminé',
+        ar: 'مكتمل',
+      ),
+      type: _tr(
+        en: 'Commercial',
+        sw: 'Biashara',
+        fr: 'Commercial',
+        ar: 'تجاري',
+      ),
+      category: _tr(
+        en: 'Apartments',
+        sw: 'Ghorofa',
+        fr: 'Appartements',
+        ar: 'شقق',
+      ),
+      description: _tr(
+        en: 'G + Two floors Apartment with twelve apartments, located in Kimara.',
+        sw: 'G + Ghorofa mbili yenye ghorofa kumi na mbili, iko Kimara.',
+        fr: 'Immeuble RDC + deux étages avec douze appartements, situé à Kimara.',
+        ar: 'مبنى أرضي مع طابقين يضم اثنتي عشرة شقة ويقع في كيمارا.',
+      ),
       location: 'Dar es Salaam',
       year: '2025',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.40.png',
@@ -192,12 +282,15 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     ),
     _Project(
       name: 'Horizon Hotel & Suites',
-      status: _isSwahili ? 'Imekamilika' : 'Completed',
-      type: _isSwahili ? 'Biashara' : 'Commercial',
-      category: _isSwahili ? 'Ghorofa' : 'Apartments',
-      description: _isSwahili
-          ? 'G + Ghorofa mbili yenye ghorofa kumi na mbili, iko Kimara.'
-          : 'G + Two floors Apartment with twelve apartments, located in Kimara.',
+      status: _tr(en: 'Completed', sw: 'Imekamilika', fr: 'Terminé', ar: 'مكتمل'),
+      type: _tr(en: 'Commercial', sw: 'Biashara', fr: 'Commercial', ar: 'تجاري'),
+      category: _tr(en: 'Apartments', sw: 'Ghorofa', fr: 'Appartements', ar: 'شقق'),
+      description: _tr(
+        en: 'G + Two floors Apartment with twelve apartments, located in Kimara.',
+        sw: 'G + Ghorofa mbili yenye ghorofa kumi na mbili, iko Kimara.',
+        fr: 'Immeuble RDC + deux étages avec douze appartements, situé à Kimara.',
+        ar: 'مبنى أرضي مع طابقين يضم اثنتي عشرة شقة ويقع في كيمارا.',
+      ),
       location: 'Dar es Salaam',
       year: '2024',
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.51.07.png',
@@ -208,12 +301,15 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     ),
     _Project(
       name: 'Unity International School',
-      status: _isSwahili ? 'Imekamilika' : 'Completed',
-      type: _isSwahili ? 'Biashara' : 'Commercial',
-      category: _isSwahili ? 'Ghorofa' : 'Apartment',
-      description: _isSwahili
-          ? 'Ghorofa mbili yenye vyumba kumi na viwili, iko Arusha.'
-          : 'Two floors Apartment with twelve apartments, located in Arusha.',
+      status: _tr(en: 'Completed', sw: 'Imekamilika', fr: 'Terminé', ar: 'مكتمل'),
+      type: _tr(en: 'Commercial', sw: 'Biashara', fr: 'Commercial', ar: 'تجاري'),
+      category: _tr(en: 'Apartment', sw: 'Ghorofa', fr: 'Appartement', ar: 'شقة'),
+      description: _tr(
+        en: 'Two floors Apartment with twelve apartments, located in Arusha.',
+        sw: 'Ghorofa mbili yenye vyumba kumi na viwili, iko Arusha.',
+        fr: 'Immeuble de deux étages avec douze appartements, situé à Arusha.',
+        ar: 'مبنى من طابقين يضم اثنتي عشرة شقة ويقع في أروشا.',
+      ),
       location: 'Arusha',
       year: '2024',
       image: 'assets/images/construction_01.png',
@@ -226,14 +322,20 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       name: _isSwahili
           ? 'Ukarabati wa Jengo la Urithi'
           : 'Heritage Building Restoration',
-      status: _isSwahili ? 'Imekamilika' : 'Completed',
-      type: _isSwahili ? 'Ukarabati' : 'Renovation',
-      category: _isSwahili
-          ? 'Ukarabati wa Jengo la Urithi'
-          : 'Heritage Building Restoration',
-      description: _isSwahili
-          ? 'Ukarabati makini wa jengo la karne ya 19 la kikoloni, kuchanganya uhifadhi wa kihistoria na utendaji wa kisasa na viwango vya usalama.'
-          : 'Careful restoration of a 19th century colonial-era building, combining historical preservation with modern functionality and safety standards.',
+      status: _tr(en: 'Completed', sw: 'Imekamilika', fr: 'Terminé', ar: 'مكتمل'),
+      type: _tr(en: 'Renovation', sw: 'Ukarabati', fr: 'Rénovation', ar: 'ترميم'),
+      category: _tr(
+        en: 'Heritage Building Restoration',
+        sw: 'Ukarabati wa Jengo la Urithi',
+        fr: 'Restauration d’un bâtiment patrimonial',
+        ar: 'ترميم مبنى تراثي',
+      ),
+      description: _tr(
+        en: 'Careful restoration of a 19th century colonial-era building, combining historical preservation with modern functionality and safety standards.',
+        sw: 'Ukarabati makini wa jengo la karne ya 19 la kikoloni, kuchanganya uhifadhi wa kihistoria na utendaji wa kisasa na viwango vya usalama.',
+        fr: 'Restauration soignée d’un bâtiment colonial du XIXe siècle, alliant préservation historique, fonctionnalité moderne et normes de sécurité.',
+        ar: 'ترميم دقيق لمبنى استعماري من القرن التاسع عشر يجمع بين الحفاظ على الطابع التاريخي والوظائف الحديثة ومعايير السلامة.',
+      ),
       location: 'Zanzibar',
       year: '2020',
       image: 'assets/images/structure_01.jpg',
@@ -252,11 +354,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       tagline: _isSwahili
           ? 'Maisha ya Kifahari na Mandhari ya Bahari'
           : 'Premium Living with Stunning Ocean Views',
-      type: _isSwahili ? 'Makazi' : 'Residential',
+      type: _tr(en: 'Residential', sw: 'Makazi', fr: 'Résidentiel', ar: 'سكني'),
       location: 'Dar es Salaam',
       size: '8,500 sq.m',
       yearCompleted: '2023',
-      duration: _isSwahili ? 'Miezi 18' : '18 Months',
+      duration: _tr(en: '18 Months', sw: 'Miezi 18', fr: '18 mois', ar: '18 شهرًا'),
       client: 'Ocean View',
       description: _isSwahili
           ? 'Mradi wa Makazi ya Kifahari ya Pwani una ghorofa nane za kipekee zenye madirisha makubwa yanayotoa mandhari ya Bahari ya Hindi. Kila nyumba inachanganya usanifu wa kisasa na kanuni za muundo endelevu.'
@@ -267,17 +369,17 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       features: [
         {
           'icon': Icons.solar_power_rounded,
-          'label': _isSwahili ? 'Nguvu za Jua' : 'Solar Power',
+          'label': _tr(en: 'Solar Power', sw: 'Nguvu za Jua', fr: 'Énergie solaire', ar: 'الطاقة الشمسية'),
         },
         {
           'icon': Icons.water_drop_rounded,
-          'label': _isSwahili ? 'Uvunaji Mvua' : 'Rain Harvest',
+          'label': _tr(en: 'Rain Harvest', sw: 'Uvunaji Mvua', fr: 'Récupération de pluie', ar: 'حصاد مياه الأمطار'),
         },
         {
           'icon': Icons.park_rounded,
-          'label': _isSwahili ? 'Bustani' : 'Gardens',
+          'label': _tr(en: 'Gardens', sw: 'Bustani', fr: 'Jardins', ar: 'الحدائق'),
         },
-        {'icon': Icons.pool_rounded, 'label': _isSwahili ? 'Bwawa' : 'Pool'},
+        {'icon': Icons.pool_rounded, 'label': _tr(en: 'Pool', sw: 'Bwawa', fr: 'Piscine', ar: 'مسبح')},
       ],
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.10.png',
     ),
@@ -286,11 +388,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       tagline: _isSwahili
           ? 'Uzuri wa Asili katika Moyo wa Jiji'
           : 'Natural Beauty in the Heart of the City',
-      type: _isSwahili ? 'Makazi' : 'Residential',
+      type: _tr(en: 'Residential', sw: 'Makazi', fr: 'Résidentiel', ar: 'سكني'),
       location: 'Dar es Salaam',
       size: '6,200 sq.m',
       yearCompleted: '2025',
-      duration: _isSwahili ? 'Miezi 14' : '14 Months',
+      duration: _tr(en: '14 Months', sw: 'Miezi 14', fr: '14 mois', ar: '14 شهرًا'),
       client: 'Green Living Corp',
       description: _isSwahili
           ? 'Palm Gardens Residences ni mradi wa makazi ya kisasa yenye vyumba vinne vya kulala, iliyoundwa kwa maisha ya familia ya kisasa.'
@@ -302,11 +404,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         {'icon': Icons.fitness_center_rounded, 'label': 'Gym'},
         {
           'icon': Icons.local_parking_rounded,
-          'label': _isSwahili ? 'Maegesho' : 'Parking',
+          'label': _tr(en: 'Parking', sw: 'Maegesho', fr: 'Parking', ar: 'مواقف السيارات'),
         },
         {
           'icon': Icons.security_rounded,
-          'label': _isSwahili ? 'Ulinzi 24/7' : '24/7 Security',
+          'label': _tr(en: '24/7 Security', sw: 'Ulinzi 24/7', fr: 'Sécurité 24h/24 7j/7', ar: 'أمن على مدار الساعة'),
         },
         {'icon': Icons.wifi_rounded, 'label': 'Smart Home'},
       ],
@@ -1341,7 +1443,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _isSwahili ? 'Bei ya Mradi' : 'Project Value',
+                                  _tr(
+                                    en: 'Project Value',
+                                    sw: 'Bei ya Mradi',
+                                    fr: 'Valeur du projet',
+                                    ar: 'قيمة المشروع',
+                                  ),
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 12,
@@ -1378,7 +1485,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    _isSwahili ? 'wanapenda' : 'interested',
+                                    _tr(
+                                      en: 'interested',
+                                      sw: 'wanapenda',
+                                      fr: 'intéressés',
+                                      ar: 'مهتمون',
+                                    ),
                                     style: TextStyle(
                                       color: Colors.white.withValues(
                                         alpha: 0.9,
@@ -1395,9 +1507,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
                     // Description
                     Text(
-                      _isSwahili
-                          ? 'Mfumo wa Utekelezaji'
-                          : 'Systematic Approach',
+                      _tr(
+                        en: 'Systematic Approach',
+                        sw: 'Mfumo wa Utekelezaji',
+                        fr: 'Approche systématique',
+                        ar: 'منهجية العمل المنظمة',
+                      ),
                       style: TextStyle(
                         color: _textPrimaryColor,
                         fontSize: 16,
@@ -1466,10 +1581,18 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     final steps = [
       {
         'number': '1',
-        'title': _isSwahili ? 'Ushauri' : 'Consultation',
-        'description': _isSwahili
-            ? 'Tunaanza na ushauri wa kina kuelewa mahitaji yako na vikwazo vya bajeti.'
-            : 'We begin with a thorough consultation to understand your needs and budget constraints.',
+        'title': _tr(
+          en: 'Consultation',
+          sw: 'Ushauri',
+          fr: 'Consultation',
+          ar: 'الاستشارة',
+        ),
+        'description': _tr(
+          en: 'We begin with a thorough consultation to understand your needs and budget constraints.',
+          sw: 'Tunaanza na ushauri wa kina kuelewa mahitaji yako na vikwazo vya bajeti.',
+          fr: 'Nous commençons par une consultation approfondie afin de comprendre vos besoins et les contraintes budgétaires.',
+          ar: 'نبدأ باستشارة شاملة لفهم احتياجاتك وقيود الميزانية.',
+        ),
         'items': _isSwahili
             ? ['Uchambuzi wa Mahitaji', 'Ziara ya Eneo', 'Maoni ya Awali']
             : ['Requirement Analysis', 'Site Visit', 'Initial Feedback'],
@@ -1477,10 +1600,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       },
       {
         'number': '2',
-        'title': _isSwahili ? 'Mipango' : 'Planning',
-        'description': _isSwahili
-            ? 'Timu yetu inaunda mipango na miundo ya kina inayofaa mahitaji ya mradi wako.'
-            : 'Our team develops detailed plans and designs tailored to your project requirements.',
+        'title': _tr(en: 'Planning', sw: 'Mipango', fr: 'Planification', ar: 'التخطيط'),
+        'description': _tr(
+          en: 'Our team develops detailed plans and designs tailored to your project requirements.',
+          sw: 'Timu yetu inaunda mipango na miundo ya kina inayofaa mahitaji ya mradi wako.',
+          fr: 'Notre équipe élabore des plans et conceptions détaillés adaptés aux besoins de votre projet.',
+          ar: 'يضع فريقنا خططًا وتصاميم تفصيلية مصممة وفق متطلبات مشروعك.',
+        ),
         'items': _isSwahili
             ? ['Uundaji wa Dhana', 'Muundo wa Kina', 'Makadirio ya Gharama']
             : ['Concept Development', 'Detailed Design', 'Cost Estimation'],
@@ -1488,10 +1614,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       },
       {
         'number': '3',
-        'title': _isSwahili ? 'Utekelezaji' : 'Execution',
-        'description': _isSwahili
-            ? 'Tunatekeleza mipango kwa umakini, udhibiti wa ubora, na usimamizi wa ratiba.'
-            : 'We implement the plans with attention to detail, quality control, and timeline management.',
+        'title': _tr(en: 'Execution', sw: 'Utekelezaji', fr: 'Exécution', ar: 'التنفيذ'),
+        'description': _tr(
+          en: 'We implement the plans with attention to detail, quality control, and timeline management.',
+          sw: 'Tunatekeleza mipango kwa umakini, udhibiti wa ubora, na usimamizi wa ratiba.',
+          fr: 'Nous exécutons les plans avec une grande attention aux détails, au contrôle qualité et à la gestion du calendrier.',
+          ar: 'ننّفذ الخطط بعناية بالتفاصيل وضبط الجودة وإدارة الجدول الزمني.',
+        ),
         'items': _isSwahili
             ? [
                 'Uhamasishaji wa Rasilimali',
@@ -1507,10 +1636,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
       },
       {
         'number': '4',
-        'title': _isSwahili ? 'Kukamilisha' : 'Completion',
-        'description': _isSwahili
-            ? 'Ukaguzi wa mwisho unahakikisha kila kitu kinakidhi viwango vyetu vya juu kabla ya kukabidhiwa mradi.'
-            : 'Final inspections ensure everything meets our high standards before project handover.',
+        'title': _tr(en: 'Completion', sw: 'Kukamilisha', fr: 'Achèvement', ar: 'الإنجاز'),
+        'description': _tr(
+          en: 'Final inspections ensure everything meets our high standards before project handover.',
+          sw: 'Ukaguzi wa mwisho unahakikisha kila kitu kinakidhi viwango vyetu vya juu kabla ya kukabidhiwa mradi.',
+          fr: 'Les inspections finales garantissent que tout respecte nos normes élevées avant la remise du projet.',
+          ar: 'تضمن عمليات الفحص النهائية أن كل شيء يفي بمعاييرنا العالية قبل تسليم المشروع.',
+        ),
         'items': _isSwahili
             ? [
                 'Ukaguzi wa Mwisho',
@@ -1543,9 +1675,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isSwahili
-                        ? 'Mchakato Wetu'
-                        : 'Our Service Delivery Process',
+                    _tr(
+                      en: 'Our Service Delivery Process',
+                      sw: 'Mchakato Wetu',
+                      fr: 'Notre processus de prestation',
+                      ar: 'آلية تقديم خدماتنا',
+                    ),
                     style: const TextStyle(
                       color: Color(0xFF1ABC9C),
                       fontSize: 12,
@@ -1554,7 +1689,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                     ),
                   ),
                   Text(
-                    _isSwahili ? 'Mbinu ya Kimfumo' : 'Systematic Approach',
+                    _tr(
+                      en: 'Systematic Approach',
+                      sw: 'Mbinu ya Kimfumo',
+                      fr: 'Approche systématique',
+                      ar: 'منهجية العمل المنظمة',
+                    ),
                     style: TextStyle(
                       color: _textPrimaryColor,
                       fontSize: 22,
@@ -1567,9 +1707,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _isSwahili
-                ? 'Tunafuata mbinu ya kimfumo kuhakikisha ubora, ufanisi, na kuridhika kwa mteja katika kila hatua.'
-                : 'We follow a systematic approach to ensure quality, efficiency, and client satisfaction at every stage.',
+            _tr(
+              en: 'We follow a systematic approach to ensure quality, efficiency, and client satisfaction at every stage.',
+              sw: 'Tunafuata mbinu ya kimfumo kuhakikisha ubora, ufanisi, na kuridhika kwa mteja katika kila hatua.',
+              fr: 'Nous suivons une approche systématique pour garantir la qualité, l’efficacité et la satisfaction du client à chaque étape.',
+              ar: 'نتبع نهجًا منهجيًا لضمان الجودة والكفاءة ورضا العميل في كل مرحلة.',
+            ),
             style: TextStyle(color: _textSecondaryColor, fontSize: 13),
           ),
           const SizedBox(height: 24),

@@ -112,48 +112,90 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
     ),
     _Award(
       year: '2023',
-      title: _isSwahili ? 'Ubora katika Ujenzi' : 'Excellence in Construction',
-      subtitle: _isSwahili
-          ? 'Tuzo ya Ubora katika Ujenzi'
-          : 'Excellence in Construction Award',
-      organization: _isSwahili
-          ? 'Chama cha Wajenzi wa Afrika Mashariki'
-          : 'East African Builders Association',
-      description: _isSwahili
-          ? 'Kutuzwa kwa kuonyesha ufundi bora, ubunifu wa kiufundi, na usimamizi wa mradi katika miradi mingi ya ujenzi.'
-          : 'Awarded for demonstrating outstanding craftsmanship, technical innovation, and project management across multiple construction projects.',
+      title: _tr(
+        en: 'Excellence in Construction',
+        sw: 'Ubora katika Ujenzi',
+        fr: 'Excellence en construction',
+        ar: 'التميز في البناء',
+      ),
+      subtitle: _tr(
+        en: 'Excellence in Construction Award',
+        sw: 'Tuzo ya Ubora katika Ujenzi',
+        fr: 'Prix d’excellence en construction',
+        ar: 'جائزة التميز في البناء',
+      ),
+      organization: _tr(
+        en: 'East African Builders Association',
+        sw: 'Chama cha Wajenzi wa Afrika Mashariki',
+        fr: 'Association des constructeurs d’Afrique de l’Est',
+        ar: 'جمعية البنّائين في شرق أفريقيا',
+      ),
+      description: _tr(
+        en: 'Awarded for demonstrating outstanding craftsmanship, technical innovation, and project management across multiple construction projects.',
+        sw: 'Kutuzwa kwa kuonyesha ufundi bora, ubunifu wa kiufundi, na usimamizi wa mradi katika miradi mingi ya ujenzi.',
+        fr: 'Décerné pour avoir démontré un savoir-faire exceptionnel, une innovation technique et une excellente gestion de projet sur plusieurs projets de construction.',
+        ar: 'مُنحت تقديرًا لإظهار حرفة متميزة وابتكار تقني وإدارة مشاريع عالية المستوى عبر عدة مشاريع إنشائية.',
+      ),
       image: 'assets/images/awards/BQ6A3837.jpeg',
       color: const Color(0xFF3498DB),
       icon: Icons.workspace_premium_rounded,
     ),
     _Award(
       year: '2022',
-      title: _isSwahili ? 'Ujenzi Endelevu' : 'Sustainable Building',
-      subtitle: _isSwahili
-          ? 'Tuzo ya Uongozi wa Ujenzi Endelevu'
-          : 'Sustainable Building Leadership Award',
-      organization: _isSwahili
-          ? 'Baraza la Majengo ya Kijani Tanzania'
-          : 'Green Building Council Tanzania',
-      description: _isSwahili
-          ? 'Kutambuliwa kwa kutekeleza mazoea endelevu, miundo inayotumia nishati kwa ufanisi, na vifaa rafiki kwa mazingira katika miradi ya ujenzi.'
-          : 'Recognized for implementing sustainable practices, energy-efficient designs, and eco-friendly materials in construction projects.',
+      title: _tr(
+        en: 'Sustainable Building',
+        sw: 'Ujenzi Endelevu',
+        fr: 'Construction durable',
+        ar: 'البناء المستدام',
+      ),
+      subtitle: _tr(
+        en: 'Sustainable Building Leadership Award',
+        sw: 'Tuzo ya Uongozi wa Ujenzi Endelevu',
+        fr: 'Prix de leadership en construction durable',
+        ar: 'جائزة الريادة في البناء المستدام',
+      ),
+      organization: _tr(
+        en: 'Green Building Council Tanzania',
+        sw: 'Baraza la Majengo ya Kijani Tanzania',
+        fr: 'Conseil tanzanien du bâtiment durable',
+        ar: 'مجلس البناء الأخضر في تنزانيا',
+      ),
+      description: _tr(
+        en: 'Recognized for implementing sustainable practices, energy-efficient designs, and eco-friendly materials in construction projects.',
+        sw: 'Kutambuliwa kwa kutekeleza mazoea endelevu, miundo inayotumia nishati kwa ufanisi, na vifaa rafiki kwa mazingira katika miradi ya ujenzi.',
+        fr: 'Reconnu pour la mise en œuvre de pratiques durables, de conceptions économes en énergie et de matériaux écologiques dans les projets de construction.',
+        ar: 'تم تكريمنا لتطبيق ممارسات مستدامة وتصاميم موفرة للطاقة ومواد صديقة للبيئة في مشاريع البناء.',
+      ),
       image: 'assets/images/awards/BQ6A3840.jpeg',
       color: const Color(0xFF27AE60),
       icon: Icons.eco_rounded,
     ),
     _Award(
       year: '2021',
-      title: _isSwahili ? 'Tuzo ya Ubunifu' : 'Innovation Award',
-      subtitle: _isSwahili
-          ? 'Tuzo ya Ubunifu katika Ujenzi'
-          : 'Innovation in Construction Award',
-      organization: _isSwahili
-          ? 'Baraza la Ubunifu wa Ujenzi Tanzania'
-          : 'Tanzania Construction Innovation Council',
-      description: _isSwahili
-          ? 'Kutambuliwa kwa kutekeleza mbinu za ujenzi za ubunifu na mazoea endelevu ya ujenzi katika miradi ya makazi.'
-          : 'Recognized for implementing innovative construction techniques and sustainable building practices in residential projects.',
+      title: _tr(
+        en: 'Innovation Award',
+        sw: 'Tuzo ya Ubunifu',
+        fr: 'Prix de l’innovation',
+        ar: 'جائزة الابتكار',
+      ),
+      subtitle: _tr(
+        en: 'Innovation in Construction Award',
+        sw: 'Tuzo ya Ubunifu katika Ujenzi',
+        fr: 'Prix de l’innovation en construction',
+        ar: 'جائزة الابتكار في البناء',
+      ),
+      organization: _tr(
+        en: 'Tanzania Construction Innovation Council',
+        sw: 'Baraza la Ubunifu wa Ujenzi Tanzania',
+        fr: 'Conseil tanzanien de l’innovation dans la construction',
+        ar: 'مجلس تنزانيا للابتكار في البناء',
+      ),
+      description: _tr(
+        en: 'Recognized for implementing innovative construction techniques and sustainable building practices in residential projects.',
+        sw: 'Kutambuliwa kwa kutekeleza mbinu za ujenzi za ubunifu na mazoea endelevu ya ujenzi katika miradi ya makazi.',
+        fr: 'Reconnu pour l’application de techniques de construction innovantes et de pratiques durables dans les projets résidentiels.',
+        ar: 'تم تكريمنا لتطبيق تقنيات بناء مبتكرة وممارسات بناء مستدامة في المشاريع السكنية.',
+      ),
       image: 'assets/images/awards/BQ6A3837_2.jpeg',
       color: const Color(0xFF9B59B6),
       icon: Icons.lightbulb_rounded,
@@ -433,7 +475,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isSwahili ? 'Mafanikio Yetu' : 'Our Achievements',
+                    _tr(
+                      en: 'Our Achievements',
+                      sw: 'Mafanikio Yetu',
+                      fr: 'Nos réalisations',
+                      ar: 'إنجازاتنا',
+                    ),
                     style: const TextStyle(
                       color: Color(0xFF1ABC9C),
                       fontSize: 12,
@@ -442,7 +489,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                     ),
                   ),
                   Text(
-                    _isSwahili ? 'Tuzo Zilizoangaziwa' : 'Featured Awards',
+                    _tr(
+                      en: 'Featured Awards',
+                      sw: 'Tuzo Zilizoangaziwa',
+                      fr: 'Prix mis en avant',
+                      ar: 'الجوائز البارزة',
+                    ),
                     style: TextStyle(
                       color: _textPrimaryColor,
                       fontSize: 22,
@@ -809,7 +861,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _isSwahili ? 'Safari Yetu' : 'Our Journey',
+                _tr(
+                  en: 'Our Journey',
+                  sw: 'Safari Yetu',
+                  fr: 'Notre parcours',
+                  ar: 'رحلتنا',
+                ),
                 style: const TextStyle(
                   color: Color(0xFF3498DB),
                   fontSize: 12,
@@ -818,7 +875,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 ),
               ),
               Text(
-                _isSwahili ? 'Ratiba ya Tuzo' : 'Awards Timeline',
+                _tr(
+                  en: 'Awards Timeline',
+                  sw: 'Ratiba ya Tuzo',
+                  fr: 'Chronologie des prix',
+                  ar: 'الجدول الزمني للجوائز',
+                ),
                 style: TextStyle(
                   color: _textPrimaryColor,
                   fontSize: 22,
@@ -1123,7 +1185,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  _isSwahili ? 'Imetolewa na' : 'Awarded by',
+                                  _tr(
+                                    en: 'Awarded by',
+                                    sw: 'Imetolewa na',
+                                    fr: 'Décerné par',
+                                    ar: 'ممنوحة من',
+                                  ),
                                   style: TextStyle(
                                     color: _textSecondaryColor,
                                     fontSize: 11,
@@ -1148,7 +1215,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
 
                     // Description
                     Text(
-                      _isSwahili ? 'Kuhusu Tuzo Hii' : 'About This Award',
+                      _tr(
+                        en: 'About This Award',
+                        sw: 'Kuhusu Tuzo Hii',
+                        fr: 'À propos de ce prix',
+                        ar: 'حول هذه الجائزة',
+                      ),
                       style: TextStyle(
                         color: _textPrimaryColor,
                         fontSize: 16,
@@ -1166,9 +1238,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _isSwahili
-                          ? 'Tuzo hii inatambua kujitolea kwetu kwa viwango vya juu vya ubora na ubunifu katika sekta ya ujenzi. Tunaendelea kujitahidi kupita matarajio ya wateja wetu na kutoa miradi bora.'
-                          : 'This award recognizes our commitment to the highest standards of quality and innovation in the construction industry. We continue to strive to exceed our clients\' expectations and deliver exceptional projects.',
+                      _tr(
+                        en: 'This award recognizes our commitment to the highest standards of quality and innovation in the construction industry. We continue to strive to exceed our clients\' expectations and deliver exceptional projects.',
+                        sw: 'Tuzo hii inatambua kujitolea kwetu kwa viwango vya juu vya ubora na ubunifu katika sekta ya ujenzi. Tunaendelea kujitahidi kupita matarajio ya wateja wetu na kutoa miradi bora.',
+                        fr: 'Ce prix reconnaît notre engagement envers les plus hauts standards de qualité et d’innovation dans le secteur de la construction. Nous continuons à nous efforcer de dépasser les attentes de nos clients et de livrer des projets exceptionnels.',
+                        ar: 'تعترف هذه الجائزة بالتزامنا بأعلى معايير الجودة والابتكار في قطاع البناء. ونواصل السعي لتجاوز توقعات عملائنا وتقديم مشاريع استثنائية.',
+                      ),
                       style: TextStyle(
                         color: _textSecondaryColor,
                         fontSize: 14,
@@ -1186,7 +1261,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                       },
                       icon: const Icon(Icons.share_rounded, size: 20),
                       label: Text(
-                        _isSwahili ? 'Shiriki Tuzo Hii' : 'Share This Award',
+                        _tr(
+                          en: 'Share This Award',
+                          sw: 'Shiriki Tuzo Hii',
+                          fr: 'Partager ce prix',
+                          ar: 'شارك هذه الجائزة',
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: award.color,
@@ -1233,7 +1313,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
           const Icon(Icons.verified_rounded, color: Colors.white, size: 48),
           const SizedBox(height: 16),
           Text(
-            _isSwahili ? 'Kujitolea kwa Ubora' : 'Commitment to Excellence',
+            _tr(
+              en: 'Commitment to Excellence',
+              sw: 'Kujitolea kwa Ubora',
+              fr: 'Engagement envers l’excellence',
+              ar: 'الالتزام بالتميّز',
+            ),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -1243,9 +1328,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            _isSwahili
-                ? 'Tuzo hizi zinaonyesha kujitolea kwetu bila kusita kwa ubora, ubunifu, na kuridhika kwa wateja. Tunaendelea kujitahidi kuweka viwango vipya katika sekta ya ujenzi.'
-                : 'These awards reflect our unwavering commitment to excellence, innovation, and customer satisfaction. We continue to strive to set new standards in the construction industry.',
+            _tr(
+              en: 'These awards reflect our unwavering commitment to excellence, innovation, and customer satisfaction. We continue to strive to set new standards in the construction industry.',
+              sw: 'Tuzo hizi zinaonyesha kujitolea kwetu bila kusita kwa ubora, ubunifu, na kuridhika kwa wateja. Tunaendelea kujitahidi kuweka viwango vipya katika sekta ya ujenzi.',
+              fr: 'Ces prix reflètent notre engagement indéfectible envers l’excellence, l’innovation et la satisfaction client. Nous continuons à nous efforcer d’établir de nouvelles références dans le secteur de la construction.',
+              ar: 'تعكس هذه الجوائز التزامنا الراسخ بالتميّز والابتكار ورضا العملاء. ونواصل السعي لوضع معايير جديدة في قطاع البناء.',
+            ),
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.9),
               fontSize: 14,
@@ -1257,7 +1345,14 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
           OutlinedButton.icon(
             onPressed: _launchWhatsApp,
             icon: const Icon(Icons.handshake_rounded, size: 18),
-            label: Text(_isSwahili ? 'Fanya Kazi Nasi' : 'Work With Us'),
+            label: Text(
+              _tr(
+                en: 'Work With Us',
+                sw: 'Fanya Kazi Nasi',
+                fr: 'Travaillez avec nous',
+                ar: 'اعمل معنا',
+              ),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
               side: const BorderSide(color: Colors.white),

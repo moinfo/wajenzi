@@ -10,6 +10,21 @@ import '../../providers/settings_provider.dart';
 import '../../widgets/common/empty_state_widget.dart';
 import '../../widgets/common/loading_widget.dart';
 
+String _bonusTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class ArchitectBonusReportScreen extends ConsumerStatefulWidget {
   const ArchitectBonusReportScreen({
     super.key,
@@ -65,6 +80,7 @@ class _ArchitectBonusReportScreenState
   }
 
   String _humanizeError(Object error) {
+    final language = ref.read(currentLanguageProvider);
     if (error is DioException) {
       final data = error.response?.data;
       if (data is Map<String, dynamic>) {
@@ -76,15 +92,39 @@ class _ArchitectBonusReportScreenState
 
       switch (error.response?.statusCode) {
         case 401:
-          return 'Authentication required. Please login again.';
+          return _bonusTr(
+            language,
+            en: 'Authentication required. Please login again.',
+            sw: 'Uthibitishaji unahitajika. Tafadhali ingia tena.',
+            fr: 'Authentification requise. Veuillez vous reconnecter.',
+            ar: 'يلزم تسجيل الدخول. يرجى تسجيل الدخول مرة أخرى.',
+          );
         case 403:
-          return 'Permission denied. You may not have access to bonus reports.';
+          return _bonusTr(
+            language,
+            en: 'Permission denied. You may not have access to bonus reports.',
+            sw: 'Ruhusa imekataliwa. Huenda huna ufikiaji wa ripoti za bonasi.',
+            fr: 'Permission refusée. Vous n’avez peut-être pas accès aux rapports de bonus.',
+            ar: 'تم رفض الإذن. قد لا تكون لديك صلاحية الوصول إلى تقارير المكافآت.',
+          );
         case 404:
-          return 'Bonus report endpoint not found. Please check API configuration.';
+          return _bonusTr(
+            language,
+            en: 'Bonus report endpoint not found. Please check API configuration.',
+            sw: 'Njia ya ripoti ya bonasi haikupatikana. Tafadhali angalia usanidi wa API.',
+            fr: 'Point d’accès au rapport de bonus introuvable. Veuillez vérifier la configuration de l’API.',
+            ar: 'لم يتم العثور على واجهة تقرير المكافآت. يرجى التحقق من إعدادات الـ API.',
+          );
       }
     }
 
-    return 'Error loading bonus report.';
+    return _bonusTr(
+      language,
+      en: 'Error loading bonus report.',
+      sw: 'Hitilafu katika kupakia ripoti ya bonasi.',
+      fr: 'Erreur lors du chargement du rapport de bonus.',
+      ar: 'حدث خطأ أثناء تحميل تقرير المكافآت.',
+    );
   }
 
   Future<void> _pickMonth() async {
@@ -169,7 +209,7 @@ class _ArchitectBonusReportScreenState
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final architectSummary =
         _reportData['architect_summary'] as List<dynamic>? ?? <dynamic>[];
     final tasks = _reportData['tasks'] as List<dynamic>? ?? <dynamic>[];
@@ -190,23 +230,49 @@ class _ArchitectBonusReportScreenState
             }
           },
         ),
-        title: Text(isSwahili ? 'Ripoti ya Bonasi' : 'Bonus Report'),
+        title: Text(
+          _bonusTr(
+            language,
+            en: 'Bonus Report',
+            sw: 'Ripoti ya Bonasi',
+            fr: 'Rapport des bonus',
+            ar: 'تقرير المكافآت',
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month),
             onPressed: _pickMonth,
-            tooltip: isSwahili ? 'Chagua Mwezi' : 'Select Month',
+            tooltip: _bonusTr(
+              language,
+              en: 'Select Month',
+              sw: 'Chagua Mwezi',
+              fr: 'Choisir le mois',
+              ar: 'اختر الشهر',
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadReport,
-            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
+            tooltip: _bonusTr(
+              language,
+              en: 'Refresh',
+              sw: 'Onyesha Upya',
+              fr: 'Actualiser',
+              ar: 'تحديث',
+            ),
           ),
         ],
       ),
       body: _isLoading
           ? LoadingWidget(
-              message: isSwahili ? 'Inapakia ripoti...' : 'Loading report...',
+              message: _bonusTr(
+                language,
+                en: 'Loading report...',
+                sw: 'Inapakia ripoti...',
+                fr: 'Chargement du rapport...',
+                ar: 'جارٍ تحميل التقرير...',
+              ),
             )
           : _errorMessage != null
           ? Center(
@@ -222,7 +288,15 @@ class _ArchitectBonusReportScreenState
                     FilledButton.icon(
                       onPressed: _loadReport,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
+                      label: Text(
+                        _bonusTr(
+                          language,
+                          en: 'Retry',
+                          sw: 'Jaribu tena',
+                          fr: 'Réessayer',
+                          ar: 'أعد المحاولة',
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -240,7 +314,13 @@ class _ArchitectBonusReportScreenState
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSwahili ? 'Ripoti ya Bonasi' : 'Bonus Report',
+                            _bonusTr(
+                              language,
+                              en: 'Bonus Report',
+                              sw: 'Ripoti ya Bonasi',
+                              fr: 'Rapport des bonus',
+                              ar: 'تقرير المكافآت',
+                            ),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w700,
@@ -248,7 +328,7 @@ class _ArchitectBonusReportScreenState
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${isSwahili ? 'Mwezi' : 'Month'}: ${DateFormat('MMMM yyyy').format(DateTime.parse('$_selectedMonth-01'))}',
+                            '${_bonusTr(language, en: 'Month', sw: 'Mwezi', fr: 'Mois', ar: 'الشهر')}: ${DateFormat('MMMM yyyy').format(DateTime.parse('$_selectedMonth-01'))}',
                             style: TextStyle(
                               fontSize: 15,
                               color: Colors.grey[600],
@@ -263,7 +343,13 @@ class _ArchitectBonusReportScreenState
                     children: [
                       Expanded(
                         child: _SummaryCard(
-                          title: isSwahili ? 'Jumla ya Kazi' : 'Total Tasks',
+                          title: _bonusTr(
+                            language,
+                            en: 'Total Tasks',
+                            sw: 'Jumla ya Kazi',
+                            fr: 'Total des tâches',
+                            ar: 'إجمالي المهام',
+                          ),
                           value: '${_reportData['total_tasks'] ?? 0}',
                           icon: Icons.task_alt,
                           color: Colors.orange,
@@ -272,7 +358,7 @@ class _ArchitectBonusReportScreenState
                       const SizedBox(width: 10),
                       Expanded(
                         child: _SummaryCard(
-                          title: isSwahili ? 'Jumla ya Units' : 'Total Units',
+                          title: _bonusTr(language, en: 'Total Units', sw: 'Jumla ya Units', fr: 'Total des unités', ar: 'إجمالي الوحدات'),
                           value: '${_reportData['grand_total_units'] ?? 0}',
                           icon: Icons.work_outline,
                           color: Colors.blue,
@@ -282,7 +368,7 @@ class _ArchitectBonusReportScreenState
                   ),
                   const SizedBox(height: 10),
                   _SummaryCard(
-                    title: isSwahili ? 'Jumla ya Bonasi' : 'Total Bonus',
+                    title: _bonusTr(language, en: 'Total Bonus', sw: 'Jumla ya Bonasi', fr: 'Bonus total', ar: 'إجمالي المكافآت'),
                     value:
                         'TZS ${_formatCurrency(_reportData['grand_total_bonus'])}',
                     icon: Icons.payments_outlined,
@@ -291,16 +377,24 @@ class _ArchitectBonusReportScreenState
                   const SizedBox(height: 24),
                   if (architectSummary.isEmpty && tasks.isEmpty)
                     EmptyStateWidget(
-                      message: isSwahili
-                          ? 'Hakuna kazi zilizopimwa kwa mwezi huu'
-                          : 'No scored tasks found for this month',
+                      message: _bonusTr(
+                        language,
+                        en: 'No scored tasks found for this month',
+                        sw: 'Hakuna kazi zilizopimwa kwa mwezi huu',
+                        fr: 'Aucune tâche évaluée pour ce mois',
+                        ar: 'لا توجد مهام تم تقييمها لهذا الشهر',
+                      ),
                       icon: Icons.bar_chart,
                     )
                   else ...[
                     Text(
-                      isSwahili
-                          ? 'Muhtasari wa Architect'
-                          : 'Architect Summary',
+                      _bonusTr(
+                        language,
+                        en: 'Architect Summary',
+                        sw: 'Muhtasari wa Architect',
+                        fr: 'Résumé de l’architecte',
+                        ar: 'ملخص المعماري',
+                      ),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -312,7 +406,7 @@ class _ArchitectBonusReportScreenState
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _ArchitectSummaryCard(
                           architect: Map<String, dynamic>.from(architect as Map),
-                          isSwahili: isSwahili,
+                          language: language,
                           formatCurrency: _formatCurrency,
                           formatPercent: _formatPercent,
                         ),
@@ -320,7 +414,13 @@ class _ArchitectBonusReportScreenState
                     }),
                     const SizedBox(height: 12),
                     Text(
-                      isSwahili ? 'Maelezo ya Kazi' : 'Task Details',
+                      _bonusTr(
+                        language,
+                        en: 'Task Details',
+                        sw: 'Maelezo ya Kazi',
+                        fr: 'Détails des tâches',
+                        ar: 'تفاصيل المهام',
+                      ),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -333,7 +433,7 @@ class _ArchitectBonusReportScreenState
                         padding: const EdgeInsets.only(bottom: 12),
                         child: _TaskDetailCard(
                           task: item,
-                          isSwahili: isSwahili,
+                          language: language,
                           statusColor: _statusColor(
                             item['status']?.toString() ?? '',
                           ),
@@ -405,13 +505,13 @@ class _SummaryCard extends StatelessWidget {
 class _ArchitectSummaryCard extends StatelessWidget {
   const _ArchitectSummaryCard({
     required this.architect,
-    required this.isSwahili,
+    required this.language,
     required this.formatCurrency,
     required this.formatPercent,
   });
 
   final Map<String, dynamic> architect;
-  final bool isSwahili;
+  final AppLanguage language;
   final String Function(dynamic value) formatCurrency;
   final String Function(dynamic value) formatPercent;
 
@@ -458,21 +558,25 @@ class _ArchitectSummaryCard extends StatelessWidget {
               runSpacing: 10,
               children: [
                 _MetricChip(
-                  label: isSwahili ? 'Kazi' : 'Tasks',
+                  label: _bonusTr(language, en: 'Tasks', sw: 'Kazi', fr: 'Tâches', ar: 'المهام'),
                   value: '${architect['tasks_count'] ?? 0}',
                 ),
                 _MetricChip(
-                  label: isSwahili ? 'Units' : 'Units',
+                  label: _bonusTr(language, en: 'Units', sw: 'Units', fr: 'Unités', ar: 'الوحدات'),
                   value: '${architect['total_units'] ?? 0}',
                 ),
                 _MetricChip(
-                  label: isSwahili ? 'Bonasi' : 'Bonus',
+                  label: _bonusTr(language, en: 'Bonus', sw: 'Bonasi', fr: 'Bonus', ar: 'المكافأة'),
                   value: 'TZS ${formatCurrency(architect['total_bonus'])}',
                 ),
                 _MetricChip(
-                  label: isSwahili
-                      ? 'Wastani wa Utendaji'
-                      : 'Avg Performance',
+                  label: _bonusTr(
+                    language,
+                    en: 'Avg Performance',
+                    sw: 'Wastani wa Utendaji',
+                    fr: 'Performance moyenne',
+                    ar: 'متوسط الأداء',
+                  ),
                   value: formatPercent(architect['avg_performance']),
                 ),
               ],
@@ -487,7 +591,7 @@ class _ArchitectSummaryCard extends StatelessWidget {
 class _TaskDetailCard extends StatelessWidget {
   const _TaskDetailCard({
     required this.task,
-    required this.isSwahili,
+    required this.language,
     required this.statusColor,
     required this.formatCurrency,
     required this.formatPercent,
@@ -495,7 +599,7 @@ class _TaskDetailCard extends StatelessWidget {
   });
 
   final Map<String, dynamic> task;
-  final bool isSwahili;
+  final AppLanguage language;
   final Color statusColor;
   final String Function(dynamic value) formatCurrency;
   final String Function(dynamic value) formatPercent;
@@ -536,7 +640,7 @@ class _TaskDetailCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${isSwahili ? 'Architect' : 'Architect'}: ${architect['name'] ?? '-'}',
+                        '${_bonusTr(language, en: 'Architect', sw: 'Architect', fr: 'Architecte', ar: 'المعماري')}: ${architect['name'] ?? '-'}',
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                     ],
@@ -571,11 +675,11 @@ class _TaskDetailCard extends StatelessWidget {
                 _MetricChip(label: 'CA', value: formatDecimal(task['client_approval_efficiency'])),
                 _MetricChip(label: 'PS', value: formatPercent(task['performance_score'])),
                 _MetricChip(
-                  label: isSwahili ? 'Units' : 'Units',
+                  label: _bonusTr(language, en: 'Units', sw: 'Units', fr: 'Unités', ar: 'الوحدات'),
                   value: '${task['final_units'] ?? '-'}',
                 ),
                 _MetricChip(
-                  label: isSwahili ? 'Bonasi' : 'Bonus',
+                  label: _bonusTr(language, en: 'Bonus', sw: 'Bonasi', fr: 'Bonus', ar: 'المكافأة'),
                   value: 'TZS ${formatCurrency(task['bonus_amount'])}',
                 ),
               ],

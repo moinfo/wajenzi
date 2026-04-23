@@ -40,6 +40,21 @@ final _genericReportDataProvider =
       return <String, dynamic>{};
     });
 
+String _reportTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 String _buildCacheKey(
   String endpoint, {
   int? year,
@@ -101,13 +116,21 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
   }
 
   Future<void> _showYearPicker(BuildContext context) async {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final currentYear = DateTime.now().year;
     final years = List.generate(10, (i) => currentYear - i);
     final picked = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(isSwahili ? 'Chagua Mwaka' : 'Select Year'),
+        title: Text(
+          _reportTr(
+            language,
+            en: 'Select Year',
+            sw: 'Chagua Mwaka',
+            fr: 'Choisir l\'année',
+            ar: 'اختر السنة',
+          ),
+        ),
         content: SizedBox(
           width: 200,
           height: 300,
@@ -135,7 +158,7 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final dataAsync = ref.watch(_genericReportDataProvider(_buildParams()));
 
     debugPrint('=== ASYNC STATE ===');
@@ -146,7 +169,11 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
       debugPrint('value keys: ${dataAsync.value?.keys.toList()}');
     }
 
-    String title = isSwahili ? widget.titleSw : widget.title;
+    String title = _reportTr(
+      language,
+      en: widget.title,
+      sw: widget.titleSw,
+    );
     if (dataAsync.hasValue && dataAsync.value != null) {
       final data = dataAsync.value!;
       if (data.containsKey('sub_category_name') &&
@@ -186,7 +213,13 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
               widget.apiEndpoint != '/reports/statutory-schedules-report')
             IconButton(
               icon: const Icon(Icons.calendar_today),
-              tooltip: isSwahili ? 'Chagua Tarehe' : 'Select Date',
+              tooltip: _reportTr(
+                language,
+                en: 'Select Date',
+                sw: 'Chagua Tarehe',
+                fr: 'Choisir la date',
+                ar: 'اختر التاريخ',
+              ),
               onPressed: () async {
                 final picked = await showDateRangePicker(
                   context: context,
@@ -201,7 +234,13 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
             ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
+            tooltip: _reportTr(
+              language,
+              en: 'Refresh',
+              sw: 'Onyesha Upya',
+              fr: 'Actualiser',
+              ar: 'تحديث',
+            ),
             onPressed: () =>
                 ref.invalidate(_genericReportDataProvider(_buildParams())),
           ),
@@ -231,7 +270,7 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
                         child: Row(
                           children: [
                             Text(
-                              '${isSwahili ? 'Mwaka' : 'Year'}: $_selectedYear',
+                              '${_reportTr(language, en: 'Year', sw: 'Mwaka', fr: 'Année', ar: 'السنة')}: $_selectedYear',
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: Theme.of(
@@ -277,7 +316,13 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
           Expanded(
             child: dataAsync.when(
               loading: () => LoadingWidget(
-                message: isSwahili ? 'Inapakia data...' : 'Loading data...',
+                message: _reportTr(
+                  language,
+                  en: 'Loading data...',
+                  sw: 'Inapakia data...',
+                  fr: 'Chargement des données...',
+                  ar: 'جارٍ تحميل البيانات...',
+                ),
               ),
               error: (error, _) => Center(
                 child: Column(
@@ -289,24 +334,46 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
                       color: Colors.red,
                     ),
                     const SizedBox(height: 16),
-                    Text(isSwahili ? 'Hitilafu' : 'Error'),
+                    Text(
+                      _reportTr(
+                        language,
+                        en: 'Error',
+                        sw: 'Hitilafu',
+                        fr: 'Erreur',
+                        ar: 'خطأ',
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
                       onPressed: () => ref.invalidate(
                         _genericReportDataProvider(_buildParams()),
                       ),
                       icon: const Icon(Icons.refresh),
-                      label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+                      label: Text(
+                        _reportTr(
+                          language,
+                          en: 'Retry',
+                          sw: 'Jaribu tena',
+                          fr: 'Réessayer',
+                          ar: 'أعد المحاولة',
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
               data: (data) => data.isEmpty
                   ? EmptyStateWidget(
-                      message: isSwahili ? 'Hakuna data' : 'No data available',
+                      message: _reportTr(
+                        language,
+                        en: 'No data available',
+                        sw: 'Hakuna data',
+                        fr: 'Aucune donnée disponible',
+                        ar: 'لا توجد بيانات متاحة',
+                      ),
                       icon: Icons.bar_chart,
                     )
-                  : _ReportContent(data: data, isSwahili: isSwahili),
+                  : _ReportContent(data: data, language: language),
             ),
           ),
         ],
@@ -317,9 +384,9 @@ class _GenericReportScreenState extends ConsumerState<GenericReportScreen> {
 
 class _ReportContent extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _ReportContent({required this.data, required this.isSwahili});
+  const _ReportContent({required this.data, required this.language});
 
   @override
   Widget build(BuildContext context) {
@@ -338,7 +405,7 @@ class _ReportContent extends StatelessWidget {
           _DataSection(
             title: _formatLabel(key),
             items: value as List,
-            isSwahili: isSwahili,
+            language: language,
           ),
         );
       } else if (value is Map) {
@@ -346,7 +413,7 @@ class _ReportContent extends StatelessWidget {
           _DataMapSection(
             title: _formatLabel(key),
             data: Map<String, dynamic>.from(value as Map),
-            isSwahili: isSwahili,
+            language: language,
           ),
         );
       }
@@ -435,12 +502,12 @@ class _SummaryCard extends StatelessWidget {
 class _DataSection extends StatelessWidget {
   final String title;
   final List items;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _DataSection({
     required this.title,
     required this.items,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -460,8 +527,16 @@ class _DataSection extends StatelessWidget {
             if (items.isEmpty)
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Center(
-                  child: Text(isSwahili ? 'Hakuna data' : 'No data'),
+                  child: Center(
+                  child: Text(
+                    _reportTr(
+                      language,
+                      en: 'No data',
+                      sw: 'Hakuna data',
+                      fr: 'Aucune donnée',
+                      ar: 'لا توجد بيانات',
+                    ),
+                  ),
                 ),
               )
             else
@@ -480,9 +555,13 @@ class _DataSection extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  isSwahili
-                      ? '+${items.length - 10} zaidi'
-                      : '+${items.length - 10} more',
+                  _reportTr(
+                    language,
+                    en: '+${items.length - 10} more',
+                    sw: '+${items.length - 10} zaidi',
+                    fr: '+${items.length - 10} de plus',
+                    ar: '+${items.length - 10} المزيد',
+                  ),
                   style: TextStyle(
                     color: Colors.grey[600],
                     fontStyle: FontStyle.italic,
@@ -499,12 +578,12 @@ class _DataSection extends StatelessWidget {
 class _DataMapSection extends StatelessWidget {
   final String title;
   final Map<String, dynamic> data;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _DataMapSection({
     required this.title,
     required this.data,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override

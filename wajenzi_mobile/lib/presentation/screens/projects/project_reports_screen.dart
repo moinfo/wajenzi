@@ -11,6 +11,21 @@ final _projectReportsSearchProvider = StateProvider.autoDispose<String>(
   (ref) => '',
 );
 
+String _projectReportsTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class _ReportFilter {
   final DateTime? startDate;
   final DateTime? endDate;
@@ -146,7 +161,7 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final reportsAsync = ref.watch(_projectReportsProvider);
     final projectsAsync = ref.watch(_projectReportsProjectsProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final filter = ref.watch(_projectReportsFilterProvider);
     final search = ref
@@ -161,7 +176,13 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
         title: Text(
-          isSwahili ? 'Ripoti za Kila Siku za Miradi' : 'Project Daily Reports',
+          _projectReportsTr(
+            language,
+            en: 'Project Daily Reports',
+            sw: 'Ripoti za Kila Siku za Miradi',
+            fr: 'Rapports quotidiens de projet',
+            ar: 'تقارير المشاريع اليومية',
+          ),
         ),
       ),
       floatingActionButton: Padding(
@@ -188,9 +209,13 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                                   .state =
                               value,
                       decoration: InputDecoration(
-                        hintText: isSwahili
-                            ? 'Tafuta ripoti...'
-                            : 'Search reports...',
+                        hintText: _projectReportsTr(
+                          language,
+                          en: 'Search reports...',
+                          sw: 'Tafuta ripoti...',
+                          fr: 'Rechercher des rapports...',
+                          ar: 'ابحث في التقارير...',
+                        ),
                         prefixIcon: const Icon(Icons.search_rounded),
                         suffixIcon: search.isNotEmpty
                             ? IconButton(
@@ -228,7 +253,7 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                           : _ReportFilters(
                               projects: projects,
                               filter: filter,
-                              isSwahili: isSwahili,
+                              language: language,
                               isDarkMode: isDarkMode,
                             ),
                     ),
@@ -243,7 +268,7 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
               error: (e, _) => SliverFillRemaining(
                 child: _ReportsErrorView(
                   error: '$e',
-                  isSwahili: isSwahili,
+                  language: language,
                   onRetry: () => ref.invalidate(_projectReportsProvider),
                 ),
               ),
@@ -263,9 +288,13 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              isSwahili
-                                  ? 'Project Daily Reports haipatikani kwenye live API kwa sasa.'
-                                  : 'Project Daily Reports is not available on the live API right now.',
+                              _projectReportsTr(
+                                language,
+                                en: 'Project Daily Reports is not available on the live API right now.',
+                                sw: 'Project Daily Reports haipatikani kwenye live API kwa sasa.',
+                                fr: 'Les rapports quotidiens de projet ne sont pas disponibles sur l’API live pour le moment.',
+                                ar: 'تقارير المشاريع اليومية غير متاحة على واجهة الـ API المباشرة حالياً.',
+                              ),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -311,12 +340,20 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                           const SizedBox(height: 16),
                           Text(
                             allItems.isEmpty
-                                ? (isSwahili
-                                      ? 'Hakuna ripoti za kila siku za miradi'
-                                      : 'No project daily reports found')
-                                : (isSwahili
-                                      ? 'Hakuna matokeo yanayolingana'
-                                      : 'No reports match your search'),
+                                ? _projectReportsTr(
+                                    language,
+                                    en: 'No project daily reports found',
+                                    sw: 'Hakuna ripoti za kila siku za miradi',
+                                    fr: 'Aucun rapport quotidien de projet trouvé',
+                                    ar: 'لم يتم العثور على تقارير مشاريع يومية',
+                                  )
+                                : _projectReportsTr(
+                                    language,
+                                    en: 'No reports match your search',
+                                    sw: 'Hakuna matokeo yanayolingana',
+                                    fr: 'Aucun rapport ne correspond à votre recherche',
+                                    ar: 'لا توجد تقارير تطابق بحثك',
+                                  ),
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -334,7 +371,15 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                                           .state =
                                       '',
                               icon: const Icon(Icons.arrow_back_rounded),
-                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                              label: Text(
+                                _projectReportsTr(
+                                  language,
+                                  en: 'Back',
+                                  sw: 'Rudi',
+                                  fr: 'Retour',
+                                  ar: 'رجوع',
+                                ),
+                              ),
                             ),
                           ],
                         ],
@@ -353,21 +398,39 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                           children: [
                             Expanded(
                               child: _StatChip(
-                                label: isSwahili ? 'Jumla' : 'Total',
+                                label: _projectReportsTr(
+                                  language,
+                                  en: 'Total',
+                                  sw: 'Jumla',
+                                  fr: 'Total',
+                                  ar: 'الإجمالي',
+                                ),
                                 value: '${meta['total'] ?? items.length}',
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: _StatChip(
-                                label: isSwahili ? 'Ripoti za Siku' : 'Daily',
+                                label: _projectReportsTr(
+                                  language,
+                                  en: 'Daily',
+                                  sw: 'Ripoti za Siku',
+                                  fr: 'Quotidien',
+                                  ar: 'يومي',
+                                ),
                                 value: '${meta['daily_reports'] ?? 0}',
                               ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: _StatChip(
-                                label: isSwahili ? 'Ziara' : 'Visits',
+                                label: _projectReportsTr(
+                                  language,
+                                  en: 'Visits',
+                                  sw: 'Ziara',
+                                  fr: 'Visites',
+                                  ar: 'الزيارات',
+                                ),
                                 value: '${meta['site_visits'] ?? 0}',
                               ),
                             ),
@@ -377,7 +440,7 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
                       ...items.map(
                         (item) => _ReportItemCard(
                           item: item,
-                          isSwahili: isSwahili,
+                          language: language,
                           isDarkMode: isDarkMode,
                           onTap: () => _openReportDetails(item),
                           onEdit: () => _openReportForm(report: item),
@@ -397,28 +460,54 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
   }
 
   Future<void> _deleteReport(Map<String, dynamic> item) async {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final id = item['id'] as int?;
     if (id == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(
-          isSwahili ? 'Futa Ripoti ya Mradi' : 'Delete Project Daily Report',
+          _projectReportsTr(
+            language,
+            en: 'Delete Project Daily Report',
+            sw: 'Futa Ripoti ya Mradi',
+            fr: 'Supprimer le rapport quotidien de projet',
+            ar: 'حذف تقرير المشروع اليومي',
+          ),
         ),
         content: Text(
-          isSwahili
-              ? 'Una uhakika unataka kufuta ripoti hii?'
-              : 'Are you sure you want to delete this report?',
+          _projectReportsTr(
+            language,
+            en: 'Are you sure you want to delete this report?',
+            sw: 'Una uhakika unataka kufuta ripoti hii?',
+            fr: 'Voulez-vous vraiment supprimer ce rapport ?',
+            ar: 'هل أنت متأكد أنك تريد حذف هذا التقرير؟',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+            child: Text(
+              _projectReportsTr(
+                language,
+                en: 'Cancel',
+                sw: 'Ghairi',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(isSwahili ? 'Futa' : 'Delete'),
+            child: Text(
+              _projectReportsTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
+            ),
           ),
         ],
       ),
@@ -431,7 +520,13 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isSwahili ? 'Ripoti imefutwa' : 'Report deleted successfully',
+              _projectReportsTr(
+                language,
+                en: 'Report deleted successfully',
+                sw: 'Ripoti imefutwa',
+                fr: 'Rapport supprimé avec succès',
+                ar: 'تم حذف التقرير بنجاح',
+              ),
             ),
             backgroundColor: AppColors.success,
           ),
@@ -454,20 +549,28 @@ class _ProjectReportsScreenState extends ConsumerState<ProjectReportsScreen> {
 class _ReportFilters extends ConsumerWidget {
   final List projects;
   final _ReportFilter filter;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _ReportFilters({
     required this.projects,
     required this.filter,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ExpansionTile(
-      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      title: Text(
+        _projectReportsTr(
+          language,
+          en: 'Filters',
+          sw: 'Vichungi',
+          fr: 'Filtres',
+          ar: 'عوامل التصفية',
+        ),
+      ),
       initiallyExpanded:
           filter.projectId != null ||
           filter.startDate != null ||
@@ -483,7 +586,13 @@ class _ReportFilters extends ConsumerWidget {
       ),
       children: [
         _Drop<int>(
-          label: isSwahili ? 'Mradi' : 'Project',
+          label: _projectReportsTr(
+            language,
+            en: 'Project',
+            sw: 'Mradi',
+            fr: 'Projet',
+            ar: 'المشروع',
+          ),
           value: filter.projectId,
           items: projects.cast<Map<String, dynamic>>(),
           onChanged: (v) =>
@@ -520,7 +629,13 @@ class _ReportFilters extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                            _projectReportsTr(
+                              language,
+                              en: 'Start Date',
+                              sw: 'Tarehe ya Kuanza',
+                              fr: 'Date de début',
+                              ar: 'تاريخ البدء',
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[600],
@@ -569,7 +684,13 @@ class _ReportFilters extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                            _projectReportsTr(
+                              language,
+                              en: 'End Date',
+                              sw: 'Tarehe ya Mwisho',
+                              fr: 'Date de fin',
+                              ar: 'تاريخ الانتهاء',
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[600],
@@ -599,7 +720,15 @@ class _ReportFilters extends ConsumerWidget {
             onPressed: () =>
                 ref.read(_projectReportsFilterProvider.notifier).state =
                     _ReportFilter(),
-            child: Text(isSwahili ? 'Futa' : 'Clear'),
+            child: Text(
+              _projectReportsTr(
+                language,
+                en: 'Clear',
+                sw: 'Futa',
+                fr: 'Effacer',
+                ar: 'مسح',
+              ),
+            ),
           ),
       ],
     );
@@ -687,7 +816,7 @@ class _StatChip extends StatelessWidget {
 
 class _ReportItemCard extends StatelessWidget {
   final Map<String, dynamic> item;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
   final VoidCallback onTap;
   final VoidCallback onEdit;
@@ -695,7 +824,7 @@ class _ReportItemCard extends StatelessWidget {
 
   const _ReportItemCard({
     required this.item,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
     required this.onTap,
     required this.onEdit,
@@ -730,10 +859,20 @@ class _ReportItemCard extends StatelessWidget {
                   ),
                   child: Text(
                     isVisit
-                        ? (isSwahili ? 'Ziara ya Tovuti' : 'Site Visit')
-                        : (isSwahili
-                              ? 'Ripoti ya Kila Siku ya Mradi'
-                              : 'Project Daily Report'),
+                        ? _projectReportsTr(
+                            language,
+                            en: 'Site Visit',
+                            sw: 'Ziara ya Tovuti',
+                            fr: 'Visite de site',
+                            ar: 'زيارة ميدانية',
+                          )
+                        : _projectReportsTr(
+                            language,
+                            en: 'Project Daily Report',
+                            sw: 'Ripoti ya Kila Siku ya Mradi',
+                            fr: 'Rapport quotidien de projet',
+                            ar: 'تقرير المشروع اليومي',
+                          ),
                     style: TextStyle(
                       color: accent,
                       fontSize: 11,
@@ -751,15 +890,39 @@ class _ReportItemCard extends StatelessWidget {
                   itemBuilder: (_) => [
                     PopupMenuItem(
                       value: 'view',
-                      child: Text(isSwahili ? 'Tazama' : 'View'),
+                      child: Text(
+                        _projectReportsTr(
+                          language,
+                          en: 'View',
+                          sw: 'Tazama',
+                          fr: 'Voir',
+                          ar: 'عرض',
+                        ),
+                      ),
                     ),
                     PopupMenuItem(
                       value: 'edit',
-                      child: Text(isSwahili ? 'Hariri' : 'Edit'),
+                      child: Text(
+                        _projectReportsTr(
+                          language,
+                          en: 'Edit',
+                          sw: 'Hariri',
+                          fr: 'Modifier',
+                          ar: 'تعديل',
+                        ),
+                      ),
                     ),
                     PopupMenuItem(
                       value: 'delete',
-                      child: Text(isSwahili ? 'Futa' : 'Delete'),
+                      child: Text(
+                        _projectReportsTr(
+                          language,
+                          en: 'Delete',
+                          sw: 'Futa',
+                          fr: 'Supprimer',
+                          ar: 'حذف',
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -841,7 +1004,7 @@ class _ProjectDailyReportDetailSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     return FutureBuilder<Map<String, dynamic>>(
       future: () async {
         try {
@@ -867,9 +1030,13 @@ class _ProjectDailyReportDetailSheet extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _ProjectDailyReportHeader(
-                  title: isSwahili
-                      ? 'Maelezo ya Ripoti ya Mradi'
-                      : 'Project Daily Report Details',
+                  title: _projectReportsTr(
+                    language,
+                    en: 'Project Daily Report Details',
+                    sw: 'Maelezo ya Ripoti ya Mradi',
+                    fr: 'Détails du rapport quotidien de projet',
+                    ar: 'تفاصيل تقرير المشروع اليومي',
+                  ),
                   onBack: () => Navigator.pop(context),
                 ),
                 Flexible(
@@ -915,7 +1082,15 @@ class _ProjectDailyReportDetailSheet extends ConsumerWidget {
                           Expanded(
                             child: OutlinedButton(
                               onPressed: onEdit,
-                              child: Text(isSwahili ? 'Hariri' : 'Edit'),
+                              child: Text(
+                                _projectReportsTr(
+                                  language,
+                                  en: 'Edit',
+                                  sw: 'Hariri',
+                                  fr: 'Modifier',
+                                  ar: 'تعديل',
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -925,7 +1100,15 @@ class _ProjectDailyReportDetailSheet extends ConsumerWidget {
                                 Navigator.pop(context);
                                 onDeleted();
                               },
-                              child: Text(isSwahili ? 'Funga' : 'Close'),
+                              child: Text(
+                                _projectReportsTr(
+                                  language,
+                                  en: 'Close',
+                                  sw: 'Funga',
+                                  fr: 'Fermer',
+                                  ar: 'إغلاق',
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -1004,7 +1187,7 @@ class _ProjectDailyReportFormSheetState
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final projectsAsync = ref.watch(_projectReportsProjectsProvider);
     return Container(
       decoration: const BoxDecoration(
@@ -1027,12 +1210,20 @@ class _ProjectDailyReportFormSheetState
                 children: [
                   _ProjectDailyReportHeader(
                     title: _isNew
-                        ? (isSwahili
-                              ? 'Ripoti Mpya ya Mradi'
-                              : 'New Project Daily Report')
-                        : (isSwahili
-                              ? 'Hariri Ripoti ya Mradi'
-                              : 'Edit Project Daily Report'),
+                        ? _projectReportsTr(
+                            language,
+                            en: 'New Project Daily Report',
+                            sw: 'Ripoti Mpya ya Mradi',
+                            fr: 'Nouveau rapport quotidien de projet',
+                            ar: 'تقرير مشروع يومي جديد',
+                          )
+                        : _projectReportsTr(
+                            language,
+                            en: 'Edit Project Daily Report',
+                            sw: 'Hariri Ripoti ya Mradi',
+                            fr: 'Modifier le rapport quotidien de projet',
+                            ar: 'تعديل تقرير المشروع اليومي',
+                          ),
                     onBack: () => Navigator.pop(context),
                   ),
                   Padding(
@@ -1040,7 +1231,13 @@ class _ProjectDailyReportFormSheetState
                     child: Column(
                       children: [
                         _Drop<int>(
-                          label: 'Project',
+                          label: _projectReportsTr(
+                            language,
+                            en: 'Project',
+                            sw: 'Mradi',
+                            fr: 'Projet',
+                            ar: 'المشروع',
+                          ),
                           value: _projectId,
                           items: (projects as List)
                               .cast<Map<String, dynamic>>(),
@@ -1048,44 +1245,80 @@ class _ProjectDailyReportFormSheetState
                           displayField: 'project_name',
                         ),
                         _DateInput(
-                          label: 'Report Date',
+                          label: _projectReportsTr(
+                            language,
+                            en: 'Report Date',
+                            sw: 'Tarehe ya Ripoti',
+                            fr: 'Date du rapport',
+                            ar: 'تاريخ التقرير',
+                          ),
                           controller: _reportDate,
                         ),
                         TextFormField(
                           controller: _weatherConditions,
-                          decoration: const InputDecoration(
-                            labelText: 'Weather Conditions',
+                          decoration: InputDecoration(
+                            labelText: _projectReportsTr(
+                              language,
+                              en: 'Weather Conditions',
+                              sw: 'Hali ya Hewa',
+                              fr: 'Conditions météorologiques',
+                              ar: 'حالة الطقس',
+                            ),
                           ),
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _workCompleted,
-                          decoration: const InputDecoration(
-                            labelText: 'Work Completed',
+                          decoration: InputDecoration(
+                            labelText: _projectReportsTr(
+                              language,
+                              en: 'Work Completed',
+                              sw: 'Kazi Iliyokamilika',
+                              fr: 'Travail terminé',
+                              ar: 'العمل المنجز',
+                            ),
                           ),
                           maxLines: 3,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _materialsUsed,
-                          decoration: const InputDecoration(
-                            labelText: 'Materials Used',
+                          decoration: InputDecoration(
+                            labelText: _projectReportsTr(
+                              language,
+                              en: 'Materials Used',
+                              sw: 'Vifaa Vilivyotumika',
+                              fr: 'Matériaux utilisés',
+                              ar: 'المواد المستخدمة',
+                            ),
                           ),
                           maxLines: 3,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _laborHours,
-                          decoration: const InputDecoration(
-                            labelText: 'Labor Hours',
+                          decoration: InputDecoration(
+                            labelText: _projectReportsTr(
+                              language,
+                              en: 'Labor Hours',
+                              sw: 'Saa za Kazi',
+                              fr: 'Heures de travail',
+                              ar: 'ساعات العمل',
+                            ),
                           ),
                           keyboardType: TextInputType.number,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
                           controller: _issuesFaced,
-                          decoration: const InputDecoration(
-                            labelText: 'Issues Faced',
+                          decoration: InputDecoration(
+                            labelText: _projectReportsTr(
+                              language,
+                              en: 'Issues Faced',
+                              sw: 'Changamoto Zilizopatikana',
+                              fr: 'Problèmes rencontrés',
+                              ar: 'المشكلات التي تمت مواجهتها',
+                            ),
                           ),
                           maxLines: 3,
                         ),
@@ -1105,8 +1338,20 @@ class _ProjectDailyReportFormSheetState
                                   )
                                 : Text(
                                     _isNew
-                                        ? (isSwahili ? 'Hifadhi' : 'Save')
-                                        : (isSwahili ? 'Sasisha' : 'Update'),
+                                        ? _projectReportsTr(
+                                            language,
+                                            en: 'Save',
+                                            sw: 'Hifadhi',
+                                            fr: 'Enregistrer',
+                                            ar: 'حفظ',
+                                          )
+                                        : _projectReportsTr(
+                                            language,
+                                            en: 'Update',
+                                            sw: 'Sasisha',
+                                            fr: 'Mettre à jour',
+                                            ar: 'تحديث',
+                                          ),
                                   ),
                           ),
                         ),
@@ -1124,8 +1369,19 @@ class _ProjectDailyReportFormSheetState
 
   Future<void> _submit() async {
     if (_projectId == null) {
+      final language = ref.read(currentLanguageProvider);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Project is required')),
+        SnackBar(
+          content: Text(
+            _projectReportsTr(
+              language,
+              en: 'Project is required',
+              sw: 'Mradi unahitajika',
+              fr: 'Le projet est requis',
+              ar: 'المشروع مطلوب',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -1312,12 +1568,12 @@ int? _toInt(dynamic value) {
 
 class _ReportsErrorView extends StatelessWidget {
   final String error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ReportsErrorView({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -1331,7 +1587,13 @@ class _ReportsErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _projectReportsTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un problème est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -1346,7 +1608,15 @@ class _ReportsErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _projectReportsTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Réessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

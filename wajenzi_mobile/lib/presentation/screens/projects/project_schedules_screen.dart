@@ -10,6 +10,21 @@ import '../../providers/settings_provider.dart';
 
 final _schedulesSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
+String _scheduleTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class _ScheduleFilter {
   final DateTime? startDate;
   final DateTime? endDate;
@@ -91,7 +106,7 @@ final _projectScheduleDetailProvider = FutureProvider.autoDispose
           : const <String, dynamic>{};
     });
 
-String _scheduleErrorMessage(Object error, bool isSwahili) {
+String _scheduleErrorMessage(Object error, AppLanguage language) {
   if (error is DioException) {
     final data = error.response?.data;
     if (data is Map) {
@@ -102,7 +117,13 @@ String _scheduleErrorMessage(Object error, bool isSwahili) {
     }
   }
 
-  return isSwahili ? 'Hitilafu imetokea' : 'Something went wrong';
+  return _scheduleTr(
+    language,
+    en: 'Something went wrong',
+    sw: 'Hitilafu imetokea',
+    fr: 'Un problème est survenu',
+    ar: 'حدث خطأ ما',
+  );
 }
 
 class ProjectSchedulesScreen extends ConsumerStatefulWidget {
@@ -119,7 +140,7 @@ class _ProjectSchedulesScreenState
   Widget build(BuildContext context) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final schedulesAsync = ref.watch(_projectSchedulesProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final filter = ref.watch(_schedulesFilterProvider);
     final search = ref.watch(_schedulesSearchProvider).trim().toLowerCase();
@@ -130,7 +151,15 @@ class _ProjectSchedulesScreenState
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Ratiba za Miradi' : 'Project Schedules'),
+        title: Text(
+          _scheduleTr(
+            language,
+            en: 'Project Schedules',
+            sw: 'Ratiba za Miradi',
+            fr: 'Plannings de projet',
+            ar: 'جداول المشاريع',
+          ),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_projectSchedulesProvider),
@@ -147,9 +176,13 @@ class _ProjectSchedulesScreenState
                           ref.read(_schedulesSearchProvider.notifier).state =
                               value,
                       decoration: InputDecoration(
-                        hintText: isSwahili
-                            ? 'Tafuta ratiba...'
-                            : 'Search schedules...',
+                        hintText: _scheduleTr(
+                          language,
+                          en: 'Search schedules...',
+                          sw: 'Tafuta ratiba...',
+                          fr: 'Rechercher des plannings...',
+                          ar: 'ابحث في الجداول...',
+                        ),
                         prefixIcon: const Icon(Icons.search_rounded),
                         suffixIcon: search.isNotEmpty
                             ? IconButton(
@@ -180,7 +213,7 @@ class _ProjectSchedulesScreenState
                     const SizedBox(height: 12),
                     _ScheduleFilters(
                       filter: filter,
-                      isSwahili: isSwahili,
+                      language: language,
                       isDarkMode: isDarkMode,
                     ),
                   ],
@@ -193,8 +226,8 @@ class _ProjectSchedulesScreenState
               ),
               error: (error, _) => SliverFillRemaining(
                 child: _ScheduleErrorView(
-                  message: _scheduleErrorMessage(error, isSwahili),
-                  isSwahili: isSwahili,
+                  message: _scheduleErrorMessage(error, language),
+                  language: language,
                   onRetry: () => ref.invalidate(_projectSchedulesProvider),
                 ),
               ),
@@ -214,9 +247,13 @@ class _ProjectSchedulesScreenState
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              isSwahili
-                                  ? 'Project Schedules haipatikani kwenye live API kwa sasa.'
-                                  : 'Project Schedules is not available on the live API right now.',
+                              _scheduleTr(
+                                language,
+                                en: 'Project Schedules is not available on the live API right now.',
+                                sw: 'Project Schedules haipatikani kwenye live API kwa sasa.',
+                                fr: 'Les plannings de projet ne sont pas disponibles sur l’API live pour le moment.',
+                                ar: 'جداول المشاريع غير متاحة على واجهة الـ API المباشرة حالياً.',
+                              ),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -226,9 +263,13 @@ class _ProjectSchedulesScreenState
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              isSwahili
-                                  ? 'Njia ya /api/v1/project-schedules haipo live, kwa hiyo screen ya native haiwezi kupakia data bado.'
-                                  : 'The /api/v1/project-schedules route is missing on live, so the native screen cannot load data yet.',
+                              _scheduleTr(
+                                language,
+                                en: 'The /api/v1/project-schedules route is missing on live, so the native screen cannot load data yet.',
+                                sw: 'Njia ya /api/v1/project-schedules haipo live, kwa hiyo screen ya native haiwezi kupakia data bado.',
+                                fr: 'La route /api/v1/project-schedules est absente en production, donc l’écran natif ne peut pas encore charger les données.',
+                                ar: 'مسار /api/v1/project-schedules غير موجود على الخادم المباشر، لذلك لا يمكن للشاشة الأصلية تحميل البيانات بعد.',
+                              ),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 13,
@@ -271,12 +312,20 @@ class _ProjectSchedulesScreenState
                           const SizedBox(height: 16),
                           Text(
                             allItems.isEmpty
-                                ? (isSwahili
-                                      ? 'Hakuna ratiba zilizopatikana'
-                                      : 'No project schedules found')
-                                : (isSwahili
-                                      ? 'Hakuna matokeo yanayolingana'
-                                      : 'No schedules match your search'),
+                                ? _scheduleTr(
+                                    language,
+                                    en: 'No project schedules found',
+                                    sw: 'Hakuna ratiba zilizopatikana',
+                                    fr: 'Aucun planning de projet trouvé',
+                                    ar: 'لم يتم العثور على جداول مشاريع',
+                                  )
+                                : _scheduleTr(
+                                    language,
+                                    en: 'No schedules match your search',
+                                    sw: 'Hakuna matokeo yanayolingana',
+                                    fr: 'Aucun planning ne correspond à votre recherche',
+                                    ar: 'لا توجد جداول تطابق بحثك',
+                                  ),
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -293,7 +342,15 @@ class _ProjectSchedulesScreenState
                                           .state =
                                       '',
                               icon: const Icon(Icons.arrow_back_rounded),
-                              label: Text(isSwahili ? 'Rudi' : 'Back'),
+                              label: Text(
+                                _scheduleTr(
+                                  language,
+                                  en: 'Back',
+                                  sw: 'Rudi',
+                                  fr: 'Retour',
+                                  ar: 'رجوع',
+                                ),
+                              ),
                             ),
                           ],
                         ],
@@ -308,7 +365,7 @@ class _ProjectSchedulesScreenState
                     delegate: SliverChildBuilderDelegate((context, index) {
                       return _ScheduleCard(
                         schedule: schedules[index],
-                        isSwahili: isSwahili,
+                        language: language,
                         isDarkMode: isDarkMode,
                         onView: () => _showDetails(
                           context,
@@ -345,7 +402,7 @@ class _ProjectSchedulesScreenState
     BuildContext context,
     Map<String, dynamic> schedule,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final isDarkMode = ref.read(isDarkModeProvider);
 
     final confirmed = await showDialog<bool>(
@@ -353,15 +410,25 @@ class _ProjectSchedulesScreenState
       builder: (ctx) => AlertDialog(
         backgroundColor: isDarkMode ? const Color(0xFF1A1A2E) : Colors.white,
         title: Text(
-          isSwahili ? 'Futa Ratiba' : 'Delete Schedule',
+          _scheduleTr(
+            language,
+            en: 'Delete Schedule',
+            sw: 'Futa Ratiba',
+            fr: 'Supprimer le planning',
+            ar: 'حذف الجدول',
+          ),
           style: TextStyle(
             color: isDarkMode ? Colors.white : AppColors.textPrimary,
           ),
         ),
         content: Text(
-          isSwahili
-              ? 'Je, una uhakika unataka kufuta ratiba hii?'
-              : 'Are you sure you want to delete this schedule?',
+          _scheduleTr(
+            language,
+            en: 'Are you sure you want to delete this schedule?',
+            sw: 'Je, una uhakika unataka kufuta ratiba hii?',
+            fr: 'Voulez-vous vraiment supprimer ce planning ?',
+            ar: 'هل أنت متأكد أنك تريد حذف هذا الجدول؟',
+          ),
           style: TextStyle(
             color: isDarkMode ? Colors.white70 : AppColors.textSecondary,
           ),
@@ -369,12 +436,26 @@ class _ProjectSchedulesScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isSwahili ? 'Cancel' : 'Cancel'),
+            child: Text(
+              _scheduleTr(
+                language,
+                en: 'Cancel',
+                sw: 'Ghairi',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              isSwahili ? 'Futa' : 'Delete',
+              _scheduleTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
               style: const TextStyle(color: AppColors.error),
             ),
           ),
@@ -392,7 +473,15 @@ class _ProjectSchedulesScreenState
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSwahili ? 'Ratiba imefutwa' : 'Schedule deleted'),
+            content: Text(
+              _scheduleTr(
+                language,
+                en: 'Schedule deleted',
+                sw: 'Ratiba imefutwa',
+                fr: 'Planning supprimé',
+                ar: 'تم حذف الجدول',
+              ),
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -401,7 +490,7 @@ class _ProjectSchedulesScreenState
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_scheduleErrorMessage(e, isSwahili)),
+            content: Text(_scheduleErrorMessage(e, language)),
             backgroundColor: AppColors.error,
           ),
         );
@@ -412,19 +501,27 @@ class _ProjectSchedulesScreenState
 
 class _ScheduleFilters extends ConsumerWidget {
   final _ScheduleFilter filter;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
 
   const _ScheduleFilters({
     required this.filter,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ExpansionTile(
-      title: Text(isSwahili ? 'Vichungi' : 'Filters'),
+      title: Text(
+        _scheduleTr(
+          language,
+          en: 'Filters',
+          sw: 'Vichungi',
+          fr: 'Filtres',
+          ar: 'عوامل التصفية',
+        ),
+      ),
       initiallyExpanded:
           filter.status != null ||
           filter.startDate != null ||
@@ -440,7 +537,7 @@ class _ScheduleFilters extends ConsumerWidget {
       ),
       children: [
         _StatusFilterChips(
-          isSwahili: isSwahili,
+          language: language,
           isDarkMode: isDarkMode,
           selectedStatus: filter.status,
           onChanged: (value) =>
@@ -476,7 +573,13 @@ class _ScheduleFilters extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSwahili ? 'Tarehe ya Kuanza' : 'Start Date',
+                            _scheduleTr(
+                              language,
+                              en: 'Start Date',
+                              sw: 'Tarehe ya Kuanza',
+                              fr: 'Date de début',
+                              ar: 'تاريخ البدء',
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[600],
@@ -525,7 +628,13 @@ class _ScheduleFilters extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSwahili ? 'Tarehe ya Mwisho' : 'End Date',
+                            _scheduleTr(
+                              language,
+                              en: 'End Date',
+                              sw: 'Tarehe ya Mwisho',
+                              fr: 'Date de fin',
+                              ar: 'تاريخ الانتهاء',
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: Colors.grey[600],
@@ -557,7 +666,15 @@ class _ScheduleFilters extends ConsumerWidget {
               onPressed: () =>
                   ref.read(_schedulesFilterProvider.notifier).state =
                       _ScheduleFilter(),
-              child: Text(isSwahili ? 'Futa' : 'Clear'),
+              child: Text(
+                _scheduleTr(
+                  language,
+                  en: 'Clear',
+                  sw: 'Futa',
+                  fr: 'Effacer',
+                  ar: 'مسح',
+                ),
+              ),
             ),
           ),
       ],
@@ -566,13 +683,13 @@ class _ScheduleFilters extends ConsumerWidget {
 }
 
 class _StatusFilterChips extends StatelessWidget {
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
   final String? selectedStatus;
   final ValueChanged<String?> onChanged;
 
   const _StatusFilterChips({
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
     required this.selectedStatus,
     required this.onChanged,
@@ -581,11 +698,41 @@ class _StatusFilterChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final options = <String?, String>{
-      null: isSwahili ? 'Zote' : 'All',
-      'pending': isSwahili ? 'Inasubiri' : 'Pending',
-      'in_progress': isSwahili ? 'Inaendelea' : 'In Progress',
-      'completed': isSwahili ? 'Imekamilika' : 'Completed',
-      'cancelled': isSwahili ? 'Imefutwa' : 'Cancelled',
+      null: _scheduleTr(
+        language,
+        en: 'All',
+        sw: 'Zote',
+        fr: 'Tous',
+        ar: 'الكل',
+      ),
+      'pending': _scheduleTr(
+        language,
+        en: 'Pending',
+        sw: 'Inasubiri',
+        fr: 'En attente',
+        ar: 'قيد الانتظار',
+      ),
+      'in_progress': _scheduleTr(
+        language,
+        en: 'In Progress',
+        sw: 'Inaendelea',
+        fr: 'En cours',
+        ar: 'قيد التنفيذ',
+      ),
+      'completed': _scheduleTr(
+        language,
+        en: 'Completed',
+        sw: 'Imekamilika',
+        fr: 'Terminé',
+        ar: 'مكتمل',
+      ),
+      'cancelled': _scheduleTr(
+        language,
+        en: 'Cancelled',
+        sw: 'Imefutwa',
+        fr: 'Annulé',
+        ar: 'ملغي',
+      ),
     };
 
     return SingleChildScrollView(
@@ -626,7 +773,7 @@ class _StatusFilterChips extends StatelessWidget {
 
 class _ScheduleCard extends StatelessWidget {
   final Map<String, dynamic> schedule;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
   final VoidCallback onView;
   final VoidCallback onDelete;
@@ -634,7 +781,7 @@ class _ScheduleCard extends StatelessWidget {
 
   const _ScheduleCard({
     required this.schedule,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
     required this.onView,
     required this.onDelete,
@@ -704,7 +851,15 @@ class _ScheduleCard extends StatelessWidget {
                             children: [
                               const Icon(Icons.visibility, size: 20),
                               const SizedBox(width: 8),
-                              Text(isSwahili ? 'Tazama' : 'View'),
+                              Text(
+                                _scheduleTr(
+                                  language,
+                                  en: 'View',
+                                  sw: 'Tazama',
+                                  fr: 'Voir',
+                                  ar: 'عرض',
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -722,7 +877,13 @@ class _ScheduleCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  isSwahili ? 'Futa' : 'Delete',
+                                  _scheduleTr(
+                                    language,
+                                    en: 'Delete',
+                                    sw: 'Futa',
+                                    fr: 'Supprimer',
+                                    ar: 'حذف',
+                                  ),
                                   style: const TextStyle(color: AppColors.error),
                                 ),
                               ],
@@ -736,18 +897,36 @@ class _ScheduleCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              _statusChip(schedule['status']?.toString()),
+              _statusChip(schedule['status']?.toString(), language: language),
               const SizedBox(height: 12),
               _metaRow(
-                isSwahili ? 'Architect' : 'Architect',
+                _scheduleTr(
+                  language,
+                  en: 'Architect',
+                  sw: 'Architect',
+                  fr: 'Architecte',
+                  ar: 'المعماري',
+                ),
                 schedule['assigned_architect_name'],
               ),
               _metaRow(
-                isSwahili ? 'Start' : 'Start',
+                _scheduleTr(
+                  language,
+                  en: 'Start',
+                  sw: 'Start',
+                  fr: 'Début',
+                  ar: 'البداية',
+                ),
                 _formatDate(schedule['start_date']?.toString()),
               ),
               _metaRow(
-                isSwahili ? 'End' : 'End',
+                _scheduleTr(
+                  language,
+                  en: 'End',
+                  sw: 'End',
+                  fr: 'Fin',
+                  ar: 'النهاية',
+                ),
                 _formatDate(schedule['end_date']?.toString()),
               ),
               const SizedBox(height: 10),
@@ -762,9 +941,13 @@ class _ScheduleCard extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                isSwahili
-                    ? 'Maendeleo: ${percent.toStringAsFixed(1)}%'
-                    : 'Progress: ${percent.toStringAsFixed(1)}%',
+                '${_scheduleTr(
+                  language,
+                  en: 'Progress',
+                  sw: 'Maendeleo',
+                  fr: 'Progression',
+                  ar: 'التقدم',
+                )}: ${percent.toStringAsFixed(1)}%',
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
@@ -797,7 +980,7 @@ class _ScheduleDetailSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detailAsync = ref.watch(_projectScheduleDetailProvider(id));
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Container(
@@ -810,8 +993,8 @@ class _ScheduleDetailSheet extends ConsumerWidget {
         child: detailAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _ScheduleErrorView(
-            message: _scheduleErrorMessage(error, isSwahili),
-            isSwahili: isSwahili,
+            message: _scheduleErrorMessage(error, language),
+            language: language,
             onRetry: () => ref.invalidate(_projectScheduleDetailProvider(id)),
           ),
           data: (schedule) {
@@ -863,7 +1046,10 @@ class _ScheduleDetailSheet extends ConsumerWidget {
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          _statusChip(schedule['status']?.toString()),
+                          _statusChip(
+                            schedule['status']?.toString(),
+                            language: language,
+                          ),
                           _infoChip(
                             Icons.person_outline,
                             (schedule['assigned_architect_name'] ?? '-')
@@ -873,34 +1059,70 @@ class _ScheduleDetailSheet extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       _detailLine(
-                        isSwahili ? 'Client' : 'Client',
+                        _scheduleTr(
+                          language,
+                          en: 'Client',
+                          sw: 'Mteja',
+                          fr: 'Client',
+                          ar: 'العميل',
+                        ),
                         schedule['client_name'],
                       ),
                       _detailLine(
-                        isSwahili ? 'Start Date' : 'Start Date',
+                        _scheduleTr(
+                          language,
+                          en: 'Start Date',
+                          sw: 'Tarehe ya Kuanza',
+                          fr: 'Date de début',
+                          ar: 'تاريخ البدء',
+                        ),
                         _formatDate(schedule['start_date']?.toString()),
                       ),
                       _detailLine(
-                        isSwahili ? 'End Date' : 'End Date',
+                        _scheduleTr(
+                          language,
+                          en: 'End Date',
+                          sw: 'Tarehe ya Mwisho',
+                          fr: 'Date de fin',
+                          ar: 'تاريخ الانتهاء',
+                        ),
                         _formatDate(schedule['end_date']?.toString()),
                       ),
                       _detailLine(
-                        isSwahili ? 'Notes' : 'Notes',
+                        _scheduleTr(
+                          language,
+                          en: 'Notes',
+                          sw: 'Maelezo',
+                          fr: 'Notes',
+                          ar: 'ملاحظات',
+                        ),
                         schedule['notes'],
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        isSwahili ? 'Maendeleo' : 'Progress',
+                        _scheduleTr(
+                          language,
+                          en: 'Progress',
+                          sw: 'Maendeleo',
+                          fr: 'Progression',
+                          ar: 'التقدم',
+                        ),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 10),
-                      _progressGrid(progress: progress, isSwahili: isSwahili),
+                      _progressGrid(progress: progress, language: language),
                       const SizedBox(height: 20),
                       Text(
-                        isSwahili ? 'Shughuli' : 'Activities',
+                        _scheduleTr(
+                          language,
+                          en: 'Activities',
+                          sw: 'Shughuli',
+                          fr: 'Activités',
+                          ar: 'الأنشطة',
+                        ),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -909,9 +1131,13 @@ class _ScheduleDetailSheet extends ConsumerWidget {
                       const SizedBox(height: 12),
                       if (activities.isEmpty)
                         Text(
-                          isSwahili
-                              ? 'Hakuna shughuli zilizopatikana'
-                              : 'No activities found',
+                          _scheduleTr(
+                            language,
+                            en: 'No activities found',
+                            sw: 'Hakuna shughuli zilizopatikana',
+                            fr: 'Aucune activité trouvée',
+                            ar: 'لم يتم العثور على أنشطة',
+                          ),
                           style: const TextStyle(
                             color: AppColors.textSecondary,
                           ),
@@ -950,34 +1176,79 @@ class _ScheduleDetailSheet extends ConsumerWidget {
                                         ],
                                       ),
                                     ),
-                                    _statusChip(activity['status']?.toString()),
+                                    _statusChip(
+                                      activity['status']?.toString(),
+                                      language: language,
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 10),
                                 _detailLine(
-                                  isSwahili ? 'Assigned To' : 'Assigned To',
+                                  _scheduleTr(
+                                    language,
+                                    en: 'Assigned To',
+                                    sw: 'Aliyekabidhiwa',
+                                    fr: 'Assigné à',
+                                    ar: 'مُسند إلى',
+                                  ),
                                   activity['assigned_user_name'],
                                 ),
                                 _detailLine(
-                                  isSwahili ? 'Role' : 'Role',
+                                  _scheduleTr(
+                                    language,
+                                    en: 'Role',
+                                    sw: 'Jukumu',
+                                    fr: 'Rôle',
+                                    ar: 'الدور',
+                                  ),
                                   activity['role_name'],
                                 ),
                                 _detailLine(
-                                  isSwahili ? 'Start' : 'Start',
+                                  _scheduleTr(
+                                    language,
+                                    en: 'Start',
+                                    sw: 'Mwanzo',
+                                    fr: 'Début',
+                                    ar: 'البداية',
+                                  ),
                                   _formatDate(
                                     activity['start_date']?.toString(),
                                   ),
                                 ),
                                 _detailLine(
-                                  isSwahili ? 'End' : 'End',
+                                  _scheduleTr(
+                                    language,
+                                    en: 'End',
+                                    sw: 'Mwisho',
+                                    fr: 'Fin',
+                                    ar: 'النهاية',
+                                  ),
                                   _formatDate(activity['end_date']?.toString()),
                                 ),
                                 _detailLine(
-                                  isSwahili ? 'Duration' : 'Duration',
-                                  '${activity['duration_days'] ?? 0} days',
+                                  _scheduleTr(
+                                    language,
+                                    en: 'Duration',
+                                    sw: 'Muda',
+                                    fr: 'Durée',
+                                    ar: 'المدة',
+                                  ),
+                                  '${activity['duration_days'] ?? 0} ${_scheduleTr(
+                                    language,
+                                    en: 'days',
+                                    sw: 'siku',
+                                    fr: 'jours',
+                                    ar: 'يوماً',
+                                  )}',
                                 ),
                                 _detailLine(
-                                  isSwahili ? 'Notes' : 'Notes',
+                                  _scheduleTr(
+                                    language,
+                                    en: 'Notes',
+                                    sw: 'Maelezo',
+                                    fr: 'Notes',
+                                    ar: 'ملاحظات',
+                                  ),
                                   activity['notes'] ??
                                       activity['completion_notes'],
                                 ),
@@ -999,31 +1270,67 @@ class _ScheduleDetailSheet extends ConsumerWidget {
 
   Widget _progressGrid({
     required Map<String, dynamic> progress,
-    required bool isSwahili,
+    required AppLanguage language,
   }) {
     final items = <Map<String, String>>[
       {
-        'label': isSwahili ? 'Jumla' : 'Total',
+        'label': _scheduleTr(
+          language,
+          en: 'Total',
+          sw: 'Jumla',
+          fr: 'Total',
+          ar: 'الإجمالي',
+        ),
         'value': '${progress['total'] ?? 0}',
       },
       {
-        'label': isSwahili ? 'Imekamilika' : 'Completed',
+        'label': _scheduleTr(
+          language,
+          en: 'Completed',
+          sw: 'Imekamilika',
+          fr: 'Terminé',
+          ar: 'مكتمل',
+        ),
         'value': '${progress['completed'] ?? 0}',
       },
       {
-        'label': isSwahili ? 'Inaendelea' : 'In Progress',
+        'label': _scheduleTr(
+          language,
+          en: 'In Progress',
+          sw: 'Inaendelea',
+          fr: 'En cours',
+          ar: 'قيد التنفيذ',
+        ),
         'value': '${progress['in_progress'] ?? 0}',
       },
       {
-        'label': isSwahili ? 'Pending' : 'Pending',
+        'label': _scheduleTr(
+          language,
+          en: 'Pending',
+          sw: 'Pending',
+          fr: 'En attente',
+          ar: 'قيد الانتظار',
+        ),
         'value': '${progress['pending'] ?? 0}',
       },
       {
-        'label': isSwahili ? 'Imechelewa' : 'Overdue',
+        'label': _scheduleTr(
+          language,
+          en: 'Overdue',
+          sw: 'Imechelewa',
+          fr: 'En retard',
+          ar: 'متأخر',
+        ),
         'value': '${progress['overdue'] ?? 0}',
       },
       {
-        'label': isSwahili ? 'Asilimia' : 'Percent',
+        'label': _scheduleTr(
+          language,
+          en: 'Percent',
+          sw: 'Asilimia',
+          fr: 'Pourcentage',
+          ar: 'النسبة',
+        ),
         'value': '${_toDouble(progress['percentage']).toStringAsFixed(1)}%',
       },
     ];
@@ -1088,12 +1395,12 @@ class _ScheduleDetailSheet extends ConsumerWidget {
 
 class _ScheduleErrorView extends StatelessWidget {
   final String message;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ScheduleErrorView({
     required this.message,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -1107,7 +1414,13 @@ class _ScheduleErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _scheduleTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un problème est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
@@ -1117,7 +1430,15 @@ class _ScheduleErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _scheduleTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Réessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],
@@ -1125,7 +1446,7 @@ class _ScheduleErrorView extends StatelessWidget {
   }
 }
 
-Widget _statusChip(String? status) {
+Widget _statusChip(String? status, {AppLanguage? language}) {
   final color = _statusColor(status);
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1134,7 +1455,7 @@ Widget _statusChip(String? status) {
       borderRadius: BorderRadius.circular(999),
     ),
     child: Text(
-      _statusLabel(status),
+      _statusLabel(status, language: language),
       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color),
     ),
   );
@@ -1184,8 +1505,68 @@ Color _statusColor(String? status) {
   }
 }
 
-String _statusLabel(String? status) {
+String _statusLabel(String? status, {AppLanguage? language}) {
   if (status == null || status.trim().isEmpty) return '-';
+  if (language != null) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return _scheduleTr(
+          language,
+          en: 'Completed',
+          sw: 'Imekamilika',
+          fr: 'Terminé',
+          ar: 'مكتمل',
+        );
+      case 'confirmed':
+        return _scheduleTr(
+          language,
+          en: 'Confirmed',
+          sw: 'Imethibitishwa',
+          fr: 'Confirmé',
+          ar: 'تم التأكيد',
+        );
+      case 'in_progress':
+        return _scheduleTr(
+          language,
+          en: 'In Progress',
+          sw: 'Inaendelea',
+          fr: 'En cours',
+          ar: 'قيد التنفيذ',
+        );
+      case 'pending_confirmation':
+        return _scheduleTr(
+          language,
+          en: 'Pending Confirmation',
+          sw: 'Inasubiri Uthibitisho',
+          fr: 'En attente de confirmation',
+          ar: 'بانتظار التأكيد',
+        );
+      case 'pending':
+        return _scheduleTr(
+          language,
+          en: 'Pending',
+          sw: 'Inasubiri',
+          fr: 'En attente',
+          ar: 'قيد الانتظار',
+        );
+      case 'cancelled':
+        return _scheduleTr(
+          language,
+          en: 'Cancelled',
+          sw: 'Imefutwa',
+          fr: 'Annulé',
+          ar: 'ملغي',
+        );
+      case 'overdue':
+        return _scheduleTr(
+          language,
+          en: 'Overdue',
+          sw: 'Imechelewa',
+          fr: 'En retard',
+          ar: 'متأخر',
+        );
+    }
+  }
   return status
       .replaceAll('_', ' ')
       .split(' ')

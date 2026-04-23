@@ -162,7 +162,12 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: PopupMenuButton<AppLanguage>(
         initialValue: language,
-        tooltip: 'Select language',
+        tooltip: switch (language) {
+          AppLanguage.english => 'Select language',
+          AppLanguage.swahili => 'Chagua lugha',
+          AppLanguage.french => 'Choisir la langue',
+          AppLanguage.arabic => 'اختر اللغة',
+        },
         color: popupBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         onSelected: onLanguageChanged,
@@ -211,8 +216,8 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
     return switch (value) {
       AppLanguage.english => 'English',
       AppLanguage.swahili => 'Kiswahili',
-      AppLanguage.french => 'Francais',
-      AppLanguage.arabic => 'Arabic',
+      AppLanguage.french => 'Français',
+      AppLanguage.arabic => 'العربية',
     };
   }
 

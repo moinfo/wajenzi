@@ -5,6 +5,21 @@ import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
 import '../../providers/settings_provider.dart';
 
+String _attendanceTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 final _selectedDateProvider = StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
 final _searchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
@@ -53,12 +68,20 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
     final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
     final reportParams = '$dateStr|$searchQuery';
     final reportAsync = ref.watch(_dailyReportProvider(reportParams));
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isSwahili ? 'Mahudhurio' : 'Attendance'),
+        title: Text(
+          _attendanceTr(
+            language,
+            en: 'Attendance',
+            sw: 'Mahudhurio',
+            fr: 'Présence',
+            ar: 'الحضور',
+          ),
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(_dailyReportProvider(reportParams).future),
@@ -66,14 +89,14 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _ErrorView(
             error: e,
-            isSwahili: isSwahili,
+            language: language,
             onRetry: () => ref.invalidate(_dailyReportProvider(reportParams)),
           ),
           data: (data) => _ReportBody(
             data: data,
             selectedDate: selectedDate,
             isDarkMode: isDarkMode,
-            isSwahili: isSwahili,
+            language: language,
             searchController: _searchController,
           ),
         ),
@@ -86,14 +109,14 @@ class _ReportBody extends ConsumerWidget {
   final Map<String, dynamic> data;
   final DateTime selectedDate;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final TextEditingController searchController;
 
   const _ReportBody({
     required this.data,
     required this.selectedDate,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
     required this.searchController,
   });
 
@@ -110,21 +133,21 @@ class _ReportBody extends ConsumerWidget {
         _DatePickerRow(
           selectedDate: selectedDate,
           isDarkMode: isDarkMode,
-          isSwahili: isSwahili,
+          language: language,
           onDateChanged: (date) =>
               ref.read(_selectedDateProvider.notifier).state = date,
         ),
         const SizedBox(height: 16),
 
         // Stats row
-        _StatsRow(stats: stats, isDarkMode: isDarkMode, isSwahili: isSwahili),
+        _StatsRow(stats: stats, isDarkMode: isDarkMode, language: language),
         const SizedBox(height: 16),
 
         // Search bar
         _SearchBar(
           controller: searchController,
           isDarkMode: isDarkMode,
-          isSwahili: isSwahili,
+          language: language,
           onChanged: (value) =>
               ref.read(_searchQueryProvider.notifier).state = value.trim(),
           onClear: () {
@@ -143,14 +166,20 @@ class _ReportBody extends ConsumerWidget {
                 Icon(Icons.people_outline, size: 56, color: Colors.grey[300]),
                 const SizedBox(height: 12),
                 Text(
-                  isSwahili ? 'Hakuna wafanyakazi' : 'No staff found',
+                  _attendanceTr(
+                    language,
+                    en: 'No staff found',
+                    sw: 'Hakuna wafanyakazi',
+                    fr: 'Aucun employé trouvé',
+                    ar: 'لم يتم العثور على موظفين',
+                  ),
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
               ],
             ),
           )
         else
-          ...staff.map((s) => _StaffCard(staff: s, isDarkMode: isDarkMode)),
+          ...staff.map((s) => _StaffCard(staff: s, isDarkMode: isDarkMode, language: language)),
 
         const SizedBox(height: 80),
       ],
@@ -161,13 +190,13 @@ class _ReportBody extends ConsumerWidget {
 class _DatePickerRow extends StatelessWidget {
   final DateTime selectedDate;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final ValueChanged<DateTime> onDateChanged;
 
   const _DatePickerRow({
     required this.selectedDate,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
     required this.onDateChanged,
   });
 
@@ -220,7 +249,13 @@ class _DatePickerRow extends StatelessWidget {
                   ),
                   if (isToday)
                     Text(
-                      isSwahili ? 'Leo' : 'Today',
+                      _attendanceTr(
+                        language,
+                        en: 'Today',
+                        sw: 'Leo',
+                        fr: 'Aujourd’hui',
+                        ar: 'اليوم',
+                      ),
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF1ABC9C),
@@ -251,43 +286,49 @@ class _DatePickerRow extends StatelessWidget {
 class _StatsRow extends StatelessWidget {
   final Map<String, dynamic> stats;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _StatsRow({
     required this.stats,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
   Widget build(BuildContext context) {
     final items = [
       _StatItem(
-        label: isSwahili ? 'Jumla' : 'Total',
+        label: _attendanceTr(
+          language,
+          en: 'Total',
+          sw: 'Jumla',
+          fr: 'Total',
+          ar: 'الإجمالي',
+        ),
         value: '${stats['total_users'] ?? 0}',
         color: const Color(0xFF3B82F6),
         icon: Icons.people_rounded,
       ),
       _StatItem(
-        label: isSwahili ? 'Walio' : 'Present',
+        label: _attendanceTr(language, en: 'Present', sw: 'Walio', fr: 'Présents', ar: 'الحاضرون'),
         value: '${stats['present'] ?? 0}',
         color: const Color(0xFF27AE60),
         icon: Icons.check_circle_rounded,
       ),
       _StatItem(
-        label: isSwahili ? 'Kwa wakati' : 'On Time',
+        label: _attendanceTr(language, en: 'On Time', sw: 'Kwa wakati', fr: 'À l’heure', ar: 'في الوقت'),
         value: '${stats['on_time'] ?? 0}',
         color: const Color(0xFF1ABC9C),
         icon: Icons.schedule_rounded,
       ),
       _StatItem(
-        label: isSwahili ? 'Wachelewa' : 'Late',
+        label: _attendanceTr(language, en: 'Late', sw: 'Wachelewa', fr: 'En retard', ar: 'متأخرون'),
         value: '${stats['late'] ?? 0}',
         color: const Color(0xFFF59E0B),
         icon: Icons.warning_rounded,
       ),
       _StatItem(
-        label: isSwahili ? 'Hawako' : 'Absent',
+        label: _attendanceTr(language, en: 'Absent', sw: 'Hawako', fr: 'Absents', ar: 'غائبون'),
         value: '${stats['absent'] ?? 0}',
         color: const Color(0xFFEF4444),
         icon: Icons.cancel_rounded,
@@ -356,14 +397,14 @@ class _StatItem {
 class _SearchBar extends StatelessWidget {
   final TextEditingController controller;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
 
   const _SearchBar({
     required this.controller,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
     required this.onChanged,
     required this.onClear,
   });
@@ -384,7 +425,13 @@ class _SearchBar extends StatelessWidget {
           color: isDarkMode ? Colors.white : AppColors.textPrimary,
         ),
         decoration: InputDecoration(
-          hintText: isSwahili ? 'Tafuta mfanyakazi...' : 'Search staff...',
+          hintText: _attendanceTr(
+            language,
+            en: 'Search staff...',
+            sw: 'Tafuta mfanyakazi...',
+            fr: 'Rechercher un employé...',
+            ar: 'ابحث عن موظف...',
+          ),
           hintStyle: TextStyle(
             fontSize: 13,
             color: isDarkMode ? Colors.white38 : AppColors.textHint,
@@ -415,8 +462,9 @@ class _SearchBar extends StatelessWidget {
 class _StaffCard extends StatelessWidget {
   final Map<String, dynamic> staff;
   final bool isDarkMode;
+  final AppLanguage language;
 
-  const _StaffCard({required this.staff, required this.isDarkMode});
+  const _StaffCard({required this.staff, required this.isDarkMode, required this.language});
 
   @override
   Widget build(BuildContext context) {
@@ -433,17 +481,17 @@ class _StaffCard extends StatelessWidget {
     switch (status) {
       case 'ON_TIME':
         statusColor = const Color(0xFF27AE60);
-        statusLabel = 'ON TIME';
+        statusLabel = _attendanceTr(language, en: 'ON TIME', sw: 'KWA WAKATI', fr: 'À L’HEURE', ar: 'في الوقت');
         statusIcon = Icons.check_circle_rounded;
         break;
       case 'LATE':
         statusColor = const Color(0xFFF59E0B);
-        statusLabel = 'LATE';
+        statusLabel = _attendanceTr(language, en: 'LATE', sw: 'AMECHELEWA', fr: 'EN RETARD', ar: 'متأخر');
         statusIcon = Icons.warning_rounded;
         break;
       default:
         statusColor = const Color(0xFFEF4444);
-        statusLabel = 'ABSENT';
+        statusLabel = _attendanceTr(language, en: 'ABSENT', sw: 'HAJAPO', fr: 'ABSENT', ar: 'غائب');
         statusIcon = Icons.cancel_rounded;
     }
 
@@ -586,12 +634,12 @@ class _StaffCard extends StatelessWidget {
 
 class _ErrorView extends StatelessWidget {
   final Object error;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ErrorView({
     required this.error,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -604,7 +652,13 @@ class _ErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _attendanceTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un problème est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -613,7 +667,15 @@ class _ErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _attendanceTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Réessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

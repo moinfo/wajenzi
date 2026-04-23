@@ -10,6 +10,21 @@ import '../../../core/network/api_client.dart';
 import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 
+String _employeeTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 // --- State providers ---
 
 final _selectedStaffIdProvider = StateProvider.autoDispose<int?>((ref) => null);
@@ -60,7 +75,7 @@ class EmployeeProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(_profileProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDark = ref.watch(isDarkModeProvider);
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
 
@@ -71,13 +86,21 @@ class EmployeeProfileScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Wasifu wa Mfanyakazi' : 'Employee Profile'),
+        title: Text(
+          _employeeTr(
+            language,
+            en: 'Employee Profile',
+            sw: 'Wasifu wa Mfanyakazi',
+            fr: 'Profil de l’employé',
+            ar: 'الملف الشخصي للموظف',
+          ),
+        ),
         backgroundColor: isDark ? _darkCard : null,
       ),
       body: Column(
         children: [
           // Filters bar
-          _FiltersBar(isDark: isDark, isSwahili: isSwahili),
+          _FiltersBar(isDark: isDark, language: language),
           // Content
           Expanded(
             child: RefreshIndicator(
@@ -86,13 +109,13 @@ class EmployeeProfileScreen extends ConsumerWidget {
                 loading: () =>
                     const Center(child: CircularProgressIndicator()),
                 error: (e, _) => _ErrorView(
-                  isSwahili: isSwahili,
+                  language: language,
                   onRetry: () => ref.invalidate(_profileProvider),
                 ),
                 data: (data) => _ProfileBody(
                   data: data,
                   isDark: isDark,
-                  isSwahili: isSwahili,
+                  language: language,
                 ),
               ),
             ),
@@ -107,8 +130,9 @@ class EmployeeProfileScreen extends ConsumerWidget {
 
 class _FiltersBar extends ConsumerWidget {
   final bool isDark;
-  final bool isSwahili;
-  const _FiltersBar({required this.isDark, required this.isSwahili});
+  final AppLanguage language;
+
+  const _FiltersBar({required this.isDark, required this.language});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -155,7 +179,13 @@ class _FiltersBar extends ConsumerWidget {
                         color: isDark ? Colors.white38 : AppColors.textHint),
                     dropdownColor: isDark ? _darkCard : Colors.white,
                     hint: Text(
-                      isSwahili ? 'Chagua mfanyakazi...' : 'Select employee...',
+                      _employeeTr(
+                        language,
+                        en: 'Select employee...',
+                        sw: 'Chagua mfanyakazi...',
+                        fr: 'Sélectionnez un employé...',
+                        ar: 'اختر موظفاً...',
+                      ),
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark ? Colors.white38 : AppColors.textHint,
@@ -169,7 +199,13 @@ class _FiltersBar extends ConsumerWidget {
                       DropdownMenuItem<int?>(
                         value: null,
                         child: Text(
-                          isSwahili ? 'Mimi (default)' : 'Me (default)',
+                          _employeeTr(
+                            language,
+                            en: 'Me (default)',
+                            sw: 'Mimi (chaguo-msingi)',
+                            fr: 'Moi (par défaut)',
+                            ar: 'أنا (افتراضي)',
+                          ),
                           style: TextStyle(
                             fontSize: 13,
                             fontStyle: FontStyle.italic,
@@ -298,12 +334,12 @@ class _DateChip extends StatelessWidget {
 class _ProfileBody extends StatelessWidget {
   final Map<String, dynamic> data;
   final bool isDark;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _ProfileBody({
     required this.data,
     required this.isDark,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -341,25 +377,37 @@ class _ProfileBody extends StatelessWidget {
 
         // Financial summary cards
         _FinancialCards(
-            financial: financial, isDark: isDark, isSwahili: isSwahili),
+          financial: financial,
+          isDark: isDark,
+          language: language,
+        ),
         const SizedBox(height: 14),
 
         // General Info
         _GeneralInfoCard(
-            personal: personal, isDark: isDark, isSwahili: isSwahili),
+          personal: personal,
+          isDark: isDark,
+          language: language,
+        ),
         const SizedBox(height: 14),
 
         // Loan History
         if (loans.isNotEmpty) ...[
           _SectionCard(
-            title: isSwahili ? 'Historia ya Mkopo' : 'Loan History',
+            title: _employeeTr(
+              language,
+              en: 'Loan History',
+              sw: 'Historia ya Mkopo',
+              fr: 'Historique des prêts',
+              ar: 'سجل القروض',
+            ),
             icon: Icons.account_balance_rounded,
             isDark: isDark,
             child: _LoanTable(
               loans: loans,
               summary: loanSummary,
               isDark: isDark,
-              isSwahili: isSwahili,
+              language: language,
             ),
           ),
           const SizedBox(height: 14),
@@ -368,16 +416,20 @@ class _ProfileBody extends StatelessWidget {
         // Advance Salaries
         if (advances.isNotEmpty) ...[
           _SectionCard(
-            title: isSwahili
-                ? 'Historia ya Mshahara wa Mapema'
-                : 'Advance Salaries',
+            title: _employeeTr(
+              language,
+              en: 'Advance Salaries',
+              sw: 'Historia ya Mshahara wa Mapema',
+              fr: 'Avances sur salaire',
+              ar: 'سجل السلف على الراتب',
+            ),
             icon: Icons.payments_rounded,
             isDark: isDark,
             child: _AdvanceSalaryTable(
               advances: advances,
               summary: advanceSummary,
               isDark: isDark,
-              isSwahili: isSwahili,
+              language: language,
             ),
           ),
           const SizedBox(height: 14),
@@ -386,14 +438,20 @@ class _ProfileBody extends StatelessWidget {
         // Payroll History
         if (payrolls.isNotEmpty) ...[
           _SectionCard(
-            title: isSwahili ? 'Historia ya Mshahara' : 'Payroll History',
+            title: _employeeTr(
+              language,
+              en: 'Payroll History',
+              sw: 'Historia ya Mshahara',
+              fr: 'Historique de paie',
+              ar: 'سجل الرواتب',
+            ),
             icon: Icons.receipt_long_rounded,
             isDark: isDark,
             child: _PayrollList(
               payrolls: payrolls,
               summary: payrollSummary,
               isDark: isDark,
-              isSwahili: isSwahili,
+              language: language,
             ),
           ),
           const SizedBox(height: 14),
@@ -402,7 +460,13 @@ class _ProfileBody extends StatelessWidget {
         // Assets
         if (assets.isNotEmpty) ...[
           _SectionCard(
-            title: isSwahili ? 'Mali na Faida' : 'Assets & Benefits',
+            title: _employeeTr(
+              language,
+              en: 'Assets & Benefits',
+              sw: 'Mali na Faida',
+              fr: 'Actifs et avantages',
+              ar: 'الأصول والمزايا',
+            ),
             icon: Icons.inventory_2_rounded,
             isDark: isDark,
             child: _AssetsTable(assets: assets, isDark: isDark),
@@ -563,31 +627,65 @@ class _MiniStat extends StatelessWidget {
 class _FinancialCards extends StatelessWidget {
   final Map<String, dynamic> financial;
   final bool isDark;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _FinancialCards({
     required this.financial,
     required this.isDark,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
   Widget build(BuildContext context) {
     final items = [
-      _FinItem('Gross', (financial['gross_pay'] as num?)?.toDouble() ?? 0,
-          Icons.trending_up_rounded, _accentBlue),
       _FinItem(
-          isSwahili ? 'Makato' : 'Deductions',
-          (financial['total_deductions'] as num?)?.toDouble() ?? 0,
-          Icons.trending_down_rounded,
-          const Color(0xFFEF5350)),
+        _employeeTr(
+          language,
+          en: 'Gross',
+          sw: 'Jumla Kuu',
+          fr: 'Brut',
+          ar: 'الإجمالي قبل الخصم',
+        ),
+        (financial['gross_pay'] as num?)?.toDouble() ?? 0,
+        Icons.trending_up_rounded,
+        _accentBlue,
+      ),
       _FinItem(
-          isSwahili ? 'Posho' : 'Allowances',
-          (financial['allowances'] as num?)?.toDouble() ?? 0,
-          Icons.card_giftcard_rounded,
-          const Color(0xFF66BB6A)),
-      _FinItem('Net Pay', (financial['net_pay'] as num?)?.toDouble() ?? 0,
-          Icons.account_balance_wallet_rounded, _accentTeal),
+        _employeeTr(
+          language,
+          en: 'Deductions',
+          sw: 'Makato',
+          fr: 'Déductions',
+          ar: 'الخصومات',
+        ),
+        (financial['total_deductions'] as num?)?.toDouble() ?? 0,
+        Icons.trending_down_rounded,
+        const Color(0xFFEF5350),
+      ),
+      _FinItem(
+        _employeeTr(
+          language,
+          en: 'Allowances',
+          sw: 'Posho',
+          fr: 'Allocations',
+          ar: 'البدلات',
+        ),
+        (financial['allowances'] as num?)?.toDouble() ?? 0,
+        Icons.card_giftcard_rounded,
+        const Color(0xFF66BB6A),
+      ),
+      _FinItem(
+        _employeeTr(
+          language,
+          en: 'Net Pay',
+          sw: 'Malipo Halisi',
+          fr: 'Salaire net',
+          ar: 'صافي الراتب',
+        ),
+        (financial['net_pay'] as num?)?.toDouble() ?? 0,
+        Icons.account_balance_wallet_rounded,
+        _accentTeal,
+      ),
     ];
 
     Widget buildCard(_FinItem item) {
@@ -673,46 +771,131 @@ class _FinItem {
 class _GeneralInfoCard extends StatelessWidget {
   final Map<String, dynamic> personal;
   final bool isDark;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _GeneralInfoCard({
     required this.personal,
     required this.isDark,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
   Widget build(BuildContext context) {
     final rows = <_InfoRow>[
-      _InfoRow(Icons.work_outline_rounded, isSwahili ? 'Cheo' : 'Designation',
-          personal['designation'] as String? ?? '-'),
       _InfoRow(
-          Icons.calendar_today_rounded,
-          isSwahili ? 'Tarehe Kuajiriwa' : 'Employed',
-          personal['employment_date'] as String? ?? '-'),
-      _InfoRow(Icons.apartment_rounded, isSwahili ? 'Idara' : 'Department',
-          personal['department'] as String? ?? '-'),
-      _InfoRow(Icons.hub_outlined, isSwahili ? 'Mfumo' : 'System',
-          personal['system'] as String? ?? '-'),
-      _InfoRow(Icons.person_outline_rounded, isSwahili ? 'Jinsia' : 'Gender',
-          personal['gender'] as String? ?? '-'),
-      _InfoRow(Icons.cake_rounded, isSwahili ? 'Kuzaliwa' : 'DOB',
-          personal['dob'] as String? ?? '-'),
-      _InfoRow(Icons.phone_rounded, isSwahili ? 'Simu' : 'Phone',
-          personal['phone'] as String? ?? '-'),
+        Icons.work_outline_rounded,
+        _employeeTr(
+          language,
+          en: 'Designation',
+          sw: 'Cheo',
+          fr: 'Fonction',
+          ar: 'المسمى الوظيفي',
+        ),
+        personal['designation'] as String? ?? '-',
+      ),
+      _InfoRow(
+        Icons.calendar_today_rounded,
+        _employeeTr(
+          language,
+          en: 'Employed',
+          sw: 'Tarehe Kuajiriwa',
+          fr: 'Date d’embauche',
+          ar: 'تاريخ التوظيف',
+        ),
+        personal['employment_date'] as String? ?? '-',
+      ),
+      _InfoRow(
+        Icons.apartment_rounded,
+        _employeeTr(
+          language,
+          en: 'Department',
+          sw: 'Idara',
+          fr: 'Département',
+          ar: 'القسم',
+        ),
+        personal['department'] as String? ?? '-',
+      ),
+      _InfoRow(
+        Icons.hub_outlined,
+        _employeeTr(
+          language,
+          en: 'System',
+          sw: 'Mfumo',
+          fr: 'Système',
+          ar: 'النظام',
+        ),
+        personal['system'] as String? ?? '-',
+      ),
+      _InfoRow(
+        Icons.person_outline_rounded,
+        _employeeTr(
+          language,
+          en: 'Gender',
+          sw: 'Jinsia',
+          fr: 'Genre',
+          ar: 'الجنس',
+        ),
+        personal['gender'] as String? ?? '-',
+      ),
+      _InfoRow(
+        Icons.cake_rounded,
+        _employeeTr(
+          language,
+          en: 'DOB',
+          sw: 'Kuzaliwa',
+          fr: 'Date de naissance',
+          ar: 'تاريخ الميلاد',
+        ),
+        personal['dob'] as String? ?? '-',
+      ),
+      _InfoRow(
+        Icons.phone_rounded,
+        _employeeTr(
+          language,
+          en: 'Phone',
+          sw: 'Simu',
+          fr: 'Téléphone',
+          ar: 'الهاتف',
+        ),
+        personal['phone'] as String? ?? '-',
+      ),
       _InfoRow(
           Icons.email_outlined, 'Email', personal['email'] as String? ?? '-'),
-      _InfoRow(Icons.location_on_outlined, isSwahili ? 'Anwani' : 'Address',
-          personal['address'] as String? ?? '-'),
+      _InfoRow(
+        Icons.location_on_outlined,
+        _employeeTr(
+          language,
+          en: 'Address',
+          sw: 'Anwani',
+          fr: 'Adresse',
+          ar: 'العنوان',
+        ),
+        personal['address'] as String? ?? '-',
+      ),
       _InfoRow(Icons.badge_outlined, 'NIDA',
           personal['national_id'] as String? ?? '-'),
       _InfoRow(
           Icons.receipt_outlined, 'TIN', personal['tin'] as String? ?? '-'),
-      _InfoRow(Icons.account_balance_rounded,
-          isSwahili ? 'Akaunti' : 'Account', personal['account_number'] as String? ?? '-'),
+      _InfoRow(
+        Icons.account_balance_rounded,
+        _employeeTr(
+          language,
+          en: 'Account',
+          sw: 'Akaunti',
+          fr: 'Compte',
+          ar: 'الحساب',
+        ),
+        personal['account_number'] as String? ?? '-',
+      ),
       _InfoRow(
         Icons.verified_user_outlined,
-        isSwahili ? 'Hali' : 'Status',
+        _employeeTr(
+          language,
+          en: 'Status',
+          sw: 'Hali',
+          fr: 'Statut',
+          ar: 'الحالة',
+        ),
         _statusDisplayText(personal),
       ),
     ];
@@ -723,7 +906,13 @@ class _GeneralInfoCard extends StatelessWidget {
         children: [
           _sectionHeader(
             Icons.info_outline_rounded,
-            isSwahili ? 'Taarifa Binafsi' : 'General Information',
+            _employeeTr(
+              language,
+              en: 'General Information',
+              sw: 'Taarifa Binafsi',
+              fr: 'Informations générales',
+              ar: 'المعلومات العامة',
+            ),
             isDark,
           ),
           ...rows.map((row) => _infoTile(row, isDark)),
@@ -766,13 +955,6 @@ class _GeneralInfoCard extends StatelessWidget {
       ),
     );
   }
-}
-
-String _statusText(Map<String, dynamic> personal) {
-  final status = personal['status']?.toString() ?? '-';
-  final updated = personal['status_updated_at']?.toString() ?? '';
-  if (updated.isEmpty) return status;
-  return '$status  •  $updated';
 }
 
 String _statusDisplayText(Map<String, dynamic> personal) {
@@ -896,13 +1078,14 @@ class _LoanTable extends StatelessWidget {
   final List<Map<String, dynamic>> loans;
   final Map<String, dynamic> summary;
   final bool isDark;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _LoanTable(
-      {required this.loans,
-      required this.summary,
-      required this.isDark,
-      required this.isSwahili});
+  const _LoanTable({
+    required this.loans,
+    required this.summary,
+    required this.isDark,
+    required this.language,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -915,9 +1098,9 @@ class _LoanTable extends StatelessWidget {
     return Column(
       children: [
         _TableHeader(columns: [
-          isSwahili ? 'Tarehe' : 'Date',
-          isSwahili ? 'Makato' : 'Deduct',
-          isSwahili ? 'Kiasi' : 'Amount',
+          _employeeTr(language, en: 'Date', sw: 'Tarehe', fr: 'Date', ar: 'التاريخ'),
+          _employeeTr(language, en: 'Deduct', sw: 'Makato', fr: 'Déduction', ar: 'الخصم'),
+          _employeeTr(language, en: 'Amount', sw: 'Kiasi', fr: 'Montant', ar: 'المبلغ'),
         ], isDark: isDark),
         ...loans.map((l) => _TableRow(
               values: [
@@ -928,7 +1111,11 @@ class _LoanTable extends StatelessWidget {
               isDark: isDark,
             )),
         _TableRow(
-          values: ['', isSwahili ? 'Jumla' : 'Total', _fmt(totalLoan)],
+          values: [
+            '',
+            _employeeTr(language, en: 'Total', sw: 'Jumla', fr: 'Total', ar: 'الإجمالي'),
+            _fmt(totalLoan),
+          ],
           isDark: isDark,
           isBold: true,
         ),
@@ -943,13 +1130,14 @@ class _AdvanceSalaryTable extends StatelessWidget {
   final List<Map<String, dynamic>> advances;
   final Map<String, dynamic> summary;
   final bool isDark;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _AdvanceSalaryTable(
-      {required this.advances,
-      required this.summary,
-      required this.isDark,
-      required this.isSwahili});
+  const _AdvanceSalaryTable({
+    required this.advances,
+    required this.summary,
+    required this.isDark,
+    required this.language,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -962,9 +1150,9 @@ class _AdvanceSalaryTable extends StatelessWidget {
     return Column(
       children: [
         _TableHeader(columns: [
-          isSwahili ? 'Tarehe' : 'Date',
-          isSwahili ? 'Maelezo' : 'Desc.',
-          isSwahili ? 'Kiasi' : 'Amount',
+          _employeeTr(language, en: 'Date', sw: 'Tarehe', fr: 'Date', ar: 'التاريخ'),
+          _employeeTr(language, en: 'Desc.', sw: 'Maelezo', fr: 'Desc.', ar: 'الوصف'),
+          _employeeTr(language, en: 'Amount', sw: 'Kiasi', fr: 'Montant', ar: 'المبلغ'),
         ], isDark: isDark),
         ...advances.map((a) => _TableRow(
               values: [
@@ -975,7 +1163,11 @@ class _AdvanceSalaryTable extends StatelessWidget {
               isDark: isDark,
             )),
         _TableRow(
-          values: ['', isSwahili ? 'Jumla' : 'Total', _fmt(total)],
+          values: [
+            '',
+            _employeeTr(language, en: 'Total', sw: 'Jumla', fr: 'Total', ar: 'الإجمالي'),
+            _fmt(total),
+          ],
           isDark: isDark,
           isBold: true,
         ),
@@ -990,13 +1182,14 @@ class _PayrollList extends StatelessWidget {
   final List<Map<String, dynamic>> payrolls;
   final Map<String, dynamic> summary;
   final bool isDark;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _PayrollList(
-      {required this.payrolls,
-      required this.summary,
-      required this.isDark,
-      required this.isSwahili});
+  const _PayrollList({
+    required this.payrolls,
+    required this.summary,
+    required this.isDark,
+    required this.language,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1034,7 +1227,7 @@ class _PayrollList extends StatelessWidget {
                 ),
               ),
               subtitle: Text(
-                'Net: ${_fmt(net)}',
+                '${_employeeTr(language, en: 'Net', sw: 'Halisi', fr: 'Net', ar: 'الصافي')}: ${_fmt(net)}',
                 style: const TextStyle(
                   fontSize: 11,
                   color: _accentTeal,
@@ -1042,15 +1235,15 @@ class _PayrollList extends StatelessWidget {
                 ),
               ),
               children: [
-                _detailRow('Salary', salary, isDark),
-                _detailRow('Allowance', allowance, isDark),
-                _detailRow('Gross', gross, isDark),
+                _detailRow(_employeeTr(language, en: 'Salary', sw: 'Mshahara', fr: 'Salaire', ar: 'الراتب'), salary, isDark),
+                _detailRow(_employeeTr(language, en: 'Allowance', sw: 'Posho', fr: 'Allocation', ar: 'البدل'), allowance, isDark),
+                _detailRow(_employeeTr(language, en: 'Gross', sw: 'Jumla Kuu', fr: 'Brut', ar: 'الإجمالي قبل الخصم'), gross, isDark),
                 _detailRow('NSSF', nssf, isDark),
                 _detailRow('PAYE', paye, isDark),
-                _detailRow('Advance', advance, isDark),
-                _detailRow('Loan', loan, isDark),
-                _detailRow('Deduction', loanDeduction, isDark),
-                _detailRow('Balance', loanBalance, isDark),
+                _detailRow(_employeeTr(language, en: 'Advance', sw: 'Mapema', fr: 'Avance', ar: 'السلفة'), advance, isDark),
+                _detailRow(_employeeTr(language, en: 'Loan', sw: 'Mkopo', fr: 'Prêt', ar: 'القرض'), loan, isDark),
+                _detailRow(_employeeTr(language, en: 'Deduction', sw: 'Makato', fr: 'Déduction', ar: 'الخصم'), loanDeduction, isDark),
+                _detailRow(_employeeTr(language, en: 'Balance', sw: 'Salio', fr: 'Solde', ar: 'الرصيد'), loanBalance, isDark),
                 if (slipUrl.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -1060,19 +1253,33 @@ class _PayrollList extends StatelessWidget {
                         onPressed: () => context.push(
                           '/portal-webview',
                           extra: {
-                            'title': 'Salary Slip',
+                            'title': _employeeTr(
+                              language,
+                              en: 'Salary Slip',
+                              sw: 'Hati ya Mshahara',
+                              fr: 'Bulletin de salaire',
+                              ar: 'قسيمة الراتب',
+                            ),
                             'url': slipUrl,
                           },
                         ),
                         icon: const Icon(Icons.receipt_long_rounded, size: 16),
-                        label: const Text('Slip'),
+                        label: Text(
+                          _employeeTr(
+                            language,
+                            en: 'Slip',
+                            sw: 'Hati',
+                            fr: 'Bulletin',
+                            ar: 'القسيمة',
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 Divider(
                     height: 10,
                     color: isDark ? _darkBorder : Colors.grey.withValues(alpha: 0.2)),
-                _detailRow('Net Pay', net, isDark,
+                _detailRow(_employeeTr(language, en: 'Net Pay', sw: 'Malipo Halisi', fr: 'Salaire net', ar: 'صافي الراتب'), net, isDark,
                     bold: true, color: _accentTeal),
               ],
             ),
@@ -1084,19 +1291,19 @@ class _PayrollList extends StatelessWidget {
             child: Column(
               children: [
                 _detailRow(
-                  'Total Salary',
+                  _employeeTr(language, en: 'Total Salary', sw: 'Jumla ya Mshahara', fr: 'Salaire total', ar: 'إجمالي الراتب'),
                   (summary['salary'] as num?)?.toDouble() ?? 0,
                   isDark,
                   bold: true,
                 ),
                 _detailRow(
-                  'Total Allowance',
+                  _employeeTr(language, en: 'Total Allowance', sw: 'Jumla ya Posho', fr: 'Allocations totales', ar: 'إجمالي البدلات'),
                   (summary['allowance'] as num?)?.toDouble() ?? 0,
                   isDark,
                   bold: true,
                 ),
                 _detailRow(
-                  'Total Gross',
+                  _employeeTr(language, en: 'Total Gross', sw: 'Jumla Kuu', fr: 'Total brut', ar: 'الإجمالي قبل الخصم'),
                   (summary['gross'] as num?)?.toDouble() ?? 0,
                   isDark,
                   bold: true,
@@ -1114,25 +1321,25 @@ class _PayrollList extends StatelessWidget {
                   bold: true,
                 ),
                 _detailRow(
-                  'Total Advance',
+                  _employeeTr(language, en: 'Total Advance', sw: 'Jumla ya Mapema', fr: 'Total des avances', ar: 'إجمالي السلف'),
                   (summary['advance'] as num?)?.toDouble() ?? 0,
                   isDark,
                   bold: true,
                 ),
                 _detailRow(
-                  'Total Loan',
+                  _employeeTr(language, en: 'Total Loan', sw: 'Jumla ya Mkopo', fr: 'Total des prêts', ar: 'إجمالي القروض'),
                   (summary['loan'] as num?)?.toDouble() ?? 0,
                   isDark,
                   bold: true,
                 ),
                 _detailRow(
-                  'Total Deduction',
+                  _employeeTr(language, en: 'Total Deduction', sw: 'Jumla ya Makato', fr: 'Total des déductions', ar: 'إجمالي الخصومات'),
                   (summary['loan_deduction'] as num?)?.toDouble() ?? 0,
                   isDark,
                   bold: true,
                 ),
                 _detailRow(
-                  'Total Balance',
+                  _employeeTr(language, en: 'Total Balance', sw: 'Jumla ya Salio', fr: 'Solde total', ar: 'إجمالي الرصيد'),
                   (summary['loan_balance'] as num?)?.toDouble() ?? 0,
                   isDark,
                   bold: true,
@@ -1141,7 +1348,7 @@ class _PayrollList extends StatelessWidget {
                     height: 10,
                     color: isDark ? _darkBorder : Colors.grey.withValues(alpha: 0.2)),
                 _detailRow(
-                  'Total Net',
+                  _employeeTr(language, en: 'Total Net', sw: 'Jumla Halisi', fr: 'Net total', ar: 'إجمالي الصافي'),
                   (summary['net'] as num?)?.toDouble() ?? 0,
                   isDark,
                   bold: true,
@@ -1291,9 +1498,9 @@ class _TableRow extends StatelessWidget {
 // ----------- Error View -----------
 
 class _ErrorView extends StatelessWidget {
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
-  const _ErrorView({required this.isSwahili, required this.onRetry});
+  const _ErrorView({required this.language, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -1304,7 +1511,13 @@ class _ErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 56, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _employeeTr(
+            language,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            fr: 'Un problème est survenu',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
@@ -1313,7 +1526,15 @@ class _ErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh, size: 18),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _employeeTr(
+                language,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                fr: 'Réessayer',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],

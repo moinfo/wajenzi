@@ -45,7 +45,10 @@ class WajenziApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
-    final language = ref.watch(currentLanguageProvider);
+    // Use effectiveLanguageProvider to respect login context
+    // Pre-login screens will use saved language preference
+    // Post-login screens will always use English
+    final language = ref.watch(effectiveLanguageProvider);
 
     return MaterialApp.router(
       title: AppConfig.appName,

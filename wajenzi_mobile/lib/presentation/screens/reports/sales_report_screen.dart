@@ -23,6 +23,21 @@ final _salesReportDataProvider = FutureProvider.family
           : {};
     });
 
+String _salesTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class SalesReportScreen extends ConsumerStatefulWidget {
   const SalesReportScreen({super.key});
 
@@ -44,7 +59,7 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final params = {
       'start_date': DateFormat('yyyy-MM-dd').format(_dateRange!.start),
       'end_date': DateFormat('yyyy-MM-dd').format(_dateRange!.end),
@@ -57,11 +72,25 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/reports'),
         ),
-        title: Text(isSwahili ? 'Ripoti ya Mauzo' : 'Sales Report'),
+        title: Text(
+          _salesTr(
+            language,
+            en: 'Sales Report',
+            sw: 'Ripoti ya Mauzo',
+            fr: 'Rapport des ventes',
+            ar: 'تقرير المبيعات',
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),
-            tooltip: isSwahili ? 'Chagua Tarehe' : 'Select Date',
+            tooltip: _salesTr(
+              language,
+              en: 'Select Date',
+              sw: 'Chagua Tarehe',
+              fr: 'Choisir la date',
+              ar: 'اختر التاريخ',
+            ),
             onPressed: () async {
               final picked = await showDateRangePicker(
                 context: context,
@@ -76,7 +105,13 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
+            tooltip: _salesTr(
+              language,
+              en: 'Refresh',
+              sw: 'Onyesha Upya',
+              fr: 'Actualiser',
+              ar: 'تحديث',
+            ),
             onPressed: () => ref.invalidate(_salesReportDataProvider(params)),
           ),
         ],
@@ -110,7 +145,13 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
           Expanded(
             child: dataAsync.when(
               loading: () => LoadingWidget(
-                message: isSwahili ? 'Inapakia data...' : 'Loading data...',
+                message: _salesTr(
+                  language,
+                  en: 'Loading data...',
+                  sw: 'Inapakia data...',
+                  fr: 'Chargement des données...',
+                  ar: 'جارٍ تحميل البيانات...',
+                ),
               ),
               error: (error, _) => Center(
                 child: Column(
@@ -122,23 +163,37 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
                       color: Colors.red,
                     ),
                     const SizedBox(height: 16),
-                    Text(isSwahili ? 'Hitilafu' : 'Error'),
+                    Text(_salesTr(language, en: 'Error', sw: 'Hitilafu', fr: 'Erreur', ar: 'خطأ')),
                     const SizedBox(height: 8),
                     ElevatedButton.icon(
                       onPressed: () =>
                           ref.invalidate(_salesReportDataProvider(params)),
                       icon: const Icon(Icons.refresh),
-                      label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+                      label: Text(
+                        _salesTr(
+                          language,
+                          en: 'Retry',
+                          sw: 'Jaribu tena',
+                          fr: 'Réessayer',
+                          ar: 'أعد المحاولة',
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
               data: (data) => data.isEmpty
                   ? EmptyStateWidget(
-                      message: isSwahili ? 'Hakuna data' : 'No data available',
+                      message: _salesTr(
+                        language,
+                        en: 'No data available',
+                        sw: 'Hakuna data',
+                        fr: 'Aucune donnée disponible',
+                        ar: 'لا توجد بيانات متاحة',
+                      ),
                       icon: Icons.bar_chart,
                     )
-                  : _SalesReportContent(data: data, isSwahili: isSwahili),
+                  : _SalesReportContent(data: data, language: language),
             ),
           ),
         ],
@@ -149,9 +204,9 @@ class _SalesReportScreenState extends ConsumerState<SalesReportScreen> {
 
 class _SalesReportContent extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _SalesReportContent({required this.data, required this.isSwahili});
+  const _SalesReportContent({required this.data, required this.language});
 
   @override
   Widget build(BuildContext context) {
@@ -169,7 +224,7 @@ class _SalesReportContent extends StatelessWidget {
             totalTurnover: totalTurnover,
             totalTax: totalTax,
             totalNet: totalNet,
-            isSwahili: isSwahili,
+            language: language,
           ),
           const SizedBox(height: 16),
           Card(
@@ -179,7 +234,13 @@ class _SalesReportContent extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isSwahili ? 'Maelezo ya Mauzo' : 'Sales Details',
+                    _salesTr(
+                      language,
+                      en: 'Sales Details',
+                      sw: 'Maelezo ya Mauzo',
+                      fr: 'Détails des ventes',
+                      ar: 'تفاصيل المبيعات',
+                    ),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -191,7 +252,13 @@ class _SalesReportContent extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       child: Center(
                         child: Text(
-                          isSwahili ? 'Hakuna mauzo' : 'No sales found',
+                          _salesTr(
+                            language,
+                            en: 'No sales found',
+                            sw: 'Hakuna mauzo',
+                            fr: 'Aucune vente trouvée',
+                            ar: 'لم يتم العثور على مبيعات',
+                          ),
                         ),
                       ),
                     )
@@ -201,7 +268,7 @@ class _SalesReportContent extends StatelessWidget {
                         .map(
                           (item) => _SaleItem(
                             data: Map<String, dynamic>.from(item as Map),
-                            isSwahili: isSwahili,
+                            language: language,
                           ),
                         ),
                 ],
@@ -218,13 +285,13 @@ class _StatsGrid extends StatelessWidget {
   final dynamic totalTurnover;
   final dynamic totalTax;
   final dynamic totalNet;
-  final bool isSwahili;
+  final AppLanguage language;
 
   const _StatsGrid({
     required this.totalTurnover,
     required this.totalTax,
     required this.totalNet,
-    required this.isSwahili,
+    required this.language,
   });
 
   @override
@@ -238,19 +305,19 @@ class _StatsGrid extends StatelessWidget {
       childAspectRatio: 1.1,
       children: [
         _StatCard(
-          label: isSwahili ? 'Jumla ya Mauzo' : 'Turnover',
+          label: _salesTr(language, en: 'Turnover', sw: 'Jumla ya Mauzo', fr: 'Chiffre d’affaires', ar: 'إجمالي المبيعات'),
           value: _formatCurrency(totalTurnover),
           color: Colors.blue,
           icon: Icons.trending_up,
         ),
         _StatCard(
-          label: isSwahili ? 'Kodi (VAT)' : 'Tax (VAT)',
+          label: _salesTr(language, en: 'Tax (VAT)', sw: 'Kodi (VAT)', fr: 'Taxe (TVA)', ar: 'الضريبة (VAT)'),
           value: _formatCurrency(totalTax),
           color: Colors.orange,
           icon: Icons.receipt,
         ),
         _StatCard(
-          label: isSwahili ? 'Net' : 'NET',
+          label: _salesTr(language, en: 'NET', sw: 'Net', fr: 'Net', ar: 'الصافي'),
           value: _formatCurrency(totalNet),
           color: Colors.green,
           icon: Icons.account_balance_wallet,
@@ -322,9 +389,9 @@ class _StatCard extends StatelessWidget {
 
 class _SaleItem extends StatelessWidget {
   final Map<String, dynamic> data;
-  final bool isSwahili;
+  final AppLanguage language;
 
-  const _SaleItem({required this.data, required this.isSwahili});
+  const _SaleItem({required this.data, required this.language});
 
   @override
   Widget build(BuildContext context) {

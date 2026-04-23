@@ -22,6 +22,21 @@ final _reportsHubMenusProvider = FutureProvider.autoDispose<List<dynamic>>((
   return data['reports'] as List? ?? const [];
 });
 
+String _reportsTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 class ReportsHubScreen extends ConsumerStatefulWidget {
   const ReportsHubScreen({super.key});
 
@@ -73,7 +88,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(isDarkModeProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final menusAsync = ref.watch(_reportsHubMenusProvider);
 
     return Scaffold(
@@ -83,11 +98,25 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
           onPressed: () =>
               ref.read(rootScaffoldKeyProvider).currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Ripoti' : 'Reports'),
+        title: Text(
+          _reportsTr(
+            language,
+            en: 'Reports',
+            sw: 'Ripoti',
+            fr: 'Rapports',
+            ar: 'التقارير',
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
+            tooltip: _reportsTr(
+              language,
+              en: 'Refresh',
+              sw: 'Onyesha Upya',
+              fr: 'Actualiser',
+              ar: 'تحديث',
+            ),
             onPressed: () => ref.invalidate(_reportsHubMenusProvider),
           ),
         ],
@@ -96,11 +125,17 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
         onRefresh: () async => ref.invalidate(_reportsHubMenusProvider),
         child: menusAsync.when(
           loading: () => LoadingWidget(
-            message: isSwahili ? 'Inapakia ripoti...' : 'Loading reports...',
+            message: _reportsTr(
+              language,
+              en: 'Loading reports...',
+              sw: 'Inapakia ripoti...',
+              fr: 'Chargement des rapports...',
+              ar: 'جارٍ تحميل التقارير...',
+            ),
           ),
           error: (error, _) => _ReportsErrorView(
             message: error.toString(),
-            isSwahili: isSwahili,
+            language: language,
             onRetry: () => ref.invalidate(_reportsHubMenusProvider),
           ),
           data: (reportsPayload) {
@@ -122,13 +157,17 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     child: _ReportsHeader(
                       isDarkMode: isDarkMode,
-                      isSwahili: isSwahili,
+                      language: language,
                       controller: _searchController,
                       onChanged: (value) => setState(() => _query = value),
                       totalCount: reports.length,
-                      subtitleOverride: isSwahili
-                          ? 'Ripoti muhimu zilizo tayari kwa simu'
-                          : 'Important reports available on mobile',
+                      subtitleOverride: _reportsTr(
+                        language,
+                        en: 'Important reports available on mobile',
+                        sw: 'Ripoti muhimu zilizo tayari kwa simu',
+                        fr: 'Rapports importants disponibles sur mobile',
+                        ar: 'تقارير مهمة متاحة على الهاتف',
+                      ),
                     ),
                   ),
                 ),
@@ -137,7 +176,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
                     hasScrollBody: false,
                     child: _ReportsEmptyView(
                       isDarkMode: isDarkMode,
-                      isSwahili: isSwahili,
+                      language: language,
                       hasSearch: _query.trim().isNotEmpty,
                     ),
                   )
@@ -162,7 +201,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
                             return _ReportCard(
                               item: item,
                               isDarkMode: isDarkMode,
-                              isSwahili: isSwahili,
+                              language: language,
                               onTap: () => _openReport(item),
                             );
                           }, childCount: reports.length),
@@ -489,13 +528,25 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
     );
     if (!mounted || opened) return;
 
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           item.supportsMobile
-              ? (isSwahili ? 'Hakuna huko kwa sasa' : 'Not available yet')
-              : '${item.name} - ${isSwahili ? 'Hakuna kwenye app ya simu bado' : 'Not available in mobile app yet'}',
+              ? _reportsTr(
+                  language,
+                  en: 'Not available yet',
+                  sw: 'Hakuna huko kwa sasa',
+                  fr: 'Pas encore disponible',
+                  ar: 'غير متاح بعد',
+                )
+              : '${item.name} - ${_reportsTr(
+                  language,
+                  en: 'Not available in mobile app yet',
+                  sw: 'Hakuna kwenye app ya simu bado',
+                  fr: 'Pas encore disponible dans l’application mobile',
+                  ar: 'غير متاح في تطبيق الهاتف بعد',
+                )}',
         ),
       ),
     );
@@ -504,7 +555,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
 
 class _ReportsHeader extends StatelessWidget {
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final int totalCount;
@@ -512,7 +563,7 @@ class _ReportsHeader extends StatelessWidget {
 
   const _ReportsHeader({
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
     required this.controller,
     required this.onChanged,
     required this.totalCount,
@@ -521,12 +572,22 @@ class _ReportsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final heading = isSwahili ? 'Ripoti Muhimu' : 'Important Reports';
+    final heading = _reportsTr(
+      language,
+      en: 'Important Reports',
+      sw: 'Ripoti Muhimu',
+      fr: 'Rapports importants',
+      ar: 'التقارير المهمة',
+    );
     final summary =
         subtitleOverride ??
-        (isSwahili
-            ? '$totalCount ripoti zimepatikana'
-            : '$totalCount reports available');
+        _reportsTr(
+          language,
+          en: '$totalCount reports available',
+          sw: '$totalCount ripoti zimepatikana',
+          fr: '$totalCount rapports disponibles',
+          ar: '$totalCount تقريراً متاحاً',
+        );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -571,7 +632,13 @@ class _ReportsHeader extends StatelessWidget {
           onChanged: onChanged,
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
-            hintText: isSwahili ? 'Tafuta ripoti...' : 'Search reports...',
+            hintText: _reportsTr(
+              language,
+              en: 'Search reports...',
+              sw: 'Tafuta ripoti...',
+              fr: 'Rechercher des rapports...',
+              ar: 'ابحث في التقارير...',
+            ),
             prefixIcon: const Icon(Icons.search_rounded),
             filled: true,
             fillColor: isDarkMode
@@ -591,13 +658,13 @@ class _ReportsHeader extends StatelessWidget {
 class _ReportCard extends StatelessWidget {
   final _ReportItem item;
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onTap;
 
   const _ReportCard({
     required this.item,
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
     required this.onTap,
   });
 
@@ -608,8 +675,20 @@ class _ReportCard extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.08)
         : const Color(0xFFE5EAF0);
     final subLabel = item.supportsMobile
-        ? (isSwahili ? 'Fungua ndani ya app' : 'Open in app')
-        : (isSwahili ? 'Fungua kwenye web' : 'Open on web');
+        ? _reportsTr(
+            language,
+            en: 'Open in app',
+            sw: 'Fungua ndani ya app',
+            fr: 'Ouvrir dans l’application',
+            ar: 'افتح داخل التطبيق',
+          )
+        : _reportsTr(
+            language,
+            en: 'Open on web',
+            sw: 'Fungua kwenye web',
+            fr: 'Ouvrir sur le web',
+            ar: 'افتح على الويب',
+          );
 
     return Material(
       color: cardColor,
@@ -683,12 +762,12 @@ class _ReportCard extends StatelessWidget {
 
 class _ReportsErrorView extends StatelessWidget {
   final String message;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _ReportsErrorView({
     required this.message,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -702,7 +781,13 @@ class _ReportsErrorView extends StatelessWidget {
         const Icon(Icons.error_outline_rounded, size: 64, color: Colors.red),
         const SizedBox(height: 12),
         Text(
-          isSwahili ? 'Imeshindikana kupakia ripoti' : 'Failed to load reports',
+          _reportsTr(
+            language,
+            en: 'Failed to load reports',
+            sw: 'Imeshindikana kupakia ripoti',
+            fr: 'Échec du chargement des rapports',
+            ar: 'فشل تحميل التقارير',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
@@ -713,7 +798,15 @@ class _ReportsErrorView extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh_rounded),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+            label: Text(
+              _reportsTr(
+                language,
+                en: 'Retry',
+                sw: 'Jaribu tena',
+                fr: 'Réessayer',
+                ar: 'أعد المحاولة',
+              ),
+            ),
           ),
         ),
       ],
@@ -723,12 +816,12 @@ class _ReportsErrorView extends StatelessWidget {
 
 class _ReportsEmptyView extends StatelessWidget {
   final bool isDarkMode;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool hasSearch;
 
   const _ReportsEmptyView({
     required this.isDarkMode,
-    required this.isSwahili,
+    required this.language,
     required this.hasSearch,
   });
 
@@ -748,12 +841,20 @@ class _ReportsEmptyView extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               hasSearch
-                  ? (isSwahili
-                        ? 'Hakuna ripoti inayofanana na utafutaji wako'
-                        : 'No reports match your search')
-                  : (isSwahili
-                        ? 'Hakuna ripoti zinazopatikana'
-                        : 'No reports available'),
+                  ? _reportsTr(
+                      language,
+                      en: 'No reports match your search',
+                      sw: 'Hakuna ripoti inayofanana na utafutaji wako',
+                      fr: 'Aucun rapport ne correspond à votre recherche',
+                      ar: 'لا توجد تقارير تطابق بحثك',
+                    )
+                  : _reportsTr(
+                      language,
+                      en: 'No reports available',
+                      sw: 'Hakuna ripoti zinazopatikana',
+                      fr: 'Aucun rapport disponible',
+                      ar: 'لا توجد تقارير متاحة',
+                    ),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),

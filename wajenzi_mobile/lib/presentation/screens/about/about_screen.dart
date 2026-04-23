@@ -473,10 +473,18 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         ),
         'content': _isSwahili
             ? 'Kutoa suluhisho la ujenzi na usanifu bora, la bei nafuu, na endelevu ambalo linazidi matarajio ya wateja huku tukidumisha viwango vya juu vya uaminifu, taaluma, na uwajibikaji wa mazingira.'
-            : 'To deliver affordable, sustainable, and high-quality construction and architectural solutions that exceed client expectations while maintaining the highest standards of integrity, professionalism, and environmental responsibility.',
+            : _tr(
+                en: 'To deliver affordable, sustainable, and high-quality construction and architectural solutions that exceed client expectations while maintaining the highest standards of integrity, professionalism, and environmental responsibility.',
+                fr: 'Fournir des solutions de construction et de conception architecturale abordables, durables et de haute qualité qui dépassent les attentes des clients tout en maintenant les plus hauts standards d\'intégrité, de professionnalisme et de responsabilité environnementale.',
+                ar: 'تقديم حلول إنشائية ومعمارية ميسورة التكلفة ومستدامة وعالية الجودة تتجاوز توقعات العملاء مع الحفاظ على أعلى معايير النزاهة والاحترافية والمسؤولية البيئية.',
+              ),
         'subContent': _isSwahili
             ? 'Tumejitolea kutumia mbinu na vifaa vya ubunifu vinavyopunguza athari za mazingira huku tukiboresha utendaji, uimara, na mvuto wa kuvutia katika kila mradi tunaouchukua.'
-            : 'We are committed to using innovative techniques and materials that reduce environmental impact while enhancing functionality, durability, and aesthetic appeal in every project we undertake.',
+            : _tr(
+                en: 'We are committed to using innovative techniques and materials that reduce environmental impact while enhancing functionality, durability, and aesthetic appeal in every project we undertake.',
+                fr: 'Nous nous engageons à utiliser des techniques et des matériaux innovants qui réduisent l\'impact environnemental tout en améliorant la fonctionnalité, la durabilité et l\'attrait esthétique de chaque projet.',
+                ar: 'نلتزم باستخدام تقنيات ومواد مبتكرة تقلل الأثر البيئي مع تعزيز الوظيفة والمتانة والجاذبية الجمالية في كل مشروع ننفذه.',
+              ),
         'gradientColors': const [Color(0xFF3498DB), Color(0xFF2980B9)],
       },
       {
@@ -489,10 +497,18 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         ),
         'content': _isSwahili
             ? 'Kuwa mtoa huduma wa kimataifa anayeongoza wa huduma za ujenzi na usanifu za ubunifu, zinazotambuliwa kwa ubora, uendelevu, na athari za mabadiliko katika mazingira yaliyojengwa.'
-            : 'To become a leading global provider of innovative construction and design services, recognized for excellence, sustainability, and transformative impact on the built environment.',
+            : _tr(
+                en: 'To become a leading global provider of innovative construction and design services, recognized for excellence, sustainability, and transformative impact on the built environment.',
+                fr: 'Devenir un fournisseur mondial de référence en services innovants de construction et de conception, reconnu pour l\'excellence, la durabilité et son impact transformateur sur l\'environnement bâti.',
+                ar: 'أن نصبح مزودًا عالميًا رائدًا لخدمات البناء والتصميم المبتكرة، معروفًا بالتميز والاستدامة والأثر التحويلي في البيئة العمرانية.',
+              ),
         'subContent': _isSwahili
             ? 'Tunataka kuweka viwango vipya katika sekta ya ujenzi kupitia ubunifu unaoendelea, maendeleo ya kitaaluma, na kujitolea bila kusita kwa ubora, kuunda majengo yanayosimama jaribio la wakati na kuchangia vyema kwa jamii zinazohudumia.'
-            : 'We aspire to set new standards in the construction industry through continuous innovation, professional development, and a steadfast commitment to quality, creating buildings that stand the test of time and contribute positively to the communities they serve.',
+            : _tr(
+                en: 'We aspire to set new standards in the construction industry through continuous innovation, professional development, and a steadfast commitment to quality, creating buildings that stand the test of time and contribute positively to the communities they serve.',
+                fr: 'Nous aspirons à établir de nouvelles références dans le secteur de la construction grâce à l\'innovation continue, au développement professionnel et à un engagement constant envers la qualité, en créant des bâtiments durables qui apportent une contribution positive aux communautés servies.',
+                ar: 'نطمح إلى وضع معايير جديدة في قطاع البناء من خلال الابتكار المستمر والتطوير المهني والالتزام الثابت بالجودة، وإنشاء مبانٍ تصمد أمام الزمن وتسهم إيجابًا في المجتمعات التي نخدمها.',
+              ),
         'gradientColors': const [Color(0xFF9B59B6), Color(0xFF8E44AD)],
       },
     ];
@@ -518,7 +534,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isSwahili ? 'Kusudi Letu' : 'Our Purpose',
+                    _tr(
+                      en: 'Our Purpose',
+                      sw: 'Kusudi Letu',
+                      fr: 'Notre objectif',
+                      ar: 'هدفنا',
+                    ),
                     style: const TextStyle(
                       color: Color(0xFF1ABC9C),
                       fontSize: 12,
@@ -527,7 +548,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     ),
                   ),
                   Text(
-                    _isSwahili ? 'Dhamira na Maono' : 'Mission & Vision',
+                    _tr(
+                      en: 'Mission & Vision',
+                      sw: 'Dhamira na Maono',
+                      fr: 'Mission et vision',
+                      ar: 'الرسالة والرؤية',
+                    ),
                     style: TextStyle(
                       color: _textPrimaryColor,
                       fontSize: 24,
@@ -540,9 +566,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _isSwahili
-                ? 'Kanuni zinazoongoza kampuni yetu mbele'
-                : 'Guiding principles that drive our company forward',
+            _tr(
+              en: 'Guiding principles that drive our company forward',
+              sw: 'Kanuni zinazoongoza kampuni yetu mbele',
+              fr: 'Des principes directeurs qui font avancer notre entreprise',
+              ar: 'مبادئ توجيهية تدفع شركتنا إلى الأمام',
+            ),
             style: TextStyle(color: _textSecondaryColor, fontSize: 14),
           ),
           const SizedBox(height: 24),
@@ -685,52 +714,106 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   Widget _buildCoreValuesSection() {
     final values = [
       _CoreValue(
-        title: _isSwahili ? 'MAOMBI' : 'PRAYERS',
+        title: _tr(
+          en: 'PRAYERS',
+          sw: 'MAOMBI',
+          fr: 'PRIÈRE',
+          ar: 'الدعاء',
+        ),
         icon: Icons.self_improvement_rounded,
         color: const Color(0xFF9B59B6),
         description: _isSwahili
             ? 'Tunaamini katika nguvu ya maombi na imani kuongoza matendo yetu, kuunganisha timu yetu, na kuhamasisha ubora katika juhudi zetu zote.'
-            : 'We believe in the power of prayer and faith to guide our actions, unite our team, and inspire excellence in all our endeavors.',
+            : _tr(
+                en: 'We believe in the power of prayer and faith to guide our actions, unite our team, and inspire excellence in all our endeavors.',
+                fr: 'Nous croyons au pouvoir de la prière et de la foi pour guider nos actions, unir notre équipe et inspirer l\'excellence dans tous nos efforts.',
+                ar: 'نؤمن بقوة الدعاء والإيمان في توجيه أعمالنا وتوحيد فريقنا وإلهام التميز في جميع مساعينا.',
+              ),
       ),
       _CoreValue(
-        title: _isSwahili ? 'UBUNIFU' : 'INNOVATION',
+        title: _tr(
+          en: 'INNOVATION',
+          sw: 'UBUNIFU',
+          fr: 'INNOVATION',
+          ar: 'الابتكار',
+        ),
         icon: Icons.lightbulb_rounded,
         color: const Color(0xFFF39C12),
         description: _isSwahili
             ? 'Tunaendeleza na kuingiza teknolojia na mbinu mpya kutoa suluhisho za kisasa kwa mahitaji ya ujenzi na usanifu ya wateja wetu.'
-            : 'We develop and incorporate new technology and approaches to provide cutting-edge solutions for our clients\' construction and design needs.',
+            : _tr(
+                en: 'We develop and incorporate new technology and approaches to provide cutting-edge solutions for our clients\' construction and design needs.',
+                fr: 'Nous développons et intégrons de nouvelles technologies et approches afin de fournir des solutions de pointe aux besoins de construction et de conception de nos clients.',
+                ar: 'نطوّر ونعتمد تقنيات وأساليب جديدة لتقديم حلول متقدمة لاحتياجات عملائنا في البناء والتصميم.',
+              ),
       ),
       _CoreValue(
-        title: _isSwahili ? 'UBORA' : 'QUALITY',
+        title: _tr(
+          en: 'QUALITY',
+          sw: 'UBORA',
+          fr: 'QUALITÉ',
+          ar: 'الجودة',
+        ),
         icon: Icons.verified_rounded,
         color: const Color(0xFF1ABC9C),
         description: _isSwahili
             ? 'Tunaamini ni jambo bora kufanya kitu kimoja vizuri sana. Kujitolea kwetu bila kusita kwa ubora kunaonyeshwa katika kila undani wa kazi yetu.'
-            : 'We believe it\'s the best thing to do one thing really really well. Our uncompromising commitment to excellence is reflected in every detail of our work.',
+            : _tr(
+                en: 'We believe it\'s the best thing to do one thing really really well. Our uncompromising commitment to excellence is reflected in every detail of our work.',
+                fr: 'Nous croyons qu\'il vaut mieux faire une chose exceptionnellement bien. Notre engagement sans compromis envers l\'excellence se reflète dans chaque détail de notre travail.',
+                ar: 'نؤمن بأن أفضل ما يمكن فعله هو إتقان الشيء على أكمل وجه. ويظهر التزامنا الراسخ بالتميز في كل تفاصيل عملنا.',
+              ),
       ),
       _CoreValue(
-        title: _isSwahili ? 'KUSOMA' : 'READING',
+        title: _tr(
+          en: 'READING',
+          sw: 'KUSOMA',
+          fr: 'LECTURE',
+          ar: 'القراءة',
+        ),
         icon: Icons.menu_book_rounded,
         color: const Color(0xFF3498DB),
         description: _isSwahili
             ? 'Tunakumbatia kusoma kama chombo cha ukuaji, maarifa, na uboreshaji wa kuendelea. Timu yetu inahimizwa kujifunza daima.'
-            : 'We embrace reading as a tool for growth, knowledge, and continuous improvement. Our team is encouraged to constantly learn.',
+            : _tr(
+                en: 'We embrace reading as a tool for growth, knowledge, and continuous improvement. Our team is encouraged to constantly learn.',
+                fr: 'Nous considérons la lecture comme un outil de croissance, de connaissance et d\'amélioration continue. Notre équipe est encouragée à apprendre en permanence.',
+                ar: 'نعتبر القراءة أداة للنمو والمعرفة والتحسين المستمر. ونشجع فريقنا على التعلم الدائم.',
+              ),
       ),
       _CoreValue(
-        title: _isSwahili ? 'USHIRIKIANO' : 'TEAMWORK',
+        title: _tr(
+          en: 'TEAMWORK',
+          sw: 'USHIRIKIANO',
+          fr: 'TRAVAIL D\'ÉQUIPE',
+          ar: 'العمل الجماعي',
+        ),
         icon: Icons.groups_rounded,
         color: const Color(0xFFE74C3C),
         description: _isSwahili
             ? 'Tunaamini suluhisho bora linakuja kutokana na kufanya kazi pamoja. Tunakuza mazingira ya ushirikiano ambapo ujuzi na mtazamo mbalimbali unathaminiwa.'
-            : 'We believe the best solution comes from working together. We foster a collaborative environment where diverse skills and perspectives are valued.',
+            : _tr(
+                en: 'We believe the best solution comes from working together. We foster a collaborative environment where diverse skills and perspectives are valued.',
+                fr: 'Nous croyons que les meilleures solutions naissent du travail collectif. Nous favorisons un environnement collaboratif où les compétences et points de vue divers sont valorisés.',
+                ar: 'نؤمن بأن أفضل الحلول تأتي من العمل معًا. ونرعى بيئة تعاونية تُقدَّر فيها المهارات ووجهات النظر المتنوعة.',
+              ),
       ),
       _CoreValue(
-        title: _isSwahili ? 'UAMINIFU' : 'INTEGRITY',
+        title: _tr(
+          en: 'INTEGRITY',
+          sw: 'UAMINIFU',
+          fr: 'INTÉGRITÉ',
+          ar: 'النزاهة',
+        ),
         icon: Icons.shield_rounded,
         color: const Color(0xFF2C3E50),
         description: _isSwahili
             ? 'Tunafanya jambo sahihi daima. Mazoea yetu ya biashara yanajengwa juu ya uaminifu, uwazi, na mwenendo wa kimaadili.'
-            : 'We do the right thing always. Our business practices are founded on honesty, transparency, and ethical conduct.',
+            : _tr(
+                en: 'We do the right thing always. Our business practices are founded on honesty, transparency, and ethical conduct.',
+                fr: 'Nous faisons toujours ce qui est juste. Nos pratiques commerciales reposent sur l\'honnêteté, la transparence et une conduite éthique.',
+                ar: 'نقوم دائمًا بما هو صائب. وتقوم ممارساتنا التجارية على الصدق والشفافية والسلوك الأخلاقي.',
+              ),
       ),
     ];
 
@@ -755,7 +838,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isSwahili ? 'Kanuni Zetu' : 'Our Guiding Principles',
+                    _tr(
+                      en: 'Our Guiding Principles',
+                      sw: 'Kanuni Zetu',
+                      fr: 'Nos principes directeurs',
+                      ar: 'مبادئنا التوجيهية',
+                    ),
                     style: const TextStyle(
                       color: Color(0xFFD4AF37),
                       fontSize: 12,
@@ -764,7 +852,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     ),
                   ),
                   Text(
-                    _isSwahili ? 'Thamani za Msingi' : 'Core Values',
+                    _tr(
+                      en: 'Core Values',
+                      sw: 'Thamani za Msingi',
+                      fr: 'Valeurs fondamentales',
+                      ar: 'القيم الأساسية',
+                    ),
                     style: TextStyle(
                       color: _textPrimaryColor,
                       fontSize: 24,
@@ -777,9 +870,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _isSwahili
-                ? 'Kanuni hizi zinaongoza maamuzi yetu, kuunda utamaduni wetu, na kufafanua mbinu yetu kwa kila mradi tunaoufanya.'
-                : 'These principles guide our decisions, shape our culture, and define our approach to every project we undertake.',
+            _tr(
+              en: 'These principles guide our decisions, shape our culture, and define our approach to every project we undertake.',
+              sw: 'Kanuni hizi zinaongoza maamuzi yetu, kuunda utamaduni wetu, na kufafanua mbinu yetu kwa kila mradi tunaoufanya.',
+              fr: 'Ces principes guident nos décisions, façonnent notre culture et définissent notre approche pour chaque projet que nous réalisons.',
+              ar: 'توجّه هذه المبادئ قراراتنا، وتشكل ثقافتنا، وتحدد نهجنا في كل مشروع ننفذه.',
+            ),
             style: TextStyle(color: _textSecondaryColor, fontSize: 14),
           ),
           const SizedBox(height: 24),
@@ -878,29 +974,54 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         name: 'Eng. ELIYA N. KISHALULI',
         role: _isSwahili
             ? 'Mwanzilishi na Mkurugenzi Mtendaji'
-            : 'Founder & CEO',
+            : _tr(
+                en: 'Founder & CEO',
+                fr: 'Fondateur et PDG',
+                ar: 'المؤسس والرئيس التنفيذي',
+              ),
         image: 'assets/images/ELIYA_KISHALULI.jpeg',
         description: _isSwahili
             ? 'Akiwa na uzoefu wa zaidi ya miaka 15 katika ujenzi na uhandisi, Eng. Eliya alianzisha Wajenzi Professional akiwa na maono ya kubadilisha sekta ya ujenzi Afrika Mashariki.'
-            : 'With over 15 years of experience in construction and engineering, Eng. Eliya founded Wajenzi Professional with a vision to transform the construction industry in East Africa.',
+            : _tr(
+                en: 'With over 15 years of experience in construction and engineering, Eng. Eliya founded Wajenzi Professional with a vision to transform the construction industry in East Africa.',
+                fr: 'Avec plus de 15 ans d\'expérience dans la construction et l\'ingénierie, l\'ingénieur Eliya a fondé Wajenzi Professional avec la vision de transformer le secteur de la construction en Afrique de l\'Est.',
+                ar: 'بخبرة تزيد على 15 عامًا في البناء والهندسة، أسس المهندس إليا شركة Wajenzi Professional برؤية تهدف إلى تحويل قطاع البناء في شرق أفريقيا.',
+              ),
       ),
       _TeamMember(
         name: 'SARAH JOHN',
-        role: _isSwahili ? 'Mkurugenzi Msimamizi' : 'Managing Director',
+        role: _tr(
+          en: 'Managing Director',
+          sw: 'Mkurugenzi Msimamizi',
+          fr: 'Directrice générale',
+          ar: 'المديرة العامة',
+        ),
         image: 'assets/images/SARAH_JOHN.png',
         description: _isSwahili
             ? 'Mkurugenzi Msimamizi mwenye uzoefu katika ujenzi, mzuri katika usimamizi wa miradi, bajeti, na uongozi wa timu, na rekodi iliyothibitishwa ya kutoa miradi bora kwa wakati na ndani ya bajeti.'
-            : 'Experienced Managing Director in construction, skilled in project management, budgeting, and team leadership, with a proven record of delivering quality projects on time and within budget.',
+            : _tr(
+                en: 'Experienced Managing Director in construction, skilled in project management, budgeting, and team leadership, with a proven record of delivering quality projects on time and within budget.',
+                fr: 'Directrice générale expérimentée dans la construction, compétente en gestion de projet, budgétisation et leadership d\'équipe, avec un solide historique de livraison de projets de qualité dans les délais et le budget.',
+                ar: 'مديرة عامة ذات خبرة في قطاع البناء، متمرسة في إدارة المشاريع وإعداد الميزانيات وقيادة الفرق، ولديها سجل مثبت في تسليم مشاريع عالية الجودة في الوقت المحدد وضمن الميزانية.',
+              ),
       ),
       _TeamMember(
         name: 'MOHAMEDI JOSEPH',
         role: _isSwahili
             ? 'Meneja wa Maendeleo ya Biashara'
-            : 'Business Development Manager',
+            : _tr(
+                en: 'Business Development Manager',
+                fr: 'Responsable du développement commercial',
+                ar: 'مدير تطوير الأعمال',
+              ),
         image: 'assets/images/MOHAMED_JOSEPH.png',
         description: _isSwahili
             ? 'Meneja wa Maendeleo ya Biashara katika sekta ya ujenzi, mzuri katika mahusiano na wateja, upataji wa miradi, na ukuaji wa kimkakati, na rekodi iliyothibitishwa ya kuongeza mapato.'
-            : 'Business Development Manager in the construction industry, skilled in client relations, project acquisition, and strategic growth, with a proven record of driving revenue and delivering successful projects.',
+            : _tr(
+                en: 'Business Development Manager in the construction industry, skilled in client relations, project acquisition, and strategic growth, with a proven record of driving revenue and delivering successful projects.',
+                fr: 'Responsable du développement commercial dans le secteur de la construction, spécialisé dans la relation client, l\'acquisition de projets et la croissance stratégique, avec un solide historique d\'augmentation des revenus et de réalisation de projets réussis.',
+                ar: 'مدير تطوير أعمال في قطاع البناء، يتمتع بخبرة في علاقات العملاء واستقطاب المشاريع والنمو الاستراتيجي، مع سجل مثبت في زيادة الإيرادات وتنفيذ مشاريع ناجحة.',
+              ),
       ),
     ];
 
@@ -925,7 +1046,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    _isSwahili ? 'Viongozi Wabobezi' : 'Expert Leaders',
+                    _tr(
+                      en: 'Expert Leaders',
+                      sw: 'Viongozi Wabobezi',
+                      fr: 'Des leaders experts',
+                      ar: 'قادة خبراء',
+                    ),
                     style: const TextStyle(
                       color: Color(0xFF3498DB),
                       fontSize: 12,
@@ -934,7 +1060,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                     ),
                   ),
                   Text(
-                    _isSwahili ? 'Timu ya Uongozi' : 'Our Leadership Team',
+                    _tr(
+                      en: 'Our Leadership Team',
+                      sw: 'Timu ya Uongozi',
+                      fr: 'Notre équipe dirigeante',
+                      ar: 'فريقنا القيادي',
+                    ),
                     style: TextStyle(
                       color: _textPrimaryColor,
                       fontSize: 24,
@@ -947,9 +1078,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _isSwahili
-                ? 'Kutana na wataalamu wanaoongoza kampuni yetu kwa ujuzi na maono.'
-                : 'Meet the professionals who guide our company with expertise and vision.',
+            _tr(
+              en: 'Meet the professionals who guide our company with expertise and vision.',
+              sw: 'Kutana na wataalamu wanaoongoza kampuni yetu kwa ujuzi na maono.',
+              fr: 'Rencontrez les professionnels qui dirigent notre entreprise avec expertise et vision.',
+              ar: 'تعرّف على الخبراء الذين يقودون شركتنا بخبرة ورؤية.',
+            ),
             style: TextStyle(color: _textSecondaryColor, fontSize: 14),
           ),
           const SizedBox(height: 24),
@@ -1196,9 +1330,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               fr: 'Heures d\'ouverture',
               ar: 'ساعات العمل',
             ),
-            content: _isSwahili
-                ? 'Jumatatu - Ijumaa: 8:00 AM - 6:00 PM'
-                : 'Mon - Fri: 8:00 AM - 6:00 PM',
+            content: _tr(
+              en: 'Mon - Fri: 8:00 AM - 6:00 PM',
+              sw: 'Jumatatu - Ijumaa: 8:00 AM - 6:00 PM',
+              fr: 'Lun - Ven : 8h00 - 18h00',
+              ar: 'الاثنين - الجمعة: 8:00 ص - 6:00 م',
+            ),
           ),
         ],
       ),

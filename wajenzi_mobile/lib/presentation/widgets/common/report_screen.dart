@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/network/api_client.dart';
-import '../../../core/router/app_router.dart';
 import '../../providers/settings_provider.dart';
 import 'loading_widget.dart';
 import 'empty_state_widget.dart';
@@ -12,6 +11,8 @@ import 'empty_state_widget.dart';
 class ReportScreen extends ConsumerStatefulWidget {
   final String title;
   final String titleSw;
+  final String? titleFr;
+  final String? titleAr;
   final String apiEndpoint;
   final List<Map<String, String>>? filterOptions;
   final Widget Function(Map<String, dynamic> data, bool isSwahili)?
@@ -22,6 +23,8 @@ class ReportScreen extends ConsumerStatefulWidget {
     super.key,
     required this.title,
     required this.titleSw,
+    this.titleFr,
+    this.titleAr,
     required this.apiEndpoint,
     this.filterOptions,
     this.customBuilder,
@@ -100,7 +103,30 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
+
+    String tr({
+      required String en,
+      required String sw,
+      String? fr,
+      String? ar,
+    }) {
+      return switch (language) {
+        AppLanguage.swahili => sw,
+        AppLanguage.french => fr ?? en,
+        AppLanguage.arabic => ar ?? en,
+        AppLanguage.english => en,
+      };
+    }
+
+    String localizedTitle() {
+      return switch (language) {
+        AppLanguage.swahili => widget.titleSw,
+        AppLanguage.french => widget.titleFr ?? widget.title,
+        AppLanguage.arabic => widget.titleAr ?? widget.title,
+        AppLanguage.english => widget.title,
+      };
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -108,16 +134,26 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.go('/reports'),
         ),
-        title: Text(isSwahili ? widget.titleSw : widget.title),
+        title: Text(localizedTitle()),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),
-            tooltip: isSwahili ? 'Chagua Tarehe' : 'Select Date',
+            tooltip: tr(
+              en: 'Select Date',
+              sw: 'Chagua Tarehe',
+              fr: 'Choisir la date',
+              ar: 'اختر التاريخ',
+            ),
             onPressed: _selectDateRange,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: isSwahili ? 'Onyesha Upya' : 'Refresh',
+            tooltip: tr(
+              en: 'Refresh',
+              sw: 'Onyesha Upya',
+              fr: 'Actualiser',
+              ar: 'تحديث',
+            ),
             onPressed: _loadData,
           ),
         ],
@@ -151,7 +187,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
           Expanded(
             child: _isLoading
                 ? LoadingWidget(
-                    message: isSwahili ? 'Inapakia data...' : 'Loading data...',
+                    message: tr(
+                      en: 'Loading data...',
+                      sw: 'Inapakia data...',
+                      fr: 'Chargement des données...',
+                      ar: 'جارٍ تحميل البيانات...',
+                    ),
                   )
                 : _error != null
                 ? Center(
@@ -165,9 +206,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          isSwahili
-                              ? 'Hitilafu wakati wa kupakia'
-                              : 'Error loading data',
+                          tr(
+                            en: 'Error loading data',
+                            sw: 'Hitilafu wakati wa kupakia',
+                            fr: 'Erreur lors du chargement des données',
+                            ar: 'حدث خطأ أثناء تحميل البيانات',
+                          ),
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
@@ -176,7 +220,14 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                         ElevatedButton.icon(
                           onPressed: _loadData,
                           icon: const Icon(Icons.refresh),
-                          label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+                          label: Text(
+                            tr(
+                              en: 'Retry',
+                              sw: 'Jaribu tena',
+                              fr: 'Réessayer',
+                              ar: 'أعد المحاولة',
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -184,14 +235,25 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                 : _data.isEmpty
                 ? EmptyStateWidget(
                     message:
-                        widget.customEmptyMessage?.call(isSwahili) ??
-                        (isSwahili
-                            ? 'Hakuna data ya ripoti'
-                            : 'No report data available'),
+                        widget.customEmptyMessage?.call(
+                          language == AppLanguage.swahili,
+                        ) ??
+                        tr(
+                          en: 'No report data available',
+                          sw: 'Hakuna data ya ripoti',
+                          fr: 'Aucune donnée de rapport disponible',
+                          ar: 'لا توجد بيانات تقرير متاحة',
+                        ),
                     icon: Icons.bar_chart,
                   )
-                : widget.customBuilder?.call(_data, isSwahili) ??
-                      _DefaultReportBuilder(data: _data, isSwahili: isSwahili),
+                : widget.customBuilder?.call(
+                        _data,
+                        language == AppLanguage.swahili,
+                      ) ??
+                      _DefaultReportBuilder(
+                        data: _data,
+                        isSwahili: language == AppLanguage.swahili,
+                      ),
           ),
         ],
       ),

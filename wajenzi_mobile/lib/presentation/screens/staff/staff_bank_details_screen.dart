@@ -11,6 +11,21 @@ import '../vat/vat_shared.dart';
 
 final _staffBankSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
+String _staffBankTr(
+  AppLanguage language, {
+  required String en,
+  String? sw,
+  String? fr,
+  String? ar,
+}) {
+  return switch (language) {
+    AppLanguage.swahili => sw ?? en,
+    AppLanguage.french => fr ?? en,
+    AppLanguage.arabic => ar ?? en,
+    AppLanguage.english => en,
+  };
+}
+
 final _staffBankDetailsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
       final api = ref.watch(apiClientProvider);
@@ -72,7 +87,7 @@ class _StaffBankDetailsScreenState
   Widget build(BuildContext context) {
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final detailsAsync = ref.watch(_staffBankDetailsProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final search = ref.watch(_staffBankSearchProvider).trim().toLowerCase();
 
@@ -82,7 +97,15 @@ class _StaffBankDetailsScreenState
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Akaunti za Benki' : 'Staff Bank Details'),
+        title: Text(
+          _staffBankTr(
+            language,
+            en: 'Staff Bank Details',
+            sw: 'Akaunti za Benki',
+            fr: 'Coordonnées bancaires du personnel',
+            ar: 'بيانات الحسابات البنكية للموظفين',
+          ),
+        ),
       ),
       floatingActionButton: detailsAsync.maybeWhen(
         data: (payload) => payload['unavailable_on_live'] == true
@@ -92,7 +115,13 @@ class _StaffBankDetailsScreenState
                 child: FloatingActionButton(
                   onPressed: () => _openForm(context, ref),
                   child: const Icon(Icons.add_rounded),
-                  tooltip: isSwahili ? 'Ongeza Taarifa' : 'Add Bank Detail',
+                  tooltip: _staffBankTr(
+                    language,
+                    en: 'Add Bank Detail',
+                    sw: 'Ongeza Taarifa',
+                    fr: 'Ajouter des coordonnées bancaires',
+                    ar: 'إضافة بيانات بنكية',
+                  ),
                 ),
               ),
         orElse: () => Padding(
@@ -100,7 +129,13 @@ class _StaffBankDetailsScreenState
           child: FloatingActionButton(
             onPressed: () => _openForm(context, ref),
             child: const Icon(Icons.add_rounded),
-            tooltip: isSwahili ? 'Ongeza Taarifa' : 'Add Bank Detail',
+            tooltip: _staffBankTr(
+              language,
+              en: 'Add Bank Detail',
+              sw: 'Ongeza Taarifa',
+              fr: 'Ajouter des coordonnées bancaires',
+              ar: 'إضافة بيانات بنكية',
+            ),
           ),
         ),
       ),
@@ -116,9 +151,13 @@ class _StaffBankDetailsScreenState
                   onChanged: (value) =>
                       ref.read(_staffBankSearchProvider.notifier).state = value,
                   decoration: InputDecoration(
-                    hintText: isSwahili
-                        ? 'Tafuta taarifa za benki...'
-                        : 'Search bank details...',
+                    hintText: _staffBankTr(
+                      language,
+                      en: 'Search bank details...',
+                      sw: 'Tafuta taarifa za benki...',
+                      fr: 'Rechercher des coordonnées bancaires...',
+                      ar: 'ابحث في البيانات البنكية...',
+                    ),
                     prefixIcon: const Icon(Icons.search_rounded),
                     suffixIcon: search.isNotEmpty
                         ? IconButton(
@@ -152,8 +191,11 @@ class _StaffBankDetailsScreenState
               ),
               error: (error, _) => SliverFillRemaining(
                 child: _StaffBankErrorView(
-                  message: vatErrorMessage(error, isSwahili: isSwahili),
-                  isSwahili: isSwahili,
+                  message: vatErrorMessage(
+                    error,
+                    isSwahili: language == AppLanguage.swahili,
+                  ),
+                  language: language,
                   onRetry: () => ref.invalidate(_staffBankDetailsProvider),
                 ),
               ),
@@ -173,9 +215,13 @@ class _StaffBankDetailsScreenState
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              isSwahili
-                                  ? 'Staff Bank Details haipatikani kwenye live API kwa sasa.'
-                                  : 'Staff Bank Details is not available on the live API right now.',
+                              _staffBankTr(
+                                language,
+                                en: 'Staff Bank Details is not available on the live API right now.',
+                                sw: 'Staff Bank Details haipatikani kwenye live API kwa sasa.',
+                                fr: 'Les coordonnées bancaires du personnel ne sont pas disponibles sur l’API live pour le moment.',
+                                ar: 'بيانات الحسابات البنكية للموظفين غير متاحة على واجهة الـ API المباشرة حالياً.',
+                              ),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 16,
@@ -219,12 +265,20 @@ class _StaffBankDetailsScreenState
                           const SizedBox(height: 16),
                           Text(
                             details.isEmpty
-                                ? (isSwahili
-                                      ? 'Hakuna taarifa za benki'
-                                      : 'No bank details found')
-                                : (isSwahili
-                                      ? 'Hakuna matokeo yanayolingana'
-                                      : 'No matching results'),
+                                ? _staffBankTr(
+                                    language,
+                                    en: 'No bank details found',
+                                    sw: 'Hakuna taarifa za benki',
+                                    fr: 'Aucune coordonnée bancaire trouvée',
+                                    ar: 'لم يتم العثور على بيانات بنكية',
+                                  )
+                                : _staffBankTr(
+                                    language,
+                                    en: 'No matching results',
+                                    sw: 'Hakuna matokeo yanayolingana',
+                                    fr: 'Aucun résultat correspondant',
+                                    ar: 'لا توجد نتائج مطابقة',
+                                  ),
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.grey[600],
@@ -242,7 +296,13 @@ class _StaffBankDetailsScreenState
                                       '',
                               icon: const Icon(Icons.clear),
                               label: Text(
-                                isSwahili ? 'Futa utafutaji' : 'Clear search',
+                                _staffBankTr(
+                                  language,
+                                  en: 'Clear search',
+                                  sw: 'Futa utafutaji',
+                                  fr: 'Effacer la recherche',
+                                  ar: 'مسح البحث',
+                                ),
                               ),
                             ),
                           ],
@@ -260,7 +320,7 @@ class _StaffBankDetailsScreenState
                       return _StaffBankCard(
                         detail: detail,
                         index: index,
-                        isSwahili: isSwahili,
+                        language: language,
                         isDarkMode: isDarkMode,
                         onEdit: () => _openForm(context, ref, detail: detail),
                         onDelete: () => _deleteDetail(context, ref, detail),
@@ -268,7 +328,7 @@ class _StaffBankDetailsScreenState
                           context,
                           detail,
                           isDarkMode,
-                          isSwahili,
+                          language,
                         ),
                       );
                     }, childCount: filteredDetails.length),
@@ -302,25 +362,51 @@ class _StaffBankDetailsScreenState
     WidgetRef ref,
     Map<String, dynamic> detail,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
+    final language = ref.read(currentLanguageProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(isSwahili ? 'Futa Taarifa za Benki' : 'Delete Bank Detail'),
+        title: Text(
+          _staffBankTr(
+            language,
+            en: 'Delete Bank Detail',
+            sw: 'Futa Taarifa za Benki',
+            fr: 'Supprimer les coordonnées bancaires',
+            ar: 'حذف البيانات البنكية',
+          ),
+        ),
         content: Text(
-          isSwahili
-              ? 'Je, unataka kufuta taarifa za "${detail['staff_name']}"?'
-              : 'Delete bank detail for "${detail['staff_name']}"?',
+          _staffBankTr(
+            language,
+            en: 'Delete bank detail for "${detail['staff_name']}"?',
+            sw: 'Je, unataka kufuta taarifa za "${detail['staff_name']}"?',
+            fr: 'Supprimer les coordonnées bancaires de "${detail['staff_name']}" ?',
+            ar: 'هل تريد حذف البيانات البنكية الخاصة بـ "${detail['staff_name']}"؟',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(isSwahili ? 'Ghairi' : 'Cancel'),
+            child: Text(
+              _staffBankTr(
+                language,
+                en: 'Cancel',
+                sw: 'Ghairi',
+                fr: 'Annuler',
+                ar: 'إلغاء',
+              ),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text(
-              isSwahili ? 'Futa' : 'Delete',
+              _staffBankTr(
+                language,
+                en: 'Delete',
+                sw: 'Futa',
+                fr: 'Supprimer',
+                ar: 'حذف',
+              ),
               style: const TextStyle(color: AppColors.error),
             ),
           ),
@@ -338,7 +424,13 @@ class _StaffBankDetailsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              isSwahili ? 'Taarifa za benki zimefutwa' : 'Bank detail deleted',
+              _staffBankTr(
+                language,
+                en: 'Bank detail deleted',
+                sw: 'Taarifa za benki zimefutwa',
+                fr: 'Coordonnées bancaires supprimées',
+                ar: 'تم حذف البيانات البنكية',
+              ),
             ),
             backgroundColor: AppColors.success,
           ),
@@ -348,7 +440,9 @@ class _StaffBankDetailsScreenState
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(vatErrorMessage(error, isSwahili: isSwahili)),
+            content: Text(
+              vatErrorMessage(error, isSwahili: language == AppLanguage.swahili),
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -360,7 +454,7 @@ class _StaffBankDetailsScreenState
     BuildContext context,
     Map<String, dynamic> detail,
     bool isDarkMode,
-    bool isSwahili,
+    AppLanguage language,
   ) {
     showModalBottomSheet<void>(
       context: context,
@@ -399,22 +493,46 @@ class _StaffBankDetailsScreenState
                       ),
                       const SizedBox(height: 18),
                       _BankDetailRow(
-                        'Bank',
+                        _staffBankTr(
+                          language,
+                          en: 'Bank',
+                          sw: 'Benki',
+                          fr: 'Banque',
+                          ar: 'البنك',
+                        ),
                         detail['bank_name']?.toString() ?? 'N/A',
                         isDarkMode,
                       ),
                       _BankDetailRow(
-                        'Account Number',
+                        _staffBankTr(
+                          language,
+                          en: 'Account Number',
+                          sw: 'Namba ya Akaunti',
+                          fr: 'Numéro de compte',
+                          ar: 'رقم الحساب',
+                        ),
                         detail['account_number']?.toString() ?? 'N/A',
                         isDarkMode,
                       ),
                       _BankDetailRow(
-                        'Branch',
+                        _staffBankTr(
+                          language,
+                          en: 'Branch',
+                          sw: 'Tawi',
+                          fr: 'Agence',
+                          ar: 'الفرع',
+                        ),
                         detail['branch']?.toString() ?? 'N/A',
                         isDarkMode,
                       ),
                       _BankDetailRow(
-                        'Created',
+                        _staffBankTr(
+                          language,
+                          en: 'Created',
+                          sw: 'Imeundwa',
+                          fr: 'Créé',
+                          ar: 'تاريخ الإنشاء',
+                        ),
                         _formatDate(detail['created_at']?.toString()),
                         isDarkMode,
                       ),
@@ -432,12 +550,12 @@ class _StaffBankDetailsScreenState
 
 class _StaffBankErrorView extends StatelessWidget {
   final String message;
-  final bool isSwahili;
+  final AppLanguage language;
   final VoidCallback onRetry;
 
   const _StaffBankErrorView({
     required this.message,
-    required this.isSwahili,
+    required this.language,
     required this.onRetry,
   });
 
@@ -450,7 +568,13 @@ class _StaffBankErrorView extends StatelessWidget {
           Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+            _staffBankTr(
+              language,
+              en: 'Something went wrong',
+              sw: 'Hitilafu imetokea',
+              fr: 'Un problème est survenu',
+              ar: 'حدث خطأ ما',
+            ),
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
@@ -459,7 +583,15 @@ class _StaffBankErrorView extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Retry'),
+            label: Text(
+              _staffBankTr(
+                language,
+                en: 'Retry',
+                sw: 'Jaribu tena',
+                fr: 'Réessayer',
+                ar: 'أعد المحاولة',
+              ),
+            ),
           ),
         ],
       ),
@@ -470,7 +602,7 @@ class _StaffBankErrorView extends StatelessWidget {
 class _StaffBankCard extends StatelessWidget {
   final Map<String, dynamic> detail;
   final int index;
-  final bool isSwahili;
+  final AppLanguage language;
   final bool isDarkMode;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -479,7 +611,7 @@ class _StaffBankCard extends StatelessWidget {
   const _StaffBankCard({
     required this.detail,
     required this.index,
-    required this.isSwahili,
+    required this.language,
     required this.isDarkMode,
     required this.onEdit,
     required this.onDelete,
@@ -620,7 +752,15 @@ class _StaffBankCard extends StatelessWidget {
                       children: [
                         const Icon(Icons.visibility_rounded, size: 20),
                         const SizedBox(width: 8),
-                        Text(isSwahili ? 'Tazama' : 'View'),
+                        Text(
+                          _staffBankTr(
+                            language,
+                            en: 'View',
+                            sw: 'Tazama',
+                            fr: 'Voir',
+                            ar: 'عرض',
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -630,7 +770,15 @@ class _StaffBankCard extends StatelessWidget {
                       children: [
                         const Icon(Icons.edit_rounded, size: 20),
                         const SizedBox(width: 8),
-                        Text(isSwahili ? 'Hariri' : 'Edit'),
+                        Text(
+                          _staffBankTr(
+                            language,
+                            en: 'Edit',
+                            sw: 'Hariri',
+                            fr: 'Modifier',
+                            ar: 'تعديل',
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -645,7 +793,13 @@ class _StaffBankCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          isSwahili ? 'Futa' : 'Delete',
+                          _staffBankTr(
+                            language,
+                            en: 'Delete',
+                            sw: 'Futa',
+                            fr: 'Supprimer',
+                            ar: 'حذف',
+                          ),
                           style: const TextStyle(color: AppColors.error),
                         ),
                       ],
@@ -744,7 +898,7 @@ class _StaffBankDetailFormSheetState
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
+    final language = ref.watch(currentLanguageProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final staffs = _toMaps(widget.refs['staffs']);
     final banks = _toMaps(widget.refs['banks']);
@@ -793,12 +947,20 @@ class _StaffBankDetailFormSheetState
                   children: [
                     Text(
                       _isEdit
-                          ? (isSwahili
-                                ? 'Hariri Taarifa za Benki'
-                                : 'Edit Bank Detail')
-                          : (isSwahili
-                                ? 'Taarifa Mpya za Benki'
-                                : 'New Bank Detail'),
+                          ? _staffBankTr(
+                              language,
+                              en: 'Edit Bank Detail',
+                              sw: 'Hariri Taarifa za Benki',
+                              fr: 'Modifier les coordonnées bancaires',
+                              ar: 'تعديل البيانات البنكية',
+                            )
+                          : _staffBankTr(
+                              language,
+                              en: 'New Bank Detail',
+                              sw: 'Taarifa Mpya za Benki',
+                              fr: 'Nouvelles coordonnées bancaires',
+                              ar: 'بيانات بنكية جديدة',
+                            ),
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
@@ -813,10 +975,24 @@ class _StaffBankDetailFormSheetState
                           staffs.any((item) => _toInt(item['id']) == _staffId)
                           ? _staffId
                           : null,
-                      decoration: inputStyle(isSwahili ? 'Staff *' : 'Staff *'),
+                      decoration: inputStyle(
+                        _staffBankTr(
+                          language,
+                          en: 'Staff *',
+                          sw: 'Mfanyakazi *',
+                          fr: 'Employé *',
+                          ar: 'الموظف *',
+                        ),
+                      ),
                       dropdownColor: bgColor,
                       validator: (selected) => selected == null
-                          ? (isSwahili ? 'Hitaji' : 'Required')
+                          ? _staffBankTr(
+                              language,
+                              en: 'Required',
+                              sw: 'Hitaji',
+                              fr: 'Obligatoire',
+                              ar: 'مطلوب',
+                            )
                           : null,
                       items: staffs
                           .map(
@@ -838,10 +1014,24 @@ class _StaffBankDetailFormSheetState
                       value: banks.any((item) => _toInt(item['id']) == _bankId)
                           ? _bankId
                           : null,
-                      decoration: inputStyle(isSwahili ? 'Bank *' : 'Bank *'),
+                      decoration: inputStyle(
+                        _staffBankTr(
+                          language,
+                          en: 'Bank *',
+                          sw: 'Benki *',
+                          fr: 'Banque *',
+                          ar: 'البنك *',
+                        ),
+                      ),
                       dropdownColor: bgColor,
                       validator: (selected) => selected == null
-                          ? (isSwahili ? 'Hitaji' : 'Required')
+                          ? _staffBankTr(
+                              language,
+                              en: 'Required',
+                              sw: 'Hitaji',
+                              fr: 'Obligatoire',
+                              ar: 'مطلوب',
+                            )
                           : null,
                       items: banks
                           .map(
@@ -862,12 +1052,22 @@ class _StaffBankDetailFormSheetState
                       controller: _accountNumberController,
                       validator: (value) =>
                           (value == null || value.trim().isEmpty)
-                          ? (isSwahili
-                                ? 'Jina linahitajika'
-                                : 'Name is required')
+                          ? _staffBankTr(
+                              language,
+                              en: 'Account number is required',
+                              sw: 'Namba ya akaunti inahitajika',
+                              fr: 'Le numéro de compte est requis',
+                              ar: 'رقم الحساب مطلوب',
+                            )
                           : null,
                       decoration: inputStyle(
-                        isSwahili ? 'Namba ya Akaunti *' : 'Account Number *',
+                        _staffBankTr(
+                          language,
+                          en: 'Account Number *',
+                          sw: 'Namba ya Akaunti *',
+                          fr: 'Numéro de compte *',
+                          ar: 'رقم الحساب *',
+                        ),
                       ),
                       style: TextStyle(color: textColor),
                     ),
@@ -876,11 +1076,23 @@ class _StaffBankDetailFormSheetState
                       controller: _branchController,
                       validator: (value) =>
                           (value == null || value.trim().isEmpty)
-                          ? (isSwahili
-                                ? 'Jina linahitajika'
-                                : 'Name is required')
+                          ? _staffBankTr(
+                              language,
+                              en: 'Branch is required',
+                              sw: 'Tawi linahitajika',
+                              fr: 'L’agence est requise',
+                              ar: 'الفرع مطلوب',
+                            )
                           : null,
-                      decoration: inputStyle(isSwahili ? 'Tawi *' : 'Branch *'),
+                      decoration: inputStyle(
+                        _staffBankTr(
+                          language,
+                          en: 'Branch *',
+                          sw: 'Tawi *',
+                          fr: 'Agence *',
+                          ar: 'الفرع *',
+                        ),
+                      ),
                       style: TextStyle(color: textColor),
                     ),
                     const SizedBox(height: 20),
@@ -905,8 +1117,20 @@ class _StaffBankDetailFormSheetState
                             )
                           : Text(
                               _isEdit
-                                  ? (isSwahili ? 'Sasisha' : 'Update')
-                                  : (isSwahili ? 'Hifadhi' : 'Save'),
+                                  ? _staffBankTr(
+                                      language,
+                                      en: 'Update',
+                                      sw: 'Sasisha',
+                                      fr: 'Mettre à jour',
+                                      ar: 'تحديث',
+                                    )
+                                  : _staffBankTr(
+                                      language,
+                                      en: 'Save',
+                                      sw: 'Hifadhi',
+                                      fr: 'Enregistrer',
+                                      ar: 'حفظ',
+                                    ),
                             ),
                     ),
                   ],

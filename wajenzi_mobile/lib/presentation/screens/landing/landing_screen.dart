@@ -22,31 +22,76 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   bool get _isFrench => _language == AppLanguage.french;
   bool get _isArabic => _language == AppLanguage.arabic;
 
-  final List<ProjectShowcase> _projects = [
+  List<ProjectShowcase> get _projects => [
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.10.png',
-      title: 'Hotel Construction',
+      title: _tr(
+        en: 'Hotel Construction',
+        sw: 'Ujenzi wa Hoteli',
+        fr: 'Construction d’hôtel',
+        ar: 'بناء فندق',
+      ),
       priceTZS: '6,911,200,000',
       priceUSD: '2,764,480',
-      features: ['Bedrooms', 'Restaurant', 'Bar', 'Parking', 'Gym', 'Spa'],
-      category: '3D Design',
+      features: [
+        _tr(en: 'Bedrooms', sw: 'Vyumba', fr: 'Chambres', ar: 'غرف النوم'),
+        _tr(en: 'Restaurant', sw: 'Mkahawa', fr: 'Restaurant', ar: 'مطعم'),
+        _tr(en: 'Bar', sw: 'Baa', fr: 'Bar', ar: 'بار'),
+        _tr(en: 'Parking', sw: 'Maegesho', fr: 'Parking', ar: 'مواقف'),
+        _tr(en: 'Gym', sw: 'Gym', fr: 'Salle de sport', ar: 'نادي رياضي'),
+        _tr(en: 'Spa', sw: 'Spa', fr: 'Spa', ar: 'سبا'),
+      ],
+      category: _tr(
+        en: '3D Design',
+        sw: 'Ubunifu wa 3D',
+        fr: 'Design 3D',
+        ar: 'تصميم ثلاثي الأبعاد',
+      ),
       likes: 156,
-      timeAgo: '2 days ago',
-      description:
-          'Luxury hotel project featuring modern architecture with premium amenities.',
+      timeAgo: _tr(
+        en: '2 days ago',
+        sw: 'siku 2 zilizopita',
+        fr: 'il y a 2 jours',
+        ar: 'منذ يومين',
+      ),
+      description: _tr(
+        en: 'Luxury hotel project featuring modern architecture with premium amenities.',
+        sw: 'Mradi wa hoteli ya kifahari wenye usanifu wa kisasa na huduma za kiwango cha juu.',
+        fr: 'Projet hôtelier de luxe présentant une architecture moderne et des équipements haut de gamme.',
+        ar: 'مشروع فندق فاخر يتميز بعمارة حديثة ومرافق متميزة.',
+      ),
       isFeatured: true,
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.20.png',
-      title: 'Residential Villa',
+      title: _tr(
+        en: 'Residential Villa',
+        sw: 'Villa ya Makazi',
+        fr: 'Villa résidentielle',
+        ar: 'فيلا سكنية',
+      ),
       priceTZS: '850,000,000',
       priceUSD: '340,000',
       features: ['5 Bedrooms', 'Swimming Pool', 'Garden', 'Garage'],
-      category: 'Completed',
+      category: _tr(
+        en: 'Completed',
+        sw: 'Imekamilika',
+        fr: 'Terminé',
+        ar: 'مكتمل',
+      ),
       likes: 243,
-      timeAgo: '1 week ago',
-      description:
-          'Beautiful modern villa in Dar es Salaam with stunning views.',
+      timeAgo: _tr(
+        en: '1 week ago',
+        sw: 'wiki 1 iliyopita',
+        fr: 'il y a 1 semaine',
+        ar: 'منذ أسبوع',
+      ),
+      description: _tr(
+        en: 'Beautiful modern villa in Dar es Salaam with stunning views.',
+        sw: 'Villa nzuri ya kisasa jijini Dar es Salaam yenye mandhari ya kuvutia.',
+        fr: 'Belle villa moderne à Dar es Salaam avec des vues imprenables.',
+        ar: 'فيلا حديثة جميلة في دار السلام بإطلالات خلابة.',
+      ),
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.28.png',
@@ -54,11 +99,25 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       priceTZS: '2,500,000,000',
       priceUSD: '1,000,000',
       features: ['Open Offices', 'Meeting Rooms', 'Cafeteria', 'Parking'],
-      category: 'In Progress',
+      category: _tr(
+        en: 'In Progress',
+        sw: 'Inaendelea',
+        fr: 'En cours',
+        ar: 'قيد التنفيذ',
+      ),
       likes: 89,
-      timeAgo: '3 days ago',
-      description:
-          'State-of-the-art commercial office building in the business district.',
+      timeAgo: _tr(
+        en: '3 days ago',
+        sw: 'siku 3 zilizopita',
+        fr: 'il y a 3 jours',
+        ar: 'منذ 3 أيام',
+      ),
+      description: _tr(
+        en: 'State-of-the-art commercial office building in the business district.',
+        sw: 'Jengo la kisasa la ofisi za biashara katika eneo la biashara.',
+        fr: 'Immeuble de bureaux commerciaux ultramoderne dans le quartier des affaires.',
+        ar: 'مبنى مكاتب تجاري حديث للغاية في الحي التجاري.',
+      ),
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.31.png',
@@ -66,10 +125,25 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       priceTZS: '4,200,000,000',
       priceUSD: '1,680,000',
       features: ['24 Units', 'Gym', 'Rooftop Lounge', 'Security'],
-      category: 'Design',
+      category: _tr(
+        en: 'Design',
+        sw: 'Ubunifu',
+        fr: 'Conception',
+        ar: 'تصميم',
+      ),
       likes: 178,
-      timeAgo: '5 days ago',
-      description: 'Modern apartment living with premium shared amenities.',
+      timeAgo: _tr(
+        en: '5 days ago',
+        sw: 'siku 5 zilizopita',
+        fr: 'il y a 5 jours',
+        ar: 'منذ 5 أيام',
+      ),
+      description: _tr(
+        en: 'Modern apartment living with premium shared amenities.',
+        sw: 'Maisha ya kisasa ya ghorofa yenye huduma bora za pamoja.',
+        fr: 'Vie en appartement moderne avec des commodités partagées haut de gamme.',
+        ar: 'سكن شقق حديث مع مرافق مشتركة متميزة.',
+      ),
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.40.png',
@@ -77,11 +151,25 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       priceTZS: '12,500,000,000',
       priceUSD: '5,000,000',
       features: ['150 Shops', 'Cinema', 'Food Court', 'Parking'],
-      category: '3D Design',
+      category: _tr(
+        en: '3D Design',
+        sw: 'Ubunifu wa 3D',
+        fr: 'Design 3D',
+        ar: 'تصميم ثلاثي الأبعاد',
+      ),
       likes: 312,
-      timeAgo: '1 day ago',
-      description:
-          'Modern shopping center with entertainment and retail facilities.',
+      timeAgo: _tr(
+        en: '1 day ago',
+        sw: 'siku 1 iliyopita',
+        fr: 'il y a 1 jour',
+        ar: 'منذ يوم واحد',
+      ),
+      description: _tr(
+        en: 'Modern shopping center with entertainment and retail facilities.',
+        sw: 'Kituo cha kisasa cha ununuzi chenye burudani na huduma za rejareja.',
+        fr: 'Centre commercial moderne avec espaces de divertissement et boutiques.',
+        ar: 'مركز تسوق حديث يضم مرافق ترفيهية وتجارية.',
+      ),
     ),
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.51.07.png',
@@ -89,10 +177,25 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
       priceTZS: '1,800,000,000',
       priceUSD: '720,000',
       features: ['30 Classrooms', 'Library', 'Labs', 'Sports Field'],
-      category: 'Completed',
+      category: _tr(
+        en: 'Completed',
+        sw: 'Imekamilika',
+        fr: 'Terminé',
+        ar: 'مكتمل',
+      ),
       likes: 198,
-      timeAgo: '2 weeks ago',
-      description: 'Educational facility with modern learning environments.',
+      timeAgo: _tr(
+        en: '2 weeks ago',
+        sw: 'wiki 2 zilizopita',
+        fr: 'il y a 2 semaines',
+        ar: 'منذ أسبوعين',
+      ),
+      description: _tr(
+        en: 'Educational facility with modern learning environments.',
+        sw: 'Kituo cha elimu chenye mazingira ya kisasa ya kujifunzia.',
+        fr: 'Établissement éducatif avec des environnements d’apprentissage modernes.',
+        ar: 'منشأة تعليمية تضم بيئات تعلم حديثة.',
+      ),
     ),
   ];
 
@@ -123,9 +226,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   }
 
   Future<void> _launchWhatsApp(String projectName) async {
-    final message = _isSwahili
-        ? 'Habari! Napenda kupata taarifa zaidi kuhusu mradi: $projectName'
-        : 'Hello! I am interested in learning more about the project: $projectName';
+    final message = _tr(
+      en: 'Hello! I am interested in learning more about the project: $projectName',
+      sw: 'Habari! Napenda kupata taarifa zaidi kuhusu mradi: $projectName',
+      fr: 'Bonjour ! Je souhaite en savoir plus sur le projet : $projectName',
+      ar: 'مرحبًا! أرغب في معرفة المزيد عن المشروع: $projectName',
+    );
     final opened = await ExternalLauncherService.openWhatsApp(message);
     if (!opened && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -282,7 +388,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 ),
                 child: PopupMenuButton<AppLanguage>(
                   initialValue: _language,
-                  tooltip: 'Select language',
+                  tooltip: _tr(
+                    en: 'Select language',
+                    sw: 'Chagua lugha',
+                    fr: 'Choisir la langue',
+                    ar: 'اختر اللغة',
+                  ),
                   color: _isDarkMode ? const Color(0xFF1F2A44) : Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -311,8 +422,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                                 '${lang.code} - ${switch (lang) {
                                   AppLanguage.english => 'English',
                                   AppLanguage.swahili => 'Kiswahili',
-                                  AppLanguage.french => 'Francais',
-                                  AppLanguage.arabic => 'Arabic',
+                                  AppLanguage.french => 'Français',
+                                  AppLanguage.arabic => 'العربية',
                                 }}',
                               ),
                             ],
