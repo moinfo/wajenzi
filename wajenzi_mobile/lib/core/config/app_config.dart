@@ -9,7 +9,7 @@ class AppConfig {
   static const String appVersion = '1.0.0';
   static const String _configAssetPath = String.fromEnvironment(
     'APP_CONFIG_ASSET',
-    defaultValue: 'assets/local_config.json',
+    defaultValue: 'assets/prod_config.json',
   );
   static const String _defaultPortalBaseUrl = 'https://wajenziprosystem.co.tz';
   static const String _apiPath = '/api/v1';
@@ -85,7 +85,8 @@ class AppConfig {
     final localUrl = _getLocalClientApiUrl();
     if (localUrl.isNotEmpty) return _ensureClientApiBaseUrl(localUrl);
     final localPortalUrl = _getLocalPortalUrl();
-    if (localPortalUrl.isNotEmpty) return _ensureClientApiBaseUrl(localPortalUrl);
+    if (localPortalUrl.isNotEmpty)
+      return _ensureClientApiBaseUrl(localPortalUrl);
     return _defaultClientApiBaseUrl;
   }
 

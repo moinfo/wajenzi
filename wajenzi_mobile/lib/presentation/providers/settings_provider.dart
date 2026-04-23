@@ -162,22 +162,8 @@ final isArabicProvider = Provider<bool>((ref) {
   return ref.watch(currentLanguageProvider) == AppLanguage.arabic;
 });
 
-/// Effective language provider that respects login context
-/// Returns the saved language only for pre-login screens (landing, login, about, services, projects, awards)
-/// Returns English ONLY for post-login screens (dashboard and all authenticated screens)
-///
-/// This ensures language settings only affect pre-login UI screens
-/// and post-login dashboard screens always display in English
+/// Language provider that respects user's saved language preference
+/// Works on ALL screens (both pre-login and post-login)
 final effectiveLanguageProvider = Provider<AppLanguage>((ref) {
-  // Import auth_provider to check authentication status
-  final authState = ref.watch(authStateProvider);
-  final isLoggedIn = authState.valueOrNull?.isAuthenticated ?? false;
-
-  // If user is logged in (post-login screens), always use English
-  if (isLoggedIn) {
-    return AppLanguage.english;
-  }
-
-  // If user is NOT logged in (pre-login screens), use saved language preference
   return ref.watch(currentLanguageProvider);
 });
