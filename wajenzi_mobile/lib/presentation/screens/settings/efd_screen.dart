@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
@@ -20,29 +21,32 @@ final _efdsSettingsProvider =
           .toList();
     });
 
-final _efdReferenceProvider =
-    FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-      final api = ref.watch(apiClientProvider);
-      final response = await api.get('/efds/reference-data');
-      final payload = response.data is Map<String, dynamic>
-          ? response.data as Map<String, dynamic>
-          : const <String, dynamic>{};
-      final data = payload['data'] is Map<String, dynamic>
-          ? payload['data'] as Map<String, dynamic>
-          : const <String, dynamic>{};
-      return data;
-    });
+final _efdReferenceProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
+  ref,
+) async {
+  final api = ref.watch(apiClientProvider);
+  final response = await api.get('/efds/reference-data');
+  final payload = response.data is Map<String, dynamic>
+      ? response.data as Map<String, dynamic>
+      : const <String, dynamic>{};
+  final data = payload['data'] is Map<String, dynamic>
+      ? payload['data'] as Map<String, dynamic>
+      : const <String, dynamic>{};
+  return data;
+});
 
 class EfdScreen extends ConsumerWidget {
   const EfdScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final asyncData = ref.watch(_efdsSettingsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('EFD'),
+        title: Text(tr('EFD', 'الفاتورة الإلكترونية')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -53,7 +57,12 @@ class EfdScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_efdsSettingsProvider),
         child: asyncData.when(
-          loading: () => const LoadingWidget(message: 'Loading EFDs...'),
+          loading: () => LoadingWidget(
+            message: tr(
+              'Loading EFDs...',
+              'جاري تحميل أجهزة الفاتورة الإلكترونية...',
+            ),
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -61,10 +70,16 @@ class EfdScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               const Icon(Icons.error_outline, size: 56, color: AppColors.error),
               const SizedBox(height: 12),
-              const Text(
-                'Failed to load EFDs',
+              Text(
+                tr(
+                  'Failed to load EFDs',
+                  'تعذر تحميل أجهزة الفاتورة الإلكترونية',
+                ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Text(vatErrorMessage(error), textAlign: TextAlign.center),
@@ -90,24 +105,27 @@ class EfdScreen extends ConsumerWidget {
                           color: AppColors.primary,
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No EFDs found',
+                        Text(
+                          tr('No EFDs found', 'لا توجد أجهزة فاتورة إلكترونية'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create an EFD to manage this setting from mobile.',
+                        Text(
+                          tr(
+                            'Create an EFD to manage this setting from mobile.',
+                            'أنشئ جهاز فاتورة إلكترونية لإدارة هذا الإعداد من التطبيق.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New EFD'),
+                          label: Text(tr('New EFD', 'جهاز جديد')),
                         ),
                       ],
                     ),
@@ -151,18 +169,21 @@ class EfdScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'EFD',
+                            Text(
+                              tr('EFD', 'الفاتورة الإلكترونية'),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${items.length} records',
+                              tr(
+                                'Showing ${items.length} records',
+                                'عرض ${items.length} سجلاً',
+                              ),
                               style: const TextStyle(
                                 color: AppColors.textSecondary,
                               ),
@@ -206,7 +227,8 @@ class EfdScreen extends ConsumerWidget {
                         ),
                       ),
                       subtitle: Text(
-                        item['system_name']?.toString() ?? 'No system',
+                        item['system_name']?.toString() ??
+                            tr('No system', 'لا يوجد نظام'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -218,9 +240,15 @@ class EfdScreen extends ConsumerWidget {
                             _deleteItem(context, ref, item);
                           }
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(tr('Edit', 'تعديل')),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(tr('Delete', 'حذف')),
+                          ),
                         ],
                       ),
                     ),
@@ -235,7 +263,7 @@ class EfdScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New EFD'),
+        label: Text(tr('New EFD', 'جهاز جديد')),
       ),
     );
   }
@@ -268,19 +296,23 @@ class EfdScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete EFD'),
-        content: Text('Delete ${item['name']}?'),
+        title: Text(tr('Delete EFD', 'حذف جهاز الفاتورة الإلكترونية')),
+        content: Text(
+          tr('Delete ${item['name']}?', 'هل تريد حذف ${item['name']}؟'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -292,8 +324,13 @@ class EfdScreen extends ConsumerWidget {
       ref.invalidate(_efdsSettingsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('EFD deleted successfully'),
+        SnackBar(
+          content: Text(
+            tr(
+              'EFD deleted successfully',
+              'تم حذف جهاز الفاتورة الإلكترونية بنجاح',
+            ),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -353,6 +390,8 @@ class _EfdFormSheetState extends ConsumerState<_EfdFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -383,7 +422,12 @@ class _EfdFormSheetState extends ConsumerState<_EfdFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _isEdit ? 'Edit EFD' : 'Create New EFD',
+                  _isEdit
+                      ? tr('Edit EFD', 'تعديل جهاز الفاتورة الإلكترونية')
+                      : tr(
+                          'Create New EFD',
+                          'إنشاء جهاز فاتورة إلكترونية جديد',
+                        ),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -392,23 +436,22 @@ class _EfdFormSheetState extends ConsumerState<_EfdFormSheet> {
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'EFD Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('EFD Name', 'اسم جهاز الفاتورة الإلكترونية'),
+                    border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty)
-                          ? 'EFD name is required'
-                          : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? tr('EFD name is required', 'اسم الجهاز مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   value: _systems.any((item) => _asInt(item['id']) == _systemId)
                       ? _systemId
                       : null,
-                  decoration: const InputDecoration(
-                    labelText: 'System',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('System', 'النظام'),
+                    border: const OutlineInputBorder(),
                   ),
                   items: _systems
                       .map(
@@ -419,8 +462,9 @@ class _EfdFormSheetState extends ConsumerState<_EfdFormSheet> {
                       )
                       .toList(),
                   onChanged: (value) => setState(() => _systemId = value),
-                  validator: (value) =>
-                      value == null ? 'System is required' : null,
+                  validator: (value) => value == null
+                      ? tr('System is required', 'النظام مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -428,7 +472,11 @@ class _EfdFormSheetState extends ConsumerState<_EfdFormSheet> {
                   child: ElevatedButton(
                     onPressed: _submitting ? null : _submit,
                     child: Text(
-                      _submitting ? 'Saving...' : (_isEdit ? 'Update EFD' : 'Save EFD'),
+                      _submitting
+                          ? tr('Saving...', 'جاري الحفظ...')
+                          : (_isEdit
+                                ? tr('Update EFD', 'تحديث الجهاز')
+                                : tr('Save EFD', 'حفظ الجهاز')),
                     ),
                   ),
                 ),

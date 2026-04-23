@@ -4,40 +4,43 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
 final _allowanceSubscriptionsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/allowance-subscriptions');
-  return response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/allowance-subscriptions');
+      return response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+    });
 
 final _allowanceSubscriptionsRefsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/allowance-subscriptions/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/allowance-subscriptions/reference-data');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
 class AllowanceSubscriptionsScreen extends ConsumerWidget {
   const AllowanceSubscriptionsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final asyncData = ref.watch(_allowanceSubscriptionsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Allowance Subscriptions'),
+        title: Text(tr('Allowance Subscriptions', 'اشتراكات البدلات')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -48,7 +51,12 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_allowanceSubscriptionsProvider),
         child: asyncData.when(
-          loading: () => const LoadingWidget(message: 'Loading allowance subscriptions...'),
+          loading: () => LoadingWidget(
+            message: tr(
+              'Loading allowance subscriptions...',
+              'جاري تحميل اشتراكات البدلات...',
+            ),
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -56,16 +64,19 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               const Icon(Icons.error_outline, size: 56, color: AppColors.error),
               const SizedBox(height: 12),
-              const Text(
-                'Failed to load allowance subscriptions',
+              Text(
+                tr(
+                  'Failed to load allowance subscriptions',
+                  'تعذر تحميل اشتراكات البدلات',
+                ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
-              Text(
-                vatErrorMessage(error),
-                textAlign: TextAlign.center,
-              ),
+              Text(vatErrorMessage(error), textAlign: TextAlign.center),
             ],
           ),
           data: (payload) {
@@ -91,23 +102,38 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.payments_outlined, size: 56, color: AppColors.primary),
+                        const Icon(
+                          Icons.payments_outlined,
+                          size: 56,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No allowance subscriptions found',
+                        Text(
+                          tr(
+                            'No allowance subscriptions found',
+                            'لا توجد اشتراكات بدلات',
+                          ),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create a subscription to match the web settings page.',
+                        Text(
+                          tr(
+                            'Create a subscription to match the web settings page.',
+                            'أنشئ اشتراكاً ليتوافق مع صفحة الإعدادات على الويب.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New Allowance Subscription'),
+                          label: Text(
+                            tr('New Allowance Subscription', 'اشتراك بدل جديد'),
+                          ),
                         ),
                       ],
                     ),
@@ -141,23 +167,34 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.payments_outlined, color: AppColors.primary),
+                        child: const Icon(
+                          Icons.payments_outlined,
+                          color: AppColors.primary,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Allowance Subscription',
+                            Text(
+                              tr('Allowance Subscription', 'اشتراك البدلات'),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${items.length} records',
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              tr(
+                                'Showing ${items.length} records',
+                                'عرض ${items.length} سجلاً',
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -197,7 +234,9 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                                 ),
                                 child: Text(
                                   '${index + 1}',
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -219,7 +258,9 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                                       item['allowance_name']?.toString() ?? '-',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(color: AppColors.textSecondary),
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondary,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -232,9 +273,15 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                                     _deleteItem(context, ref, item);
                                   }
                                 },
-                                itemBuilder: (_) => const [
-                                  PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                  PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                itemBuilder: (_) => [
+                                  PopupMenuItem(
+                                    value: 'edit',
+                                    child: Text(tr('Edit', 'تعديل')),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text(tr('Delete', 'حذف')),
+                                  ),
                                 ],
                               ),
                             ],
@@ -244,8 +291,14 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              _chip('Date', item['date']?.toString() ?? '-'),
-                              _chip('Amount', _money(_toDouble(item['amount']))),
+                              _chip(
+                                tr('Date', 'التاريخ'),
+                                item['date']?.toString() ?? '-',
+                              ),
+                              _chip(
+                                tr('Amount', 'المبلغ'),
+                                _money(_toDouble(item['amount'])),
+                              ),
                             ],
                           ),
                         ],
@@ -262,7 +315,7 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New Subscription'),
+        label: Text(tr('New Subscription', 'اشتراك جديد')),
       ),
     );
   }
@@ -309,19 +362,26 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Allowance Subscription'),
-        content: Text('Delete subscription for ${item['staff_name']}?'),
+        title: Text(tr('Delete Allowance Subscription', 'حذف اشتراك البدل')),
+        content: Text(
+          tr(
+            'Delete subscription for ${item['staff_name']}?',
+            'هل تريد حذف اشتراك ${item['staff_name']}؟',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -329,12 +389,19 @@ class AllowanceSubscriptionsScreen extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      await ref.read(apiClientProvider).delete('/allowance-subscriptions/${item['id']}');
+      await ref
+          .read(apiClientProvider)
+          .delete('/allowance-subscriptions/${item['id']}');
       ref.invalidate(_allowanceSubscriptionsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Allowance subscription deleted successfully'),
+        SnackBar(
+          content: Text(
+            tr(
+              'Allowance subscription deleted successfully',
+              'تم حذف اشتراك البدل بنجاح',
+            ),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -354,10 +421,7 @@ class _AllowanceSubscriptionFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic> refs;
   final Map<String, dynamic>? item;
 
-  const _AllowanceSubscriptionFormSheet({
-    required this.refs,
-    this.item,
-  });
+  const _AllowanceSubscriptionFormSheet({required this.refs, this.item});
 
   @override
   ConsumerState<_AllowanceSubscriptionFormSheet> createState() =>
@@ -384,7 +448,9 @@ class _AllowanceSubscriptionFormSheetState
       text: widget.item?['amount']?.toString() ?? '',
     );
     _dateController = TextEditingController(
-      text: widget.item?['date']?.toString() ?? DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      text:
+          widget.item?['date']?.toString() ??
+          DateFormat('yyyy-MM-dd').format(DateTime.now()),
     );
   }
 
@@ -397,6 +463,8 @@ class _AllowanceSubscriptionFormSheetState
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final staffs = (widget.refs['staffs'] as List? ?? const [])
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
@@ -437,17 +505,23 @@ class _AllowanceSubscriptionFormSheetState
                 const SizedBox(height: 16),
                 Text(
                   _isEdit
-                      ? 'Edit Allowance Subscription'
-                      : 'Create New Allowance Subscription',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                      ? tr('Edit Allowance Subscription', 'تعديل اشتراك البدل')
+                      : tr(
+                          'Create New Allowance Subscription',
+                          'إنشاء اشتراك بدل جديد',
+                        ),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 DropdownButtonFormField<int>(
                   value: _selectedStaffId,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Staff',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Staff', 'الموظف'),
+                    border: const OutlineInputBorder(),
                   ),
                   items: staffs
                       .map(
@@ -460,16 +534,19 @@ class _AllowanceSubscriptionFormSheetState
                         ),
                       )
                       .toList(),
-                  onChanged: (value) => setState(() => _selectedStaffId = value),
-                  validator: (value) => value == null ? 'Staff is required' : null,
+                  onChanged: (value) =>
+                      setState(() => _selectedStaffId = value),
+                  validator: (value) => value == null
+                      ? tr('Staff is required', 'الموظف مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   value: _selectedAllowanceId,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Allowance',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Allowance', 'البدل'),
+                    border: const OutlineInputBorder(),
                   ),
                   items: allowances
                       .map(
@@ -482,20 +559,27 @@ class _AllowanceSubscriptionFormSheetState
                         ),
                       )
                       .toList(),
-                  onChanged: (value) => setState(() => _selectedAllowanceId = value),
-                  validator: (value) => value == null ? 'Allowance is required' : null,
+                  onChanged: (value) =>
+                      setState(() => _selectedAllowanceId = value),
+                  validator: (value) => value == null
+                      ? tr('Allowance is required', 'البدل مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _amountController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'Amount',
-                    border: OutlineInputBorder(),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: tr('Amount', 'المبلغ'),
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) {
                     final amount = double.tryParse(value?.trim() ?? '');
-                    if (amount == null || amount < 0) return 'Valid amount is required';
+                    if (amount == null || amount < 0) {
+                      return tr('Valid amount is required', 'مبلغ صحيح مطلوب');
+                    }
                     return null;
                   },
                 ),
@@ -503,23 +587,28 @@ class _AllowanceSubscriptionFormSheetState
                 TextFormField(
                   controller: _dateController,
                   readOnly: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Date',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Date', 'التاريخ'),
+                    border: const OutlineInputBorder(),
                   ),
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: context,
                       firstDate: DateTime(2000),
                       lastDate: DateTime(2100),
-                      initialDate: DateTime.tryParse(_dateController.text) ?? DateTime.now(),
+                      initialDate:
+                          DateTime.tryParse(_dateController.text) ??
+                          DateTime.now(),
                     );
                     if (picked != null) {
-                      _dateController.text = DateFormat('yyyy-MM-dd').format(picked);
+                      _dateController.text = DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(picked);
                     }
                   },
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Date is required' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? tr('Date is required', 'التاريخ مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -528,8 +617,10 @@ class _AllowanceSubscriptionFormSheetState
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? 'Saving...'
-                          : (_isEdit ? 'Update Subscription' : 'Save Subscription'),
+                          ? tr('Saving...', 'جاري الحفظ...')
+                          : (_isEdit
+                                ? tr('Update Subscription', 'تحديث الاشتراك')
+                                : tr('Save Subscription', 'حفظ الاشتراك')),
                     ),
                   ),
                 ),
@@ -557,7 +648,10 @@ class _AllowanceSubscriptionFormSheetState
     try {
       final api = ref.read(apiClientProvider);
       if (_isEdit) {
-        await api.put('/allowance-subscriptions/${widget.item!['id']}', data: payload);
+        await api.put(
+          '/allowance-subscriptions/${widget.item!['id']}',
+          data: payload,
+        );
       } else {
         await api.post('/allowance-subscriptions', data: payload);
       }

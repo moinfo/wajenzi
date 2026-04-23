@@ -66,7 +66,6 @@ class ProjectClientsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final clientsAsync = ref.watch(_clientsProvider);
-    final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
     final searchTerm = ref.watch(_clientSearchProvider).trim().toLowerCase();
@@ -77,13 +76,25 @@ class ProjectClientsScreen extends ConsumerWidget {
           icon: const Icon(Icons.menu_rounded),
           onPressed: () => rootScaffoldKey.currentState?.openDrawer(),
         ),
-        title: Text(isSwahili ? 'Wateja wa Miradi' : 'Project Clients'),
+        title: Text(
+          _trLocale(
+            context,
+            en: 'Project Clients',
+            sw: 'Wateja wa Miradi',
+            ar: 'عملاء المشاريع',
+          ),
+        ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 80),
         child: FloatingActionButton(
           onPressed: () => _showClientForm(context, ref),
-          tooltip: isSwahili ? 'Ongeza Mteja' : 'Add Client',
+          tooltip: _trLocale(
+            context,
+            en: 'Add Client',
+            sw: 'Ongeza Mteja',
+            ar: 'إضافة عميل',
+          ),
           child: const Icon(Icons.add_rounded),
         ),
       ),
@@ -95,7 +106,7 @@ class ProjectClientsScreen extends ConsumerWidget {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => _ErrorView(
             error: e,
-            isSwahili: isSwahili,
+            isSwahili: Localizations.localeOf(context).languageCode == 'sw',
             onRetry: () => ref.invalidate(_clientsProvider),
           ),
           data: (payload) {
@@ -120,7 +131,8 @@ class ProjectClientsScreen extends ConsumerWidget {
                       client['last_login_at'],
                       client['portal_access_enabled'] == true ? 'active' : '',
                       client['has_account'] == true ? 'disabled' : 'no account',
-                      (client['client_source'] as Map<String, dynamic>?)?['name'],
+                      (client['client_source']
+                          as Map<String, dynamic>?)?['name'],
                     ].whereType<Object>().join(' ').toLowerCase();
                     return haystack.contains(searchTerm);
                   }).toList();
@@ -135,7 +147,12 @@ class ProjectClientsScreen extends ConsumerWidget {
                         ref.read(_clientSearchProvider.notifier).state = value,
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.search_rounded),
-                      hintText: isSwahili ? 'Search' : 'Search',
+                      hintText: _trLocale(
+                        context,
+                        en: 'Search',
+                        sw: 'Tafuta',
+                        ar: 'بحث',
+                      ),
                       filled: true,
                       fillColor: isDarkMode
                           ? const Color(0xFF2A2A3E)
@@ -168,10 +185,18 @@ class ProjectClientsScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   Text(
                     allClients.isEmpty
-                        ? (isSwahili ? 'Hakuna wateja' : 'No clients found')
-                        : (isSwahili
-                            ? 'Hakuna matokeo yanayolingana'
-                            : 'No clients match your search'),
+                        ? _trLocale(
+                            context,
+                            en: 'No clients found',
+                            sw: 'Hakuna wateja',
+                            ar: 'لم يتم العثور على عملاء',
+                          )
+                        : _trLocale(
+                            context,
+                            en: 'No clients match your search',
+                            sw: 'Hakuna matokeo yanayolingana',
+                            ar: 'لا يوجد عملاء يطابقون البحث',
+                          ),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: isDarkMode
@@ -186,7 +211,14 @@ class ProjectClientsScreen extends ConsumerWidget {
                         onPressed: () =>
                             ref.read(_clientSearchProvider.notifier).state = '',
                         icon: const Icon(Icons.arrow_back_rounded),
-                        label: Text(isSwahili ? 'Rudi' : 'Back'),
+                        label: Text(
+                          _trLocale(
+                            context,
+                            en: 'Back',
+                            sw: 'Rudi',
+                            ar: 'رجوع',
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -211,12 +243,17 @@ class ProjectClientsScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TextField(
-                          onChanged: (value) => ref
-                              .read(_clientSearchProvider.notifier)
-                              .state = value,
+                          onChanged: (value) =>
+                              ref.read(_clientSearchProvider.notifier).state =
+                                  value,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.search_rounded),
-                            hintText: isSwahili ? 'Search' : 'Search',
+                            hintText: _trLocale(
+                              context,
+                              en: 'Search',
+                              sw: 'Tafuta',
+                              ar: 'بحث',
+                            ),
                             filled: true,
                             fillColor: isDarkMode
                                 ? const Color(0xFF2A2A3E)
@@ -241,9 +278,12 @@ class ProjectClientsScreen extends ConsumerWidget {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          isSwahili
-                              ? 'Jumla ya wateja: $total'
-                              : 'Total clients: $total',
+                          _trLocale(
+                            context,
+                            en: 'Total clients: $total',
+                            sw: 'Jumla ya wateja: $total',
+                            ar: 'إجمالي العملاء: $total',
+                          ),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -264,7 +304,6 @@ class ProjectClientsScreen extends ConsumerWidget {
                 final client = clients[index - 1];
                 return _ClientCard(
                   client: client,
-                  isSwahili: isSwahili,
                   isDarkMode: isDarkMode,
                   onEdit: () => _showClientForm(context, ref, client: client),
                   onDelete: () => _deleteClient(context, ref, client),
@@ -300,25 +339,38 @@ class ProjectClientsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> client,
   ) async {
-    final isSwahili = ref.read(isSwahiliProvider);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isSwahili ? 'Futa Mteja' : 'Delete Client'),
+        title: Text(
+          _trLocale(
+            context,
+            en: 'Delete Client',
+            sw: 'Futa Mteja',
+            ar: 'حذف العميل',
+          ),
+        ),
         content: Text(
-          isSwahili
-              ? 'Je, una uhakika unataka kufuta ${client['first_name']} ${client['last_name']}?'
-              : 'Are you sure you want to delete ${client['first_name']} ${client['last_name']}?',
+          _trLocale(
+            context,
+            en: 'Are you sure you want to delete ${client['first_name']} ${client['last_name']}?',
+            sw: 'Je, una uhakika unataka kufuta ${client['first_name']} ${client['last_name']}?',
+            ar: 'هل أنت متأكد أنك تريد حذف ${client['first_name']} ${client['last_name']}؟',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(isSwahili ? 'Cancel' : 'Cancel'),
+            child: Text(
+              _trLocale(context, en: 'Cancel', sw: 'Ghairi', ar: 'إلغاء'),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: Text(isSwahili ? 'Futa' : 'Delete'),
+            child: Text(
+              _trLocale(context, en: 'Delete', sw: 'Futa', ar: 'حذف'),
+            ),
           ),
         ],
       ),
@@ -333,7 +385,9 @@ class ProjectClientsScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSwahili ? 'Umefutwa' : 'Deleted'),
+            content: Text(
+              _trLocale(context, en: 'Deleted', sw: 'Umefutwa', ar: 'تم الحذف'),
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -344,7 +398,9 @@ class ProjectClientsScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(
+              '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -412,7 +468,6 @@ class _ProjectClientDetailSheetState
     final isDarkMode = widget.isDarkMode;
     final approvalFlow =
         _detail['approval_flow'] as Map<String, dynamic>? ?? const {};
-    final isSwahili = ref.watch(isSwahiliProvider);
 
     return Container(
       decoration: BoxDecoration(
@@ -430,7 +485,9 @@ class _ProjectClientDetailSheetState
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFF2A2A3E) : AppColors.primary,
+                  color: isDarkMode
+                      ? const Color(0xFF2A2A3E)
+                      : AppColors.primary,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(24),
                   ),
@@ -451,7 +508,9 @@ class _ProjectClientDetailSheetState
                     Row(
                       children: [
                         IconButton(
-                          onPressed: _busy ? null : () => Navigator.pop(context),
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.pop(context),
                           icon: const Icon(
                             Icons.arrow_back_rounded,
                             color: Colors.white,
@@ -459,11 +518,16 @@ class _ProjectClientDetailSheetState
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Project Client',
+                            _trLocale(
+                              context,
+                              en: 'Project Client',
+                              sw: 'Mteja wa Mradi',
+                              ar: 'عميل المشروع',
+                            ),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
@@ -482,19 +546,39 @@ class _ProjectClientDetailSheetState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _PlainDetailRow(
-                      label: 'Requested by :',
+                      label: _trLocale(
+                        context,
+                        en: 'Requested by :',
+                        sw: 'Imeombwa na :',
+                        ar: 'طُلب بواسطة :',
+                      ),
                       value: _detail['requested_by'] as String? ?? '-',
                       isDarkMode: isDarkMode,
                     ),
                     _PlainDetailRow(
-                      label: 'Created Time :',
+                      label: _trLocale(
+                        context,
+                        en: 'Created Time :',
+                        sw: 'Muda wa Kuundwa :',
+                        ar: 'وقت الإنشاء :',
+                      ),
                       value: _detail['created_time'] as String? ?? '-',
                       isDarkMode: isDarkMode,
                     ),
                     const SizedBox(height: 16),
-                    _SectionHeader(title: 'Project Details', isDarkMode: isDarkMode),
+                    _SectionHeader(
+                      title: _trLocale(
+                        context,
+                        en: 'Project Details',
+                        sw: 'Maelezo ya Mradi',
+                        ar: 'تفاصيل المشروع',
+                      ),
+                      isDarkMode: isDarkMode,
+                    ),
                     const SizedBox(height: 12),
-                    ...(((_detail['project_details'] as Map<String, dynamic>?) ?? {})
+                    ...(((_detail['project_details']
+                                as Map<String, dynamic>?) ??
+                            {})
                         .entries
                         .map(
                           (entry) => _PlainDetailRow(
@@ -504,23 +588,52 @@ class _ProjectClientDetailSheetState
                           ),
                         )),
                     const SizedBox(height: 16),
-                    _SectionHeader(title: 'Approval Flow', isDarkMode: isDarkMode),
-                    const SizedBox(height: 12),
-                    _PlainDetailRow(
-                      label: '',
-                      value: approvalFlow['status_label'] as String? ?? 'In Progress',
+                    _SectionHeader(
+                      title: _trLocale(
+                        context,
+                        en: 'Approval Flow',
+                        sw: 'Mtiririko wa Idhini',
+                        ar: 'مسار الموافقة',
+                      ),
                       isDarkMode: isDarkMode,
                     ),
                     const SizedBox(height: 12),
-                    _SectionHeader(title: 'Approvals', isDarkMode: isDarkMode),
+                    _PlainDetailRow(
+                      label: '',
+                      value:
+                          approvalFlow['status_label'] as String? ??
+                          _trLocale(
+                            context,
+                            en: 'In Progress',
+                            sw: 'Inaendelea',
+                            ar: 'قيد التنفيذ',
+                          ),
+                      isDarkMode: isDarkMode,
+                    ),
+                    const SizedBox(height: 12),
+                    _SectionHeader(
+                      title: _trLocale(
+                        context,
+                        en: 'Approvals',
+                        sw: 'Idhini',
+                        ar: 'الموافقات',
+                      ),
+                      isDarkMode: isDarkMode,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       approvalFlow['message'] as String? ??
-                          'This document is not yet submitted.',
+                          _trLocale(
+                            context,
+                            en: 'This document is not yet submitted.',
+                            sw: 'Hati hii bado haijawasilishwa.',
+                            ar: 'لم يتم إرسال هذه الوثيقة بعد.',
+                          ),
                       style: TextStyle(
                         fontSize: 14,
-                        color:
-                            isDarkMode ? Colors.white70 : AppColors.textSecondary,
+                        color: isDarkMode
+                            ? Colors.white70
+                            : AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -529,8 +642,9 @@ class _ProjectClientDetailSheetState
                         padding: EdgeInsets.only(bottom: 12),
                         child: LinearProgressIndicator(),
                       ),
-                    _buildActionButtons(context, approvalFlow, isSwahili),
-                    if (((approvalFlow['steps'] as List?)?.isNotEmpty ?? false)) ...[
+                    _buildActionButtons(context, approvalFlow),
+                    if (((approvalFlow['steps'] as List?)?.isNotEmpty ??
+                        false)) ...[
                       const SizedBox(height: 12),
                       ...((approvalFlow['steps'] as List)
                           .cast<Map<String, dynamic>>()
@@ -541,14 +655,21 @@ class _ProjectClientDetailSheetState
                             ),
                           )),
                     ],
-                    if ((_detail['client_source'] as Map<String, dynamic>?)?['name'] !=
+                    if ((_detail['client_source']
+                            as Map<String, dynamic>?)?['name'] !=
                         null) ...[
                       const SizedBox(height: 8),
                       _DetailRow(
-                        label: isSwahili ? 'Chanzo' : 'Source',
-                        value: (_detail['client_source']
-                                as Map<String, dynamic>)['name']
-                            as String,
+                        label: _trLocale(
+                          context,
+                          en: 'Source',
+                          sw: 'Chanzo',
+                          ar: 'المصدر',
+                        ),
+                        value:
+                            (_detail['client_source']
+                                    as Map<String, dynamic>)['name']
+                                as String,
                         isDarkMode: isDarkMode,
                         icon: Icons.source_outlined,
                       ),
@@ -562,15 +683,26 @@ class _ProjectClientDetailSheetState
                             _CountBadge(
                               icon: Icons.folder_outlined,
                               count: (_detail['projects_count'] as num).toInt(),
-                              label: isSwahili ? 'Miradi' : 'Projects',
+                              label: _trLocale(
+                                context,
+                                en: 'Projects',
+                                sw: 'Miradi',
+                                ar: 'المشاريع',
+                              ),
                               color: const Color(0xFF3B82F6),
                             ),
                           if (_detail['documents_count'] != null) ...[
                             const SizedBox(width: 12),
                             _CountBadge(
                               icon: Icons.description_outlined,
-                              count: (_detail['documents_count'] as num).toInt(),
-                              label: isSwahili ? 'Hati' : 'Documents',
+                              count: (_detail['documents_count'] as num)
+                                  .toInt(),
+                              label: _trLocale(
+                                context,
+                                en: 'Documents',
+                                sw: 'Hati',
+                                ar: 'الوثائق',
+                              ),
                               color: const Color(0xFF10B981),
                             ),
                           ],
@@ -591,7 +723,6 @@ class _ProjectClientDetailSheetState
   Widget _buildActionButtons(
     BuildContext context,
     Map<String, dynamic> approvalFlow,
-    bool isSwahili,
   ) {
     final actionButtons = <Widget>[];
     final nextAction = (approvalFlow['next_action'] as String? ?? 'APPROVE')
@@ -610,7 +741,9 @@ class _ProjectClientDetailSheetState
               backgroundColor: AppColors.success,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Submit'),
+            child: Text(
+              _trLocale(context, en: 'Submit', sw: 'Wasilisha', ar: 'إرسال'),
+            ),
           ),
         ),
       );
@@ -628,7 +761,9 @@ class _ProjectClientDetailSheetState
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.error,
                 ),
-                child: const Text('Discard'),
+                child: Text(
+                  _trLocale(context, en: 'Discard', sw: 'Tupa', ar: 'تجاهل'),
+                ),
               )
             else ...[
               if (approvalFlow['can_be_rejected'] == true)
@@ -637,12 +772,21 @@ class _ProjectClientDetailSheetState
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.error,
                   ),
-                  child: const Text('Reject'),
+                  child: Text(
+                    _trLocale(context, en: 'Reject', sw: 'Kataa', ar: 'رفض'),
+                  ),
                 ),
               if (approvalFlow['can_be_returned'] == true)
                 OutlinedButton(
                   onPressed: _busy ? null : () => _performAction('return'),
-                  child: const Text('Return'),
+                  child: Text(
+                    _trLocale(
+                      context,
+                      en: 'Return',
+                      sw: 'Rudisha',
+                      ar: 'إرجاع',
+                    ),
+                  ),
                 ),
             ],
             ElevatedButton(
@@ -665,10 +809,12 @@ class _ProjectClientDetailSheetState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: actionButtons
-          .map((button) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: button,
-              ))
+          .map(
+            (button) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: button,
+            ),
+          )
           .toList(),
     );
   }
@@ -680,12 +826,36 @@ class _ProjectClientDetailSheetState
     String? comment;
     if (action == 'reject' || action == 'return') {
       comment = await _promptForComment(
-        title: action == 'reject' ? 'Reject Request' : 'Return Request',
+        title: action == 'reject'
+            ? _trLocale(
+                context,
+                en: 'Reject Request',
+                sw: 'Kataa Ombi',
+                ar: 'رفض الطلب',
+              )
+            : _trLocale(
+                context,
+                en: 'Return Request',
+                sw: 'Rudisha Ombi',
+                ar: 'إرجاع الطلب',
+              ),
       );
       if (comment == null || comment.trim().isEmpty) return;
     } else if (action == 'approve' || action == 'discard') {
       comment = await _promptForComment(
-        title: action == 'approve' ? 'Approval Comment' : 'Discard Request',
+        title: action == 'approve'
+            ? _trLocale(
+                context,
+                en: 'Approval Comment',
+                sw: 'Maoni ya Idhini',
+                ar: 'تعليق الموافقة',
+              )
+            : _trLocale(
+                context,
+                en: 'Discard Request',
+                sw: 'Tupa Ombi',
+                ar: 'تجاهل الطلب',
+              ),
         required: false,
       );
       if (comment == null) return;
@@ -736,7 +906,16 @@ class _ProjectClientDetailSheetState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text((response.data['message'] ?? 'Success').toString()),
+            content: Text(
+              (response.data['message'] ??
+                      _trLocale(
+                        context,
+                        en: 'Success',
+                        sw: 'Imefanikiwa',
+                        ar: 'نجاح',
+                      ))
+                  .toString(),
+            ),
             backgroundColor: AppColors.success,
           ),
         );
@@ -745,7 +924,9 @@ class _ProjectClientDetailSheetState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(
+              '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -777,7 +958,9 @@ class _ProjectClientDetailSheetState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, null),
-            child: const Text('Cancel'),
+            child: Text(
+              _trLocale(context, en: 'Cancel', sw: 'Ghairi', ar: 'إلغاء'),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -787,7 +970,9 @@ class _ProjectClientDetailSheetState
               }
               Navigator.pop(ctx, value);
             },
-            child: const Text('Continue'),
+            child: Text(
+              _trLocale(context, en: 'Continue', sw: 'Endelea', ar: 'متابعة'),
+            ),
           ),
         ],
       ),
@@ -849,8 +1034,12 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
     _clientSourceId =
-        (widget.client?['client_source'] as Map<String, dynamic>?)?['id'] as int?;
-    _portalAccessEnabled = _asBool(widget.client?['portal_access_enabled'], true);
+        (widget.client?['client_source'] as Map<String, dynamic>?)?['id']
+            as int?;
+    _portalAccessEnabled = _asBool(
+      widget.client?['portal_access_enabled'],
+      true,
+    );
   }
 
   @override
@@ -868,7 +1057,6 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isSwahili = ref.watch(isSwahiliProvider);
     final isDarkMode = ref.watch(isDarkModeProvider);
     final referenceAsync = ref.watch(_clientReferenceDataProvider);
 
@@ -893,7 +1081,9 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF2A2A3E) : AppColors.primary,
+                    color: isDarkMode
+                        ? const Color(0xFF2A2A3E)
+                        : AppColors.primary,
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(24),
                     ),
@@ -914,7 +1104,9 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
                       Row(
                         children: [
                           IconButton(
-                            onPressed: _loading ? null : () => Navigator.pop(context),
+                            onPressed: _loading
+                                ? null
+                                : () => Navigator.pop(context),
                             icon: const Icon(
                               Icons.arrow_back_rounded,
                               color: Colors.white,
@@ -924,7 +1116,19 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
                           ),
                           Expanded(
                             child: Text(
-                              widget.isNew ? 'New Client' : 'Edit Client',
+                              widget.isNew
+                                  ? _trLocale(
+                                      context,
+                                      en: 'New Client',
+                                      sw: 'Mteja Mpya',
+                                      ar: 'عميل جديد',
+                                    )
+                                  : _trLocale(
+                                      context,
+                                      en: 'Edit Client',
+                                      sw: 'Hariri Mteja',
+                                      ar: 'تعديل العميل',
+                                    ),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 18,
@@ -944,208 +1148,326 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: referenceAsync.when(
-                loading: () => [
-                  const SizedBox(height: 32),
-                  const Center(child: CircularProgressIndicator()),
-                  const SizedBox(height: 32),
-                ],
-                error: (_, __) => [
-                  const SizedBox(height: 16),
-                  const Text('Failed to load client sources'),
-                ],
-                data: (referenceData) {
-                  final clientSources =
-                      (referenceData['client_sources'] as List? ?? const [])
-                          .cast<Map<String, dynamic>>();
-                  return [
-                TextFormField(
-                  controller: _firstNameController,
-                  decoration: InputDecoration(
-                    labelText: isSwahili ? 'Jina la Kwanza *' : 'First Name *',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                  validator: (v) => (v == null || v.isEmpty)
-                      ? (isSwahili ? 'Kituraisha kinahitajika' : 'Required')
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _lastNameController,
-                  decoration: InputDecoration(
-                    labelText: isSwahili ? 'Jina la Mwisho *' : 'Last Name *',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                  validator: (v) => (v == null || v.isEmpty)
-                      ? (isSwahili ? 'Kituraisha kinahitajika' : 'Required')
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: InputDecoration(
-                    labelText: isSwahili ? 'Nambari ya Simu *' : 'Phone *',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                  keyboardType: TextInputType.phone,
-                  validator: (v) => (v == null || v.isEmpty)
-                      ? (isSwahili ? 'Kituraisha kinahitajika' : 'Required')
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: isSwahili ? 'Barua Pepe' : 'Email',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _addressController,
-                  decoration: InputDecoration(
-                    labelText: isSwahili ? 'Anwani' : 'Address',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _idNumberController,
-                  decoration: InputDecoration(
-                    labelText: isSwahili
-                        ? 'Nambari ya Kitambulisho'
-                        : 'Identification Number',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<int>(
-                  value: _clientSourceId,
-                  decoration: InputDecoration(
-                    labelText: isSwahili ? 'Chanzo cha Mteja *' : 'Client Source *',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                  items: clientSources
-                      .map(
-                        (source) => DropdownMenuItem<int>(
-                          value: (source['id'] as num).toInt(),
-                          child: Text(source['name']?.toString() ?? '-'),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) => setState(() => _clientSourceId = value),
-                  validator: (value) => value == null
-                      ? (isSwahili ? 'Required' : 'Required')
-                      : null,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Client Portal Access',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: widget.isNew
-                        ? 'Portal Password'
-                        : 'Portal Password (leave blank to keep current)',
-                    hintText: 'Enter password',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                  obscureText: true,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    hintText: 'Confirm password',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                  obscureText: true,
-                  validator: (value) {
-                    if (_passwordController.text.isNotEmpty &&
-                        value != _passwordController.text) {
-                      return isSwahili
-                          ? 'Passwords hazifanani'
-                          : 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                SwitchListTile.adaptive(
-                  value: _portalAccessEnabled,
-                  onChanged: (value) =>
-                      setState(() => _portalAccessEnabled = value),
-                  title: const Text('Enable Portal Access'),
-                  contentPadding: EdgeInsets.zero,
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _loading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            widget.isNew
-                                ? (isSwahili ? 'Hifadhi' : 'Save')
-                                : (isSwahili ? 'Sasisha' : 'Update'),
+                      loading: () => [
+                        const SizedBox(height: 32),
+                        const Center(child: CircularProgressIndicator()),
+                        const SizedBox(height: 32),
+                      ],
+                      error: (_, __) => [
+                        const SizedBox(height: 16),
+                        Text(
+                          _trLocale(
+                            context,
+                            en: 'Failed to load client sources',
+                            sw: 'Imeshindikana kupakia vyanzo vya wateja',
+                            ar: 'فشل تحميل مصادر العملاء',
                           ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                  ];
-                },
+                        ),
+                      ],
+                      data: (referenceData) {
+                        final clientSources =
+                            (referenceData['client_sources'] as List? ??
+                                    const [])
+                                .cast<Map<String, dynamic>>();
+                        return [
+                          TextFormField(
+                            controller: _firstNameController,
+                            decoration: InputDecoration(
+                              labelText: _trLocale(
+                                context,
+                                en: 'First Name *',
+                                sw: 'Jina la Kwanza *',
+                                ar: 'الاسم الأول *',
+                              ),
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                            ),
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? _trLocale(
+                                    context,
+                                    en: 'Required',
+                                    sw: 'Inahitajika',
+                                    ar: 'مطلوب',
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _lastNameController,
+                            decoration: InputDecoration(
+                              labelText: _trLocale(
+                                context,
+                                en: 'Last Name *',
+                                sw: 'Jina la Mwisho *',
+                                ar: 'اسم العائلة *',
+                              ),
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                            ),
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? _trLocale(
+                                    context,
+                                    en: 'Required',
+                                    sw: 'Inahitajika',
+                                    ar: 'مطلوب',
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _phoneController,
+                            decoration: InputDecoration(
+                              labelText: _trLocale(
+                                context,
+                                en: 'Phone *',
+                                sw: 'Nambari ya Simu *',
+                                ar: 'الهاتف *',
+                              ),
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                            ),
+                            keyboardType: TextInputType.phone,
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? _trLocale(
+                                    context,
+                                    en: 'Required',
+                                    sw: 'Inahitajika',
+                                    ar: 'مطلوب',
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              labelText: _trLocale(
+                                context,
+                                en: 'Email',
+                                sw: 'Barua Pepe',
+                                ar: 'البريد الإلكتروني',
+                              ),
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _addressController,
+                            decoration: InputDecoration(
+                              labelText: _trLocale(
+                                context,
+                                en: 'Address',
+                                sw: 'Anwani',
+                                ar: 'العنوان',
+                              ),
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                            ),
+                            maxLines: 2,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _idNumberController,
+                            decoration: InputDecoration(
+                              labelText: _trLocale(
+                                context,
+                                en: 'Identification Number',
+                                sw: 'Nambari ya Kitambulisho',
+                                ar: 'رقم الهوية',
+                              ),
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<int>(
+                            value: _clientSourceId,
+                            decoration: InputDecoration(
+                              labelText: _trLocale(
+                                context,
+                                en: 'Client Source *',
+                                sw: 'Chanzo cha Mteja *',
+                                ar: 'مصدر العميل *',
+                              ),
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                            ),
+                            items: clientSources
+                                .map(
+                                  (source) => DropdownMenuItem<int>(
+                                    value: (source['id'] as num).toInt(),
+                                    child: Text(
+                                      source['name']?.toString() ?? '-',
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) =>
+                                setState(() => _clientSourceId = value),
+                            validator: (value) => value == null
+                                ? _trLocale(
+                                    context,
+                                    en: 'Required',
+                                    sw: 'Inahitajika',
+                                    ar: 'مطلوب',
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(height: 24),
+                          Text(
+                            _trLocale(
+                              context,
+                              en: 'Client Portal Access',
+                              sw: 'Ufikiaji wa Portal ya Mteja',
+                              ar: 'وصول بوابة العميل',
+                            ),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _passwordController,
+                            decoration: InputDecoration(
+                              labelText: widget.isNew
+                                  ? _trLocale(
+                                      context,
+                                      en: 'Portal Password',
+                                      sw: 'Nenosiri la Portal',
+                                      ar: 'كلمة مرور البوابة',
+                                    )
+                                  : _trLocale(
+                                      context,
+                                      en: 'Portal Password (leave blank to keep current)',
+                                      sw: 'Nenosiri la Portal (acha wazi kuhifadhi la sasa)',
+                                      ar: 'كلمة مرور البوابة (اتركها فارغة للاحتفاظ بالحالية)',
+                                    ),
+                              hintText: _trLocale(
+                                context,
+                                en: 'Enter password',
+                                sw: 'Weka nenosiri',
+                                ar: 'أدخل كلمة المرور',
+                              ),
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                            ),
+                            obscureText: true,
+                          ),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _confirmPasswordController,
+                            decoration: InputDecoration(
+                              labelText: _trLocale(
+                                context,
+                                en: 'Confirm Password',
+                                sw: 'Thibitisha Nenosiri',
+                                ar: 'تأكيد كلمة المرور',
+                              ),
+                              hintText: _trLocale(
+                                context,
+                                en: 'Confirm password',
+                                sw: 'Thibitisha nenosiri',
+                                ar: 'أكد كلمة المرور',
+                              ),
+                              filled: true,
+                              fillColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.grey[100],
+                            ),
+                            obscureText: true,
+                            validator: (value) {
+                              if (_passwordController.text.isNotEmpty &&
+                                  value != _passwordController.text) {
+                                return _trLocale(
+                                  context,
+                                  en: 'Passwords do not match',
+                                  sw: 'Nywila hazifanani',
+                                  ar: 'كلمات المرور غير متطابقة',
+                                );
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          SwitchListTile.adaptive(
+                            value: _portalAccessEnabled,
+                            onChanged: (value) =>
+                                setState(() => _portalAccessEnabled = value),
+                            title: Text(
+                              _trLocale(
+                                context,
+                                en: 'Enable Portal Access',
+                                sw: 'Washa Ufikiaji wa Portal',
+                                ar: 'تمكين وصول البوابة',
+                              ),
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          const SizedBox(height: 32),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _loading ? null : _submit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: _loading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      widget.isNew
+                                          ? _trLocale(
+                                              context,
+                                              en: 'Save',
+                                              sw: 'Hifadhi',
+                                              ar: 'حفظ',
+                                            )
+                                          : _trLocale(
+                                              context,
+                                              en: 'Update',
+                                              sw: 'Sasisha',
+                                              ar: 'تحديث',
+                                            ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ];
+                      },
                     ),
                   ),
                 ),
@@ -1198,7 +1520,9 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(
+              '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -1226,7 +1550,6 @@ class _ClientFormSheetState extends ConsumerState<_ClientFormSheet> {
 
 class _ClientCard extends StatelessWidget {
   final Map<String, dynamic> client;
-  final bool isSwahili;
   final bool isDarkMode;
   final VoidCallback onTap;
   final VoidCallback onEdit;
@@ -1234,7 +1557,6 @@ class _ClientCard extends StatelessWidget {
 
   const _ClientCard({
     required this.client,
-    required this.isSwahili,
     required this.isDarkMode,
     required this.onTap,
     required this.onEdit,
@@ -1253,10 +1575,15 @@ class _ClientCard extends StatelessWidget {
     final documentsCount = client['documents_count']?.toString() ?? '0';
     final documentNumber = client['document_number'] as String? ?? '-';
     final portalStatus = client['portal_access_enabled'] == true
-        ? 'Active'
+        ? _trLocale(context, en: 'Active', sw: 'Hai', ar: 'نشط')
         : ((client['has_account'] == true)
-            ? 'Disabled'
-            : 'No Account');
+              ? _trLocale(context, en: 'Disabled', sw: 'Imezimwa', ar: 'معطل')
+              : _trLocale(
+                  context,
+                  en: 'No Account',
+                  sw: 'Hakuna Akaunti',
+                  ar: 'لا يوجد حساب',
+                ));
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1280,9 +1607,9 @@ class _ClientCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       fullName.isNotEmpty ? fullName : '-',
@@ -1310,11 +1637,13 @@ class _ClientCard extends StatelessWidget {
                             color: const Color(0xFF3B82F6),
                           ),
                         _MiniBadge(
-                          label: 'Projects $projectsCount',
+                          label:
+                              '${_trLocale(context, en: 'Projects', sw: 'Miradi', ar: 'المشاريع')} $projectsCount',
                           color: const Color(0xFF10B981),
                         ),
                         _MiniBadge(
-                          label: 'Documents $documentsCount',
+                          label:
+                              '${_trLocale(context, en: 'Documents', sw: 'Hati', ar: 'الوثائق')} $documentsCount',
                           color: const Color(0xFFF59E0B),
                         ),
                         if (source != null && source.isNotEmpty)
@@ -1334,7 +1663,7 @@ class _ClientCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  _StatusBadge(status: status, isSwahili: isSwahili),
+                  _StatusBadge(status: status),
                   const SizedBox(height: 8),
                   if (client['phone_number'] != null)
                     Row(
@@ -1364,14 +1693,28 @@ class _ClientCard extends StatelessWidget {
                         onDelete();
                       }
                     },
-                    itemBuilder: (context) => const [
+                    itemBuilder: (context) => [
                       PopupMenuItem<String>(
                         value: 'edit',
-                        child: Text('Edit'),
+                        child: Text(
+                          _trLocale(
+                            context,
+                            en: 'Edit',
+                            sw: 'Hariri',
+                            ar: 'تعديل',
+                          ),
+                        ),
                       ),
                       PopupMenuItem<String>(
                         value: 'delete',
-                        child: Text('Delete'),
+                        child: Text(
+                          _trLocale(
+                            context,
+                            en: 'Delete',
+                            sw: 'Futa',
+                            ar: 'حذف',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -1413,9 +1756,7 @@ class _MiniBadge extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   final String status;
-  final bool isSwahili;
-
-  const _StatusBadge({required this.status, required this.isSwahili});
+  const _StatusBadge({required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -1429,11 +1770,31 @@ class _StatusBadge extends StatelessWidget {
     };
 
     final label = switch (status.toUpperCase()) {
-      'APPROVED' => isSwahili ? 'IMEDHINISHWA' : 'APPROVED',
-      'PENDING' => isSwahili ? 'INASUBIRI' : 'PENDING',
-      'REJECTED' => isSwahili ? 'IMEKATALIWA' : 'REJECTED',
-      'ACTIVE' => isSwahili ? 'HAI' : 'ACTIVE',
-      'INACTIVE' => isSwahili ? 'ISIYOHAI' : 'INACTIVE',
+      'APPROVED' => _trLocale(
+        context,
+        en: 'APPROVED',
+        sw: 'IMEDHINISHWA',
+        ar: 'مُعتمد',
+      ),
+      'PENDING' => _trLocale(
+        context,
+        en: 'PENDING',
+        sw: 'INASUBIRI',
+        ar: 'قيد الانتظار',
+      ),
+      'REJECTED' => _trLocale(
+        context,
+        en: 'REJECTED',
+        sw: 'IMEKATALIWA',
+        ar: 'مرفوض',
+      ),
+      'ACTIVE' => _trLocale(context, en: 'ACTIVE', sw: 'HAI', ar: 'نشط'),
+      'INACTIVE' => _trLocale(
+        context,
+        en: 'INACTIVE',
+        sw: 'ISIYOHAI',
+        ar: 'غير نشط',
+      ),
       _ => status.toUpperCase(),
     };
 
@@ -1580,10 +1941,7 @@ class _ApprovalStepCard extends StatelessWidget {
   final Map<String, dynamic> step;
   final bool isDarkMode;
 
-  const _ApprovalStepCard({
-    required this.step,
-    required this.isDarkMode,
-  });
+  const _ApprovalStepCard({required this.step, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -1697,7 +2055,12 @@ class _ErrorView extends StatelessWidget {
         const Icon(Icons.error_outline, size: 64, color: AppColors.error),
         const SizedBox(height: 16),
         Text(
-          isSwahili ? 'Hitilafu imetokea' : 'Something went wrong',
+          _trLocale(
+            context,
+            en: 'Something went wrong',
+            sw: 'Hitilafu imetokea',
+            ar: 'حدث خطأ ما',
+          ),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
@@ -1712,12 +2075,31 @@ class _ErrorView extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: onRetry,
             icon: const Icon(Icons.refresh),
-            label: Text(isSwahili ? 'Jaribu tena' : 'Try again'),
+            label: Text(
+              _trLocale(
+                context,
+                en: 'Try again',
+                sw: 'Jaribu tena',
+                ar: 'حاول مرة أخرى',
+              ),
+            ),
           ),
         ),
       ],
     );
   }
+}
+
+String _trLocale(
+  BuildContext context, {
+  required String en,
+  required String sw,
+  required String ar,
+}) {
+  final code = Localizations.localeOf(context).languageCode.toLowerCase();
+  if (code == 'ar') return ar;
+  if (code == 'sw') return sw;
+  return en;
 }
 
 String _formatDate(String? raw) {

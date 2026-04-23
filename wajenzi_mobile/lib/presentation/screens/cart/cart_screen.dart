@@ -34,25 +34,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   bool get _isFrench => _language == AppLanguage.french;
   bool get _isArabic => _language == AppLanguage.arabic;
 
-  Widget _languageFlag() {
-    switch (_language) {
-      case AppLanguage.swahili:
-        return const TanzaniaFlag();
-      case AppLanguage.french:
-        return const FranceFlag();
-      case AppLanguage.arabic:
-        return const ArabicLanguageBadge();
-      case AppLanguage.english:
-        return const UKFlag();
-    }
-  }
-
-  String _tr({
-    required String en,
-    String? sw,
-    String? fr,
-    String? ar,
-  }) {
+  String _tr({required String en, String? sw, String? fr, String? ar}) {
     if (_isSwahili) return sw ?? en;
     if (_isFrench) return fr ?? en;
     if (_isArabic) return ar ?? en;
@@ -86,14 +68,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         : 'USD ${_formatNumber(ref.read(cartTotalUSDProvider))}';
 
     final message = _tr(
-      en:
-          'Hello! I am interested in learning more about the following projects:\n\n$itemsList\n\nTotal Value: $totalPrice',
-      sw:
-          'Habari! Napenda kupata taarifa zaidi kuhusu miradi ifuatayo:\n\n$itemsList\n\nJumla: $totalPrice',
-      fr:
-          'Bonjour ! Je souhaite en savoir plus sur les projets suivants :\n\n$itemsList\n\nValeur totale : $totalPrice',
-      ar:
-          'مرحبًا! أرغب في معرفة المزيد عن المشاريع التالية:\n\n$itemsList\n\nالقيمة الإجمالية: $totalPrice',
+      en: 'Hello! I am interested in learning more about the following projects:\n\n$itemsList\n\nTotal Value: $totalPrice',
+      sw: 'Habari! Napenda kupata taarifa zaidi kuhusu miradi ifuatayo:\n\n$itemsList\n\nJumla: $totalPrice',
+      fr: 'Bonjour ! Je souhaite en savoir plus sur les projets suivants :\n\n$itemsList\n\nValeur totale : $totalPrice',
+      ar: 'مرحبًا! أرغب في معرفة المزيد عن المشاريع التالية:\n\n$itemsList\n\nالقيمة الإجمالية: $totalPrice',
     );
 
     final opened = await ExternalLauncherService.openWhatsApp(message);
@@ -130,9 +108,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         language: _language,
         onDarkModeToggle: () =>
             ref.read(settingsProvider.notifier).toggleDarkMode(),
-        onLanguageToggle: () =>
-            ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _languageFlag(),
+        onLanguageChanged: (value) =>
+            ref.read(settingsProvider.notifier).setLanguage(value),
       ),
       body: cartState.items.isEmpty
           ? _buildEmptyCart()
@@ -252,10 +229,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     _isSwahili
                         ? '${cartState.itemCount} ${cartState.itemCount == 1 ? 'mradi' : 'miradi'}'
                         : _isFrench
-                            ? '${cartState.itemCount} ${cartState.itemCount == 1 ? 'projet' : 'projets'}'
-                            : _isArabic
-                                ? '${cartState.itemCount} ${cartState.itemCount == 1 ? 'مشروع' : 'مشاريع'}'
-                                : '${cartState.itemCount} ${cartState.itemCount == 1 ? 'project' : 'projects'}',
+                        ? '${cartState.itemCount} ${cartState.itemCount == 1 ? 'projet' : 'projets'}'
+                        : _isArabic
+                        ? '${cartState.itemCount} ${cartState.itemCount == 1 ? 'مشروع' : 'مشاريع'}'
+                        : '${cartState.itemCount} ${cartState.itemCount == 1 ? 'project' : 'projects'}',
                     style: TextStyle(color: _textSecondaryColor, fontSize: 14),
                   ),
                 ],
@@ -279,14 +256,10 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                         ),
                         content: Text(
                           _tr(
-                            en:
-                                'Are you sure you want to remove all projects from your cart?',
-                            sw:
-                                'Una uhakika unataka kufuta miradi yote kwenye kikapu?',
-                            fr:
-                                'Voulez-vous vraiment supprimer tous les projets de votre panier ?',
-                            ar:
-                                'هل أنت متأكد أنك تريد إزالة جميع المشاريع من سلتك؟',
+                            en: 'Are you sure you want to remove all projects from your cart?',
+                            sw: 'Una uhakika unataka kufuta miradi yote kwenye kikapu?',
+                            fr: 'Voulez-vous vraiment supprimer tous les projets de votre panier ?',
+                            ar: 'هل أنت متأكد أنك تريد إزالة جميع المشاريع من سلتك؟',
                           ),
                           style: TextStyle(color: _textSecondaryColor),
                         ),

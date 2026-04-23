@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
@@ -25,11 +26,13 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final asyncData = ref.watch(_approvalDocumentTypesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Approval Document Types'),
+        title: Text(tr('Approval Document Types', 'أنواع مستندات الموافقة')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -40,8 +43,11 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_approvalDocumentTypesProvider),
         child: asyncData.when(
-          loading: () => const LoadingWidget(
-            message: 'Loading approval document types...',
+          loading: () => LoadingWidget(
+            message: tr(
+              'Loading approval document types...',
+              'جاري تحميل أنواع مستندات الموافقة...',
+            ),
           ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -50,10 +56,16 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               const Icon(Icons.error_outline, size: 56, color: AppColors.error),
               const SizedBox(height: 12),
-              const Text(
-                'Failed to load approval document types',
+              Text(
+                tr(
+                  'Failed to load approval document types',
+                  'تعذر تحميل أنواع مستندات الموافقة',
+                ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Text(vatErrorMessage(error), textAlign: TextAlign.center),
@@ -79,24 +91,35 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
                           color: AppColors.primary,
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No approval document types found',
+                        Text(
+                          tr(
+                            'No approval document types found',
+                            'لا توجد أنواع لمستندات الموافقة',
+                          ),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create an approval document type to manage this setting from mobile.',
+                        Text(
+                          tr(
+                            'Create an approval document type to manage this setting from mobile.',
+                            'أنشئ نوع مستند موافقة لإدارة هذا الإعداد من التطبيق.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New Approval Document Type'),
+                          label: Text(
+                            tr(
+                              'New Approval Document Type',
+                              'نوع مستند موافقة جديد',
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -140,18 +163,24 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Approval Document Types',
+                            Text(
+                              tr(
+                                'Approval Document Types',
+                                'أنواع مستندات الموافقة',
+                              ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${items.length} records',
+                              tr(
+                                'Showing ${items.length} records',
+                                'عرض ${items.length} سجلاً',
+                              ),
                               style: const TextStyle(
                                 color: AppColors.textSecondary,
                               ),
@@ -198,7 +227,8 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if ((item['description']?.toString() ?? '').isNotEmpty)
+                          if ((item['description']?.toString() ?? '')
+                              .isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text(
@@ -210,10 +240,15 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
                           Padding(
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
-                              'Keyword: ${item['keyword']?.toString() ?? '-'}',
+                              tr(
+                                'Keyword: ${item['keyword']?.toString() ?? '-'}',
+                                'الكلمة المفتاحية: ${item['keyword']?.toString() ?? '-'}',
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -226,9 +261,15 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
                             _deleteItem(context, ref, item);
                           }
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(tr('Edit', 'تعديل')),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(tr('Delete', 'حذف')),
+                          ),
                         ],
                       ),
                     ),
@@ -243,7 +284,7 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New Approval Document Type'),
+        label: Text(tr('New Approval Document Type', 'نوع مستند موافقة جديد')),
       ),
     );
   }
@@ -272,19 +313,25 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Approval Document Type'),
-        content: Text('Delete ${item['name']}?'),
+        title: Text(
+          tr('Delete Approval Document Type', 'حذف نوع مستند الموافقة'),
+        ),
+        content: Text(
+          tr('Delete ${item['name']}?', 'هل تريد حذف ${item['name']}؟'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -298,8 +345,13 @@ class ApprovalDocumentTypesScreen extends ConsumerWidget {
       ref.invalidate(_approvalDocumentTypesProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Approval document type deleted successfully'),
+        SnackBar(
+          content: Text(
+            tr(
+              'Approval document type deleted successfully',
+              'تم حذف نوع مستند الموافقة بنجاح',
+            ),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -359,6 +411,8 @@ class _ApprovalDocumentTypeFormSheetState
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -390,8 +444,14 @@ class _ApprovalDocumentTypeFormSheetState
                 const SizedBox(height: 16),
                 Text(
                   _isEdit
-                      ? 'Edit Approval Document Type'
-                      : 'Create New Approval Document Type',
+                      ? tr(
+                          'Edit Approval Document Type',
+                          'تعديل نوع مستند الموافقة',
+                        )
+                      : tr(
+                          'Create New Approval Document Type',
+                          'إنشاء نوع مستند موافقة جديد',
+                        ),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
@@ -400,36 +460,34 @@ class _ApprovalDocumentTypeFormSheetState
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Name', 'الاسم'),
+                    border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty)
-                          ? 'Name is required'
-                          : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? tr('Name is required', 'الاسم مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _descriptionController,
                   minLines: 3,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Description', 'الوصف'),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _keywordController,
-                  decoration: const InputDecoration(
-                    labelText: 'Keyword',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Keyword', 'الكلمة المفتاحية'),
+                    border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty)
-                          ? 'Keyword is required'
-                          : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? tr('Keyword is required', 'الكلمة المفتاحية مطلوبة')
+                      : null,
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -438,10 +496,16 @@ class _ApprovalDocumentTypeFormSheetState
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? 'Saving...'
+                          ? tr('Saving...', 'جاري الحفظ...')
                           : (_isEdit
-                                ? 'Update Approval Document Type'
-                                : 'Save Approval Document Type'),
+                                ? tr(
+                                    'Update Approval Document Type',
+                                    'تحديث نوع مستند الموافقة',
+                                  )
+                                : tr(
+                                    'Save Approval Document Type',
+                                    'حفظ نوع مستند الموافقة',
+                                  )),
                     ),
                   ),
                 ),

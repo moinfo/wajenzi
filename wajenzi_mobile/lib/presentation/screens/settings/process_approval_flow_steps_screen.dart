@@ -3,45 +3,50 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
 final _processApprovalFlowStepsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/process-approval-flow-steps');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/process-approval-flow-steps');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
 final _processApprovalFlowStepRefsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/process-approval-flow-steps/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get(
+        '/process-approval-flow-steps/reference-data',
+      );
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
 class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
   const ProcessApprovalFlowStepsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final stepsAsync = ref.watch(_processApprovalFlowStepsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Approval Flow Steps'),
+        title: Text(tr('Approval Flow Steps', 'خطوات مسار الموافقة')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -50,9 +55,15 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(_processApprovalFlowStepsProvider),
+        onRefresh: () async =>
+            ref.invalidate(_processApprovalFlowStepsProvider),
         child: stepsAsync.when(
-          loading: () => const LoadingWidget(message: 'Loading approval flow steps...'),
+          loading: () => LoadingWidget(
+            message: tr(
+              'Loading approval flow steps...',
+              'جاري تحميل خطوات مسار الموافقة...',
+            ),
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -60,16 +71,19 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               const Icon(Icons.error_outline, size: 56, color: AppColors.error),
               const SizedBox(height: 12),
-              const Text(
-                'Failed to load approval flow steps',
+              Text(
+                tr(
+                  'Failed to load approval flow steps',
+                  'تعذر تحميل خطوات مسار الموافقة',
+                ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
-              Text(
-                vatErrorMessage(error),
-                textAlign: TextAlign.center,
-              ),
+              Text(vatErrorMessage(error), textAlign: TextAlign.center),
             ],
           ),
           data: (steps) {
@@ -86,23 +100,41 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.format_list_numbered, size: 56, color: AppColors.primary),
+                        const Icon(
+                          Icons.format_list_numbered,
+                          size: 56,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No approval flow steps found',
+                        Text(
+                          tr(
+                            'No approval flow steps found',
+                            'لا توجد خطوات لمسار الموافقة',
+                          ),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create the first step to match the web settings page.',
+                        Text(
+                          tr(
+                            'Create the first step to match the web settings page.',
+                            'أنشئ الخطوة الأولى لتتوافق مع صفحة الإعدادات على الويب.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New Approval Flow Step'),
+                          label: Text(
+                            tr(
+                              'New Approval Flow Step',
+                              'خطوة مسار موافقة جديدة',
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -136,23 +168,37 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.format_list_numbered, color: AppColors.primary),
+                        child: const Icon(
+                          Icons.format_list_numbered,
+                          color: AppColors.primary,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Approval Flow Steps Settings',
+                            Text(
+                              tr(
+                                'Approval Flow Steps Settings',
+                                'إعدادات خطوات مسار الموافقة',
+                              ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${steps.length} records',
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              tr(
+                                'Showing ${steps.length} records',
+                                'عرض ${steps.length} سجلاً',
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -183,7 +229,9 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
                                 ),
                                 child: Text(
                                   '${index + 1}',
-                                  style: const TextStyle(fontWeight: FontWeight.w700),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -192,7 +240,9 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      step['process_approval_flow_name']?.toString() ?? '-',
+                                      step['process_approval_flow_name']
+                                              ?.toString() ??
+                                          '-',
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -205,7 +255,9 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
                                       step['role_name']?.toString() ?? '-',
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(color: AppColors.textSecondary),
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondary,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -218,9 +270,15 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
                                     _deleteStep(context, ref, step);
                                   }
                                 },
-                                itemBuilder: (_) => const [
-                                  PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                  PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                itemBuilder: (_) => [
+                                  PopupMenuItem(
+                                    value: 'edit',
+                                    child: Text(tr('Edit', 'تعديل')),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text(tr('Delete', 'حذف')),
+                                  ),
                                 ],
                               ),
                             ],
@@ -230,10 +288,22 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              _chip('Action', step['action']?.toString() ?? '-'),
-                              _chip('Order', '${step['order'] ?? '-'}'),
-                              if ((step['description'] ?? '').toString().trim().isNotEmpty)
-                                _chip('Description', step['description'].toString()),
+                              _chip(
+                                tr('Action', 'الإجراء'),
+                                step['action']?.toString() ?? '-',
+                              ),
+                              _chip(
+                                tr('Order', 'الترتيب'),
+                                '${step['order'] ?? '-'}',
+                              ),
+                              if ((step['description'] ?? '')
+                                  .toString()
+                                  .trim()
+                                  .isNotEmpty)
+                                _chip(
+                                  tr('Description', 'الوصف'),
+                                  step['description'].toString(),
+                                ),
                             ],
                           ),
                         ],
@@ -250,7 +320,7 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New Approval Flow Step'),
+        label: Text(tr('New Approval Flow Step', 'خطوة مسار موافقة جديدة')),
       ),
     );
   }
@@ -284,10 +354,7 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => FractionallySizedBox(
         heightFactor: 0.88,
-        child: _ProcessApprovalFlowStepFormSheet(
-          refs: refs,
-          step: step,
-        ),
+        child: _ProcessApprovalFlowStepFormSheet(refs: refs, step: step),
       ),
     );
 
@@ -301,21 +368,26 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> step,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Approval Flow Step'),
+        title: Text(tr('Delete Approval Flow Step', 'حذف خطوة مسار الموافقة')),
         content: Text(
-          'Delete ${step['process_approval_flow_name']} step for ${step['role_name']}?',
+          tr(
+            'Delete ${step['process_approval_flow_name']} step for ${step['role_name']}?',
+            'هل تريد حذف خطوة ${step['process_approval_flow_name']} للدور ${step['role_name']}؟',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -324,12 +396,19 @@ class ProcessApprovalFlowStepsScreen extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      await ref.read(apiClientProvider).delete('/process-approval-flow-steps/${step['id']}');
+      await ref
+          .read(apiClientProvider)
+          .delete('/process-approval-flow-steps/${step['id']}');
       ref.invalidate(_processApprovalFlowStepsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Approval flow step deleted successfully'),
+        SnackBar(
+          content: Text(
+            tr(
+              'Approval flow step deleted successfully',
+              'تم حذف خطوة مسار الموافقة بنجاح',
+            ),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -349,10 +428,7 @@ class _ProcessApprovalFlowStepFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic> refs;
   final Map<String, dynamic>? step;
 
-  const _ProcessApprovalFlowStepFormSheet({
-    required this.refs,
-    this.step,
-  });
+  const _ProcessApprovalFlowStepFormSheet({required this.refs, this.step});
 
   @override
   ConsumerState<_ProcessApprovalFlowStepFormSheet> createState() =>
@@ -394,6 +470,8 @@ class _ProcessApprovalFlowStepFormSheetState
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final flows = (widget.refs['flows'] as List? ?? const [])
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
@@ -438,17 +516,26 @@ class _ProcessApprovalFlowStepFormSheetState
                 const SizedBox(height: 16),
                 Text(
                   _isEdit
-                      ? 'Edit Approval Flow Step'
-                      : 'Create New Approval Flow Step',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                      ? tr(
+                          'Edit Approval Flow Step',
+                          'تعديل خطوة مسار الموافقة',
+                        )
+                      : tr(
+                          'Create New Approval Flow Step',
+                          'إنشاء خطوة مسار موافقة جديدة',
+                        ),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 DropdownButtonFormField<int>(
                   value: _selectedFlowId,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Approval Flow',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Approval Flow', 'مسار الموافقة'),
+                    border: const OutlineInputBorder(),
                   ),
                   items: flows
                       .map(
@@ -462,15 +549,17 @@ class _ProcessApprovalFlowStepFormSheetState
                       )
                       .toList(),
                   onChanged: (value) => setState(() => _selectedFlowId = value),
-                  validator: (value) => value == null ? 'Approval flow is required' : null,
+                  validator: (value) => value == null
+                      ? tr('Approval flow is required', 'مسار الموافقة مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
                   value: _selectedRoleId,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Role',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Role', 'الدور'),
+                    border: const OutlineInputBorder(),
                   ),
                   items: roles
                       .map(
@@ -484,15 +573,17 @@ class _ProcessApprovalFlowStepFormSheetState
                       )
                       .toList(),
                   onChanged: (value) => setState(() => _selectedRoleId = value),
-                  validator: (value) => value == null ? 'Role is required' : null,
+                  validator: (value) => value == null
+                      ? tr('Role is required', 'الدور مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: _selectedAction,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Action',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Action', 'الإجراء'),
+                    border: const OutlineInputBorder(),
                   ),
                   items: actions
                       .map(
@@ -507,21 +598,26 @@ class _ProcessApprovalFlowStepFormSheetState
                       .toList(),
                   onChanged: (value) => setState(() => _selectedAction = value),
                   validator: (value) => (value == null || value.isEmpty)
-                      ? 'Action is required'
+                      ? tr('Action is required', 'الإجراء مطلوب')
                       : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _orderController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Order',
-                    border: OutlineInputBorder(),
-                    hintText: 'Step order e.g. 1, 2, 3',
+                  decoration: InputDecoration(
+                    labelText: tr('Order', 'الترتيب'),
+                    border: const OutlineInputBorder(),
+                    hintText: tr(
+                      'Step order e.g. 1, 2, 3',
+                      'ترتيب الخطوة مثل 1، 2، 3',
+                    ),
                   ),
                   validator: (value) {
                     final order = int.tryParse(value?.trim() ?? '');
-                    if (order == null || order < 1) return 'Valid order is required';
+                    if (order == null || order < 1) {
+                      return tr('Valid order is required', 'ترتيب صحيح مطلوب');
+                    }
                     return null;
                   },
                 ),
@@ -530,10 +626,13 @@ class _ProcessApprovalFlowStepFormSheetState
                   controller: _descriptionController,
                   minLines: 3,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
-                    hintText: 'Optional description for this approval step',
+                  decoration: InputDecoration(
+                    labelText: tr('Description', 'الوصف'),
+                    border: const OutlineInputBorder(),
+                    hintText: tr(
+                      'Optional description for this approval step',
+                      'وصف اختياري لهذه الخطوة',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -543,10 +642,16 @@ class _ProcessApprovalFlowStepFormSheetState
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? 'Saving...'
+                          ? tr('Saving...', 'جاري الحفظ...')
                           : (_isEdit
-                              ? 'Update Approval Flow Step'
-                              : 'Save Approval Flow Step'),
+                                ? tr(
+                                    'Update Approval Flow Step',
+                                    'تحديث خطوة مسار الموافقة',
+                                  )
+                                : tr(
+                                    'Save Approval Flow Step',
+                                    'حفظ خطوة مسار الموافقة',
+                                  )),
                     ),
                   ),
                 ),
@@ -560,7 +665,9 @@ class _ProcessApprovalFlowStepFormSheetState
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedFlowId == null || _selectedRoleId == null || _selectedAction == null) {
+    if (_selectedFlowId == null ||
+        _selectedRoleId == null ||
+        _selectedAction == null) {
       return;
     }
 
@@ -577,7 +684,10 @@ class _ProcessApprovalFlowStepFormSheetState
     try {
       final api = ref.read(apiClientProvider);
       if (_isEdit) {
-        await api.put('/process-approval-flow-steps/${widget.step!['id']}', data: payload);
+        await api.put(
+          '/process-approval-flow-steps/${widget.step!['id']}',
+          data: payload,
+        );
       } else {
         await api.post('/process-approval-flow-steps', data: payload);
       }

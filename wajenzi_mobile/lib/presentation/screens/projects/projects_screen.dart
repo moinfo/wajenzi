@@ -107,19 +107,6 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     return en;
   }
 
-  Widget _languageFlag() {
-    switch (_language) {
-      case AppLanguage.swahili:
-        return const TanzaniaFlag();
-      case AppLanguage.french:
-        return const FranceFlag();
-      case AppLanguage.arabic:
-        return const ArabicLanguageBadge();
-      case AppLanguage.english:
-        return const UKFlag();
-    }
-  }
-
   List<_Project> get _projects => [
     _Project(
       name: _isSwahili
@@ -337,9 +324,8 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         language: _language,
         onDarkModeToggle: () =>
             ref.read(settingsProvider.notifier).toggleDarkMode(),
-        onLanguageToggle: () =>
-            ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _languageFlag(),
+        onLanguageChanged: (value) =>
+            ref.read(settingsProvider.notifier).setLanguage(value),
       ),
       body: CustomScrollView(
         slivers: [

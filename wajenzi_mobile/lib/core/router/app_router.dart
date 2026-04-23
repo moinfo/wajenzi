@@ -1482,12 +1482,7 @@ class MainDrawer extends ConsumerWidget {
     final currentLanguage = ref.watch(currentLanguageProvider);
     final menusAsync = isClient ? null : ref.watch(_drawerMenusProvider);
 
-    String tr({
-      required String en,
-      String? sw,
-      String? fr,
-      String? ar,
-    }) {
+    String tr({required String en, String? sw, String? fr, String? ar}) {
       return switch (currentLanguage) {
         AppLanguage.swahili => sw ?? en,
         AppLanguage.french => fr ?? en,
@@ -1575,12 +1570,7 @@ class MainDrawer extends ConsumerWidget {
             // Menu items
             Expanded(
               child: isClient
-                  ? _buildClientMenu(
-                      context,
-                      ref,
-                      isDarkMode,
-                      currentLanguage,
-                    )
+                  ? _buildClientMenu(context, ref, isDarkMode, currentLanguage)
                   : _buildStaffMenu(
                       context,
                       ref,
@@ -1708,24 +1698,19 @@ class MainDrawer extends ConsumerWidget {
         : const Color(0xFFE2E8F0);
 
     Widget sectionHeader(String title) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-          child: Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: mutedColor,
-              letterSpacing: 1.1,
-            ),
-          ),
-        );
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+      child: Text(
+        title.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: mutedColor,
+          letterSpacing: 1.1,
+        ),
+      ),
+    );
 
-    String tr({
-      required String en,
-      String? sw,
-      String? fr,
-      String? ar,
-    }) {
+    String tr({required String en, String? sw, String? fr, String? ar}) {
       return switch (language) {
         AppLanguage.swahili => sw ?? en,
         AppLanguage.french => fr ?? en,
@@ -1783,12 +1768,7 @@ class MainDrawer extends ConsumerWidget {
 
         // ── Account ─────────────────────────────────────────────────────
         sectionHeader(
-          tr(
-            en: 'Account',
-            sw: 'Akaunti',
-            fr: 'Compte',
-            ar: 'الحساب',
-          ),
+          tr(en: 'Account', sw: 'Akaunti', fr: 'Compte', ar: 'الحساب'),
         ),
         _DrawerItem(
           icon: Icons.person_outline_rounded,
@@ -1816,12 +1796,7 @@ class MainDrawer extends ConsumerWidget {
 
         // ── Appearance ──────────────────────────────────────────────────
         sectionHeader(
-          tr(
-            en: 'Appearance',
-            sw: 'Mandhari',
-            fr: 'Apparence',
-            ar: 'المظهر',
-          ),
+          tr(en: 'Appearance', sw: 'Mandhari', fr: 'Apparence', ar: 'المظهر'),
         ),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1835,7 +1810,9 @@ class MainDrawer extends ConsumerWidget {
               Icon(
                 isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
                 size: 20,
-                color: isDarkMode ? const Color(0xFF1ABC9C) : const Color(0xFFF39C12),
+                color: isDarkMode
+                    ? const Color(0xFF1ABC9C)
+                    : const Color(0xFFF39C12),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1865,7 +1842,9 @@ class MainDrawer extends ConsumerWidget {
                 onChanged: (v) =>
                     ref.read(settingsProvider.notifier).setDarkMode(v),
                 activeThumbColor: const Color(0xFF1ABC9C),
-                activeTrackColor: const Color(0xFF1ABC9C).withValues(alpha: 0.4),
+                activeTrackColor: const Color(
+                  0xFF1ABC9C,
+                ).withValues(alpha: 0.4),
               ),
             ],
           ),
@@ -1881,7 +1860,11 @@ class MainDrawer extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              Icon(Icons.translate_rounded, size: 20, color: const Color(0xFF3498DB)),
+              Icon(
+                Icons.translate_rounded,
+                size: 20,
+                color: const Color(0xFF3498DB),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -1898,26 +1881,54 @@ class MainDrawer extends ConsumerWidget {
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: () => ref.read(settingsProvider.notifier).toggleLanguage(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3498DB).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    switch (language) {
-                      AppLanguage.english => 'SW',
-                      AppLanguage.swahili => 'FR',
-                      AppLanguage.french => 'AR',
-                      AppLanguage.arabic => 'EN',
-                    },
-                    style: const TextStyle(
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 0,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3498DB).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<AppLanguage>(
+                    value: language,
+                    icon: const Icon(
+                      Icons.arrow_drop_down_rounded,
                       color: Color(0xFF3498DB),
-                      fontWeight: FontWeight.w700,
+                    ),
+                    dropdownColor: isDarkMode
+                        ? const Color(0xFF1F2A44)
+                        : Colors.white,
+                    style: TextStyle(
+                      color: labelColor,
+                      fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
+                    onChanged: (value) {
+                      if (value != null) {
+                        ref.read(settingsProvider.notifier).setLanguage(value);
+                      }
+                    },
+                    items: AppLanguage.values
+                        .map(
+                          (value) => DropdownMenuItem<AppLanguage>(
+                            value: value,
+                            child: Text(
+                              switch (value) {
+                                AppLanguage.english => 'EN',
+                                AppLanguage.swahili => 'SW',
+                                AppLanguage.french => 'FR',
+                                AppLanguage.arabic => 'AR',
+                              },
+                              style: const TextStyle(
+                                color: Color(0xFF3498DB),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
               ),
@@ -1928,12 +1939,7 @@ class MainDrawer extends ConsumerWidget {
 
         // ── Legal ───────────────────────────────────────────────────────
         sectionHeader(
-          tr(
-            en: 'Legal',
-            sw: 'Kisheria',
-            fr: 'Juridique',
-            ar: 'القانونية',
-          ),
+          tr(en: 'Legal', sw: 'Kisheria', fr: 'Juridique', ar: 'القانونية'),
         ),
         _DrawerItem(
           icon: Icons.privacy_tip_outlined,

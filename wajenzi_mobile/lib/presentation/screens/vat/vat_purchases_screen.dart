@@ -974,27 +974,59 @@ class _VatOrderItemsTable extends StatelessWidget {
           fontSize: 12,
           color: isDark ? Colors.white : AppColors.textPrimary,
         ),
-        columns: const [
-          DataColumn(label: Text('#')),
-          DataColumn(label: Text('Description')),
-          DataColumn(label: Text('BOQ Item')),
-          DataColumn(label: Text('Unit')),
-          DataColumn(label: Text('Qty')),
-          DataColumn(label: Text('Unit Price')),
-          DataColumn(label: Text('Total')),
+        columns: [
+          const DataColumn(label: Text('#')),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Description', sw: 'Maelezo', ar: 'الوصف'),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(
+                context,
+                en: 'BOQ Item',
+                sw: 'Kipengee cha BOQ',
+                ar: 'عنصر BOQ',
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Unit', sw: 'Kipimo', ar: 'الوحدة'),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Qty', sw: 'Kiasi', ar: 'الكمية'),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(
+                context,
+                en: 'Unit Price',
+                sw: 'Bei ya Kipimo',
+                ar: 'سعر الوحدة',
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Total', sw: 'Jumla', ar: 'الإجمالي'),
+            ),
+          ),
         ],
         rows: List.generate(items.length, (index) {
           final item = items[index];
           final boqItem = item['boq_item'] as Map<String, dynamic>?;
           return DataRow(
             cells: [
-              DataCell(Text('${index + 1}')),
+              DataCell(Text((index + 1).toString())),
               DataCell(Text((item['description'] ?? '-') as String)),
               DataCell(Text((boqItem?['description'] ?? '-') as String)),
               DataCell(Text((item['unit'] ?? '-') as String)),
-              DataCell(
-                Text('${_toDouble(item['quantity']).toStringAsFixed(2)}'),
-              ),
+              DataCell(Text(_toDouble(item['quantity']).toStringAsFixed(2))),
               DataCell(
                 Text(_formatVatDetailMoney(_toDouble(item['unit_price']))),
               ),
@@ -1060,10 +1092,22 @@ class _VatApprovalFlowTable extends StatelessWidget {
           fontSize: 12,
           color: isDark ? Colors.white : AppColors.textPrimary,
         ),
-        columns: const [
-          DataColumn(label: Text('By:')),
-          DataColumn(label: Text('Action')),
-          DataColumn(label: Text('Date')),
+        columns: [
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'By:', sw: 'Na:', ar: 'بواسطة:'),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Action', sw: 'Hatua', ar: 'الإجراء'),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Date', sw: 'Tarehe', ar: 'التاريخ'),
+            ),
+          ),
         ],
         rows: steps.map((step) {
           return DataRow(
@@ -1082,4 +1126,16 @@ class _VatApprovalFlowTable extends StatelessWidget {
       ),
     );
   }
+}
+
+String _trLocale(
+  BuildContext context, {
+  required String en,
+  required String sw,
+  required String ar,
+}) {
+  final code = Localizations.localeOf(context).languageCode.toLowerCase();
+  if (code == 'ar') return ar;
+  if (code == 'sw') return sw;
+  return en;
 }

@@ -3,50 +3,59 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
-final _userStatusFilterProvider = StateProvider.autoDispose<String>((ref) => 'ACTIVE');
+final _userStatusFilterProvider = StateProvider.autoDispose<String>(
+  (ref) => 'ACTIVE',
+);
 
 final _settingsUsersReferenceProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/settings-users/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] as Map<String, dynamic>? ?? const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/settings-users/reference-data');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] as Map<String, dynamic>? ?? const <String, dynamic>{};
+    });
 
 final _settingsUsersProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final status = ref.watch(_userStatusFilterProvider);
-  final response = await api.get(
-    '/settings-users',
-    queryParameters: {'status': status},
-  );
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final status = ref.watch(_userStatusFilterProvider);
+      final response = await api.get(
+        '/settings-users',
+        queryParameters: {'status': status},
+      );
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
 class UsersScreen extends ConsumerWidget {
   const UsersScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final status = ref.watch(_userStatusFilterProvider);
     final asyncData = ref.watch(_settingsUsersProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(status == 'INACTIVE' ? 'Inactive Users' : 'Active Users'),
+        title: Text(
+          status == 'INACTIVE'
+              ? tr('Inactive Users', 'المستخدمون غير النشطين')
+              : tr('Active Users', 'المستخدمون النشطون'),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -58,6 +67,7 @@ class UsersScreen extends ConsumerWidget {
         children: [
           _UsersFilterHeader(
             status: status,
+            isArabic: isArabic,
             onStatusChanged: (value) {
               ref.read(_userStatusFilterProvider.notifier).state = value;
             },
@@ -70,18 +80,27 @@ class UsersScreen extends ConsumerWidget {
                 ref.invalidate(_settingsUsersProvider);
               },
               child: asyncData.when(
-                loading: () => const LoadingWidget(message: 'Loading users...'),
+                loading: () => LoadingWidget(
+                  message: tr('Loading users...', 'جاري تحميل المستخدمين...'),
+                ),
                 error: (error, _) => ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(24),
                   children: [
                     const SizedBox(height: 48),
-                    const Icon(Icons.error_outline, size: 56, color: AppColors.error),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 56,
+                      color: AppColors.error,
+                    ),
                     const SizedBox(height: 12),
                     const Text(
                       'Failed to load users',
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(vatErrorMessage(error), textAlign: TextAlign.center),
@@ -101,25 +120,35 @@ class UsersScreen extends ConsumerWidget {
                           ),
                           child: Column(
                             children: [
-                              const Icon(Icons.groups_outlined, size: 56, color: AppColors.primary),
+                              const Icon(
+                                Icons.groups_outlined,
+                                size: 56,
+                                color: AppColors.primary,
+                              ),
                               const SizedBox(height: 12),
                               Text(
                                 status == 'INACTIVE'
                                     ? 'No inactive users found'
                                     : 'No active users found',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                'Create or activate users to match the web settings page.',
+                              Text(
+                                tr(
+                                  'Create or activate users to match the web settings page.',
+                                  'أنشئ المستخدمين أو فعّلهم ليتوافقوا مع صفحة الإعدادات على الويب.',
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 16),
                               ElevatedButton.icon(
                                 onPressed: () => _openForm(context, ref),
                                 icon: const Icon(Icons.add),
-                                label: const Text('New User'),
+                                label: Text(tr('New User', 'مستخدم جديد')),
                               ),
                             ],
                           ),
@@ -138,7 +167,8 @@ class UsersScreen extends ConsumerWidget {
                           item: item,
                           onEdit: () => _openForm(context, ref, item: item),
                           onDelete: () => _deleteItem(context, ref, item),
-                          onToggleStatus: () => _toggleStatus(context, ref, item),
+                          onToggleStatus: () =>
+                              _toggleStatus(context, ref, item),
                         );
                       }),
                     ],
@@ -152,7 +182,7 @@ class UsersScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New User'),
+        label: Text(tr('New User', 'مستخدم جديد')),
       ),
     );
   }
@@ -181,19 +211,23 @@ class UsersScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete User'),
-        content: Text('Delete ${item['name']}?'),
+        title: Text(tr('Delete User', 'حذف المستخدم')),
+        content: Text(
+          tr('Delete ${item['name']}?', 'هل تريد حذف ${item['name']}؟'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -205,8 +239,10 @@ class UsersScreen extends ConsumerWidget {
       ref.invalidate(_settingsUsersProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User deleted successfully'),
+        SnackBar(
+          content: Text(
+            tr('User deleted successfully', 'تم حذف المستخدم بنجاح'),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -226,22 +262,38 @@ class UsersScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final currentStatus = (item['status'] ?? '').toString().toUpperCase();
     final actionLabel = currentStatus == 'ACTIVE' ? 'deactivate' : 'activate';
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text('${actionLabel[0].toUpperCase()}${actionLabel.substring(1)} User'),
-        content: Text('Are you sure you want to $actionLabel ${item['name']}?'),
+        title: Text(
+          currentStatus == 'ACTIVE'
+              ? tr('Deactivate User', 'تعطيل المستخدم')
+              : tr('Activate User', 'تفعيل المستخدم'),
+        ),
+        content: Text(
+          currentStatus == 'ACTIVE'
+              ? tr(
+                  'Are you sure you want to deactivate ${item['name']}?',
+                  'هل أنت متأكد من تعطيل ${item['name']}؟',
+                )
+              : tr(
+                  'Are you sure you want to activate ${item['name']}?',
+                  'هل أنت متأكد من تفعيل ${item['name']}؟',
+                ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Confirm'),
+            child: Text(tr('Confirm', 'تأكيد')),
           ),
         ],
       ),
@@ -249,12 +301,18 @@ class UsersScreen extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      await ref.read(apiClientProvider).post('/settings-users/${item['id']}/toggle-status');
+      await ref
+          .read(apiClientProvider)
+          .post('/settings-users/${item['id']}/toggle-status');
       ref.invalidate(_settingsUsersProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('User ${currentStatus == 'ACTIVE' ? 'deactivated' : 'activated'} successfully'),
+          content: Text(
+            currentStatus == 'ACTIVE'
+                ? tr('User deactivated successfully', 'تم تعطيل المستخدم بنجاح')
+                : tr('User activated successfully', 'تم تفعيل المستخدم بنجاح'),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -272,17 +330,20 @@ class UsersScreen extends ConsumerWidget {
 
 class _UsersFilterHeader extends StatelessWidget {
   final String status;
+  final bool isArabic;
   final ValueChanged<String> onStatusChanged;
   final VoidCallback onCreate;
 
   const _UsersFilterHeader({
     required this.status,
+    required this.isArabic,
     required this.onStatusChanged,
     required this.onCreate,
   });
 
   @override
   Widget build(BuildContext context) {
+    String tr(String en, String ar) => isArabic ? ar : en;
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -292,12 +353,19 @@ class _UsersFilterHeader extends StatelessWidget {
             children: [
               Expanded(
                 child: SegmentedButton<String>(
-                  segments: const [
-                    ButtonSegment<String>(value: 'ACTIVE', label: Text('Active')),
-                    ButtonSegment<String>(value: 'INACTIVE', label: Text('Inactive')),
+                  segments: [
+                    ButtonSegment<String>(
+                      value: 'ACTIVE',
+                      label: Text(tr('Active', 'نشط')),
+                    ),
+                    ButtonSegment<String>(
+                      value: 'INACTIVE',
+                      label: Text(tr('Inactive', 'غير نشط')),
+                    ),
                   ],
                   selected: {status},
-                  onSelectionChanged: (selection) => onStatusChanged(selection.first),
+                  onSelectionChanged: (selection) =>
+                      onStatusChanged(selection.first),
                 ),
               ),
             ],
@@ -325,7 +393,10 @@ class _UsersFilterHeader extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.groups_outlined, color: AppColors.primary),
+                  child: const Icon(
+                    Icons.groups_outlined,
+                    color: AppColors.primary,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -333,15 +404,23 @@ class _UsersFilterHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        status == 'INACTIVE' ? 'Inactive Users' : 'Active Users',
-                        style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                        status == 'INACTIVE'
+                            ? tr('Inactive Users', 'المستخدمون غير النشطين')
+                            : tr('Active Users', 'المستخدمون النشطون'),
+                        style: const TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Manage users, profile details, attendance setup, and status.',
+                      Text(
+                        tr(
+                          'Manage users, profile details, attendance setup, and status.',
+                          'إدارة المستخدمين وبيانات الملف الشخصي وإعدادات الحضور والحالة.',
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: const TextStyle(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
@@ -350,7 +429,7 @@ class _UsersFilterHeader extends StatelessWidget {
                 IconButton(
                   onPressed: onCreate,
                   icon: const Icon(Icons.person_add_alt_1),
-                  tooltip: 'New User',
+                  tooltip: tr('New User', 'مستخدم جديد'),
                 ),
               ],
             ),
@@ -378,6 +457,8 @@ class _UserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    String tr(String en, String ar) => isArabic ? ar : en;
     final status = (item['status'] ?? '').toString();
     final attendanceStatus = (item['attendance_status'] ?? '').toString();
     final department = (item['department_name'] ?? '').toString();
@@ -416,14 +497,19 @@ class _UserCard extends StatelessWidget {
                         item['name']?.toString() ?? '-',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       if (designation.isNotEmpty)
                         Text(
                           designation,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                     ],
                   ),
@@ -439,12 +525,22 @@ class _UserCard extends StatelessWidget {
                     }
                   },
                   itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Text(tr('Edit', 'تعديل')),
+                    ),
                     PopupMenuItem(
                       value: 'toggle',
-                      child: Text(status == 'ACTIVE' ? 'Deactivate' : 'Activate'),
+                      child: Text(
+                        status == 'ACTIVE'
+                            ? tr('Deactivate', 'تعطيل')
+                            : tr('Activate', 'تفعيل'),
+                      ),
                     ),
-                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(tr('Delete', 'حذف')),
+                    ),
                   ],
                 ),
               ],
@@ -454,29 +550,51 @@ class _UserCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _InfoBadge(label: status, color: status == 'ACTIVE' ? AppColors.success : AppColors.warning),
+                _InfoBadge(
+                  label: status,
+                  color: status == 'ACTIVE'
+                      ? AppColors.success
+                      : AppColors.warning,
+                ),
                 if (attendanceStatus.isNotEmpty)
                   _InfoBadge(
                     label: attendanceStatus,
-                    color: attendanceStatus == 'ENABLED' ? AppColors.primary : AppColors.error,
+                    color: attendanceStatus == 'ENABLED'
+                        ? AppColors.primary
+                        : AppColors.error,
                   ),
                 if ((item['type'] ?? '').toString().isNotEmpty)
-                  _InfoBadge(label: (item['type'] ?? '').toString(), color: const Color(0xFF6C63FF)),
+                  _InfoBadge(
+                    label: (item['type'] ?? '').toString(),
+                    color: const Color(0xFF6C63FF),
+                  ),
               ],
             ),
             const SizedBox(height: 12),
-            _UserInfoRow(icon: Icons.email_outlined, label: email.isEmpty ? 'No email' : email),
+            _UserInfoRow(
+              icon: Icons.email_outlined,
+              label: email.isEmpty
+                  ? tr('No email', 'لا يوجد بريد إلكتروني')
+                  : email,
+            ),
             _UserInfoRow(
               icon: Icons.apartment_outlined,
-              label: department.isEmpty ? 'No department' : department,
+              label: department.isEmpty
+                  ? tr('No department', 'لا يوجد قسم')
+                  : department,
             ),
             _UserInfoRow(
               icon: Icons.fingerprint,
-              label: 'Device ID: ${(item['user_device_id'] ?? 'N/A').toString()}',
+              label: tr(
+                'Device ID: ${(item['user_device_id'] ?? 'N/A').toString()}',
+                'معرّف الجهاز: ${(item['user_device_id'] ?? 'N/A').toString()}',
+              ),
             ),
             _UserInfoRow(
               icon: Icons.access_time,
-              label: attendanceType.isEmpty ? 'No attendance type' : attendanceType,
+              label: attendanceType.isEmpty
+                  ? tr('No attendance type', 'لا يوجد نوع حضور')
+                  : attendanceType,
             ),
           ],
         ),
@@ -579,17 +697,39 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
   void initState() {
     super.initState();
     final item = widget.item;
-    _nameController = TextEditingController(text: item?['name']?.toString() ?? '');
-    _emailController = TextEditingController(text: item?['email']?.toString() ?? '');
-    _phoneController = TextEditingController(text: item?['phone_number']?.toString() ?? '');
-    _addressController = TextEditingController(text: item?['address']?.toString() ?? '');
-    _designationController = TextEditingController(text: item?['designation']?.toString() ?? '');
-    _employeeNumberController = TextEditingController(text: item?['employee_number']?.toString() ?? '');
-    _deviceIdController = TextEditingController(text: item?['user_device_id']?.toString() ?? '');
-    _dobController = TextEditingController(text: item?['dob']?.toString() ?? '');
-    _employmentDateController = TextEditingController(text: item?['employment_date']?.toString() ?? '');
-    _tinController = TextEditingController(text: item?['tin']?.toString() ?? '');
-    _nationalIdController = TextEditingController(text: item?['national_id']?.toString() ?? '');
+    _nameController = TextEditingController(
+      text: item?['name']?.toString() ?? '',
+    );
+    _emailController = TextEditingController(
+      text: item?['email']?.toString() ?? '',
+    );
+    _phoneController = TextEditingController(
+      text: item?['phone_number']?.toString() ?? '',
+    );
+    _addressController = TextEditingController(
+      text: item?['address']?.toString() ?? '',
+    );
+    _designationController = TextEditingController(
+      text: item?['designation']?.toString() ?? '',
+    );
+    _employeeNumberController = TextEditingController(
+      text: item?['employee_number']?.toString() ?? '',
+    );
+    _deviceIdController = TextEditingController(
+      text: item?['user_device_id']?.toString() ?? '',
+    );
+    _dobController = TextEditingController(
+      text: item?['dob']?.toString() ?? '',
+    );
+    _employmentDateController = TextEditingController(
+      text: item?['employment_date']?.toString() ?? '',
+    );
+    _tinController = TextEditingController(
+      text: item?['tin']?.toString() ?? '',
+    );
+    _nationalIdController = TextEditingController(
+      text: item?['national_id']?.toString() ?? '',
+    );
 
     _gender = item?['gender']?.toString() ?? 'MALE';
     _type = item?['type']?.toString() ?? 'STAFF';
@@ -619,6 +759,8 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final referenceAsync = ref.watch(_settingsUsersReferenceProvider);
 
     return Container(
@@ -629,7 +771,9 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
       child: SafeArea(
         top: false,
         child: referenceAsync.when(
-          loading: () => const LoadingWidget(message: 'Loading form data...'),
+          loading: () => LoadingWidget(
+            message: tr('Loading form data...', 'جاري تحميل بيانات النموذج...'),
+          ),
           error: (error, _) => Padding(
             padding: const EdgeInsets.all(24),
             child: Center(
@@ -641,10 +785,11 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
                 .whereType<Map>()
                 .map((item) => Map<String, dynamic>.from(item))
                 .toList();
-            final attendanceTypes = (reference['attendance_types'] as List? ?? const [])
-                .whereType<Map>()
-                .map((item) => Map<String, dynamic>.from(item))
-                .toList();
+            final attendanceTypes =
+                (reference['attendance_types'] as List? ?? const [])
+                    .whereType<Map>()
+                    .map((item) => Map<String, dynamic>.from(item))
+                    .toList();
 
             return Padding(
               padding: EdgeInsets.fromLTRB(
@@ -669,62 +814,118 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      _isEdit ? 'Edit User' : 'Create New User',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                      _isEdit
+                          ? tr('Edit User', 'تعديل المستخدم')
+                          : tr('Create New User', 'إنشاء مستخدم جديد'),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Core profile, attendance setup, and employment details for mobile admin use.',
-                      style: TextStyle(color: AppColors.textSecondary),
+                    Text(
+                      tr(
+                        'Core profile, attendance setup, and employment details for mobile admin use.',
+                        'الملف الشخصي الأساسي وإعدادات الحضور وتفاصيل التوظيف لاستخدام إدارة التطبيق.',
+                      ),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 20),
                     _FormSection(
-                      title: 'Basic Details',
+                      title: tr('Basic Details', 'البيانات الأساسية'),
                       children: [
-                        _buildTextField(_nameController, 'Name', required: true),
-                        _buildTextField(_emailController, 'Email', keyboardType: TextInputType.emailAddress),
-                        _buildTextField(_phoneController, 'Phone Number', keyboardType: TextInputType.phone),
+                        _buildTextField(
+                          _nameController,
+                          tr('Name', 'الاسم'),
+                          required: true,
+                        ),
+                        _buildTextField(
+                          _emailController,
+                          tr('Email', 'البريد الإلكتروني'),
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        _buildTextField(
+                          _phoneController,
+                          tr('Phone Number', 'رقم الهاتف'),
+                          keyboardType: TextInputType.phone,
+                        ),
                         _buildDropdown<String>(
-                          label: 'Gender',
+                          label: tr('Gender', 'الجنس'),
                           value: _gender,
                           items: const ['MALE', 'FEMALE'],
                           onChanged: (value) => setState(() => _gender = value),
                         ),
-                        _buildTextField(_addressController, 'Address'),
-                        _buildTextField(_designationController, 'Designation'),
+                        _buildTextField(
+                          _addressController,
+                          tr('Address', 'العنوان'),
+                        ),
+                        _buildTextField(
+                          _designationController,
+                          tr('Designation', 'المسمى الوظيفي'),
+                        ),
                       ],
                     ),
                     _FormSection(
-                      title: 'Employment',
+                      title: tr('Employment', 'التوظيف'),
                       children: [
-                        _buildTextField(_employeeNumberController, 'Employee No.'),
-                        _buildTextField(_deviceIdController, 'Device ID', keyboardType: TextInputType.number),
+                        _buildTextField(
+                          _employeeNumberController,
+                          tr('Employee No.', 'رقم الموظف'),
+                        ),
+                        _buildTextField(
+                          _deviceIdController,
+                          tr('Device ID', 'معرّف الجهاز'),
+                          keyboardType: TextInputType.number,
+                        ),
                         _buildDropdown<String>(
-                          label: 'Employee Type',
+                          label: tr('Employee Type', 'نوع الموظف'),
                           value: _type,
                           items: const ['STAFF', 'INTERN', 'EXTERNAL'],
                           onChanged: (value) => setState(() => _type = value),
                         ),
-                        _buildTextField(_dobController, 'Date of Birth', hint: 'YYYY-MM-DD'),
-                        _buildTextField(_employmentDateController, 'Date of Job', hint: 'YYYY-MM-DD'),
-                        _buildTextField(_tinController, 'TIN', keyboardType: TextInputType.number),
-                        _buildTextField(_nationalIdController, 'National ID', keyboardType: TextInputType.number),
+                        _buildTextField(
+                          _dobController,
+                          tr('Date of Birth', 'تاريخ الميلاد'),
+                          hint: 'YYYY-MM-DD',
+                        ),
+                        _buildTextField(
+                          _employmentDateController,
+                          tr('Date of Job', 'تاريخ التوظيف'),
+                          hint: 'YYYY-MM-DD',
+                        ),
+                        _buildTextField(
+                          _tinController,
+                          tr('TIN', 'الرقم الضريبي'),
+                          keyboardType: TextInputType.number,
+                        ),
+                        _buildTextField(
+                          _nationalIdController,
+                          tr('National ID', 'الهوية الوطنية'),
+                          keyboardType: TextInputType.number,
+                        ),
                         _buildDropdown<String>(
-                          label: 'Employment Type',
+                          label: tr('Employment Type', 'نوع التوظيف'),
                           value: _employmentType,
                           items: const ['FULL_TIME', 'CONTRACT', 'INTERN'],
-                          onChanged: (value) => setState(() => _employmentType = value),
+                          onChanged: (value) =>
+                              setState(() => _employmentType = value),
                           isRequired: false,
                         ),
                         _buildDropdown<String>(
-                          label: 'Marital Status',
+                          label: tr('Marital Status', 'الحالة الاجتماعية'),
                           value: _maritalStatus,
-                          items: const ['SINGLE', 'MARRIED', 'DIVORCED', 'OTHER'],
-                          onChanged: (value) => setState(() => _maritalStatus = value),
+                          items: const [
+                            'SINGLE',
+                            'MARRIED',
+                            'DIVORCED',
+                            'OTHER',
+                          ],
+                          onChanged: (value) =>
+                              setState(() => _maritalStatus = value),
                           isRequired: false,
                         ),
                         _buildDropdown<String>(
-                          label: 'Status',
+                          label: tr('Status', 'الحالة'),
                           value: _status,
                           items: const ['ACTIVE', 'INACTIVE', 'DORMANT'],
                           onChanged: (value) => setState(() => _status = value),
@@ -732,41 +933,50 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
                       ],
                     ),
                     _FormSection(
-                      title: 'Attendance & Department',
+                      title: tr('Attendance & Department', 'الحضور والقسم'),
                       children: [
                         _buildDropdown<int>(
-                          label: 'Department',
+                          label: tr('Department', 'القسم'),
                           value: _departmentId,
-                          items: departments.map((item) => item['id'] as int).toList(),
+                          items: departments
+                              .map((item) => item['id'] as int)
+                              .toList(),
                           labelForItem: (value) {
                             final match = departments.firstWhere(
                               (item) => item['id'] == value,
                               orElse: () => const <String, dynamic>{},
                             );
-                            return match['name']?.toString() ?? 'Unknown';
+                            return match['name']?.toString() ??
+                                tr('Unknown', 'غير معروف');
                           },
-                          onChanged: (value) => setState(() => _departmentId = value),
+                          onChanged: (value) =>
+                              setState(() => _departmentId = value),
                           isRequired: false,
                         ),
                         _buildDropdown<int>(
-                          label: 'Attendance Type',
+                          label: tr('Attendance Type', 'نوع الحضور'),
                           value: _attendanceTypeId,
-                          items: attendanceTypes.map((item) => item['id'] as int).toList(),
+                          items: attendanceTypes
+                              .map((item) => item['id'] as int)
+                              .toList(),
                           labelForItem: (value) {
                             final match = attendanceTypes.firstWhere(
                               (item) => item['id'] == value,
                               orElse: () => const <String, dynamic>{},
                             );
-                            return match['name']?.toString() ?? 'Unknown';
+                            return match['name']?.toString() ??
+                                tr('Unknown', 'غير معروف');
                           },
-                          onChanged: (value) => setState(() => _attendanceTypeId = value),
+                          onChanged: (value) =>
+                              setState(() => _attendanceTypeId = value),
                           isRequired: false,
                         ),
                         _buildDropdown<String>(
-                          label: 'Attendance Status',
+                          label: tr('Attendance Status', 'حالة الحضور'),
                           value: _attendanceStatus,
                           items: const ['ENABLED', 'DISABLED'],
-                          onChanged: (value) => setState(() => _attendanceStatus = value),
+                          onChanged: (value) =>
+                              setState(() => _attendanceStatus = value),
                           isRequired: false,
                         ),
                       ],
@@ -777,7 +987,11 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
                       child: ElevatedButton(
                         onPressed: _submitting ? null : _submit,
                         child: Text(
-                          _submitting ? 'Saving...' : (_isEdit ? 'Update User' : 'Save User'),
+                          _submitting
+                              ? tr('Saving...', 'جاري الحفظ...')
+                              : (_isEdit
+                                    ? tr('Update User', 'تحديث المستخدم')
+                                    : tr('Save User', 'حفظ المستخدم')),
                         ),
                       ),
                     ),
@@ -809,7 +1023,9 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
           border: const OutlineInputBorder(),
         ),
         validator: required
-            ? (value) => (value == null || value.trim().isEmpty) ? '$label is required' : null
+            ? (value) => (value == null || value.trim().isEmpty)
+                  ? '$label is required'
+                  : null
             : null,
       ),
     );
@@ -835,7 +1051,9 @@ class _UserFormSheetState extends ConsumerState<_UserFormSheet> {
             .map(
               (item) => DropdownMenuItem<T>(
                 value: item,
-                child: Text(labelForItem != null ? labelForItem(item) : item.toString()),
+                child: Text(
+                  labelForItem != null ? labelForItem(item) : item.toString(),
+                ),
               ),
             )
             .toList(),

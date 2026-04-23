@@ -62,29 +62,11 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
   Color get _textSecondaryColor =>
       _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
 
-  String _tr({
-    required String en,
-    String? sw,
-    String? fr,
-    String? ar,
-  }) {
+  String _tr({required String en, String? sw, String? fr, String? ar}) {
     if (_isSwahili) return sw ?? en;
     if (_isFrench) return fr ?? en;
     if (_isArabic) return ar ?? en;
     return en;
-  }
-
-  Widget _languageFlag() {
-    switch (_language) {
-      case AppLanguage.swahili:
-        return const TanzaniaFlag();
-      case AppLanguage.french:
-        return const FranceFlag();
-      case AppLanguage.arabic:
-        return const ArabicLanguageBadge();
-      case AppLanguage.english:
-        return const UKFlag();
-    }
   }
 
   Future<void> _launchWhatsApp([String? topic]) async {
@@ -188,9 +170,8 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
         language: _language,
         onDarkModeToggle: () =>
             ref.read(settingsProvider.notifier).toggleDarkMode(),
-        onLanguageToggle: () =>
-            ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _languageFlag(),
+        onLanguageChanged: (value) =>
+            ref.read(settingsProvider.notifier).setLanguage(value),
       ),
       body: CustomScrollView(
         slivers: [
@@ -336,12 +317,9 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 _isSwahili
                     ? 'Kutambuliwa kwa kujitolea kwetu kwa ubora, ubunifu, na ubora katika ujenzi'
                     : _tr(
-                        en:
-                            'Recognition of our commitment to quality, innovation, and excellence in construction',
-                        fr:
-                            'Reconnaissance de notre engagement envers la qualite, l\'innovation et l\'excellence dans la construction',
-                        ar:
-                            'تقدير لالتزامنا بالجودة والابتكار والتميز في البناء',
+                        en: 'Recognition of our commitment to quality, innovation, and excellence in construction',
+                        fr: 'Reconnaissance de notre engagement envers la qualite, l\'innovation et l\'excellence dans la construction',
+                        ar: 'تقدير لالتزامنا بالجودة والابتكار والتميز في البناء',
                       ),
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),

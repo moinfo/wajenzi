@@ -3,33 +3,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
 final _processApprovalFlowsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/process-approval-flows');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/process-approval-flows');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
 class ProcessApprovalFlowsScreen extends ConsumerWidget {
   const ProcessApprovalFlowsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final flowsAsync = ref.watch(_processApprovalFlowsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Approval Flows'),
+        title: Text(tr('Approval Flows', 'مسارات الموافقة')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -40,7 +43,12 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_processApprovalFlowsProvider),
         child: flowsAsync.when(
-          loading: () => const LoadingWidget(message: 'Loading approval flows...'),
+          loading: () => LoadingWidget(
+            message: tr(
+              'Loading approval flows...',
+              'جاري تحميل مسارات الموافقة...',
+            ),
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -48,16 +56,19 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               const Icon(Icons.error_outline, size: 56, color: AppColors.error),
               const SizedBox(height: 12),
-              const Text(
-                'Failed to load approval flows',
+              Text(
+                tr(
+                  'Failed to load approval flows',
+                  'تعذر تحميل مسارات الموافقة',
+                ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
-              Text(
-                vatErrorMessage(error),
-                textAlign: TextAlign.center,
-              ),
+              Text(vatErrorMessage(error), textAlign: TextAlign.center),
             ],
           ),
           data: (flows) {
@@ -74,23 +85,38 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.approval_outlined, size: 56, color: AppColors.primary),
+                        const Icon(
+                          Icons.approval_outlined,
+                          size: 56,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No approval flows found',
+                        Text(
+                          tr(
+                            'No approval flows found',
+                            'لا توجد مسارات موافقة',
+                          ),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create your first approval flow to match the web settings page.',
+                        Text(
+                          tr(
+                            'Create your first approval flow to match the web settings page.',
+                            'أنشئ أول مسار موافقة ليتوافق مع صفحة الإعدادات على الويب.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New Approval Flow'),
+                          label: Text(
+                            tr('New Approval Flow', 'مسار موافقة جديد'),
+                          ),
                         ),
                       ],
                     ),
@@ -124,23 +150,37 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.approval_outlined, color: AppColors.primary),
+                        child: const Icon(
+                          Icons.approval_outlined,
+                          color: AppColors.primary,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Approval Flows Settings',
+                            Text(
+                              tr(
+                                'Approval Flows Settings',
+                                'إعدادات مسارات الموافقة',
+                              ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${flows.length} records',
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              tr(
+                                'Showing ${flows.length} records',
+                                'عرض ${flows.length} سجلاً',
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -168,7 +208,9 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
                             ),
                             child: Text(
                               '${index + 1}',
-                              style: const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 14),
@@ -196,11 +238,16 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: Colors.grey.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(999),
+                                        color: Colors.grey.withValues(
+                                          alpha: 0.12,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
                                       ),
                                       child: Text(
-                                        flow['approvable_type']?.toString() ?? '-',
+                                        flow['approvable_type']?.toString() ??
+                                            '-',
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: const TextStyle(fontSize: 12),
@@ -219,9 +266,15 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
                                 _deleteFlow(context, ref, flow);
                               }
                             },
-                            itemBuilder: (_) => const [
-                              PopupMenuItem(value: 'edit', child: Text('Edit')),
-                              PopupMenuItem(value: 'delete', child: Text('Delete')),
+                            itemBuilder: (_) => [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Text(tr('Edit', 'تعديل')),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Text(tr('Delete', 'حذف')),
+                              ),
                             ],
                           ),
                         ],
@@ -238,7 +291,7 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New Approval Flow'),
+        label: Text(tr('New Approval Flow', 'مسار موافقة جديد')),
       ),
     );
   }
@@ -268,19 +321,23 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> flow,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Approval Flow'),
-        content: Text('Delete ${flow['name']}?'),
+        title: Text(tr('Delete Approval Flow', 'حذف مسار الموافقة')),
+        content: Text(
+          tr('Delete ${flow['name']}?', 'هل تريد حذف ${flow['name']}؟'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -289,12 +346,19 @@ class ProcessApprovalFlowsScreen extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      await ref.read(apiClientProvider).delete('/process-approval-flows/${flow['id']}');
+      await ref
+          .read(apiClientProvider)
+          .delete('/process-approval-flows/${flow['id']}');
       ref.invalidate(_processApprovalFlowsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Approval flow deleted successfully'),
+        SnackBar(
+          content: Text(
+            tr(
+              'Approval flow deleted successfully',
+              'تم حذف مسار الموافقة بنجاح',
+            ),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -349,6 +413,8 @@ class _ProcessApprovalFlowFormSheetState
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -379,32 +445,47 @@ class _ProcessApprovalFlowFormSheetState
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _isEdit ? 'Edit Approval Flow' : 'Create New Approval Flow',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  _isEdit
+                      ? tr('Edit Approval Flow', 'تعديل مسار الموافقة')
+                      : tr(
+                          'Create New Approval Flow',
+                          'إنشاء مسار موافقة جديد',
+                        ),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Name', 'الاسم'),
+                    border: const OutlineInputBorder(),
                   ),
                   textInputAction: TextInputAction.next,
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Name is required' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? tr('Name is required', 'الاسم مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _approvableTypeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Approvable Type',
-                    border: OutlineInputBorder(),
-                    hintText: 'e.g. App\\Models\\ImprestRequest',
+                  decoration: InputDecoration(
+                    labelText: tr(
+                      'Approvable Type',
+                      'نوع الكيان القابل للموافقة',
+                    ),
+                    border: const OutlineInputBorder(),
+                    hintText: tr(
+                      'e.g. App\\Models\\ImprestRequest',
+                      'مثال: App\\Models\\ImprestRequest',
+                    ),
                   ),
                   minLines: 1,
                   maxLines: 2,
                   validator: (value) => (value == null || value.trim().isEmpty)
-                      ? 'Approvable type is required'
+                      ? tr('Approvable type is required', 'نوع الكيان مطلوب')
                       : null,
                 ),
                 const SizedBox(height: 20),
@@ -412,9 +493,19 @@ class _ProcessApprovalFlowFormSheetState
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _submitting ? null : _submit,
-                    child: Text(_submitting
-                        ? 'Saving...'
-                        : (_isEdit ? 'Update Approval Flow' : 'Save Approval Flow')),
+                    child: Text(
+                      _submitting
+                          ? tr('Saving...', 'جاري الحفظ...')
+                          : (_isEdit
+                                ? tr(
+                                    'Update Approval Flow',
+                                    'تحديث مسار الموافقة',
+                                  )
+                                : tr(
+                                    'Save Approval Flow',
+                                    'حفظ مسار الموافقة',
+                                  )),
+                    ),
                   ),
                 ),
               ],
@@ -438,7 +529,10 @@ class _ProcessApprovalFlowFormSheetState
     try {
       final api = ref.read(apiClientProvider);
       if (_isEdit) {
-        await api.put('/process-approval-flows/${widget.flow!['id']}', data: payload);
+        await api.put(
+          '/process-approval-flows/${widget.flow!['id']}',
+          data: payload,
+        );
       } else {
         await api.post('/process-approval-flows', data: payload);
       }

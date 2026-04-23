@@ -20,25 +20,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   bool get _isFrench => _language == AppLanguage.french;
   bool get _isArabic => _language == AppLanguage.arabic;
 
-  Widget _languageFlag() {
-    switch (_language) {
-      case AppLanguage.swahili:
-        return const TanzaniaFlag();
-      case AppLanguage.french:
-        return const FranceFlag();
-      case AppLanguage.arabic:
-        return const ArabicLanguageBadge();
-      case AppLanguage.english:
-        return const UKFlag();
-    }
-  }
-
-  String _tr({
-    required String en,
-    String? sw,
-    String? fr,
-    String? ar,
-  }) {
+  String _tr({required String en, String? sw, String? fr, String? ar}) {
     if (_isSwahili) return sw ?? en;
     if (_isFrench) return fr ?? en;
     if (_isArabic) return ar ?? en;
@@ -97,10 +79,14 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   }
 
   // Dark mode colors
-  Color get _bgColor => _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
-  Color get _cardBgColor => _isDarkMode ? const Color(0xFF16213E) : Colors.white;
-  Color get _textPrimaryColor => _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
-  Color get _textSecondaryColor => _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+  Color get _bgColor =>
+      _isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+  Color get _cardBgColor =>
+      _isDarkMode ? const Color(0xFF16213E) : Colors.white;
+  Color get _textPrimaryColor =>
+      _isDarkMode ? Colors.white : const Color(0xFF2C3E50);
+  Color get _textSecondaryColor =>
+      _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
 
   @override
   Widget build(BuildContext context) {
@@ -110,46 +96,33 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       appBar: LandingTopBar(
         isDarkMode: _isDarkMode,
         language: _language,
-        onDarkModeToggle: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
-        onLanguageToggle: () => ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _languageFlag(),
+        onDarkModeToggle: () =>
+            ref.read(settingsProvider.notifier).toggleDarkMode(),
+        onLanguageChanged: (value) =>
+            ref.read(settingsProvider.notifier).setLanguage(value),
       ),
       body: CustomScrollView(
         slivers: [
           // Hero Section with Image
-          SliverToBoxAdapter(
-            child: _buildHeroSection(),
-          ),
+          SliverToBoxAdapter(child: _buildHeroSection()),
 
           // Our Story Section
-          SliverToBoxAdapter(
-            child: _buildStorySection(),
-          ),
+          SliverToBoxAdapter(child: _buildStorySection()),
 
           // Stats Section
-          SliverToBoxAdapter(
-            child: _buildStatsSection(),
-          ),
+          SliverToBoxAdapter(child: _buildStatsSection()),
 
           // Mission & Vision Section
-          SliverToBoxAdapter(
-            child: _buildMissionVisionSection(),
-          ),
+          SliverToBoxAdapter(child: _buildMissionVisionSection()),
 
           // Core Values Section
-          SliverToBoxAdapter(
-            child: _buildCoreValuesSection(),
-          ),
+          SliverToBoxAdapter(child: _buildCoreValuesSection()),
 
           // Leadership Team Section
-          SliverToBoxAdapter(
-            child: _buildLeadershipSection(),
-          ),
+          SliverToBoxAdapter(child: _buildLeadershipSection()),
 
           // Contact Us Section
-          SliverToBoxAdapter(
-            child: _buildContactSection(),
-          ),
+          SliverToBoxAdapter(child: _buildContactSection()),
 
           // Footer
           SliverToBoxAdapter(
@@ -215,11 +188,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 ),
               ),
               child: const Center(
-                child: Icon(
-                  Icons.business,
-                  size: 80,
-                  color: Colors.white24,
-                ),
+                child: Icon(Icons.business, size: 80, color: Colors.white24),
               ),
             ),
           ),
@@ -247,7 +216,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1ABC9C),
                   borderRadius: BorderRadius.circular(20),
@@ -352,14 +324,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           // Story paragraphs
           _buildParagraph(
             _tr(
-              en:
-                  'Wajenzi Professional Co. Ltd is recognized as one of the leading construction companies in East Africa. Founded in 2012 by Engineer Eliya N Kishaluli and officially registered as a company limited in 2020, we have steadily grown to become an award-winning construction firm.',
-              sw:
-                  'Wajenzi Professional Co. Ltd inajulikana kama mojawapo ya makampuni yanayoongoza ya ujenzi Afrika Mashariki. Ilianzishwa mwaka 2012 na Mhandisi Eliya N Kishaluli na kusajiliwa rasmi kama kampuni yenye kikomo mwaka 2020, tumekua kuwa kampuni ya ujenzi yenye tuzo.',
-              fr:
-                  'Wajenzi Professional Co. Ltd est reconnue comme l\'une des principales entreprises de construction en Afrique de l\'Est. Fondee en 2012 par l\'ingenieur Eliya N Kishaluli et officiellement enregistree comme societe en 2020, elle est devenue une entreprise de construction primee.',
-              ar:
-                  'تُعرف شركة Wajenzi Professional Co. Ltd بأنها واحدة من الشركات الرائدة في مجال البناء في شرق أفريقيا. تأسست عام 2012 على يد المهندس Eliya N Kishaluli وسُجلت رسميًا كشركة محدودة عام 2020، ونمت لتصبح شركة إنشاءات حائزة على جوائز.',
+              en: 'Wajenzi Professional Co. Ltd is recognized as one of the leading construction companies in East Africa. Founded in 2012 by Engineer Eliya N Kishaluli and officially registered as a company limited in 2020, we have steadily grown to become an award-winning construction firm.',
+              sw: 'Wajenzi Professional Co. Ltd inajulikana kama mojawapo ya makampuni yanayoongoza ya ujenzi Afrika Mashariki. Ilianzishwa mwaka 2012 na Mhandisi Eliya N Kishaluli na kusajiliwa rasmi kama kampuni yenye kikomo mwaka 2020, tumekua kuwa kampuni ya ujenzi yenye tuzo.',
+              fr: 'Wajenzi Professional Co. Ltd est reconnue comme l\'une des principales entreprises de construction en Afrique de l\'Est. Fondee en 2012 par l\'ingenieur Eliya N Kishaluli et officiellement enregistree comme societe en 2020, elle est devenue une entreprise de construction primee.',
+              ar: 'تُعرف شركة Wajenzi Professional Co. Ltd بأنها واحدة من الشركات الرائدة في مجال البناء في شرق أفريقيا. تأسست عام 2012 على يد المهندس Eliya N Kishaluli وسُجلت رسميًا كشركة محدودة عام 2020، ونمت لتصبح شركة إنشاءات حائزة على جوائز.',
             ),
           ),
           const SizedBox(height: 16),
@@ -371,14 +339,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           const SizedBox(height: 16),
           _buildParagraph(
             _tr(
-              en:
-                  'Our company name "Wajenzi," which means "Builders" in Swahili, reflects our deep roots in the local culture and our commitment to building not just structures, but also relationships and communities.',
-              sw:
-                  'Jina la kampuni yetu "Wajenzi," ambalo linamaanisha "Builders" kwa Kiingereza, linaonyesha mizizi yetu ya ndani katika utamaduni wa hapa na dhamira yetu ya kujenga si tu majengo, bali pia mahusiano na jamii.',
-              fr:
-                  'Le nom de notre entreprise, "Wajenzi", qui signifie "constructeurs" en swahili, reflete nos racines profondes dans la culture locale et notre engagement a construire non seulement des structures, mais aussi des relations et des communautes.',
-              ar:
-                  'اسم شركتنا "Wajenzi" الذي يعني "البناؤون" باللغة السواحيلية يعكس جذورنا العميقة في الثقافة المحلية والتزامنا ببناء ليس فقط المنشآت بل أيضًا العلاقات والمجتمعات.',
+              en: 'Our company name "Wajenzi," which means "Builders" in Swahili, reflects our deep roots in the local culture and our commitment to building not just structures, but also relationships and communities.',
+              sw: 'Jina la kampuni yetu "Wajenzi," ambalo linamaanisha "Builders" kwa Kiingereza, linaonyesha mizizi yetu ya ndani katika utamaduni wa hapa na dhamira yetu ya kujenga si tu majengo, bali pia mahusiano na jamii.',
+              fr: 'Le nom de notre entreprise, "Wajenzi", qui signifie "constructeurs" en swahili, reflete nos racines profondes dans la culture locale et notre engagement a construire non seulement des structures, mais aussi des relations et des communautes.',
+              ar: 'اسم شركتنا "Wajenzi" الذي يعني "البناؤون" باللغة السواحيلية يعكس جذورنا العميقة في الثقافة المحلية والتزامنا ببناء ليس فقط المنشآت بل أيضًا العلاقات والمجتمعات.',
             ),
           ),
         ],
@@ -389,11 +353,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   Widget _buildParagraph(String text) {
     return Text(
       text,
-      style: TextStyle(
-        color: _textSecondaryColor,
-        fontSize: 15,
-        height: 1.6,
-      ),
+      style: TextStyle(color: _textSecondaryColor, fontSize: 15, height: 1.6),
     );
   }
 
@@ -583,10 +543,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
             _isSwahili
                 ? 'Kanuni zinazoongoza kampuni yetu mbele'
                 : 'Guiding principles that drive our company forward',
-            style: TextStyle(
-              color: _textSecondaryColor,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: _textSecondaryColor, fontSize: 14),
           ),
           const SizedBox(height: 24),
 
@@ -823,10 +780,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
             _isSwahili
                 ? 'Kanuni hizi zinaongoza maamuzi yetu, kuunda utamaduni wetu, na kufafanua mbinu yetu kwa kila mradi tunaoufanya.'
                 : 'These principles guide our decisions, shape our culture, and define our approach to every project we undertake.',
-            style: TextStyle(
-              color: _textSecondaryColor,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: _textSecondaryColor, fontSize: 14),
           ),
           const SizedBox(height: 24),
 
@@ -883,11 +837,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                   color: value.color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  value.icon,
-                  color: value.color,
-                  size: 22,
-                ),
+                child: Icon(value.icon, color: value.color, size: 22),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -926,7 +876,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
     final leaders = [
       _TeamMember(
         name: 'Eng. ELIYA N. KISHALULI',
-        role: _isSwahili ? 'Mwanzilishi na Mkurugenzi Mtendaji' : 'Founder & CEO',
+        role: _isSwahili
+            ? 'Mwanzilishi na Mkurugenzi Mtendaji'
+            : 'Founder & CEO',
         image: 'assets/images/ELIYA_KISHALULI.jpeg',
         description: _isSwahili
             ? 'Akiwa na uzoefu wa zaidi ya miaka 15 katika ujenzi na uhandisi, Eng. Eliya alianzisha Wajenzi Professional akiwa na maono ya kubadilisha sekta ya ujenzi Afrika Mashariki.'
@@ -942,7 +894,9 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
       ),
       _TeamMember(
         name: 'MOHAMEDI JOSEPH',
-        role: _isSwahili ? 'Meneja wa Maendeleo ya Biashara' : 'Business Development Manager',
+        role: _isSwahili
+            ? 'Meneja wa Maendeleo ya Biashara'
+            : 'Business Development Manager',
         image: 'assets/images/MOHAMED_JOSEPH.png',
         description: _isSwahili
             ? 'Meneja wa Maendeleo ya Biashara katika sekta ya ujenzi, mzuri katika mahusiano na wateja, upataji wa miradi, na ukuaji wa kimkakati, na rekodi iliyothibitishwa ya kuongeza mapato.'
@@ -996,10 +950,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
             _isSwahili
                 ? 'Kutana na wataalamu wanaoongoza kampuni yetu kwa ujuzi na maono.'
                 : 'Meet the professionals who guide our company with expertise and vision.',
-            style: TextStyle(
-              color: _textSecondaryColor,
-              fontSize: 14,
-            ),
+            style: TextStyle(color: _textSecondaryColor, fontSize: 14),
           ),
           const SizedBox(height: 24),
 
@@ -1109,7 +1060,10 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1ABC9C).withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -1207,7 +1161,8 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
               fr: 'Adresse',
               ar: 'العنوان',
             ),
-            content: 'Ground-Floor (07), PSSSF Commercial Complex, Dar es Salaam',
+            content:
+                'Ground-Floor (07), PSSSF Commercial Complex, Dar es Salaam',
           ),
           const SizedBox(height: 16),
 

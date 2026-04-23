@@ -30,29 +30,11 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
   Color get _textSecondaryColor =>
       _isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
 
-  String _tr({
-    required String en,
-    String? sw,
-    String? fr,
-    String? ar,
-  }) {
+  String _tr({required String en, String? sw, String? fr, String? ar}) {
     if (_isSwahili) return sw ?? en;
     if (_isFrench) return fr ?? en;
     if (_isArabic) return ar ?? en;
     return en;
-  }
-
-  Widget _languageFlag() {
-    switch (_language) {
-      case AppLanguage.swahili:
-        return const TanzaniaFlag();
-      case AppLanguage.french:
-        return const FranceFlag();
-      case AppLanguage.arabic:
-        return const ArabicLanguageBadge();
-      case AppLanguage.english:
-        return const UKFlag();
-    }
   }
 
   Future<void> _launchPhone() async {
@@ -265,9 +247,8 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
         language: _language,
         onDarkModeToggle: () =>
             ref.read(settingsProvider.notifier).toggleDarkMode(),
-        onLanguageToggle: () =>
-            ref.read(settingsProvider.notifier).toggleLanguage(),
-        flagWidget: _languageFlag(),
+        onLanguageChanged: (value) =>
+            ref.read(settingsProvider.notifier).setLanguage(value),
       ),
       body: CustomScrollView(
         slivers: [
@@ -474,14 +455,10 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           const SizedBox(height: 12),
           Text(
             _tr(
-              en:
-                  'We offer a wide range of construction and design services to meet all your building needs.',
-              sw:
-                  'Tunatoa huduma mbalimbali za ujenzi na usanifu ili kukidhi mahitaji yako yote ya ujenzi.',
-              fr:
-                  'Nous proposons une large gamme de services de construction et de conception pour repondre a tous vos besoins.',
-              ar:
-                  'نقدم مجموعة واسعة من خدمات البناء والتصميم لتلبية جميع احتياجاتك.',
+              en: 'We offer a wide range of construction and design services to meet all your building needs.',
+              sw: 'Tunatoa huduma mbalimbali za ujenzi na usanifu ili kukidhi mahitaji yako yote ya ujenzi.',
+              fr: 'Nous proposons une large gamme de services de construction et de conception pour repondre a tous vos besoins.',
+              ar: 'نقدم مجموعة واسعة من خدمات البناء والتصميم لتلبية جميع احتياجاتك.',
             ),
             style: TextStyle(
               color: _textSecondaryColor,
@@ -1017,14 +994,10 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           const SizedBox(height: 8),
           Text(
             _tr(
-              en:
-                  'Contact us today for a free consultation and estimate for your project.',
-              sw:
-                  'Wasiliana nasi leo kwa ushauri wa bure na makadirio ya mradi wako.',
-              fr:
-                  'Contactez-nous aujourd\'hui pour une consultation gratuite et une estimation de votre projet.',
-              ar:
-                  'تواصل معنا اليوم للحصول على استشارة مجانية وتقدير لمشروعك.',
+              en: 'Contact us today for a free consultation and estimate for your project.',
+              sw: 'Wasiliana nasi leo kwa ushauri wa bure na makadirio ya mradi wako.',
+              fr: 'Contactez-nous aujourd\'hui pour une consultation gratuite et une estimation de votre projet.',
+              ar: 'تواصل معنا اليوم للحصول على استشارة مجانية وتقدير لمشروعك.',
             ),
             style: TextStyle(
               color: _textSecondaryColor,

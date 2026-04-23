@@ -7,24 +7,25 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isDarkMode;
   final AppLanguage language;
   final VoidCallback onDarkModeToggle;
-  final VoidCallback onLanguageToggle;
+  final ValueChanged<AppLanguage> onLanguageChanged;
   final bool showBackButton;
-  final Widget? flagWidget;
 
   const LandingTopBar({
     super.key,
     required this.isDarkMode,
     required this.language,
     required this.onDarkModeToggle,
-    required this.onLanguageToggle,
+    required this.onLanguageChanged,
     this.showBackButton = false,
-    this.flagWidget,
   });
 
   bool get isSwahili => language == AppLanguage.swahili;
-  Color get _textPrimaryColor => isDarkMode ? Colors.white : const Color(0xFF2C3E50);
-  Color get _textSecondaryColor => isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
-  Color get _appBarBgColor => isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
+  Color get _textPrimaryColor =>
+      isDarkMode ? Colors.white : const Color(0xFF2C3E50);
+  Color get _textSecondaryColor =>
+      isDarkMode ? Colors.white70 : const Color(0xFF7F8C8D);
+  Color get _appBarBgColor =>
+      isDarkMode ? const Color(0xFF1A1A2E) : const Color(0xFFF0F4F8);
 
   String get _tagline => switch (language) {
     AppLanguage.swahili => 'Mabingwa wa Uthabiti na Ubora',
@@ -115,37 +116,7 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
         ],
       ),
       actions: [
-        // Language Toggle with National Flags
-        _buildTopBarButton(
-          context: context,
-          onTap: onLanguageToggle,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (flagWidget != null) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: SizedBox(
-                    width: 20,
-                    height: 13,
-                    child: flagWidget,
-                  ),
-                ),
-                const SizedBox(width: 3),
-              ],
-              Text(
-                language.code,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: _textPrimaryColor,
-                ),
-              ),
-            ],
-          ),
-          isWide: true,
-        ),
+        _buildLanguageDropdown(context),
         const SizedBox(width: 8),
         // Dark Mode Toggle
         _buildTopBarButton(
@@ -173,6 +144,85 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
         const SizedBox(width: 12),
       ],
     );
+  }
+
+  Widget _buildLanguageDropdown(BuildContext context) {
+    final menuBg = isDarkMode ? const Color(0xFF16213E) : Colors.white;
+    final menuBorder = isDarkMode
+        ? Colors.white.withValues(alpha: 0.15)
+        : Colors.grey.withValues(alpha: 0.25);
+    final popupBg = isDarkMode ? const Color(0xFF1F2A44) : Colors.white;
+
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+        color: menuBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: menuBorder, width: 1),
+      ),
+      child: PopupMenuButton<AppLanguage>(
+        initialValue: language,
+        tooltip: 'Select language',
+        color: popupBg,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onSelected: onLanguageChanged,
+        itemBuilder: (context) => AppLanguage.values
+            .map(
+              (lang) => PopupMenuItem<AppLanguage>(
+                value: lang,
+                child: Row(
+                  children: [
+                    SizedBox(width: 20, height: 13, child: _flagFor(lang)),
+                    const SizedBox(width: 8),
+                    Text('${lang.code} - ${_labelFor(lang)}'),
+                  ],
+                ),
+              ),
+            )
+            .toList(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(width: 20, height: 13, child: _flagFor(language)),
+              const SizedBox(width: 3),
+              Text(
+                language.code,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: _textPrimaryColor,
+                ),
+              ),
+              Icon(
+                Icons.arrow_drop_down_rounded,
+                size: 16,
+                color: _textPrimaryColor,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _labelFor(AppLanguage value) {
+    return switch (value) {
+      AppLanguage.english => 'English',
+      AppLanguage.swahili => 'Kiswahili',
+      AppLanguage.french => 'Francais',
+      AppLanguage.arabic => 'Arabic',
+    };
+  }
+
+  Widget _flagFor(AppLanguage value) {
+    return switch (value) {
+      AppLanguage.english => const UKFlag(),
+      AppLanguage.swahili => const TanzaniaFlag(),
+      AppLanguage.french => const FranceFlag(),
+      AppLanguage.arabic => const ArabicLanguageBadge(),
+    };
   }
 
   Widget _buildTopBarButton({
@@ -209,9 +259,7 @@ class TanzaniaFlag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _TanzaniaFlagPainter(),
-    );
+    return CustomPaint(painter: _TanzaniaFlagPainter());
   }
 }
 
@@ -221,9 +269,7 @@ class UKFlag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _UKFlagPainter(),
-    );
+    return CustomPaint(painter: _UKFlagPainter());
   }
 }
 
@@ -232,9 +278,7 @@ class FranceFlag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _FranceFlagPainter(),
-    );
+    return CustomPaint(painter: _FranceFlagPainter());
   }
 }
 
@@ -359,8 +403,16 @@ class _UKFlagPainter extends CustomPainter {
       ..strokeWidth = size.height * 0.2
       ..style = PaintingStyle.stroke;
 
-    canvas.drawLine(Offset.zero, Offset(size.width, size.height), whiteDiagonal);
-    canvas.drawLine(Offset(size.width, 0), Offset(0, size.height), whiteDiagonal);
+    canvas.drawLine(
+      Offset.zero,
+      Offset(size.width, size.height),
+      whiteDiagonal,
+    );
+    canvas.drawLine(
+      Offset(size.width, 0),
+      Offset(0, size.height),
+      whiteDiagonal,
+    );
 
     // Red diagonal cross (thinner)
     final redDiagonal = Paint()
@@ -377,8 +429,16 @@ class _UKFlagPainter extends CustomPainter {
       ..strokeWidth = size.height * 0.35
       ..style = PaintingStyle.stroke;
 
-    canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width / 2, size.height), whiteCross);
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), whiteCross);
+    canvas.drawLine(
+      Offset(size.width / 2, 0),
+      Offset(size.width / 2, size.height),
+      whiteCross,
+    );
+    canvas.drawLine(
+      Offset(0, size.height / 2),
+      Offset(size.width, size.height / 2),
+      whiteCross,
+    );
 
     // Red cross (horizontal and vertical)
     final redCross = Paint()
@@ -386,8 +446,16 @@ class _UKFlagPainter extends CustomPainter {
       ..strokeWidth = size.height * 0.2
       ..style = PaintingStyle.stroke;
 
-    canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width / 2, size.height), redCross);
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), redCross);
+    canvas.drawLine(
+      Offset(size.width / 2, 0),
+      Offset(size.width / 2, size.height),
+      redCross,
+    );
+    canvas.drawLine(
+      Offset(0, size.height / 2),
+      Offset(size.width, size.height / 2),
+      redCross,
+    );
   }
 
   @override

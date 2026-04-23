@@ -4,45 +4,48 @@ import 'package:intl/intl.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
 final _deductionSettingsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/deduction-settings');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/deduction-settings');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
 final _deductionSettingRefsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/deduction-settings/reference-data');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  return data['data'] is Map
-      ? Map<String, dynamic>.from(data['data'] as Map)
-      : const <String, dynamic>{};
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/deduction-settings/reference-data');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      return data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : const <String, dynamic>{};
+    });
 
 class DeductionSettingsScreen extends ConsumerWidget {
   const DeductionSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final asyncData = ref.watch(_deductionSettingsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Deduction Settings'),
+        title: Text(tr('Deduction Settings', 'إعدادات الاستقطاعات')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -53,7 +56,12 @@ class DeductionSettingsScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_deductionSettingsProvider),
         child: asyncData.when(
-          loading: () => const LoadingWidget(message: 'Loading deduction settings...'),
+          loading: () => LoadingWidget(
+            message: tr(
+              'Loading deduction settings...',
+              'جاري تحميل إعدادات الاستقطاعات...',
+            ),
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -84,23 +92,38 @@ class DeductionSettingsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.tune, size: 56, color: AppColors.primary),
+                        const Icon(
+                          Icons.tune,
+                          size: 56,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No deduction settings found',
+                        Text(
+                          tr(
+                            'No deduction settings found',
+                            'لا توجد إعدادات استقطاعات',
+                          ),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create a deduction setting to match the web settings page.',
+                        Text(
+                          tr(
+                            'Create a deduction setting to match the web settings page.',
+                            'أنشئ إعداد استقطاع ليتوافق مع صفحة الإعدادات على الويب.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New Deduction Setting'),
+                          label: Text(
+                            tr('New Deduction Setting', 'إعداد استقطاع جديد'),
+                          ),
                         ),
                       ],
                     ),
@@ -141,16 +164,24 @@ class DeductionSettingsScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Deduction Setting',
+                            Text(
+                              tr('Deduction Setting', 'إعداد الاستقطاع'),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${items.length} records',
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              tr(
+                                'Showing ${items.length} records',
+                                'عرض ${items.length} سجلاً',
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -189,8 +220,11 @@ class DeductionSettingsScreen extends ConsumerWidget {
                                         .isNotEmpty) ...[
                                       const SizedBox(height: 4),
                                       Text(
-                                        item['deduction_abbreviation'].toString(),
-                                        style: const TextStyle(color: AppColors.textSecondary),
+                                        item['deduction_abbreviation']
+                                            .toString(),
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                        ),
                                       ),
                                     ],
                                   ],
@@ -204,9 +238,15 @@ class DeductionSettingsScreen extends ConsumerWidget {
                                     _deleteItem(context, ref, item);
                                   }
                                 },
-                                itemBuilder: (_) => const [
-                                  PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                  PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                itemBuilder: (_) => [
+                                  PopupMenuItem(
+                                    value: 'edit',
+                                    child: Text(tr('Edit', 'تعديل')),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text(tr('Delete', 'حذف')),
+                                  ),
                                 ],
                               ),
                             ],
@@ -216,11 +256,30 @@ class DeductionSettingsScreen extends ConsumerWidget {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              _chip('Min', _money(_toDouble(item['minimum_amount']))),
-                              _chip('Max', _money(_toDouble(item['maximum_amount']))),
-                              _chip('Employee %', _percent(_toDouble(item['employee_percentage']))),
-                              _chip('Employer %', _percent(_toDouble(item['employer_percentage']))),
-                              _chip('Additional', _money(_toDouble(item['additional_amount']))),
+                              _chip(
+                                tr('Min', 'الحد الأدنى'),
+                                _money(_toDouble(item['minimum_amount'])),
+                              ),
+                              _chip(
+                                tr('Max', 'الحد الأقصى'),
+                                _money(_toDouble(item['maximum_amount'])),
+                              ),
+                              _chip(
+                                tr('Employee %', 'نسبة الموظف'),
+                                _percent(
+                                  _toDouble(item['employee_percentage']),
+                                ),
+                              ),
+                              _chip(
+                                tr('Employer %', 'نسبة صاحب العمل'),
+                                _percent(
+                                  _toDouble(item['employer_percentage']),
+                                ),
+                              ),
+                              _chip(
+                                tr('Additional', 'إضافي'),
+                                _money(_toDouble(item['additional_amount'])),
+                              ),
                             ],
                           ),
                         ],
@@ -237,7 +296,7 @@ class DeductionSettingsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New Setting'),
+        label: Text(tr('New Setting', 'إعداد جديد')),
       ),
     );
   }
@@ -284,19 +343,26 @@ class DeductionSettingsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Deduction Setting'),
-        content: Text('Delete ${item['deduction_name']} setting?'),
+        title: Text(tr('Delete Deduction Setting', 'حذف إعداد الاستقطاع')),
+        content: Text(
+          tr(
+            'Delete ${item['deduction_name']} setting?',
+            'هل تريد حذف إعداد ${item['deduction_name']}؟',
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -304,12 +370,19 @@ class DeductionSettingsScreen extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      await ref.read(apiClientProvider).delete('/deduction-settings/${item['id']}');
+      await ref
+          .read(apiClientProvider)
+          .delete('/deduction-settings/${item['id']}');
       ref.invalidate(_deductionSettingsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Deduction setting deleted successfully'),
+        SnackBar(
+          content: Text(
+            tr(
+              'Deduction setting deleted successfully',
+              'تم حذف إعداد الاستقطاع بنجاح',
+            ),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -329,10 +402,7 @@ class _DeductionSettingFormSheet extends ConsumerStatefulWidget {
   final Map<String, dynamic> refs;
   final Map<String, dynamic>? item;
 
-  const _DeductionSettingFormSheet({
-    required this.refs,
-    this.item,
-  });
+  const _DeductionSettingFormSheet({required this.refs, this.item});
 
   @override
   ConsumerState<_DeductionSettingFormSheet> createState() =>
@@ -356,16 +426,21 @@ class _DeductionSettingFormSheetState
   void initState() {
     super.initState();
     _selectedDeductionId = _toNullableInt(widget.item?['deduction_id']);
-    _minimumController =
-        TextEditingController(text: _textValue(widget.item?['minimum_amount']));
-    _maximumController =
-        TextEditingController(text: _textValue(widget.item?['maximum_amount']));
-    _employeeController =
-        TextEditingController(text: _textValue(widget.item?['employee_percentage']));
-    _employerController =
-        TextEditingController(text: _textValue(widget.item?['employer_percentage']));
-    _additionalController =
-        TextEditingController(text: _textValue(widget.item?['additional_amount']));
+    _minimumController = TextEditingController(
+      text: _textValue(widget.item?['minimum_amount']),
+    );
+    _maximumController = TextEditingController(
+      text: _textValue(widget.item?['maximum_amount']),
+    );
+    _employeeController = TextEditingController(
+      text: _textValue(widget.item?['employee_percentage']),
+    );
+    _employerController = TextEditingController(
+      text: _textValue(widget.item?['employer_percentage']),
+    );
+    _additionalController = TextEditingController(
+      text: _textValue(widget.item?['additional_amount']),
+    );
   }
 
   @override
@@ -380,6 +455,8 @@ class _DeductionSettingFormSheetState
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final deductions = (widget.refs['deductions'] as List? ?? const [])
         .whereType<Map>()
         .map((item) => Map<String, dynamic>.from(item))
@@ -415,16 +492,24 @@ class _DeductionSettingFormSheetState
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _isEdit ? 'Edit Deduction Setting' : 'Create New Deduction Setting',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  _isEdit
+                      ? tr('Edit Deduction Setting', 'تعديل إعداد الاستقطاع')
+                      : tr(
+                          'Create New Deduction Setting',
+                          'إنشاء إعداد استقطاع جديد',
+                        ),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 DropdownButtonFormField<int>(
                   value: _selectedDeductionId,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Deduction',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Deduction', 'الاستقطاع'),
+                    border: const OutlineInputBorder(),
                   ),
                   items: deductions
                       .map(
@@ -437,19 +522,39 @@ class _DeductionSettingFormSheetState
                         ),
                       )
                       .toList(),
-                  onChanged: (value) => setState(() => _selectedDeductionId = value),
-                  validator: (value) => value == null ? 'Deduction is required' : null,
+                  onChanged: (value) =>
+                      setState(() => _selectedDeductionId = value),
+                  validator: (value) => value == null
+                      ? tr('Deduction is required', 'الاستقطاع مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 16),
-                _numberField(_minimumController, 'Minimum Amount'),
+                _numberField(
+                  _minimumController,
+                  tr('Minimum Amount', 'الحد الأدنى للمبلغ'),
+                ),
                 const SizedBox(height: 16),
-                _numberField(_maximumController, 'Maximum Amount'),
+                _numberField(
+                  _maximumController,
+                  tr('Maximum Amount', 'الحد الأقصى للمبلغ'),
+                ),
                 const SizedBox(height: 16),
-                _numberField(_employeeController, 'Employee Percentage', decimal: true),
+                _numberField(
+                  _employeeController,
+                  tr('Employee Percentage', 'نسبة الموظف'),
+                  decimal: true,
+                ),
                 const SizedBox(height: 16),
-                _numberField(_employerController, 'Employer Percentage', decimal: true),
+                _numberField(
+                  _employerController,
+                  tr('Employer Percentage', 'نسبة صاحب العمل'),
+                  decimal: true,
+                ),
                 const SizedBox(height: 16),
-                _numberField(_additionalController, 'Additional Amount'),
+                _numberField(
+                  _additionalController,
+                  tr('Additional Amount', 'المبلغ الإضافي'),
+                ),
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
@@ -457,8 +562,10 @@ class _DeductionSettingFormSheetState
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? 'Saving...'
-                          : (_isEdit ? 'Update Setting' : 'Save Setting'),
+                          ? tr('Saving...', 'جاري الحفظ...')
+                          : (_isEdit
+                                ? tr('Update Setting', 'تحديث الإعداد')
+                                : tr('Save Setting', 'حفظ الإعداد')),
                     ),
                   ),
                 ),
@@ -509,7 +616,10 @@ class _DeductionSettingFormSheetState
     try {
       final api = ref.read(apiClientProvider);
       if (_isEdit) {
-        await api.put('/deduction-settings/${widget.item!['id']}', data: payload);
+        await api.put(
+          '/deduction-settings/${widget.item!['id']}',
+          data: payload,
+        );
       } else {
         await api.post('/deduction-settings', data: payload);
       }

@@ -268,35 +268,91 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
               ],
             ),
             actions: [
-              _buildTopBarButton(
-                onTap: () =>
-                    ref.read(settingsProvider.notifier).toggleLanguage(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: SizedBox(
-                        width: 20,
-                        height: 13,
-                        child: _languageFlag(),
+              Container(
+                height: 40,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: _isDarkMode ? const Color(0xFF16213E) : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: _isDarkMode
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Colors.grey.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: PopupMenuButton<AppLanguage>(
+                  initialValue: _language,
+                  tooltip: 'Select language',
+                  color: _isDarkMode ? const Color(0xFF1F2A44) : Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onSelected: (value) =>
+                      ref.read(settingsProvider.notifier).setLanguage(value),
+                  itemBuilder: (context) => AppLanguage.values
+                      .map(
+                        (lang) => PopupMenuItem<AppLanguage>(
+                          value: lang,
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 13,
+                                child: switch (lang) {
+                                  AppLanguage.swahili => const TanzaniaFlag(),
+                                  AppLanguage.french => const FranceFlag(),
+                                  AppLanguage.arabic =>
+                                    const ArabicLanguageBadge(),
+                                  AppLanguage.english => const UKFlag(),
+                                },
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${lang.code} - ${switch (lang) {
+                                  AppLanguage.english => 'English',
+                                  AppLanguage.swahili => 'Kiswahili',
+                                  AppLanguage.french => 'Francais',
+                                  AppLanguage.arabic => 'Arabic',
+                                }}',
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: SizedBox(
+                          width: 20,
+                          height: 13,
+                          child: _languageFlag(),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 3),
-                    Text(
-                      _language.code,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(width: 3),
+                      Text(
+                        _language.code,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: _isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF2C3E50),
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_drop_down_rounded,
+                        size: 14,
                         color: _isDarkMode
                             ? Colors.white
                             : const Color(0xFF2C3E50),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                isWide: true,
               ),
               const SizedBox(width: 8),
               _buildTopBarButton(

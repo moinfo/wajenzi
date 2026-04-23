@@ -3,25 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
 final _permissionsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final response = await api.get('/permissions');
-  final data = response.data is Map<String, dynamic>
-      ? response.data as Map<String, dynamic>
-      : const <String, dynamic>{};
-  final items = data['data'] as List? ?? const [];
-  return items
-      .whereType<Map>()
-      .map((item) => Map<String, dynamic>.from(item))
-      .toList();
-});
+      final api = ref.watch(apiClientProvider);
+      final response = await api.get('/permissions');
+      final data = response.data is Map<String, dynamic>
+          ? response.data as Map<String, dynamic>
+          : const <String, dynamic>{};
+      final items = data['data'] as List? ?? const [];
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    });
 
-final _permissionReferenceProvider =
-    FutureProvider.autoDispose<List<String>>((ref) async {
+final _permissionReferenceProvider = FutureProvider.autoDispose<List<String>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
   final response = await api.get('/permissions/reference-data');
   final data = response.data is Map<String, dynamic>
@@ -40,11 +42,13 @@ class PermissionsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final asyncData = ref.watch(_permissionsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Permissions'),
+        title: Text(tr('Permissions', 'الصلاحيات')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -58,7 +62,9 @@ class PermissionsScreen extends ConsumerWidget {
           ref.invalidate(_permissionReferenceProvider);
         },
         child: asyncData.when(
-          loading: () => const LoadingWidget(message: 'Loading permissions...'),
+          loading: () => LoadingWidget(
+            message: tr('Loading permissions...', 'جاري تحميل الصلاحيات...'),
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -66,10 +72,13 @@ class PermissionsScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               const Icon(Icons.error_outline, size: 56, color: AppColors.error),
               const SizedBox(height: 12),
-              const Text(
-                'Failed to load permissions',
+              Text(
+                tr('Failed to load permissions', 'تعذر تحميل الصلاحيات'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Text(vatErrorMessage(error), textAlign: TextAlign.center),
@@ -89,23 +98,33 @@ class PermissionsScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.key_outlined, size: 56, color: AppColors.primary),
+                        const Icon(
+                          Icons.key_outlined,
+                          size: 56,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No permissions found',
+                        Text(
+                          tr('No permissions found', 'لا توجد صلاحيات'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create a permission to manage this setting from mobile.',
+                        Text(
+                          tr(
+                            'Create a permission to manage this setting from mobile.',
+                            'أنشئ صلاحية لإدارة هذا الإعداد من التطبيق.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New Permission'),
+                          label: Text(tr('New Permission', 'صلاحية جديدة')),
                         ),
                       ],
                     ),
@@ -139,23 +158,34 @@ class PermissionsScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.key_outlined, color: AppColors.primary),
+                        child: const Icon(
+                          Icons.key_outlined,
+                          color: AppColors.primary,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Permissions',
+                            Text(
+                              tr('Permissions', 'الصلاحيات'),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${items.length} records',
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              tr(
+                                'Showing ${items.length} records',
+                                'عرض ${items.length} سجلاً',
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -169,7 +199,10 @@ class PermissionsScreen extends ConsumerWidget {
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       leading: Container(
                         width: 38,
                         height: 38,
@@ -187,14 +220,22 @@ class PermissionsScreen extends ConsumerWidget {
                         item['name']?.toString() ?? '-',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 6),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Type: ${item['permission_type'] ?? '-'}'),
+                            Text(
+                              tr(
+                                'Type: ${item['permission_type'] ?? '-'}',
+                                'النوع: ${item['permission_type'] ?? '-'}',
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Text(
                               item['description']?.toString() ?? '',
@@ -212,9 +253,15 @@ class PermissionsScreen extends ConsumerWidget {
                             _deleteItem(context, ref, item);
                           }
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(tr('Edit', 'تعديل')),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(tr('Delete', 'حذف')),
+                          ),
                         ],
                       ),
                     ),
@@ -229,7 +276,7 @@ class PermissionsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New Permission'),
+        label: Text(tr('New Permission', 'صلاحية جديدة')),
       ),
     );
   }
@@ -259,19 +306,23 @@ class PermissionsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Permission'),
-        content: Text('Delete ${item['name']}?'),
+        title: Text(tr('Delete Permission', 'حذف الصلاحية')),
+        content: Text(
+          tr('Delete ${item['name']}?', 'هل تريد حذف ${item['name']}؟'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -283,8 +334,10 @@ class PermissionsScreen extends ConsumerWidget {
       ref.invalidate(_permissionsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Permission deleted successfully'),
+        SnackBar(
+          content: Text(
+            tr('Permission deleted successfully', 'تم حذف الصلاحية بنجاح'),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -306,7 +359,8 @@ class _PermissionFormSheet extends ConsumerStatefulWidget {
   const _PermissionFormSheet({this.item});
 
   @override
-  ConsumerState<_PermissionFormSheet> createState() => _PermissionFormSheetState();
+  ConsumerState<_PermissionFormSheet> createState() =>
+      _PermissionFormSheetState();
 }
 
 class _PermissionFormSheetState extends ConsumerState<_PermissionFormSheet> {
@@ -339,6 +393,8 @@ class _PermissionFormSheetState extends ConsumerState<_PermissionFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final typesAsync = ref.watch(_permissionReferenceProvider);
 
     return Container(
@@ -371,18 +427,23 @@ class _PermissionFormSheetState extends ConsumerState<_PermissionFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _isEdit ? 'Edit Permission' : 'Create New Permission',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  _isEdit
+                      ? tr('Edit Permission', 'تعديل الصلاحية')
+                      : tr('Create New Permission', 'إنشاء صلاحية جديدة'),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Permission Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Permission Name', 'اسم الصلاحية'),
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) => (value == null || value.trim().isEmpty)
-                      ? 'Permission name is required'
+                      ? tr('Permission name is required', 'اسم الصلاحية مطلوب')
                       : null,
                 ),
                 const SizedBox(height: 16),
@@ -390,10 +451,12 @@ class _PermissionFormSheetState extends ConsumerState<_PermissionFormSheet> {
                   loading: () => const LinearProgressIndicator(),
                   error: (_, _) => const SizedBox.shrink(),
                   data: (types) => DropdownButtonFormField<String>(
-                    value: types.contains(_permissionType) ? _permissionType : (types.isNotEmpty ? types.first : 'MENU'),
-                    decoration: const InputDecoration(
-                      labelText: 'Permission Type',
-                      border: OutlineInputBorder(),
+                    value: types.contains(_permissionType)
+                        ? _permissionType
+                        : (types.isNotEmpty ? types.first : 'MENU'),
+                    decoration: InputDecoration(
+                      labelText: tr('Permission Type', 'نوع الصلاحية'),
+                      border: const OutlineInputBorder(),
                     ),
                     items: types
                         .map(
@@ -403,16 +466,17 @@ class _PermissionFormSheetState extends ConsumerState<_PermissionFormSheet> {
                           ),
                         )
                         .toList(),
-                    onChanged: (value) => setState(() => _permissionType = value ?? 'MENU'),
+                    onChanged: (value) =>
+                        setState(() => _permissionType = value ?? 'MENU'),
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _descriptionController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Description', 'الوصف'),
+                    border: const OutlineInputBorder(),
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -423,8 +487,10 @@ class _PermissionFormSheetState extends ConsumerState<_PermissionFormSheet> {
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? 'Saving...'
-                          : (_isEdit ? 'Update Permission' : 'Save Permission'),
+                          ? tr('Saving...', 'جاري الحفظ...')
+                          : (_isEdit
+                                ? tr('Update Permission', 'تحديث الصلاحية')
+                                : tr('Save Permission', 'حفظ الصلاحية')),
                     ),
                   ),
                 ),

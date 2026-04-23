@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
-final _rolesProvider =
-    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+final _rolesProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>>((
+  ref,
+) async {
   final api = ref.watch(apiClientProvider);
   final response = await api.get('/roles');
   final data = response.data is Map<String, dynamic>
@@ -25,11 +27,13 @@ class RolesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final asyncData = ref.watch(_rolesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Roles'),
+        title: Text(tr('Roles', 'الأدوار')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -40,7 +44,9 @@ class RolesScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_rolesProvider),
         child: asyncData.when(
-          loading: () => const LoadingWidget(message: 'Loading roles...'),
+          loading: () => LoadingWidget(
+            message: tr('Loading roles...', 'جاري تحميل الأدوار...'),
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -48,10 +54,13 @@ class RolesScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               const Icon(Icons.error_outline, size: 56, color: AppColors.error),
               const SizedBox(height: 12),
-              const Text(
-                'Failed to load roles',
+              Text(
+                tr('Failed to load roles', 'تعذر تحميل الأدوار'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Text(vatErrorMessage(error), textAlign: TextAlign.center),
@@ -71,23 +80,33 @@ class RolesScreen extends ConsumerWidget {
                     ),
                     child: Column(
                       children: [
-                        const Icon(Icons.admin_panel_settings_outlined, size: 56, color: AppColors.primary),
+                        const Icon(
+                          Icons.admin_panel_settings_outlined,
+                          size: 56,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No roles found',
+                        Text(
+                          tr('No roles found', 'لا توجد أدوار'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create a role to manage this setting from mobile.',
+                        Text(
+                          tr(
+                            'Create a role to manage this setting from mobile.',
+                            'أنشئ دوراً لإدارة هذا الإعداد من التطبيق.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New Role'),
+                          label: Text(tr('New Role', 'دور جديد')),
                         ),
                       ],
                     ),
@@ -121,23 +140,34 @@ class RolesScreen extends ConsumerWidget {
                           color: AppColors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(Icons.admin_panel_settings_outlined, color: AppColors.primary),
+                        child: const Icon(
+                          Icons.admin_panel_settings_outlined,
+                          color: AppColors.primary,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Roles',
+                            Text(
+                              tr('Roles', 'الأدوار'),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${items.length} records',
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              tr(
+                                'Showing ${items.length} records',
+                                'عرض ${items.length} سجلاً',
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -151,7 +181,10 @@ class RolesScreen extends ConsumerWidget {
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       leading: Container(
                         width: 38,
                         height: 38,
@@ -169,7 +202,10 @@ class RolesScreen extends ConsumerWidget {
                         item['name']?.toString() ?? '-',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       subtitle: Text(
                         item['created_at']?.toString() ?? '',
@@ -184,9 +220,15 @@ class RolesScreen extends ConsumerWidget {
                             _deleteItem(context, ref, item);
                           }
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(tr('Edit', 'تعديل')),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(tr('Delete', 'حذف')),
+                          ),
                         ],
                       ),
                     ),
@@ -201,7 +243,7 @@ class RolesScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New Role'),
+        label: Text(tr('New Role', 'دور جديد')),
       ),
     );
   }
@@ -230,19 +272,23 @@ class RolesScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Role'),
-        content: Text('Delete ${item['name']}?'),
+        title: Text(tr('Delete Role', 'حذف الدور')),
+        content: Text(
+          tr('Delete ${item['name']}?', 'هل تريد حذف ${item['name']}؟'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -254,8 +300,8 @@ class RolesScreen extends ConsumerWidget {
       ref.invalidate(_rolesProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Role deleted successfully'),
+        SnackBar(
+          content: Text(tr('Role deleted successfully', 'تم حذف الدور بنجاح')),
           backgroundColor: AppColors.success,
         ),
       );
@@ -303,6 +349,8 @@ class _RoleFormSheetState extends ConsumerState<_RoleFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -333,18 +381,24 @@ class _RoleFormSheetState extends ConsumerState<_RoleFormSheet> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _isEdit ? 'Edit Role' : 'Create New Role',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  _isEdit
+                      ? tr('Edit Role', 'تعديل الدور')
+                      : tr('Create New Role', 'إنشاء دور جديد'),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Role Name',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Role Name', 'اسم الدور'),
+                    border: const OutlineInputBorder(),
                   ),
-                  validator: (value) =>
-                      (value == null || value.trim().isEmpty) ? 'Role name is required' : null,
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? tr('Role name is required', 'اسم الدور مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -352,7 +406,11 @@ class _RoleFormSheetState extends ConsumerState<_RoleFormSheet> {
                   child: ElevatedButton(
                     onPressed: _submitting ? null : _submit,
                     child: Text(
-                      _submitting ? 'Saving...' : (_isEdit ? 'Update Role' : 'Save Role'),
+                      _submitting
+                          ? tr('Saving...', 'جاري الحفظ...')
+                          : (_isEdit
+                                ? tr('Update Role', 'تحديث الدور')
+                                : tr('Save Role', 'حفظ الدور')),
                     ),
                   ),
                 ),
@@ -368,9 +426,7 @@ class _RoleFormSheetState extends ConsumerState<_RoleFormSheet> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
 
-    final payload = {
-      'name': _nameController.text.trim(),
-    };
+    final payload = {'name': _nameController.text.trim()};
 
     try {
       final api = ref.read(apiClientProvider);

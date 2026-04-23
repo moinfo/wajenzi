@@ -19,12 +19,7 @@ class SettingsScreen extends ConsumerWidget {
     final isDarkMode = ref.watch(isDarkModeProvider);
     final rootScaffoldKey = ref.read(rootScaffoldKeyProvider);
 
-    String tr({
-      required String en,
-      String? sw,
-      String? fr,
-      String? ar,
-    }) {
+    String tr({required String en, String? sw, String? fr, String? ar}) {
       return switch (currentLanguage) {
         AppLanguage.swahili => sw ?? en,
         AppLanguage.french => fr ?? en,
@@ -36,9 +31,7 @@ class SettingsScreen extends ConsumerWidget {
     final backgroundColor = isDarkMode
         ? const Color(0xFF0F172A)
         : const Color(0xFFF4F7FB);
-    final surfaceColor = isDarkMode
-        ? const Color(0xFF182235)
-        : Colors.white;
+    final surfaceColor = isDarkMode ? const Color(0xFF182235) : Colors.white;
     final mutedSurfaceColor = isDarkMode
         ? const Color(0xFF111827)
         : const Color(0xFFF8FAFC);
@@ -46,9 +39,7 @@ class SettingsScreen extends ConsumerWidget {
         ? Colors.white.withValues(alpha: 0.08)
         : const Color(0xFFE2E8F0);
     final titleColor = isDarkMode ? Colors.white : const Color(0xFF1E293B);
-    final subtitleColor = isDarkMode
-        ? Colors.white70
-        : const Color(0xFF64748B);
+    final subtitleColor = isDarkMode ? Colors.white70 : const Color(0xFF64748B);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -154,12 +145,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _SectionTitle(
-            title: tr(
-              en: 'Account',
-              sw: 'Akaunti',
-              fr: 'Compte',
-              ar: 'الحساب',
-            ),
+            title: tr(en: 'Account', sw: 'Akaunti', fr: 'Compte', ar: 'الحساب'),
             subtitle: tr(
               en: 'Keep your account secure',
               sw: 'Usalama wa akaunti yako',
@@ -324,8 +310,9 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                         icon: Icons.light_mode_rounded,
                         selected: !isDarkMode,
-                        onTap: () =>
-                            ref.read(settingsProvider.notifier).setDarkMode(false),
+                        onTap: () => ref
+                            .read(settingsProvider.notifier)
+                            .setDarkMode(false),
                         surfaceColor: mutedSurfaceColor,
                         borderColor: borderColor,
                         titleColor: titleColor,
@@ -343,8 +330,9 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                         icon: Icons.dark_mode_rounded,
                         selected: isDarkMode,
-                        onTap: () =>
-                            ref.read(settingsProvider.notifier).setDarkMode(true),
+                        onTap: () => ref
+                            .read(settingsProvider.notifier)
+                            .setDarkMode(true),
                         surfaceColor: mutedSurfaceColor,
                         borderColor: borderColor,
                         titleColor: titleColor,
@@ -358,12 +346,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _SectionTitle(
-            title: tr(
-              en: 'Language',
-              sw: 'Lugha',
-              fr: 'Langue',
-              ar: 'اللغة',
-            ),
+            title: tr(en: 'Language', sw: 'Lugha', fr: 'Langue', ar: 'اللغة'),
             subtitle: tr(
               en: 'Select your preferred language',
               sw: 'Chagua lugha ya matumizi',
@@ -396,14 +379,10 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 6),
                 Text(
                   tr(
-                    en:
-                        'Choose your preferred language for app labels and messages.',
-                    sw:
-                        'Chagua lugha unayopendelea kwa maandishi ya programu.',
-                    fr:
-                        'Choisissez votre langue preferee pour les libelles et messages de l\'application.',
-                    ar:
-                        'اختر لغتك المفضلة لعناوين التطبيق ورسائله.',
+                    en: 'Choose your preferred language for app labels and messages.',
+                    sw: 'Chagua lugha unayopendelea kwa maandishi ya programu.',
+                    fr: 'Choisissez votre langue preferee pour les libelles et messages de l\'application.',
+                    ar: 'اختر لغتك المفضلة لعناوين التطبيق ورسائله.',
                   ),
                   style: TextStyle(
                     color: subtitleColor,
@@ -412,69 +391,54 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    SizedBox(
-                      width: 150,
-                      child: _ChoiceTile(
-                        label: 'English',
-                        icon: Icons.language_rounded,
-                        selected: currentLanguage == AppLanguage.english,
-                        onTap: () => ref
-                            .read(settingsProvider.notifier)
-                            .setLanguage(AppLanguage.english),
-                        surfaceColor: mutedSurfaceColor,
-                        borderColor: borderColor,
-                        titleColor: titleColor,
-                        subtitleColor: subtitleColor,
-                      ),
+                DropdownButtonFormField<AppLanguage>(
+                  initialValue: currentLanguage,
+                  icon: const Icon(Icons.arrow_drop_down_rounded),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: mutedSurfaceColor,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
                     ),
-                    SizedBox(
-                      width: 150,
-                      child: _ChoiceTile(
-                        label: 'Kiswahili',
-                        icon: Icons.translate_rounded,
-                        selected: currentLanguage == AppLanguage.swahili,
-                        onTap: () => ref
-                            .read(settingsProvider.notifier)
-                            .setLanguage(AppLanguage.swahili),
-                        surfaceColor: mutedSurfaceColor,
-                        borderColor: borderColor,
-                        titleColor: titleColor,
-                        subtitleColor: subtitleColor,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
                     ),
-                    SizedBox(
-                      width: 150,
-                      child: _ChoiceTile(
-                        label: 'Français',
-                        icon: Icons.flag_rounded,
-                        selected: currentLanguage == AppLanguage.french,
-                        onTap: () => ref
-                            .read(settingsProvider.notifier)
-                            .setLanguage(AppLanguage.french),
-                        surfaceColor: mutedSurfaceColor,
-                        borderColor: borderColor,
-                        titleColor: titleColor,
-                        subtitleColor: subtitleColor,
-                      ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide(color: borderColor),
                     ),
-                    SizedBox(
-                      width: 150,
-                      child: _ChoiceTile(
-                        label: 'العربية',
-                        icon: Icons.translate_rounded,
-                        selected: currentLanguage == AppLanguage.arabic,
-                        onTap: () => ref
-                            .read(settingsProvider.notifier)
-                            .setLanguage(AppLanguage.arabic),
-                        surfaceColor: mutedSurfaceColor,
-                        borderColor: borderColor,
-                        titleColor: titleColor,
-                        subtitleColor: subtitleColor,
-                      ),
+                  ),
+                  dropdownColor: isDarkMode
+                      ? const Color(0xFF1E293B)
+                      : Colors.white,
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(settingsProvider.notifier).setLanguage(value);
+                    }
+                  },
+                  items: const [
+                    DropdownMenuItem(
+                      value: AppLanguage.english,
+                      child: Text('English (EN)'),
+                    ),
+                    DropdownMenuItem(
+                      value: AppLanguage.swahili,
+                      child: Text('Kiswahili (SW)'),
+                    ),
+                    DropdownMenuItem(
+                      value: AppLanguage.french,
+                      child: Text('Français (FR)'),
+                    ),
+                    DropdownMenuItem(
+                      value: AppLanguage.arabic,
+                      child: Text('العربية (AR)'),
                     ),
                   ],
                 ),
@@ -522,13 +486,7 @@ class _SectionTitle extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: TextStyle(
-            color: subtitleColor,
-            fontSize: 13,
-          ),
-        ),
+        Text(subtitle, style: TextStyle(color: subtitleColor, fontSize: 13)),
       ],
     );
   }
@@ -630,10 +588,7 @@ class _ActionRow extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: subtitleColor,
-              ),
+              Icon(Icons.chevron_right_rounded, color: subtitleColor),
             ],
           ),
         ),

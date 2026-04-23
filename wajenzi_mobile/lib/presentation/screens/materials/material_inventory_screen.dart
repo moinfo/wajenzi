@@ -652,7 +652,12 @@ class _MaterialInventoryScreenState
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(
+                '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+              ),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -1726,7 +1731,10 @@ class _Drop<T> extends StatelessWidget {
         items: [
           DropdownMenuItem<T>(
             value: null,
-            child: const Text('All', overflow: TextOverflow.ellipsis),
+            child: Text(
+              _trLocale(context, en: 'All', sw: 'Zote', ar: 'الكل'),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           ...items.map(
             (item) => DropdownMenuItem<T>(
@@ -2095,7 +2103,12 @@ class _IssueMaterialsSheetState extends ConsumerState<_IssueMaterialsSheet> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(
+            '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) {
@@ -2281,7 +2294,12 @@ class _AdjustStockSheetState extends ConsumerState<_AdjustStockSheet> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(
+            '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) {
@@ -2377,24 +2395,72 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                           ? 'Aina ya Mwendendo'
                           : 'Movement Type',
                     ),
-                    items: const [
-                      DropdownMenuItem(value: '', child: Text('All Types')),
+                    items: [
+                      DropdownMenuItem(
+                        value: '',
+                        child: Text(
+                          _trLocale(
+                            context,
+                            en: 'All Types',
+                            sw: 'Aina Zote',
+                            ar: 'كل الأنواع',
+                          ),
+                        ),
+                      ),
                       DropdownMenuItem(
                         value: 'received',
-                        child: Text('Received'),
+                        child: Text(
+                          _trLocale(
+                            context,
+                            en: 'Received',
+                            sw: 'Imepokelewa',
+                            ar: 'تم الاستلام',
+                          ),
+                        ),
                       ),
-                      DropdownMenuItem(value: 'issued', child: Text('Issued')),
+                      DropdownMenuItem(
+                        value: 'issued',
+                        child: Text(
+                          _trLocale(
+                            context,
+                            en: 'Issued',
+                            sw: 'Imetolewa',
+                            ar: 'تم الصرف',
+                          ),
+                        ),
+                      ),
                       DropdownMenuItem(
                         value: 'adjustment',
-                        child: Text('Adjustment'),
+                        child: Text(
+                          _trLocale(
+                            context,
+                            en: 'Adjustment',
+                            sw: 'Marekebisho',
+                            ar: 'تسوية',
+                          ),
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'returned',
-                        child: Text('Returned'),
+                        child: Text(
+                          _trLocale(
+                            context,
+                            en: 'Returned',
+                            sw: 'Imerejeshwa',
+                            ar: 'تم الإرجاع',
+                          ),
+                        ),
                       ),
                       DropdownMenuItem(
                         value: 'transfer',
-                        child: Text('Transfer'),
+                        child: Text(
+                          _trLocale(
+                            context,
+                            en: 'Transfer',
+                            sw: 'Uhamisho',
+                            ar: 'تحويل',
+                          ),
+                        ),
                       ),
                     ],
                     onChanged: (value) {
@@ -2624,7 +2690,12 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(
+            '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) {
@@ -2974,7 +3045,12 @@ class _InventoryFormSheetState extends ConsumerState<_InventoryFormSheet> {
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(
+              '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -3029,4 +3105,16 @@ class _ErrorView extends StatelessWidget {
       ],
     );
   }
+}
+
+String _trLocale(
+  BuildContext context, {
+  required String en,
+  required String sw,
+  required String ar,
+}) {
+  final code = Localizations.localeOf(context).languageCode.toLowerCase();
+  if (code == 'ar') return ar;
+  if (code == 'sw') return sw;
+  return en;
 }

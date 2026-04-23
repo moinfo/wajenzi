@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/config/theme_config.dart';
 import '../../../core/network/api_client.dart';
+import '../../providers/settings_provider.dart';
 import '../../widgets/common/loading_widget.dart';
 import '../vat/vat_shared.dart';
 
@@ -38,11 +39,13 @@ class ApprovalLevelsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final asyncData = ref.watch(_approvalLevelsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Approval Levels'),
+        title: Text(tr('Approval Levels', 'مستويات الموافقة')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -53,7 +56,12 @@ class ApprovalLevelsScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(_approvalLevelsProvider),
         child: asyncData.when(
-          loading: () => const LoadingWidget(message: 'Loading approval levels...'),
+          loading: () => LoadingWidget(
+            message: tr(
+              'Loading approval levels...',
+              'جاري تحميل مستويات الموافقة...',
+            ),
+          ),
           error: (error, _) => ListView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
@@ -61,10 +69,16 @@ class ApprovalLevelsScreen extends ConsumerWidget {
               const SizedBox(height: 48),
               const Icon(Icons.error_outline, size: 56, color: AppColors.error),
               const SizedBox(height: 12),
-              const Text(
-                'Failed to load approval levels',
+              Text(
+                tr(
+                  'Failed to load approval levels',
+                  'تعذر تحميل مستويات الموافقة',
+                ),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 8),
               Text(vatErrorMessage(error), textAlign: TextAlign.center),
@@ -90,21 +104,32 @@ class ApprovalLevelsScreen extends ConsumerWidget {
                           color: AppColors.primary,
                         ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'No approval levels found',
+                        Text(
+                          tr(
+                            'No approval levels found',
+                            'لا توجد مستويات موافقة',
+                          ),
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Create an approval level to manage this setting from mobile.',
+                        Text(
+                          tr(
+                            'Create an approval level to manage this setting from mobile.',
+                            'أنشئ مستوى موافقة لإدارة هذا الإعداد من التطبيق.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton.icon(
                           onPressed: () => _openForm(context, ref),
                           icon: const Icon(Icons.add),
-                          label: const Text('New Approval Level'),
+                          label: Text(
+                            tr('New Approval Level', 'مستوى موافقة جديد'),
+                          ),
                         ),
                       ],
                     ),
@@ -148,16 +173,24 @@ class ApprovalLevelsScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Approval Levels',
+                            Text(
+                              tr('Approval Levels', 'مستويات الموافقة'),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Showing ${items.length} records',
-                              style: const TextStyle(color: AppColors.textSecondary),
+                              tr(
+                                'Showing ${items.length} records',
+                                'عرض ${items.length} سجلاً',
+                              ),
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -171,7 +204,10 @@ class ApprovalLevelsScreen extends ConsumerWidget {
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       leading: Container(
                         width: 38,
                         height: 38,
@@ -189,7 +225,10 @@ class ApprovalLevelsScreen extends ConsumerWidget {
                         item['approval_document_type_name']?.toString() ?? '-',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 6),
@@ -198,17 +237,22 @@ class ApprovalLevelsScreen extends ConsumerWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              item['user_group_name']?.toString() ?? 'No group',
+                              item['user_group_name']?.toString() ??
+                                  tr('No group', 'لا توجد مجموعة'),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Action: ${item['action']?.toString() ?? '-'}',
+                              tr(
+                                'Action: ${item['action']?.toString() ?? '-'}',
+                                'الإجراء: ${item['action']?.toString() ?? '-'}',
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            if ((item['description']?.toString() ?? '').isNotEmpty)
+                            if ((item['description']?.toString() ?? '')
+                                .isNotEmpty)
                               Padding(
                                 padding: const EdgeInsets.only(top: 4),
                                 child: Text(
@@ -228,9 +272,15 @@ class ApprovalLevelsScreen extends ConsumerWidget {
                             _deleteItem(context, ref, item);
                           }
                         },
-                        itemBuilder: (_) => const [
-                          PopupMenuItem(value: 'edit', child: Text('Edit')),
-                          PopupMenuItem(value: 'delete', child: Text('Delete')),
+                        itemBuilder: (_) => [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(tr('Edit', 'تعديل')),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(tr('Delete', 'حذف')),
+                          ),
                         ],
                       ),
                     ),
@@ -245,7 +295,7 @@ class ApprovalLevelsScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openForm(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('New Approval Level'),
+        label: Text(tr('New Approval Level', 'مستوى موافقة جديد')),
       ),
     );
   }
@@ -278,21 +328,26 @@ class ApprovalLevelsScreen extends ConsumerWidget {
     WidgetRef ref,
     Map<String, dynamic> item,
   ) async {
+    final isArabic = ref.read(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Approval Level'),
+        title: Text(tr('Delete Approval Level', 'حذف مستوى الموافقة')),
         content: Text(
-          'Delete approval level for ${item['approval_document_type_name'] ?? 'this document type'}?',
+          tr(
+            'Delete approval level for ${item['approval_document_type_name'] ?? 'this document type'}?',
+            'هل تريد حذف مستوى الموافقة لـ ${item['approval_document_type_name'] ?? 'هذا النوع من المستندات'}؟',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(tr('Cancel', 'إلغاء')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Delete'),
+            child: Text(tr('Delete', 'حذف')),
           ),
         ],
       ),
@@ -300,12 +355,19 @@ class ApprovalLevelsScreen extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      await ref.read(apiClientProvider).delete('/approval-levels/${item['id']}');
+      await ref
+          .read(apiClientProvider)
+          .delete('/approval-levels/${item['id']}');
       ref.invalidate(_approvalLevelsProvider);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Approval level deleted successfully'),
+        SnackBar(
+          content: Text(
+            tr(
+              'Approval level deleted successfully',
+              'تم حذف مستوى الموافقة بنجاح',
+            ),
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -332,7 +394,8 @@ class _ApprovalLevelFormSheet extends ConsumerStatefulWidget {
       _ApprovalLevelFormSheetState();
 }
 
-class _ApprovalLevelFormSheetState extends ConsumerState<_ApprovalLevelFormSheet> {
+class _ApprovalLevelFormSheetState
+    extends ConsumerState<_ApprovalLevelFormSheet> {
   final _formKey = GlobalKey<FormState>();
   int? _approvalDocumentTypeId;
   int? _userGroupId;
@@ -360,7 +423,9 @@ class _ApprovalLevelFormSheetState extends ConsumerState<_ApprovalLevelFormSheet
   @override
   void initState() {
     super.initState();
-    _approvalDocumentTypeId = _asInt(widget.item?['approval_document_types_id']);
+    _approvalDocumentTypeId = _asInt(
+      widget.item?['approval_document_types_id'],
+    );
     _userGroupId = _asInt(widget.item?['user_group_id']);
     _descriptionController = TextEditingController(
       text: widget.item?['description']?.toString() ?? '',
@@ -380,6 +445,8 @@ class _ApprovalLevelFormSheetState extends ConsumerState<_ApprovalLevelFormSheet
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = ref.watch(currentLanguageProvider) == AppLanguage.arabic;
+    String tr(String en, String ar) => isArabic ? ar : en;
     final documentTypes = _maps(widget.refs['approval_document_types']);
     final userGroups = _maps(widget.refs['user_groups']);
     final actions = _maps(widget.refs['actions']);
@@ -414,18 +481,31 @@ class _ApprovalLevelFormSheetState extends ConsumerState<_ApprovalLevelFormSheet
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  _isEdit ? 'Edit Approval Level' : 'Create New Approval Level',
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  _isEdit
+                      ? tr('Edit Approval Level', 'تعديل مستوى الموافقة')
+                      : tr(
+                          'Create New Approval Level',
+                          'إنشاء مستوى موافقة جديد',
+                        ),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: 18),
                 DropdownButtonFormField<int>(
-                  value: documentTypes.any(
-                          (item) => _asInt(item['id']) == _approvalDocumentTypeId)
+                  value:
+                      documentTypes.any(
+                        (item) => _asInt(item['id']) == _approvalDocumentTypeId,
+                      )
                       ? _approvalDocumentTypeId
                       : null,
-                  decoration: const InputDecoration(
-                    labelText: 'Approval Document Type',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr(
+                      'Approval Document Type',
+                      'نوع مستند الموافقة',
+                    ),
+                    border: const OutlineInputBorder(),
                   ),
                   items: documentTypes
                       .map(
@@ -437,17 +517,24 @@ class _ApprovalLevelFormSheetState extends ConsumerState<_ApprovalLevelFormSheet
                       .toList(),
                   onChanged: (value) =>
                       setState(() => _approvalDocumentTypeId = value),
-                  validator: (value) =>
-                      value == null ? 'Approval document type is required' : null,
+                  validator: (value) => value == null
+                      ? tr(
+                          'Approval document type is required',
+                          'نوع مستند الموافقة مطلوب',
+                        )
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
-                  value: userGroups.any((item) => _asInt(item['id']) == _userGroupId)
+                  value:
+                      userGroups.any(
+                        (item) => _asInt(item['id']) == _userGroupId,
+                      )
                       ? _userGroupId
                       : null,
-                  decoration: const InputDecoration(
-                    labelText: 'User Group',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('User Group', 'مجموعة المستخدمين'),
+                    border: const OutlineInputBorder(),
                   ),
                   items: userGroups
                       .map(
@@ -458,45 +545,52 @@ class _ApprovalLevelFormSheetState extends ConsumerState<_ApprovalLevelFormSheet
                       )
                       .toList(),
                   onChanged: (value) => setState(() => _userGroupId = value),
-                  validator: (value) =>
-                      value == null ? 'User group is required' : null,
+                  validator: (value) => value == null
+                      ? tr('User group is required', 'مجموعة المستخدمين مطلوبة')
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _descriptionController,
                   minLines: 3,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Description', 'الوصف'),
+                    border: const OutlineInputBorder(),
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _orderController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Order',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Order', 'الترتيب'),
+                    border: const OutlineInputBorder(),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Order is required';
+                      return tr('Order is required', 'الترتيب مطلوب');
                     }
                     if (int.tryParse(value.trim()) == null) {
-                      return 'Order must be a number';
+                      return tr(
+                        'Order must be a number',
+                        'يجب أن يكون الترتيب رقماً',
+                      );
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: actions.any((item) => item['value']?.toString() == _action)
+                  value:
+                      actions.any(
+                        (item) => item['value']?.toString() == _action,
+                      )
                       ? _action
                       : null,
-                  decoration: const InputDecoration(
-                    labelText: 'Action',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: tr('Action', 'الإجراء'),
+                    border: const OutlineInputBorder(),
                   ),
                   items: actions
                       .map(
@@ -507,8 +601,9 @@ class _ApprovalLevelFormSheetState extends ConsumerState<_ApprovalLevelFormSheet
                       )
                       .toList(),
                   onChanged: (value) => setState(() => _action = value),
-                  validator: (value) =>
-                      (value == null || value.isEmpty) ? 'Action is required' : null,
+                  validator: (value) => (value == null || value.isEmpty)
+                      ? tr('Action is required', 'الإجراء مطلوب')
+                      : null,
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -517,8 +612,16 @@ class _ApprovalLevelFormSheetState extends ConsumerState<_ApprovalLevelFormSheet
                     onPressed: _submitting ? null : _submit,
                     child: Text(
                       _submitting
-                          ? 'Saving...'
-                          : (_isEdit ? 'Update Approval Level' : 'Save Approval Level'),
+                          ? tr('Saving...', 'جاري الحفظ...')
+                          : (_isEdit
+                                ? tr(
+                                    'Update Approval Level',
+                                    'تحديث مستوى الموافقة',
+                                  )
+                                : tr(
+                                    'Save Approval Level',
+                                    'حفظ مستوى الموافقة',
+                                  )),
                     ),
                   ),
                 ),

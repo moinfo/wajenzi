@@ -42,7 +42,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final resetUri = Uri.parse(AppConfig.portalUrl('/password/reset'));
     final opened = await launchUrl(
       resetUri,
-      mode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+      mode: kIsWeb
+          ? LaunchMode.platformDefault
+          : LaunchMode.externalApplication,
     );
 
     if (!opened && mounted) {
@@ -128,10 +130,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    final success = await ref.read(authStateProvider.notifier).login(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+    final success = await ref
+        .read(authStateProvider.notifier)
+        .login(_emailController.text.trim(), _passwordController.text);
 
     if (!mounted) return;
 
@@ -153,15 +154,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     // Dark mode colors
     final gradientColors = isDark
-        ? [const Color(0xFF0D1B2A), const Color(0xFF1B263B), const Color(0xFF415A77)]
-        : [const Color(0xFF3498DB), const Color(0xFF1ABC9C), const Color(0xFF2ECC71)];
+        ? [
+            const Color(0xFF0D1B2A),
+            const Color(0xFF1B263B),
+            const Color(0xFF415A77),
+          ]
+        : [
+            const Color(0xFF3498DB),
+            const Color(0xFF1ABC9C),
+            const Color(0xFF2ECC71),
+          ];
 
-    final cardColor = isDark ? const Color(0xFF1B263B).withValues(alpha: 0.95) : const Color(0xFFE8F8F5);  // Light mint card
+    final cardColor = isDark
+        ? const Color(0xFF1B263B).withValues(alpha: 0.95)
+        : const Color(0xFFE8F8F5); // Light mint card
     final textColor = isDark ? Colors.white : const Color(0xFF2C3E50);
-    final subtextColor = isDark ? const Color(0xFF778DA9) : Colors.grey.shade500;
-    final inputBgColor = isDark ? const Color(0xFF0D1B2A) : Colors.white;  // White inputs on tinted card
-    final inputBorderColor = isDark ? const Color(0xFF415A77) : const Color(0xFF1ABC9C).withValues(alpha: 0.4);
-    final inputHintColor = isDark ? const Color(0xFF778DA9) : Colors.grey.shade400;
+    final subtextColor = isDark
+        ? const Color(0xFF778DA9)
+        : Colors.grey.shade500;
+    final inputBgColor = isDark
+        ? const Color(0xFF0D1B2A)
+        : Colors.white; // White inputs on tinted card
+    final inputBorderColor = isDark
+        ? const Color(0xFF415A77)
+        : const Color(0xFF1ABC9C).withValues(alpha: 0.4);
+    final inputHintColor = isDark
+        ? const Color(0xFF778DA9)
+        : Colors.grey.shade400;
 
     return Scaffold(
       body: Container(
@@ -223,7 +242,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   height: 4 + random.nextDouble() * 8,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.1 + random.nextDouble() * 0.2),
+                    color: Colors.white.withValues(
+                      alpha: 0.1 + random.nextDouble() * 0.2,
+                    ),
                   ),
                 ),
               );
@@ -262,48 +283,91 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               const SizedBox(width: 12),
                               // Dark mode toggle
                               GestureDetector(
-                                onTap: () => ref.read(settingsProvider.notifier).toggleDarkMode(),
+                                onTap: () => ref
+                                    .read(settingsProvider.notifier)
+                                    .toggleDarkMode(),
                                 child: Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                     color: isDark
-                                        ? const Color(0xFFFFC107).withValues(alpha: 0.2)
+                                        ? const Color(
+                                            0xFFFFC107,
+                                          ).withValues(alpha: 0.2)
                                         : Colors.white.withValues(alpha: 0.15),
                                     borderRadius: BorderRadius.circular(12),
                                     border: isDark
-                                        ? Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.4))
+                                        ? Border.all(
+                                            color: const Color(
+                                              0xFFFFC107,
+                                            ).withValues(alpha: 0.4),
+                                          )
                                         : null,
                                   ),
                                   child: Icon(
-                                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                                    color: isDark ? const Color(0xFFFFC107) : Colors.white,
+                                    isDark
+                                        ? Icons.light_mode_rounded
+                                        : Icons.dark_mode_rounded,
+                                    color: isDark
+                                        ? const Color(0xFFFFC107)
+                                        : Colors.white,
                                     size: 22,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          // Language toggle
-                          GestureDetector(
-                            onTap: () => ref.read(settingsProvider.notifier).toggleLanguage(),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.15),
+                          // Language dropdown
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: PopupMenuButton<AppLanguage>(
+                              initialValue: language,
+                              tooltip: _tr(
+                                language,
+                                en: 'Select language',
+                                sw: 'Chagua lugha',
+                                fr: 'Choisir la langue',
+                                ar: 'اختر اللغة',
+                              ),
+                              color: isDark
+                                  ? const Color(0xFF1B263B)
+                                  : Colors.white,
+                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
+                              onSelected: (value) => ref
+                                  .read(settingsProvider.notifier)
+                                  .setLanguage(value),
+                              itemBuilder: (context) => AppLanguage.values
+                                  .map(
+                                    (value) => PopupMenuItem<AppLanguage>(
+                                      value: value,
+                                      child: Text(
+                                        '${value.code} - ${switch (value) {
+                                          AppLanguage.english => 'English',
+                                          AppLanguage.swahili => 'Kiswahili',
+                                          AppLanguage.french => 'Francais',
+                                          AppLanguage.arabic => 'Arabic',
+                                        }}',
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    switch (language) {
-                                      AppLanguage.swahili => '🇹🇿',
-                                      AppLanguage.french => '🇫🇷',
-                                      AppLanguage.arabic => '🌍',
-                                      AppLanguage.english => '🇬🇧',
-                                    },
-                                    style: const TextStyle(fontSize: 20),
-                                  ),
+                                  Text(switch (language) {
+                                    AppLanguage.swahili => '🇹🇿',
+                                    AppLanguage.french => '🇫🇷',
+                                    AppLanguage.arabic => '🌍',
+                                    AppLanguage.english => '🇬🇧',
+                                  }, style: const TextStyle(fontSize: 20)),
                                   const SizedBox(width: 6),
                                   Text(
                                     language.code,
@@ -312,6 +376,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
                                     ),
+                                  ),
+                                  const Icon(
+                                    Icons.arrow_drop_down_rounded,
+                                    color: Colors.white,
+                                    size: 18,
                                   ),
                                 ],
                               ),
@@ -328,8 +397,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           boxShadow: [
                             BoxShadow(
                               color: isDark
-                                  ? const Color(0xFF4CC9F0).withValues(alpha: 0.5)
-                                  : const Color(0xFF1ABC9C).withValues(alpha: 0.4),
+                                  ? const Color(
+                                      0xFF4CC9F0,
+                                    ).withValues(alpha: 0.5)
+                                  : const Color(
+                                      0xFF1ABC9C,
+                                    ).withValues(alpha: 0.4),
                               blurRadius: isDark ? 40 : 30,
                               spreadRadius: isDark ? 8 : 5,
                             ),
@@ -396,14 +469,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           borderRadius: BorderRadius.circular(24),
                           border: isDark
                               ? Border.all(
-                                  color: const Color(0xFF415A77).withValues(alpha: 0.5),
+                                  color: const Color(
+                                    0xFF415A77,
+                                  ).withValues(alpha: 0.5),
                                   width: 1,
                                 )
                               : null,
                           boxShadow: [
                             BoxShadow(
                               color: isDark
-                                  ? const Color(0xFF4CC9F0).withValues(alpha: 0.1)
+                                  ? const Color(
+                                      0xFF4CC9F0,
+                                    ).withValues(alpha: 0.1)
                                   : Colors.black.withValues(alpha: 0.15),
                               blurRadius: 40,
                               offset: const Offset(0, 20),
@@ -439,16 +516,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
-                                    color: AppColors.error.withValues(alpha: 0.1),
+                                    color: AppColors.error.withValues(
+                                      alpha: 0.1,
+                                    ),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: AppColors.error.withValues(alpha: 0.3),
+                                      color: AppColors.error.withValues(
+                                        alpha: 0.3,
+                                      ),
                                     ),
                                   ),
                                   child: Row(
                                     children: [
-                                      const Icon(Icons.error_outline,
-                                          color: AppColors.error, size: 20),
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: AppColors.error,
+                                        size: 20,
+                                      ),
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Text(
@@ -461,10 +545,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       ),
                                       GestureDetector(
                                         onTap: () {
-                                          ref.read(authStateProvider.notifier).clearError();
+                                          ref
+                                              .read(authStateProvider.notifier)
+                                              .clearError();
                                         },
-                                        child: const Icon(Icons.close,
-                                            size: 18, color: AppColors.error),
+                                        child: const Icon(
+                                          Icons.close,
+                                          size: 18,
+                                          color: AppColors.error,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -509,7 +598,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 hintColor: inputHintColor,
                                 isDarkMode: isDark,
                                 onTogglePassword: () {
-                                  setState(() => _obscurePassword = !_obscurePassword);
+                                  setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  );
                                 },
                                 onSubmit: (_) => _handleLogin(),
                                 validator: (value) {
@@ -543,7 +634,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   style: TextButton.styleFrom(
                                     padding: EdgeInsets.zero,
                                     minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
                                   ),
                                   child: Text(
                                     t['forgotPassword']!,
@@ -577,15 +669,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                 ],
                                         ),
                                   color: _isLoading
-                                      ? (isDark ? const Color(0xFF415A77) : Colors.grey.shade300)
+                                      ? (isDark
+                                            ? const Color(0xFF415A77)
+                                            : Colors.grey.shade300)
                                       : null,
                                   boxShadow: _isLoading
                                       ? null
                                       : [
                                           BoxShadow(
                                             color: isDark
-                                                ? const Color(0xFF4CC9F0).withValues(alpha: 0.4)
-                                                : const Color(0xFF1ABC9C).withValues(alpha: 0.4),
+                                                ? const Color(
+                                                    0xFF4CC9F0,
+                                                  ).withValues(alpha: 0.4)
+                                                : const Color(
+                                                    0xFF1ABC9C,
+                                                  ).withValues(alpha: 0.4),
                                             blurRadius: 20,
                                             offset: const Offset(0, 10),
                                           ),
@@ -610,7 +708,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           ),
                                         )
                                       : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
                                             Text(
                                               t['signIn']!,
@@ -666,7 +765,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: MediaQuery.of(context).padding.bottom + 30),
+                      SizedBox(
+                        height: MediaQuery.of(context).padding.bottom + 30,
+                      ),
                     ],
                   ),
                 ),
@@ -716,7 +817,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
-        textInputAction: isPassword ? TextInputAction.done : TextInputAction.next,
+        textInputAction: isPassword
+            ? TextInputAction.done
+            : TextInputAction.next,
         onFieldSubmitted: onSubmit,
         style: TextStyle(
           fontSize: 15,
@@ -732,14 +835,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             margin: const EdgeInsets.only(left: 4),
             child: Icon(
               icon,
-              color: isDarkMode ? const Color(0xFF4CC9F0) : const Color(0xFF1ABC9C),
+              color: isDarkMode
+                  ? const Color(0xFF4CC9F0)
+                  : const Color(0xFF1ABC9C),
               size: 22,
             ),
           ),
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(
-                    obscureText ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                    obscureText
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
                     color: hintColor ?? Colors.grey.shade400,
                     size: 22,
                   ),
@@ -747,7 +854,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 18,
+          ),
         ),
         validator: validator,
       ),

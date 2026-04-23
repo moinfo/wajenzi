@@ -19,10 +19,7 @@ Future<Response<dynamic>> _getWithFallback(
   Map<String, dynamic>? queryParameters,
 }) async {
   try {
-    return await api.get(
-      primaryPath,
-      queryParameters: queryParameters,
-    );
+    return await api.get(primaryPath, queryParameters: queryParameters);
   } on DioException catch (e) {
     final shouldRetry =
         e.response?.statusCode == null &&
@@ -33,17 +30,11 @@ Future<Response<dynamic>> _getWithFallback(
 
     if (shouldRetry) {
       await Future.delayed(const Duration(milliseconds: 250));
-      return api.get(
-        primaryPath,
-        queryParameters: queryParameters,
-      );
+      return api.get(primaryPath, queryParameters: queryParameters);
     }
 
     if (e.response?.statusCode == 404 && fallbackPath != null) {
-      return api.get(
-        fallbackPath,
-        queryParameters: queryParameters,
-      );
+      return api.get(fallbackPath, queryParameters: queryParameters);
     }
     rethrow;
   }
@@ -72,29 +63,22 @@ Future<Response<dynamic>> _uploadWithFallback(
   Options? options,
 }) async {
   try {
-    return await api.uploadFile(
-      primaryPath,
-      data: data,
-      options: options,
-    );
+    return await api.uploadFile(primaryPath, data: data, options: options);
   } on DioException catch (e) {
     if (e.response?.statusCode == 404 && fallbackPath != null) {
-      return api.uploadFile(
-        fallbackPath,
-        data: data,
-        options: options,
-      );
+      return api.uploadFile(fallbackPath, data: data, options: options);
     }
     rethrow;
   }
 }
 
-final _purchasesStartProvider =
-    StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
-final _purchasesEndProvider =
-    StateProvider.autoDispose<DateTime>((ref) => DateTime.now());
-final _purchasesSearchProvider =
-    StateProvider.autoDispose<String>((ref) => '');
+final _purchasesStartProvider = StateProvider.autoDispose<DateTime>(
+  (ref) => DateTime.now(),
+);
+final _purchasesEndProvider = StateProvider.autoDispose<DateTime>(
+  (ref) => DateTime.now(),
+);
+final _purchasesSearchProvider = StateProvider.autoDispose<String>((ref) => '');
 
 final _purchasesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
   ref,
@@ -120,8 +104,8 @@ final _purchasesProvider = FutureProvider.autoDispose<Map<String, dynamic>>((
     if (responseData is Map) {
       final dynamic dataField = responseData['data'];
       if (dataField is Map) {
-        items = (dataField['purchases'] as List?)
-                ?.cast<Map<String, dynamic>>() ??
+        items =
+            (dataField['purchases'] as List?)?.cast<Map<String, dynamic>>() ??
             [];
         meta = (dataField['totals'] as Map<String, dynamic>?) ?? {};
       } else if (dataField is List) {
@@ -243,11 +227,11 @@ class PurchasesScreen extends ConsumerWidget {
                   Text(
                     purchases.isEmpty
                         ? (isSwahili
-                            ? 'Hakuna manunuzi yoyote'
-                            : 'No purchases found')
+                              ? 'Hakuna manunuzi yoyote'
+                              : 'No purchases found')
                         : (isSwahili
-                            ? 'Hakuna matokeo yanayolingana'
-                            : 'No purchases match your search'),
+                              ? 'Hakuna matokeo yanayolingana'
+                              : 'No purchases match your search'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: AppColors.textSecondary),
                   ),
@@ -282,10 +266,7 @@ class PurchasesScreen extends ConsumerWidget {
                 if (index == 1) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _PurchasesTotalsCard(
-                      meta: meta,
-                      isDark: isDarkMode,
-                    ),
+                    child: _PurchasesTotalsCard(meta: meta, isDark: isDarkMode),
                   );
                 }
                 final purchaseIndex = index - 2;
@@ -383,7 +364,9 @@ class PurchasesScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(
+              '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -490,8 +473,7 @@ class PurchasesScreen extends ConsumerWidget {
                     _DetailRow(
                       label: 'Supplier',
                       value:
-                          (detail['supplier']
-                                  as Map<String, dynamic>?)?['name']
+                          (detail['supplier'] as Map<String, dynamic>?)?['name']
                               as String? ??
                           '-',
                       isDarkMode: isDarkMode,
@@ -527,9 +509,7 @@ class PurchasesScreen extends ConsumerWidget {
                     ),
                     _DetailRow(
                       label: 'Amount VAT EXC',
-                      value: _formatMoney(
-                        _toDouble(detail['amount_vat_exc']),
-                      ),
+                      value: _formatMoney(_toDouble(detail['amount_vat_exc'])),
                       isDarkMode: isDarkMode,
                     ),
                     _DetailRow(
@@ -558,7 +538,14 @@ class PurchasesScreen extends ConsumerWidget {
                             isSwahili: isSwahili,
                           ),
                           icon: const Icon(Icons.attach_file_rounded),
-                          label: const Text('Open Attachment'),
+                          label: Text(
+                            _trLocale(
+                              context,
+                              en: 'Open Attachment',
+                              sw: 'Fungua Kiambatisho',
+                              ar: 'فتح المرفق',
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -604,7 +591,8 @@ class PurchasesScreen extends ConsumerWidget {
                     ),
                     _FlowStatusCard(
                       statusLabel:
-                          approvalFlow['status_label'] as String? ?? 'In Progress',
+                          approvalFlow['status_label'] as String? ??
+                          'In Progress',
                       isDarkMode: isDarkMode,
                     ),
                     const SizedBox(height: 12),
@@ -639,7 +627,8 @@ class PurchasesScreen extends ConsumerWidget {
                     ] else ...[
                       const SizedBox(height: 12),
                       Text(
-                        approvalFlow['status_label'] as String? ?? 'Not Submitted',
+                        approvalFlow['status_label'] as String? ??
+                            'Not Submitted',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -708,10 +697,7 @@ class _PurchasesFiltersBar extends ConsumerWidget {
   final bool isDark;
   final bool isSwahili;
 
-  const _PurchasesFiltersBar({
-    required this.isDark,
-    required this.isSwahili,
-  });
+  const _PurchasesFiltersBar({required this.isDark, required this.isSwahili});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -767,10 +753,7 @@ class _PurchasesTotalsCard extends StatelessWidget {
   final Map<String, dynamic> meta;
   final bool isDark;
 
-  const _PurchasesTotalsCard({
-    required this.meta,
-    required this.isDark,
-  });
+  const _PurchasesTotalsCard({required this.meta, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -843,9 +826,13 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
     _taxInvoiceController = TextEditingController(
       text: widget.purchase?['tax_invoice']?.toString() ?? '',
     );
-    _selectedSupplierId = _normalizeNullableInt(widget.purchase?['supplier_id']);
+    _selectedSupplierId = _normalizeNullableInt(
+      widget.purchase?['supplier_id'],
+    );
     _selectedItemId = _normalizeNullableInt(widget.purchase?['item_id']);
-    _selectedPurchaseType = _normalizeNullableInt(widget.purchase?['purchase_type']);
+    _selectedPurchaseType = _normalizeNullableInt(
+      widget.purchase?['purchase_type'],
+    );
     _isExpense = widget.purchase?['is_expense'] as String? ?? 'NO';
     if (widget.purchase?['date'] != null) {
       try {
@@ -941,11 +928,11 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                             child: Text(
                               widget.isNew
                                   ? (isSwahili
-                                      ? 'Ununuzi Mpya'
-                                      : 'New Purchase')
+                                        ? 'Ununuzi Mpya'
+                                        : 'New Purchase')
                                   : (isSwahili
-                                      ? 'Hariri Ununuzi'
-                                      : 'Edit Purchase'),
+                                        ? 'Hariri Ununuzi'
+                                        : 'Edit Purchase'),
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 20,
@@ -965,404 +952,458 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                Text(
-                  'Is Expenses?',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _isExpense,
-                      isExpanded: true,
-                      dropdownColor: isDarkMode
-                          ? const Color(0xFF2A2A3E)
-                          : Colors.white,
-                      items: const [
-                        DropdownMenuItem(value: 'NO', child: Text('NO')),
-                        DropdownMenuItem(value: 'YES', child: Text('YES')),
-                      ],
-                      onChanged: (v) {
-                        if (v != null) {
-                          setState(() => _isExpense = v);
-                        }
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Supplier',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: suppliersAsync.when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: CircularProgressIndicator(),
-                    ),
-                    error: (_, __) => Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(isSwahili ? 'Imeshindikana' : 'Failed'),
-                    ),
-                    data: (suppliers) => DropdownButtonHideUnderline(
-                      child: DropdownButton<int?>(
-                        value: _selectedSupplierId,
-                        isExpanded: true,
-                        hint: const Text(''),
-                        dropdownColor: isDarkMode
-                            ? const Color(0xFF2A2A3E)
-                            : Colors.white,
-                        items: (suppliers as List)
-                            .map(
-                              (s) => DropdownMenuItem(
-                                value: s['id'] as int,
-                                child: Text(s['name'] as String? ?? ''),
+                      Text(
+                        'Is Expenses?',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A3E)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _isExpense,
+                            isExpanded: true,
+                            dropdownColor: isDarkMode
+                                ? const Color(0xFF2A2A3E)
+                                : Colors.white,
+                            items: [
+                              DropdownMenuItem(
+                                value: 'NO',
+                                child: Text(
+                                  _trLocale(
+                                    context,
+                                    en: 'NO',
+                                    sw: 'HAPANA',
+                                    ar: 'لا',
+                                  ),
+                                ),
                               ),
-                            )
-                            .toList(),
-                        onChanged: (v) =>
-                            setState(() => _selectedSupplierId = v),
+                              DropdownMenuItem(
+                                value: 'YES',
+                                child: Text(
+                                  _trLocale(
+                                    context,
+                                    en: 'YES',
+                                    sw: 'NDIYO',
+                                    ar: 'نعم',
+                                  ),
+                                ),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() => _isExpense = v);
+                              }
+                            },
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Item',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: referenceAsync.when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: CircularProgressIndicator(),
-                    ),
-                    error: (_, __) => const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Failed'),
-                    ),
-                    data: (reference) {
-                      final items =
-                          (reference['items'] as List?)?.cast<dynamic>() ?? [];
-                      return DropdownButtonHideUnderline(
-                        child: DropdownButton<int?>(
-                          value: _selectedItemId,
-                          isExpanded: true,
-                          hint: const Text(''),
-                          dropdownColor: isDarkMode
-                              ? const Color(0xFF2A2A3E)
-                              : Colors.white,
-                          items: items
-                              .map(
-                                (item) => DropdownMenuItem<int?>(
-                                  value: item['id'] as int?,
-                                  child: Text(item['name'] as String? ?? ''),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) => setState(() => _selectedItemId = v),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Purchase Type',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: referenceAsync.when(
-                    loading: () => const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: CircularProgressIndicator(),
-                    ),
-                    error: (_, __) => const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Text('Failed'),
-                    ),
-                    data: (reference) {
-                      final purchaseTypes = (reference['purchase_types'] as List?)
-                              ?.cast<dynamic>() ??
-                          [];
-                      return DropdownButtonHideUnderline(
-                        child: DropdownButton<int?>(
-                          value: _selectedPurchaseType,
-                          isExpanded: true,
-                          hint: const Text(''),
-                          dropdownColor: isDarkMode
-                              ? const Color(0xFF2A2A3E)
-                              : Colors.white,
-                          items: purchaseTypes
-                              .map(
-                                (type) => DropdownMenuItem<int?>(
-                                  value: type['id'] as int?,
-                                  child: Text(type['name'] as String? ?? ''),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: (v) =>
-                              setState(() => _selectedPurchaseType = v),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Total Amount',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _totalAmountController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: '0.00',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                  validator: (v) => (v == null || v.isEmpty)
-                      ? (isSwahili
-                            ? 'Kiasi kinahitajika'
-                            : 'Amount is required')
-                      : null,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Tax Invoice',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _taxInvoiceController,
-                  decoration: InputDecoration(
-                    hintText: 'Tax Invoice',
-                    filled: true,
-                    fillColor: isDarkMode
-                        ? const Color(0xFF2A2A3E)
-                        : Colors.grey[100],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Invoice Date',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _invoiceDate ?? _selectedDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      setState(() => _invoiceDate = picked);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? const Color(0xFF2A2A3E)
-                          : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
+                      const SizedBox(height: 16),
+                      Text(
+                        'Supplier',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                           color: isDarkMode
-                              ? Colors.white54
+                              ? Colors.white70
                               : AppColors.textSecondary,
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          DateFormat('dd MMM yyyy').format(
-                            _invoiceDate ?? _selectedDate,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A3E)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: suppliersAsync.when(
+                          loading: () => const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
                           ),
-                          style: TextStyle(
-                            color: isDarkMode
-                                ? Colors.white
-                                : AppColors.textPrimary,
+                          error: (_, __) => Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              _trLocale(
+                                context,
+                                en: 'Failed',
+                                sw: 'Imeshindikana',
+                                ar: 'فشل',
+                              ),
+                            ),
+                          ),
+                          data: (suppliers) => DropdownButtonHideUnderline(
+                            child: DropdownButton<int?>(
+                              value: _selectedSupplierId,
+                              isExpanded: true,
+                              hint: const Text(''),
+                              dropdownColor: isDarkMode
+                                  ? const Color(0xFF2A2A3E)
+                                  : Colors.white,
+                              items: (suppliers as List)
+                                  .map(
+                                    (s) => DropdownMenuItem(
+                                      value: s['id'] as int,
+                                      child: Text(s['name'] as String? ?? ''),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) =>
+                                  setState(() => _selectedSupplierId = v),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Date',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode
-                        ? Colors.white70
-                        : AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      setState(() => _selectedDate = picked);
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDarkMode
-                          ? const Color(0xFF2A2A3E)
-                          : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Item',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                           color: isDarkMode
-                              ? Colors.white54
+                              ? Colors.white70
                               : AppColors.textSecondary,
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          DateFormat('dd MMM yyyy').format(_selectedDate),
-                          style: TextStyle(
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A3E)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: referenceAsync.when(
+                          loading: () => const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          ),
+                          error: (_, __) => Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text(
+                              _trLocale(
+                                context,
+                                en: 'Failed',
+                                sw: 'Imeshindikana',
+                                ar: 'فشل',
+                              ),
+                            ),
+                          ),
+                          data: (reference) {
+                            final items =
+                                (reference['items'] as List?)
+                                    ?.cast<dynamic>() ??
+                                [];
+                            return DropdownButtonHideUnderline(
+                              child: DropdownButton<int?>(
+                                value: _selectedItemId,
+                                isExpanded: true,
+                                hint: const Text(''),
+                                dropdownColor: isDarkMode
+                                    ? const Color(0xFF2A2A3E)
+                                    : Colors.white,
+                                items: items
+                                    .map(
+                                      (item) => DropdownMenuItem<int?>(
+                                        value: item['id'] as int?,
+                                        child: Text(
+                                          item['name'] as String? ?? '',
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (v) =>
+                                    setState(() => _selectedItemId = v),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Purchase Type',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? const Color(0xFF2A2A3E)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: referenceAsync.when(
+                          loading: () => const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          ),
+                          error: (_, __) => Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Text(
+                              _trLocale(
+                                context,
+                                en: 'Failed',
+                                sw: 'Imeshindikana',
+                                ar: 'فشل',
+                              ),
+                            ),
+                          ),
+                          data: (reference) {
+                            final purchaseTypes =
+                                (reference['purchase_types'] as List?)
+                                    ?.cast<dynamic>() ??
+                                [];
+                            return DropdownButtonHideUnderline(
+                              child: DropdownButton<int?>(
+                                value: _selectedPurchaseType,
+                                isExpanded: true,
+                                hint: const Text(''),
+                                dropdownColor: isDarkMode
+                                    ? const Color(0xFF2A2A3E)
+                                    : Colors.white,
+                                items: purchaseTypes
+                                    .map(
+                                      (type) => DropdownMenuItem<int?>(
+                                        value: type['id'] as int?,
+                                        child: Text(
+                                          type['name'] as String? ?? '',
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (v) =>
+                                    setState(() => _selectedPurchaseType = v),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Total Amount',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _totalAmountController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          hintText: '0.00',
+                          filled: true,
+                          fillColor: isDarkMode
+                              ? const Color(0xFF2A2A3E)
+                              : Colors.grey[100],
+                        ),
+                        validator: (v) => (v == null || v.isEmpty)
+                            ? (isSwahili
+                                  ? 'Kiasi kinahitajika'
+                                  : 'Amount is required')
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Tax Invoice',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _taxInvoiceController,
+                        decoration: InputDecoration(
+                          hintText: 'Tax Invoice',
+                          filled: true,
+                          fillColor: isDarkMode
+                              ? const Color(0xFF2A2A3E)
+                              : Colors.grey[100],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Invoice Date',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _invoiceDate ?? _selectedDate,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
+                            ),
+                          );
+                          if (picked != null) {
+                            setState(() => _invoiceDate = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
                             color: isDarkMode
-                                ? Colors.white
-                                : AppColors.textPrimary,
+                                ? const Color(0xFF2A2A3E)
+                                : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                color: isDarkMode
+                                    ? Colors.white54
+                                    : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                DateFormat(
+                                  'dd MMM yyyy',
+                                ).format(_invoiceDate ?? _selectedDate),
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                VatFilePicker(
-                  file: _selectedFile,
-                  isDark: isDarkMode,
-                  isSwahili: isSwahili,
-                  onPicked: (file) => setState(() => _selectedFile = file),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _loading ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    child: _loading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                      const SizedBox(height: 16),
+                      Text(
+                        'Date',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _selectedDate,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 365),
                             ),
-                          )
-                        : Text(
-                            widget.isNew
-                                ? (isSwahili ? 'Hifadhi' : 'Save')
-                                : (isSwahili ? 'Sasisha' : 'Update'),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                          );
+                          if (picked != null) {
+                            setState(() => _selectedDate = picked);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDarkMode
+                                ? const Color(0xFF2A2A3E)
+                                : Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                color: isDarkMode
+                                    ? Colors.white54
+                                    : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                DateFormat('dd MMM yyyy').format(_selectedDate),
+                                style: TextStyle(
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      VatFilePicker(
+                        file: _selectedFile,
+                        isDark: isDarkMode,
+                        isSwahili: isSwahili,
+                        onPicked: (file) =>
+                            setState(() => _selectedFile = file),
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _loading ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          ),
-                ),
-                const SizedBox(height: 16),
+                          child: _loading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  widget.isNew
+                                      ? (isSwahili ? 'Hifadhi' : 'Save')
+                                      : (isSwahili ? 'Sasisha' : 'Update'),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -1392,7 +1433,9 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
     if (_selectedItemId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(ref.read(isSwahiliProvider) ? 'Chagua Item' : 'Select Item'),
+          content: Text(
+            ref.read(isSwahiliProvider) ? 'Chagua Item' : 'Select Item',
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -1464,7 +1507,9 @@ class _PurchaseFormSheetState extends ConsumerState<_PurchaseFormSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(
+              '${_trLocale(context, en: 'Error', sw: 'Hitilafu', ar: 'خطأ')}: $e',
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -1506,10 +1551,10 @@ class _PurchaseCard extends StatelessWidget {
     final hasAttachment = purchase['has_attachment'] == true;
     final supplierName =
         (purchase['supplier'] as Map<String, dynamic>?)?['name'] as String? ??
-            '-';
+        '-';
     final supplierVrn =
         (purchase['supplier'] as Map<String, dynamic>?)?['vrn'] as String? ??
-            '-';
+        '-';
 
     Color statusColor;
     switch (status.toUpperCase()) {
@@ -1786,7 +1831,8 @@ class _MetricChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: valueColor ??
+              color:
+                  valueColor ??
                   (isDarkMode ? Colors.white : AppColors.textPrimary),
             ),
           ),
@@ -1800,10 +1846,7 @@ class _OrderItemsTable extends StatelessWidget {
   final List<Map<String, dynamic>> items;
   final bool isDarkMode;
 
-  const _OrderItemsTable({
-    required this.items,
-    required this.isDarkMode,
-  });
+  const _OrderItemsTable({required this.items, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -1813,14 +1856,48 @@ class _OrderItemsTable extends StatelessWidget {
         headingRowColor: WidgetStatePropertyAll(
           isDarkMode ? Colors.white.withValues(alpha: 0.08) : Colors.grey[200],
         ),
-        columns: const [
+        columns: [
           DataColumn(label: Text('#')),
-          DataColumn(label: Text('Description')),
-          DataColumn(label: Text('BOQ Item')),
-          DataColumn(label: Text('Unit')),
-          DataColumn(label: Text('Qty')),
-          DataColumn(label: Text('Unit Price')),
-          DataColumn(label: Text('Total')),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Description', sw: 'Maelezo', ar: 'الوصف'),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(
+                context,
+                en: 'BOQ Item',
+                sw: 'Kipengee cha BOQ',
+                ar: 'عنصر BOQ',
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Unit', sw: 'Kipimo', ar: 'الوحدة'),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Qty', sw: 'Kiasi', ar: 'الكمية'),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(
+                context,
+                en: 'Unit Price',
+                sw: 'Bei ya Kipimo',
+                ar: 'سعر الوحدة',
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Total', sw: 'Jumla', ar: 'الإجمالي'),
+            ),
+          ),
         ],
         rows: items.asMap().entries.map((entry) {
           final item = entry.value;
@@ -1830,8 +1907,10 @@ class _OrderItemsTable extends StatelessWidget {
               DataCell(Text(item['description']?.toString() ?? '-')),
               DataCell(
                 Text(
-                  ((item['boq_item'] as Map<String, dynamic>?)?['description'] ??
-                          (item['boq_item'] as Map<String, dynamic>?)?['item_code'] ??
+                  ((item['boq_item']
+                              as Map<String, dynamic>?)?['description'] ??
+                          (item['boq_item']
+                              as Map<String, dynamic>?)?['item_code'] ??
                           '-')
                       .toString(),
                 ),
@@ -1864,10 +1943,7 @@ class _SectionTitle extends StatelessWidget {
   final String title;
   final bool isDarkMode;
 
-  const _SectionTitle({
-    required this.title,
-    required this.isDarkMode,
-  });
+  const _SectionTitle({required this.title, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -1889,10 +1965,7 @@ class _FlowStatusCard extends StatelessWidget {
   final String statusLabel;
   final bool isDarkMode;
 
-  const _FlowStatusCard({
-    required this.statusLabel,
-    required this.isDarkMode,
-  });
+  const _FlowStatusCard({required this.statusLabel, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -1921,10 +1994,7 @@ class _ApprovalFlowTable extends StatelessWidget {
   final List<Map<String, dynamic>> steps;
   final bool isDarkMode;
 
-  const _ApprovalFlowTable({
-    required this.steps,
-    required this.isDarkMode,
-  });
+  const _ApprovalFlowTable({required this.steps, required this.isDarkMode});
 
   @override
   Widget build(BuildContext context) {
@@ -1934,9 +2004,17 @@ class _ApprovalFlowTable extends StatelessWidget {
         headingRowColor: WidgetStatePropertyAll(
           isDarkMode ? Colors.white.withValues(alpha: 0.08) : Colors.grey[200],
         ),
-        columns: const [
-          DataColumn(label: Text('By:')),
-          DataColumn(label: Text('Date')),
+        columns: [
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'By:', sw: 'Na:', ar: 'بواسطة:'),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              _trLocale(context, en: 'Date', sw: 'Tarehe', ar: 'التاريخ'),
+            ),
+          ),
         ],
         rows: steps
             .map(
@@ -2007,7 +2085,8 @@ class _DetailLine extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: valueColor ??
+              color:
+                  valueColor ??
                   (isDarkMode ? Colors.white : AppColors.textPrimary),
             ),
           ),
@@ -2106,4 +2185,16 @@ class _ErrorView extends StatelessWidget {
       ],
     );
   }
+}
+
+String _trLocale(
+  BuildContext context, {
+  required String en,
+  required String sw,
+  required String ar,
+}) {
+  final code = Localizations.localeOf(context).languageCode.toLowerCase();
+  if (code == 'ar') return ar;
+  if (code == 'sw') return sw;
+  return en;
 }
