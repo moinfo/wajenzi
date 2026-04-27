@@ -1,5 +1,6 @@
 <?php
 $document_id = \App\Classes\Utility::getLastId('Sale')+1;
+$sale_date = old('date', !empty($object->date) ? $object->date : date('Y-m-d'));
 ?>
 <div class="block-content">
     <form method="post"  enctype="multipart/form-data"  autocomplete="off">
@@ -37,10 +38,14 @@ $document_id = \App\Classes\Utility::getLastId('Sale')+1;
                    value="{{ $object->turn_over ?? '' }}" placeholder="Total Turnover" required>
         </div>
         <div class="form-group">
-            <label for="example-nf-date">Date</label>
-            <input type="text" class="form-control datepicker"  id="input-date" name="date"
-                   value="{{ $object->date ?? date('Y-m-d') }}" required>
-            {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
+            <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                    <span class="input-group-text" id="basic-addon-sale-date">Date</span>
+                </div>
+                <input type="text" name="date" id="input-date"
+                       class="form-control datepicker-index-form datepicker"
+                       aria-describedby="basic-addon-sale-date" value="{{ $sale_date }}" required>
+            </div>
         </div>
         <div class="form-group">
             <label class="control-label" for="chooseFile">Choose file</label>
@@ -88,7 +93,7 @@ $document_id = \App\Classes\Utility::getLastId('Sale')+1;
 
 
     });
-    $("input").on("change", function () {
+    $("#input-date").on("change", function () {
         this.setAttribute(
             "data-date",
             moment(this.value, "YYYY-MM-DD")
@@ -97,7 +102,7 @@ $document_id = \App\Classes\Utility::getLastId('Sale')+1;
     }).trigger("change")
 </script>
 <script>
-    $('.datepicker').datepicker({
+    $('#input-date').datepicker({
         format: 'yyyy-mm-dd'
     });
 </script>

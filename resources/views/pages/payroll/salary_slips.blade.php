@@ -1,160 +1,495 @@
 @extends('layouts.backend')
 
-@section('content')
-    <?php
+@php
+    $staffList = collect($staffs)->sortBy('name')->values();
+    $defaultStaffId = optional($staffList->first())->id;
 
-    use Illuminate\Support\Facades\DB;
+    $this_year = (int) request()->input('year', date('Y'));
+    $this_month = (int) request()->input('month', date('m'));
+    $this_employee = (int) request()->input('staff_id', $defaultStaffId);
+    $staff_id = $this_employee;
 
-    $start_date = $_POST['start_date'] ?? date('Y-m-01');
-    $end_date = $_POST['end_date'] ?? date('Y-m-t');
+    $months = [
+        1 => 'January',
+        2 => 'February',
+        3 => 'March',
+        4 => 'April',
+        5 => 'May',
+        6 => 'June',
+        7 => 'July',
+        8 => 'August',
+        9 => 'September',
+        10 => 'October',
+        11 => 'November',
+        12 => 'December',
+    ];
 
-    ?>
-    <?php
-    ?>
+    $payrollYears = \App\Models\Payroll::query()
+        ->whereNotNull('year')
+        ->distinct()
+        ->pluck('year')
+        ->map(fn ($year) => (int) $year);
+
+    $yearOptions = collect(range((int) date('Y') - 4, (int) date('Y') + 1))
+        ->merge($payrollYears)
+        ->unique()
+        ->sortDesc()
+        ->values();
+
+    $payroll = \App\Models\Payroll::getThisPayrollApproved($this_month, $this_year);
+    $payroll_id = $payroll?->id;
+    $employee = $this_employee ? \App\Models\User::with('department')->find($this_employee) : null;
+    $employee_bank_details = $this_employee
+        ? \App\Models\StaffBankDetail::with('bank')->where('staff_id', $this_employee)->first()
+        : null;
+
+    $basic_salary = $payroll_id ? \App\Models\Staff::getStaffSalaryPaid($this_employee, $payroll_id) : 0;
+    $gross_salary = $payroll_id ? \App\Models\Staff::getStaffGrossPayPaid($staff_id, $payroll_id) : 0;
+    $net_salary = $payroll_id ? \App\Models\Staff::getStaffNetPaid($staff_id, $payroll_id) : 0;
+    $advance_salary = $payroll_id ? \App\Models\Staff::getStaffAdvanceSalaryPaid($staff_id, $payroll_id) : 0;
+    $loan_balance = $payroll_id ? \App\Models\Staff::getStaffLoanBalancePaid($staff_id, $payroll_id) : 0;
+    $current_loan = $payroll_id ? \App\Models\Staff::getStaffLoanPaid($staff_id, $payroll_id) : 0;
+    $loan_deduction = $payroll_id ? \App\Models\Staff::getStaffLoanDeductionPaid($staff_id, $payroll_id) : 0;
+    $total_deduction = 0;
+
+    $allowances = $staff_id
+        ? \App\Models\Allowance::select(
+            'allowance_subscriptions.amount as amount',
+            'allowances.name as allowance_name',
+            'allowances.allowance_type as allowance_type'
+        )
+            ->join('allowance_subscriptions', 'allowance_subscriptions.allowance_id', '=', 'allowances.id')
+            ->where('allowance_subscriptions.staff_id', $staff_id)
+            ->get()
+        : collect();
+
+    $deductions = $staff_id
+        ? \App\Models\Deduction::select(
+            'deduction_settings.employee_percentage as employee_deducted_percentage',
+            'deductions.id as deduction_id',
+            'deductions.name as keyword'
+        )
+            ->join('deduction_settings', 'deduction_settings.deduction_id', '=', 'deductions.id')
+            ->join('deduction_subscriptions', 'deduction_subscriptions.deduction_id', 'deductions.id')
+            ->where('deductions.id', '!=', 1)
+            ->where('deduction_subscriptions.staff_id', $staff_id)
+            ->get()
+        : collect();
+
+    $left_side = [
+        ['name' => 'Basic Salary', 'value' => $basic_salary],
+    ];
+
+    $right_side = [
+        ['name' => 'Advance Salary', 'value' => $advance_salary],
+        ['name' => 'Loan', 'value' => $loan_balance],
+        ['name' => 'Loan Deduction', 'value' => $loan_deduction],
+        ['name' => 'Loan Balance', 'value' => ($current_loan - $loan_deduction)],
+    ];
+
+    foreach ($allowances as $allowance) {
+        $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType(
+            $allowance->allowance_type,
+            $allowance->amount,
+            $this_month
+        );
+
+        if ($allowance_amount > 0) {
+            $left_side[] = [
+                'name' => strtoupper($allowance->allowance_name),
+                'value' => $allowance_amount,
+            ];
+        }
+    }
+
+    $employee_deducted_amount_payee = $payroll_id
+        ? \App\Models\Staff::getStaffDeductionPaid($staff_id, $payroll_id, 1, 'employee_deduction_amount')
+        : 0;
+
+    if ($employee_deducted_amount_payee > 0) {
+        $total_deduction += $employee_deducted_amount_payee;
+        $right_side[] = ['name' => 'PAYE', 'value' => $employee_deducted_amount_payee];
+    }
+
+    foreach ($deductions as $deduction) {
+        $deduction_id = $deduction['deduction_id'];
+        $deducted_amount = $payroll_id
+            ? \App\Models\Staff::getStaffDeductionPaid($staff_id, $payroll_id, $deduction_id, 'employee_deduction_amount')
+            : 0;
+
+        $total_deduction += $deducted_amount;
+        $percentage = $deduction['employee_deducted_percentage'] > 0 ? " ({$deduction['employee_deducted_percentage']}%)" : '';
+
+        if ($deducted_amount > 0 && $deduction_id != 1) {
+            $right_side[] = [
+                'name' => strtoupper($deduction['keyword']) . $percentage,
+                'value' => $deducted_amount,
+            ];
+        }
+    }
+
+    $total_deductions_display = $total_deduction + $advance_salary + $loan_deduction;
+    $salaryRows = max(count($left_side), count($right_side));
+    $selectedMonthName = $months[$this_month] ?? date('F');
+    $payrollMonthLabel = $payroll
+        ? date('F Y', strtotime($payroll->year . '-' . $payroll->month . '-01'))
+        : $selectedMonthName . ' ' . $this_year;
+    $hasPayslip = $payroll && $employee;
+@endphp
+
+@section('css_after')
     <style>
-        :root {
-            --primary: #343a40;
-            --secondary: #555555;
-            --accent: #007bff;
-            --light-bg: #f8f9fa;
-            --border: #dee2e6;
-            --text: #212529;
-            --muted: #6c757d;
+        .salary-slip-page {
+            color: #172033;
+            padding-bottom: 2rem;
         }
 
-        .payslip-premium {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-radius: 0.25rem;
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-            overflow: hidden;
-            background-color: white;
-            margin-bottom: 30px;
-        }
-
-        .payslip-header {
+        .salary-slip-header {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #e3e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem;
-            border-bottom: 2px solid var(--border);
-            background: linear-gradient(to right, var(--light-bg), white);
-        }
-
-        .company-branding {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .logo-wrapper {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
+            margin-bottom: 1rem;
             overflow: hidden;
-            padding: 5px;
-            background-color: white;
-            border: 1px solid var(--border);
+            padding: 1.25rem;
+            position: relative;
         }
 
-        .logo-wrapper img {
-            width: 100%;
+        .salary-slip-header:before {
+            background: linear-gradient(180deg, #1bc5bd, #2563eb);
+            content: "";
             height: 100%;
-            object-fit: contain;
+            left: 0;
+            position: absolute;
+            top: 0;
+            width: 5px;
         }
 
-        .company-info {
-            line-height: 1.4;
+        .salary-slip-title {
+            margin-left: 0.5rem;
         }
 
-        .company-info p {
+        .salary-slip-title h1 {
+            color: #111827;
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: 0;
             margin: 0;
-            padding: 0;
-            color: var(--secondary);
         }
 
-        .company-info .company-name {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin-bottom: 0.25rem;
+        .salary-slip-title p {
+            color: #64748b;
+            font-size: 0.92rem;
+            margin: 0.25rem 0 0;
         }
 
-        .payslip-label {
-            font-size: 2rem;
+        .salary-slip-period {
+            background: #f8fafc;
+            border: 1px solid #dbe3ee;
+            border-radius: 8px;
+            min-width: 180px;
+            padding: 0.75rem 1rem;
+            text-align: right;
+        }
+
+        .salary-slip-period span {
+            color: #64748b;
+            display: block;
+            font-size: 0.75rem;
             font-weight: 700;
-            color: var(--accent);
-            padding: 0.5rem 1rem;
-            border-radius: 0.25rem;
-            letter-spacing: 1px;
             text-transform: uppercase;
         }
 
-        .employee-details {
-            background-color: white;
-            border-bottom: 1px solid var(--border);
+        .salary-slip-period strong {
+            color: #0f766e;
+            display: block;
+            font-size: 1.1rem;
+            margin-top: 0.15rem;
         }
 
-        .employee-details-table {
+        .salary-slip-toolbar {
+            background: #ffffff;
+            border: 1px solid #e3e8f0;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+            margin-bottom: 1rem;
+            padding: 1rem;
+        }
+
+        .salary-slip-toolbar label {
+            color: #475569;
+            font-size: 0.76rem;
+            font-weight: 800;
+            margin-bottom: 0.35rem;
+            text-transform: uppercase;
+        }
+
+        .salary-slip-toolbar .form-control {
+            border-color: #d8e0eb;
+            border-radius: 7px;
+            color: #172033;
+            min-height: 42px;
+        }
+
+        .salary-slip-toolbar .form-control:focus {
+            border-color: #1bc5bd;
+            box-shadow: 0 0 0 0.15rem rgba(27, 197, 189, 0.15);
+        }
+
+        .salary-slip-toolbar .btn-view-slip,
+        .slip-actions .btn-print-slip,
+        .slip-actions .btn-export-slip {
+            align-items: center;
+            border: 0;
+            border-radius: 7px;
+            display: inline-flex;
+            font-weight: 800;
+            gap: 0.45rem;
+            justify-content: center;
+            min-height: 42px;
+            padding: 0.55rem 1rem;
+        }
+
+        .salary-slip-toolbar .btn-view-slip {
+            background: #1bc5bd;
+            color: #ffffff;
             width: 100%;
-            border-collapse: collapse;
         }
 
-        .employee-details-table td {
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border);
+        .salary-slip-toolbar .btn-view-slip:hover {
+            background: #0f9f99;
+            color: #ffffff;
         }
 
-        .detail-label {
-            font-weight: 600;
-            color: var(--primary);
-            background-color: rgba(0, 0, 0, 0.02);
-            width: 30%;
+        .slip-actions {
+            align-items: center;
+            display: flex;
+            gap: 0.65rem;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
         }
 
-        .detail-value {
-            color: var(--text);
+        .slip-actions .btn-print-slip {
+            background: #172033;
+            color: #ffffff;
+        }
+
+        .slip-actions .btn-print-slip:hover {
+            background: #0f172a;
+            color: #ffffff;
+        }
+
+        .slip-actions .btn-export-slip {
+            background: #f59e0b;
+            color: #1f2937;
+        }
+
+        .slip-actions .btn-export-slip:hover {
+            background: #d97706;
+            color: #ffffff;
+        }
+
+        .salary-summary-grid {
+            display: grid;
+            gap: 0.9rem;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            margin-bottom: 1rem;
+        }
+
+        .salary-summary-item {
+            background: #ffffff;
+            border: 1px solid #e3e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .salary-summary-item span {
+            color: #64748b;
+            display: block;
+            font-size: 0.76rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .salary-summary-item strong {
+            color: #172033;
+            display: block;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 1.25rem;
+            margin-top: 0.25rem;
+        }
+
+        .salary-summary-item.net strong {
+            color: #0f766e;
+        }
+
+        .payslip-document {
+            background: #ffffff;
+            border: 1px solid #dfe7f1;
+            border-radius: 8px;
+            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.10);
+            margin: 0 auto 2rem;
+            max-width: 1120px;
+            overflow: hidden;
+        }
+
+        .payslip-document-header {
+            align-items: center;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 55%, #eefaf8 100%);
+            border-bottom: 1px solid #e3e8f0;
+            display: flex;
+            justify-content: space-between;
+            padding: 1.4rem 1.6rem;
+        }
+
+        .payslip-brand {
+            align-items: center;
+            display: flex;
+            gap: 1rem;
+            min-width: 0;
+        }
+
+        .payslip-brand-logo {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #d9e3ef;
+            border-radius: 8px;
+            display: flex;
+            flex: 0 0 78px;
+            height: 78px;
+            justify-content: center;
+            padding: 0.45rem;
+            width: 78px;
+        }
+
+        .payslip-brand-logo img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .payslip-company-name {
+            color: #111827;
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin: 0 0 0.2rem;
+        }
+
+        .payslip-company-meta {
+            color: #64748b;
+            font-size: 0.85rem;
+            line-height: 1.45;
+            margin: 0;
+        }
+
+        .payslip-label {
+            text-align: right;
+        }
+
+        .payslip-label span {
+            background: #e6fffb;
+            border: 1px solid #a7f3d0;
+            border-radius: 999px;
+            color: #0f766e;
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 900;
+            padding: 0.35rem 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .payslip-label strong {
+            color: #172033;
+            display: block;
+            font-size: 1.75rem;
+            font-weight: 900;
+            margin-top: 0.35rem;
+            text-transform: uppercase;
+        }
+
+        .employee-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .employee-field {
+            border-bottom: 1px solid #e3e8f0;
+            border-right: 1px solid #e3e8f0;
+            min-width: 0;
+            padding: 0.9rem 1rem;
+        }
+
+        .employee-field:nth-child(4n) {
+            border-right: 0;
+        }
+
+        .employee-field span {
+            color: #64748b;
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .employee-field strong {
+            color: #172033;
+            display: block;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+            overflow-wrap: anywhere;
         }
 
         .salary-details {
-            padding: 1.5rem;
+            padding: 1.35rem;
         }
 
         .salary-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 0;
             width: 100%;
-            border-collapse: collapse;
         }
 
         .salary-table th,
         .salary-table td {
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border);
-            text-align: left;
+            border-bottom: 1px solid #e3e8f0;
+            padding: 0.8rem 0.95rem;
+            vertical-align: middle;
         }
 
         .salary-table thead th {
-            background-color: var(--light-bg);
-            font-weight: 600;
-            color: var(--primary);
+            background: #172033;
+            color: #ffffff;
+            font-size: 0.78rem;
+            font-weight: 900;
             text-transform: uppercase;
-            font-size: 0.875rem;
         }
 
-        .salary-table tbody th {
-            font-weight: 600;
-            color: var(--primary);
-            background-color: rgba(0, 0, 0, 0.02);
+        .salary-table thead th:first-child {
+            border-top-left-radius: 8px;
         }
 
-        .section-title {
-            background-color: var(--light-bg);
-            font-weight: 600;
-            color: var(--accent);
+        .salary-table thead th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        .salary-table tbody tr:nth-child(even) td {
+            background: #fbfdff;
+        }
+
+        .salary-section-row th,
+        .salary-section-row td {
+            background: #edf7f6;
+            color: #0f766e;
+            font-weight: 900;
+            text-transform: uppercase;
         }
 
         .money {
-            font-family: 'Consolas', 'Courier New', monospace;
+            font-family: Consolas, "Courier New", monospace;
             white-space: nowrap;
         }
 
@@ -162,573 +497,438 @@
             text-align: right !important;
         }
 
-        .summary-row th {
-            background-color: var(--light-bg);
-            border-bottom: 1px solid var(--border);
+        .summary-row th,
+        .summary-row td {
+            background: #f8fafc;
+            color: #172033;
+            font-weight: 900;
         }
 
         .net-salary-row td {
-            background-color: var(--primary);
-            color: white;
-            font-weight: 700;
-            padding: 1rem;
-            border: 1px solid var(--primary);
-        }
-
-        .net-salary-label {
-            font-size: 1.1rem;
-            text-transform: uppercase;
+            background: #0f766e;
+            border-bottom: 0;
+            color: #ffffff;
+            font-weight: 900;
+            padding: 1rem 0.95rem;
         }
 
         .net-salary-value {
             font-size: 1.25rem;
-            letter-spacing: 1px;
         }
 
         .payslip-footer {
-            padding: 1rem;
+            background: #f8fafc;
+            border-top: 1px solid #e3e8f0;
+            color: #64748b;
+            font-size: 0.85rem;
+            padding: 0.9rem 1rem;
             text-align: center;
-            color: var(--muted);
-            font-size: 0.875rem;
-            border-top: 1px solid var(--border);
-            background-color: var(--light-bg);
         }
 
-        /* Button Styles */
-        .action-buttons {
-            padding: 10px 0;
+        .empty-payslip {
+            align-items: center;
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            display: flex;
+            gap: 1rem;
+            padding: 1.4rem;
         }
 
-        .btn {
-            display: inline-block;
-            font-weight: 400;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: middle;
-            user-select: none;
-            border: 1px solid transparent;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            border-radius: 0.25rem;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        .empty-payslip-icon {
+            align-items: center;
+            background: #fff7ed;
+            border-radius: 8px;
+            color: #c2410c;
+            display: flex;
+            flex: 0 0 54px;
+            font-size: 1.4rem;
+            height: 54px;
+            justify-content: center;
+            width: 54px;
         }
 
-        .btn-sm {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            line-height: 1.5;
-            border-radius: 0.2rem;
+        .empty-payslip h3 {
+            color: #172033;
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin: 0;
         }
 
-        .btn-primary {
-            color: #fff;
-            background-color: #007bff;
-            border-color: #007bff;
+        .empty-payslip p {
+            color: #64748b;
+            margin: 0.25rem 0 0;
         }
 
-        .btn-primary:hover {
-            color: #fff;
-            background-color: #0069d9;
-            border-color: #0062cc;
+        @media (max-width: 991.98px) {
+            .salary-slip-header,
+            .payslip-document-header {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .salary-slip-period,
+            .payslip-label {
+                text-align: left;
+                width: 100%;
+            }
+
+            .salary-summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .employee-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .employee-field:nth-child(2n) {
+                border-right: 0;
+            }
         }
 
-        .btn-success {
-            color: #fff;
-            background-color: #28a745;
-            border-color: #28a745;
-        }
+        @media (max-width: 575.98px) {
+            .slip-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
 
-        .btn-success:hover {
-            color: #fff;
-            background-color: #218838;
-            border-color: #1e7e34;
-        }
+            .slip-actions .btn-print-slip,
+            .slip-actions .btn-export-slip {
+                width: 100%;
+            }
 
-        .mr-1 {
-            margin-right: 0.25rem;
-        }
+            .payslip-brand {
+                align-items: flex-start;
+            }
 
-        .mr-2 {
-            margin-right: 0.5rem;
-        }
+            .employee-grid {
+                grid-template-columns: 1fr;
+            }
 
-        .mb-3 {
-            margin-bottom: 1rem;
+            .employee-field {
+                border-right: 0;
+            }
         }
 
         @media print {
-            .no-print {
+            .no-print,
+            .wajenzi-header,
+            .wajenzi-footer,
+            .sidebar,
+            .main-sidebar {
                 display: none !important;
             }
 
-            .payslip-premium {
-                box-shadow: none;
-                border: 1px solid var(--secondary);
+            .wajenzi-main,
+            .main-content,
+            .container-fluid,
+            .content {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
             }
 
-            body {
-                padding: 0;
+            .payslip-document {
+                border: 1px solid #94a3b8;
+                border-radius: 0;
+                box-shadow: none;
                 margin: 0;
+                max-width: none;
             }
         }
     </style>
+@endsection
 
-
-    <div class="container-fluid">
+@section('content')
+    <div class="container-fluid salary-slip-page">
         <div class="content">
-            <div class="content-heading">Salary Slip
-                @php
-                    $this_year = $_POST['year'] ?? date('Y');
-                    $this_month = $_POST['month'] ?? date('m');
-                    $this_employee = $_POST['staff_id'] ?? 11;
-                    $staff_id = $this_employee;
-                    $payroll = \App\Models\Payroll::getThisPayrollApproved($this_month,$this_year);
-                    $payroll_id = $payroll['id'] ?? null;
-                    $employee = \App\Models\User::find($this_employee);
-                    $employee_bank_details = \App\Models\StaffBankDetail::where('staff_id',$this_employee)->first();
-                    $basic_salary = \App\Models\Staff::getStaffSalaryPaid($this_employee,$payroll_id ?? 0);
-                    $total_deduction = 0;
-                    $gross_salary = \App\Models\Staff::getStaffGrossPayPaid($this_employee,$payroll_id ?? 0) ?? 0;
-                    $net_salary = \App\Models\Staff::getStaffNetPaid($staff_id,$payroll_id ?? 0) ?? 0;
-                    $advance_salary = \App\Models\Staff::getStaffAdvanceSalaryPaid($staff_id,$payroll_id ?? 0) ?? 0;
-                    $loan_balance = \App\Models\Staff::getStaffLoanBalancePaid($staff_id,$payroll_id ?? 0) ?? 0;
-                    $current_loan = \App\Models\Staff::getStaffLoanPaid($staff_id,$payroll_id ?? 0) ?? 0;
-                    $loan_deduction = \App\Models\Staff::getStaffLoanDeductionPaid($staff_id,$payroll_id ?? 0) ?? 0;
-                    $taxable = \App\Models\Staff::getStaffTaxablePaid($staff_id,$payroll_id ?? 0) ?? 0;
-
-
-
-
-                    $gross_salary_check = 0;
-                    $allowances = \App\Models\Allowance::select('allowance_subscriptions.amount as amount','allowances.name as allowance_name','allowances.allowance_type as allowance_type')->join('allowance_subscriptions','allowance_subscriptions.allowance_id','=','allowances.id')->
-                                   where('allowance_subscriptions.staff_id',$staff_id)->get();
-                    $deductions = \App\Models\Deduction::select('deduction_settings.employee_percentage as employee_deducted_percentage','deductions.id as deduction_id','deductions.name as keyword')->join('deduction_settings','deduction_settings.deduction_id','=','deductions.id')->
-                                    join('deduction_subscriptions','deduction_subscriptions.deduction_id','deductions.id')->
-                                    where('deductions.id','!=',1)->where('deduction_subscriptions.staff_id',$staff_id)->get();
-
-
-                    $left_side = [
-                        ['name' => 'Basic Salary', 'value' => $basic_salary ]
-                    ];
-
-                $right_side = [
-                    ['name' => 'Advance Salary', 'value' => $advance_salary ],
-                    ['name' => 'Loan', 'value' => $loan_balance ],
-                    ['name' => 'Loan Deduction', 'value' => $loan_deduction ],
-                    ['name' => 'Loan Balance', 'value' => ($current_loan - $loan_deduction) ],
-                ];
-
-                foreach ($allowances as $allowance) {
-                    $allowance_type = $allowance->allowance_type;
-                    $allowance_amount_first = $allowance->amount;
-                    $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType($allowance_type,$allowance_amount_first,$this_month);
-                    if ($allowance_amount > 0) {
-                        $gross_salary_check += $allowance_amount;
-                        array_push($left_side, ['name' => strtoupper($allowance->allowance_name), 'value' => $allowance_amount]);
-                    }
-                }
-
-                // Add PAYEE at the top first
-                $employee_deducted_amount_payee = \App\Models\Staff::getStaffDeductionPaid($staff_id, $payroll_id, 1, 'employee_deduction_amount') ?? 0;
-
-                // Add PAYEE to the total deduction
-                if ($employee_deducted_amount_payee > 0) {
-                    $total_deduction += $employee_deducted_amount_payee;
-                    array_push($right_side, ['name' => 'PAYEE', 'value' => $employee_deducted_amount_payee]);
-                }
-
-                // Then continue with your loop for other deductions
-                foreach ($deductions as $deduction) {
-                    $deduction_id = $deduction['deduction_id'];
-                    $deducted_amount = \App\Models\Staff::getStaffDeductionPaid($staff_id, $payroll_id, $deduction_id, 'employee_deduction_amount') ?? 0;
-                    $total_deduction += $deducted_amount;
-                    $percentage = $deduction['employee_deducted_percentage'] > 0 ? "({$deduction['employee_deducted_percentage']}%)" : '';
-                    $deduction_title = $deduction['keyword'];
-
-                    // Include all deductions, but we don't need to add PAYEE twice
-                    if ($deducted_amount > 0 && $deduction_id != 1) {
-                        array_push($right_side, ['name' => strtoupper($deduction_title) . $percentage, 'value' => $deducted_amount]);
-                    }
-                }
-
-                @endphp
-
-                <div class="float-right">
-
+            <div class="salary-slip-header no-print">
+                <div class="salary-slip-title">
+                    <h1>Salary Slip</h1>
+                    <p>{{ settings('ORGANIZATION_NAME') }} payroll document</p>
+                </div>
+                <div class="salary-slip-period">
+                    <span>Selected Period</span>
+                    <strong>{{ $payrollMonthLabel }}</strong>
                 </div>
             </div>
-            <div>
-                <div class="block block-themed">
-                    <div class="block-content">
-                        <div class="row no-print m-t-10">
-                            <div class="class col-md-12">
-                                <div class="class card-box">
-                                    <div class="row" style="border-bottom: 3px solid gray">
-                                        <div class="col-md-3 text-right">
-                                            <img class="" src="{{ asset('media/logo/wajenzilogo.png') }}" alt=""
-                                                 height="100">
-                                        </div>
-                                        <div class="col-md-6 text-center">
-                                            <span
-                                                class="text-center font-size-h3">{{settings('ORGANIZATION_NAME')}}</span><br/>
-                                            <span
-                                                class="text-center font-size-h5">{{settings('COMPANY_ADDRESS_LINE_1')}}</span><br/>
-                                            <span
-                                                class="text-center font-size-h5">{{settings('COMPANY_ADDRESS_LINE_2')}}</span><br/>
-                                            <span
-                                                class="text-center font-size-h5">{{settings('COMPANY_PHONE_NUMBER')}}</span><br/>
-                                            <span
-                                                class="text-center font-size-h5">{{settings('TAX_IDENTIFICATION_NUMBER')}}</span><br/>
-                                        </div>
-                                        <div class="col-md-3 text-right">
-                                            {{--                                            <a href="{{route('reports')}}"   type="button" class="btn btn-sm btn-danger"><i class="fa fa arrow-left"></i>Back</a>--}}
-                                        </div>
-                                    </div>
-                                </div>
-                                <br/>
-                                <div class="class card-box">
-                                    <form name="gross_search" action="" id="filter-form" method="post"
-                                          autocomplete="off">
-                                        @csrf
-                                        <div class="row">
-                                            <div class="class col-md-3">
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="basic-addon1">Month</span>
-                                                    </div>
-                                                    <select name="month" id="month" class="form-control">
-                                                        <option value="1" {{ ($this_month == 1) ? 'selected' : '' }}>
-                                                            Jan
-                                                        </option>
-                                                        <option value="2" {{ ($this_month == 2) ? 'selected' : '' }}>
-                                                            Feb
-                                                        </option>
-                                                        <option value="3" {{ ($this_month == 3) ? 'selected' : '' }}>
-                                                            Mar
-                                                        </option>
-                                                        <option value="4" {{ ($this_month == 4) ? 'selected' : '' }}>
-                                                            Apr
-                                                        </option>
-                                                        <option value="5" {{ ($this_month == 5) ? 'selected' : '' }}>
-                                                            May
-                                                        </option>
-                                                        <option value="6" {{ ($this_month == 6) ? 'selected' : '' }}>
-                                                            Jun
-                                                        </option>
-                                                        <option value="7" {{ ($this_month == 7) ? 'selected' : '' }}>
-                                                            Jul
-                                                        </option>
-                                                        <option value="8" {{ ($this_month == 8) ? 'selected' : '' }}>
-                                                            Aug
-                                                        </option>
-                                                        <option value="9" {{ ($this_month == 9) ? 'selected' : '' }}>
-                                                            Sept
-                                                        </option>
-                                                        <option value="10" {{ ($this_month == 10) ? 'selected' : '' }}>
-                                                            Oct
-                                                        </option>
-                                                        <option value="11" {{ ($this_month == 11) ? 'selected' : '' }}>
-                                                            Nov
-                                                        </option>
-                                                        <option value="12" {{ ($this_month == 12) ? 'selected' : '' }}>
-                                                            Dec
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="class col-md-3">
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="basic-addon1">Year</span>
-                                                    </div>
-                                                    <select name="year" id="year" class="form-control">
-                                                        {{--                                                        <option value="2021" {{ ($this_year == 2021) ? 'selected' : '' }}>2021</option>--}}
-                                                        {{--                                                        <option value="2022" {{ ($this_year == 2022) ? 'selected' : '' }}>2022</option>--}}
-                                                        {{--                                                        <option value="2023" {{ ($this_year == 2023) ? 'selected' : '' }}>2023</option>--}}
-                                                        {{--                                                        <option value="2024" {{ ($this_year == 2024) ? 'selected' : '' }}>2024</option>--}}
-                                                        <option
-                                                            value="2025" {{ ($this_year == 2025) ? 'selected' : '' }}>
-                                                            2025
-                                                        </option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="class col-md-4">
-                                                <div class="input-group mb-3">
-                                                    <div class="input-group-prepend">
-                                                        <span class="input-group-text" id="basic-addon1">Employee</span>
-                                                    </div>
-                                                    <select name="staff_id" id="input-staff-id"
-                                                            class="form-control select2" required>
-                                                        @foreach($staffs as $staff)
-                                                            <option
-                                                                value="{{ $staff->id }}"> {{ $staff->name }} </option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="class col-md-2">
-                                                <div>
-                                                    <button type="submit" name="submit" class="btn btn-sm btn-primary">
-                                                        Show
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
+
+            <div class="salary-slip-toolbar no-print">
+                <form name="gross_search" action="{{ route('salary_slips') }}" id="filter-form" method="get" autocomplete="off">
+                    <div class="row align-items-end">
+                        <div class="col-lg-3 col-md-6 mb-3 mb-lg-0">
+                            <label for="month">Month</label>
+                            <select name="month" id="month" class="form-control">
+                                @foreach($months as $monthNumber => $monthName)
+                                    <option value="{{ $monthNumber }}" {{ (int) $this_month === (int) $monthNumber ? 'selected' : '' }}>
+                                        {{ $monthName }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-
-
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped table-vcenter js-dataTable-full"
-                                   id="payroll">
-
-
-                            </table>
+                        <div class="col-lg-2 col-md-6 mb-3 mb-lg-0">
+                            <label for="year">Year</label>
+                            <select name="year" id="year" class="form-control">
+                                @foreach($yearOptions as $year)
+                                    <option value="{{ $year }}" {{ (int) $this_year === (int) $year ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-lg-5 col-md-8 mb-3 mb-lg-0">
+                            <label for="input-staff-id">Employee</label>
+                            <select name="staff_id" id="input-staff-id" class="form-control select2" required>
+                                @foreach($staffList as $staff)
+                                    <option value="{{ $staff->id }}" {{ (int) $staff->id === (int) $staff_id ? 'selected' : '' }}>
+                                        {{ $staff->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-4">
+                            <button type="submit" name="submit" class="btn btn-view-slip">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                Show
+                            </button>
                         </div>
                     </div>
-                </div>
+                </form>
             </div>
-            @if($payroll)
-                <div>
-                    <div class="block block-themed">
-                        <div class="block-content">
-                            <div class="row m-t-10">
-                                <div class="class col-md-12">
-                                    <div class="class card-box">
-                                        <!-- Action Buttons -->
-                                        <div class="action-buttons no-print mb-3 text-right">
-                                            <button type="button" class="btn btn-primary btn-sm mr-2"
-                                                    onclick="printPayslip()">
-                                                <i class="fa fa-print mr-1"></i> Print Payslip
-                                            </button>
-                                            <button type="button" class="btn btn-success btn-sm"
-                                                    onclick="exportToPDF()">
-                                                <i class="fa fa-file-pdf-o mr-1"></i> Export to PDF
-                                            </button>
-                                        </div>
 
-                                        <div class="table-responsive" id="payslip-container">
-                                            <div class="payslip-premium">
-                                                <div class="payslip-header">
-                                                    <div class="company-branding">
-                                                        <div class="logo-wrapper">
-                                                            <img src="{{ asset('media/logo/wajenzilogo.png') }}"
-                                                                 alt="Company Logo">
-                                                        </div>
-                                                        <div class="company-info">
-                                                            <p class="company-name">{{settings('ORGANIZATION_NAME')}}</p>
-                                                            <p>{{settings('COMPANY_ADDRESS_LINE_1')}}</p>
-                                                            <p>{{settings('COMPANY_ADDRESS_LINE_2')}}</p>
-                                                            <p>{{settings('COMPANY_PHONE_NUMBER')}}</p>
-                                                            <p>{{settings('COMPANY_EMAIL_ADDRESS')}}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div class="payslip-label">Payslip</div>
-                                                </div>
-
-                                                <div class="employee-details">
-                                                    <table class="employee-details-table">
-                                                        <tr>
-                                                            <td class="detail-label">Payroll Number:</td>
-                                                            <td class="detail-value">{{$payroll['payroll_number'] ?? '-'}}</td>
-                                                            <td class="detail-label">Payroll Month:</td>
-                                                            <td class="detail-value">{{$payroll ? date('F',strtotime($payroll->year.'-'.$payroll->month.'-'.'01')).' - '.$payroll->year : '-'}}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="detail-label">Employee Number:</td>
-                                                            <td class="detail-value">
-                                                                HRM/LE/PO-{{$employee->employee_number ?? '-'}}</td>
-                                                            <td class="detail-label">Employee Name:</td>
-                                                            <td class="detail-value">{{$employee->name ?? '-'}}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="detail-label">Department:</td>
-                                                            <td class="detail-value">Human Resources &amp;
-                                                                Administration (HRA)
-                                                            </td>
-                                                            <td class="detail-label">Designation:</td>
-                                                            <td class="detail-value">{{$employee?->designation ?? '-'}}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="detail-label">Bank Name:</td>
-                                                            <td class="detail-value">{{$employee_bank_details?->bank?->name ?? '-'}}</td>
-                                                            <td class="detail-label">Account Number:</td>
-                                                            <td class="detail-value">{{$employee_bank_details?->account_number ?? '-'}}</td>
-                                                        </tr>
-                                                    </table>
-                                                </div>
-
-                                                <div class="salary-details">
-                                                    <table class="salary-table">
-                                                        <thead>
-                                                        <tr>
-                                                            <th>DETAILS</th>
-                                                            <th class="text-right">AMOUNT</th>
-                                                            <th>DETAILS</th>
-                                                            <th class="text-right">AMOUNT</th>
-                                                        </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        <tr>
-                                                            <th class="section-title">Employee Income</th>
-                                                            <td></td>
-                                                            <th class="section-title">Deductions</th>
-                                                            <td></td>
-                                                        </tr>
-
-                                                        @php
-                                                            $max = count($left_side) > count($right_side) ? count($left_side) : count($right_side);
-                                                            foreach (range(0, $max -1 ) as $index) {
-                                                                echo "<tr>
-                                                                        <td>". (isset($left_side[$index]) ? $left_side[$index]['name'] : '') . "</td>
-                                                                        <td class='money text-right'>". (isset($left_side[$index]) ? \App\Classes\Utility::money_format($left_side[$index]['value']): ''). "</td>
-                                                                        <td>". (isset($right_side[$index]) ? $right_side[$index]['name'] : '') ."</td>
-                                                                        <td class='money text-right'>". (isset($right_side[$index]) ? \App\Classes\Utility::money_format($right_side[$index]['value']) : '')."</td>
-                                                                    </tr>";
-                                                            }
-                                                        @endphp
-
-                                                        <tr class="summary-row">
-                                                            <th>Gross Salary</th>
-                                                            <td class="money text-right">{{number_format($gross_salary)}}</td>
-                                                            <th>Total Deductions</th>
-                                                            <td class="money text-right">{{number_format($total_deduction+$advance_salary+$loan_deduction)}}</td>
-                                                        </tr>
-                                                        </tbody>
-                                                        <tfoot>
-                                                        <tr class="net-salary-row">
-                                                            <td colspan="3" class="net-salary-label">NET SALARY</td>
-                                                            <td class="money text-right net-salary-value">
-                                                                {{number_format($net_salary)}}
-                                                            </td>
-                                                        </tr>
-                                                        </tfoot>
-                                                    </table>
-                                                </div>
-
-                                                <div class="payslip-footer">
-                                                    This is a computer-generated payslip and does not require a
-                                                    signature.
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            @if($hasPayslip)
+                <div class="salary-summary-grid no-print">
+                    <div class="salary-summary-item">
+                        <span>Gross Salary</span>
+                        <strong>{{ \App\Classes\Utility::money_format($gross_salary) }}</strong>
+                    </div>
+                    <div class="salary-summary-item">
+                        <span>Total Deductions</span>
+                        <strong>{{ \App\Classes\Utility::money_format($total_deductions_display) }}</strong>
+                    </div>
+                    <div class="salary-summary-item net">
+                        <span>Net Salary</span>
+                        <strong>{{ \App\Classes\Utility::money_format($net_salary) }}</strong>
                     </div>
                 </div>
 
+                <div class="slip-actions no-print">
+                    <button type="button" class="btn btn-print-slip" onclick="printPayslip()">
+                        <i class="fa-solid fa-print"></i>
+                        Print Payslip
+                    </button>
+                    <button type="button" class="btn btn-export-slip" onclick="exportToPDF()">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        Export PDF
+                    </button>
+                </div>
+
+                <div id="payslip-container">
+                    <div class="payslip-document">
+                        <div class="payslip-document-header">
+                            <div class="payslip-brand">
+                                <div class="payslip-brand-logo">
+                                    <img src="{{ asset('media/logo/wajenzilogo.png') }}" alt="Company Logo">
+                                </div>
+                                <div>
+                                    <p class="payslip-company-name">{{ settings('ORGANIZATION_NAME') }}</p>
+                                    <p class="payslip-company-meta">
+                                        {{ settings('COMPANY_ADDRESS_LINE_1') }}<br>
+                                        {{ settings('COMPANY_ADDRESS_LINE_2') }}<br>
+                                        {{ settings('COMPANY_PHONE_NUMBER') }} · {{ settings('COMPANY_EMAIL_ADDRESS') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="payslip-label">
+                                <span>Approved Payroll</span>
+                                <strong>Payslip</strong>
+                            </div>
+                        </div>
+
+                        <div class="employee-grid">
+                            <div class="employee-field">
+                                <span>Payroll Number</span>
+                                <strong>{{ $payroll->payroll_number ?? '-' }}</strong>
+                            </div>
+                            <div class="employee-field">
+                                <span>Payroll Month</span>
+                                <strong>{{ $payrollMonthLabel }}</strong>
+                            </div>
+                            <div class="employee-field">
+                                <span>Employee Number</span>
+                                <strong>HRM/LE/PO-{{ $employee->employee_number ?? '-' }}</strong>
+                            </div>
+                            <div class="employee-field">
+                                <span>Employee Name</span>
+                                <strong>{{ $employee->name ?? '-' }}</strong>
+                            </div>
+                            <div class="employee-field">
+                                <span>Department</span>
+                                <strong>{{ $employee?->department?->name ?? 'Human Resources & Administration' }}</strong>
+                            </div>
+                            <div class="employee-field">
+                                <span>Designation</span>
+                                <strong>{{ $employee?->designation ?? '-' }}</strong>
+                            </div>
+                            <div class="employee-field">
+                                <span>Bank Name</span>
+                                <strong>{{ $employee_bank_details?->bank?->name ?? '-' }}</strong>
+                            </div>
+                            <div class="employee-field">
+                                <span>Account Number</span>
+                                <strong>{{ $employee_bank_details?->account_number ?? '-' }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="salary-details">
+                            <div class="table-responsive">
+                                <table class="salary-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Employee Income</th>
+                                            <th class="text-right">Amount</th>
+                                            <th>Deductions</th>
+                                            <th class="text-right">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="salary-section-row">
+                                            <th>Details</th>
+                                            <td></td>
+                                            <th>Details</th>
+                                            <td></td>
+                                        </tr>
+
+                                        @for($index = 0; $index < $salaryRows; $index++)
+                                            <tr>
+                                                <td>{{ $left_side[$index]['name'] ?? '' }}</td>
+                                                <td class="money text-right">
+                                                    {{ isset($left_side[$index]) ? \App\Classes\Utility::money_format($left_side[$index]['value']) : '' }}
+                                                </td>
+                                                <td>{{ $right_side[$index]['name'] ?? '' }}</td>
+                                                <td class="money text-right">
+                                                    {{ isset($right_side[$index]) ? \App\Classes\Utility::money_format($right_side[$index]['value']) : '' }}
+                                                </td>
+                                            </tr>
+                                        @endfor
+
+                                        <tr class="summary-row">
+                                            <th>Gross Salary</th>
+                                            <td class="money text-right">{{ \App\Classes\Utility::money_format($gross_salary) }}</td>
+                                            <th>Total Deductions</th>
+                                            <td class="money text-right">{{ \App\Classes\Utility::money_format($total_deductions_display) }}</td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="net-salary-row">
+                                            <td colspan="3">NET SALARY</td>
+                                            <td class="money text-right net-salary-value">
+                                                {{ \App\Classes\Utility::money_format($net_salary) }}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="payslip-footer">
+                            This is a computer-generated payslip and does not require a signature.
+                        </div>
+                    </div>
+                </div>
             @else
-                <div>
-                    <div class="block block-themed bg-gray min-height-200 text-center">
-                        <div class="block-content">
-                            <div class="row no-print m-t-10">
-                                <div class="class col-md-12">
-                                    <div class="class card-box ">
-                                        <div class='jumbotron '>Failed to get salary slip for this month!</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="empty-payslip no-print">
+                    <div class="empty-payslip-icon">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                    </div>
+                    <div>
+                        <h3>Salary slip not available</h3>
+                        <p>No approved payroll was found for {{ $selectedMonthName }} {{ $this_year }}{{ $employee ? ' for ' . $employee->name : '' }}.</p>
                     </div>
                 </div>
             @endif
         </div>
     </div>
-
 @endsection
 
-<!-- JavaScript for Print and PDF Export -->
-<script>
-    // Print functionality
-    function printPayslip() {
-        window.print();
-    }
+@section('js_after')
+    <script>
+        function printPayslip() {
+            window.print();
+        }
 
-    // PDF Export functionality
-    function exportToPDF() {
-        // Check if jsPDF is available
-        if (typeof window.jspdf === 'undefined') {
-            // Load jsPDF dynamically if it's not already loaded
-            var script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-            script.onload = function () {
-                var script2 = document.createElement('script');
-                script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-                script2.onload = function () {
-                    generatePDF();
+        function exportToPDF() {
+            if (typeof window.jspdf === 'undefined') {
+                var script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                script.onload = function () {
+                    var script2 = document.createElement('script');
+                    script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                    script2.onload = function () {
+                        generatePDF();
+                    };
+                    document.head.appendChild(script2);
                 };
-                document.head.appendChild(script2);
-            };
-            document.head.appendChild(script);
-        } else {
+                document.head.appendChild(script);
+                return;
+            }
+
             generatePDF();
         }
-    }
 
-    function generatePDF() {
-        // Use jsPDF and html2canvas to generate PDF
-        const {jsPDF} = window.jspdf;
+        function generatePDF() {
+            var element = document.getElementById('payslip-container');
 
-        // Get the payslip element
-        var element = document.getElementById('payslip-container');
-
-        // Create a new jsPDF instance
-        var doc = new jsPDF('p', 'mm', 'a4');
-
-        // Hide action buttons for PDF generation
-        var actionButtons = document.querySelector('.action-buttons');
-        if (actionButtons) {
-            actionButtons.style.display = 'none';
-        }
-
-        // Convert the element to canvas
-        html2canvas(element, {
-            scale: 2,
-            logging: false,
-            useCORS: true
-        }).then(function (canvas) {
-            // Show action buttons again
-            if (actionButtons) {
-                actionButtons.style.display = 'block';
+            if (!element) {
+                return;
             }
 
-            // Calculate dimensions
-            var imgWidth = 210; // A4 width in mm (210mm)
-            var pageHeight = 297; // A4 height in mm (297mm)
-            var imgHeight = canvas.height * imgWidth / canvas.width;
-            var heightLeft = imgHeight;
+            const {jsPDF} = window.jspdf;
+            var doc = new jsPDF('p', 'mm', 'a4');
+            var actionButtons = document.querySelector('.slip-actions');
 
-            var imgData = canvas.toDataURL('image/png');
-            var position = 0;
+            if (actionButtons) {
+                actionButtons.style.display = 'none';
+            }
 
-            // Add image to PDF
-            doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
+            html2canvas(element, {
+                scale: 2,
+                logging: false,
+                useCORS: true
+            }).then(function (canvas) {
+                if (actionButtons) {
+                    actionButtons.style.display = '';
+                }
 
-            // Add new pages if the content is longer than one page
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                doc.addPage();
+                var imgWidth = 210;
+                var pageHeight = 297;
+                var imgHeight = canvas.height * imgWidth / canvas.width;
+                var heightLeft = imgHeight;
+                var imgData = canvas.toDataURL('image/png');
+                var position = 0;
+
                 doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
                 heightLeft -= pageHeight;
-            }
 
-            // Get employee name for filename or use default
-            var employeeName = '{{$employee->name ?? "Employee"}}';
-            var payrollMonth = '{{date("F_Y", strtotime(($payroll->year ?? date('Y'))."-".($payroll->month ?? date('m'))."-01"))}}';
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    doc.addPage();
+                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
 
-            // Generate filename
-            var filename = 'Payslip_' + employeeName.replace(/\s+/g, '_') + '_' + payrollMonth + '.pdf';
+                var employeeName = @json($employee->name ?? 'Employee');
+                var payrollMonth = @json(str_replace(' ', '_', $payrollMonthLabel));
+                var filename = 'Payslip_' + employeeName.replace(/\s+/g, '_') + '_' + payrollMonth + '.pdf';
 
-            // Save the PDF
-            doc.save(filename);
-        });
-    }
-</script>
-
+                doc.save(filename);
+            }).catch(function () {
+                if (actionButtons) {
+                    actionButtons.style.display = '';
+                }
+            });
+        }
+    </script>
+@endsection
