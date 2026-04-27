@@ -1,13 +1,12 @@
 <?php
 $document_id = \App\Classes\Utility::getLastId('Sale')+1;
-$sale_date = old('date', !empty($object->date) ? $object->date : date('Y-m-d'));
 ?>
 <div class="block-content">
     <form method="post"  enctype="multipart/form-data"  autocomplete="off">
         @csrf
         <div class="form-group">
             <label for="example-nf-email">Efd Name</label>
-            <select name="efd_id" id="input-ifd-id" class="form-control">
+            <select name="efd_id" id="input-ifd-id" class="form-control" required>
 
                 <option value="">Select Efd</option>
 
@@ -38,14 +37,10 @@ $sale_date = old('date', !empty($object->date) ? $object->date : date('Y-m-d'));
                    value="{{ $object->turn_over ?? '' }}" placeholder="Total Turnover" required>
         </div>
         <div class="form-group">
-            <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <span class="input-group-text" id="basic-addon-sale-date">Date</span>
-                </div>
-                <input type="text" name="date" id="input-date"
-                       class="form-control datepicker-index-form datepicker"
-                       aria-describedby="basic-addon-sale-date" value="{{ $sale_date }}" required>
-            </div>
+            <label for="example-nf-date">Date</label>
+            <input type="date" name="date" id="input-date"
+                   class="form-control"
+                   value="{{ old('date', $object->date ?? date('Y-m-d')) }}" required>
         </div>
         <div class="form-group">
             <label class="control-label" for="chooseFile">Choose file</label>
@@ -93,17 +88,4 @@ $sale_date = old('date', !empty($object->date) ? $object->date : date('Y-m-d'));
 
 
     });
-    $("#input-date").on("change", function () {
-        this.setAttribute(
-            "data-date",
-            moment(this.value, "YYYY-MM-DD")
-                .format(this.getAttribute("data-date-format"))
-        )
-    }).trigger("change")
 </script>
-<script>
-    $('#input-date').datepicker({
-        format: 'yyyy-mm-dd'
-    });
-</script>
-

@@ -7,14 +7,14 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
         @if(\App\Classes\Utility::isAdmin())
             <div class="form-group">
                 <label for="example-nf-date" class="control-label required">Issues Date</label>
-                <input type="text" class="form-control datepicker"  id="input-issue-date" name="issue_date"
-                       value="{{ $object->issue_date ?? date('Y-m-d') }}" required>
+                <input type="date" class="form-control" id="input-issue-date" name="issue_date"
+                       value="{{ old('issue_date', $object->issue_date ? \Carbon\Carbon::parse($object->issue_date)->format('Y-m-d') : date('Y-m-d')) }}">
             </div>
         @else
             <div class="form-group">
                 <label for="example-nf-date" class="control-label required">Issues Date</label>
-                <input type="text" class="form-control datepicker"  id="input-issue-date" name="issue_date"
-                       value="{{ $object->issue_date ?? date('Y-m-d') }}" readonly>
+                <input type="date" class="form-control" id="input-issue-date" name="issue_date"
+                       value="{{ old('issue_date', $object->issue_date ? \Carbon\Carbon::parse($object->issue_date)->format('Y-m-d') : date('Y-m-d')) }}" readonly>
             </div>
         @endif
         <div class="form-group">
@@ -75,14 +75,14 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
         @if(\App\Classes\Utility::isAdmin())
             <div class="form-group">
                 <label for="example-nf-date" class="control-label required">Due Date</label>
-                <input type="text" class="form-control "  id="input-due_date" name="due_date"
-                       value="{{ $object->due_date ?? date('Y-m-d') }}" required>
+                <input type="date" class="form-control" id="input-due_date" name="due_date"
+                       value="{{ old('due_date', $object->due_date ? \Carbon\Carbon::parse($object->due_date)->format('Y-m-d') : date('Y-m-d')) }}">
             </div>
         @else
             <div class="form-group">
                 <label for="example-nf-date" class="control-label required">Due Date</label>
-                <input type="text" class="form-control datepicker"  id="input-due_date" name="due_date"
-                       value="{{ $object->due_date ?? date('Y-m-d') }}" readonly>
+                <input type="date" class="form-control" id="input-due_date" name="due_date"
+                       value="{{ old('due_date', $object->due_date ? \Carbon\Carbon::parse($object->due_date)->format('Y-m-d') : date('Y-m-d')) }}" readonly>
             </div>
         @endif
         <div class="form-group">
@@ -191,23 +191,6 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
         })
 
 
-    });
-    $("input").on("change", function () {
-        this.setAttribute(
-            "data-date",
-            moment(this.value, "YYYY-MM-DD")
-                .format(this.getAttribute("data-date-format"))
-        )
-    }).trigger("change")
-</script>
-<script>
-    // window.Echo.private('details.' + window.Laravel.user)
-    //     .listen('Approved', (e) => {
-    //         console.log(e);
-    //     });
-
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
     });
 </script>
 

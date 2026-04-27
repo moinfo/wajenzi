@@ -360,6 +360,7 @@ class AjaxController
                         $id = $request->input('id');
                         $key_name = $request->input('key_name') ?? null;
                         $date_find = $request->input('date_find') ?? null;
+                        
                         if($date_find != null && $date_find != '1970-01-01'){
                             $data['object'] = $fullObject::select([DB::raw("*")]);
                             if($date_find){

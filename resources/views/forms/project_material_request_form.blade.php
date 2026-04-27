@@ -24,8 +24,8 @@
             <div class="col-sm-6">
                 <div class="form-group">
                     <label class="control-label required">Required Date</label>
-                    <input type="text" class="form-control datepicker" name="required_date"
-                        value="{{ date('Y-m-d', strtotime('+7 days')) }}" required>
+                    <input type="date" class="form-control" name="required_date"
+                        value="{{ old('required_date', date('Y-m-d', strtotime('+7 days'))) }}">
                 </div>
             </div>
         </div>
@@ -315,13 +315,6 @@
         initSelect2($newRow.find('.boq-item-select')[0]);
         bindRowEvents($newRow[0]);
         updateRemoveButtons();
-    });
-
-    // ── Datepicker ─────────────────────────────────────────────────────────
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd',
-        autoclose: true,
-        todayHighlight: true
     });
 
     // ── Project select2 ────────────────────────────────────────────────────

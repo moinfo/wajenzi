@@ -31,7 +31,7 @@ $document_id = \App\Classes\Utility::getLastId('Project')+1;
             <div class="col-sm-12">
                 <div class="form-group">
                     <label for="visit_date" class="control-label required">Visit Date</label>
-                    <input type="text" class="form-control datepicker" id="input-visit-date" name="visit_date" value="{{ $object->visit_date ?? date('Y-m-d') }}" required="required">
+                    <input type="date" class="form-control" id="input-visit-date" name="visit_date" value="{{ old('visit_date', $object->visit_date ? \Carbon\Carbon::parse($object->visit_date)->format('Y-m-d') : date('Y-m-d')) }}">
                 </div>
             </div>
         </div>
@@ -49,9 +49,4 @@ $document_id = \App\Classes\Utility::getLastId('Project')+1;
         </div>
     </form>
 </div>
-<script>
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
-    });
-</script>
 

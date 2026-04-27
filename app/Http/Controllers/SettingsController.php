@@ -1114,9 +1114,10 @@ class SettingsController extends Controller
 
     public function sub_activities(Request $request)
     {
-        if($this->handleCrud($request, 'SubActivity')) {
-            return back();
-        }
+        // Temporarily disable CRUD to test
+        // if($this->handleCrud($request, 'SubActivity')) {
+        //     return back();
+        // }
         
         $data = [
             'sub_activities' => SubActivity::with('activity.constructionStage')->orderBy('sort_order')->get(),

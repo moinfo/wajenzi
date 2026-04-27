@@ -34,7 +34,7 @@
             <div class="col-sm-6">
                 <div class="form-group">
                     <label for="expense_date" class="control-label required">Cost Date</label>
-                    <input type="text" class="form-control datepicker" id="input-expense-date" name="expense_date" value="{{ isset($object->expense_date) ? $object->expense_date->format('Y-m-d') : date('Y-m-d') }}" required="required">
+                    <input type="date" class="form-control" id="input-expense-date" name="expense_date" value="{{ old('expense_date', isset($object->expense_date) ? \Carbon\Carbon::parse($object->expense_date)->format('Y-m-d') : date('Y-m-d')) }}">
                 </div>
             </div>
             <div class="col-sm-6">

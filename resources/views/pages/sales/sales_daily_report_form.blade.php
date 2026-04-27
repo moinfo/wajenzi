@@ -36,9 +36,9 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="report_date" class="required">Report Date</label>
-                            <input type="text" class="form-control datepicker @error('report_date') is-invalid @enderror" 
+                            <input type="date" class="form-control @error('report_date') is-invalid @enderror" 
                                    id="report_date" name="report_date" 
-                                   value="{{ old('report_date', $object->report_date?->format('d/m/Y') ?? now()->format('d/m/Y')) }}" required
+                                   value="{{ old('report_date', $object->report_date ? \Carbon\Carbon::parse($object->report_date)->format('Y-m-d') : now()->format('Y-m-d')) }}" required
                                    placeholder="Select date">
                             @error('report_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -135,7 +135,7 @@
                                         <td><textarea class="form-control" name="lead_followups[{{ $index }}][details_discussion]" rows="2">{{ $followup->details_discussion }}</textarea></td>
                                         <td><textarea class="form-control" name="lead_followups[{{ $index }}][outcome]" rows="2">{{ $followup->outcome }}</textarea></td>
                                         <td><textarea class="form-control" name="lead_followups[{{ $index }}][next_step]" rows="2">{{ $followup->next_step }}</textarea></td>
-                                        <td><input type="text" class="form-control datepicker" name="lead_followups[{{ $index }}][followup_date]" value="{{ $followup->followup_date?->format('d/m/Y') }}" placeholder="Select date"></td>
+                                        <td><input type="date" class="form-control" name="lead_followups[{{ $index }}][followup_date]" value="{{ $followup->followup_date ? \Carbon\Carbon::parse($followup->followup_date)->format('Y-m-d') : '' }}"></td>
                                         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
                                     </tr>
                                 @endforeach
@@ -160,7 +160,7 @@
                                     <td><textarea class="form-control" name="lead_followups[0][details_discussion]" rows="2" placeholder="Details/Discussion"></textarea></td>
                                     <td><textarea class="form-control" name="lead_followups[0][outcome]" rows="2" placeholder="Outcome"></textarea></td>
                                     <td><textarea class="form-control" name="lead_followups[0][next_step]" rows="2" placeholder="Next Step"></textarea></td>
-                                    <td><input type="text" class="form-control datepicker" name="lead_followups[0][followup_date]" placeholder="Select date"></td>
+                                    <td><input type="date" class="form-control" name="lead_followups[0][followup_date]"></td>
                                     <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
                                 </tr>
                             @endif
@@ -427,12 +427,10 @@ function addLeadFollowup() {
         <td><textarea class="form-control" name="lead_followups[${leadFollowupIndex}][details_discussion]" rows="2" placeholder="Details/Discussion"></textarea></td>
         <td><textarea class="form-control" name="lead_followups[${leadFollowupIndex}][outcome]" rows="2" placeholder="Outcome"></textarea></td>
         <td><textarea class="form-control" name="lead_followups[${leadFollowupIndex}][next_step]" rows="2" placeholder="Next Step"></textarea></td>
-        <td><input type="text" class="form-control datepicker" name="lead_followups[${leadFollowupIndex}][followup_date]" placeholder="Select date"></td>
+        <td><input type="date" class="form-control" name="lead_followups[${leadFollowupIndex}][followup_date]"></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
     `;
     leadFollowupIndex++;
-    // Initialize datepicker for new row
-    initializeDatepickers();
 }
 
 function addSalesActivity() {
@@ -494,16 +492,6 @@ function calculateCAC() {
     document.getElementById('cac_value').value = cacValue.toFixed(2);
 }
 
-// Initialize datepickers for dynamically added elements
-function initializeDatepickers() {
-    $('.datepicker').datepicker({
-        autoclose: true,
-        format: 'dd/mm/yyyy',
-        todayHighlight: true,
-        defaultViewDate: new Date()
-    });
-}
-
 // Toggle payment amount field visibility
 function togglePaymentAmount(selectElement) {
     const row = selectElement.closest('tr');
@@ -528,7 +516,6 @@ function togglePaymentAmount(selectElement) {
 // Calculate CAC on page load
 document.addEventListener('DOMContentLoaded', function() {
     calculateCAC();
-    initializeDatepickers();
     
     // Initialize payment amount visibility for existing rows
     document.querySelectorAll('.sales-status-select').forEach(function(select) {

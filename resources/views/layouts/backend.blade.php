@@ -749,6 +749,15 @@ MAIN CONTENT LAYOUT
         });
     }
 
+    // Initialize datepicker when modal is shown
+    $('#ajax-loader-modal').on('shown.bs.modal', function () {
+        $('#ajax-loader-modal-content .datepicker').datepicker({
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true
+        });
+    });
+
     /**
      * Delete A modal Item using ajax
      */

@@ -24,9 +24,8 @@ $document_id = \App\Classes\Utility::getLastId('Loan')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>
-            <input type="text" class="form-control datepicker"  id="input-date" name="date"
-                   value="{{ $object->date ?? date('Y-m-d') }}" required>
-            {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
+            <input type="date" class="form-control" id="input-date" name="date"
+                   value="{{ old('date', $object->date ? \Carbon\Carbon::parse($object->date)->format('Y-m-d') : date('Y-m-d')) }}">
         </div>
         <div class="form-group">
             @if($object->id ?? null)
@@ -67,17 +66,5 @@ $document_id = \App\Classes\Utility::getLastId('Loan')+1;
         })
 
 
-    });
-    $("input").on("change", function () {
-        this.setAttribute(
-            "data-date",
-            moment(this.value, "YYYY-MM-DD")
-                .format(this.getAttribute("data-date-format"))
-        )
-    }).trigger("change")
-</script>
-<script>
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
     });
 </script>

@@ -19,7 +19,7 @@
                     <i class="si si-graph"></i> Dashboard
                 </a>
                 <a href="{{ route('project_material_requests') }}" class="btn btn-rounded min-width-125 mb-10 action-btn add-btn">
-                    <i class="si si-plus"></i> New Quotation
+                    <i class="si si-plus"></i> Create from Material Request
                 </a>
             </div>
         </div>

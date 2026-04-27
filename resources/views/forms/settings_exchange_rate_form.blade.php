@@ -29,11 +29,30 @@
         </div>
         <div class="form-group">
             <label for="example-nf-email">Month</label>
-            <input type="number" class="form-control" id="month" name="month" value="{{ $object->month ?? '' }}" required>
+            <select name="month" id="month" class="form-control" required>
+                <option value="">Select Month</option>
+                <option value="1" {{ ($object->month ?? '') == '1' ? 'selected' : '' }}>January</option>
+                <option value="2" {{ ($object->month ?? '') == '2' ? 'selected' : '' }}>February</option>
+                <option value="3" {{ ($object->month ?? '') == '3' ? 'selected' : '' }}>March</option>
+                <option value="4" {{ ($object->month ?? '') == '4' ? 'selected' : '' }}>April</option>
+                <option value="5" {{ ($object->month ?? '') == '5' ? 'selected' : '' }}>May</option>
+                <option value="6" {{ ($object->month ?? '') == '6' ? 'selected' : '' }}>June</option>
+                <option value="7" {{ ($object->month ?? '') == '7' ? 'selected' : '' }}>July</option>
+                <option value="8" {{ ($object->month ?? '') == '8' ? 'selected' : '' }}>August</option>
+                <option value="9" {{ ($object->month ?? '') == '9' ? 'selected' : '' }}>September</option>
+                <option value="10" {{ ($object->month ?? '') == '10' ? 'selected' : '' }}>October</option>
+                <option value="11" {{ ($object->month ?? '') == '11' ? 'selected' : '' }}>November</option>
+                <option value="12" {{ ($object->month ?? '') == '12' ? 'selected' : '' }}>December</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="example-nf-email">Year</label>
-            <input type="number" class="form-control" id="year" name="year" value="{{ $object->year ?? '' }}" required>
+            <select name="year" id="year" class="form-control" required>
+                <option value="">Select Year</option>
+                @for($y = date('Y'); $y >= date('Y') - 10; $y--)
+                    <option value="{{ $y }}" {{ ($object->year ?? '') == (string)$y ? 'selected' : '' }}>{{ $y }}</option>
+                @endfor
+            </select>
         </div>
         <div class="form-group">
             @if($object->id ?? null)

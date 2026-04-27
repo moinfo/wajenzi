@@ -63,21 +63,21 @@ $users = \App\Models\User::all();
             <div class="col-md-4">
                 <div class="form-group">
                     <label for="start_date" class="control-label required">Start Date</label>
-                    <input type="text" class="form-control datepicker" id="input-start-date" name="start_date" value="{{ $object->start_date ?? date('Y-m-d') }}" required="required">
+                    <input type="date" class="form-control" id="input-start-date" name="start_date" value="{{ old('start_date', $object->start_date ? \Carbon\Carbon::parse($object->start_date)->format('Y-m-d') : date('Y-m-d')) }}">
                 </div>
             </div>
 
             <div class="col-md-4">
                 <div class="form-group">
                     <label for="expected_end_date" class="control-label required">Expected End Date</label>
-                    <input type="text" class="form-control datepicker" id="input-expected-end-date" name="expected_end_date" value="{{ $object->expected_end_date ?? date('Y-m-d') }}" required="required">
+                    <input type="date" class="form-control" id="input-expected-end-date" name="expected_end_date" value="{{ old('expected_end_date', $object->expected_end_date ? \Carbon\Carbon::parse($object->expected_end_date)->format('Y-m-d') : date('Y-m-d')) }}">
                 </div>
             </div>
 
             <div class="col-md-4">
                 <div class="form-group">
                     <label for="actual_end_date" class="control-label">Actual End Date</label>
-                    <input type="text" class="form-control datepicker" id="input-actual-end-date" name="actual_end_date" value="{{ $object->actual_end_date ?? '' }}" placeholder="Set when completed">
+                    <input type="date" class="form-control" id="input-actual-end-date" name="actual_end_date" value="{{ old('actual_end_date', $object->actual_end_date ? \Carbon\Carbon::parse($object->actual_end_date)->format('Y-m-d') : '') }}" placeholder="Set when completed">
                 </div>
             </div>
 
@@ -143,8 +143,3 @@ $users = \App\Models\User::all();
         </div>
     </form>
 </div>
-<script>
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
-    });
-</script>

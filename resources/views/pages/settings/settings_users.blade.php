@@ -31,30 +31,14 @@
                             <table class="table table-bordered table-striped table-vcenter js-dataTable-full">
                                 <thead>
                                 <tr>
-                                    <th class="text-center" style="width: 100px;">#</th>
-                                    <th></th>
-                                    <th>Name</th>
-                                    <th class="d-none d-sm-table-cell" style="width: 30%;">Email</th>
-                                    <th>Device ID</th>
-                                    <th>Address</th>
-                                    <th>Designation</th>
-                                    <th>Department</th>
-                                    <th>Attendance Type</th>
-                                    <th>Attendance Status</th>
-                                    <th>Type</th>
-                                    <th>Gender</th>
-                                    <th>Employee No.</th>
-                                    <th>Date of Birth</th>
-                                    <th>Date of Job</th>
-                                    <th>National ID</th>
-                                    <th>TIN</th>
-                                    <th>EMPLOYMENT TYPE</th>
-                                    <th>MARITAL STATUS</th>
-                                    <th>Signature</th>
-                                    <th>Profile</th>
-                                    <th>Contract</th>
-                                    <th>STATUS</th>
-                                    <th class="text-center" style="width: 100px;">Actions</th>
+                                    <th class="text-center" style="width: 80px;">#</th>
+                                    <th style="width: 80px;"></th>
+                                    <th style="width: 20%;">Full Name</th>
+                                    <th style="width: 25%;">Email</th>
+                                    <th style="width: 15%;">Position</th>
+                                    <th style="width: 15%;">Department</th>
+                                    <th style="width: 10%;">Status</th>
+                                    <th class="text-center" style="width: 120px;">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -66,61 +50,45 @@
 
                                         <td class="font-w600">
                                             @can('Edit User Permission')
-                                                <button type="button" onclick="loadFormModal('settings_user_permission_form', {className: 'UsersPermission', user_id: {{$user->id}}}, 'Permission For {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                <button type="button" onclick="loadFormModal('settings_user_permission_form', {className: 'UsersPermission', user_id: {{$user->id}}}, 'Permission For {{$user->name}}', 'modal-md');" class="btn btn-sm btn-primary js-tooltip-enabled" data-toggle="tooltip" title="Edit Permissions" data-original-title="Edit Permissions">
                                                     <i class="fa fa-cog"></i>
                                                 </button>
                                             @endcan
                                         </td>
-                                        <td class="font-w600">{{ $user->name }}</td>
-                                        <td class="d-none d-sm-table-cell">{{ $user->email }}
+                                        <td class="font-w600">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fa fa-user-circle text-muted mr-2" style="font-size: 1.2em;"></i>
+                                                <div>
+                                                    <div class="font-weight-bold">{{ $user->name }}</div>
+                                                    <small class="text-muted">ID: {{ $user->employee_number ?? 'N/A' }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fa fa-envelope text-muted mr-2"></i>
+                                                {{ $user->email }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fa fa-briefcase text-muted mr-2"></i>
+                                                {{ $user->designation ?? 'N/A' }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fa fa-building text-muted mr-2"></i>
+                                                {{ $user->department->name ?? 'N/A' }}
+                                            </div>
                                         </td>
                                         <td class="text-center">
-                                            <span class="badge badge-info">{{ $user->user_device_id ?? 'N/A' }}</span>
-                                        </td>
-                                        <td>{{ $user->address }}</td>
-                                        <td>{{ $user->designation }}</td>
-                                        <td>{{ $user->department->name  ?? ''}}</td>
-                                        <td>{{ $user->attendanceType->name ?? 'N/A' }}</td>
-                                        <td class="text-center">
-                                            @if($user->attendance_status == 'ENABLED')
-                                                <span class="badge badge-success">ENABLED</span>
-                                            @elseif($user->attendance_status == 'DISABLED')
-                                                <span class="badge badge-danger">DISABLED</span>
+                                            @if($user->status === 'ACTIVE')
+                                                <span class="badge badge-success">ACTIVE</span>
                                             @else
-                                                <span class="badge badge-secondary">N/A</span>
+                                                <span class="badge badge-danger">INACTIVE</span>
                                             @endif
                                         </td>
-                                        <td>{{ $user->type }}</td>
-                                        <td>{{ $user->gender }}</td>
-                                        <td>{{ $user->employee_number }}</td>
-                                        <td>{{ $user->dob }}</td>
-                                        <td>{{ $user->employment_date }}</td>
-                                        <td>{{ $user->national_id }}</td>
-                                        <td>{{ $user->tin }}</td>
-                                        <td>{{ $user->employment_type }}</td>
-                                        <td>{{ $user->marital_status }}</td>
-                                        <td class="text-center">
-                                            @if($user->file != null)
-                                                <a href="{{ url("$user->file") }}">Signature</a>
-                                            @else
-                                                No Signature
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            @if($user->profile != null)
-                                                <a href="{{ url("$user->profile") }}">Profile</a>
-                                            @else
-                                                No Profile
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            @if($user->contract != null)
-                                                <a href="{{ url("$user->contract") }}" target="_blank"><i class="fa fa-file-pdf text-danger"></i> Contract</a>
-                                            @else
-                                                No Contract
-                                            @endif
-                                        </td>
-                                        <td>{{ $user->status }}</td>
                                         <td class="text-center" >
                                             <div class="btn-group">
                                                 @can('Manage User Password')

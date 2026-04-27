@@ -29,9 +29,8 @@ $document_id = \App\Classes\Utility::getLastId('VatPayment')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>
-            <input type="text" class="form-control datepicker"  id="input-date" name="date"
-                   value="{{ $object->date ?? date('Y-m-d') }}" required>
-            {{--            <input type="date"  min="1997-01-01" max="2030-12-31" class="js-flatpickr form-control bg-white" id="example-flatpickr-default" name="example-flatpickr-default" placeholder="Y-m-d">--}}
+            <input type="date" class="form-control" id="input-date" name="date"
+                   value="{{ old('date', $object->date ?? date('Y-m-d')) }}" required>
         </div>
         <div class="form-group">
             <label class="control-label" for="chooseFile">Choose file</label>
@@ -78,18 +77,6 @@ $document_id = \App\Classes\Utility::getLastId('VatPayment')+1;
         })
 
 
-    });
-    $("input").on("change", function () {
-        this.setAttribute(
-            "data-date",
-            moment(this.value, "YYYY-MM-DD")
-                .format(this.getAttribute("data-date-format"))
-        )
-    }).trigger("change")
-</script>
-<script>
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
     });
 </script>
 

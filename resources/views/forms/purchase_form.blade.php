@@ -53,13 +53,13 @@ $document_id = \App\Classes\Utility::getLastId('Purchase')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-invoice_date">Invoice Date</label>
-            <input type="text" class="form-control datepicker" id="input-invoice_date" name="invoice_date"
-                   value="{{ $object->invoice_date ?? date('Y-m-d') }}" required>
+            <input type="date" class="form-control" id="input-invoice_date" name="invoice_date"
+                   value="{{ old('invoice_date', $object->invoice_date ?? date('Y-m-d')) }}" required>
         </div>
         <div class="form-group">
-            <label for="example-nf-invoice_date">Date</label>
-            <input type="text" class="form-control datepicker" id="input-date" name="date"
-                   value="{{ $object->date ?? date('Y-m-d') }}" required>
+            <label for="example-nf-date">Date</label>
+            <input type="date" class="form-control" id="input-date" name="date"
+                   value="{{ old('date', $object->date ?? date('Y-m-d')) }}" required>
         </div>
         <div class="form-group">
             <label class="control-label" for="chooseFile">Choose file</label>
@@ -132,10 +132,6 @@ $document_id = \App\Classes\Utility::getLastId('Purchase')+1;
             $('#input-vat_amount').val($('#input-amount_vat_exc').val() * 0);
         }
     }
-
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
-    });
 
     $(".select2").select2({
         theme: "bootstrap",

@@ -89,7 +89,22 @@
                                         <td>{{ $visit->project->project_name ?? null }} - {{ $visit->project->client->first_name ?? null }} {{ $visit->project->client->last_name ?? null }}</td>
                                         <td>{{ $visit->location ?? null }}</td>
                                         <td>{{ $visit->description ?? null }}</td>
-                                        <td>{{ $visit->visit_date }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($visit->visit_date)->format('Y-m-d') }}</td>
+                                        <td>
+                                            @if($visit->status == 'PENDING')
+                                                <div class="badge badge-warning">{{ $visit->status}}</div>
+                                            @elseif($visit->status == 'APPROVED')
+                                                <div class="badge badge-primary">{{ $visit->status}}</div>
+                                            @elseif($visit->status == 'REJECTED')
+                                                <div class="badge badge-danger">{{ $visit->status}}</div>
+                                            @elseif($visit->status == 'PAID')
+                                                <div class="badge badge-primary">{{ $visit->status}}</div>
+                                            @elseif($visit->status == 'COMPLETED')
+                                                <div class="badge badge-success">{{ $visit->status}}</div>
+                                            @else
+                                                <div class="badge badge-secondary">{{ $visit->status}}</div>
+                                            @endif
+                                        </td>
                                         <td class="approvals-cell">
                                             <div class="approval-badges">
                                                 @foreach($approvals as $approval)
@@ -118,22 +133,6 @@
                                                     @endif
                                                 @endforeach
                                             </div>
-                                        </td>
-
-                                        <td>
-                                            @if($visit->status == 'PENDING')
-                                                <div class="badge badge-warning">{{ $visit->status}}</div>
-                                            @elseif($visit->status == 'APPROVED')
-                                                <div class="badge badge-primary">{{ $visit->status}}</div>
-                                            @elseif($visit->status == 'REJECTED')
-                                                <div class="badge badge-danger">{{ $visit->status}}</div>
-                                            @elseif($visit->status == 'PAID')
-                                                <div class="badge badge-primary">{{ $visit->status}}</div>
-                                            @elseif($visit->status == 'COMPLETED')
-                                                <div class="badge badge-success">{{ $visit->status}}</div>
-                                            @else
-                                                <div class="badge badge-secondary">{{ $visit->status}}</div>
-                                            @endif
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group">
