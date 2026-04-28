@@ -427,24 +427,6 @@
 
 @section('js_after')
 <script>
-(function() {
-    var bodyTop = $('body').offset().top;
-    $('.modal .datepicker').each(function() {
-        try { $(this).datepicker('destroy'); } catch(e) {}
-        $(this).datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true, container: 'body', orientation: 'bottom auto' });
-        var dp = $(this).data('datepicker');
-        if (dp) {
-            var _orig = dp.place;
-            dp.place = function() {
-                _orig.call(this);
-                if (bodyTop > 0) { this.picker.css('top', parseFloat(this.picker.css('top')) + bodyTop); }
-                this.picker[0].style.setProperty('z-index', '9999', 'important');
-                return this;
-            };
-        }
-    });
-})();
-
 // ── Contact modal ────────────────────────────────────────────────────────────
 function openEditContact(data) {
     var form = document.getElementById('editContactForm');

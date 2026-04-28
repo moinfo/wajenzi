@@ -682,6 +682,32 @@ MAIN CONTENT LAYOUT
     $('.datepicker').datepicker({
         format: 'yyyy-mm-dd'
     });
+
+    // Fix datepicker inside modals globally (static + AJAX-loaded forms)
+    // codebase.css sets .datepicker { z-index:1051!important } and $('body').offset().top = 80
+    // so we patch dp.place() to correct both after each show
+    function _fixModalDatepickers(modalEl) {
+        var bodyTop = $('body').offset().top;
+        $(modalEl || document).find('.datepicker').each(function() {
+            try { $(this).datepicker('destroy'); } catch(e) {}
+            $(this).datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true, container: 'body', orientation: 'bottom auto' });
+            var dp = $(this).data('datepicker');
+            if (dp && !dp._placePatchApplied) {
+                dp._placePatchApplied = true;
+                var _orig = dp.place;
+                dp.place = function() {
+                    _orig.call(this);
+                    if (bodyTop > 0) { this.picker.css('top', parseFloat(this.picker.css('top')) + bodyTop); }
+                    this.picker[0].style.setProperty('z-index', '9999', 'important');
+                    return this;
+                };
+            }
+        });
+    }
+    // Apply to any datepickers already inside modals on page load
+    $('.modal').each(function() { _fixModalDatepickers(this); });
+    // Apply every time a modal finishes opening (covers AJAX-loaded forms)
+    $(document).on('shown.bs.modal', '.modal', function() { _fixModalDatepickers(this); });
     $(".select2").select2({
         theme: "bootstrap",
         placeholder: "Choose",
