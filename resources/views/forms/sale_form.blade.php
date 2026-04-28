@@ -38,8 +38,8 @@ $document_id = \App\Classes\Utility::getLastId('Sale')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-date">Date</label>
-            <input type="date" name="date" id="input-date"
-                   class="form-control"
+            <input type="text" name="date" id="input-date"
+                   class="form-control datepicker"
                    value="{{ old('date', $object->date ?? date('Y-m-d')) }}" required>
         </div>
         <div class="form-group">

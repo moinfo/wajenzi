@@ -2,12 +2,15 @@
 
 @php
     $staffList = collect($staffs)->sortBy('name')->values();
-    $defaultStaffId = optional($staffList->first())->id;
+    $latestApprovedPayroll = \App\Models\Payroll::query()
+        ->where('status', 'APPROVED')
+        ->orderByDesc('year')
+        ->orderByDesc('month')
+        ->orderByDesc('id')
+        ->first();
 
-    $this_year = (int) request()->input('year', date('Y'));
-    $this_month = (int) request()->input('month', date('m'));
-    $this_employee = (int) request()->input('staff_id', $defaultStaffId);
-    $staff_id = $this_employee;
+    $this_year = (int) request()->input('year', $latestApprovedPayroll?->year ?? date('Y'));
+    $this_month = (int) request()->input('month', $latestApprovedPayroll?->month ?? date('m'));
 
     $months = [
         1 => 'January',
@@ -38,6 +41,18 @@
 
     $payroll = \App\Models\Payroll::getThisPayrollApproved($this_month, $this_year);
     $payroll_id = $payroll?->id;
+    $payrollStaffId = $payroll_id
+        ? \App\Models\PayrollSalary::query()
+            ->join('users', 'users.id', '=', 'payroll_salaries.staff_id')
+            ->where('payroll_salaries.payroll_id', $payroll_id)
+            ->where('users.status', 'ACTIVE')
+            ->where('users.type', 'STAFF')
+            ->orderBy('users.name')
+            ->value('payroll_salaries.staff_id')
+        : null;
+    $defaultStaffId = $payrollStaffId ?? optional($staffList->first())->id;
+    $this_employee = (int) request()->input('staff_id', $defaultStaffId);
+    $staff_id = $this_employee;
     $employee = $this_employee ? \App\Models\User::with('department')->find($this_employee) : null;
     $employee_bank_details = $this_employee
         ? \App\Models\StaffBankDetail::with('bank')->where('staff_id', $this_employee)->first()
@@ -134,22 +149,30 @@
     $payrollMonthLabel = $payroll
         ? date('F Y', strtotime($payroll->year . '-' . $payroll->month . '-01'))
         : $selectedMonthName . ' ' . $this_year;
-    $hasPayslip = $payroll && $employee;
+    $employeeHasPayroll = $payroll_id && $staff_id
+        ? \App\Models\PayrollSalary::where('payroll_id', $payroll_id)->where('staff_id', $staff_id)->exists()
+        : false;
+    $hasPayslip = $payroll && $employee && $employeeHasPayroll;
+    $emptyPayslipMessage = $payroll && $employee && ! $employeeHasPayroll
+        ? 'An approved payroll exists for ' . $payrollMonthLabel . ', but ' . $employee->name . ' was not included in that payroll.'
+        : 'No approved payroll was found for ' . $selectedMonthName . ' ' . $this_year . ($employee ? ' for ' . $employee->name : '') . '.';
 @endphp
 
 @section('css_after')
     <style>
         .salary-slip-page {
+            background: #f4f7fb;
             color: #172033;
+            min-height: calc(100vh - 80px);
             padding-bottom: 2rem;
         }
 
         .salary-slip-header {
             align-items: center;
-            background: #ffffff;
-            border: 1px solid #e3e8f0;
+            background: linear-gradient(135deg, #12304d 0%, #165f6b 58%, #17a99a 100%);
+            border: 0;
             border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            box-shadow: 0 16px 38px rgba(18, 48, 77, 0.18);
             display: flex;
             justify-content: space-between;
             margin-bottom: 1rem;
@@ -159,13 +182,13 @@
         }
 
         .salary-slip-header:before {
-            background: linear-gradient(180deg, #1bc5bd, #2563eb);
+            background: rgba(255, 255, 255, 0.22);
             content: "";
             height: 100%;
             left: 0;
             position: absolute;
             top: 0;
-            width: 5px;
+            width: 6px;
         }
 
         .salary-slip-title {
@@ -173,7 +196,7 @@
         }
 
         .salary-slip-title h1 {
-            color: #111827;
+            color: #ffffff;
             font-size: 1.55rem;
             font-weight: 800;
             letter-spacing: 0;
@@ -181,14 +204,14 @@
         }
 
         .salary-slip-title p {
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.78);
             font-size: 0.92rem;
             margin: 0.25rem 0 0;
         }
 
         .salary-slip-period {
-            background: #f8fafc;
-            border: 1px solid #dbe3ee;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.25);
             border-radius: 8px;
             min-width: 180px;
             padding: 0.75rem 1rem;
@@ -196,7 +219,7 @@
         }
 
         .salary-slip-period span {
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.72);
             display: block;
             font-size: 0.75rem;
             font-weight: 700;
@@ -204,7 +227,7 @@
         }
 
         .salary-slip-period strong {
-            color: #0f766e;
+            color: #ffffff;
             display: block;
             font-size: 1.1rem;
             margin-top: 0.15rem;
@@ -300,10 +323,38 @@
         }
 
         .salary-summary-item {
+            align-items: center;
             background: #ffffff;
             border: 1px solid #e3e8f0;
             border-radius: 8px;
+            display: flex;
+            gap: 0.85rem;
             padding: 1rem;
+        }
+
+        .salary-summary-icon {
+            align-items: center;
+            border-radius: 8px;
+            display: flex;
+            flex: 0 0 44px;
+            height: 44px;
+            justify-content: center;
+            width: 44px;
+        }
+
+        .salary-summary-icon.gross {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .salary-summary-icon.deductions {
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .salary-summary-icon.net {
+            background: #dcfce7;
+            color: #15803d;
         }
 
         .salary-summary-item span {
@@ -330,16 +381,17 @@
             background: #ffffff;
             border: 1px solid #dfe7f1;
             border-radius: 8px;
-            box-shadow: 0 14px 40px rgba(15, 23, 42, 0.10);
+            box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
             margin: 0 auto 2rem;
-            max-width: 1120px;
+            max-width: 1040px;
             overflow: hidden;
         }
 
         .payslip-document-header {
             align-items: center;
-            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 55%, #eefaf8 100%);
+            background: #ffffff;
             border-bottom: 1px solid #e3e8f0;
+            border-top: 6px solid #12304d;
             display: flex;
             justify-content: space-between;
             padding: 1.4rem 1.6rem;
@@ -354,7 +406,7 @@
 
         .payslip-brand-logo {
             align-items: center;
-            background: #ffffff;
+            background: #f8fafc;
             border: 1px solid #d9e3ef;
             border-radius: 8px;
             display: flex;
@@ -386,6 +438,7 @@
         }
 
         .payslip-label {
+            min-width: 220px;
             text-align: right;
         }
 
@@ -408,6 +461,14 @@
             font-weight: 900;
             margin-top: 0.35rem;
             text-transform: uppercase;
+        }
+
+        .payslip-label small {
+            color: #64748b;
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-top: 0.1rem;
         }
 
         .employee-grid {
@@ -446,46 +507,122 @@
             padding: 1.35rem;
         }
 
-        .salary-table {
-            border-collapse: separate;
-            border-spacing: 0;
-            margin: 0;
-            width: 100%;
+        .salary-breakdown-grid {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
-        .salary-table th,
-        .salary-table td {
-            border-bottom: 1px solid #e3e8f0;
-            padding: 0.8rem 0.95rem;
-            vertical-align: middle;
+        .salary-panel {
+            border: 1px solid #e3e8f0;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
-        .salary-table thead th {
-            background: #172033;
-            color: #ffffff;
+        .salary-panel-header {
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
+            padding: 0.9rem 1rem;
+        }
+
+        .salary-panel-header span {
             font-size: 0.78rem;
             font-weight: 900;
             text-transform: uppercase;
         }
 
-        .salary-table thead th:first-child {
-            border-top-left-radius: 8px;
+        .salary-panel-header strong {
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.98rem;
         }
 
-        .salary-table thead th:last-child {
-            border-top-right-radius: 8px;
+        .earnings-panel .salary-panel-header {
+            background: #eefaf7;
+            color: #0f766e;
         }
 
-        .salary-table tbody tr:nth-child(even) td {
+        .deductions-panel .salary-panel-header {
+            background: #fff7ed;
+            color: #c2410c;
+        }
+
+        .salary-line-table {
+            border-collapse: collapse;
+            margin: 0;
+            width: 100%;
+        }
+
+        .salary-line-table td,
+        .salary-line-table th {
+            border-top: 1px solid #edf2f7;
+            padding: 0.72rem 0.9rem;
+            vertical-align: middle;
+        }
+
+        .salary-line-table td:first-child,
+        .salary-line-table th:first-child {
+            color: #334155;
+            font-weight: 650;
+        }
+
+        .salary-line-table tbody tr:nth-child(even) td {
             background: #fbfdff;
         }
 
-        .salary-section-row th,
-        .salary-section-row td {
-            background: #edf7f6;
-            color: #0f766e;
+        .salary-panel-total th,
+        .salary-panel-total td {
+            background: #f8fafc;
+            color: #172033;
+            font-weight: 900;
+        }
+
+        .salary-net-banner {
+            align-items: center;
+            background: linear-gradient(135deg, #12304d 0%, #0f766e 100%);
+            border-radius: 8px;
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            padding: 1.05rem 1.15rem;
+        }
+
+        .salary-net-banner span {
+            color: rgba(255, 255, 255, 0.76);
+            display: block;
+            font-size: 0.74rem;
             font-weight: 900;
             text-transform: uppercase;
+        }
+
+        .salary-net-banner strong {
+            display: block;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 1.65rem;
+            line-height: 1.15;
+            margin-top: 0.2rem;
+        }
+
+        .salary-net-bank {
+            max-width: 320px;
+            text-align: right;
+        }
+
+        .salary-net-bank small {
+            color: rgba(255, 255, 255, 0.76);
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .salary-net-bank b {
+            color: #ffffff;
+            display: block;
+            font-size: 0.92rem;
+            margin-top: 0.15rem;
+            overflow-wrap: anywhere;
         }
 
         .money {
@@ -497,32 +634,19 @@
             text-align: right !important;
         }
 
-        .summary-row th,
-        .summary-row td {
-            background: #f8fafc;
-            color: #172033;
-            font-weight: 900;
-        }
-
-        .net-salary-row td {
-            background: #0f766e;
-            border-bottom: 0;
-            color: #ffffff;
-            font-weight: 900;
-            padding: 1rem 0.95rem;
-        }
-
-        .net-salary-value {
-            font-size: 1.25rem;
-        }
-
         .payslip-footer {
+            align-items: center;
             background: #f8fafc;
             border-top: 1px solid #e3e8f0;
             color: #64748b;
+            display: flex;
             font-size: 0.85rem;
+            justify-content: space-between;
             padding: 0.9rem 1rem;
-            text-align: center;
+        }
+
+        .payslip-footer strong {
+            color: #172033;
         }
 
         .empty-payslip {
@@ -578,6 +702,10 @@
                 grid-template-columns: 1fr;
             }
 
+            .salary-breakdown-grid {
+                grid-template-columns: 1fr;
+            }
+
             .employee-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
@@ -609,6 +737,18 @@
             .employee-field {
                 border-right: 0;
             }
+
+            .salary-net-banner,
+            .payslip-footer {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .salary-net-bank {
+                max-width: none;
+                text-align: left;
+            }
         }
 
         @media print {
@@ -636,6 +776,19 @@
                 box-shadow: none;
                 margin: 0;
                 max-width: none;
+            }
+
+            .salary-slip-page {
+                background: #ffffff !important;
+            }
+
+            .salary-net-banner,
+            .salary-panel-header,
+            .salary-panel-total th,
+            .salary-panel-total td,
+            .payslip-document-header {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
         }
     </style>
@@ -701,16 +854,31 @@
             @if($hasPayslip)
                 <div class="salary-summary-grid no-print">
                     <div class="salary-summary-item">
-                        <span>Gross Salary</span>
-                        <strong>{{ \App\Classes\Utility::money_format($gross_salary) }}</strong>
+                        <div class="salary-summary-icon gross">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <div>
+                            <span>Gross Salary</span>
+                            <strong>{{ \App\Classes\Utility::money_format($gross_salary) }}</strong>
+                        </div>
                     </div>
                     <div class="salary-summary-item">
-                        <span>Total Deductions</span>
-                        <strong>{{ \App\Classes\Utility::money_format($total_deductions_display) }}</strong>
+                        <div class="salary-summary-icon deductions">
+                            <i class="fa-solid fa-minus-circle"></i>
+                        </div>
+                        <div>
+                            <span>Total Deductions</span>
+                            <strong>{{ \App\Classes\Utility::money_format($total_deductions_display) }}</strong>
+                        </div>
                     </div>
                     <div class="salary-summary-item net">
-                        <span>Net Salary</span>
-                        <strong>{{ \App\Classes\Utility::money_format($net_salary) }}</strong>
+                        <div class="salary-summary-icon net">
+                            <i class="fa-solid fa-money-bill-wave"></i>
+                        </div>
+                        <div>
+                            <span>Net Salary</span>
+                            <strong>{{ \App\Classes\Utility::money_format($net_salary) }}</strong>
+                        </div>
                     </div>
                 </div>
 
@@ -744,6 +912,7 @@
                             <div class="payslip-label">
                                 <span>Approved Payroll</span>
                                 <strong>Payslip</strong>
+                                <small>{{ $payrollMonthLabel }}</small>
                             </div>
                         </div>
 
@@ -783,58 +952,73 @@
                         </div>
 
                         <div class="salary-details">
-                            <div class="table-responsive">
-                                <table class="salary-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Employee Income</th>
-                                            <th class="text-right">Amount</th>
-                                            <th>Deductions</th>
-                                            <th class="text-right">Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr class="salary-section-row">
-                                            <th>Details</th>
-                                            <td></td>
-                                            <th>Details</th>
-                                            <td></td>
-                                        </tr>
+                            <div class="salary-breakdown-grid">
+                                <div class="salary-panel earnings-panel">
+                                    <div class="salary-panel-header">
+                                        <span>Employee Income</span>
+                                        <strong>{{ \App\Classes\Utility::money_format($gross_salary) }}</strong>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="salary-line-table">
+                                            <tbody>
+                                                @foreach($left_side as $income)
+                                                    <tr>
+                                                        <td>{{ $income['name'] }}</td>
+                                                        <td class="money text-right">{{ \App\Classes\Utility::money_format($income['value']) }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="salary-panel-total">
+                                                    <th>Gross Salary</th>
+                                                    <td class="money text-right">{{ \App\Classes\Utility::money_format($gross_salary) }}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
 
-                                        @for($index = 0; $index < $salaryRows; $index++)
-                                            <tr>
-                                                <td>{{ $left_side[$index]['name'] ?? '' }}</td>
-                                                <td class="money text-right">
-                                                    {{ isset($left_side[$index]) ? \App\Classes\Utility::money_format($left_side[$index]['value']) : '' }}
-                                                </td>
-                                                <td>{{ $right_side[$index]['name'] ?? '' }}</td>
-                                                <td class="money text-right">
-                                                    {{ isset($right_side[$index]) ? \App\Classes\Utility::money_format($right_side[$index]['value']) : '' }}
-                                                </td>
-                                            </tr>
-                                        @endfor
+                                <div class="salary-panel deductions-panel">
+                                    <div class="salary-panel-header">
+                                        <span>Deductions</span>
+                                        <strong>{{ \App\Classes\Utility::money_format($total_deductions_display) }}</strong>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="salary-line-table">
+                                            <tbody>
+                                                @foreach($right_side as $deduction)
+                                                    <tr>
+                                                        <td>{{ $deduction['name'] }}</td>
+                                                        <td class="money text-right">{{ \App\Classes\Utility::money_format($deduction['value']) }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="salary-panel-total">
+                                                    <th>Total Deductions</th>
+                                                    <td class="money text-right">{{ \App\Classes\Utility::money_format($total_deductions_display) }}</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
 
-                                        <tr class="summary-row">
-                                            <th>Gross Salary</th>
-                                            <td class="money text-right">{{ \App\Classes\Utility::money_format($gross_salary) }}</td>
-                                            <th>Total Deductions</th>
-                                            <td class="money text-right">{{ \App\Classes\Utility::money_format($total_deductions_display) }}</td>
-                                        </tr>
-                                    </tbody>
-                                    <tfoot>
-                                        <tr class="net-salary-row">
-                                            <td colspan="3">NET SALARY</td>
-                                            <td class="money text-right net-salary-value">
-                                                {{ \App\Classes\Utility::money_format($net_salary) }}
-                                            </td>
-                                        </tr>
-                                    </tfoot>
-                                </table>
+                            <div class="salary-net-banner">
+                                <div>
+                                    <span>Net Salary</span>
+                                    <strong>{{ \App\Classes\Utility::money_format($net_salary) }}</strong>
+                                </div>
+                                <div class="salary-net-bank">
+                                    <small>Payment Account</small>
+                                    <b>{{ $employee_bank_details?->bank?->name ?? 'Bank not set' }} / {{ $employee_bank_details?->account_number ?? 'Account not set' }}</b>
+                                </div>
                             </div>
                         </div>
 
                         <div class="payslip-footer">
-                            This is a computer-generated payslip and does not require a signature.
+                            <span>This is a computer-generated payslip and does not require a signature.</span>
+                            <strong>{{ settings('ORGANIZATION_NAME') }}</strong>
                         </div>
                     </div>
                 </div>
@@ -845,7 +1029,7 @@
                     </div>
                     <div>
                         <h3>Salary slip not available</h3>
-                        <p>No approved payroll was found for {{ $selectedMonthName }} {{ $this_year }}{{ $employee ? ' for ' . $employee->name : '' }}.</p>
+                        <p>{{ $emptyPayslipMessage }}</p>
                     </div>
                 </div>
             @endif

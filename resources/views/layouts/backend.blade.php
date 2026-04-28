@@ -679,9 +679,27 @@ MAIN CONTENT LAYOUT
         });
     }
 
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd'
-    });
+    function initBootstrapDatepickers(context, options) {
+        var defaults = {
+            format: 'yyyy-mm-dd',
+            autoclose: true,
+            todayHighlight: true,
+            orientation: 'bottom auto'
+        };
+        var settings = $.extend({}, defaults, options || {});
+        var $scope = context ? $(context) : $(document);
+        var $pickers = $scope.is('.datepicker') ? $scope : $scope.find('.datepicker');
+
+        $pickers.each(function () {
+            var $picker = $(this);
+            if ($picker.data('datepicker')) {
+                $picker.datepicker('destroy');
+            }
+            $picker.datepicker(settings);
+        });
+    }
+
+    initBootstrapDatepickers(document);
     $(".select2").select2({
         theme: "bootstrap",
         placeholder: "Choose",
@@ -751,10 +769,9 @@ MAIN CONTENT LAYOUT
 
     // Initialize datepicker when modal is shown
     $('#ajax-loader-modal').on('shown.bs.modal', function () {
-        $('#ajax-loader-modal-content .datepicker').datepicker({
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true
+        initBootstrapDatepickers('#ajax-loader-modal-content', {
+            container: '#ajax-loader-modal',
+            zIndexOffset: 2000
         });
     });
 
