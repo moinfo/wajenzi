@@ -583,6 +583,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/campaigns', [$c, 'storeCampaign'])->name('campaigns.store');
         Route::put('/campaigns/{id}', [$c, 'updateCampaign'])->name('campaigns.update');
         Route::delete('/campaigns/{id}', [$c, 'destroyCampaign'])->name('campaigns.destroy');
+        Route::patch('/campaigns/{id}/close', [$c, 'closeCampaign'])->name('campaigns.close');
     });
 
 // Architect Bonus Scheme

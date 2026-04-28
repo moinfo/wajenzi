@@ -21,11 +21,12 @@ class WhatsAppMarketingController extends Controller
         $converted       = WhatsAppContact::whereNotNull('client_id')->count();
         $fromAds         = WhatsAppContact::where('source', 'whatsapp_ad')->count();
         $conversionRate  = $totalContacts > 0 ? round(($converted / $totalContacts) * 100) : 0;
-        $campaignCount   = WhatsAppAdCampaign::count();
+        $campaignCount   = WhatsAppAdCampaign::where('status', 'active')->count();
 
         $services  = FieldMarketingService::active()->orderBy('sort_order')->get();
         $users     = User::where('status', 'ACTIVE')->orderBy('name')->get();
-        $campaigns = WhatsAppAdCampaign::orderByDesc('start_date')->get();
+        // Only active campaigns appear in the contact form dropdown
+        $campaigns = WhatsAppAdCampaign::where('status', 'active')->orderByDesc('start_date')->get();
 
         $data = compact('tab', 'totalContacts', 'converted', 'fromAds', 'conversionRate',
                         'campaignCount', 'services', 'users', 'campaigns');
@@ -193,5 +194,11 @@ class WhatsAppMarketingController extends Controller
     {
         WhatsAppAdCampaign::findOrFail($id)->delete();
         return back()->with('success', 'Campaign deleted.');
+    }
+
+    public function closeCampaign($id)
+    {
+        WhatsAppAdCampaign::findOrFail($id)->update(['status' => 'closed']);
+        return back()->with('success', 'Campaign closed.');
     }
 }

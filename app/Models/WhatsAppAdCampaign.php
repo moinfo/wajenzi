@@ -8,7 +8,12 @@ class WhatsAppAdCampaign extends Model
 {
     protected $table = 'whatsapp_ad_campaigns';
 
-    protected $fillable = ['name', 'start_date', 'end_date', 'budget', 'notes', 'created_by'];
+    protected $fillable = ['name', 'start_date', 'end_date', 'budget', 'notes', 'status', 'created_by'];
+
+    public function isActive(): bool
+    {
+        return $this->status !== 'closed';
+    }
 
     protected $casts = [
         'start_date' => 'date',

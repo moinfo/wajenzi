@@ -275,12 +275,13 @@
                             <th class="text-center">Leads</th>
                             <th class="text-center">Converted</th>
                             <th>Cost / Lead</th>
+                            <th>Status</th>
                             <th class="text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($campaignRows as $camp)
-                        <tr>
+                        <tr class="{{ $camp->status === 'closed' ? 'text-muted' : '' }}">
                             <td class="font-w600">{{ $camp->name }}</td>
                             <td>{{ $camp->start_date->format('d M Y') }}</td>
                             <td>{{ $camp->end_date?->format('d M Y') ?? '—' }}</td>
@@ -298,7 +299,15 @@
                                     —
                                 @endif
                             </td>
+                            <td>
+                                @if($camp->status === 'closed')
+                                    <span class="badge badge-secondary">Closed</span>
+                                @else
+                                    <span class="badge badge-success">Active</span>
+                                @endif
+                            </td>
                             <td class="text-right text-nowrap">
+                                @if($camp->status === 'active')
                                 <button class="btn btn-xs btn-alt-secondary" title="Edit"
                                     onclick="openEditCampaign({{ json_encode([
                                         'id'         => $camp->id,
@@ -310,6 +319,13 @@
                                     ]) }})">
                                     <i class="fa fa-pencil-alt"></i>
                                 </button>
+                                <form action="{{ route('whatsapp_marketing.campaigns.close', $camp->id) }}" method="POST" class="d-inline">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="btn btn-xs btn-alt-warning" title="Close campaign" onclick="return confirm('Close this campaign? It will no longer appear in the contact form.')">
+                                        <i class="fa fa-times-circle"></i>
+                                    </button>
+                                </form>
+                                @endif
                                 <form action="{{ route('whatsapp_marketing.campaigns.destroy', $camp->id) }}" method="POST" class="d-inline">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="btn btn-xs btn-alt-danger" onclick="return confirm('Delete this campaign?')">
