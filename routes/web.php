@@ -554,6 +554,40 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('project-schedules/{projectSchedule}/change-architect', [App\Http\Controllers\ProjectScheduleController::class, 'changeArchitect'])->name('project-schedules.change-architect');
     Route::get('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'showForLead'])->name('leads.schedule');
     Route::post('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForLead'])->name('leads.schedule.create');
+    Route::post('projects/{project}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForProject'])->name('projects.schedule.create');
+
+// Field Marketing
+    Route::prefix('field-marketing')->name('field_marketing.')->group(function () {
+        $c = App\Http\Controllers\FieldMarketingController::class;
+        Route::get('/', [$c, 'index'])->name('index');
+        Route::post('/sessions', [$c, 'storeSession'])->name('sessions.store');
+        Route::get('/sessions/{id}', [$c, 'showSession'])->name('sessions.show');
+        Route::put('/sessions/{id}', [$c, 'updateSession'])->name('sessions.update');
+        Route::delete('/sessions/{id}', [$c, 'destroySession'])->name('sessions.destroy');
+        Route::post('/sessions/{id}/visits', [$c, 'storeVisit'])->name('visits.store');
+        Route::put('/visits/{id}', [$c, 'updateVisit'])->name('visits.update');
+        Route::delete('/visits/{id}', [$c, 'destroyVisit'])->name('visits.destroy');
+        Route::post('/targets', [$c, 'storeTarget'])->name('targets.store');
+        Route::post('/services', [$c, 'storeService'])->name('services.store');
+        Route::put('/services/{id}', [$c, 'updateService'])->name('services.update');
+        Route::delete('/services/{id}', [$c, 'destroyService'])->name('services.destroy');
+    });
+
+// WhatsApp Marketing
+    Route::prefix('whatsapp-marketing')->name('whatsapp_marketing.')->group(function () {
+        $c = App\Http\Controllers\WhatsAppMarketingController::class;
+        Route::get('/', [$c, 'index'])->name('index');
+        Route::post('/contacts', [$c, 'storeContact'])->name('contacts.store');
+        Route::put('/contacts/{id}', [$c, 'updateContact'])->name('contacts.update');
+        Route::delete('/contacts/{id}', [$c, 'destroyContact'])->name('contacts.destroy');
+        Route::post('/campaigns', [$c, 'storeCampaign'])->name('campaigns.store');
+        Route::put('/campaigns/{id}', [$c, 'updateCampaign'])->name('campaigns.update');
+        Route::delete('/campaigns/{id}', [$c, 'destroyCampaign'])->name('campaigns.destroy');
+        Route::patch('/campaigns/{id}/close', [$c, 'closeCampaign'])->name('campaigns.close');
+        Route::patch('/contacts/{id}/labels', [$c, 'updateContactLabels'])->name('contacts.labels.update');
+        Route::get('/contacts/{id}/calls', [$c, 'getContactCalls'])->name('contacts.calls.index');
+        Route::post('/contacts/{id}/calls', [$c, 'storeContactCall'])->name('contacts.calls.store');
+    });
 
 // Architect Bonus Scheme
     Route::get('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'index'])->name('architect-bonus.index');

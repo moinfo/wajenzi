@@ -2,7 +2,9 @@
 
 namespace App\Console\Commands;
 
+use App\Mail\FieldMarketingFollowupMail;
 use App\Mail\FollowupReminderMail;
+use App\Models\FieldMarketingVisit;
 use App\Models\SalesLeadFollowup;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -69,6 +71,35 @@ class SendFollowupReminders extends Command
                     $this->info("Sent TOMORROW reminder to {$salesperson->email} for lead: {$followup->lead->name}");
                 } catch (\Exception $e) {
                     $this->error("Failed to send email to {$salesperson->email}: {$e->getMessage()}");
+                }
+            }
+        }
+
+        // Field marketing follow-ups
+        $fmFollowups = [
+            'today'    => FieldMarketingVisit::with(['session.officer', 'services'])
+                ->where('status', 'follow_up')
+                ->whereDate('next_followup_date', $today)
+                ->whereHas('session.officer')
+                ->get(),
+            'tomorrow' => FieldMarketingVisit::with(['session.officer', 'services'])
+                ->where('status', 'follow_up')
+                ->whereDate('next_followup_date', $tomorrow)
+                ->whereHas('session.officer')
+                ->get(),
+        ];
+
+        foreach ($fmFollowups as $type => $visits) {
+            foreach ($visits as $visit) {
+                $officer = $visit->session->officer;
+                if ($officer && $officer->email) {
+                    try {
+                        Mail::to($officer->email)->send(new FieldMarketingFollowupMail($visit, $type));
+                        $sentCount++;
+                        $this->info("Sent FM {$type} reminder to {$officer->email} for: {$visit->business_name}");
+                    } catch (\Exception $e) {
+                        $this->error("Failed FM reminder to {$officer->email}: {$e->getMessage()}");
+                    }
                 }
             }
         }

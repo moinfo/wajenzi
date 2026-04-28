@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lead;
+use App\Models\Project;
+use App\Models\ProjectAssignment;
 use App\Models\ProjectSchedule;
 use App\Models\ProjectScheduleActivity;
+use App\Models\Role;
 use App\Models\User;
 use App\Notifications\ActivityReassignedNotification;
 use App\Services\ProjectScheduleService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProjectScheduleController extends Controller
 {
@@ -384,6 +389,91 @@ class ProjectScheduleController extends Controller
         }
 
         return back()->with('error', 'Failed to create schedule.');
+    }
+
+    public function createForProject(Request $request, Project $project)
+    {
+        $existing = ProjectSchedule::where(function ($q) use ($project) {
+            $q->whereHas('lead', fn($l) => $l->where('project_id', $project->id))
+              ->orWhere('client_id', $project->client_id);
+        })->first();
+
+        if ($existing) {
+            return redirect()
+                ->route('project-schedules.show', $existing)
+                ->with('info', 'A schedule already exists for this project.');
+        }
+
+        $request->validate([
+            'start_date' => 'required|date',
+        ]);
+
+        $startDate   = Carbon::parse($request->start_date);
+        $architectId = $request->assigned_architect_id ?: null;
+
+        // Use lead if the project has one, otherwise create schedule directly
+        $lead = $project->leads()->latest()->first();
+
+        if ($lead) {
+            $schedule = ProjectScheduleService::createScheduleFromTemplate(
+                $lead->id, $startDate, $architectId, auth()->id()
+            );
+        } else {
+            try {
+                DB::beginTransaction();
+
+                if (!$architectId) {
+                    $architect   = ProjectAssignment::findArchitectWithLeastWorkload();
+                    $architectId = $architect?->id;
+                }
+
+                $schedule = ProjectSchedule::create([
+                    'lead_id'               => null,
+                    'client_id'             => $project->client_id,
+                    'start_date'            => $startDate,
+                    'status'                => 'draft',
+                    'assigned_architect_id' => $architectId,
+                    'created_by'            => auth()->id(),
+                ]);
+
+                ProjectScheduleService::generateActivitiesFromTemplate($schedule, $startDate);
+
+                $last = ProjectScheduleActivity::where('project_schedule_id', $schedule->id)
+                    ->orderBy('end_date', 'desc')->first();
+                if ($last) {
+                    $schedule->update(['end_date' => $last->end_date]);
+                }
+
+                if ($architectId) {
+                    $role = Role::where('name', 'Architect')->first();
+                    if ($role) {
+                        ProjectAssignment::create([
+                            'lead_id'             => null,
+                            'project_schedule_id' => $schedule->id,
+                            'user_id'             => $architectId,
+                            'role_id'             => $role->id,
+                            'status'              => 'active',
+                            'assigned_by'         => auth()->id(),
+                            'assigned_at'         => now(),
+                        ]);
+                    }
+                }
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Failed to create project schedule: ' . $e->getMessage());
+                $schedule = null;
+            }
+        }
+
+        if ($schedule) {
+            return redirect()
+                ->route('project-schedules.show', $schedule)
+                ->with('success', 'Project schedule created successfully.');
+        }
+
+        return back()->with('error', 'Failed to create schedule. Please try again.');
     }
 
     /**

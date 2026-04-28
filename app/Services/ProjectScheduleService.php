@@ -122,7 +122,7 @@ class ProjectScheduleService
     /**
      * Generate activities from template
      */
-    protected static function generateActivitiesFromTemplate(ProjectSchedule $schedule, Carbon $startDate): void
+    public static function generateActivitiesFromTemplate(ProjectSchedule $schedule, Carbon $startDate): void
     {
         $templates = ProjectActivityTemplate::getOrderedTemplates();
         $activityDates = [];

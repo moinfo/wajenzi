@@ -679,27 +679,35 @@ MAIN CONTENT LAYOUT
         });
     }
 
-    function initBootstrapDatepickers(context, options) {
-        var defaults = {
-            format: 'yyyy-mm-dd',
-            autoclose: true,
-            todayHighlight: true,
-            orientation: 'bottom auto'
-        };
-        var settings = $.extend({}, defaults, options || {});
-        var $scope = context ? $(context) : $(document);
-        var $pickers = $scope.is('.datepicker') ? $scope : $scope.find('.datepicker');
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd'
+    });
 
-        $pickers.each(function () {
-            var $picker = $(this);
-            if ($picker.data('datepicker')) {
-                $picker.datepicker('destroy');
+    // Fix datepicker inside modals globally (static + AJAX-loaded forms)
+    // codebase.css sets .datepicker { z-index:1051!important } and $('body').offset().top = 80
+    // so we patch dp.place() to correct both after each show
+    function _fixModalDatepickers(modalEl) {
+        var bodyTop = $('body').offset().top;
+        $(modalEl || document).find('.datepicker').each(function() {
+            try { $(this).datepicker('destroy'); } catch(e) {}
+            $(this).datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true, container: 'body', orientation: 'bottom auto' });
+            var dp = $(this).data('datepicker');
+            if (dp && !dp._placePatchApplied) {
+                dp._placePatchApplied = true;
+                var _orig = dp.place;
+                dp.place = function() {
+                    _orig.call(this);
+                    if (bodyTop > 0) { this.picker.css('top', parseFloat(this.picker.css('top')) + bodyTop); }
+                    this.picker[0].style.setProperty('z-index', '9999', 'important');
+                    return this;
+                };
             }
-            $picker.datepicker(settings);
         });
     }
-
-    initBootstrapDatepickers(document);
+    // Apply to any datepickers already inside modals on page load
+    $('.modal').each(function() { _fixModalDatepickers(this); });
+    // Apply every time a modal finishes opening (covers AJAX-loaded forms)
+    $(document).on('shown.bs.modal', '.modal', function() { _fixModalDatepickers(this); });
     $(".select2").select2({
         theme: "bootstrap",
         placeholder: "Choose",
@@ -722,32 +730,30 @@ MAIN CONTENT LAYOUT
 </script>
 
 <script>
-        <?php
+    {{-- Approval toast notifications disabled -- uncomment to re-enable
+    <?php
         $timer = 1000;
         $delay = 5000;
-
-    foreach( Auth::user()->unreadNotifications()->take(4)->get() as $notification){
-        $link = $notification->data['link']
-        ?>
+        foreach( Auth::user()->unreadNotifications()->take(4)->get() as $notification){
+            $link = $notification->data['link']
+    ?>
     $.notify({
             title: "<strong>{{$notification->data['title']}}:</strong></br> ",
             message: "{{$notification->data['body']}}",
             url: "{{url("$link")}}",
         },{
             type: 'success',
-            placement: {
-                from: "bottom",
-                align: "right"
-            },
+            placement: { from: "bottom", align: "right" },
             delay: {{$delay}},
             timer: {{$timer}},
         },
     );
-        <?php
-        $delay+=30;
-        $timer+=30;
-    }
-        ?>
+    <?php
+            $delay+=30;
+            $timer+=30;
+        }
+    ?>
+    --}}
 
     /**
      * Load a form into a modal
@@ -766,14 +772,6 @@ MAIN CONTENT LAYOUT
             }
         });
     }
-
-    // Initialize datepicker when modal is shown
-    $('#ajax-loader-modal').on('shown.bs.modal', function () {
-        initBootstrapDatepickers('#ajax-loader-modal-content', {
-            container: '#ajax-loader-modal',
-            zIndexOffset: 2000
-        });
-    });
 
     /**
      * Delete A modal Item using ajax
