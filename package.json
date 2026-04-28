@@ -23,6 +23,7 @@
         "laravel-echo": "^1.10.0",
         "laravel-mix": "^6.0.6",
         "lodash": "^4.17.19",
+        "playwright": "^1.59.1",
         "popper.js": "^1.12",
         "postcss": "^8.1.14",
         "pusher-js": "^7.0.3",
