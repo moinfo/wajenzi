@@ -4,6 +4,7 @@
     <?php
     use App\Classes\Utility;
     use App\Models\AdvanceSalary;
+    use App\Models\FieldMarketingVisit;
     use App\Models\Loan;
     use App\Models\Payroll;
     use App\Models\Staff;
@@ -124,6 +125,20 @@
         ->groupBy(function($item) {
             return $item->followup_date->format('Y-m-d');
         });
+
+    // Field marketing follow-ups for calendar
+    $fmCalQuery = FieldMarketingVisit::with(['session.officer'])
+        ->where('status', 'follow_up')
+        ->whereNotNull('next_followup_date')
+        ->whereYear('next_followup_date', $calendarYear)
+        ->whereMonth('next_followup_date', $calendarMonth);
+
+    if (!$canViewAllFollowups) {
+        $fmCalQuery->whereHas('session', fn($q) => $q->where('officer_id', Auth::id()));
+    }
+
+    $calendarFmFollowups = $fmCalQuery->get()
+        ->groupBy(fn($v) => $v->next_followup_date->format('Y-m-d'));
     ?>
 
     <!-- Modern Wajenzi Dashboard -->
@@ -686,13 +701,15 @@
                                 $dayFollowups = $calendarFollowups[$dateKey] ?? collect();
                                 $dayActivities = isset($calendarActivities) ? ($calendarActivities[$dateKey] ?? collect()) : collect();
                                 $dayInvoices = isset($calendarInvoices) ? ($calendarInvoices[$dateKey] ?? collect()) : collect();
+                                $dayFmFollowups = $calendarFmFollowups[$dateKey] ?? collect();
                                 $isToday = $isViewingCurrentMonth && $day == $today;
                                 $currentDate = $calendarDate->copy()->setDay($day);
                                 $isPast = $currentDate->isPast() && !$currentDate->isToday();
                                 $hasFollowups = $dayFollowups->count() > 0;
                                 $hasActivities = $dayActivities->count() > 0;
                                 $hasInvoices = $dayInvoices->count() > 0;
-                                $hasEvents = $hasFollowups || $hasActivities || $hasInvoices;
+                                $hasFmFollowups = $dayFmFollowups->count() > 0;
+                                $hasEvents = $hasFollowups || $hasActivities || $hasInvoices || $hasFmFollowups;
                                 $pendingCount = $dayFollowups->where('status', 'pending')->count();
                                 $completedCount = $dayFollowups->where('status', 'completed')->count();
                             @endphp
@@ -721,15 +738,19 @@
                                             @endphp
                                             <span class="event-dot {{ $invDotClass }}"></span>
                                         @endforeach
-                                        @if(($dayFollowups->count() + $dayActivities->count() + $dayInvoices->count()) > 4)
-                                            <span class="more-events">+{{ ($dayFollowups->count() + $dayActivities->count() + $dayInvoices->count()) - 4 }}</span>
+                                        {{-- FM Follow-up dots (teal) --}}
+                                        @foreach($dayFmFollowups->take(2) as $fm)
+                                            <span class="event-dot fm-followup"></span>
+                                        @endforeach
+                                        @if(($dayFollowups->count() + $dayActivities->count() + $dayInvoices->count() + $dayFmFollowups->count()) > 4)
+                                            <span class="more-events">+{{ ($dayFollowups->count() + $dayActivities->count() + $dayInvoices->count() + $dayFmFollowups->count()) - 4 }}</span>
                                         @endif
                                     </div>
                                     {{-- Hover Tooltip --}}
                                     <div class="calendar-tooltip">
                                         <div class="tooltip-header">
                                             <strong>{{ $currentDate->format('d M Y') }}</strong>
-                                            <span class="tooltip-badge">{{ $dayFollowups->count() + $dayActivities->count() + $dayInvoices->count() }} events</span>
+                                            <span class="tooltip-badge">{{ $dayFollowups->count() + $dayActivities->count() + $dayInvoices->count() + $dayFmFollowups->count() }} events</span>
                                         </div>
                                         @if($hasFollowups)
                                             <div class="tooltip-section">
@@ -785,6 +806,23 @@
                                                 @endif
                                             </div>
                                         @endif
+                                        @if($hasFmFollowups)
+                                            <div class="tooltip-section">
+                                                <div class="tooltip-section-title"><i class="fa fa-map-marked-alt"></i> FM Follow-ups</div>
+                                                @foreach($dayFmFollowups->take(3) as $fm)
+                                                    <div class="tooltip-item">
+                                                        <span class="item-status fm-followup"></span>
+                                                        <span class="item-text">{{ Str::limit($fm->business_name, 22) }}</span>
+                                                        <a href="{{ route('field_marketing.sessions.show', $fm->session_id) }}" target="_blank" class="tooltip-gcal" title="View Session" onclick="event.stopPropagation();">
+                                                            <i class="fa fa-eye"></i>
+                                                        </a>
+                                                    </div>
+                                                @endforeach
+                                                @if($dayFmFollowups->count() > 3)
+                                                    <div class="tooltip-more">+{{ $dayFmFollowups->count() - 3 }} more</div>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
                                 @endif
                             </div>
@@ -815,6 +853,10 @@
                     <div class="legend-item">
                         <span class="legend-dot overdue"></span>
                         <span>Overdue</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot fm-followup"></span>
+                        <span>FM Follow-up</span>
                     </div>
                 </div>
 
@@ -2670,6 +2712,10 @@
             background: #9b59b6;
         }
 
+        .tooltip-item .item-status.fm-followup {
+            background: #17a2b8;
+        }
+
         .tooltip-item .item-code {
             font-weight: 600;
             color: var(--wajenzi-blue-primary);
@@ -2794,6 +2840,10 @@
             background: #9b59b6;
         }
 
+        .event-dot.fm-followup {
+            background: #17a2b8;
+        }
+
         .more-events {
             font-size: 0.6rem;
             color: var(--wajenzi-gray-600);
@@ -2847,6 +2897,10 @@
 
         .calendar-legend .legend-dot.activity {
             background: #3498db;
+        }
+
+        .calendar-legend .legend-dot.fm-followup {
+            background: #17a2b8;
         }
 
         .today-followups-detail {

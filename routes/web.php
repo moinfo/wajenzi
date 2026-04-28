@@ -556,6 +556,23 @@ Route::middleware(['auth'])->group(function () {
     Route::post('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForLead'])->name('leads.schedule.create');
     Route::post('projects/{project}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForProject'])->name('projects.schedule.create');
 
+// Field Marketing
+    Route::prefix('field-marketing')->name('field_marketing.')->group(function () {
+        $c = App\Http\Controllers\FieldMarketingController::class;
+        Route::get('/', [$c, 'index'])->name('index');
+        Route::post('/sessions', [$c, 'storeSession'])->name('sessions.store');
+        Route::get('/sessions/{id}', [$c, 'showSession'])->name('sessions.show');
+        Route::put('/sessions/{id}', [$c, 'updateSession'])->name('sessions.update');
+        Route::delete('/sessions/{id}', [$c, 'destroySession'])->name('sessions.destroy');
+        Route::post('/sessions/{id}/visits', [$c, 'storeVisit'])->name('visits.store');
+        Route::put('/visits/{id}', [$c, 'updateVisit'])->name('visits.update');
+        Route::delete('/visits/{id}', [$c, 'destroyVisit'])->name('visits.destroy');
+        Route::post('/targets', [$c, 'storeTarget'])->name('targets.store');
+        Route::post('/services', [$c, 'storeService'])->name('services.store');
+        Route::put('/services/{id}', [$c, 'updateService'])->name('services.update');
+        Route::delete('/services/{id}', [$c, 'destroyService'])->name('services.destroy');
+    });
+
 // Architect Bonus Scheme
     Route::get('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'index'])->name('architect-bonus.index');
     Route::get('architect-bonus/create', [App\Http\Controllers\ArchitectBonusController::class, 'create'])->name('architect-bonus.create');
