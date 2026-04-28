@@ -32,6 +32,8 @@ return new class extends Migration
             }
         }
 
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+
         $primaryExists = collect(DB::select("SHOW INDEX FROM {$table}"))
             ->contains(fn ($index) => ($index->Key_name ?? null) === 'PRIMARY');
 
@@ -47,6 +49,8 @@ return new class extends Migration
         if (!$codeUniqueExists) {
             DB::statement("ALTER TABLE {$table} ADD UNIQUE INDEX billing_products_services_code_unique (code)");
         }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
 
     public function down(): void

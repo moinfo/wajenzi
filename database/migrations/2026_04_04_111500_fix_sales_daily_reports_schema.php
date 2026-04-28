@@ -12,8 +12,11 @@ return new class extends Migration
             return;
         }
 
-        DB::statement('ALTER TABLE sales_daily_reports MODIFY id BIGINT UNSIGNED NOT NULL');
-        DB::statement('ALTER TABLE sales_daily_reports ADD PRIMARY KEY (id)');
+        $hasPK = !empty(DB::select("SHOW INDEX FROM sales_daily_reports WHERE Key_name = 'PRIMARY'"));
+        if (!$hasPK) {
+            DB::statement('ALTER TABLE sales_daily_reports MODIFY id BIGINT UNSIGNED NOT NULL');
+            DB::statement('ALTER TABLE sales_daily_reports ADD PRIMARY KEY (id)');
+        }
         DB::statement('ALTER TABLE sales_daily_reports MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
     }
 

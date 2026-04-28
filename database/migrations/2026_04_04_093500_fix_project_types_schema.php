@@ -50,8 +50,11 @@ return new class extends Migration
             }
         }
 
-        DB::statement('ALTER TABLE project_types MODIFY id BIGINT UNSIGNED NOT NULL');
-        DB::statement('ALTER TABLE project_types ADD PRIMARY KEY (id)');
+        $hasPK = !empty(DB::select("SHOW INDEX FROM project_types WHERE Key_name = 'PRIMARY'"));
+        if (!$hasPK) {
+            DB::statement('ALTER TABLE project_types MODIFY id BIGINT UNSIGNED NOT NULL');
+            DB::statement('ALTER TABLE project_types ADD PRIMARY KEY (id)');
+        }
         DB::statement('ALTER TABLE project_types MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
     }
 
