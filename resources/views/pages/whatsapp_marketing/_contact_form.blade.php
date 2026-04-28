@@ -36,8 +36,11 @@
             <label>Ad Campaign</label>
             <select name="campaign_id" class="form-control">
                 <option value="">— None —</option>
-                @foreach($campaigns as $camp)
-                    <option value="{{ $camp->id }}">{{ $camp->name }}</option>
+                @foreach($formCampaigns ?? $campaigns as $camp)
+                    <option value="{{ $camp->id }}"
+                            @if(isset($camp->status) && $camp->status === 'closed') class="text-muted" @endif>
+                        {{ $camp->name }}{{ isset($camp->status) && $camp->status === 'closed' ? ' [Closed]' : '' }}
+                    </option>
                 @endforeach
             </select>
         </div>
@@ -95,8 +98,31 @@
     </div>
     <div class="col-md-12">
         <div class="form-group">
+            <label class="d-block mb-2">Labels</label>
+            <div class="d-flex flex-wrap" style="gap:8px">
+                @foreach(\App\Models\WhatsAppContact::LABELS as $key => $meta)
+                <label class="d-flex align-items-center" style="cursor:pointer; user-select:none; gap:6px; font-weight:normal; margin:0">
+                    <input type="checkbox" name="label_ids[]" value="{{ $key }}"
+                           class="lbl-cb {{ $prefix }}-lbl-cb" data-key="{{ $key }}" style="display:none">
+                    <span class="lbl-dot" style="width:14px;height:14px;border-radius:50%;display:inline-block;
+                          background:{{ $meta['hex'] }};flex-shrink:0;transition:transform .15s;
+                          box-shadow:0 0 0 2px #fff,0 0 0 3px {{ $meta['hex'] }}88"></span>
+                    <span style="font-size:13px">{{ $meta['label'] }}</span>
+                </label>
+                @endforeach
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-group">
             <label>Notes</label>
             <textarea name="notes" class="form-control" rows="2"></textarea>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-group">
+            <label>Deal Value (TZS)</label>
+            <input type="number" name="deal_value" class="form-control" min="0" step="0.01" placeholder="0.00">
         </div>
     </div>
     <div class="col-md-12">

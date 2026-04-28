@@ -584,6 +584,9 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/campaigns/{id}', [$c, 'updateCampaign'])->name('campaigns.update');
         Route::delete('/campaigns/{id}', [$c, 'destroyCampaign'])->name('campaigns.destroy');
         Route::patch('/campaigns/{id}/close', [$c, 'closeCampaign'])->name('campaigns.close');
+        Route::patch('/contacts/{id}/labels', [$c, 'updateContactLabels'])->name('contacts.labels.update');
+        Route::get('/contacts/{id}/calls', [$c, 'getContactCalls'])->name('contacts.calls.index');
+        Route::post('/contacts/{id}/calls', [$c, 'storeContactCall'])->name('contacts.calls.store');
     });
 
 // Architect Bonus Scheme
