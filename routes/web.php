@@ -573,6 +573,18 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/services/{id}', [$c, 'destroyService'])->name('services.destroy');
     });
 
+// WhatsApp Marketing
+    Route::prefix('whatsapp-marketing')->name('whatsapp_marketing.')->group(function () {
+        $c = App\Http\Controllers\WhatsAppMarketingController::class;
+        Route::get('/', [$c, 'index'])->name('index');
+        Route::post('/contacts', [$c, 'storeContact'])->name('contacts.store');
+        Route::put('/contacts/{id}', [$c, 'updateContact'])->name('contacts.update');
+        Route::delete('/contacts/{id}', [$c, 'destroyContact'])->name('contacts.destroy');
+        Route::post('/campaigns', [$c, 'storeCampaign'])->name('campaigns.store');
+        Route::put('/campaigns/{id}', [$c, 'updateCampaign'])->name('campaigns.update');
+        Route::delete('/campaigns/{id}', [$c, 'destroyCampaign'])->name('campaigns.destroy');
+    });
+
 // Architect Bonus Scheme
     Route::get('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'index'])->name('architect-bonus.index');
     Route::get('architect-bonus/create', [App\Http\Controllers\ArchitectBonusController::class, 'create'])->name('architect-bonus.create');

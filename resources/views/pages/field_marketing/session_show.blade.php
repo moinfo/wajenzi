@@ -1,5 +1,9 @@
 @extends('layouts.backend')
 
+@section('css_before')
+<style>.datepicker-dropdown { z-index: 1300 !important; }</style>
+@endsection
+
 @section('content')
 <div class="bg-body-light">
     <div class="content content-full">
@@ -310,7 +314,23 @@
 
 @section('js_after')
 <script>
-$('.datepicker').datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true });
+(function() {
+    var bodyTop = $('body').offset().top;
+    $('.modal .datepicker').each(function() {
+        try { $(this).datepicker('destroy'); } catch(e) {}
+        $(this).datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true, container: 'body', orientation: 'bottom auto' });
+        var dp = $(this).data('datepicker');
+        if (dp) {
+            var _orig = dp.place;
+            dp.place = function() {
+                _orig.call(this);
+                if (bodyTop > 0) { this.picker.css('top', parseFloat(this.picker.css('top')) + bodyTop); }
+                this.picker[0].style.setProperty('z-index', '9999', 'important');
+                return this;
+            };
+        }
+    });
+})();
 
 function toggleFollowupDate(containerId, select) {
     document.getElementById(containerId).style.display = select.value === 'follow_up' ? '' : 'none';
@@ -326,10 +346,8 @@ function openEditVisit(id, business, location, phone, status, followup, notes, s
     document.getElementById('evLocation').value = location || '';
     document.getElementById('evPhone').value    = phone    || '';
     document.getElementById('evStatus').value   = status;
-    $('#evFollowup').datepicker('update', followup || '');
     document.getElementById('evNotes').value    = notes    || '';
 
-    // Restore service pill state — Bootstrap 4 btn-group uses `active` class on label
     document.querySelectorAll('#evServicesContainer .ev-svc-cb').forEach(function(cb) {
         var selected = serviceIds.indexOf(parseInt(cb.dataset.id)) !== -1;
         cb.checked = selected;
@@ -337,7 +355,9 @@ function openEditVisit(id, business, location, phone, status, followup, notes, s
         if (label) label.classList.toggle('active', selected);
     });
 
+    $('#evFollowup').datepicker('update', followup || '');
     toggleFollowupDate('editFollowupDate', document.getElementById('evStatus'));
+    $('#editVisitModal').modal('show');
 }
 </script>
 @endsection

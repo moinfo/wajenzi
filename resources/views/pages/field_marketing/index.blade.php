@@ -1,5 +1,9 @@
 @extends('layouts.backend')
 
+@section('css_before')
+<style>.datepicker-dropdown { z-index: 1300 !important; }</style>
+@endsection
+
 @section('content')
 <div class="content">
     @if(session('success'))
@@ -628,15 +632,31 @@
 
 @section('js_after')
 <script>
-$('.datepicker').datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true });
+(function() {
+    var bodyTop = $('body').offset().top;
+    $('.modal .datepicker').each(function() {
+        try { $(this).datepicker('destroy'); } catch(e) {}
+        $(this).datepicker({ format: 'yyyy-mm-dd', autoclose: true, todayHighlight: true, container: 'body', orientation: 'bottom auto' });
+        var dp = $(this).data('datepicker');
+        if (dp) {
+            var _orig = dp.place;
+            dp.place = function() {
+                _orig.call(this);
+                if (bodyTop > 0) { this.picker.css('top', parseFloat(this.picker.css('top')) + bodyTop); }
+                this.picker[0].style.setProperty('z-index', '9999', 'important');
+                return this;
+            };
+        }
+    });
+})();
 
 function openEditSession(id, officerId, area, date, status, notes) {
     document.getElementById('editSessionForm').action = '/field-marketing/sessions/' + id;
     document.getElementById('editOfficerId').value = officerId;
     document.getElementById('editArea').value = area;
-    $('#editDate').datepicker('update', date);
     document.getElementById('editStatus').value = status;
     document.getElementById('editNotes').value = notes || '';
+    $('#editDate').datepicker('update', date);
     $('#editSessionModal').modal('show');
 }
 
