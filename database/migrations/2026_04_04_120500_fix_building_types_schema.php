@@ -54,14 +54,17 @@ return new class extends Migration
             }
         }
 
-        DB::statement('ALTER TABLE building_types MODIFY id BIGINT UNSIGNED NOT NULL');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0');
 
         $hasPrimaryKey = !empty(DB::select("SHOW INDEX FROM building_types WHERE Key_name = 'PRIMARY'"));
         if (!$hasPrimaryKey) {
+            DB::statement('ALTER TABLE building_types MODIFY id BIGINT UNSIGNED NOT NULL');
             DB::statement('ALTER TABLE building_types ADD PRIMARY KEY (id)');
         }
 
         DB::statement('ALTER TABLE building_types MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1');
     }
 
     public function down(): void
