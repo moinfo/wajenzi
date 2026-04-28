@@ -79,8 +79,11 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="start_date">Start Date</label>
+                            @php
+                                $startDate = old('start_date', now()->format('d/m/Y'));
+                            @endphp
                             <input type="text" class="form-control datepicker @error('start_date') is-invalid @enderror" 
-                                   id="start_date" name="start_date" value="{{ old('start_date') }}" 
+                                   id="start_date" name="start_date" value="{{ $startDate }}" 
                                    placeholder="dd/mm/yyyy">
                             @error('start_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -91,8 +94,11 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="expected_end_date">Expected End Date</label>
+                            @php
+                                $expectedEndDate = old('expected_end_date', now()->format('d/m/Y'));
+                            @endphp
                             <input type="text" class="form-control datepicker @error('expected_end_date') is-invalid @enderror" 
-                                   id="expected_end_date" name="expected_end_date" value="{{ old('expected_end_date') }}" 
+                                   id="expected_end_date" name="expected_end_date" value="{{ $expectedEndDate }}" 
                                    placeholder="dd/mm/yyyy">
                             @error('expected_end_date')
                                 <div class="invalid-feedback">{{ $message }}</div>

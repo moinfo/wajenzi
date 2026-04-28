@@ -61,10 +61,9 @@ class SalesDailyReportController extends Controller
             'reports' => $reports,
             'users' => $users,
             'object' => new SalesDailyReport(),
-            'client_sources' => ClientSource::all(),
-            'departments' => Department::all(),
-            'clients' => ProjectClient::all(),
-            'leads' => Lead::active()->get()
+            'client_sources' => ClientSource::all() ?? collect(),
+            'departments' => Department::all() ?? collect(),
+            'clients' => ProjectClient::all() ?? collect(),
         ];
 
         return view('pages.sales.sales_daily_reports')->with($data);
@@ -74,11 +73,11 @@ class SalesDailyReportController extends Controller
     {
         $data = [
             'object' => new SalesDailyReport(),
-            'client_sources' => ClientSource::all(),
-            'users' => User::all(),
-            'departments' => Department::all(),
-            'clients' => ProjectClient::all(),
-            'leads' => Lead::active()->get()
+            'client_sources' => ClientSource::all() ?? collect(),
+            'users' => User::all() ?? collect(),
+            'departments' => Department::all() ?? collect(),
+            'clients' => ProjectClient::all() ?? collect(),
+            'leads' => Lead::active()->get() ?? collect() ?? collect()
         ];
 
         return view('pages.sales.sales_daily_report_form')->with($data);
@@ -223,11 +222,11 @@ class SalesDailyReportController extends Controller
 
         $data = [
             'object' => $report,
-            'client_sources' => ClientSource::all(),
-            'users' => User::all(),
-            'departments' => Department::all(),
-            'clients' => ProjectClient::all(),
-            'leads' => Lead::active()->get()
+            'client_sources' => ClientSource::all() ?? collect(),
+            'users' => User::all() ?? collect(),
+            'departments' => Department::all() ?? collect(),
+            'clients' => ProjectClient::all() ?? collect(),
+            'leads' => Lead::active()->get() ?? collect()
         ];
 
         return view('pages.sales.sales_daily_report_form')->with($data);

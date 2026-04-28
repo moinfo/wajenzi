@@ -63,21 +63,36 @@ $users = \App\Models\User::all();
             <div class="col-md-4">
                 <div class="form-group">
                     <label for="start_date" class="control-label required">Start Date</label>
-                    <input type="date" class="form-control" id="input-start-date" name="start_date" value="{{ old('start_date', $object->start_date ? \Carbon\Carbon::parse($object->start_date)->format('Y-m-d') : date('Y-m-d')) }}">
+                    <div class="input-group date" id="project-start-datepicker" data-target-input="nearest">
+                        <input type="text" class="form-control datetimepicker-input datepicker" data-target="#project-start-datepicker"
+                               id="input-start-date" name="start_date" 
+                               value="{{ old('start_date', $object->start_date ? \Carbon\Carbon::parse($object->start_date)->format('Y-m-d') : date('Y-m-d')) }}" 
+                               placeholder="YYYY-MM-DD" required>
+                    </div>
                 </div>
             </div>
 
             <div class="col-md-4">
                 <div class="form-group">
                     <label for="expected_end_date" class="control-label required">Expected End Date</label>
-                    <input type="date" class="form-control" id="input-expected-end-date" name="expected_end_date" value="{{ old('expected_end_date', $object->expected_end_date ? \Carbon\Carbon::parse($object->expected_end_date)->format('Y-m-d') : date('Y-m-d')) }}">
+                    <div class="input-group date" id="project-expected-datepicker" data-target-input="nearest">
+                        <input type="text" class="form-control datetimepicker-input datepicker" data-target="#project-expected-datepicker"
+                               id="input-expected-end-date" name="expected_end_date" 
+                               value="{{ old('expected_end_date', $object->expected_end_date ? \Carbon\Carbon::parse($object->expected_end_date)->format('Y-m-d') : date('Y-m-d')) }}" 
+                               placeholder="YYYY-MM-DD" required>
+                    </div>
                 </div>
             </div>
 
             <div class="col-md-4">
                 <div class="form-group">
                     <label for="actual_end_date" class="control-label">Actual End Date</label>
-                    <input type="date" class="form-control" id="input-actual-end-date" name="actual_end_date" value="{{ old('actual_end_date', $object->actual_end_date ? \Carbon\Carbon::parse($object->actual_end_date)->format('Y-m-d') : '') }}" placeholder="Set when completed">
+                    <div class="input-group date" id="project-actual-datepicker" data-target-input="nearest">
+                        <input type="text" class="form-control datetimepicker-input datepicker" data-target="#project-actual-datepicker"
+                               id="input-actual-end-date" name="actual_end_date" 
+                               value="{{ old('actual_end_date', $object->actual_end_date ? \Carbon\Carbon::parse($object->actual_end_date)->format('Y-m-d') : date('Y-m-d')) }}" 
+                               placeholder="YYYY-MM-DD">
+                    </div>
                 </div>
             </div>
 

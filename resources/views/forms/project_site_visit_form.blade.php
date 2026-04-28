@@ -31,7 +31,12 @@ $document_id = \App\Classes\Utility::getLastId('Project')+1;
             <div class="col-sm-12">
                 <div class="form-group">
                     <label for="visit_date" class="control-label required">Visit Date</label>
-                    <input type="date" class="form-control" id="input-visit-date" name="visit_date" value="{{ old('visit_date', $object->visit_date ? \Carbon\Carbon::parse($object->visit_date)->format('Y-m-d') : date('Y-m-d')) }}">
+                    <div class="input-group date" id="visit-datepicker" data-target-input="nearest">
+                        <input type="text" class="form-control datetimepicker-input datepicker" data-target="#visit-datepicker"
+                               id="input-visit-date" name="visit_date" 
+                               value="{{ old('visit_date', $object->visit_date ? \Carbon\Carbon::parse($object->visit_date)->format('Y-m-d') : date('Y-m-d')) }}" 
+                               placeholder="YYYY-MM-DD" required>
+                    </div>
                 </div>
             </div>
         </div>

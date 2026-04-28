@@ -29,8 +29,12 @@ $document_id = \App\Classes\Utility::getLastId('VatPayment')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>
-            <input type="date" class="form-control" id="input-date" name="date"
-                   value="{{ old('date', $object->date ?? date('Y-m-d')) }}" required>
+            <div class="input-group date" id="vat-payment-datepicker" data-target-input="nearest">
+                <input type="text" class="form-control datetimepicker-input datepicker" data-target="#vat-payment-datepicker"
+                       id="input-date" name="date"
+                       value="{{ old('date', $object->date ? \Carbon\Carbon::parse($object->date)->format('Y-m-d') : date('Y-m-d')) }}" 
+                       placeholder="YYYY-MM-DD" required>
+            </div>
         </div>
         <div class="form-group">
             <label class="control-label" for="chooseFile">Choose file</label>

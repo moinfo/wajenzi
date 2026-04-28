@@ -34,7 +34,12 @@
             <div class="col-sm-6">
                 <div class="form-group">
                     <label for="expense_date" class="control-label required">Cost Date</label>
-                    <input type="date" class="form-control" id="input-expense-date" name="expense_date" value="{{ old('expense_date', isset($object->expense_date) ? \Carbon\Carbon::parse($object->expense_date)->format('Y-m-d') : date('Y-m-d')) }}">
+                    <div class="input-group date" id="expense-datepicker" data-target-input="nearest">
+                        <input type="text" class="form-control datetimepicker-input datepicker" data-target="#expense-datepicker"
+                               id="input-expense-date" name="expense_date" 
+                               value="{{ old('expense_date', isset($object->expense_date) ? \Carbon\Carbon::parse($object->expense_date)->format('Y-m-d') : date('Y-m-d')) }}" 
+                               placeholder="YYYY-MM-DD" required>
+                    </div>
                 </div>
             </div>
             <div class="col-sm-6">

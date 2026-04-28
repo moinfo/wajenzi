@@ -47,9 +47,20 @@
                     <div class="col-md-2">
                         <div class="form-group">
                             <label for="lead_date">Lead Date</label>
-                            <input type="date" class="form-control @error('lead_date') is-invalid @enderror"
-                                   id="lead_date" name="lead_date"
-                                   value="{{ old('lead_date', $object->lead_date ? $object->lead_date->format('Y-m-d') : now()->format('Y-m-d')) }}">
+                            @php
+                                if(old('lead_date')) {
+                                    $leadDate = old('lead_date');
+                                } elseif(isset($object->lead_date) && $object->lead_date) {
+                                    $leadDate = $object->lead_date->format('Y-m-d');
+                                } else {
+                                    $leadDate = now()->format('Y-m-d');
+                                }
+                            @endphp
+                            <div class="input-group date" id="lead-datepicker" data-target-input="nearest">
+                                <input type="text" class="form-control datetimepicker-input datepicker @error('lead_date') is-invalid @enderror"
+                                       data-target="#lead-datepicker" id="lead_date" name="lead_date"
+                                       value="{{ $leadDate }}" placeholder="YYYY-MM-DD">
+                            </div>
                             @error('lead_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

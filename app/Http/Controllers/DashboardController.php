@@ -195,7 +195,6 @@ class DashboardController extends Controller
 
         $this->notify('Welcome to Wajenzi Construction ERP', 'Hello'.' '.$user->name, 'success');
 //        $this->notify_toast('success','hello');
-        session()->put('success','Item created successfully.');
         return view('pages.dashboard')->with($data);
     }
 

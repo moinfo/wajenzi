@@ -36,10 +36,21 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="report_date" class="required">Report Date</label>
-                            <input type="date" class="form-control @error('report_date') is-invalid @enderror" 
-                                   id="report_date" name="report_date" 
-                                   value="{{ old('report_date', $object->report_date ? \Carbon\Carbon::parse($object->report_date)->format('Y-m-d') : now()->format('Y-m-d')) }}" required
-                                   placeholder="Select date">
+                            @php
+                                if(old('report_date')) {
+                                    $reportDate = old('report_date');
+                                } elseif($object->report_date) {
+                                    $reportDate = \Carbon\Carbon::parse($object->report_date)->format('Y-m-d');
+                                } else {
+                                    $reportDate = now()->format('Y-m-d');
+                                }
+                            @endphp
+                             <div class="input-group date" id="report-datepicker" data-target-input="nearest">
+                                 <input type="text" class="form-control datetimepicker-input datepicker @error('report_date') is-invalid @enderror" 
+                                        data-target="#report-datepicker" id="report_date" name="report_date" 
+                                        value="{{ $reportDate }}" 
+                                        placeholder="YYYY-MM-DD" required>
+                             </div>
                             @error('report_date')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -54,12 +65,23 @@
                     <div class="col-md-4">
                         <div class="form-group">
                             <label for="department_id" class="required">Department</label>
+                            @php
+                                $selDeptId = old('department_id', $object->department_id ?? null);
+                                if (!$selDeptId && !isset($object->id)) {
+                                    foreach($departments as $dept) {
+                                        if ($dept->name == 'Sales and Marketing') {
+                                            $selDeptId = $dept->id;
+                                            break;
+                                        }
+                                    }
+                                }
+                            @endphp
                             <select class="form-control @error('department_id') is-invalid @enderror" 
                                     id="department_id" name="department_id" required>
                                 <option value="">Select Department</option>
                                 @foreach($departments as $department)
                                     <option value="{{ $department->id }}" 
-                                            {{ old('department_id', $object->department_id ?? ($department->name == 'Sales and Marketing' ? $department->id : null)) == $department->id ? 'selected' : '' }}>
+                                            {{ $selDeptId == $department->id ? 'selected' : '' }}>
                                         {{ $department->name }}
                                     </option>
                                 @endforeach
@@ -135,7 +157,14 @@
                                         <td><textarea class="form-control" name="lead_followups[{{ $index }}][details_discussion]" rows="2">{{ $followup->details_discussion }}</textarea></td>
                                         <td><textarea class="form-control" name="lead_followups[{{ $index }}][outcome]" rows="2">{{ $followup->outcome }}</textarea></td>
                                         <td><textarea class="form-control" name="lead_followups[{{ $index }}][next_step]" rows="2">{{ $followup->next_step }}</textarea></td>
-                                        <td><input type="date" class="form-control" name="lead_followups[{{ $index }}][followup_date]" value="{{ $followup->followup_date ? \Carbon\Carbon::parse($followup->followup_date)->format('Y-m-d') : '' }}"></td>
+                                        <td>
+                                            <div class="input-group date" id="followup-datepicker-{{ $index }}" data-target-input="nearest">
+                                                <input type="text" class="form-control datetimepicker-input datepicker" 
+                                                       data-target="#followup-datepicker-{{ $index }}" name="lead_followups[{{ $index }}][followup_date]" 
+                                                       value="{{ $followup->followup_date ? \Carbon\Carbon::parse($followup->followup_date)->format('Y-m-d') : '' }}" 
+                                                       placeholder="YYYY-MM-DD">
+                                            </div>
+                                        </td>
                                         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
                                     </tr>
                                 @endforeach
@@ -160,7 +189,17 @@
                                     <td><textarea class="form-control" name="lead_followups[0][details_discussion]" rows="2" placeholder="Details/Discussion"></textarea></td>
                                     <td><textarea class="form-control" name="lead_followups[0][outcome]" rows="2" placeholder="Outcome"></textarea></td>
                                     <td><textarea class="form-control" name="lead_followups[0][next_step]" rows="2" placeholder="Next Step"></textarea></td>
-                                    <td><input type="date" class="form-control" name="lead_followups[0][followup_date]"></td>
+                                    <td>
+                                        @php
+                                            $oldFollowupDate = old('lead_followups.0.followup_date');
+                                        @endphp
+                                        <div class="input-group date" id="followup-datepicker-0" data-target-input="nearest">
+                                            <input type="text" class="form-control datetimepicker-input datepicker" 
+                                                   data-target="#followup-datepicker-0" name="lead_followups[0][followup_date]" 
+                                                   value="{{ $oldFollowupDate }}" 
+                                                   placeholder="YYYY-MM-DD">
+                                        </div>
+                                    </td>
                                     <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
                                 </tr>
                             @endif
@@ -248,13 +287,20 @@
             <div class="block-content">
                 @php
                     $cacData = isset($object->id) ? $object->customerAcquisitionCost : null;
+                    $marketingCost = old('cac_data[marketing_cost]', $cacData->marketing_cost ?? 0);
+                    $salesCost = old('cac_data[sales_cost]', $cacData->sales_cost ?? 0);
+                    $otherCost = old('cac_data[other_cost]', $cacData->other_cost ?? 0);
+                    $newCustomers = old('cac_data[new_customers]', $cacData->new_customers ?? 0);
+                    $totalCost = old('cac_data[total_cost]', $cacData->total_cost ?? 0);
+                    $cacValue = old('cac_data[cac_value]', $cacData->cac_value ?? 0);
+                    $cacNotes = old('cac_data[notes]', $cacData->notes ?? '');
                 @endphp
                 <div class="row">
                     <div class="col-md-3">
                         <div class="form-group">
                             <label>Marketing Cost</label>
                             <input type="number" class="form-control" name="cac_data[marketing_cost]" step="0.01" 
-                                   value="{{ old('cac_data.marketing_cost', $cacData->marketing_cost ?? 0) }}" 
+                                   value="{{ $marketingCost }}" 
                                    onchange="calculateCAC()">
                         </div>
                     </div>
@@ -262,7 +308,7 @@
                         <div class="form-group">
                             <label>Sales Cost</label>
                             <input type="number" class="form-control" name="cac_data[sales_cost]" step="0.01" 
-                                   value="{{ old('cac_data.sales_cost', $cacData->sales_cost ?? 0) }}" 
+                                   value="{{ $salesCost }}" 
                                    onchange="calculateCAC()">
                         </div>
                     </div>
@@ -270,7 +316,7 @@
                         <div class="form-group">
                             <label>Other Cost</label>
                             <input type="number" class="form-control" name="cac_data[other_cost]" step="0.01" 
-                                   value="{{ old('cac_data.other_cost', $cacData->other_cost ?? 0) }}" 
+                                   value="{{ $otherCost }}" 
                                    onchange="calculateCAC()">
                         </div>
                     </div>
@@ -278,7 +324,7 @@
                         <div class="form-group">
                             <label>New Customers</label>
                             <input type="number" class="form-control" name="cac_data[new_customers]" 
-                                   value="{{ old('cac_data.new_customers', $cacData->new_customers ?? 0) }}" 
+                                   value="{{ $newCustomers }}" 
                                    onchange="calculateCAC()">
                         </div>
                     </div>
@@ -286,21 +332,21 @@
                         <div class="form-group">
                             <label>Total Cost</label>
                             <input type="number" class="form-control" id="total_cost" readonly 
-                                   value="{{ old('cac_data.total_cost', $cacData->total_cost ?? 0) }}">
+                                   value="{{ $totalCost }}">
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label>CAC Value</label>
                             <input type="number" class="form-control" id="cac_value" readonly 
-                                   value="{{ old('cac_data.cac_value', $cacData->cac_value ?? 0) }}">
+                                   value="{{ $cacValue }}">
                         </div>
                     </div>
                     <div class="col-12">
                         <div class="form-group">
                             <label>Notes</label>
                             <textarea class="form-control" name="cac_data[notes]" rows="3" 
-                                      placeholder="Additional notes about customer acquisition costs">{{ old('cac_data.notes', $cacData->notes ?? '') }}</textarea>
+                                      placeholder="Additional notes about customer acquisition costs">{{ $cacNotes }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -393,85 +439,107 @@
                             <i class="fa fa-times"></i> Cancel
                         </a>
                     </div>
-                </div>
-            </div>
         </div>
     </form>
 </div>
 
+@php
+    $leadOptionsHtml = '';
+    foreach($leads as $lead) {
+        $leadOptionsHtml .= '<option value="' . $lead->id . '">' . htmlspecialchars($lead->name) . '</option>';
+    }
+    
+    $sourceOptionsHtml = '';
+    foreach($client_sources as $source) {
+        $sourceOptionsHtml .= '<option value="' . $source->id . '">' . htmlspecialchars($source->name) . '</option>';
+    }
+    
+    $clientOptionsHtml = '';
+    foreach($clients as $client) {
+        $clientOptionsHtml .= '<option value="' . $client->id . '">' . htmlspecialchars($client->first_name . ' ' . $client->last_name) . '</option>';
+    }
+@endphp
+
 <script>
-let leadFollowupIndex = {{ isset($object->id) && $object->leadFollowups->count() > 0 ? $object->leadFollowups->count() : 1 }};
-let salesActivityIndex = {{ isset($object->id) && $object->salesActivities->count() > 0 ? $object->salesActivities->count() : 1 }};
-let clientConcernIndex = {{ isset($object->id) && $object->clientConcerns->count() > 0 ? $object->clientConcerns->count() : 1 }};
+let leadOptionsHtml = @json($leadOptionsHtml);
+let sourceOptionsHtml = @json($sourceOptionsHtml);
+let clientOptionsHtml = @json($clientOptionsHtml);
+let leadFollowupIndex = 1;
+let salesActivityIndex = 1;
+let clientConcernIndex = 1;
+
+@if(isset($object->id))
+    leadFollowupIndex = {{ $object->leadFollowups->count() }};
+    salesActivityIndex = {{ $object->salesActivities->count() }};
+@endif
 
 function addLeadFollowup() {
     const table = document.getElementById('leadFollowupsTable').getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
-    newRow.innerHTML = `
-        <td>
-            <select class="form-control" name="lead_followups[${leadFollowupIndex}][lead_id]">
-                <option value="">Select Lead</option>
-                @foreach($leads as $lead)
-                    <option value="{{ $lead->id }}">{{ $lead->name }}</option>
-                @endforeach
-            </select>
-        </td>
-        <td>
-            <select class="form-control" name="lead_followups[${leadFollowupIndex}][client_source_id]">
-                <option value="">Select Type</option>
-                @foreach($client_sources as $source)
-                    <option value="{{ $source->id }}">{{ $source->name }}</option>
-                @endforeach
-            </select>
-        </td>
-        <td><textarea class="form-control" name="lead_followups[${leadFollowupIndex}][details_discussion]" rows="2" placeholder="Details/Discussion"></textarea></td>
-        <td><textarea class="form-control" name="lead_followups[${leadFollowupIndex}][outcome]" rows="2" placeholder="Outcome"></textarea></td>
-        <td><textarea class="form-control" name="lead_followups[${leadFollowupIndex}][next_step]" rows="2" placeholder="Next Step"></textarea></td>
-        <td><input type="date" class="form-control" name="lead_followups[${leadFollowupIndex}][followup_date]"></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
-    `;
+    const idx = leadFollowupIndex;
+    newRow.innerHTML =
+        '<td>' +
+            '<select class="form-control" name="lead_followups[' + idx + '][lead_id]">' +
+                '<option value="">Select Lead</option>' +
+                leadOptionsHtml +
+            '</select>' +
+        '</td>' +
+        '<td>' +
+            '<select class="form-control" name="lead_followups[' + idx + '][client_source_id]">' +
+                '<option value="">Select Type</option>' +
+                sourceOptionsHtml +
+            '</select>' +
+        '</td>' +
+        '<td><textarea class="form-control" name="lead_followups[' + idx + '][details_discussion]" rows="2" placeholder="Details/Discussion"></textarea></td>' +
+        '<td><textarea class="form-control" name="lead_followups[' + idx + '][outcome]" rows="2" placeholder="Outcome"></textarea></td>' +
+        '<td><textarea class="form-control" name="lead_followups[' + idx + '][next_step]" rows="2" placeholder="Next Step"></textarea></td>' +
+        '<td>' +
+            '<div class="input-group date" id="followup-datepicker-' + idx + '" data-target-input="nearest">' +
+                '<input type="text" class="form-control datetimepicker-input datepicker" ' +
+                       'data-target="#followup-datepicker-' + idx + '" name="lead_followups[' + idx + '][followup_date]" ' +
+                       'placeholder="YYYY-MM-DD">' +
+            '</div>' +
+        '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>';
     leadFollowupIndex++;
+    initBootstrapDatepickers(document);
 }
 
 function addSalesActivity() {
     const table = document.getElementById('salesActivitiesTable').getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
-    newRow.innerHTML = `
-        <td><input type="text" class="form-control" name="sales_activities[${salesActivityIndex}][invoice_no]" placeholder="Invoice No"></td>
-        <td><input type="number" class="form-control" name="sales_activities[${salesActivityIndex}][invoice_sum]" step="0.01" placeholder="0.00"></td>
-        <td><input type="text" class="form-control" name="sales_activities[${salesActivityIndex}][activity]" placeholder="Activity Description"></td>
-        <td>
-            <select class="form-control sales-status-select" name="sales_activities[${salesActivityIndex}][status]" onchange="togglePaymentAmount(this)">
-                <option value="not_paid">Not Paid</option>
-                <option value="paid">Paid</option>
-                <option value="partial">Partial</option>
-            </select>
-        </td>
-        <td>
-            <input type="number" class="form-control payment-amount-input" name="sales_activities[${salesActivityIndex}][payment_amount]" 
-                   step="0.01" placeholder="0.00" style="display: none;">
-        </td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
-    `;
+    newRow.innerHTML = 
+        '<td><input type="text" class="form-control" name="sales_activities[' + salesActivityIndex + '][invoice_no]" placeholder="Invoice No"></td>' +
+        '<td><input type="number" class="form-control" name="sales_activities[' + salesActivityIndex + '][invoice_sum]" step="0.01" placeholder="0.00"></td>' +
+        '<td><input type="text" class="form-control" name="sales_activities[' + salesActivityIndex + '][activity]" placeholder="Activity Description"></td>' +
+        '<td>' +
+            '<select class="form-control sales-status-select" name="sales_activities[' + salesActivityIndex + '][status]" onchange="togglePaymentAmount(this)">' +
+                '<option value="not_paid">Not Paid</option>' +
+                '<option value="paid">Paid</option>' +
+                '<option value="partial">Partial</option>' +
+            '</select>' +
+        '</td>' +
+        '<td>' +
+            '<input type="number" class="form-control payment-amount-input" name="sales_activities[' + salesActivityIndex + '][payment_amount]" ' +
+                   'step="0.01" placeholder="0.00" style="display: none;">' +
+        '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>';
     salesActivityIndex++;
 }
 
 function addClientConcern() {
     const table = document.getElementById('clientConcernsTable').getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
-    newRow.innerHTML = `
-        <td>
-            <select class="form-control" name="client_concerns[${clientConcernIndex}][client_id]">
-                <option value="">Select Client</option>
-                @foreach($clients as $client)
-                    <option value="{{ $client->id }}">{{ $client->first_name }} {{ $client->last_name }}</option>
-                @endforeach
-            </select>
-        </td>
-        <td><textarea class="form-control" name="client_concerns[${clientConcernIndex}][issue_concern]" rows="2" placeholder="Issue/Concern"></textarea></td>
-        <td><textarea class="form-control" name="client_concerns[${clientConcernIndex}][action_taken]" rows="2" placeholder="Action Taken or Required"></textarea></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>
-    `;
+    newRow.innerHTML =
+        '<td>' +
+            '<select class="form-control" name="client_concerns[' + clientConcernIndex + '][client_id]">' +
+                '<option value="">Select Client</option>' +
+                clientOptionsHtml +
+            '</select>' +
+        '</td>' +
+        '<td><textarea class="form-control" name="client_concerns[' + clientConcernIndex + '][issue_concern]" rows="2" placeholder="Issue/Concern"></textarea></td>' +
+        '<td><textarea class="form-control" name="client_concerns[' + clientConcernIndex + '][action_taken]" rows="2" placeholder="Action Taken or Required"></textarea></td>' +
+        '<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(this)"><i class="fa fa-trash"></i></button></td>';
     clientConcernIndex++;
 }
 
