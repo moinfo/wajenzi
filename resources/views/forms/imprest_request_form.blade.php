@@ -41,7 +41,7 @@ $balance = PettyCashRefillRequest::getCurrentBalanceBetweenPettyCashRefillReques
 
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>
-            <input type="date" class="form-control" id="input-date" name="date" value="{{ old('date', $object->date ? \Carbon\Carbon::parse($object->date)->format('Y-m-d') : date('Y-m-d')) }}">
+            <input type="text" class="form-control datepicker" id="input-date" name="date" value="{{ old('date', $object->date ? \Carbon\Carbon::parse($object->date)->format('Y-m-d') : date('Y-m-d')) }}" required>
         </div>
         <div class="form-group">
             <label class="control-label" for="chooseFile">Choose file</label>
@@ -107,5 +107,10 @@ $balance = PettyCashRefillRequest::getCurrentBalanceBetweenPettyCashRefillReques
 
 
 
+</script>
+<script>
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd'
+    });
 </script>
 
