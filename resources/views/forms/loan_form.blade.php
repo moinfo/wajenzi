@@ -1,5 +1,6 @@
 <?php
 $document_id = \App\Classes\Utility::getLastId('Loan')+1;
+$isEditing = isset($object) && $object->exists;
 ?>
 <div class="block-content">
     <form  method="post"  autocomplete="off">
@@ -24,11 +25,11 @@ $document_id = \App\Classes\Utility::getLastId('Loan')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>
-            <input type="date" class="form-control" id="input-date" name="date"
-                   value="{{ old('date', $object->date ? \Carbon\Carbon::parse($object->date)->format('Y-m-d') : date('Y-m-d')) }}">
+            <input type="text" class="form-control datepicker" id="input-date" name="date"
+                   value="{{ old('date', $object->date ? \Carbon\Carbon::parse($object->date)->format('Y-m-d') : date('Y-m-d')) }}" required>
         </div>
         <div class="form-group">
-            @if($object->id ?? null)
+            @if($isEditing)
                 <input type="hidden" name="id" value="{{$object->id }}">
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
@@ -66,5 +67,15 @@ $document_id = \App\Classes\Utility::getLastId('Loan')+1;
         })
 
 
+    });
+</script>
+<script>
+    try { $('#input-date').datepicker('destroy'); } catch (e) {}
+    $('#input-date').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        container: 'body',
+        orientation: 'bottom auto'
     });
 </script>

@@ -56,6 +56,10 @@
                     }
                 }
 
+                    $statutory_deduction = $total_deduction + $employee_deducted_amount_payee;
+                    $other_deduction = $advance_salary + $loan_deduction;
+                    $gross_deduction = $statutory_deduction + $other_deduction;
+
                     @endphp
 
                     <!-- Employee Information Card -->
@@ -131,6 +135,16 @@
                                         background: #f1f3f4;
                                         font-weight: 600;
                                     }
+                                    .payslip-table .summary-row td {
+                                        background: #fafbfc;
+                                        border-top: 2px solid #e9ecef;
+                                        font-weight: 600;
+                                    }
+                                    .payslip-table .gross-deduction-row td {
+                                        background: #eef8f7;
+                                        color: #0f766e;
+                                        font-weight: 700;
+                                    }
                                     .payslip-table .net-salary-row {
                                         background: linear-gradient(90deg, #1BC5BD 0%, #1DC9C0 100%);
                                         color: white;
@@ -184,11 +198,23 @@
                                         }
                                         @endphp
                                         
-                                        <tr class="total-row">
+                                        <tr class="summary-row">
                                             <td class="font-weight-bold">GROSS SALARY</td>
                                             <td class="money text-right font-weight-bold">{{number_format($gross_salary)}}</td>
-                                            <td class="font-weight-bold">TOTAL DEDUCTIONS</td>
-                                            <td class="money text-right font-weight-bold">{{number_format($total_deduction+$advance_salary+$loan_deduction+$employee_deducted_amount_payee)}}</td>
+                                            <td class="font-weight-bold">STATUTORY DEDUCTION</td>
+                                            <td class="money text-right font-weight-bold">{{number_format($statutory_deduction)}}</td>
+                                        </tr>
+                                        <tr class="summary-row">
+                                            <td></td>
+                                            <td></td>
+                                            <td class="font-weight-bold">OTHER DEDUCTION</td>
+                                            <td class="money text-right font-weight-bold">{{number_format($other_deduction)}}</td>
+                                        </tr>
+                                        <tr class="gross-deduction-row">
+                                            <td></td>
+                                            <td></td>
+                                            <td class="font-weight-bold">GROSS DEDUCTION</td>
+                                            <td class="money text-right font-weight-bold">{{number_format($gross_deduction)}}</td>
                                         </tr>
                                     </tbody>
                                     <tfoot>

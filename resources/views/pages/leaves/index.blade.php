@@ -13,6 +13,18 @@
                     </div>
 
                     <div class="card-body">
+                        @include('partials.alerts')
+
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0 pl-3">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
                         <table class="table">
                             <thead>
                             <tr>
@@ -64,21 +76,21 @@
                             <label>Leave Type</label>
                             <select name="leave_type_id" class="form-control" required>
                                 @foreach($leaveTypes as $type)
-                                    <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                    <option value="{{ $type->id }}" {{ (string) old('leave_type_id', $leaveTypes->first()?->id) === (string) $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Start Date</label>
-                            <input type="date" name="start_date" class="form-control" required>
+                            <input type="text" name="start_date" class="form-control datepicker" value="{{ old('start_date', date('Y-m-d')) }}" required>
                         </div>
                         <div class="form-group">
                             <label>End Date</label>
-                            <input type="date" name="end_date" class="form-control" required>
+                            <input type="text" name="end_date" class="form-control datepicker" value="{{ old('end_date', date('Y-m-d')) }}" required>
                         </div>
                         <div class="form-group">
                             <label>Reason</label>
-                            <textarea name="reason" class="form-control" rows="3" required></textarea>
+                            <textarea name="reason" class="form-control" rows="3" required>{{ old('reason') }}</textarea>
                         </div>
                         <div class="form-group">
                             <div id="notice-info" class="alert alert-info">
@@ -98,11 +110,21 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const leaveTypeSelect = document.querySelector('select[name="leave_type_id"]');
                 const startDateInput = document.querySelector('input[name="start_date"]');
+                const endDateInput = document.querySelector('input[name="end_date"]');
                 const noticeDays = {
                     @foreach($leaveTypes as $type)
                         {{ $type->id }}: {{ $type->notice_days }},
                     @endforeach
                 };
+
+                try { $('.datepicker').datepicker('destroy'); } catch (e) {}
+                $('.datepicker').datepicker({
+                    format: 'yyyy-mm-dd',
+                    autoclose: true,
+                    todayHighlight: true,
+                    container: 'body',
+                    orientation: 'bottom auto'
+                });
 
                 leaveTypeSelect.addEventListener('change', function() {
                     const selectedTypeId = this.value;
@@ -111,16 +133,39 @@
                     if (requiredDays > 0) {
                         const minDate = new Date();
                         minDate.setDate(minDate.getDate() + requiredDays);
-                        startDateInput.min = minDate.toISOString().split('T')[0];
+                        const minDateString = minDate.toISOString().split('T')[0];
+                        startDateInput.value = startDateInput.value && startDateInput.value >= minDateString
+                            ? startDateInput.value
+                            : minDateString;
+                        $(startDateInput).datepicker('setStartDate', minDateString);
+                        $(endDateInput).datepicker('setStartDate', startDateInput.value || minDateString);
 
                         document.getElementById('notice-info').textContent =
                             `This leave type requires ${requiredDays} days advance notice.`;
                     } else {
-                        startDateInput.min = new Date().toISOString().split('T')[0];
+                        const todayString = new Date().toISOString().split('T')[0];
+                        startDateInput.value = startDateInput.value && startDateInput.value >= todayString
+                            ? startDateInput.value
+                            : todayString;
+                        $(startDateInput).datepicker('setStartDate', todayString);
+                        $(endDateInput).datepicker('setStartDate', startDateInput.value || todayString);
                         document.getElementById('notice-info').textContent =
                             'No advance notice required for this leave type.';
                     }
                 });
+
+                $(startDateInput).on('changeDate change', function() {
+                    $(endDateInput).datepicker('setStartDate', startDateInput.value || null);
+                    if (endDateInput.value && startDateInput.value && endDateInput.value < startDateInput.value) {
+                        endDateInput.value = startDateInput.value;
+                    }
+                });
+
+                leaveTypeSelect.dispatchEvent(new Event('change'));
+
+                @if ($errors->any())
+                    $('#newLeaveModal').modal('show');
+                @endif
             });
         </script>
 @endsection

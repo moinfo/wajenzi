@@ -108,9 +108,13 @@
                                             </a>
                                         </td>
                                         <td>
-                                            <strong>{{ $proforma->client->first_name }} {{ $proforma->client->last_name }}</strong>
-                                            @if($proforma->client->contact_person)
-                                                <br><small class="text-muted">{{ $proforma->client->contact_person }}</small>
+                                            @if($proforma->client)
+                                                <strong>{{ $proforma->client->first_name }} {{ $proforma->client->last_name }}</strong>
+                                                @if($proforma->client->contact_person)
+                                                    <br><small class="text-muted">{{ $proforma->client->contact_person }}</small>
+                                                @endif
+                                            @else
+                                                <span class="text-muted">No client linked</span>
                                             @endif
                                         </td>
                                         <td>{{ $proforma->issue_date->format('d/m/Y') }}</td>

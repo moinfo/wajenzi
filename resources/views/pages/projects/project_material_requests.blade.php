@@ -20,7 +20,7 @@
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
-                                    <form name="request_search" action="" id="filter-form" method="post" autocomplete="off">
+                                    <form name="request_search" action="{{ route('project_material_requests') }}" id="filter-form" method="post" autocomplete="off">
                                         @csrf
                                         <div class="row">
                                             <div class="class col-md-3">
@@ -31,7 +31,7 @@
                                                     <select name="project_id" id="input-project" class="form-control">
                                                         <option value="">All Projects</option>
                                                         @foreach ($projects as $project)
-                                                            <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                                            <option value="{{ $project->id }}" {{ (string) request('project_id') === (string) $project->id ? 'selected' : '' }}>{{ $project->name }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -43,10 +43,10 @@
                                                     </div>
                                                     <select name="status" id="input-status" class="form-control">
                                                         <option value="">All Statuses</option>
-                                                        <option value="pending">Pending</option>
-                                                        <option value="APPROVED">Approved</option>
-                                                        <option value="rejected">Rejected</option>
-                                                        <option value="completed">Completed</option>
+                                                        <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                                                        <option value="approved" {{ strtolower((string) request('status')) === 'approved' ? 'selected' : '' }}>Approved</option>
+                                                        <option value="rejected" {{ strtolower((string) request('status')) === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                                        <option value="completed" {{ strtolower((string) request('status')) === 'completed' ? 'selected' : '' }}>Completed</option>
                                                     </select>
                                                 </div>
                                             </div>

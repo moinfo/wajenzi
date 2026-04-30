@@ -298,20 +298,11 @@
             {{-- Project Schedule Section (only for Project model) --}}
             @if(isset($model) && $model === 'Project')
                 @php
-                    // Look for schedule linked directly to this project
-                    $projectSchedule = \App\Models\ProjectSchedule::with(['assignedArchitect', 'activities'])
-                        ->where('project_id', $approval_data->id)
-                        ->first();
-
-                    // If not found, check via linked leads
-                    if (!$projectSchedule) {
-                        $linkedLeadIds = \App\Models\Lead::where('project_id', $approval_data->id)->pluck('id');
-                        if ($linkedLeadIds->isNotEmpty()) {
-                            $projectSchedule = \App\Models\ProjectSchedule::with(['assignedArchitect', 'activities'])
-                                ->whereIn('lead_id', $linkedLeadIds)
-                                ->first();
-                        }
-                    }
+                    // Look for schedule linked via leads associated with this project
+                    $linkedLeadIds = \App\Models\Lead::where('project_id', $approval_data->id)->pluck('id');
+                    $projectSchedule = $linkedLeadIds->isNotEmpty()
+                        ? \App\Models\ProjectSchedule::with(['assignedArchitect', 'activities'])->whereIn('lead_id', $linkedLeadIds)->first()
+                        : null;
 
                     $isApproved = strtoupper($approval_data->status ?? '') === 'APPROVED';
                 @endphp

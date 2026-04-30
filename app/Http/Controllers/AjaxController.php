@@ -372,7 +372,9 @@ class AjaxController
                             $data['object']->Where("status",'APPROVED');
                             $data['object'] = $data['object']->get();
                         }else{
-                            $data['object'] = $id ? $fullObject::find($id) : new $fullObject();
+                            $data['object'] = $request->has('id')
+                                ? ($fullObject::find($id) ?? new $fullObject())
+                                : new $fullObject();
                         }
                     }
                     if(count($metadata)){
@@ -422,8 +424,11 @@ class AjaxController
                     $method = $request->input('method');
                     $params = $request->input('params') ?? [];
                     $id = $request->input('id');
-                    if ($id) { // instance
+                    if ($request->has('id')) { // instance
                         $obj = $fullObject::find($id);
+                        if (! $obj) {
+                            return response("Model not found", 404);
+                        }
                         return $obj->$method(...$params);
                     } else {
                         return $fullObject::$method(...$params);

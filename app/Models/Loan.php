@@ -11,7 +11,7 @@ use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 class Loan extends Model implements ApprovableModel
 {
     use HasFactory,Approvable;
-    public $fillable = ['id', 'staff_id', 'amount', 'date', 'deduction','payment_type_id','create_by_id','document_number'];
+    public $fillable = ['staff_id', 'amount', 'date', 'deduction','payment_type_id','create_by_id','document_number'];
 
     /**
      * Logic executed when the approval process is completed.

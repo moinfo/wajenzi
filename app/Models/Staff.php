@@ -112,6 +112,9 @@ class Staff extends User
         $allowance_subscriptions = AllowanceSubscription::Where('staff_id', $staff_id)->get();
         $total = 0;
         foreach ($allowance_subscriptions as $index => $allowance_subscription) {
+            if (!$allowance_subscription->allowance) {
+                continue;
+            }
             $allowance_type = $allowance_subscription->allowance->allowance_type;
             $allowance_amount_first = $allowance_subscription->amount;
             $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType($allowance_type, $allowance_amount_first, $month);
@@ -301,6 +304,9 @@ class Staff extends User
         $allowance_subscriptions = AllowanceSubscription::Where('staff_id', $staff_id)->get();
         $total = 0;
         foreach ($allowance_subscriptions as $index => $allowance_subscription) {
+            if (!$allowance_subscription->allowance) {
+                continue;
+            }
             $allowance_type = $allowance_subscription->allowance->allowance_type;
             $allowance_amount_first = $allowance_subscription->amount;
             $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType($allowance_type, $allowance_amount_first, $month);
@@ -315,6 +321,9 @@ class Staff extends User
         $total = 0;
         foreach ($staffs as $index => $staffs) {
             foreach ($staffs->allowance_subscriptions as $allowance_subscription) {
+                if (!$allowance_subscription->allowance) {
+                    continue;
+                }
                 $allowance_type = $allowance_subscription->allowance->allowance_type;
                 $allowance_amount_first = $allowance_subscription->amount;
                 $allowance_amount = \App\Models\Allowance::getAllowanceAmountPerType($allowance_type, $allowance_amount_first, $month);

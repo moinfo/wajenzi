@@ -24,8 +24,8 @@ $document_id = \App\Classes\Utility::getLastId('AdvanceSalary')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>
-            <input type="date" class="form-control" id="input-date" name="date"
-                   value="{{ old('date', $object->date ? \Carbon\Carbon::parse($object->date)->format('Y-m-d') : date('Y-m-d')) }}">
+            <input type="text" class="form-control datepicker" id="input-date" name="date"
+                   value="{{ old('date', $object->date ? \Carbon\Carbon::parse($object->date)->format('Y-m-d') : date('Y-m-d')) }}" required>
         </div>
         <div class="form-group">
             @if($object->id ?? null)
@@ -67,5 +67,15 @@ $document_id = \App\Classes\Utility::getLastId('AdvanceSalary')+1;
         })
 
 
+    });
+</script>
+<script>
+    try { $('#input-date').datepicker('destroy'); } catch (e) {}
+    $('#input-date').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        container: 'body',
+        orientation: 'bottom auto'
     });
 </script>

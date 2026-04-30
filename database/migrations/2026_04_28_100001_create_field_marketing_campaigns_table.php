@@ -2,12 +2,16 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        $this->ensurePrimaryKey('lead_sources');
+        Schema::dropIfExists('field_marketing_campaigns');
+
         Schema::create('field_marketing_campaigns', function (Blueprint $table) {
             $table->id();
             $table->string('campaign_number')->unique();
@@ -30,5 +34,29 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('field_marketing_campaigns');
+    }
+
+    private function ensurePrimaryKey(string $tableName): void
+    {
+        if (!Schema::hasTable($tableName) || DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
+        $databaseName = DB::getDatabaseName();
+
+        $hasPrimaryKey = DB::table('information_schema.statistics')
+            ->where('table_schema', $databaseName)
+            ->where('table_name', $tableName)
+            ->where('index_name', 'PRIMARY')
+            ->exists();
+
+        if (!$hasPrimaryKey) {
+            DB::statement("ALTER TABLE `{$tableName}` ADD PRIMARY KEY (`id`)");
+        }
+
+        DB::statement("ALTER TABLE `{$tableName}` MODIFY `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT");
+
+        $nextId = (DB::table($tableName)->max('id') ?? 0) + 1;
+        DB::statement("ALTER TABLE `{$tableName}` AUTO_INCREMENT = " . max($nextId, 1));
     }
 };

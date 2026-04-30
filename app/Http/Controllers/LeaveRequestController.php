@@ -6,6 +6,7 @@ use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class LeaveRequestController extends Controller
 {
@@ -23,64 +24,66 @@ class LeaveRequestController extends Controller
 
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'leave_type_id' => 'required|exists:leave_types,id',
+            'start_date' => 'required|date|after_or_equal:today',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'reason' => 'required|string|max:500',
+        ]);
 
-//        $request->validate([
-//            'leave_type_id' => 'required|exists:leave_types,id',
-//            'start_date' => 'required|date',
-//            'end_date' => 'required|date|after_or_equal:start_date',
-//            'reason' => 'required|string|min:10'
-//        ]);
-
-        $leaveType = LeaveType::findOrFail($request->leave_type_id);
-        $startDate = Carbon::parse($request->start_date);
+        $leaveType = LeaveType::findOrFail($validated['leave_type_id']);
+        $startDate = Carbon::parse($validated['start_date']);
         $today = Carbon::today();
-//        dump($leaveType);
-//        return;
 
         // Check if enough notice is given (except for sick leave)
         if ($leaveType->notice_days > 0) {
             $minimumStartDate = $today->copy()->addDays($leaveType->notice_days);
 
             if ($startDate->lt($minimumStartDate)) {
-                return back()->with('error',
-                    "This leave type requires {$leaveType->notice_days} days advance notice. " .
-                    "Earliest possible start date is {$minimumStartDate->format('M d, Y')}");
+                throw ValidationException::withMessages([
+                    'start_date' => "This leave type requires {$leaveType->notice_days} days advance notice. Earliest possible start date is {$minimumStartDate->format('M d, Y')}.",
+                ]);
             }
         }
 
-        $endDate = Carbon::parse($request->end_date);
+        $endDate = Carbon::parse($validated['end_date']);
         $totalDays = $startDate->diffInDays($endDate) + 1;
 
         // Check for overlapping leaves
         $overlapping = LeaveRequest::where('user_id', auth()->id())
-            ->where('status', '!=', 'rejected')
+            ->whereNotIn('status', ['rejected', 'REJECTED'])
             ->where(function($query) use ($startDate, $endDate) {
                 $query->whereBetween('start_date', [$startDate, $endDate])
-                    ->orWhereBetween('end_date', [$startDate, $endDate]);
+                    ->orWhereBetween('end_date', [$startDate, $endDate])
+                    ->orWhere(function ($nested) use ($startDate, $endDate) {
+                        $nested->whereDate('start_date', '<=', $startDate->toDateString())
+                            ->whereDate('end_date', '>=', $endDate->toDateString());
+                    });
             })->exists();
 
         if ($overlapping) {
-            return back()->with('error', 'You have overlapping leave requests for the selected dates');
+            throw ValidationException::withMessages([
+                'start_date' => 'You already have another leave request in the selected date range.',
+            ]);
         }
 
         // Check remaining leave balance
-        $usedLeaves = LeaveRequest::where('user_id', auth()->id())
-            ->where('leave_type_id', $request->leave_type_id)
-            ->where('status', 'approved')
-            ->whereYear('start_date', date('Y'))
-            ->sum('total_days');
+        $remainingBalance = auth()->user()->getRemainingLeaveBalance($validated['leave_type_id']);
 
-        if (($usedLeaves + $totalDays) > $leaveType->days_allowed) {
-            return back()->with('error', 'Insufficient leave balance');
+        if ($totalDays > $remainingBalance) {
+            throw ValidationException::withMessages([
+                'end_date' => "Insufficient leave balance. You have {$remainingBalance} days remaining.",
+            ]);
         }
 
         LeaveRequest::create([
             'user_id' => auth()->id(),
-            'leave_type_id' => $request->leave_type_id,
+            'leave_type_id' => $validated['leave_type_id'],
             'start_date' => $startDate,
             'end_date' => $endDate,
             'total_days' => $totalDays,
-            'reason' => $request->reason,
+            'reason' => $validated['reason'],
+            'status' => 'pending',
         ]);
 
         return redirect()->route('leave_request')

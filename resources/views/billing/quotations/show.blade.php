@@ -8,7 +8,7 @@
                 <div class="col-md-6">
                     <h1>Quotation {{ $quotation->document_number }}</h1>
                     <span class="badge badge-{{ $quotation->status_color ?? 'secondary' }} badge-lg">
-                        {{ ucfirst(str_replace('_', ' ', $quotation->status)) }}
+                        {{ ucfirst(str_replace('_', ' ', $quotation->status ?? '')) }}
                     </span>
                 </div>
                 <div class="col-md-6 text-right">
@@ -282,7 +282,7 @@
                             @endif
                             <tr>
                                 <td>Payment Terms:</td>
-                                <td>{{ ucwords(str_replace('_', ' ', $quotation->payment_terms)) }}</td>
+                                <td>{{ ucwords(str_replace('_', ' ', $quotation->payment_terms ?? '')) }}</td>
                             </tr>
                         </table>
                     </div>

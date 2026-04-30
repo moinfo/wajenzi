@@ -147,8 +147,6 @@ class Controller extends BaseController
             // Ensure ID is not set when creating new records
             $request->request->remove('id');
             $newObj->fill($request->except(['document_id', 'document_number', 'document_type_id', 'link']));
-            // Force ID to be null to ensure auto-increment works
-            $newObj->id = null;
             $name = time().'_'.$request->file->getClientOriginalName();
             $filePath = $request->file('file')->storeAs('uploads', $name, 'public');
             $newObj->file = '/storage/'. $filePath;
@@ -196,7 +194,6 @@ class Controller extends BaseController
 // Ensure ID is not set when creating new records
             $request->request->remove('id');
             $newObj->fill($request->except(['document_id', 'document_number', 'document_type_id', 'link']));
-
             // Handle contract file if present
             if($request->hasFile('contract')) {
                 $contractName = time().'_contract_'.$request->contract->getClientOriginalName();

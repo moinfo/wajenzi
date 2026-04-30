@@ -24,8 +24,8 @@
             <div class="col-sm-6">
                 <div class="form-group">
                     <label class="control-label required">Required Date</label>
-                    <input type="date" class="form-control" name="required_date"
-                        value="{{ old('required_date', date('Y-m-d', strtotime('+7 days'))) }}">
+                    <input type="text" class="form-control datepicker" name="required_date"
+                        value="{{ old('required_date', date('Y-m-d')) }}">
                 </div>
             </div>
         </div>
@@ -324,6 +324,15 @@
         width: '100%',
         allowClear: true,
         dropdownParent: $('#ajax-loader-modal')
+    });
+
+    try { $('.datepicker').datepicker('destroy'); } catch (e) {}
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        autoclose: true,
+        todayHighlight: true,
+        container: 'body',
+        orientation: 'bottom auto'
     });
 })();
 </script>

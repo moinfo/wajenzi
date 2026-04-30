@@ -25,7 +25,30 @@ class ProjectMaterialRequestController extends Controller
             return back();
         }
 
-        $requests = ProjectMaterialRequest::with(['project', 'items.boqItem', 'requester', 'approvalStatus'])->get();
+        $query = ProjectMaterialRequest::with(['project', 'items.boqItem', 'requester', 'approvalStatus']);
+
+        if ($request->filled('project_id')) {
+            $query->where('project_id', $request->project_id);
+        }
+
+        if ($request->filled('status')) {
+            $status = strtolower((string) $request->status);
+
+            if ($status === 'pending') {
+                $query->where(function ($builder) {
+                    $builder->whereDoesntHave('approvalStatus')
+                        ->orWhereHas('approvalStatus', function ($approvalQuery) {
+                            $approvalQuery->whereIn(DB::raw('LOWER(status)'), ['pending', 'created', 'submitted']);
+                        });
+                });
+            } else {
+                $query->whereHas('approvalStatus', function ($approvalQuery) use ($status) {
+                    $approvalQuery->whereRaw('LOWER(status) = ?', [$status]);
+                });
+            }
+        }
+
+        $requests = $query->latest()->get();
         $projects = Project::all();
 
         $data = [

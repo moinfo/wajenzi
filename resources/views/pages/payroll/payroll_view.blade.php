@@ -128,6 +128,7 @@
                 padding: 15px;
             }
         }
+
     </style>
 
     <div class="container-fluid">
@@ -465,26 +466,7 @@
                                         $staffs = \App\Models\Staff::getAllStaffSalaryPaid($payroll_id,$payroll_type_id);
                                     @endphp
                                     <tr>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td style="display: none;"></td>
-                                        <td colspan="20" class="text-center">{{$payroll_type->name}}'s Payroll</td>
+                                        <td colspan="21" class="text-center">{{$payroll_type->name}}'s Payroll</td>
                                     </tr>
                                     @php
                                         $total_basic_salary = 0;
