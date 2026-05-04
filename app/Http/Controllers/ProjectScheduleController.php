@@ -201,7 +201,7 @@ class ProjectScheduleController extends Controller
 
         $request->validate([
             'completion_notes' => 'nullable|string|max:1000',
-            'attachment' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip,dwg|max:10240',
+            'attachment' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip,dwg|max:51200',
         ]);
 
         // Handle file upload
