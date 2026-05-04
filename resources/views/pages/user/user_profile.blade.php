@@ -198,14 +198,12 @@
                                 </div>
                             </div>
                             <input type="hidden" name="id" value="{{ $user->id }}">
-                            @can('Update Password')
 
                             <div class="form-group row">
                                 <div class="col-12">
                                     <button type="submit" class="btn btn-alt-primary">Update Password</button>
                                 </div>
                             </div>
-                                @endcan
                         </div>
                     </div>
                 </form>
