@@ -420,7 +420,9 @@ class SettingsController extends Controller
             return back();
         }
         $totalRefilled = PettyCashRefillRequest::whereRaw('UPPER(status) = ?', ['APPROVED'])->sum('refill_amount');
-        $totalUsed = ImprestRequest::whereRaw('UPPER(status) = ?', ['APPROVED'])->sum('amount');
+        // Imprests count as "used" once they're approved; retirement (COMPLETED)
+        // doesn't return the cash, so include both states.
+        $totalUsed = ImprestRequest::whereRaw('UPPER(status) IN (?, ?)', ['APPROVED', 'COMPLETED'])->sum('amount');
         $data = [
             'petty_cash_refill_requests' => PettyCashRefillRequest::all(),
             'total_refilled' => $totalRefilled,
