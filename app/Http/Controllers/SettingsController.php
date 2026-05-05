@@ -419,8 +419,13 @@ class SettingsController extends Controller
         if($this->handleCrud($request, 'PettyCashRefillRequest')) {
             return back();
         }
+        $totalRefilled = PettyCashRefillRequest::whereRaw('UPPER(status) = ?', ['APPROVED'])->sum('refill_amount');
+        $totalUsed = ImprestRequest::whereRaw('UPPER(status) = ?', ['APPROVED'])->sum('amount');
         $data = [
-            'petty_cash_refill_requests' => PettyCashRefillRequest::all()
+            'petty_cash_refill_requests' => PettyCashRefillRequest::all(),
+            'total_refilled' => $totalRefilled,
+            'total_used' => $totalUsed,
+            'balance_remaining' => $totalRefilled - $totalUsed,
         ];
         return view('pages.petty_cash_management.petty_cash_refill_requests')->with($data);
     }

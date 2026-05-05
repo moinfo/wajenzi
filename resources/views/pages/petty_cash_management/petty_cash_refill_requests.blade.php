@@ -17,6 +17,35 @@
                         <h3 class="block-title">All Petty Cash Refill Request</h3>
                     </div>
                     <div class="block-content">
+                        <div class="row m-t-10 mb-3">
+                            <div class="col-md-4">
+                                <div class="card text-white bg-info">
+                                    <div class="card-body py-3">
+                                        <h6 class="text-uppercase mb-1" style="opacity:.85;">Total Refilled</h6>
+                                        <h3 class="mb-0">{{ number_format($total_refilled ?? 0, 2) }}</h3>
+                                        <small style="opacity:.85;">Approved petty cash refills</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-white bg-warning">
+                                    <div class="card-body py-3">
+                                        <h6 class="text-uppercase mb-1" style="opacity:.85;">Amount Used</h6>
+                                        <h3 class="mb-0">{{ number_format($total_used ?? 0, 2) }}</h3>
+                                        <small style="opacity:.85;">Approved imprest withdrawals</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card text-white {{ ($balance_remaining ?? 0) >= 0 ? 'bg-success' : 'bg-danger' }}">
+                                    <div class="card-body py-3">
+                                        <h6 class="text-uppercase mb-1" style="opacity:.85;">Balance Remaining</h6>
+                                        <h3 class="mb-0">{{ number_format($balance_remaining ?? 0, 2) }}</h3>
+                                        <small style="opacity:.85;">Refilled − Used</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
