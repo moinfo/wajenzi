@@ -663,6 +663,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/quotation_comparison/store', [App\Http\Controllers\QuotationComparisonController::class, 'store'])->name('quotation_comparison.store');
     Route::get('/quotation_comparison/{id}/create_purchase', [App\Http\Controllers\QuotationComparisonController::class, 'createPurchase'])->name('quotation_comparison.create_purchase');
     Route::match(['get', 'post'], '/quotation_comparison/{id}/{document_type_id}', [App\Http\Controllers\QuotationComparisonController::class, 'comparison'])->name('quotation_comparison');
+// Procurement - Material Transfers
+    Route::match(['get', 'post'], '/material_transfers', [App\Http\Controllers\MaterialTransferController::class, 'index'])->name('material_transfers');
+    Route::match(['get', 'post'], '/material_transfer/create', [App\Http\Controllers\MaterialTransferController::class, 'create'])->name('material_transfer.create');
+    Route::post('/material_transfer/store', [App\Http\Controllers\MaterialTransferController::class, 'store'])->name('material_transfer.store');
+    Route::post('/material_transfer/{id}/delete', [App\Http\Controllers\MaterialTransferController::class, 'destroy'])->name('material_transfer.delete');
+    Route::match(['get', 'post'], '/material_transfer/{id}/{document_type_id}', [App\Http\Controllers\MaterialTransferController::class, 'show'])->name('material_transfer');
+
     Route::post('/quotation_comparison/{comparison}/submit', [App\Http\Controllers\QuotationComparisonController::class, 'submit'])->name('quotation_comparison.submit');
     Route::post('/quotation_comparison/{comparison}/approve', [App\Http\Controllers\QuotationComparisonController::class, 'approve'])->name('quotation_comparison.approve');
     Route::post('/quotation_comparison/{comparison}/reject', [App\Http\Controllers\QuotationComparisonController::class, 'reject'])->name('quotation_comparison.reject');

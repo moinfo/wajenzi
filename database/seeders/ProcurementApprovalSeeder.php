@@ -51,6 +51,13 @@ class ProcurementApprovalSeeder extends Seeder
                     ['role_id' => $mdRole->id, 'action' => 'APPROVE', 'order' => 2],
                 ]
             ],
+            [
+                'name' => 'MaterialTransfer',
+                'approvable_type' => 'App\\Models\\MaterialTransfer',
+                'steps' => [
+                    ['role_id' => $mdRole->id, 'action' => 'APPROVE', 'order' => 1],
+                ]
+            ],
         ];
 
         foreach ($flows as $flowConfig) {

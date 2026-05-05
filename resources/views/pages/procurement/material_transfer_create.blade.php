@@ -1,0 +1,238 @@
+@extends('layouts.backend')
+
+@section('content')
+    <div class="container-fluid">
+        <div class="content">
+            <div class="content-heading">New Material Transfer
+                <div class="float-right">
+                    <a href="{{ route('material_transfers') }}" class="btn btn-secondary"><i class="fa fa-arrow-left"></i> Back</a>
+                </div>
+            </div>
+
+            <div class="block">
+                <div class="block-content">
+                    @if($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    <form method="get" action="{{ route('material_transfer.create') }}" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label class="control-label required">Source Project (where materials are now)</label>
+                                <select name="from_project_id" class="form-control" onchange="this.form.submit()" required>
+                                    <option value="">— Select source site —</option>
+                                    @foreach($projects as $p)
+                                        <option value="{{ $p->id }}" {{ $fromProjectId == $p->id ? 'selected' : '' }}>{{ $p->project_name }}</option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">Pick first to load BOQ items with available stock.</small>
+                            </div>
+                        </div>
+                    </form>
+
+                    @if($fromProjectId)
+                        <form method="post" action="{{ route('material_transfer.store') }}">
+                            @csrf
+                            <input type="hidden" name="from_project_id" value="{{ $fromProjectId }}">
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label required">Destination Project</label>
+                                        <select name="to_project_id" class="form-control" required>
+                                            <option value="">— Select destination —</option>
+                                            @foreach($projects as $p)
+                                                @if($p->id != $fromProjectId)
+                                                    <option value="{{ $p->id }}" {{ old('to_project_id') == $p->id ? 'selected' : '' }}>{{ $p->project_name }}</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label required">Transfer Date</label>
+                                        <input type="date" name="transfer_date" class="form-control" value="{{ old('transfer_date', date('Y-m-d')) }}" required>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label">Expected Arrival Date</label>
+                                        <input type="date" name="expected_arrival_date" class="form-control" value="{{ old('expected_arrival_date') }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label">Linked Material Request <small class="text-muted">(optional)</small></label>
+                                        <select name="material_request_id" class="form-control">
+                                            <option value="">— None —</option>
+                                            @foreach($pendingMaterialRequests as $mr)
+                                                <option value="{{ $mr->id }}" {{ old('material_request_id') == $mr->id ? 'selected' : '' }}>
+                                                    {{ $mr->request_number }} ({{ $mr->project->project_name ?? '' }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">Pick the supervisor's request being fulfilled by this transfer.</small>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label">Vehicle / Plate</label>
+                                        <input type="text" name="vehicle_info" class="form-control" value="{{ old('vehicle_info') }}" placeholder="e.g. T123 ABC, lorry">
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="control-label">Cost Expense Sub-Category</label>
+                                        <select name="expenses_sub_category_id" class="form-control">
+                                            <option value="">— Select to record costs as expense —</option>
+                                            @foreach($expensesSubCategories as $sub)
+                                                <option value="{{ $sub->id }}" {{ old('expenses_sub_category_id') == $sub->id ? 'selected' : '' }}>{{ $sub->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="text-muted">Required to post loading/offloading/transport as an expense on destination project.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="control-label">Loading Cost</label>
+                                        <input type="number" step="0.01" min="0" name="loading_cost" class="form-control" value="{{ old('loading_cost', 0) }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="control-label">Offloading Cost</label>
+                                        <input type="number" step="0.01" min="0" name="offloading_cost" class="form-control" value="{{ old('offloading_cost', 0) }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="control-label">Transportation Cost</label>
+                                        <input type="number" step="0.01" min="0" name="transportation_cost" class="form-control" value="{{ old('transportation_cost', 0) }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="control-label">Notes</label>
+                                        <input type="text" name="notes" class="form-control" value="{{ old('notes') }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <h5>Materials to transfer</h5>
+                            @if($sourceItems->isEmpty())
+                                <div class="alert alert-warning">No BOQ items at this source project have available stock to transfer.</div>
+                            @else
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="items-table">
+                                        <thead>
+                                        <tr>
+                                            <th style="width:30%;">Source BOQ Item</th>
+                                            <th>Description</th>
+                                            <th style="width:12%;">Qty</th>
+                                            <th style="width:10%;">Unit</th>
+                                            <th style="width:12%;">Available</th>
+                                            <th style="width:60px;"></th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr class="item-row">
+                                            <td>
+                                                <select name="items[0][source_boq_item_id]" class="form-control source-select" data-row="0">
+                                                    <option value="">— Custom (no BOQ link) —</option>
+                                                    @foreach($sourceItems as $bi)
+                                                        <option value="{{ $bi->id }}"
+                                                                data-description="{{ $bi->description }}"
+                                                                data-unit="{{ $bi->unit }}"
+                                                                data-available="{{ max(0, ((float)$bi->quantity_received) - ((float)$bi->quantity_used)) }}">
+                                                            {{ $bi->item_code }} — {{ \Illuminate\Support\Str::limit($bi->description, 40) }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td><input type="text" name="items[0][description]" class="form-control description" required></td>
+                                            <td><input type="number" step="0.01" min="0.01" name="items[0][quantity]" class="form-control quantity" required></td>
+                                            <td><input type="text" name="items[0][unit]" class="form-control unit" required></td>
+                                            <td><span class="available-display text-muted">—</span></td>
+                                            <td><button type="button" class="btn btn-sm btn-danger remove-row"><i class="fa fa-times"></i></button></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                    <button type="button" id="add-row" class="btn btn-sm btn-primary"><i class="fa fa-plus"></i> Add Row</button>
+                                </div>
+
+                                <div class="text-right mt-4">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fa fa-paper-plane mr-1"></i> Submit Transfer for Approval
+                                    </button>
+                                </div>
+                            @endif
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('js_after')
+    <script>
+        (function () {
+            let rowIndex = 1;
+
+            function bindSourceChange(select) {
+                select.addEventListener('change', function () {
+                    const row = this.closest('.item-row');
+                    const opt = this.options[this.selectedIndex];
+                    if (opt.value) {
+                        row.querySelector('.description').value = opt.dataset.description || '';
+                        row.querySelector('.unit').value = opt.dataset.unit || '';
+                        row.querySelector('.available-display').textContent = parseFloat(opt.dataset.available || 0).toFixed(2);
+                    } else {
+                        row.querySelector('.available-display').textContent = '—';
+                    }
+                });
+            }
+
+            document.querySelectorAll('.source-select').forEach(bindSourceChange);
+
+            document.getElementById('add-row')?.addEventListener('click', function () {
+                const tbody = document.querySelector('#items-table tbody');
+                const first = tbody.querySelector('.item-row');
+                const clone = first.cloneNode(true);
+                clone.querySelectorAll('input, select').forEach(el => {
+                    el.name = el.name.replace(/items\[\d+\]/, 'items[' + rowIndex + ']');
+                    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                    else el.value = '';
+                });
+                clone.querySelector('.available-display').textContent = '—';
+                tbody.appendChild(clone);
+                bindSourceChange(clone.querySelector('.source-select'));
+                rowIndex++;
+            });
+
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('.remove-row')) {
+                    const rows = document.querySelectorAll('#items-table .item-row');
+                    if (rows.length > 1) e.target.closest('.item-row').remove();
+                }
+            });
+        })();
+    </script>
+@endsection
