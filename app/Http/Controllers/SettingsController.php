@@ -464,6 +464,35 @@ class SettingsController extends Controller
         return view('pages.imprest.imprest_requests')->with($data);
     }
 
+    public function retireImprest(Request $request, $id){
+        $imprest = ImprestRequest::findOrFail($id);
+
+        if (!$imprest->isApproved()) {
+            return back()->with('error', 'Only approved imprests can be retired.');
+        }
+
+        if ($imprest->isRetired()) {
+            return back()->with('error', 'This imprest has already been retired.');
+        }
+
+        $request->validate([
+            'retirement_file' => 'required|file|mimes:png,jpg,jpeg,pdf,doc,docx,xls,xlsx|max:8192',
+            'retirement_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $name = time().'_retirement_'.$request->file('retirement_file')->getClientOriginalName();
+        $filePath = $request->file('retirement_file')->storeAs('uploads/imprest_retirements', $name, 'public');
+
+        $imprest->update([
+            'retirement_file'  => '/storage/'.$filePath,
+            'retirement_notes' => $request->input('retirement_notes'),
+            'retired_at'       => now(),
+            'status'           => 'COMPLETED',
+        ]);
+
+        return back()->with('success', 'Imprest retirement uploaded. Imprest closed.');
+    }
+
     public function imprest_request($id,$document_type_id){
         // Mark notification as read
         $this->approvalService->markNotificationAsRead($id, $document_type_id,'imprest_requests');
