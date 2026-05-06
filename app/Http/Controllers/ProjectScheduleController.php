@@ -123,10 +123,6 @@ class ProjectScheduleController extends Controller
             return back()->with('error', 'You do not have permission to delete schedules.');
         }
 
-        if ($projectSchedule->isConfirmed()) {
-            return back()->with('error', 'Confirmed schedules cannot be deleted.');
-        }
-
         try {
             DB::beginTransaction();
 
