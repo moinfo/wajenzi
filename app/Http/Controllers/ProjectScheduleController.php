@@ -115,6 +115,38 @@ class ProjectScheduleController extends Controller
     }
 
     /**
+     * Delete an unconfirmed schedule
+     */
+    public function destroy(ProjectSchedule $projectSchedule)
+    {
+        if (!auth()->user()->can('Delete Project Schedule')) {
+            return back()->with('error', 'You do not have permission to delete schedules.');
+        }
+
+        if ($projectSchedule->isConfirmed()) {
+            return back()->with('error', 'Confirmed schedules cannot be deleted.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $projectSchedule->activities()->delete();
+            ProjectAssignment::where('project_schedule_id', $projectSchedule->id)->delete();
+            $projectSchedule->delete();
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete project schedule: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete schedule.');
+        }
+
+        return redirect()
+            ->route('project-schedules.index')
+            ->with('success', 'Schedule deleted successfully.');
+    }
+
+    /**
      * Confirm the schedule
      */
     public function confirm(ProjectSchedule $projectSchedule)

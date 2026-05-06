@@ -95,11 +95,18 @@
                                             <i class="fa fa-eye"></i>
                                         </a>
                                         @can('Edit Project Schedule')
-                                            @if(!$schedule->isConfirmed())
-                                                <a href="{{ route('project-schedules.edit', $schedule) }}" class="btn btn-sm btn-warning">
-                                                    <i class="fa fa-edit"></i>
-                                                </a>
-                                            @endif
+                                            <a href="{{ route('project-schedules.edit', $schedule) }}" class="btn btn-sm btn-warning">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                        @endcan
+                                        @can('Delete Project Schedule')
+                                            <form action="{{ route('project-schedules.destroy', $schedule) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this schedule? All its activities and assignments will also be removed. This cannot be undone.');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete Schedule">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </form>
                                         @endcan
                                     </td>
                                 </tr>

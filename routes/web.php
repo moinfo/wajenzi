@@ -544,7 +544,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('leads/{id}/project-cost/{costId}', [App\Http\Controllers\LeadController::class, 'deleteProjectCost'])->name('leads.delete-project-cost');
 
     // Project Schedule Routes
-    Route::resource('project-schedules', App\Http\Controllers\ProjectScheduleController::class)->except(['create', 'store', 'destroy']);
+    Route::resource('project-schedules', App\Http\Controllers\ProjectScheduleController::class)->except(['create', 'store']);
     Route::post('project-schedules/{projectSchedule}/confirm', [App\Http\Controllers\ProjectScheduleController::class, 'confirm'])->name('project-schedules.confirm');
     Route::post('project-schedules/activity/{activity}/start', [App\Http\Controllers\ProjectScheduleController::class, 'startActivity'])->name('project-schedules.activity.start');
     Route::post('project-schedules/activity/{activity}/complete', [App\Http\Controllers\ProjectScheduleController::class, 'completeActivity'])->name('project-schedules.activity.complete');
