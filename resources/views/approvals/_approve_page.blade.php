@@ -164,6 +164,87 @@
             </div>
             @endif
 
+            {{-- Payment Section (Finance uploads / Procurement closes) --}}
+            @if(isset($model) && $model === 'Purchase' && strtoupper($approval_data->status ?? '') === 'APPROVED')
+            @php $payStatus = $approval_data->payment_status; @endphp
+            <div class="details-card" style="margin-bottom: 25px;">
+                <div class="card-header" style="background-color: {{ $payStatus === 'closed' ? '#e8f5e9' : ($payStatus === 'paid' ? '#fff8e1' : '#f8f9fa') }}; padding: 15px 25px; border-bottom: 1px solid #e9ecef;">
+                    <h3 style="margin: 0; color: #0066cc; font-weight: 600; font-size: 18px;">
+                        <i class="fa fa-money"></i> Payment Status
+                        @if($payStatus === 'closed')
+                            <span class="badge badge-dark ml-2">CLOSED</span>
+                        @elseif($payStatus === 'paid')
+                            <span class="badge badge-success ml-2">PAID</span>
+                        @else
+                            <span class="badge badge-warning ml-2">PENDING PAYMENT</span>
+                        @endif
+                    </h3>
+                </div>
+                <div class="card-body" style="padding: 25px;">
+                    @if($payStatus === 'paid' || $payStatus === 'closed')
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Payment Date</strong><br>
+                                {{ $approval_data->payment_date ?? '-' }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Reference</strong><br>
+                                {{ $approval_data->payment_reference ?? '-' }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Uploaded By</strong><br>
+                                {{ $approval_data->paymentUploadedBy?->name ?? '-' }}
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Payment Slip</strong><br>
+                                @if($approval_data->payment_attachment_url)
+                                    <a href="{{ $approval_data->payment_attachment_url }}" target="_blank"
+                                       class="btn btn-sm btn-outline-success">
+                                        <i class="fa fa-paperclip"></i> View Attachment
+                                    </a>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </div>
+                        </div>
+                        @if($approval_data->payment_note)
+                            <div class="mt-3 p-2" style="background:#f9f9f9; border-left:3px solid #4caf50; border-radius:4px;">
+                                <strong>Note:</strong> {{ $approval_data->payment_note }}
+                            </div>
+                        @endif
+
+                        {{-- Procurement: Close button --}}
+                        @if($payStatus === 'paid')
+                            @can('Close Purchase Order')
+                            <div class="mt-4">
+                                <form method="post" action="{{ route('purchase_order.close', $approval_data->id) }}"
+                                      onsubmit="return confirm('Mark this Purchase Order as CLOSED?')">
+                                    @csrf
+                                    <button type="submit" class="btn btn-dark">
+                                        <i class="fa fa-check-square-o"></i> Mark as Closed
+                                    </button>
+                                </form>
+                            </div>
+                            @endcan
+                        @endif
+                    @else
+                        {{-- Finance: Upload payment button --}}
+                        @can('Upload Payment Attachment')
+                        <div class="text-center py-3">
+                            <p class="text-muted mb-3">No payment proof has been uploaded yet.</p>
+                            <a href="{{ route('purchase_order.record_payment', $approval_data->id) }}"
+                               class="btn btn-warning">
+                                <i class="fa fa-upload"></i> Upload Payment Attachment
+                            </a>
+                        </div>
+                        @else
+                        <p class="text-muted text-center py-3">Awaiting Finance to upload payment proof.</p>
+                        @endcan
+                    @endif
+                </div>
+            </div>
+            @endif
+
             {{-- Quotation Comparison Items --}}
             @if(isset($quotations) && $quotations->count())
             <div class="details-card" style="margin-bottom: 25px;">

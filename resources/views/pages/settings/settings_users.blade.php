@@ -125,6 +125,16 @@
                                                         </form>
                                                     @endcan
 
+                                                @can('Login As User')
+                                                    @if($user->id !== auth()->id())
+                                                        <form action="{{ route('hr_settings_users_login_as', $user->id) }}" method="POST" style="display:inline;">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-dark js-tooltip-enabled" data-toggle="tooltip" title="Login As" onclick="return confirm('Login as {{ addslashes($user->name) }}?');">
+                                                                <i class="fa fa-sign-in"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                @endcan
                                             </div>
                                         </td>
                                     </tr>

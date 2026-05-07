@@ -24,7 +24,7 @@ class ProjectScheduleController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director']);
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing']);
 
         $schedules = ProjectSchedule::with(['lead', 'assignedArchitect', 'client'])
             ->when(!$isAdmin, fn($q) => $q->where(function ($q) use ($user) {
@@ -45,7 +45,7 @@ class ProjectScheduleController extends Controller
     public function show(ProjectSchedule $projectSchedule)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director']);
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing']);
 
         $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'assignments.user']);
 

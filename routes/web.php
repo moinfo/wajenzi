@@ -200,6 +200,8 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/systems', [App\Http\Controllers\SettingsController::class, 'systems'])->name('hr_settings_systems');
     Route::match(['get', 'post'], '/settings/users', [App\Http\Controllers\SettingsController::class, 'users'])->name('hr_settings_users');
     Route::post('/settings/users/{id}/toggle-status', [App\Http\Controllers\SettingsController::class, 'toggleUserStatus'])->name('hr_settings_users_toggle_status');
+    Route::post('/settings/users/{id}/login-as', [App\Http\Controllers\SettingsController::class, 'loginAsUser'])->name('hr_settings_users_login_as');
+    Route::post('/settings/users/switch-back', [App\Http\Controllers\SettingsController::class, 'switchBackToAdmin'])->name('hr_settings_users_switch_back');
     Route::match(['get', 'post'], '/settings/approvals', [App\Http\Controllers\ApprovalController::class, 'approvals'])->name('hr_settings_approvals');
     Route::match(['get', 'post'], '/settings/positions', [App\Http\Controllers\SettingsController::class, 'positions'])->name('hr_settings_positions');
     Route::match(['get', 'post'], '/settings/roles', [App\Http\Controllers\SettingsController::class, 'roles'])->name('hr_settings_roles');
@@ -226,6 +228,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/leave_types', [App\Http\Controllers\SettingsController::class, 'leave_types'])->name('hr_settings_leave_types');
     Route::match(['get', 'post'], '/settings/client_sources', [App\Http\Controllers\SettingsController::class, 'client_sources'])->name('client_sources');
     Route::match(['get', 'post'], '/settings/roles_permissions', [App\Http\Controllers\SettingsController::class, 'updateRolePermissions'])->name('hr_settings_role_permissions');
+    Route::get('/settings/roles/{role_id}/permissions', [App\Http\Controllers\SettingsController::class, 'showRolePermissionsPage'])->name('hr_settings_role_permissions_page');
     Route::match(['get', 'post'], '/settings/roles_users', [App\Http\Controllers\SettingsController::class, 'assignUsersToRole'])->name('hr_settings_role_users');
 
     // BOQ Template System Routes
@@ -679,6 +682,9 @@ Route::middleware(['auth'])->group(function () {
     // Specific routes must come before the wildcard {document_type_id} route
     Route::get('/purchase_order/{id}/record_delivery', [App\Http\Controllers\PurchaseController::class, 'recordDelivery'])->name('purchase_order.record_delivery');
     Route::post('/purchase_order/{id}/store_delivery', [App\Http\Controllers\PurchaseController::class, 'storeDelivery'])->name('purchase_order.store_delivery');
+    Route::get('/purchase_order/{id}/record_payment', [App\Http\Controllers\PurchaseController::class, 'recordPayment'])->name('purchase_order.record_payment');
+    Route::post('/purchase_order/{id}/store_payment', [App\Http\Controllers\PurchaseController::class, 'storePayment'])->name('purchase_order.store_payment');
+    Route::post('/purchase_order/{id}/close', [App\Http\Controllers\PurchaseController::class, 'closePurchaseOrder'])->name('purchase_order.close');
     Route::match(['get', 'post'], '/purchase_order/{id}/{document_type_id}', [App\Http\Controllers\PurchaseController::class, 'purchaseOrderDetail'])->name('purchase_order');
 
 // Procurement - Record Deliveries Route

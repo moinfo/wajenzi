@@ -580,6 +580,17 @@ MAIN CONTENT LAYOUT
     <!-- Main Container -->
     <main id="main-container" class="wajenzi-main">
         <div class='notifications top-right'></div>
+        @if(session('impersonating_admin_id'))
+            <div style="background:#e74c3c;color:#fff;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:600;z-index:9999;">
+                <span><i class="fa fa-exclamation-triangle"></i>&nbsp; You are logged in as <strong>{{ auth()->user()->name }}</strong> (impersonation mode)</span>
+                <form action="{{ route('hr_settings_users_switch_back') }}" method="POST" style="margin:0;">
+                    @csrf
+                    <button type="submit" style="background:#fff;color:#e74c3c;border:none;padding:4px 14px;border-radius:4px;font-weight:700;cursor:pointer;">
+                        <i class="fa fa-sign-out"></i> Switch Back to Admin
+                    </button>
+                </form>
+            </div>
+        @endif
         <div class="main-content">
             @yield('content')
         </div>

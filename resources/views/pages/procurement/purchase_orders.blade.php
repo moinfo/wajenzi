@@ -47,19 +47,27 @@
                                 <th>PO Number</th>
                                 <th>Project</th>
                                 <th>Supplier</th>
-                                <th>Material Request</th>
                                 <th class="text-center">Items</th>
-                                <th class="text-right">Subtotal</th>
-                                <th class="text-right">VAT</th>
                                 <th class="text-right">Total</th>
                                 <th class="text-center">Approvals</th>
                                 <th class="text-center">Status</th>
-                                <th class="text-center" style="width: 100px;">Actions</th>
+                                <th class="text-center">Payment</th>
+                                <th class="text-center" style="width: 120px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($purchaseOrders as $po)
                                 <tr id="purchase-tr-{{ $po->id }}">
+                                    @php
+                                        $status = strtoupper($po->approvalStatus?->status ?? $po->status ?? 'pending');
+                                        $statusClass = match($status) {
+                                            'APPROVED' => 'success',
+                                            'PENDING', 'SUBMITTED' => 'warning',
+                                            'REJECTED' => 'danger',
+                                            default => 'secondary'
+                                        };
+                                        $payStatus = $po->payment_status;
+                                    @endphp
                                     <td class="text-center">{{ $loop->index + 1 }}</td>
                                     <td>
                                         <a href="{{ route('purchase_order', ['id' => $po->id, 'document_type_id' => 0]) }}">
@@ -68,20 +76,9 @@
                                     </td>
                                     <td>{{ $po->project?->name ?? 'N/A' }}</td>
                                     <td>{{ $po->supplier?->name ?? 'N/A' }}</td>
-                                    <td>
-                                        @if($po->materialRequest)
-                                            <a href="{{ route('supplier_quotations.by_request', $po->material_request_id) }}">
-                                                {{ $po->materialRequest->request_number }}
-                                            </a>
-                                        @else
-                                            N/A
-                                        @endif
-                                    </td>
                                     <td class="text-center">
                                         <span class="badge badge-info">{{ $po->purchaseItems->count() }}</span>
                                     </td>
-                                    <td class="text-right">{{ number_format($po->amount_vat_exc, 2) }}</td>
-                                    <td class="text-right">{{ number_format($po->vat_amount, 2) }}</td>
                                     <td class="text-right">
                                         <strong>{{ number_format($po->total_amount, 2) }}</strong>
                                     </td>
@@ -89,16 +86,18 @@
                                         <x-ringlesoft-approval-status-summary :model="$po" />
                                     </td>
                                     <td class="text-center">
-                                        @php
-                                            $status = strtoupper($po->approvalStatus?->status ?? $po->status ?? 'pending');
-                                            $statusClass = match($status) {
-                                                'APPROVED' => 'success',
-                                                'PENDING', 'SUBMITTED' => 'warning',
-                                                'REJECTED' => 'danger',
-                                                default => 'secondary'
-                                            };
-                                        @endphp
                                         <span class="badge badge-{{ $statusClass }}">{{ $status }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if($payStatus === 'closed')
+                                            <span class="badge badge-dark" title="Closed by procurement">CLOSED</span>
+                                        @elseif($payStatus === 'paid')
+                                            <span class="badge badge-success" title="Payment proof uploaded by finance">PAID</span>
+                                        @elseif($status === 'APPROVED')
+                                            <span class="badge badge-warning">PENDING PAYMENT</span>
+                                        @else
+                                            <span class="badge badge-secondary">-</span>
+                                        @endif
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group">
@@ -106,12 +105,20 @@
                                                 class="btn btn-sm btn-success" title="View">
                                                 <i class="fa fa-eye"></i>
                                             </a>
-                                            @if(strtoupper($status) === 'APPROVED' && $po->material_request_id && $po->purchaseItems->contains(fn($i) => !$i->isFullyReceived()))
+                                            @if($status === 'APPROVED' && $po->material_request_id && $po->purchaseItems->contains(fn($i) => !$i->isFullyReceived()))
                                                 <a href="{{ route('purchase_order.record_delivery', $po->id) }}"
                                                     class="btn btn-sm btn-info" title="Record Delivery">
                                                     <i class="fa fa-truck"></i>
                                                 </a>
                                             @endif
+                                            @can('Upload Payment Attachment')
+                                                @if($status === 'APPROVED' && !$payStatus)
+                                                    <a href="{{ route('purchase_order.record_payment', $po->id) }}"
+                                                        class="btn btn-sm btn-warning" title="Upload Payment Proof">
+                                                        <i class="fa fa-upload"></i>
+                                                    </a>
+                                                @endif
+                                            @endcan
                                             @if(strtoupper($po->status) !== 'APPROVED')
                                                 <button type="button"
                                                     onclick="deleteModelItem('Purchase', {{ $po->id }}, 'purchase-tr-{{ $po->id }}');"
