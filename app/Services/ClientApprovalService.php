@@ -5,7 +5,10 @@ namespace App\Services;
 use App\Models\BillingDocument;
 use App\Models\BillingPayment;
 use App\Models\Lead;
+use App\Models\Project;
 use App\Models\ProjectClient;
+use App\Models\ProjectType;
+use App\Services\ProjectScheduleService;
 use Illuminate\Support\Facades\Log;
 
 class ClientApprovalService
@@ -121,30 +124,22 @@ class ClientApprovalService
     }
 
     /**
-     * Create project schedule for a client on first payment
-     *
-     * @param int $clientId
-     * @param BillingPayment|null $payment
-     * @return void
+     * Create project schedule for a client on first payment.
+     * Also converts the lead to a project in Design Phase.
      */
     protected static function createProjectScheduleForClient($clientId, ?BillingPayment $payment = null): void
     {
         try {
-            // Find the lead associated with this payment/client
+            // Resolve the lead from the payment document, or fall back to client's lead
             $leadId = null;
-
-            // First, try to get lead from the payment's document
             if ($payment && $payment->document_id) {
                 $document = BillingDocument::find($payment->document_id);
                 if ($document && $document->lead_id) {
                     $leadId = $document->lead_id;
                 }
             }
-
-            // If no lead from document, try to find a lead for this client
             if (!$leadId) {
-                $lead = Lead::where('client_id', $clientId)->first();
-                $leadId = $lead?->id;
+                $leadId = Lead::where('client_id', $clientId)->value('id');
             }
 
             if (!$leadId) {
@@ -152,7 +147,26 @@ class ClientApprovalService
                 return;
             }
 
-            // Create schedule using ProjectScheduleService
+            $lead = Lead::find($leadId);
+
+            // Create a project if the lead doesn't have one yet
+            if (!$lead->project_id) {
+                $project = self::createProjectFromLead($lead);
+                if ($project) {
+                    $lead->project_id = $project->id;
+                }
+            } else {
+                // Advance an existing pending project to design_phase
+                Project::where('id', $lead->project_id)
+                    ->where('status', 'pending')
+                    ->update(['status' => 'design_phase']);
+            }
+
+            // Mark the lead as converted
+            $lead->status = 'converted';
+            $lead->save();
+
+            // Auto-assign architect and create the design schedule
             $schedule = ProjectScheduleService::assignArchitectOnFirstPayment($leadId);
 
             if ($schedule) {
@@ -162,5 +176,37 @@ class ClientApprovalService
         } catch (\Exception $e) {
             Log::error("Failed to create project schedule for client #{$clientId}: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Auto-create a project in Design Phase from a converted lead.
+     */
+    private static function createProjectFromLead(Lead $lead): ?Project
+    {
+        $projectType = ProjectType::whereRaw('LOWER(name) LIKE ?', ['%design%'])->first()
+            ?? ProjectType::first();
+
+        if (!$projectType) {
+            Log::warning("No project type found; cannot auto-create project for lead #{$lead->id}");
+            return null;
+        }
+
+        $nextId = (Project::max('id') ?? 0) + 1;
+
+        $project = Project::create([
+            'document_number' => 'PCT/' . $nextId . '/' . date('Y'),
+            'project_name'    => $lead->name . ' — Design Project',
+            'client_id'       => $lead->client_id,
+            'project_type_id' => $projectType->id,
+            'status'          => 'design_phase',
+            'start_date'      => now()->toDateString(),
+            'salesperson_id'  => $lead->salesperson_id,
+            'contract_value'  => $lead->estimated_value,
+            'create_by_id'    => auth()->id() ?? 1,
+        ]);
+
+        Log::info("Auto-created project #{$project->id} (design_phase) from lead #{$lead->id}");
+
+        return $project;
     }
 }
