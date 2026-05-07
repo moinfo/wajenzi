@@ -595,12 +595,26 @@
                     }
                 </style>
 
+                @php
+                    $approvalStatusValue = $approval_data->approvalStatus->status ?? null;
+                    $flowMap = [
+                        'Created'    => ['Not Started', 'secondary'],
+                        'Submitted'  => ['Submitted',   'info'],
+                        'Pending'    => ['In Progress', 'info'],
+                        'Returned'   => ['Returned',    'warning'],
+                        'Approved'   => ['Approved',    'success'],
+                        'Rejected'   => ['Rejected',    'danger'],
+                        'Discarded'  => ['Discarded',   'dark'],
+                        'Overridden' => ['Overridden',  'success'],
+                    ];
+                    [$flowLabel, $flowColor] = $flowMap[$approvalStatusValue] ?? ['Not Started', 'secondary'];
+                @endphp
                 <div class="section-header">
                     <h2 class="section-title">
                         <i class="fas fa-tasks"></i> Approval Flow
                     </h2>
                     <div class="flow-status">
-                        <span class="badge bg-info">In Progress</span>
+                        <span class="badge badge-{{ $flowColor }}">{{ $flowLabel }}</span>
                     </div>
                 </div>
 

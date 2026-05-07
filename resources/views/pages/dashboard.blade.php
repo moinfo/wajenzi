@@ -913,6 +913,7 @@
                 @endif
             </div>
 
+            {{-- Hidden for now — will be re-enabled later
             <!-- Project Status -->
             <div class="dashboard-section projects-status">
                 <div class="section-header">
@@ -1154,6 +1155,7 @@
                     @endforeach
                 </div>
             </div>
+            --}}
         </div>
 
         <!-- Quick Actions Bar -->

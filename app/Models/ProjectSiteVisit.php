@@ -17,6 +17,7 @@ class ProjectSiteVisit extends Model implements ApprovableModel
 
     protected $fillable = [
         'project_id',
+        'client_id',
         'inspector_id',
         'visit_date',
         'status',
@@ -49,10 +50,21 @@ class ProjectSiteVisit extends Model implements ApprovableModel
         'visit_date' => 'date'
     ];
 
+    public function enableAutoSubmit(): bool
+    {
+        return true;
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(ProjectClient::class, 'client_id');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class,'create_by_id');

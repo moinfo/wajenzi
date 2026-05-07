@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Approval;
 use App\Models\Project;
+use App\Models\ProjectClient;
 use App\Models\ProjectDailyReport;
 use App\Models\ProjectSiteVisit;
 use App\Models\User;
@@ -33,7 +34,7 @@ class ProjectSiteVisitController extends Controller
             [$start_date, $end_date] = [$end_date, $start_date];
         }
 
-        $visits = ProjectSiteVisit::with(['project', 'inspector'])
+        $visits = ProjectSiteVisit::with(['project', 'client', 'inspector'])
             ->whereDate('visit_date', '>=', $start_date)
             ->whereDate('visit_date', '<=', $end_date)
             ->when($request->project_id, function($query) use ($request) {
@@ -45,6 +46,7 @@ class ProjectSiteVisitController extends Controller
             ->get();
 
         $projects = Project::all();
+        $clients = ProjectClient::where('status', 'APPROVED')->orderBy('first_name')->get();
 //        $inspectors = User::whereHas('roles', function($query) {
 //            $query->where('name', 'inspector');
 //        })->get();
@@ -52,6 +54,7 @@ class ProjectSiteVisitController extends Controller
         $data = [
             'visits' => $visits,
             'projects' => $projects,
+            'clients' => $clients,
             'start_date' => $start_date,
             'end_date' => $end_date,
 //            'inspectors' => $inspectors
@@ -63,19 +66,20 @@ class ProjectSiteVisitController extends Controller
         // Mark notification as read
         $this->approvalService->markNotificationAsRead($id, $document_type_id,'project_site_visits');
 
-        $approval_data = \App\Models\ProjectSiteVisit::where('id',$id)->get()->first();
+        $approval_data = \App\Models\ProjectSiteVisit::with(['project.client', 'project.projectType', 'client'])->where('id',$id)->first();
         $document_id = $id;
 
+        $clientModel = $approval_data->project->client ?? $approval_data->client ?? null;
+        $clientName  = $clientModel ? trim(($clientModel->first_name ?? '') . ' ' . ($clientModel->last_name ?? '')) : null;
+
         $details = [
-            'Project Name' => $approval_data->project->project_name ?? null,
-            'Client Name' => $approval_data->project->client->first_name.' '.$approval_data->project->client->last_name,
-            'Project Type' => $approval_data->project->projectType->name,
-            'Phone Number' => $approval_data->project->client->phone_number,
-//            'Total Amount' => number_format($approval_data->total_amount),
-            'Visit Date' => $approval_data->visit_date,
-            'Site Location' => $approval_data->location,
-            'Description' => $approval_data->description,
-//            'Expected End Date' => $approval_data->expected_end_date
+            'Project Name' => $approval_data->project->project_name ?? 'N/A (client-only visit)',
+            'Client Name'  => $clientName,
+            'Project Type' => $approval_data->project->projectType->name ?? null,
+            'Phone Number' => $clientModel->phone_number ?? null,
+            'Visit Date'   => $approval_data->visit_date,
+            'Site Location'=> $approval_data->location,
+            'Description'  => $approval_data->description,
         ];
 
         $data = [
@@ -83,7 +87,7 @@ class ProjectSiteVisitController extends Controller
             'document_id' => $document_id,
             'approval_document_type_id' => $document_type_id, //improve $approval_document_type_id
             'page_name' => 'Project Site Visit',
-            'approval_data_name' => $approval_data->project->project_name ?? null,
+            'approval_data_name' => $approval_data->project->project_name ?? $clientName ?? 'Site Visit #' . $approval_data->id,
             'details' => $details,
             'model' => 'ProjectSiteVisit',
             'route' => 'project_site_visits',
