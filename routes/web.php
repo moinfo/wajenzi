@@ -560,6 +560,21 @@ Route::middleware(['auth'])->group(function () {
     Route::post('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForLead'])->name('leads.schedule.create');
     Route::post('projects/{project}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForProject'])->name('projects.schedule.create');
 
+// Content Creators
+    Route::prefix('content-creator')->name('content_creator.')->group(function () {
+        $c = App\Http\Controllers\ContentCreatorController::class;
+        Route::get('/', [$c, 'index'])->name('index');
+        Route::post('/tasks', [$c, 'storeTask'])->name('tasks.store');
+        Route::get('/tasks/{task}', [$c, 'getTask'])->name('tasks.show');
+        Route::put('/tasks/{task}', [$c, 'updateTask'])->name('tasks.update');
+        Route::delete('/tasks/{task}', [$c, 'destroyTask'])->name('tasks.destroy');
+        Route::post('/tasks/{task}/progress', [$c, 'updateProgress'])->name('tasks.progress');
+        Route::post('/tasks/{task}/comments', [$c, 'addComment'])->name('tasks.comments');
+        Route::post('/tasks/{task}/approve', [$c, 'approveTask'])->name('tasks.approve');
+        Route::post('/targets', [$c, 'setTarget'])->name('targets.set');
+        Route::post('/crew/{user}/status', [$c, 'updateCrewStatus'])->name('crew.status');
+    });
+
 // Field Marketing
     Route::prefix('field-marketing')->name('field_marketing.')->group(function () {
         $c = App\Http\Controllers\FieldMarketingController::class;

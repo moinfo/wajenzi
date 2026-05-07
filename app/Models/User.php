@@ -506,5 +506,8 @@ class User extends Authenticatable
         return $leaveType->days_allowed - $usedLeaves;
     }
 
-
+    public function crewProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\ContentCreatorCrew::class, 'user_id');
+    }
 }
