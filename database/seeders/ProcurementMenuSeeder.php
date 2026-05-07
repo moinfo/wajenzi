@@ -96,6 +96,15 @@ class ProcurementMenuSeeder extends Seeder
                 'crud' => true,
                 'approval' => ['Verify Material Inspection', 'Approve Material Inspection'],
             ],
+            [
+                'name' => 'Material Transfers',
+                'singular' => 'Material Transfer',
+                'route' => 'material_transfers',
+                'icon' => 'fa fa-exchange-alt',
+                'list_order' => 6,
+                'crud' => true,
+                'approval' => ['Approve Material Transfer'],
+            ],
         ];
 
         $menuId = $parentMenuId;

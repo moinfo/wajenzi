@@ -115,6 +115,34 @@ class ProjectScheduleController extends Controller
     }
 
     /**
+     * Delete an unconfirmed schedule
+     */
+    public function destroy(ProjectSchedule $projectSchedule)
+    {
+        if (!auth()->user()->can('Delete Project Schedule')) {
+            return back()->with('error', 'You do not have permission to delete schedules.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $projectSchedule->activities()->delete();
+            ProjectAssignment::where('project_schedule_id', $projectSchedule->id)->delete();
+            $projectSchedule->delete();
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete project schedule: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete schedule.');
+        }
+
+        return redirect()
+            ->route('project-schedules.index')
+            ->with('success', 'Schedule deleted successfully.');
+    }
+
+    /**
      * Confirm the schedule
      */
     public function confirm(ProjectSchedule $projectSchedule)
@@ -201,7 +229,7 @@ class ProjectScheduleController extends Controller
 
         $request->validate([
             'completion_notes' => 'nullable|string|max:1000',
-            'attachment' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip,dwg|max:10240',
+            'attachment' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip,dwg|max:51200',
         ]);
 
         // Handle file upload

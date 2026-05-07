@@ -419,8 +419,15 @@ class SettingsController extends Controller
         if($this->handleCrud($request, 'PettyCashRefillRequest')) {
             return back();
         }
+        $totalRefilled = PettyCashRefillRequest::whereRaw('UPPER(status) = ?', ['APPROVED'])->sum('refill_amount');
+        // Imprests count as "used" once they're approved; retirement (COMPLETED)
+        // doesn't return the cash, so include both states.
+        $totalUsed = ImprestRequest::whereRaw('UPPER(status) IN (?, ?)', ['APPROVED', 'COMPLETED'])->sum('amount');
         $data = [
-            'petty_cash_refill_requests' => PettyCashRefillRequest::all()
+            'petty_cash_refill_requests' => PettyCashRefillRequest::all(),
+            'total_refilled' => $totalRefilled,
+            'total_used' => $totalUsed,
+            'balance_remaining' => $totalRefilled - $totalUsed,
         ];
         return view('pages.petty_cash_management.petty_cash_refill_requests')->with($data);
     }
@@ -462,6 +469,35 @@ class SettingsController extends Controller
             'imprest_requests' => ImprestRequest::all()
         ];
         return view('pages.imprest.imprest_requests')->with($data);
+    }
+
+    public function retireImprest(Request $request, $id){
+        $imprest = ImprestRequest::findOrFail($id);
+
+        if (!$imprest->isApproved()) {
+            return back()->with('error', 'Only approved imprests can be retired.');
+        }
+
+        if ($imprest->isRetired()) {
+            return back()->with('error', 'This imprest has already been retired.');
+        }
+
+        $request->validate([
+            'retirement_file' => 'required|file|mimes:png,jpg,jpeg,pdf,doc,docx,xls,xlsx|max:8192',
+            'retirement_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $name = time().'_retirement_'.$request->file('retirement_file')->getClientOriginalName();
+        $filePath = $request->file('retirement_file')->storeAs('uploads/imprest_retirements', $name, 'public');
+
+        $imprest->update([
+            'retirement_file'  => '/storage/'.$filePath,
+            'retirement_notes' => $request->input('retirement_notes'),
+            'retired_at'       => now(),
+            'status'           => 'COMPLETED',
+        ]);
+
+        return back()->with('success', 'Imprest retirement uploaded. Imprest closed.');
     }
 
     public function imprest_request($id,$document_type_id){

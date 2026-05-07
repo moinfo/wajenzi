@@ -64,6 +64,7 @@
                                     <th scope="col">Attachment</th>
                                     <th scope="col">Approvals</th>
                                     <th scope="col">Status</th>
+                                    <th scope="col">Retirement</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -144,6 +145,23 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
+                                            @if($imprest_request->isRetired())
+                                                <a href="{{ url($imprest_request->retirement_file) }}" target="_blank" class="btn btn-sm btn-success js-tooltip-enabled" title="View retirement document">
+                                                    <i class="fa fa-file-text-o"></i> Retired
+                                                </a>
+                                                <span class="d-block small text-muted mt-1">{{ optional($imprest_request->retired_at)->format('d M Y') }}</span>
+                                            @elseif($imprest_request->isApproved())
+                                                <button type="button"
+                                                        onclick="loadFormModal('imprest_retirement_form', {className: 'ImprestRequest', id: {{ $imprest_request->id }}}, 'Retire Imprest {{ $imprest_request->document_number }}', 'modal-md');"
+                                                        class="btn btn-sm btn-warning js-tooltip-enabled"
+                                                        title="Upload retirement document">
+                                                    <i class="fa fa-upload"></i> Retire
+                                                </button>
+                                            @else
+                                                <span class="text-muted">—</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
                                             <div class="btn-group">
                                                 <a class="btn btn-sm btn-success js-tooltip-enabled" href="{{route('imprest_request',['id' => $imprest_request->id,'document_type_id'=>13])}}"><i class="fa fa-eye"></i></a>
                                             @can('Edit Imprest Request')
@@ -179,7 +197,7 @@
                                     <td></td>
                                     <td></td>
                                     <td></td>
-{{--                                    <td></td>--}}
+                                    <td></td>
                                 </tr>
                                 </tfoot>
                             </table>

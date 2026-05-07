@@ -271,6 +271,7 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/finance/petty_cash_management/petty_cash_refill_requests', [App\Http\Controllers\SettingsController::class, 'petty_cash_refill_requests'])->name('petty_cash_refill_requests');
     Route::match(['get', 'post'], '/finance/petty_cash_management/petty_cash_refill_requests/{id}/{document_type_id}', [App\Http\Controllers\SettingsController::class, 'petty_cash_refill_request'])->name('petty_cash_refill_request');
     Route::match(['get', 'post'], '/finance/imprest_management/imprest_requests', [App\Http\Controllers\SettingsController::class, 'imprest_requests'])->name('imprest_requests');
+    Route::post('/finance/imprest_management/imprest_requests/{id}/retire', [App\Http\Controllers\SettingsController::class, 'retireImprest'])->name('imprest_request.retire');
     Route::match(['get', 'post'], '/finance/imprest_management/imprest_requests/{id}/{document_type_id}', [App\Http\Controllers\SettingsController::class, 'imprest_request'])->name('imprest_request');
 
 
@@ -543,7 +544,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('leads/{id}/project-cost/{costId}', [App\Http\Controllers\LeadController::class, 'deleteProjectCost'])->name('leads.delete-project-cost');
 
     // Project Schedule Routes
-    Route::resource('project-schedules', App\Http\Controllers\ProjectScheduleController::class)->except(['create', 'store', 'destroy']);
+    Route::resource('project-schedules', App\Http\Controllers\ProjectScheduleController::class)->except(['create', 'store']);
     Route::post('project-schedules/{projectSchedule}/confirm', [App\Http\Controllers\ProjectScheduleController::class, 'confirm'])->name('project-schedules.confirm');
     Route::post('project-schedules/activity/{activity}/start', [App\Http\Controllers\ProjectScheduleController::class, 'startActivity'])->name('project-schedules.activity.start');
     Route::post('project-schedules/activity/{activity}/complete', [App\Http\Controllers\ProjectScheduleController::class, 'completeActivity'])->name('project-schedules.activity.complete');
@@ -662,6 +663,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/quotation_comparison/store', [App\Http\Controllers\QuotationComparisonController::class, 'store'])->name('quotation_comparison.store');
     Route::get('/quotation_comparison/{id}/create_purchase', [App\Http\Controllers\QuotationComparisonController::class, 'createPurchase'])->name('quotation_comparison.create_purchase');
     Route::match(['get', 'post'], '/quotation_comparison/{id}/{document_type_id}', [App\Http\Controllers\QuotationComparisonController::class, 'comparison'])->name('quotation_comparison');
+// Procurement - Material Transfers
+    Route::match(['get', 'post'], '/material_transfers', [App\Http\Controllers\MaterialTransferController::class, 'index'])->name('material_transfers');
+    Route::match(['get', 'post'], '/material_transfer/create', [App\Http\Controllers\MaterialTransferController::class, 'create'])->name('material_transfer.create');
+    Route::post('/material_transfer/store', [App\Http\Controllers\MaterialTransferController::class, 'store'])->name('material_transfer.store');
+    Route::post('/material_transfer/{id}/delete', [App\Http\Controllers\MaterialTransferController::class, 'destroy'])->name('material_transfer.delete');
+    Route::match(['get', 'post'], '/material_transfer/{id}/{document_type_id}', [App\Http\Controllers\MaterialTransferController::class, 'show'])->name('material_transfer');
+
     Route::post('/quotation_comparison/{comparison}/submit', [App\Http\Controllers\QuotationComparisonController::class, 'submit'])->name('quotation_comparison.submit');
     Route::post('/quotation_comparison/{comparison}/approve', [App\Http\Controllers\QuotationComparisonController::class, 'approve'])->name('quotation_comparison.approve');
     Route::post('/quotation_comparison/{comparison}/reject', [App\Http\Controllers\QuotationComparisonController::class, 'reject'])->name('quotation_comparison.reject');

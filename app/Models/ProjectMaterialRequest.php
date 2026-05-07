@@ -55,6 +55,18 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
             if (empty($model->requested_date)) {
                 $model->requested_date = now();
             }
+
+            // IDs are assigned manually and may collide with rows left over from
+            // previously-deleted requests, causing the morphOne approvalStatus
+            // relation to surface a stale "Approved" row.
+            \DB::table('process_approval_statuses')
+                ->where('approvable_type', self::class)
+                ->where('approvable_id', $model->id)
+                ->delete();
+            \DB::table('process_approvals')
+                ->where('approvable_type', self::class)
+                ->where('approvable_id', $model->id)
+                ->delete();
         });
 
         // Replicate Approvable trait's created callback (trait boot is overridden)
@@ -67,6 +79,17 @@ class ProjectMaterialRequest extends Model implements ApprovableModel
                 'status' => ApprovalStatusEnum::SUBMITTED->value,
                 'creator_id' => Auth::id(),
             ]);
+        });
+
+        static::deleted(static function ($model) {
+            \DB::table('process_approval_statuses')
+                ->where('approvable_type', self::class)
+                ->where('approvable_id', $model->id)
+                ->delete();
+            \DB::table('process_approvals')
+                ->where('approvable_type', self::class)
+                ->where('approvable_id', $model->id)
+                ->delete();
         });
     }
 

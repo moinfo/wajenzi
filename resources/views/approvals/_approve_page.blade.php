@@ -436,6 +436,53 @@
                 @endif
             @endif
 
+            {{-- Imprest Retirement Section --}}
+            @if(isset($model) && $model === 'ImprestRequest' && strtoupper($approval_data->status ?? '') === 'APPROVED')
+                <div class="details-card" style="margin-bottom: 25px;">
+                    <div class="card-header" style="background-color: #f8f9fa; padding: 15px 25px; border-bottom: 1px solid #e9ecef;">
+                        <h3 style="margin: 0; color: #0066cc; font-weight: 600; font-size: 18px;">
+                            <i class="fa fa-receipt mr-2"></i> Imprest Retirement
+                        </h3>
+                    </div>
+                    <div class="card-body" style="padding: 25px;">
+                        @if($approval_data->isRetired())
+                            <div class="alert alert-success" style="margin-bottom: 0;">
+                                <i class="fa fa-check-circle mr-1"></i>
+                                <strong>Retirement closed</strong>
+                                @if($approval_data->retired_at)
+                                    on {{ $approval_data->retired_at->format('d M Y H:i') }}.
+                                @endif
+                                <a href="{{ url($approval_data->retirement_file) }}" target="_blank" class="btn btn-sm btn-outline-success ml-2">
+                                    <i class="fa fa-file-text-o mr-1"></i> View document
+                                </a>
+                                @if($approval_data->retirement_notes)
+                                    <hr>
+                                    <strong>Notes:</strong> {{ $approval_data->retirement_notes }}
+                                @endif
+                            </div>
+                        @else
+                            <p class="text-muted">This imprest is approved but has not yet been retired. Upload a receipt or supporting document to close it.</p>
+                            <form method="post" action="{{ route('imprest_request.retire', ['id' => $approval_data->id]) }}" enctype="multipart/form-data">
+                                @csrf
+                                <div class="form-group">
+                                    <label for="retirement_file_inline" class="control-label required">Retirement Document</label>
+                                    <input type="file" name="retirement_file" id="retirement_file_inline" class="form-control" required
+                                           accept=".png,.jpg,.jpeg,.pdf,.doc,.docx,.xls,.xlsx">
+                                </div>
+                                <div class="form-group">
+                                    <label for="retirement_notes_inline" class="control-label">Notes <small class="text-muted">(optional)</small></label>
+                                    <textarea name="retirement_notes" id="retirement_notes_inline" class="form-control" rows="3"
+                                              placeholder="Briefly describe how the imprest was used"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fa fa-check mr-1"></i> Submit Retirement &amp; Close
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
             <!-- Approvals Section -->
             <div class="approvals-section">
                 <style>

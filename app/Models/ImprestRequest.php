@@ -15,7 +15,21 @@ class ImprestRequest extends Model implements ApprovableModel
 
     protected $table = 'imprest_requests';
 
-    public $fillable = ['document_number','description','amount','status','create_by_id','expenses_sub_category_id','file','date','project_id'];
+    public $fillable = ['document_number','description','amount','status','create_by_id','expenses_sub_category_id','file','date','project_id','retirement_file','retirement_notes','retired_at'];
+
+    protected $casts = [
+        'retired_at' => 'datetime',
+    ];
+
+    public function isApproved(): bool
+    {
+        return strtoupper($this->status ?? '') === 'APPROVED';
+    }
+
+    public function isRetired(): bool
+    {
+        return !empty($this->retirement_file);
+    }
 
     protected static function boot(): void
     {

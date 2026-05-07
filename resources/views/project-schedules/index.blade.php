@@ -95,11 +95,18 @@
                                             <i class="fa fa-eye"></i>
                                         </a>
                                         @can('Edit Project Schedule')
-                                            @if(!$schedule->isConfirmed())
-                                                <a href="{{ route('project-schedules.edit', $schedule) }}" class="btn btn-sm btn-warning">
-                                                    <i class="fa fa-edit"></i>
-                                                </a>
-                                            @endif
+                                            <a href="{{ route('project-schedules.edit', $schedule) }}" class="btn btn-sm btn-warning">
+                                                <i class="fa fa-edit"></i>
+                                            </a>
+                                        @endcan
+                                        @can('Delete Project Schedule')
+                                            <form action="{{ route('project-schedules.destroy', $schedule) }}" method="POST" class="d-inline js-delete-schedule">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete Schedule">
+                                                    <i class="fa fa-trash"></i>
+                                                </button>
+                                            </form>
                                         @endcan
                                     </td>
                                 </tr>
@@ -117,4 +124,44 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('js_after')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('form.js-delete-schedule').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Delete this schedule?',
+                text: 'All its activities and assignments will also be removed. This cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete it',
+                cancelButtonText: 'Cancel',
+            }).then(function (result) {
+                if (result && (result.value || result.isConfirmed)) form.submit();
+            });
+        });
+    });
+
+    @if(session('success'))
+        Swal.fire({
+            icon: 'success',
+            title: 'Done',
+            text: @json(session('success')),
+            timer: 2200,
+            showConfirmButton: false,
+        });
+    @elseif(session('error'))
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: @json(session('error')),
+        });
+    @endif
+});
+</script>
 @endsection

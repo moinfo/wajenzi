@@ -7,6 +7,7 @@ use App\Models\UsersPermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 
 class UserController extends Controller
@@ -55,19 +56,22 @@ class UserController extends Controller
     }
 
     public function update_password(Request $request){
-        $id = $request->input('id');
-        $name = $request->input('name');
-        $email = $request->input('email');
-        $password = bcrypt($request->input('password'));
+        $request->validate([
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:6|same:new_password_confirmation',
+            'new_password_confirmation' => 'required|string',
+        ]);
 
-        User::query()->whereId($id)
-            ->update([
-                'name' => $name,
-                'email' => $email,
-                'password' => $password,
-            ]);
+        $user = Auth::user();
 
-        return Redirect::back();
+        if (!Hash::check($request->input('current_password'), $user->password)) {
+            return Redirect::back()->withErrors(['current_password' => 'The current password is incorrect.']);
+        }
+
+        $user->password = Hash::make($request->input('password'));
+        $user->save();
+
+        return Redirect::back()->with('success', 'Password updated successfully.');
     }
 
     public function update_profile(Request $request){

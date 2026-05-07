@@ -11,7 +11,7 @@ class ProjectScheduleMenuSeeder extends Seeder
     public function run()
     {
         // Create permissions (match existing guard_name pattern)
-        $permissionNames = ['Project Schedules', 'Edit Project Schedule', 'Assign Project Activities'];
+        $permissionNames = ['Project Schedules', 'Edit Project Schedule', 'Delete Project Schedule', 'Assign Project Activities'];
         $roles = ['System Administrator', 'Managing Director', 'Architect', 'Project Manager'];
 
         foreach ($permissionNames as $permName) {

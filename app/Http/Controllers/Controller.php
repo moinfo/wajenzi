@@ -68,22 +68,27 @@ class Controller extends BaseController
                     }
                     $this->notify($class_name .'Added Successfully', 'Added!', 'success');
                     if($request->document_id != null){
-                        if(Approval::getNextApproval($request->document_id,$request->document_type_id)) {
-                            $next_user_group_id = Approval::getNextApproval($request->document_id,$request->document_type_id)->user_group_id;
-                            $next_user_id = AssignUserGroup::getUserId($next_user_group_id)->user_id;
-                            $user = User::find($next_user_id);
+                        $nextApproval = Approval::getNextApproval($request->document_id,$request->document_type_id);
+                        if($nextApproval) {
+                            $next_user_group_id = $nextApproval->user_group_id;
+                            $assignment = AssignUserGroup::getUserId($next_user_group_id);
+                            $user = $assignment ? User::find($assignment->user_id) : null;
 
-                            $details = [
-                                'staff_id' => $next_user_id,
-                                'title' => $class_name. ' '. 'Waiting for Approval',
-                                'body' => 'A new '.$class_name.' '.$request->document_number.' has been created and submitted. You are required to review and approve the created '. $class_name,
-                                'link' => $request->link,
-                                'document_id' => $request->document_id,
-                                'document_type_id' => $request->document_type_id
-                            ];
-                            $user->notify(new \App\Notifications\ApprovalNotification($details));
+                            if ($user) {
+                                $details = [
+                                    'staff_id' => $assignment->user_id,
+                                    'title' => $class_name. ' '. 'Waiting for Approval',
+                                    'body' => 'A new '.$class_name.' '.$request->document_number.' has been created and submitted. You are required to review and approve the created '. $class_name,
+                                    'link' => $request->link,
+                                    'document_id' => $request->document_id,
+                                    'document_type_id' => $request->document_type_id
+                                ];
+                                $user->notify(new \App\Notifications\ApprovalNotification($details));
 
-                            event(new \App\Events\Approved($details));
+                                event(new \App\Events\Approved($details));
+                            } else {
+                                \Log::warning("No approver assigned for {$class_name} document_type_id={$request->document_type_id}, group_id={$next_user_group_id}");
+                            }
                         }
                     }
                 } else {
