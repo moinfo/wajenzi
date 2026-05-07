@@ -308,9 +308,28 @@ function resolve(p, lk) {
         base = p.name;
     }
 
+    // Phase 1: exact / plural variant match
     for (const v of variants(base)) {
         if (lk[v]) return lk[v];
     }
+
+    // Phase 2: forward prefix — base noun starts with a known menu key
+    // e.g. "Field Marketing Session" starts with "field marketing "
+    const nb = norm(base);
+    let best = null;
+    for (const [key, val] of Object.entries(lk)) {
+        if (key.length >= 4 && nb.startsWith(key + ' ')) {
+            if (!best || key.length > best.keyLen) best = {val, keyLen: key.length};
+        }
+    }
+    if (best) return best.val;
+
+    // Phase 3: reverse prefix — a known menu key starts with the base noun
+    // e.g. "Payroll" → "payroll administration" starts with "payroll "
+    for (const [key, val] of Object.entries(lk)) {
+        if (nb.length >= 4 && key.startsWith(nb + ' ')) return val;
+    }
+
     return null;
 }
 
@@ -389,6 +408,60 @@ function collapsible(hdrCls, badgeCls, bodyCls, label, items, btnClass, icon) {
     </div>`;
 }
 
+/* ── Grouped render: merges SETTING perms with their CRUD actions ── */
+function renderDirectGrouped(actions, settings, btnClass, icon) {
+    if (!actions.length && !settings.length) return '';
+
+    // Build module map: normKey → {label, setting, actions[]}
+    const mods = {};
+    settings.forEach(p => {
+        const key = norm(p.name);
+        if (!mods[key]) mods[key] = {label: p.name, setting: null, actions: []};
+        mods[key].setting = p;
+    });
+
+    const loose = [];
+    actions.forEach(p => {
+        const base = actionBase(p.name) || p.name;
+        let hit = false;
+        for (const v of variants(base)) {
+            if (mods[v]) { mods[v].actions.push(p); hit = true; break; }
+        }
+        if (!hit) {
+            // prefix-match against existing module keys
+            const nb = norm(base);
+            let bestKey = null, bestLen = 0;
+            for (const k of Object.keys(mods)) {
+                if (k.length >= 4 && nb.startsWith(k + ' ') && k.length > bestLen) { bestKey = k; bestLen = k.length; }
+                else if (nb.length >= 4 && k.startsWith(nb + ' ') && !bestKey)      { bestKey = k; bestLen = nb.length; }
+            }
+            if (bestKey) mods[bestKey].actions.push(p); else loose.push(p);
+        }
+    });
+
+    // Remaining loose actions — fold into per-base-noun groups
+    loose.forEach(p => {
+        const base = actionBase(p.name) || p.name;
+        const key  = norm(base);
+        if (!mods[key]) mods[key] = {label: base, setting: null, actions: []};
+        mods[key].actions.push(p);
+    });
+
+    let html = '';
+    Object.keys(mods).sort().forEach(key => {
+        const m = mods[key];
+        const total = (m.setting ? 1 : 0) + m.actions.length;
+        if (!total) return;
+        let body = m.setting ? permItem(m.setting, btnClass, icon) : '';
+        m.actions.sort((a, b) => a.name.localeCompare(b.name)).forEach(p => { body += permItem(p, btnClass, icon); });
+        html += `<div>
+            <div class="perm-hdr l3-header">${m.label}<span class="l3-badge">${total}</span><span class="toggle-arrow"><i class="fa fa-chevron-down"></i></span></div>
+            <div class="perm-body l3-body">${body}</div>
+        </div>`;
+    });
+    return html;
+}
+
 function renderL2(ch, cName, btnClass, icon) {
     const total = (ch.self?1:0) + ch.actions.length + ch.settings.length + ch.reports.length;
     if (!total) return '';
@@ -431,9 +504,8 @@ function renderGroupedList(permissions, action) {
             l1Body += renderL2(node.children[cName] || {self:null,actions:[],settings:[],reports:[]}, cName, btnClass, icon);
         });
 
-        // Direct actions/settings/reports on L1 (e.g. Settings, Reports catch-all nodes)
-        l1Body += collapsible('perm-hdr l3-header','l3-badge','l3-body','Actions',  node.direct.actions,  btnClass, icon);
-        l1Body += collapsible('perm-hdr l4-header','l4-badge','l4-body','Settings', node.direct.settings, btnClass, icon);
+        // Direct actions/settings on L1 — grouped by module (SETTING merged with its CRUD)
+        l1Body += renderDirectGrouped(node.direct.actions, node.direct.settings, btnClass, icon);
         l1Body += collapsible('perm-hdr l5-header','l5-badge','l5-body','Reports',  node.direct.reports,  btnClass, icon);
 
         html += `<div>

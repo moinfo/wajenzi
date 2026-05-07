@@ -733,18 +733,19 @@ class SettingsController extends Controller
 
         abort_if($target->id === auth()->id(), 400, 'Cannot impersonate yourself.');
 
-        session(['impersonating_admin_id' => auth()->id()]);
+        $adminId = auth()->id();
         \Auth::loginUsingId($target->id);
+        // Set AFTER loginUsingId so it lands on the migrated session
+        session()->put('impersonating_admin_id', $adminId);
 
         return redirect('/')->with('info', "You are now logged in as {$target->name}.");
     }
 
     public function switchBackToAdmin(Request $request)
     {
-        $adminId = session('impersonating_admin_id');
+        $adminId = session()->pull('impersonating_admin_id');
         abort_unless($adminId, 403);
 
-        session()->forget('impersonating_admin_id');
         \Auth::loginUsingId($adminId);
 
         return redirect()->route('hr_settings_users')->with('success', 'Switched back to your admin account.');
