@@ -52,13 +52,11 @@
                                                 </button>
                                             @endcan
                                             @can('Assign Role To Permissions')
-
-                                                <button type="button"
-                                                        onclick="loadFormModal('settings_role_permissions_form', {className: 'UsersPermission', role_id: {{$role->id}}}, 'Permission For {{$role->name}}', 'modal-lg');"
-                                                        class="btn btn-sm btn-primary js-tooltip-enabled"
-                                                        data-toggle="tooltip" title="Edit" data-original-title="Edit">
+                                                <a href="{{ route('hr_settings_role_permissions_page', $role->id) }}"
+                                                   class="btn btn-sm btn-primary js-tooltip-enabled"
+                                                   data-toggle="tooltip" title="Manage Permissions" data-original-title="Manage Permissions">
                                                     <i class="fa fa-cog"></i>
-                                                </button>
+                                                </a>
                                             @endcan
                                             @can('Edit Role')
                                                 <button type="button"

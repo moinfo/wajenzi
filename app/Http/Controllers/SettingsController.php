@@ -77,6 +77,7 @@ use App\Models\BoqTemplateStage;
 use App\Models\BoqTemplateActivity;
 use App\Models\BoqTemplateSubActivity;
 use App\Models\ProjectActivityTemplate;
+use App\Models\Menu;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -724,6 +725,31 @@ class SettingsController extends Controller
         return back()->with('success', "User {$user->name} status updated to {$user->status}");
     }
 
+    public function loginAsUser(Request $request, $id)
+    {
+        abort_unless(auth()->user()->can('Login As User'), 403);
+
+        $target = User::findOrFail($id);
+
+        abort_if($target->id === auth()->id(), 400, 'Cannot impersonate yourself.');
+
+        session(['impersonating_admin_id' => auth()->id()]);
+        \Auth::loginUsingId($target->id);
+
+        return redirect('/')->with('info', "You are now logged in as {$target->name}.");
+    }
+
+    public function switchBackToAdmin(Request $request)
+    {
+        $adminId = session('impersonating_admin_id');
+        abort_unless($adminId, 403);
+
+        session()->forget('impersonating_admin_id');
+        \Auth::loginUsingId($adminId);
+
+        return redirect()->route('hr_settings_users')->with('success', 'Switched back to your admin account.');
+    }
+
 
     public function supervisors(Request $request){
         if($this->handleCrud($request, 'Supervisor')) {
@@ -1029,6 +1055,38 @@ class SettingsController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', "Error updating permissions: " . $e->getMessage());
         }
+    }
+
+    public function showRolePermissionsPage(Request $request, $role_id)
+    {
+        $allRoles = DB::table('roles')->get();
+        $selectedRole = DB::table('roles')->where('id', $role_id)->first();
+
+        if (!$selectedRole) {
+            return redirect()->route('hr_settings_roles')->with('error', 'Role not found.');
+        }
+
+        $permissions = Permission::all();
+        $permissionsByType = $permissions->groupBy('permission_type');
+        $rolePermissionIds = DB::table('role_has_permissions')
+            ->where('role_id', $role_id)
+            ->pluck('permission_id')
+            ->toArray();
+
+        $menuTree = Menu::with('children')
+            ->whereNull('parent_id')
+            ->where('status', 'ACTIVE')
+            ->orderBy('list_order')
+            ->get()
+            ->map(fn($m) => [
+                'name'     => $m->name,
+                'children' => $m->children->pluck('name')->values()->toArray(),
+            ])
+            ->toArray();
+
+        return view('pages.settings.settings_role_permissions_page', compact(
+            'allRoles', 'selectedRole', 'permissions', 'permissionsByType', 'rolePermissionIds', 'menuTree'
+        ));
     }
 
     /**
