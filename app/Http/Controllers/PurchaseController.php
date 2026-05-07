@@ -377,6 +377,70 @@ class PurchaseController extends Controller
         ]);
     }
 
+    public function recordPayment($id)
+    {
+        $purchase = Purchase::with(['supplier', 'project', 'purchaseItems.boqItem'])
+            ->findOrFail($id);
+
+        if (strtoupper($purchase->status) !== 'APPROVED') {
+            $this->notify('Only approved purchase orders can have payment recorded.', 'Error', 'error');
+            return redirect()->route('purchase_orders');
+        }
+
+        if ($purchase->isClosed()) {
+            $this->notify('This purchase order is already closed.', 'Info', 'info');
+            return redirect()->route('purchase_orders');
+        }
+
+        return view('pages.procurement.record_payment')->with(['purchase' => $purchase]);
+    }
+
+    public function storePayment(Request $request, $id)
+    {
+        $purchase = Purchase::findOrFail($id);
+
+        if (strtoupper($purchase->status) !== 'APPROVED') {
+            $this->notify('Only approved purchase orders can have payment recorded.', 'Error', 'error');
+            return redirect()->route('purchase_orders');
+        }
+
+        $request->validate([
+            'payment_date'      => 'required|date',
+            'payment_reference' => 'required|string|max:100',
+            'payment_attachment' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'payment_note'      => 'nullable|string|max:500',
+        ]);
+
+        $path = $request->file('payment_attachment')->store('payment_attachments', 'public');
+
+        $purchase->update([
+            'payment_status'       => 'paid',
+            'payment_date'         => $request->payment_date,
+            'payment_reference'    => $request->payment_reference,
+            'payment_attachment'   => $path,
+            'payment_note'         => $request->payment_note,
+            'payment_uploaded_by'  => auth()->id(),
+        ]);
+
+        $this->notify('Payment attachment uploaded successfully. Procurement has been notified.', 'Success', 'success');
+        return redirect()->route('purchase_orders');
+    }
+
+    public function closePurchaseOrder(Request $request, $id)
+    {
+        $purchase = Purchase::findOrFail($id);
+
+        if (!$purchase->isPaymentUploaded()) {
+            $this->notify('Cannot close a purchase order without payment proof.', 'Error', 'error');
+            return back();
+        }
+
+        $purchase->update(['payment_status' => 'closed']);
+
+        $this->notify('Purchase order marked as closed.', 'Success', 'success');
+        return back();
+    }
+
     public function receivingDetail($id)
     {
         $receiving = SupplierReceiving::with([

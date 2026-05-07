@@ -61,8 +61,31 @@ class Purchase extends Model implements ApprovableModel
         'file', 'date', 'status', 'document_number',
         // Procurement workflow fields
         'project_id', 'material_request_id', 'quotation_comparison_id',
-        'expected_delivery_date', 'delivery_address', 'payment_terms', 'notes'
+        'expected_delivery_date', 'delivery_address', 'payment_terms', 'notes',
+        // Finance payment fields
+        'payment_status', 'payment_date', 'payment_reference',
+        'payment_attachment', 'payment_note', 'payment_uploaded_by',
     ];
+
+    public function paymentUploadedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payment_uploaded_by');
+    }
+
+    public function isPaymentUploaded(): bool
+    {
+        return $this->payment_status === 'paid';
+    }
+
+    public function isClosed(): bool
+    {
+        return $this->payment_status === 'closed';
+    }
+
+    public function getPaymentAttachmentUrlAttribute(): ?string
+    {
+        return self::resolveAttachmentUrl($this->payment_attachment);
+    }
 
     public function getAll($start_date, $end_date, $supplier_id = null, $purchase_type = null){
         $purchases = DB::table('purchases')
