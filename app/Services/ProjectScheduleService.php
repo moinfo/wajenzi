@@ -155,6 +155,7 @@ class ProjectScheduleService
                 'sort_order' => $template->sort_order,
                 'assigned_to' => $schedule->assigned_architect_id,
                 'role_id' => $template->role_id,
+                'requires_approval' => $template->requires_approval ?? false,
             ]);
 
             // Store for predecessor reference

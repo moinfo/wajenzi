@@ -125,6 +125,11 @@ class User extends Authenticatable
         return $this->hasMany(ProjectActivityLog::class);
     }
 
+    public function structuralDesigns(): HasMany
+    {
+        return $this->hasMany(ProjectStructuralDesign::class, 'assigned_engineer_id');
+    }
+
     // Permission handling methods
     public function hasProjectPermission($permission, $project_id = null)
     {

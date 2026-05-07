@@ -19,12 +19,14 @@ class ProjectActivityTemplate extends Model
         'sort_order',
         'is_active',
         'role_id',
+        'requires_approval',
     ];
 
     protected $casts = [
         'duration_days' => 'integer',
         'sort_order' => 'integer',
         'is_active' => 'boolean',
+        'requires_approval' => 'boolean',
     ];
 
     /**

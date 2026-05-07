@@ -206,6 +206,9 @@
                                             <select name="status" class="form-control form-control-sm">
                                                 <option value="">All Status</option>
                                                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                                <option value="design_phase" {{ request('status') == 'design_phase' ? 'selected' : '' }}>Design Phase</option>
+                                                <option value="structural_phase" {{ request('status') == 'structural_phase' ? 'selected' : '' }}>Structural Phase</option>
+                                                <option value="structural_approved" {{ request('status') == 'structural_approved' ? 'selected' : '' }}>Structural Approved</option>
                                                 <option value="APPROVED" {{ request('status') == 'APPROVED' ? 'selected' : '' }}>Approved</option>
                                                 <option value="in_progress" {{ request('status') == 'in_progress' ? 'selected' : '' }}>In Progress</option>
                                                 <option value="COMPLETED" {{ request('status') == 'COMPLETED' ? 'selected' : '' }}>Completed</option>
@@ -283,6 +286,9 @@
                                     $statusColors = [
                                         'pending' => 'warning',
                                         'Pending' => 'warning',
+                                        'design_phase' => 'info',
+                                        'structural_phase' => 'primary',
+                                        'structural_approved' => 'success',
                                         'Submitted' => 'info',
                                         'APPROVED' => 'success',
                                         'Approved' => 'success',

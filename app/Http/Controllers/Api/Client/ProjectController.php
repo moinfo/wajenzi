@@ -85,7 +85,11 @@ class ProjectController extends Controller
         $activities = collect();
         $schedule = ProjectSchedule::where('client_id', $request->user()->id)->first();
         if ($schedule) {
-            $activities = $schedule->activities()->orderBy('sort_order')->get();
+            // Only show activities that are fully completed (approved by CEO/MD)
+            $activities = $schedule->activities()
+                ->where('status', 'completed')
+                ->orderBy('sort_order')
+                ->get();
         }
 
         return response()->json([
@@ -155,12 +159,15 @@ class ProjectController extends Controller
     }
 
     /**
-     * Documents — designs and project documents.
+     * Documents — only approved designs are visible to the client.
      */
     public function documents(Request $request, $project): JsonResponse
     {
         $project = $this->clientProject($request, $project);
-        $designs = $project->projectDesigns()->orderBy('created_at', 'desc')->get();
+        $designs = $project->projectDesigns()
+            ->where('status', 'approved')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return response()->json([
             'success' => true,

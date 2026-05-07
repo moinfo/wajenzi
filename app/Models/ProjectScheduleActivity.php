@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Services\StructuralHandoffService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
+use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
+use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 
-class ProjectScheduleActivity extends Model
+class ProjectScheduleActivity extends Model implements ApprovableModel
 {
-    use HasFactory;
+    use HasFactory, Approvable;
 
     protected $fillable = [
         'project_schedule_id',
@@ -30,6 +34,8 @@ class ProjectScheduleActivity extends Model
         'attachment_path',
         'attachment_name',
         'sort_order',
+        'requires_approval',
+        'approval_notes',
     ];
 
     protected $casts = [
@@ -39,7 +45,35 @@ class ProjectScheduleActivity extends Model
         'completed_at' => 'datetime',
         'duration_days' => 'integer',
         'sort_order' => 'integer',
+        'requires_approval' => 'boolean',
     ];
+
+    /**
+     * Skip the approval engine for activities that don't require CEO/MD sign-off.
+     */
+    public function bypassApprovalProcess(): bool
+    {
+        return !$this->requires_approval;
+    }
+
+    /**
+     * Called by RingleSoft when all approval steps are completed.
+     * Marks the activity as completed and unlocks dependent activities.
+     */
+    public function onApprovalCompleted(ProcessApproval $approval): bool
+    {
+        $this->status       = 'completed';
+        $this->completed_at = now();
+        $this->completed_by = $approval->approver_id ?? auth()->id();
+        $this->save();
+
+        // B7 (3D Final Draft) approval triggers the structural design handoff
+        if ($this->activity_code === 'B7') {
+            StructuralHandoffService::triggerFromActivity($this);
+        }
+
+        return true;
+    }
 
     /**
      * Get the schedule

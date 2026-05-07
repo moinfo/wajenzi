@@ -560,6 +560,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('leads/{lead}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForLead'])->name('leads.schedule.create');
     Route::post('projects/{project}/schedule', [App\Http\Controllers\ProjectScheduleController::class, 'createForProject'])->name('projects.schedule.create');
 
+    // Structural Design Routes
+    Route::get('/structural-design', [App\Http\Controllers\ProjectStructuralDesignController::class, 'index'])->name('structural_design.index');
+    Route::post('/structural-design', [App\Http\Controllers\ProjectStructuralDesignController::class, 'store'])->name('structural_design.store');
+    Route::get('/structural-design/{design}', [App\Http\Controllers\ProjectStructuralDesignController::class, 'show'])->name('structural_design.show');
+    Route::post('/structural-design/{design}/stage/{stage}', [App\Http\Controllers\ProjectStructuralDesignController::class, 'updateStage'])->name('structural_design.stage');
+    Route::post('/structural-design/{design}/submit', [App\Http\Controllers\ProjectStructuralDesignController::class, 'submit'])->name('structural_design.submit');
+    Route::post('/structural-design/{design}/reassign', [App\Http\Controllers\ProjectStructuralDesignController::class, 'reassignEngineer'])->name('structural_design.reassign');
+
 // Content Creators
     Route::prefix('content-creator')->name('content_creator.')->group(function () {
         $c = App\Http\Controllers\ContentCreatorController::class;

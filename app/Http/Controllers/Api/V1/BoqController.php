@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\ProjectBoq;
 use App\Models\ProjectBoqItem;
+use App\Models\ProjectStructuralDesign;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -77,6 +78,13 @@ class BoqController extends Controller
                 'type' => 'required|in:client,internal',
                 'status' => 'nullable|string',
             ]);
+
+            if (!ProjectStructuralDesign::isApprovedForProject((int) $validated['project_id'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'BOQ cannot be created until the structural design is approved by management.',
+                ], 422);
+            }
 
             $validated['total_amount'] = 0;
             $validated['created_by'] = $request->user()->id;

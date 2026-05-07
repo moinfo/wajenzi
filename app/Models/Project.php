@@ -130,10 +130,12 @@ class Project extends Model implements ApprovableModel
      */
     public function onApprovalCompleted(ProcessApproval|\RingleSoft\LaravelProcessApproval\Models\ProcessApproval $approval): bool
     {
-
-        $this->status = 'APPROVED';
-        $this->updated_at = now();
-        $this->save();
+        // Only advance from pending — do not overwrite design_phase or later workflow statuses
+        if ($this->status === 'pending') {
+            $this->status = 'APPROVED';
+            $this->updated_at = now();
+            $this->save();
+        }
         return true;
     }
 
@@ -295,5 +297,15 @@ class Project extends Model implements ApprovableModel
     public function progressImages(): HasMany
     {
         return $this->hasMany(ProjectProgressImage::class);
+    }
+
+    public function structuralDesigns(): HasMany
+    {
+        return $this->hasMany(ProjectStructuralDesign::class);
+    }
+
+    public function approvedStructuralDesign()
+    {
+        return $this->hasOne(ProjectStructuralDesign::class)->where('status', 'approved');
     }
 }

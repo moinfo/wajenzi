@@ -7,6 +7,7 @@ use App\Models\ProjectBoq;
 use App\Models\ProjectBoqItem;
 use App\Models\ProjectBoqSection;
 use App\Models\ProjectBoqTemplate;
+use App\Models\ProjectStructuralDesign;
 use App\Models\Approval;
 use App\Services\ApprovalService;
 use Illuminate\Http\Request;
@@ -21,7 +22,14 @@ class ProjectBoqController extends Controller
         $this->approvalService = $approvalService;
     }
     public function index(Request $request) {
-        //handle crud operations
+        // Gate: BOQ creation requires an approved structural design
+        if ($request->isMethod('POST') && $request->has('addItem') && $request->addItem === 'ProjectBoq') {
+            $projectId = $request->input('project_id');
+            if ($projectId && !ProjectStructuralDesign::isApprovedForProject((int) $projectId)) {
+                return back()->with('error', 'A BOQ can only be created after the structural design is approved by management.');
+            }
+        }
+
         if($this->handleCrud($request, 'ProjectBoq')) {
             return back();
         }
