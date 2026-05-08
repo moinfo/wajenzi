@@ -392,6 +392,11 @@ class PurchaseController extends Controller
             return redirect()->route('purchase_orders');
         }
 
+        if (strtolower($purchase->payment_status ?? '') === 'paid') {
+            $this->notify('Payment for this PO has already been recorded.', 'Info', 'info');
+            return redirect()->route('purchase_orders');
+        }
+
         return view('pages.procurement.record_payment')->with(['purchase' => $purchase]);
     }
 
@@ -401,6 +406,11 @@ class PurchaseController extends Controller
 
         if (strtoupper($purchase->status) !== 'APPROVED') {
             $this->notify('Only approved purchase orders can have payment recorded.', 'Error', 'error');
+            return redirect()->route('purchase_orders');
+        }
+
+        if (strtolower($purchase->payment_status ?? '') === 'paid') {
+            $this->notify('Payment for this PO has already been recorded.', 'Info', 'info');
             return redirect()->route('purchase_orders');
         }
 
