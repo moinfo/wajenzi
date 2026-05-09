@@ -31,6 +31,7 @@
                                     <th>Address</th>
                                     <th>VRN</th>
                                     <th>System</th>
+                                    <th class="text-center" style="width: 130px;">Attachments</th>
                                     <th class="text-center" style="width: 100px;">Actions</th>
                                 </tr>
                                 </thead>
@@ -49,6 +50,32 @@
                                         <td class="font-w400">{{ $supplier->address }}</td>
                                         <td class="font-w400">{{ $supplier->vrn }}</td>
                                         <td class="font-w400">{{ $supplier->system->name ?? null }}</td>
+
+                                        <td class="text-center">
+                                            @php
+                                                $att = [
+                                                    'proforma'  => ['icon' => 'fa-file-invoice', 'label' => 'Pro-forma'],
+                                                    'quotation' => ['icon' => 'fa-file-alt',     'label' => 'Quotation'],
+                                                    'document'  => ['icon' => 'fa-file',         'label' => 'Document'],
+                                                ];
+                                            @endphp
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                @foreach($att as $field => $meta)
+                                                    @if(! empty($supplier->{$field}))
+                                                        <a href="{{ $supplier->{$field} }}" target="_blank"
+                                                           class="btn btn-sm btn-outline-info js-tooltip-enabled"
+                                                           data-toggle="tooltip" title="View {{ $meta['label'] }}">
+                                                            <i class="fa {{ $meta['icon'] }}"></i>
+                                                        </a>
+                                                    @else
+                                                        <span class="btn btn-sm btn-light text-muted disabled js-tooltip-enabled"
+                                                              data-toggle="tooltip" title="No {{ strtolower($meta['label']) }}" style="opacity:.4;">
+                                                            <i class="fa {{ $meta['icon'] }}"></i>
+                                                        </span>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        </td>
 
                                         <td class="text-center" >
                                             <div class="btn-group">
