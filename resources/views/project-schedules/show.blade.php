@@ -275,11 +275,11 @@
                         <table class="table table-sm table-hover">
                             <thead>
                                 <tr>
-                                    @can('Assign Project Activities')
+                                    @if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
                                     <th width="3%" class="text-center">
                                         <input type="checkbox" class="select-all-activities" title="Select all in this phase">
                                     </th>
-                                    @endcan
+                                    @endif
                                     <th width="6%">Code</th>
                                     <th width="15%">Activity</th>
                                     <th width="9%">Discipline</th>
@@ -289,18 +289,18 @@
                                     <th width="7%">End</th>
                                     <th width="6%">Days</th>
                                     <th width="9%">Status</th>
-                                    <th width="@can('Assign Project Activities')16%@else19%@endcan">Actions</th>
+                                    <th width="@if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))16%@else19%@endif">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($activities as $activity)
                                     <tr class="{{ $activity->isOverdue() ? 'table-danger' : '' }}">
-                                        @can('Assign Project Activities')
+                                        @if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
                                         <td class="text-center">
                                             <input type="checkbox" class="activity-checkbox" value="{{ $activity->id }}"
                                                    data-name="{{ $activity->activity_code }}: {{ $activity->name }}">
                                         </td>
-                                        @endcan
+                                        @endif
                                         <td><strong>{{ $activity->activity_code }}</strong></td>
                                         <td>
                                             {{ $activity->name }}
@@ -332,12 +332,12 @@
                                                     <i class="fa fa-user-tie mr-1"></i>{{ $projectSchedule->assignedArchitect->name ?? 'N/A' }}
                                                 </span>
                                             @endif
-                                            @can('Assign Project Activities')
+                                            @if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
                                             <button type="button" class="btn btn-xs btn-outline-primary ml-1" title="Reassign"
                                                     data-toggle="modal" data-target="#assignModal{{ $activity->id }}">
                                                 <i class="fa fa-exchange-alt"></i>
                                             </button>
-                                            @endcan
+                                            @endif
                                         </td>
                                         <td>{{ $activity->start_date->format('d/m/Y') }}</td>
                                         <td>{{ $activity->end_date->format('d/m/Y') }}</td>
@@ -607,7 +607,7 @@
 @endforeach
 
 {{-- Bulk Action Floating Bar --}}
-@can('Assign Project Activities')
+@if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
 <div id="bulkActionBar" class="d-none"
      style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1050;
             background:#2c3e50;color:#fff;padding:12px 20px;border-radius:10px;
@@ -654,10 +654,10 @@
         </div>
     </div>
 </div>
-@endcan
+@endif
 
 {{-- Reassign Activity Modals --}}
-@can('Assign Project Activities')
+@if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
 @foreach($projectSchedule->activities as $activity)
 @php
     $currentAssignee = $activity->assigned_to ?? $projectSchedule->assigned_architect_id;
@@ -721,7 +721,7 @@
     </div>
 </div>
 @endforeach
-@endcan
+@endif
 
 <script>
 // ── File input label ──────────────────────────────────────────────────────────
