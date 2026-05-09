@@ -25,6 +25,101 @@
                 @endforeach
             </select>
         </div>
+
+        {{-- ── Payment Details ─────────────────────────────────────────── --}}
+        @php
+            $pm = old('payment_method', $object->payment_method ?? '');
+        @endphp
+        <fieldset class="form-group" style="border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;margin-top:8px;">
+            <legend class="control-label" style="font-size:13px;font-weight:700;width:auto;padding:0 8px;margin-bottom:8px;">
+                Payment Details
+            </legend>
+
+            <div class="form-group mb-3">
+                <label class="control-label d-block" style="font-size:12px;color:#475569;">Means of Payment</label>
+                <div class="btn-group btn-group-toggle d-flex" data-toggle="buttons" id="supplier-payment-method-group">
+                    @foreach([
+                        'BANK'   => ['label' => 'Bank Acc',     'icon' => 'fa-university'],
+                        'MOBILE' => ['label' => 'Mobile',       'icon' => 'fa-mobile-alt'],
+                        'CASH'   => ['label' => 'Cash in Hand', 'icon' => 'fa-money-bill-wave'],
+                    ] as $val => $meta)
+                        <label class="btn btn-outline-primary {{ $pm === $val ? 'active' : '' }}" style="flex:1;">
+                            <input type="radio" name="payment_method" value="{{ $val }}" autocomplete="off"
+                                   {{ $pm === $val ? 'checked' : '' }}>
+                            <i class="fa {{ $meta['icon'] }} mr-1"></i> {{ $meta['label'] }}
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Bank fields --}}
+            <div id="supplier-payment-bank" class="supplier-payment-block" style="display:{{ $pm === 'BANK' ? 'block' : 'none' }};">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label style="font-size:12px;">Bank Name</label>
+                        <input type="text" name="bank_name" class="form-control" list="supplier-bank-list"
+                               value="{{ old('bank_name', $object->bank_name ?? '') }}" placeholder="e.g. NMB, CRDB, NBC…">
+                        <datalist id="supplier-bank-list">
+                            <option value="NMB">
+                            <option value="CRDB">
+                            <option value="NBC">
+                            <option value="Stanbic">
+                            <option value="Exim Bank">
+                            <option value="KCB">
+                            <option value="DTB">
+                            <option value="Equity Bank">
+                            <option value="Akiba Commercial Bank">
+                            <option value="Absa Bank">
+                            <option value="Standard Chartered">
+                        </datalist>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label style="font-size:12px;">Account Number</label>
+                        <input type="text" name="bank_account_number" class="form-control"
+                               value="{{ old('bank_account_number', $object->bank_account_number ?? '') }}" placeholder="Account Number">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="font-size:12px;">Account Name</label>
+                    <input type="text" name="account_name" class="form-control"
+                           value="{{ old('account_name', $object->account_name ?? '') }}" placeholder="Name as it appears on the account">
+                </div>
+            </div>
+
+            {{-- Mobile money fields --}}
+            <div id="supplier-payment-mobile" class="supplier-payment-block" style="display:{{ $pm === 'MOBILE' ? 'block' : 'none' }};">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label style="font-size:12px;">Provider</label>
+                        <select name="mobile_provider" class="form-control">
+                            <option value="">— Select provider —</option>
+                            @foreach(['M-Pesa','Mixx by Yas','Tigo Pesa','Airtel Money','Halopesa','T-Pesa','Other'] as $prov)
+                                <option value="{{ $prov }}" {{ old('mobile_provider', $object->mobile_provider ?? '') === $prov ? 'selected' : '' }}>{{ $prov }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label style="font-size:12px;">Mobile Number</label>
+                        <input type="text" name="mobile_number" class="form-control"
+                               value="{{ old('mobile_number', $object->mobile_number ?? '') }}" placeholder="e.g. 0712345678">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="font-size:12px;">Account Name</label>
+                    <input type="text" name="account_name" class="form-control"
+                           value="{{ old('account_name', $object->account_name ?? '') }}" placeholder="Registered name on the mobile money line">
+                </div>
+            </div>
+
+            {{-- Cash --}}
+            <div id="supplier-payment-cash" class="supplier-payment-block" style="display:{{ $pm === 'CASH' ? 'block' : 'none' }};">
+                <div class="alert alert-info mb-0" style="font-size:12.5px;">
+                    <i class="fa fa-info-circle mr-1"></i>
+                    Supplier will be paid in cash. No bank or mobile money details are required.
+                </div>
+            </div>
+        </fieldset>
+
         <div class="form-group">
             @if($object->id ?? null)
                 <input type="hidden" name="id" value="{{$object->id }}">
@@ -40,6 +135,26 @@
     $('.datepicker').datepicker({
         format: 'yyyy-mm-dd'
     });
+
+    // ── Payment method toggle: show only the relevant block ──────────
+    (function () {
+        const map = { BANK: 'supplier-payment-bank', MOBILE: 'supplier-payment-mobile', CASH: 'supplier-payment-cash' };
+        function applyPaymentMethod(val) {
+            Object.values(map).forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            if (val && map[val]) {
+                const el = document.getElementById(map[val]);
+                if (el) el.style.display = 'block';
+            }
+        }
+        document.querySelectorAll('input[name="payment_method"]').forEach(input => {
+            input.addEventListener('change', e => applyPaymentMethod(e.target.value));
+        });
+        const checked = document.querySelector('input[name="payment_method"]:checked');
+        if (checked) applyPaymentMethod(checked.value);
+    })();
 
     // Initialize form based on initial value
     $(document).ready(function() {

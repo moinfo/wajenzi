@@ -12,6 +12,7 @@ class Supplier extends Model
     public $fillable = [
         'id', 'name', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id',
         'account_name', 'nmb_account', 'nbc_account', 'crdb_account',
+        'payment_method', 'bank_name', 'bank_account_number', 'mobile_provider', 'mobile_number',
         'supplier_type', 'is_artisan', 'trade_skill', 'daily_rate', 'id_number', 'previous_work_history', 'rating'
     ];
 

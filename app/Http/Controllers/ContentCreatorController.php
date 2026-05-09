@@ -21,6 +21,23 @@ class ContentCreatorController extends Controller
         $month = $request->get('month', now()->format('Y-m'));
         [$year, $mon] = explode('-', $month);
 
+        // Calendar week anchor — defaults to current week, but follows the
+        // month picker (jumps to start of that month) and supports a `week`
+        // query param (any date in the desired week, "YYYY-MM-DD") plus
+        // explicit prev/next navigation handled by the view links.
+        $weekParam = $request->get('week');
+        if ($weekParam) {
+            try {
+                $weekAnchor = \Carbon\Carbon::parse($weekParam);
+            } catch (\Throwable $e) {
+                $weekAnchor = now();
+            }
+        } elseif ($request->has('month') && ($mon != now()->month || $year != now()->year)) {
+            $weekAnchor = \Carbon\Carbon::createFromDate((int)$year, (int)$mon, 1);
+        } else {
+            $weekAnchor = now();
+        }
+
         // DB stores status as 'ACTIVE' / 'INACTIVE' (uppercase)
         $activeUsers = User::where('status', 'ACTIVE')->orderBy('name')->get();
 
@@ -45,7 +62,7 @@ class ContentCreatorController extends Controller
         $statsThisMonth = $this->buildStats((int)$year, (int)$mon);
         $tickerItems    = $this->buildTickerItems();
 
-        $data = compact('tab', 'month', 'year', 'mon', 'crew', 'users', 'activeUsers', 'creatorUsers', 'platforms', 'targets', 'statsThisMonth', 'tickerItems');
+        $data = compact('tab', 'month', 'year', 'mon', 'crew', 'users', 'activeUsers', 'creatorUsers', 'platforms', 'targets', 'statsThisMonth', 'tickerItems', 'weekAnchor');
 
         switch ($tab) {
             case 'workability':
@@ -58,7 +75,7 @@ class ContentCreatorController extends Controller
                 $data['targets'] = $this->buildTargets((int)$year, (int)$mon, $platforms, $targets);
                 break;
             default: // calendar
-                $data['calendarData'] = $this->buildCalendar((int)$year, (int)$mon);
+                $data['calendarData'] = $this->buildCalendar($weekAnchor);
                 break;
         }
 
@@ -240,14 +257,14 @@ class ContentCreatorController extends Controller
         })->toArray();
     }
 
-    private function buildCalendar(int $year, int $mon): array
+    private function buildCalendar(\Carbon\Carbon $anchor): array
     {
-        $start = now()->setYear($year)->setMonth($mon)->startOfWeek();
+        $start = $anchor->copy()->startOfWeek();
         $end   = $start->copy()->endOfWeek();
 
         $tasks = ContentCreatorTask::with('assignee')
             ->whereNotNull('deadline')
-            ->whereBetween('deadline', [$start->toDateString(), $end->addDays(6)->toDateString()])
+            ->whereBetween('deadline', [$start->toDateString(), $end->toDateString()])
             ->get();
 
         $schedules = \App\Models\ContentCreatorSchedule::with('user')

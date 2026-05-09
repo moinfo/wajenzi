@@ -38,11 +38,21 @@ class ProjectExpenseController extends Controller
         $costCategories = CostCategory::orderBy('name')->get();
         $total_amount = $expenses->sum('amount');
 
+        // Category summary — used by the new summary panel on the page.
+        // Falls back to 0 when a canonical category isn't found.
+        $catIds = $costCategories->pluck('id', 'name'); // [name => id]
+        $categorySummary = [
+            'Material'         => (float) $expenses->where('cost_category_id', $catIds['Material']         ?? 0)->sum('amount'),
+            'Labour Charge'    => (float) $expenses->where('cost_category_id', $catIds['Labour Charge']    ?? 0)->sum('amount'),
+            'Overhead Expense' => (float) $expenses->where('cost_category_id', $catIds['Overhead Expense'] ?? 0)->sum('amount'),
+        ];
+
         $data = [
             'expenses' => $expenses,
             'projects' => $projects,
             'costCategories' => $costCategories,
-            'total_amount' => $total_amount
+            'total_amount' => $total_amount,
+            'categorySummary' => $categorySummary,
         ];
         return view('pages.projects.project_expenses')->with($data);
     }

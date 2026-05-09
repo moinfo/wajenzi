@@ -716,6 +716,10 @@ Route::middleware(['auth'])->group(function () {
 // Procurement - Supplier Receivings Routes
     Route::match(['get', 'post'], '/supplier_receivings_procurement', [App\Http\Controllers\PurchaseController::class, 'receivings'])->name('supplier_receivings_procurement');
     Route::get('/supplier_receiving_detail/{id}', [App\Http\Controllers\PurchaseController::class, 'receivingDetail'])->name('supplier_receiving_detail');
+    Route::post('/supplier_receiving/{id}/overheads', [App\Http\Controllers\PurchaseController::class, 'storeReceivingOverheads'])->name('supplier_receiving.overheads.store');
+
+// Finance - Expenditure Dashboard
+    Route::get('/finance/expenditure-dashboard', [App\Http\Controllers\ExpenditureDashboardController::class, 'index'])->name('finance.expenditure_dashboard');
 
 // Procurement - Material Inspections Routes
     Route::match(['get', 'post'], '/material_inspections', [App\Http\Controllers\MaterialInspectionController::class, 'index'])->name('material_inspections');

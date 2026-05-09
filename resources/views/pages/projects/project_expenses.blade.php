@@ -79,24 +79,64 @@
 
                         <!-- Summary Stats -->
                         <div class="row mb-3">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="block block-rounded bg-primary text-white text-center p-3">
                                     <div class="font-size-h4 font-w600">{{ $expenses->count() }}</div>
                                     <div class="font-size-sm">Total Records</div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="block block-rounded bg-success text-white text-center p-3">
                                     <div class="font-size-h4 font-w600">TZS {{ number_format($total_amount, 2) }}</div>
                                     <div class="font-size-sm">Total Cost Amount</div>
                                 </div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <div class="block block-rounded bg-info text-white text-center p-3">
                                     <div class="font-size-h4 font-w600">{{ $expenses->unique('project_id')->count() }}</div>
                                     <div class="font-size-sm">Projects with Costs</div>
                                 </div>
                             </div>
+                            <div class="col-md-3">
+                                <a href="{{ route('finance.expenditure_dashboard') }}" class="block block-rounded bg-secondary text-white text-center p-3 d-block" style="text-decoration:none;">
+                                    <div class="font-size-h4 font-w600"><i class="fa fa-chart-line"></i></div>
+                                    <div class="font-size-sm">Open Daily/Weekly/Monthly Dashboard</div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Category Breakdown (Material / Labour / Overhead) -->
+                        @php
+                            $catColors = [
+                                'Material'         => ['bg' => '#eff6ff', 'fg' => '#1d4ed8', 'icon' => 'fa-cubes'],
+                                'Labour Charge'    => ['bg' => '#f5f3ff', 'fg' => '#6d28d9', 'icon' => 'fa-hard-hat'],
+                                'Overhead Expense' => ['bg' => '#fffbeb', 'fg' => '#b45309', 'icon' => 'fa-truck-loading'],
+                            ];
+                        @endphp
+                        <div class="row mb-3">
+                            @foreach($categorySummary ?? [] as $catName => $catTotal)
+                                @php $c = $catColors[$catName] ?? ['bg'=>'#f1f5f9','fg'=>'#475569','icon'=>'fa-coins']; @endphp
+                                <div class="col-md-4">
+                                    <div class="block block-rounded p-3 mb-0" style="background:{{ $c['bg'] }};border-left:4px solid {{ $c['fg'] }};">
+                                        <div style="display:flex;align-items:center;gap:12px;">
+                                            <div style="width:42px;height:42px;border-radius:8px;background:{{ $c['fg'] }}20;display:flex;align-items:center;justify-content:center;">
+                                                <i class="fa {{ $c['icon'] }}" style="color:{{ $c['fg'] }};font-size:18px;"></i>
+                                            </div>
+                                            <div>
+                                                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:700;color:{{ $c['fg'] }};">{{ $catName }}</div>
+                                                <div style="font-size:18px;font-weight:800;color:#1e293b;">TZS {{ number_format($catTotal, 0) }}</div>
+                                                <div style="font-size:11px;color:#64748b;">
+                                                    @if($total_amount > 0)
+                                                        {{ round(($catTotal / $total_amount) * 100, 1) }}% of total
+                                                    @else
+                                                        — of total
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
 
                         <!-- Data Table -->
