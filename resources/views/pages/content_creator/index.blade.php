@@ -217,8 +217,28 @@
     padding: 5px 4px;
     border-bottom: 1px solid #f1f5f9;
     border-right: 1px solid #f1f5f9;
+    position: relative;
 }
 .cc-cal-cell.today-col { background: #fafeff; }
+.cc-cell-add {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px dashed #cbd5e1;
+    background: #fff;
+    color: #94a3b8;
+    font-size: 9px;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .12s, background .12s, color .12s;
+}
+.cc-cal-cell:hover .cc-cell-add { opacity: 1; }
+.cc-cell-add:hover { background: #2563eb; color: #fff; border-color: #2563eb; }
 .cc-chip {
     display: block;
     border-radius: 5px;
@@ -287,7 +307,27 @@
     cursor: grab;
     transition: box-shadow .12s, transform .12s;
 }
+.cc-task-card { position: relative; }
 .cc-task-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.1); transform: translateY(-1px); }
+.cc-card-del {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 10px;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .12s, background .12s, color .12s;
+}
+.cc-task-card:hover .cc-card-del { opacity: 1; }
+.cc-card-del:hover { background: #fee2e2; color: #b91c1c; }
 .cc-task-title { font-size: 12.5px; font-weight: 600; color: #1e293b; margin-bottom: 7px; line-height: 1.35; }
 .cc-task-meta { font-size: 11px; color: #64748b; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .cc-task-assignee { display: flex; align-items: center; gap: 4px; }
@@ -466,8 +506,11 @@
     {{-- ── TAB 1: Content Calendar ── --}}
     @if($tab === 'calendar')
     @php
-        $weekStart = \Carbon\Carbon::now()->startOfWeek();
+        $weekStart = ($calendarData['start'] ?? \Carbon\Carbon::now()->startOfWeek())->copy();
         $weekDates = collect(range(0, 6))->map(fn($i) => $weekStart->copy()->addDays($i));
+        $prevWeek  = $weekStart->copy()->subWeek()->toDateString();
+        $nextWeek  = $weekStart->copy()->addWeek()->toDateString();
+        $thisWeek  = \Carbon\Carbon::now()->startOfWeek()->toDateString();
         $calTasks  = $calendarData['tasks'] ?? collect();
         $calSched  = $calendarData['schedules'] ?? collect();
         // Calendar rows: registered crew if exists, else content-creator-role users only
@@ -479,9 +522,16 @@
     @endphp
     <div class="cc-cal-wrap">
         <div class="cc-cal-top">
-            <div class="cc-cal-title">
-                <i class="fas fa-calendar-week mr-2" style="color:#2563eb;"></i>
-                {{ $weekStart->format('M d') }} – {{ $weekStart->copy()->endOfWeek()->format('M d, Y') }}
+            <div class="cc-cal-title d-flex align-items-center" style="gap:8px;">
+                <a href="{{ route('content_creator.index', ['tab' => 'calendar', 'month' => $month, 'week' => $prevWeek]) }}"
+                   class="btn btn-sm btn-light border" title="Previous week"><i class="fas fa-chevron-left"></i></a>
+                <span><i class="fas fa-calendar-week mr-2" style="color:#2563eb;"></i>
+                    {{ $weekStart->format('M d') }} – {{ $weekStart->copy()->endOfWeek()->format('M d, Y') }}
+                </span>
+                <a href="{{ route('content_creator.index', ['tab' => 'calendar', 'month' => $month, 'week' => $nextWeek]) }}"
+                   class="btn btn-sm btn-light border" title="Next week"><i class="fas fa-chevron-right"></i></a>
+                <a href="{{ route('content_creator.index', ['tab' => 'calendar', 'month' => now()->format('Y-m'), 'week' => $thisWeek]) }}"
+                   class="btn btn-sm btn-outline-primary" title="Jump to this week">Today</a>
             </div>
             <div class="cc-legend">
                 <span class="cc-legend-chip chip-video">🎬 Video Shoot</span>
@@ -519,6 +569,11 @@
                 @foreach($dTasks as $dt)
                 <span class="cc-chip {{ $chipMap[$dt->task_type] ?? '' }}" title="{{ e($dt->title) }}" onclick="viewTask({{ $dt->id }})">{{ Str::limit($dt->title, 18) }}</span>
                 @endforeach
+                <button type="button" class="cc-cell-add"
+                        title="Add task for {{ $mname }} on {{ $d->format('D, M d') }}"
+                        onclick="openCreateTaskFor({{ $mid ?? 'null' }}, '{{ $d->toDateString() }}')">
+                    <i class="fas fa-plus"></i>
+                </button>
             </div>
             @endforeach
             @empty
@@ -608,6 +663,11 @@
                 <div class="cc-task-card border-{{ $status }}"
                      draggable="true" data-task-id="{{ $task->id }}"
                      ondragstart="dragStart(event)" onclick="viewTask({{ $task->id }})">
+                    <button type="button" class="cc-card-del"
+                            title="Delete task"
+                            onclick="event.stopPropagation(); deleteTaskById({{ $task->id }})">
+                        <i class="fas fa-times"></i>
+                    </button>
                     <div class="cc-task-title">{{ $task->title }}</div>
                     <div class="cc-task-meta">
                         @if($task->assignee)
@@ -874,6 +934,9 @@
                                         <i class="fas fa-check-circle mr-1"></i> Approve & Mark Published
                                     </button>
                                 </div>
+                                <button class="btn btn-outline-danger btn-block btn-sm mt-2" onclick="deleteTask()">
+                                    <i class="fas fa-trash-alt mr-1"></i> Delete Task
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -965,6 +1028,23 @@ $(function () {
                 showConfirmButton: false, timer: 2200, timerProgressBar: true });
         }
     }
+
+    // ─── Open Create Task pre-filled (per-day cell action) ───────
+    window.openCreateTaskFor = function (userId, dateStr) {
+        const form = document.getElementById('createTaskForm');
+        if (!form) return;
+        form.reset();
+        if (dateStr) {
+            // Bootstrap datepicker uses .datepicker('update', date) to sync UI
+            try { $('#createDeadlinePicker').datepicker('update', dateStr); }
+            catch (err) { form.querySelector('[name="deadline"]').value = dateStr; }
+        }
+        if (userId) {
+            const sel = form.querySelector('[name="assigned_to"]');
+            if (sel) sel.value = String(userId);
+        }
+        $('#createTaskModal').modal('show');
+    };
 
     // ─── Create Task ─────────────────────────────────────────────
     document.getElementById('createTaskForm').addEventListener('submit', function (e) {
@@ -1120,6 +1200,52 @@ $(function () {
     document.getElementById('newCommentInput').addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); window.addComment(); }
     });
+
+    // ─── Delete Task ──────────────────────────────────────────────
+    function performDelete(id, onDone) {
+        apiFetch(`/content-creator/tasks/${id}`, { method: 'DELETE' })
+            .then(res => {
+                if (res && res.success) {
+                    showToast('Task deleted.', 'success');
+                    if (typeof onDone === 'function') onDone();
+                    setTimeout(() => location.reload(), 700);
+                } else {
+                    showToast('Could not delete task.', 'error');
+                }
+            })
+            .catch(() => showToast('Could not delete task.', 'error'));
+    }
+
+    function confirmThen(message, action) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Delete this task?',
+                text: message,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                confirmButtonText: 'Yes, delete it'
+            }).then(r => {
+                // SweetAlert2 v9 (installed) returns r.value; v10+ uses r.isConfirmed.
+                // Accept both so the click reliably triggers the delete.
+                if (r && (r.isConfirmed === true || r.value === true)) action();
+            });
+        } else if (window.confirm(message)) {
+            action();
+        }
+    }
+
+    window.deleteTask = function () {
+        if (!currentTaskId) return;
+        const id = currentTaskId;
+        confirmThen('This cannot be undone.', () => {
+            performDelete(id, () => $('#viewTaskModal').modal('hide'));
+        });
+    };
+
+    window.deleteTaskById = function (id) {
+        confirmThen('This cannot be undone.', () => performDelete(id));
+    };
 
     // ─── Approve Task ─────────────────────────────────────────────
     window.approveTask = function () {

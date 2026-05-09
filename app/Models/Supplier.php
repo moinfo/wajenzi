@@ -12,8 +12,35 @@ class Supplier extends Model
     public $fillable = [
         'id', 'name', 'phone', 'address', 'email', 'vrn', 'supplier', 'system_id',
         'account_name', 'nmb_account', 'nbc_account', 'crdb_account',
+        'payment_method', 'bank_name', 'bank_account_number', 'mobile_provider', 'mobile_number',
+        'proforma', 'quotation', 'document',
         'supplier_type', 'is_artisan', 'trade_skill', 'daily_rate', 'id_number', 'previous_work_history', 'rating'
     ];
+
+    /**
+     * Attachment fields that come in as uploaded files on the supplier form.
+     * Generic CRUD (Controller::handleCrud) only handles `file` + `contract`,
+     * so we intercept here on save and persist any of these to public storage.
+     */
+    public const ATTACHMENT_FIELDS = ['proforma', 'quotation', 'document'];
+
+    protected static function booted(): void
+    {
+        static::saving(function (Supplier $supplier) {
+            $request = request();
+            if (! $request) {
+                return;
+            }
+            foreach (self::ATTACHMENT_FIELDS as $field) {
+                if ($request->hasFile($field)) {
+                    $upload = $request->file($field);
+                    $name = time() . '_' . $field . '_' . $upload->getClientOriginalName();
+                    $path = $upload->storeAs('uploads/suppliers', $name, 'public');
+                    $supplier->{$field} = '/storage/' . $path;
+                }
+            }
+        });
+    }
 
     public static function getSupplierName($supplier_id)
     {

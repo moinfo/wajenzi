@@ -148,6 +148,90 @@
         </div>
         @endif
 
+        {{-- Delivery Overhead Expenses (loading / offloading / transportation) --}}
+        <div class="block">
+            <div class="block-header block-header-default">
+                <h3 class="block-title">
+                    <i class="fa fa-truck-loading mr-1" style="color:#b45309;"></i>
+                    Delivery Overhead Expenses
+                </h3>
+                @php
+                    $loading        = (float) ($overheads['loading']->amount        ?? 0);
+                    $offloading     = (float) ($overheads['offloading']->amount     ?? 0);
+                    $transportation = (float) ($overheads['transportation']->amount ?? 0);
+                    $overheadTotal  = $loading + $offloading + $transportation;
+                    $existingNotes  = $overheads['loading']->remarks
+                                        ?? $overheads['offloading']->remarks
+                                        ?? $overheads['transportation']->remarks
+                                        ?? null;
+                    $existingDate   = $overheads['loading']->expense_date
+                                        ?? $overheads['offloading']->expense_date
+                                        ?? $overheads['transportation']->expense_date
+                                        ?? $receiving->date;
+                @endphp
+                <div class="block-options">
+                    <span class="badge badge-warning" style="font-size: 13px; padding: 7px 14px;">
+                        Total: TZS {{ number_format($overheadTotal, 2) }}
+                    </span>
+                </div>
+            </div>
+            <div class="block-content">
+                @if(! $receiving->project_id)
+                    <div class="alert alert-warning">
+                        <i class="fa fa-exclamation-triangle mr-1"></i>
+                        Cannot record overheads — this receiving has no linked project.
+                    </div>
+                @else
+                    <form action="{{ route('supplier_receiving.overheads.store', $receiving->id) }}" method="POST">
+                        @csrf
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="font-w600" style="font-size:12px;">Loading (TZS)</label>
+                                <input type="number" name="loading_amount" class="form-control"
+                                       min="0" step="0.01" placeholder="0.00"
+                                       value="{{ old('loading_amount', $loading > 0 ? $loading : '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="font-w600" style="font-size:12px;">Offloading (TZS)</label>
+                                <input type="number" name="offloading_amount" class="form-control"
+                                       min="0" step="0.01" placeholder="0.00"
+                                       value="{{ old('offloading_amount', $offloading > 0 ? $offloading : '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="font-w600" style="font-size:12px;">Transportation (TZS)</label>
+                                <input type="number" name="transportation_amount" class="form-control"
+                                       min="0" step="0.01" placeholder="0.00"
+                                       value="{{ old('transportation_amount', $transportation > 0 ? $transportation : '') }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="font-w600" style="font-size:12px;">Expense Date</label>
+                                <input type="date" name="expense_date" class="form-control"
+                                       value="{{ old('expense_date', $existingDate instanceof \Carbon\Carbon ? $existingDate->toDateString() : $existingDate) }}">
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-9">
+                                <label class="font-w600" style="font-size:12px;">Notes (optional)</label>
+                                <input type="text" name="overhead_notes" class="form-control"
+                                       maxlength="500" placeholder="e.g. truck reg #, helpers count…"
+                                       value="{{ old('overhead_notes', $existingNotes) }}">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fa fa-save mr-1"></i> Save Overheads
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-muted mt-2 mb-0" style="font-size:11.5px;">
+                            <i class="fa fa-info-circle mr-1"></i>
+                            Each amount becomes a Project Cost row under <strong>Overhead Expense</strong>
+                            and shows in the Expenditure Dashboard. Set a value to 0 to clear it.
+                        </p>
+                    </form>
+                @endif
+            </div>
+        </div>
+
         {{-- Inspections --}}
         <div class="block">
             <div class="block-header block-header-default">

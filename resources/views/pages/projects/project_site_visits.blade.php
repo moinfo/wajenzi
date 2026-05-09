@@ -67,7 +67,7 @@
                                 <thead>
                                 <tr>
                                     <th class="text-center" style="width: 100px;">#</th>
-                                    <th>Project Name</th>
+                                    <th>Project / Client</th>
                                     <th>Location</th>
                                     <th>Description</th>
                                     <th>Visit Date</th>
@@ -86,7 +86,18 @@
 
                                     <tr id="visit-tr-{{$visit->id}}">
                                         <td class="text-center">{{$loop->index + 1}}</td>
-                                        <td>{{ $visit->project->project_name ?? null }} - {{ $visit->project->client->first_name ?? null }} {{ $visit->project->client->last_name ?? null }}</td>
+                                        <td>
+                                            @if($visit->project)
+                                                <i class="fa fa-building text-primary mr-1"></i>
+                                                {{ $visit->project->project_name }} - {{ $visit->project->client->first_name ?? '' }} {{ $visit->project->client->last_name ?? '' }}
+                                            @elseif($visit->client)
+                                                <i class="fa fa-user text-info mr-1"></i>
+                                                {{ $visit->client->first_name }} {{ $visit->client->last_name }}
+                                                <span class="badge badge-light ml-1">Client only</span>
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
                                         <td>{{ $visit->location ?? null }}</td>
                                         <td>{{ $visit->description ?? null }}</td>
                                         <td>{{ \Carbon\Carbon::parse($visit->visit_date)->format('Y-m-d') }}</td>

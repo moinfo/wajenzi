@@ -30,7 +30,10 @@ $refill_amount = $chart_of_accounts_variable - $balance;
         <div class="form-group">
             <label for="example-nf-refill_amount" class="control-label required">Refill Amount</label>
             <input type="number" step=".01" class="form-control" id="refill_amount" name="refill_amount"
-                   value="{{ $object->refill_amount ?? $refill_amount }}" placeholder="Refill Amount" readonly>
+                   value="{{ $object->refill_amount ?? $refill_amount }}"
+                   min="0.01" max="{{ $refill_amount }}"
+                   placeholder="Refill Amount" required>
+            <small class="text-muted">Maximum allowed: {{ number_format($refill_amount, 2) }}</small>
         </div>
         <div class="form-group">
             <label for="example-nf-date" class="control-label required">Date</label>

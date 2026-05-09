@@ -15,6 +15,8 @@ class ProjectExpense extends Model
     protected $fillable = [
         'project_id',
         'cost_category_id',
+        'supplier_receiving_id',
+        'expense_subtype',
         'amount',
         'description',
         'remarks',
@@ -50,6 +52,11 @@ class ProjectExpense extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function supplierReceiving(): BelongsTo
+    {
+        return $this->belongsTo(SupplierReceiving::class, 'supplier_receiving_id');
     }
 
     /**

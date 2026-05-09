@@ -417,6 +417,24 @@ class SettingsController extends Controller
         return view('pages.settings.settings_account_types')->with($data);
     }
     public function petty_cash_refill_requests(Request $request){
+        if ($request->isMethod('POST') && $request->has('addItem')) {
+            $balance = PettyCashRefillRequest::getCurrentBalanceBetweenPettyCashRefillRequestAndImprestRequest();
+            $limitVar = ChartAccountVariable::where('variable', 'PETTY_CASH_LIMIT')->first();
+            $limit = $limitVar ? (float) $limitVar->value : 0;
+            $maxRefill = max(0, $limit - $balance);
+            $requested = (float) $request->input('refill_amount');
+
+            if ($requested <= 0) {
+                $this->notify('Refill amount must be greater than 0.', 'Invalid amount', 'error');
+                return back()->withInput();
+            }
+
+            if ($requested > $maxRefill) {
+                $this->notify('Refill amount cannot exceed '.number_format($maxRefill, 2).' (petty cash limit minus current balance).', 'Invalid amount', 'error');
+                return back()->withInput();
+            }
+        }
+
         if($this->handleCrud($request, 'PettyCashRefillRequest')) {
             return back();
         }

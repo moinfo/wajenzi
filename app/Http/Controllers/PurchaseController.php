@@ -392,6 +392,11 @@ class PurchaseController extends Controller
             return redirect()->route('purchase_orders');
         }
 
+        if (strtolower($purchase->payment_status ?? '') === 'paid') {
+            $this->notify('Payment for this PO has already been recorded.', 'Info', 'info');
+            return redirect()->route('purchase_orders');
+        }
+
         return view('pages.procurement.record_payment')->with(['purchase' => $purchase]);
     }
 
@@ -401,6 +406,11 @@ class PurchaseController extends Controller
 
         if (strtoupper($purchase->status) !== 'APPROVED') {
             $this->notify('Only approved purchase orders can have payment recorded.', 'Error', 'error');
+            return redirect()->route('purchase_orders');
+        }
+
+        if (strtolower($purchase->payment_status ?? '') === 'paid') {
+            $this->notify('Payment for this PO has already been recorded.', 'Info', 'info');
             return redirect()->route('purchase_orders');
         }
 
@@ -447,8 +457,86 @@ class PurchaseController extends Controller
             'purchase.purchaseItems.boqItem', 'supplier', 'project', 'receivedBy', 'inspections'
         ])->findOrFail($id);
 
+        // Existing delivery overheads (loading/offloading/transportation) recorded
+        // for this receiving — stored as ProjectExpense rows under the
+        // "Overhead Expense" cost category, tagged via expense_subtype.
+        $overheads = \App\Models\ProjectExpense::where('supplier_receiving_id', $receiving->id)
+            ->get()
+            ->keyBy('expense_subtype');
+
         return view('pages.procurement.supplier_receiving_detail')->with([
             'receiving' => $receiving,
+            'overheads' => $overheads,
         ]);
+    }
+
+    /**
+     * Save delivery overheads for a supplier receiving — loading, offloading,
+     * transportation. Each non-zero amount is upserted as a ProjectExpense row
+     * under the "Overhead Expense" cost category so it flows into the finance
+     * reports automatically.
+     */
+    public function storeReceivingOverheads(Request $request, $id)
+    {
+        $receiving = SupplierReceiving::with('project')->findOrFail($id);
+
+        $request->validate([
+            'loading_amount'        => 'nullable|numeric|min:0',
+            'offloading_amount'     => 'nullable|numeric|min:0',
+            'transportation_amount' => 'nullable|numeric|min:0',
+            'overhead_notes'        => 'nullable|string|max:500',
+            'expense_date'          => 'nullable|date',
+        ]);
+
+        $category = \App\Models\CostCategory::firstOrCreate(['name' => 'Overhead Expense']);
+        $expenseDate = $request->input('expense_date') ?: ($receiving->date?->toDateString() ?? now()->toDateString());
+        $notes = $request->input('overhead_notes');
+
+        if (! $receiving->project_id) {
+            $this->notify('Cannot save overheads — this receiving has no linked project.', 'Error', 'error');
+            return back();
+        }
+
+        $types = [
+            'loading'        => $request->input('loading_amount'),
+            'offloading'     => $request->input('offloading_amount'),
+            'transportation' => $request->input('transportation_amount'),
+        ];
+
+        foreach ($types as $subtype => $amount) {
+            $amount = $amount === null || $amount === '' ? null : (float) $amount;
+
+            $existing = \App\Models\ProjectExpense::where('supplier_receiving_id', $receiving->id)
+                ->where('expense_subtype', $subtype)
+                ->first();
+
+            // Zero / blank → drop any existing row so the form reflects truth.
+            if ($amount === null || $amount <= 0) {
+                $existing?->delete();
+                continue;
+            }
+
+            $payload = [
+                'project_id'            => $receiving->project_id,
+                'cost_category_id'      => $category->id,
+                'supplier_receiving_id' => $receiving->id,
+                'expense_subtype'       => $subtype,
+                'amount'                => $amount,
+                'description'           => ucfirst($subtype) . ' for receiving ' . ($receiving->receiving_number ?? '#' . $receiving->id),
+                'remarks'               => $notes,
+                'expense_date'          => $expenseDate,
+                'created_by'            => auth()->id(),
+                'status'                => 'draft',
+            ];
+
+            if ($existing) {
+                $existing->update($payload);
+            } else {
+                \App\Models\ProjectExpense::create($payload);
+            }
+        }
+
+        $this->notify('Delivery overheads saved.', 'Success', 'success');
+        return back();
     }
 }
