@@ -1225,7 +1225,11 @@ $(function () {
                 showCancelButton: true,
                 confirmButtonColor: '#dc2626',
                 confirmButtonText: 'Yes, delete it'
-            }).then(r => { if (r.isConfirmed) action(); });
+            }).then(r => {
+                // SweetAlert2 v9 (installed) returns r.value; v10+ uses r.isConfirmed.
+                // Accept both so the click reliably triggers the delete.
+                if (r && (r.isConfirmed === true || r.value === true)) action();
+            });
         } else if (window.confirm(message)) {
             action();
         }

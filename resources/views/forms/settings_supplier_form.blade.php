@@ -1,5 +1,5 @@
 <div class="block-content">
-    <form method="post" autocomplete="off">
+    <form method="post" enctype="multipart/form-data" autocomplete="off">
         @csrf
         <div class="form-group">
             <label for="example-nf-email" class="control-label required">Name</label>
@@ -118,6 +118,40 @@
                     Supplier will be paid in cash. No bank or mobile money details are required.
                 </div>
             </div>
+        </fieldset>
+
+        {{-- ── Attachments ─────────────────────────────────────────────── --}}
+        <fieldset class="form-group" style="border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;margin-top:8px;">
+            <legend class="control-label" style="font-size:13px;font-weight:700;width:auto;padding:0 8px;margin-bottom:8px;">
+                Attachments
+            </legend>
+            <p class="text-muted" style="font-size:11.5px;margin-top:-4px;">
+                Optional. Allowed: PDF, JPG, PNG, DOC, XLS — max 4 MB each.
+            </p>
+
+            @foreach([
+                'proforma'  => ['label' => 'Pro-forma',  'icon' => 'fa-file-invoice'],
+                'quotation' => ['label' => 'Quotation',  'icon' => 'fa-file-alt'],
+                'document'  => ['label' => 'Document',   'icon' => 'fa-file'],
+            ] as $field => $meta)
+                @php $existing = $object->{$field} ?? null; @endphp
+                <div class="form-group mb-3">
+                    <label style="font-size:12px;">
+                        <i class="fa {{ $meta['icon'] }} mr-1" style="color:#64748b;"></i>
+                        {{ $meta['label'] }}
+                    </label>
+                    <input type="file" name="{{ $field }}" class="form-control-file"
+                           accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx">
+                    @if($existing)
+                        <div class="mt-1" style="font-size:11.5px;">
+                            <a href="{{ asset(ltrim($existing, '/')) }}" target="_blank" class="text-primary">
+                                <i class="fa fa-paperclip mr-1"></i>View current {{ strtolower($meta['label']) }}
+                            </a>
+                            <span class="text-muted ml-2">— upload a new file to replace</span>
+                        </div>
+                    @endif
+                </div>
+            @endforeach
         </fieldset>
 
         <div class="form-group">
