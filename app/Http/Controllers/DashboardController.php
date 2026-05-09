@@ -8,6 +8,7 @@ use App\Models\Expense;
 use App\Models\Gross;
 use App\Models\ProjectSchedule;
 use App\Models\ProjectScheduleActivity;
+use App\Models\ProjectServiceDesign;
 use App\Models\ProjectStructuralDesign;
 use App\Models\TransactionMovement;
 use App\Models\User;
@@ -146,11 +147,14 @@ class DashboardController extends Controller
             );
         }
 
-        // Final design handoff sections — Civil Engineer, QS, Sales Team
+        // Final design handoff sections — Civil Engineer, Service Engineer, QS, Sales Team
         $structuralHandoffs       = collect();
+        $serviceHandoffs          = collect();
         $qsReadyDesigns           = collect();
+        $qsReadyServiceDesigns    = collect();
         $qsBoqPlans               = collect();
         $salesApprovedDesigns     = collect();
+        $salesApprovedServiceDesigns = collect();
         $salesApprovedBoqs        = collect();
 
         if ($user->hasRole('Civil Engineer')) {
@@ -166,9 +170,29 @@ class DashboardController extends Controller
                 ->get();
         }
 
+        if ($user->hasRole('Service Engineer')) {
+            $serviceHandoffs = ProjectServiceDesign::with(['project.projectType', 'triggeringStructuralDesign', 'stages'])
+                ->where(function ($q) use ($user) {
+                    $q->where('assigned_engineer_id', $user->id)
+                      ->orWhereDoesntHave('assignedEngineer');
+                })
+                ->whereNotIn('status', ['approved'])
+                ->orderByRaw("FIELD(status, 'pending', 'in_progress', 'submitted') ASC")
+                ->orderBy('created_at', 'asc')
+                ->limit(10)
+                ->get();
+        }
+
         if ($user->hasRole('Quantity Surveyor (QS)') || $user->can('View All Project Activities')) {
             // Approved structural designs → QS prepares BOQ plan
             $qsReadyDesigns = ProjectStructuralDesign::with(['project.projectType', 'assignedEngineer', 'stages'])
+                ->where('status', 'approved')
+                ->orderBy('approved_at', 'desc')
+                ->limit(10)
+                ->get();
+
+            // Approved service designs → QS
+            $qsReadyServiceDesigns = ProjectServiceDesign::with(['project.projectType', 'assignedEngineer', 'stages'])
                 ->where('status', 'approved')
                 ->orderBy('approved_at', 'desc')
                 ->limit(10)
@@ -190,6 +214,13 @@ class DashboardController extends Controller
         if ($user->hasRole(['Sales and Marketing', 'Business Development Manager']) || $user->can('View All Project Activities')) {
             // Approved structural designs — Sales shares with client
             $salesApprovedDesigns = ProjectStructuralDesign::with(['project.client', 'project.projectType', 'stages'])
+                ->where('status', 'approved')
+                ->orderBy('approved_at', 'desc')
+                ->limit(10)
+                ->get();
+
+            // Approved service designs — Sales shares with client
+            $salesApprovedServiceDesigns = ProjectServiceDesign::with(['project.client', 'project.projectType', 'stages'])
                 ->where('status', 'approved')
                 ->orderBy('approved_at', 'desc')
                 ->limit(10)
@@ -257,9 +288,12 @@ class DashboardController extends Controller
             'overallProgress' => $overallProgress,
             'completedActivities' => $completedActivities,
             'structuralHandoffs' => $structuralHandoffs,
+            'serviceHandoffs' => $serviceHandoffs,
             'qsReadyDesigns' => $qsReadyDesigns,
+            'qsReadyServiceDesigns' => $qsReadyServiceDesigns,
             'qsBoqPlans' => $qsBoqPlans,
             'salesApprovedDesigns' => $salesApprovedDesigns,
+            'salesApprovedServiceDesigns' => $salesApprovedServiceDesigns,
             'salesApprovedBoqs' => $salesApprovedBoqs,
             'invoiceDueDates' => $invoiceDueDates,
             'overdueInvoicesCount' => $overdueInvoicesCount,

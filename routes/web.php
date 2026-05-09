@@ -576,6 +576,22 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/structural-design/{design}/stage/{stage}/approve', [App\Http\Controllers\ProjectStructuralDesignController::class, 'approveStage'])->name('structural_design.stage.approve');
     Route::post('/structural-design/{design}/stage/{stage}/reject', [App\Http\Controllers\ProjectStructuralDesignController::class, 'rejectStage'])->name('structural_design.stage.reject');
 
+    // Service Design Routes
+    Route::get('/service-design', [App\Http\Controllers\ProjectServiceDesignController::class, 'index'])->name('service_design.index');
+    Route::post('/service-design', [App\Http\Controllers\ProjectServiceDesignController::class, 'store'])->name('service_design.store');
+    Route::get('/service-design/{design}', [App\Http\Controllers\ProjectServiceDesignController::class, 'show'])->name('service_design.show');
+    Route::patch('/service-design/{design}/stage/{stage}', [App\Http\Controllers\ProjectServiceDesignController::class, 'updateStage'])->name('service_design.stage.update');
+    Route::post('/service-design/{design}/submit', [App\Http\Controllers\ProjectServiceDesignController::class, 'submit'])->name('service_design.submit');
+    Route::post('/service-design/{design}/reassign', [App\Http\Controllers\ProjectServiceDesignController::class, 'reassignEngineer'])->name('service_design.reassign');
+    // Work schedule approval flow
+    Route::post('/service-design/{design}/schedule/submit', [App\Http\Controllers\ProjectServiceDesignController::class, 'submitSchedule'])->name('service_design.schedule.submit');
+    Route::post('/service-design/{design}/schedule/approve', [App\Http\Controllers\ProjectServiceDesignController::class, 'approveSchedule'])->name('service_design.schedule.approve');
+    Route::post('/service-design/{design}/schedule/reject', [App\Http\Controllers\ProjectServiceDesignController::class, 'rejectSchedule'])->name('service_design.schedule.reject');
+    // Per-stage approval flow
+    Route::post('/service-design/{design}/stage/{stage}/submit', [App\Http\Controllers\ProjectServiceDesignController::class, 'submitStage'])->name('service_design.stage.submit');
+    Route::post('/service-design/{design}/stage/{stage}/approve', [App\Http\Controllers\ProjectServiceDesignController::class, 'approveStage'])->name('service_design.stage.approve');
+    Route::post('/service-design/{design}/stage/{stage}/reject', [App\Http\Controllers\ProjectServiceDesignController::class, 'rejectStage'])->name('service_design.stage.reject');
+
     // BOQ Preparation Plans
     Route::get('/project-boq-plans', [App\Http\Controllers\ProjectBoqPlanController::class, 'index'])->name('project-boq-plans.index');
     Route::post('/project-boq-plans', [App\Http\Controllers\ProjectBoqPlanController::class, 'store'])->name('project-boq-plans.store');
@@ -1003,6 +1019,8 @@ Route::prefix('client')->name('client.')->group(function () {
         Route::get('/project/{id}/gallery', [App\Http\Controllers\Client\ClientPortalController::class, 'projectGallery'])->name('project.gallery');
         Route::get('/project/{id}/structural-design', [App\Http\Controllers\Client\ClientPortalController::class, 'projectStructuralDesign'])->name('project.structural_design');
         Route::post('/project/{id}/structural-design/feedback', [App\Http\Controllers\Client\ClientPortalController::class, 'submitStructuralFeedback'])->name('project.structural_design.feedback');
+        Route::get('/project/{id}/service-design', [App\Http\Controllers\Client\ClientPortalController::class, 'projectServiceDesign'])->name('project.service_design');
+        Route::post('/project/{id}/service-design/feedback', [App\Http\Controllers\Client\ClientPortalController::class, 'submitServiceFeedback'])->name('project.service_design.feedback');
     });
 });
 

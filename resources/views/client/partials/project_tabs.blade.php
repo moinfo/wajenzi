@@ -25,4 +25,9 @@
         <i class="fas fa-drafting-compass me-1"></i> Structural Design
     </a>
     @endif
+    @if(\App\Models\ProjectServiceDesign::where('project_id', $project->id)->where('status','approved')->exists())
+    <a href="{{ route('client.project.service_design', $project->id) }}" class="m-tab {{ request()->routeIs('client.project.service_design') ? 'active' : '' }}">
+        <i class="fas fa-tools me-1"></i> Service Design
+    </a>
+    @endif
 </div>

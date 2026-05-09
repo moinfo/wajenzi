@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\BillingDocument;
 use App\Models\Project;
 use App\Models\ProjectSchedule;
+use App\Models\ProjectServiceDesign;
 use App\Models\ProjectStructuralDesign;
+use App\Models\ServiceDesignFeedback;
 use App\Models\StructuralDesignFeedback;
 use Illuminate\Support\Facades\Auth;
 use PDF;
@@ -321,6 +323,44 @@ class ClientPortalController extends Controller
         $feedbacks = $design ? $design->feedbacks : collect();
 
         return view('client.projects.structural_design', compact('project', 'design', 'feedbacks'));
+    }
+
+    /**
+     * Service Design — approved service drawings for client review and download.
+     */
+    public function projectServiceDesign($id)
+    {
+        $project = $this->clientProject($id);
+
+        $design = ProjectServiceDesign::with(['stages.completedByUser', 'assignedEngineer', 'feedbacks.client'])
+            ->where('project_id', $project->id)
+            ->where('status', 'approved')
+            ->first();
+
+        $feedbacks = $design ? $design->feedbacks : collect();
+
+        return view('client.projects.service_design', compact('project', 'design', 'feedbacks'));
+    }
+
+    /**
+     * Submit client feedback on the approved service design.
+     */
+    public function submitServiceFeedback($id, \Illuminate\Http\Request $request)
+    {
+        $project = $this->clientProject($id);
+        $request->validate(['comment' => 'required|string|max:2000']);
+
+        $design = ProjectServiceDesign::where('project_id', $project->id)
+            ->where('status', 'approved')
+            ->firstOrFail();
+
+        ServiceDesignFeedback::create([
+            'service_design_id' => $design->id,
+            'client_id'         => $this->client()->id,
+            'comment'           => $request->comment,
+        ]);
+
+        return back()->with('success', 'Your feedback has been submitted. Our team will review it.');
     }
 
     /**

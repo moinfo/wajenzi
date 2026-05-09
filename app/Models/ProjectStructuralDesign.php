@@ -69,8 +69,32 @@ class ProjectStructuralDesign extends Model implements ApprovableModel
         $this->approved_at = now();
         $this->save();
 
-        // Update the project to reflect structural approval (unlocks BOQ)
         $this->project?->update(['status' => 'structural_approved']);
+
+        // Auto-create the service design and notify service engineers
+        if (!\App\Models\ProjectServiceDesign::where('project_id', $this->project_id)->exists()) {
+            $serviceDesign = \App\Models\ProjectServiceDesign::create([
+                'project_id'                       => $this->project_id,
+                'triggered_by_structural_design_id' => $this->id,
+                'status'                            => 'pending',
+                'created_by'                        => $this->created_by,
+            ]);
+            foreach (\App\Models\ProjectServiceDesignStage::defaultStages() as $stage) {
+                \App\Models\ProjectServiceDesignStage::create(array_merge(
+                    $stage,
+                    ['service_design_id' => $serviceDesign->id, 'status' => 'pending']
+                ));
+            }
+            $serviceEngineers = User::role('Service Engineer')->get();
+            foreach ($serviceEngineers as $eng) {
+                $eng->notify(new \App\Notifications\SystemActionNotification(
+                    'Service Design Assigned',
+                    "Structural design for {$this->document_number} has been approved. Please prepare the service design.",
+                    "/service-design/{$serviceDesign->id}",
+                    null, $serviceDesign->id
+                ));
+            }
+        }
 
         $link    = "/structural-design/{$this->id}";
         $title   = 'Structural Design Approved';
