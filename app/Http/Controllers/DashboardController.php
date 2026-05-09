@@ -60,6 +60,17 @@ class DashboardController extends Controller
 
         $projectActivities = $activityQuery->orderBy('start_date', 'asc')->get();
 
+        // Recently completed design stages — for Sales team to share with clients
+        $completedActivities = ProjectScheduleActivity::with(['schedule.lead', 'schedule.client', 'completedByUser'])
+            ->where('status', 'completed')
+            ->whereNotNull('completed_at')
+            ->whereHas('schedule', function ($q) {
+                $q->whereIn('status', ['confirmed', 'in_progress', 'completed']);
+            })
+            ->orderBy('completed_at', 'desc')
+            ->limit(15)
+            ->get();
+
         // Activities for calendar
         $calMonth = $request->input('cal_month', now()->month);
         $calYear = $request->input('cal_year', now()->year);
@@ -186,6 +197,7 @@ class DashboardController extends Controller
             'inProgressActivitiesCount' => $inProgressActivitiesCount,
             'activeSchedules' => $activeSchedules,
             'overallProgress' => $overallProgress,
+            'completedActivities' => $completedActivities,
             'invoiceDueDates' => $invoiceDueDates,
             'overdueInvoicesCount' => $overdueInvoicesCount,
             'todayInvoicesCount' => $todayInvoicesCount,

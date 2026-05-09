@@ -446,6 +446,54 @@
             </div>
             @endif
 
+            <!-- Completed Design Stages (for Sales Team visibility) -->
+            @if(isset($completedActivities) && $completedActivities->count() > 0)
+            <div class="dashboard-section project-activities-todo">
+                <div class="section-header">
+                    <h2><i class="fa fa-check-circle mr-2" style="color:#28a745;"></i>Completed Design Stages</h2>
+                    <small class="text-muted">Recent completed milestones across all active projects</small>
+                </div>
+                <div class="followup-list">
+                    @foreach($completedActivities as $activity)
+                    <a href="{{ route('project-schedules.show', $activity->project_schedule_id) }}" class="followup-item completed" style="border-left-color:#28a745;">
+                        <div class="followup-date-badge" style="background:#28a745;">
+                            <span class="day">{{ $activity->completed_at->format('d') }}</span>
+                            <span class="month">{{ $activity->completed_at->format('M') }}</span>
+                        </div>
+                        <div class="followup-content">
+                            <span class="followup-lead-name">{{ $activity->activity_code }}: {{ Str::limit($activity->name, 35) }}</span>
+                            <span class="followup-details">
+                                {{ $activity->schedule->display_name ?? 'N/A' }}
+                                @if($activity->schedule->client)
+                                    &middot; {{ $activity->schedule->client->name }}
+                                @endif
+                            </span>
+                            <span class="followup-assignee">
+                                <i class="fa fa-layer-group"></i> {{ $activity->phase }}
+                                @if($activity->completedByUser)
+                                    &middot; <i class="fa fa-user"></i> {{ $activity->completedByUser->name }}
+                                @endif
+                            </span>
+                        </div>
+                        <div class="followup-status">
+                            <span class="status-label" style="background:#d4edda;color:#155724;border-color:#c3e6cb;">
+                                <i class="fa fa-check"></i> Done
+                            </span>
+                            @if($activity->completion_notes)
+                                <span class="d-block small text-muted mt-1" style="max-width:120px;">{{ Str::limit($activity->completion_notes, 40) }}</span>
+                            @endif
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+                <div class="followup-footer">
+                    <a href="{{ route('project-schedules.index') }}" class="view-all-btn">
+                        <i class="fa fa-list"></i> View All Schedules
+                    </a>
+                </div>
+            </div>
+            @endif
+
             <!-- Invoice Due Dates To-Do List (for Accountants) -->
             @php
                 // Check if user can view invoices

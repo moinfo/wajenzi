@@ -32,6 +32,16 @@ class ProjectSchedule extends Model implements ApprovableModel
     ];
 
     /**
+     * Human-readable label combining lead number and client name.
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        $lead = $this->lead->lead_number ?? $this->lead->name ?? "Schedule #{$this->id}";
+        $client = $this->client->name ?? null;
+        return $client ? "{$lead} — {$client}" : $lead;
+    }
+
+    /**
      * Get the lead
      */
     public function lead()

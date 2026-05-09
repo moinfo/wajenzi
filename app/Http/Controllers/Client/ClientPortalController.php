@@ -154,12 +154,17 @@ class ClientPortalController extends Controller
 
         // Get schedule activities if a schedule exists for this client
         $activities = collect();
+        $completedActivities = collect();
         $schedule = \App\Models\ProjectSchedule::where('client_id', $this->client()->id)->first();
         if ($schedule) {
-            $activities = $schedule->activities()->orderBy('sort_order')->get();
+            $schedule->load(['activities' => function ($q) {
+                $q->with('completedByUser')->orderBy('sort_order');
+            }]);
+            $activities = $schedule->activities->filter(fn($a) => $a->status !== 'completed');
+            $completedActivities = $schedule->activities->where('status', 'completed')->sortByDesc('completed_at');
         }
 
-        return view('client.projects.schedule', compact('project', 'phases', 'activities'));
+        return view('client.projects.schedule', compact('project', 'phases', 'activities', 'completedActivities', 'schedule'));
     }
 
     /**
