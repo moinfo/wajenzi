@@ -87,7 +87,7 @@ class SalesDailyReportController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'report_date' => 'required|date_format:d/m/Y',
+            'report_date' => 'required|date_format:Y-m-d',
             'department_id' => 'required|exists:departments,id',
             'daily_summary' => 'required|string',
             'lead_followups' => 'array',
@@ -98,8 +98,7 @@ class SalesDailyReportController extends Controller
 
         DB::beginTransaction();
         try {
-            // Convert date from datepicker format (dd/mm/yyyy) to database format (Y-m-d)
-            $reportDate = \Carbon\Carbon::createFromFormat('d/m/Y', $request->report_date)->format('Y-m-d');
+            $reportDate = $request->report_date;
             
             // Create the main report
             $report = SalesDailyReport::create([
@@ -118,7 +117,7 @@ class SalesDailyReportController extends Controller
                         // Convert followup date if provided
                         $followupDate = null;
                         if (!empty($followup['followup_date'])) {
-                            $followupDate = \Carbon\Carbon::createFromFormat('d/m/Y', $followup['followup_date'])->format('Y-m-d');
+                            $followupDate = \Carbon\Carbon::parse($followup['followup_date'])->format('Y-m-d');
                         }
                         
                         SalesLeadFollowup::create([
@@ -242,15 +241,14 @@ class SalesDailyReportController extends Controller
         }
 
         $request->validate([
-            'report_date' => 'required|date_format:d/m/Y',
+            'report_date' => 'required|date_format:Y-m-d',
             'department_id' => 'required|exists:departments,id',
             'daily_summary' => 'required|string'
         ]);
 
         DB::beginTransaction();
         try {
-            // Convert date from datepicker format (dd/mm/yyyy) to database format (Y-m-d)
-            $reportDate = \Carbon\Carbon::createFromFormat('d/m/Y', $request->report_date)->format('Y-m-d');
+            $reportDate = $request->report_date;
             
             // Update main report
             $report->update([
