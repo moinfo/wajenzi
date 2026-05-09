@@ -133,8 +133,15 @@ class Purchase extends Model implements ApprovableModel
             return $file;
         }
 
-        $path = Str::startsWith($file, '/') ? $file : '/' . ltrim($file, '/');
-        return $portalBase . $path;
+        // Some columns store the bare relative path like "payment_attachments/foo.pdf"
+        // while others store the full "/storage/payment_attachments/foo.pdf" — only
+        // the latter is reachable via the public/storage symlink. Normalize so both
+        // shapes resolve to a working URL.
+        $relative = ltrim($file, '/');
+        if (! Str::startsWith($relative, 'storage/')) {
+            $relative = 'storage/' . $relative;
+        }
+        return $portalBase . '/' . $relative;
     }
 
     // Method required by the ApprovableModel interface
