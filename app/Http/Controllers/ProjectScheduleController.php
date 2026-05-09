@@ -143,36 +143,43 @@ class ProjectScheduleController extends Controller
     }
 
     /**
-     * Confirm the schedule
+     * Submit the schedule for CEO/MD approval.
+     * Replaces the old one-click "confirm" with a proper approval gate.
      */
-    public function confirm(ProjectSchedule $projectSchedule)
+    public function submit(ProjectSchedule $projectSchedule)
     {
         if ($projectSchedule->isConfirmed()) {
             return back()->with('error', 'Schedule is already confirmed.');
         }
 
-        $projectSchedule->confirm(auth()->id());
-        $projectSchedule->update(['status' => 'confirmed']);
+        if ($projectSchedule->isPendingApproval()) {
+            return back()->with('error', 'Schedule is already submitted and awaiting approval.');
+        }
 
-        // Notify the assigned architect
-        $projectSchedule->load('lead');
-        if ($projectSchedule->assigned_architect_id && $projectSchedule->assigned_architect_id !== auth()->id()) {
-            $architect = User::find($projectSchedule->assigned_architect_id);
-            if ($architect) {
-                $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
-                $this->sendScheduleNotification(
-                    $architect,
-                    'Schedule Confirmed',
-                    "Project schedule for {$leadNumber} has been confirmed.",
-                    "/project-schedules/{$projectSchedule->id}",
-                    $projectSchedule->id
-                );
-            }
+        if ($projectSchedule->activities()->count() === 0) {
+            return back()->with('error', 'Cannot submit a schedule with no activities.');
+        }
+
+        // Enter RingleSoft approval queue and mark as pending
+        $projectSchedule->submit();
+        $projectSchedule->update(['status' => 'pending_confirmation']);
+
+        // Notify all Managing Directors
+        $mdUsers = User::role('Managing Director')->get();
+        $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
+        foreach ($mdUsers as $md) {
+            $this->sendScheduleNotification(
+                $md,
+                'Schedule Pending Approval',
+                "Project schedule for {$leadNumber} has been submitted and requires your approval.",
+                "/project-schedules/{$projectSchedule->id}",
+                $projectSchedule->id
+            );
         }
 
         return redirect()
             ->route('project-schedules.show', $projectSchedule)
-            ->with('success', 'Schedule confirmed successfully. Activities are now visible on dashboard and calendar.');
+            ->with('success', 'Schedule submitted for approval. The Managing Director will be notified.');
     }
 
     /**
@@ -180,6 +187,10 @@ class ProjectScheduleController extends Controller
      */
     public function startActivity(ProjectScheduleActivity $activity)
     {
+        if (!$activity->schedule->isConfirmed()) {
+            return back()->with('error', 'Schedule must be approved by the Managing Director before activities can begin.');
+        }
+
         if (!$activity->canStart()) {
             return back()->with('error', 'Cannot start this activity. Predecessor is not completed.');
         }

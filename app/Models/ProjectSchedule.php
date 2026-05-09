@@ -4,10 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
+use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
+use RingleSoft\LaravelProcessApproval\Traits\Approvable;
 
-class ProjectSchedule extends Model
+class ProjectSchedule extends Model implements ApprovableModel
 {
-    use HasFactory;
+    use HasFactory, Approvable;
 
     protected $fillable = [
         'lead_id',
@@ -85,7 +88,44 @@ class ProjectSchedule extends Model
     }
 
     /**
-     * Check if schedule is confirmed
+     * Always require CEO/MD approval — never bypass.
+     */
+    public function bypassApprovalProcess(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Called by RingleSoft when the MD/CEO approves the schedule.
+     * Marks the schedule as confirmed and notifies the architect.
+     */
+    public function onApprovalCompleted(ProcessApproval $approval): bool
+    {
+        $this->status       = 'confirmed';
+        $this->confirmed_at = now();
+        $this->confirmed_by = $approval->approver_id ?? auth()->id();
+        $this->save();
+
+        // Notify the assigned architect
+        if ($this->assigned_architect_id && $this->assigned_architect_id !== $approval->approver_id) {
+            $architect = \App\Models\User::find($this->assigned_architect_id);
+            if ($architect) {
+                $leadNumber = $this->lead->lead_number ?? $this->lead->name ?? 'N/A';
+                $architect->notify(new \App\Notifications\SystemActionNotification(
+                    'Schedule Approved',
+                    "Your project schedule for {$leadNumber} has been approved. You may now begin activities.",
+                    "/project-schedules/{$this->id}",
+                    null,
+                    $this->id
+                ));
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if schedule is confirmed (approved and ready for work)
      */
     public function isConfirmed(): bool
     {
@@ -93,14 +133,11 @@ class ProjectSchedule extends Model
     }
 
     /**
-     * Confirm the schedule
+     * Check if schedule is awaiting MD/CEO approval
      */
-    public function confirm($userId = null)
+    public function isPendingApproval(): bool
     {
-        $this->status = 'confirmed';
-        $this->confirmed_at = now();
-        $this->confirmed_by = $userId ?? auth()->id();
-        $this->save();
+        return $this->status === 'pending_confirmation';
     }
 
     /**

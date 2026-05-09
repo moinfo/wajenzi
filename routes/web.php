@@ -548,7 +548,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Project Schedule Routes
     Route::resource('project-schedules', App\Http\Controllers\ProjectScheduleController::class)->except(['create', 'store']);
-    Route::post('project-schedules/{projectSchedule}/confirm', [App\Http\Controllers\ProjectScheduleController::class, 'confirm'])->name('project-schedules.confirm');
+    Route::post('project-schedules/{projectSchedule}/submit', [App\Http\Controllers\ProjectScheduleController::class, 'submit'])->name('project-schedules.submit');
     Route::post('project-schedules/activity/{activity}/start', [App\Http\Controllers\ProjectScheduleController::class, 'startActivity'])->name('project-schedules.activity.start');
     Route::post('project-schedules/activity/{activity}/complete', [App\Http\Controllers\ProjectScheduleController::class, 'completeActivity'])->name('project-schedules.activity.complete');
     Route::patch('project-schedules/activity/{activity}/days', [App\Http\Controllers\ProjectScheduleController::class, 'updateActivityDays'])->name('project-schedules.activity.update-days');

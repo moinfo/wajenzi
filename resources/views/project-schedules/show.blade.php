@@ -32,13 +32,18 @@
                         </a>
                     @endif
                 @endif
-                @if(!$projectSchedule->isConfirmed())
-                    <form action="{{ route('project-schedules.confirm', $projectSchedule) }}" method="POST" class="d-inline">
+                @if($projectSchedule->status === 'draft')
+                    <form action="{{ route('project-schedules.submit', $projectSchedule) }}" method="POST" class="d-inline">
                         @csrf
-                        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to confirm this schedule? This will make activities visible on dashboard and calendar.')">
-                            <i class="fa fa-check"></i> Confirm Schedule
+                        <button type="submit" class="btn btn-success"
+                                onclick="return confirm('Submit this schedule for CEO/MD approval? You will not be able to edit it after submission.')">
+                            <i class="fa fa-paper-plane"></i> Submit for Approval
                         </button>
                     </form>
+                @elseif($projectSchedule->isPendingApproval())
+                    <span class="badge badge-warning badge-lg px-3 py-2">
+                        <i class="fa fa-clock-o mr-1"></i> Awaiting MD Approval
+                    </span>
                 @endif
             </div>
         </div>
@@ -165,6 +170,19 @@
                 </div>
             </div>
         </div>
+
+        {{-- MD/CEO Approval Actions (shown when pending) --}}
+        @if($projectSchedule->isPendingApproval())
+        <div class="block block-rounded mb-4">
+            <div class="block-header block-header-default">
+                <h3 class="block-title"><i class="fa fa-check-circle text-warning mr-2"></i> Approval Required</h3>
+            </div>
+            <div class="block-content">
+                <p class="text-muted mb-3">This schedule has been submitted by the architect and is awaiting your approval before work can begin.</p>
+                <x-ringlesoft-approval-actions :model="$projectSchedule" />
+            </div>
+        </div>
+        @endif
 
         <!-- Edit Info Box (before confirmation) -->
         @if(!$projectSchedule->isConfirmed())
