@@ -20,4 +20,9 @@
     <a href="{{ route('client.project.reports', $project->id) }}" class="m-tab {{ request()->routeIs('client.project.reports') ? 'active' : '' }}">
         <i class="fas fa-clipboard-list me-1"></i> Reports
     </a>
+    @if(\App\Models\ProjectStructuralDesign::where('project_id', $project->id)->where('status','approved')->exists())
+    <a href="{{ route('client.project.structural_design', $project->id) }}" class="m-tab {{ request()->routeIs('client.project.structural_design') ? 'active' : '' }}">
+        <i class="fas fa-drafting-compass me-1"></i> Structural Design
+    </a>
+    @endif
 </div>

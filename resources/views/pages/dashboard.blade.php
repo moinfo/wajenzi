@@ -551,56 +551,93 @@
             </div>
             @endif
 
-            <!-- Quantity Surveyor: Projects Ready for BOQ -->
-            @if(isset($qsReadyProjects) && $qsReadyProjects->count() > 0)
+            <!-- Quantity Surveyor: Approved structural designs ready for BOQ -->
+            @if(isset($qsReadyDesigns) && $qsReadyDesigns->count() > 0)
             <div class="dashboard-section project-activities-todo">
                 <div class="section-header">
-                    <h2><i class="fa fa-clipboard-list mr-2" style="color:#fd7e14;"></i>BOQ Ready — Design Handoffs</h2>
-                    <small class="text-muted">Architect has completed C2 — these projects are ready for BOQ preparation</small>
+                    <h2><i class="fa fa-clipboard-list mr-2" style="color:#fd7e14;"></i>BOQ Ready — Approved Structural Designs</h2>
+                    <small class="text-muted">Structural design has been approved — prepare the Bill of Quantities</small>
                 </div>
                 <div class="followup-list">
-                    @foreach($qsReadyProjects as $schedule)
-                    @php
-                        $c2 = $schedule->activities->firstWhere('activity_code','C2');
-                        $c4 = $schedule->activities->firstWhere('activity_code','C4');
-                        $fullyDone = $schedule->status === 'completed' || ($c4 && $c4->status === 'completed');
-                    @endphp
-                    <a href="{{ route('project-schedules.show', $schedule) }}" class="followup-item {{ $fullyDone ? 'completed' : '' }}" style="border-left-color:{{ $fullyDone ? '#28a745' : '#fd7e14' }};">
-                        <div class="followup-date-badge" style="background:{{ $fullyDone ? '#28a745' : '#fd7e14' }};">
-                            <span class="day" style="font-size:1rem;">{{ $fullyDone ? '✓' : 'C2' }}</span>
-                            <span class="month" style="font-size:0.6rem;">{{ $fullyDone ? 'Done' : 'Ready' }}</span>
+                    @foreach($qsReadyDesigns as $design)
+                    <a href="{{ route('structural_design.show', $design) }}" class="followup-item" style="border-left-color:#fd7e14;">
+                        <div class="followup-date-badge" style="background:#fd7e14;">
+                            <span class="day" style="font-size:0.75rem;">BOQ</span>
+                            <span class="month" style="font-size:0.6rem;">Ready</span>
                         </div>
                         <div class="followup-content">
-                            <span class="followup-lead-name">{{ $schedule->display_name }}</span>
+                            <span class="followup-lead-name">{{ $design->document_number }}</span>
                             <span class="followup-details">
-                                @if($c2 && $c2->completed_at)
-                                    C2 completed {{ $c2->completed_at->format('d M Y') }}
-                                @endif
-                                @if($fullyDone)
-                                    &middot; <strong style="color:#28a745;">All stages done</strong>
+                                {{ $design->project->project_name ?? 'N/A' }}
+                                @if($design->project->projectType)
+                                    &middot; <span class="badge badge-secondary badge-sm">{{ $design->project->projectType->name }}</span>
                                 @endif
                             </span>
                             <span class="followup-assignee">
-                                <i class="fa fa-user-tie"></i> {{ $schedule->assignedArchitect->name ?? 'Unassigned' }}
+                                <i class="fa fa-calendar-check"></i> Approved {{ $design->approved_at->format('d M Y') }}
+                                &middot; <i class="fa fa-file"></i> {{ $design->stages->where('file_path','!=',null)->count() }} file(s) attached
                             </span>
                         </div>
                         <div class="followup-status">
-                            @if($fullyDone)
-                                <span class="status-label" style="background:#d4edda;color:#155724;border-color:#c3e6cb;">
-                                    <i class="fa fa-check-double"></i> Complete
-                                </span>
-                            @else
-                                <span class="status-label" style="background:#fff3cd;color:#856404;border-color:#ffc107;">
-                                    <i class="fa fa-file-alt"></i> BOQ Needed
-                                </span>
-                            @endif
+                            <span class="status-label" style="background:#fff3cd;color:#856404;border-color:#ffc107;">
+                                <i class="fa fa-file-invoice"></i> BOQ Needed
+                            </span>
                         </div>
                     </a>
                     @endforeach
                 </div>
                 <div class="followup-footer">
-                    <a href="{{ route('project-schedules.index') }}" class="view-all-btn">
-                        <i class="fa fa-list"></i> View All Schedules
+                    <a href="{{ route('structural_design.index') }}" class="view-all-btn">
+                        <i class="fa fa-list"></i> View All Structural Designs
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            <!-- Sales Team: Approved structural designs to share with clients -->
+            @if(isset($salesApprovedDesigns) && $salesApprovedDesigns->count() > 0)
+            <div class="dashboard-section project-activities-todo">
+                <div class="section-header">
+                    <h2><i class="fa fa-share-alt mr-2" style="color:#20c997;"></i>Ready to Share — Approved Structural Designs</h2>
+                    <small class="text-muted">Final structural drawings approved — share via Client Portal or download for client</small>
+                </div>
+                <div class="followup-list">
+                    @foreach($salesApprovedDesigns as $design)
+                    @php
+                        $filesCount = $design->stages->whereNotNull('file_path')->count();
+                    @endphp
+                    <a href="{{ route('structural_design.show', $design) }}" class="followup-item" style="border-left-color:#20c997;">
+                        <div class="followup-date-badge" style="background:#20c997;">
+                            <span class="day" style="font-size:0.75rem;"><i class="fa fa-check"></i></span>
+                            <span class="month" style="font-size:0.6rem;">Approved</span>
+                        </div>
+                        <div class="followup-content">
+                            <span class="followup-lead-name">{{ $design->document_number }}</span>
+                            <span class="followup-details">
+                                {{ $design->project->project_name ?? 'N/A' }}
+                                @if($design->project->projectType)
+                                    &middot; <span class="badge badge-secondary badge-sm">{{ $design->project->projectType->name }}</span>
+                                @endif
+                                @if($design->project->client)
+                                    &middot; Client: {{ $design->project->client->first_name }} {{ $design->project->client->last_name }}
+                                @endif
+                            </span>
+                            <span class="followup-assignee">
+                                <i class="fa fa-calendar-check"></i> {{ $design->approved_at->format('d M Y') }}
+                                &middot; <i class="fa fa-paperclip"></i> {{ $filesCount }} downloadable file(s)
+                            </span>
+                        </div>
+                        <div class="followup-status">
+                            <span class="status-label" style="background:#d1f2eb;color:#0e6655;border-color:#1abc9c;">
+                                <i class="fa fa-share"></i> Share
+                            </span>
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+                <div class="followup-footer">
+                    <a href="{{ route('structural_design.index') }}" class="view-all-btn">
+                        <i class="fa fa-list"></i> View All Structural Designs
                     </a>
                 </div>
             </div>

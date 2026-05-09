@@ -987,6 +987,8 @@ Route::prefix('client')->name('client.')->group(function () {
         Route::get('/project/{id}/billing/{documentId}/pdf', [App\Http\Controllers\Client\ClientPortalController::class, 'billingDocumentPdf'])->name('project.billing_pdf');
         Route::get('/project/{id}/site-visit/{visitId}/pdf', [App\Http\Controllers\Client\ClientPortalController::class, 'siteVisitPdf'])->name('project.site_visit_pdf');
         Route::get('/project/{id}/gallery', [App\Http\Controllers\Client\ClientPortalController::class, 'projectGallery'])->name('project.gallery');
+        Route::get('/project/{id}/structural-design', [App\Http\Controllers\Client\ClientPortalController::class, 'projectStructuralDesign'])->name('project.structural_design');
+        Route::post('/project/{id}/structural-design/feedback', [App\Http\Controllers\Client\ClientPortalController::class, 'submitStructuralFeedback'])->name('project.structural_design.feedback');
     });
 });
 

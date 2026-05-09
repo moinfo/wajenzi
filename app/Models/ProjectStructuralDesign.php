@@ -48,6 +48,26 @@ class ProjectStructuralDesign extends Model implements ApprovableModel
         // Update the project to reflect structural approval (unlocks BOQ)
         $this->project?->update(['status' => 'structural_approved']);
 
+        $link    = "/structural-design/{$this->id}";
+        $title   = 'Structural Design Approved';
+        $message = "The structural design for {$this->document_number} has been approved and is ready for BOQ preparation.";
+
+        // Notify all Quantity Surveyors
+        $qsUsers = User::role('Quantity Surveyor (QS)')->get();
+        foreach ($qsUsers as $qs) {
+            $qs->notify(new \App\Notifications\SystemActionNotification($title, $message, $link, null, $this->id));
+        }
+
+        // Notify Sales team so they can share with the client
+        $salesUsers = User::role(['Sales and Marketing', 'Business Development Manager'])->get();
+        foreach ($salesUsers as $sales) {
+            $sales->notify(new \App\Notifications\SystemActionNotification(
+                'Structural Design Ready to Share',
+                "Structural design {$this->document_number} has been approved. You may now share it with the client via the portal.",
+                $link, null, $this->id
+            ));
+        }
+
         return true;
     }
 
@@ -77,6 +97,12 @@ class ProjectStructuralDesign extends Model implements ApprovableModel
     {
         return $this->hasMany(ProjectStructuralDesignStage::class, 'structural_design_id')
             ->orderBy('stage_order');
+    }
+
+    public function feedbacks(): HasMany
+    {
+        return $this->hasMany(\App\Models\StructuralDesignFeedback::class, 'structural_design_id')
+            ->latest();
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
