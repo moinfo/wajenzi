@@ -25,12 +25,36 @@ class ProjectStructuralDesign extends Model implements ApprovableModel
         'submitted_at',
         'approved_at',
         'created_by',
+        'schedule_description',
+        'schedule_planned_start',
+        'schedule_planned_end',
+        'schedule_status',
+        'schedule_submitted_at',
+        'schedule_approved_at',
+        'schedule_approved_by',
+        'schedule_rejection_notes',
     ];
 
     protected $casts = [
-        'submitted_at' => 'datetime',
-        'approved_at'  => 'datetime',
+        'submitted_at'          => 'datetime',
+        'approved_at'           => 'datetime',
+        'schedule_planned_start' => 'date',
+        'schedule_planned_end'   => 'date',
+        'schedule_submitted_at'  => 'datetime',
+        'schedule_approved_at'   => 'datetime',
     ];
+
+    // ── Schedule helpers ─────────────────────────────────────────────────────
+
+    public function scheduleApproved(): bool
+    {
+        return $this->schedule_status === 'approved';
+    }
+
+    public function schedulePending(): bool
+    {
+        return $this->schedule_status === 'submitted';
+    }
 
     // Used as the display label in approval UI partials
     public function getDocumentNumberAttribute(): string

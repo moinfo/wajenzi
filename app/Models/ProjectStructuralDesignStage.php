@@ -22,12 +22,25 @@ class ProjectStructuralDesignStage extends Model
         'notes',
         'completed_at',
         'completed_by',
+        'approval_status',
+        'submitted_at',
+        'approved_at',
+        'approved_by',
+        'rejected_at',
+        'rejection_notes',
     ];
 
     protected $casts = [
         'completed_at' => 'datetime',
+        'submitted_at' => 'datetime',
+        'approved_at'  => 'datetime',
+        'rejected_at'  => 'datetime',
         'stage_order'  => 'integer',
     ];
+
+    public function isApproved(): bool  { return $this->approval_status === 'approved'; }
+    public function isSubmitted(): bool { return $this->approval_status === 'submitted'; }
+    public function isRejected(): bool  { return $this->approval_status === 'rejected'; }
 
     public function structuralDesign(): BelongsTo
     {

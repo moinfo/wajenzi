@@ -567,6 +567,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/structural-design/{design}/stage/{stage}', [App\Http\Controllers\ProjectStructuralDesignController::class, 'updateStage'])->name('structural_design.stage');
     Route::post('/structural-design/{design}/submit', [App\Http\Controllers\ProjectStructuralDesignController::class, 'submit'])->name('structural_design.submit');
     Route::post('/structural-design/{design}/reassign', [App\Http\Controllers\ProjectStructuralDesignController::class, 'reassignEngineer'])->name('structural_design.reassign');
+    // Work schedule approval flow
+    Route::post('/structural-design/{design}/schedule/submit', [App\Http\Controllers\ProjectStructuralDesignController::class, 'submitSchedule'])->name('structural_design.schedule.submit');
+    Route::post('/structural-design/{design}/schedule/approve', [App\Http\Controllers\ProjectStructuralDesignController::class, 'approveSchedule'])->name('structural_design.schedule.approve');
+    Route::post('/structural-design/{design}/schedule/reject', [App\Http\Controllers\ProjectStructuralDesignController::class, 'rejectSchedule'])->name('structural_design.schedule.reject');
+    // Per-stage approval flow
+    Route::post('/structural-design/{design}/stage/{stage}/submit', [App\Http\Controllers\ProjectStructuralDesignController::class, 'submitStage'])->name('structural_design.stage.submit');
+    Route::post('/structural-design/{design}/stage/{stage}/approve', [App\Http\Controllers\ProjectStructuralDesignController::class, 'approveStage'])->name('structural_design.stage.approve');
+    Route::post('/structural-design/{design}/stage/{stage}/reject', [App\Http\Controllers\ProjectStructuralDesignController::class, 'rejectStage'])->name('structural_design.stage.reject');
 
     // BOQ Preparation Plans
     Route::get('/project-boq-plans', [App\Http\Controllers\ProjectBoqPlanController::class, 'index'])->name('project-boq-plans.index');

@@ -104,6 +104,15 @@ class ProjectStructuralDesignController extends Controller
             'file'   => 'nullable|file|max:20480|mimes:pdf,dwg,dxf,jpg,jpeg,png,zip',
         ]);
 
+        if (!$design->scheduleApproved()) {
+            return back()->with('error', 'Work schedule must be approved by management before stage work can begin.');
+        }
+
+        // Can only edit if not yet submitted for approval or if rejected
+        if (in_array($stage->approval_status, ['submitted', 'approved'])) {
+            return back()->with('error', 'This stage has already been submitted for approval and cannot be edited.');
+        }
+
         $data = [
             'status' => $request->status,
             'notes'  => $request->notes,
@@ -147,14 +156,19 @@ class ProjectStructuralDesignController extends Controller
 
     /**
      * Submit the structural design for CEO/MD approval.
-     * All stages must be completed first.
+     * All stages must be approved first.
      */
     public function submit(Request $request, $id)
     {
         $design = ProjectStructuralDesign::with('stages')->findOrFail($id);
 
-        if (!$design->allStagesCompleted()) {
-            return back()->with('error', 'All stages must be completed before submitting for approval.');
+        if (!$design->scheduleApproved()) {
+            return back()->with('error', 'The work schedule must be approved by management before submitting the final design.');
+        }
+
+        $unapproved = $design->stages->where('approval_status', '!=', 'approved')->count();
+        if ($unapproved > 0) {
+            return back()->with('error', 'All stages must be individually approved by management before submitting the final design.');
         }
 
         if ($design->isSubmitted()) {
@@ -165,5 +179,208 @@ class ProjectStructuralDesignController extends Controller
         $design->update(['submitted_at' => now(), 'status' => 'submitted']);
 
         return back()->with('success', 'Structural design submitted for CEO/MD approval.');
+    }
+
+    // ── Work Schedule Flow ───────────────────────────────────────────────────
+
+    /**
+     * Engineer submits their work schedule for MD approval.
+     */
+    public function submitSchedule(Request $request, $id)
+    {
+        $design = ProjectStructuralDesign::findOrFail($id);
+
+        $request->validate([
+            'schedule_description'  => 'required|string|max:3000',
+            'schedule_planned_start' => 'required|date',
+            'schedule_planned_end'   => 'required|date|after_or_equal:schedule_planned_start',
+        ]);
+
+        if ($design->scheduleApproved()) {
+            return back()->with('error', 'Work schedule is already approved.');
+        }
+
+        $design->update([
+            'schedule_description'   => $request->schedule_description,
+            'schedule_planned_start' => $request->schedule_planned_start,
+            'schedule_planned_end'   => $request->schedule_planned_end,
+            'schedule_status'        => 'submitted',
+            'schedule_submitted_at'  => now(),
+            'schedule_rejection_notes' => null,
+        ]);
+
+        // Notify MD/CEO
+        $mdUsers = User::role(['Managing Director', 'CEO'])->get();
+        foreach ($mdUsers as $md) {
+            $md->notify(new \App\Notifications\SystemActionNotification(
+                'Structural Design Work Schedule Awaiting Approval',
+                "Engineer {$design->assignedEngineer?->name} submitted a work schedule for {$design->document_number}. Please review and approve.",
+                "/structural-design/{$design->id}",
+                null, $design->id
+            ));
+        }
+
+        return back()->with('success', 'Work schedule submitted for management approval.');
+    }
+
+    /**
+     * MD/CEO approves the work schedule → engineer can begin stages.
+     */
+    public function approveSchedule(Request $request, $id)
+    {
+        $design = ProjectStructuralDesign::findOrFail($id);
+
+        if (!$design->schedulePending()) {
+            return back()->with('error', 'No pending schedule to approve.');
+        }
+
+        $design->update([
+            'schedule_status'      => 'approved',
+            'schedule_approved_at' => now(),
+            'schedule_approved_by' => Auth::id(),
+        ]);
+
+        // Notify the engineer
+        if ($design->assigned_engineer_id) {
+            $design->assignedEngineer?->notify(new \App\Notifications\SystemActionNotification(
+                'Work Schedule Approved',
+                "Your work schedule for {$design->document_number} has been approved. You may now begin the design stages.",
+                "/structural-design/{$design->id}",
+                null, $design->id
+            ));
+        }
+
+        return back()->with('success', 'Work schedule approved. Engineer can now begin stages.');
+    }
+
+    /**
+     * MD/CEO rejects the work schedule → engineer must revise and resubmit.
+     */
+    public function rejectSchedule(Request $request, $id)
+    {
+        $request->validate(['rejection_notes' => 'required|string|max:1000']);
+        $design = ProjectStructuralDesign::findOrFail($id);
+
+        $design->update([
+            'schedule_status'          => 'rejected',
+            'schedule_rejection_notes' => $request->rejection_notes,
+        ]);
+
+        $design->assignedEngineer?->notify(new \App\Notifications\SystemActionNotification(
+            'Work Schedule Rejected',
+            "Your work schedule for {$design->document_number} was rejected. Reason: {$request->rejection_notes}",
+            "/structural-design/{$design->id}",
+            null, $design->id
+        ));
+
+        return back()->with('error', 'Work schedule rejected. Engineer has been notified.');
+    }
+
+    // ── Per-Stage Approval Flow ──────────────────────────────────────────────
+
+    /**
+     * Engineer submits a completed stage for MD approval.
+     */
+    public function submitStage(Request $request, $designId, $stageId)
+    {
+        $design = ProjectStructuralDesign::findOrFail($designId);
+        $stage  = ProjectStructuralDesignStage::where('structural_design_id', $designId)->findOrFail($stageId);
+
+        if (!$design->scheduleApproved()) {
+            return back()->with('error', 'Work schedule must be approved before submitting stages.');
+        }
+
+        if ($stage->status !== 'completed') {
+            return back()->with('error', 'Stage must be marked as completed before submitting for approval.');
+        }
+
+        if (!$stage->file_path) {
+            return back()->with('error', 'Please upload the stage document before submitting for approval.');
+        }
+
+        if ($stage->approval_status === 'submitted') {
+            return back()->with('error', 'This stage is already awaiting approval.');
+        }
+
+        $stage->update([
+            'approval_status' => 'submitted',
+            'submitted_at'    => now(),
+            'rejected_at'     => null,
+            'rejection_notes' => null,
+        ]);
+
+        // Notify MD/CEO
+        $mdUsers = User::role(['Managing Director', 'CEO'])->get();
+        foreach ($mdUsers as $md) {
+            $md->notify(new \App\Notifications\SystemActionNotification(
+                'Stage Ready for Review',
+                "Stage \"{$stage->name}\" of {$design->document_number} is ready for your review.",
+                "/structural-design/{$design->id}",
+                null, $design->id
+            ));
+        }
+
+        return back()->with('success', "Stage \"{$stage->name}\" submitted for management approval.");
+    }
+
+    /**
+     * MD/CEO approves a stage.
+     */
+    public function approveStage(Request $request, $designId, $stageId)
+    {
+        $design = ProjectStructuralDesign::findOrFail($designId);
+        $stage  = ProjectStructuralDesignStage::where('structural_design_id', $designId)->findOrFail($stageId);
+
+        $stage->update([
+            'approval_status' => 'approved',
+            'approved_at'     => now(),
+            'approved_by'     => Auth::id(),
+        ]);
+
+        // Notify engineer
+        $design->assignedEngineer?->notify(new \App\Notifications\SystemActionNotification(
+            'Stage Approved',
+            "Stage \"{$stage->name}\" of {$design->document_number} has been approved.",
+            "/structural-design/{$design->id}",
+            null, $design->id
+        ));
+
+        // If all stages are approved, update overall design status to in_progress
+        $allApproved = $design->stages()->where('approval_status', '!=', 'approved')->doesntExist();
+        if ($allApproved && $design->status === 'in_progress') {
+            // All done — ready for final submission
+        }
+
+        return back()->with('success', "Stage \"{$stage->name}\" approved.");
+    }
+
+    /**
+     * MD/CEO rejects a stage → engineer must revise.
+     */
+    public function rejectStage(Request $request, $designId, $stageId)
+    {
+        $request->validate(['rejection_notes' => 'required|string|max:1000']);
+        $design = ProjectStructuralDesign::findOrFail($designId);
+        $stage  = ProjectStructuralDesignStage::where('structural_design_id', $designId)->findOrFail($stageId);
+
+        $stage->update([
+            'approval_status' => 'rejected',
+            'rejected_at'     => now(),
+            'rejection_notes' => $request->rejection_notes,
+        ]);
+
+        // Revert stage to in_progress so engineer can fix it
+        if ($stage->status === 'completed') {
+            $stage->update(['status' => 'in_progress']);
+        }
+
+        $design->assignedEngineer?->notify(new \App\Notifications\SystemActionNotification(
+            'Stage Rejected — Revision Required',
+            "Stage \"{$stage->name}\" of {$design->document_number} was rejected. Reason: {$request->rejection_notes}",
+            "/structural-design/{$design->id}",
+            null, $design->id
+        ));
+
+        return back()->with('error', "Stage \"{$stage->name}\" rejected. Engineer has been notified.");
     }
 }
