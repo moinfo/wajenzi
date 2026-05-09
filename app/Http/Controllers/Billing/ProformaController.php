@@ -253,12 +253,26 @@ class ProformaController extends Controller
             ->with('success', 'Proforma invoice cancelled successfully.');
     }
 
+    public function approve(BillingDocument $proforma)
+    {
+        if ($proforma->approved_at) {
+            return back()->with('error', 'Proforma invoice is already approved.');
+        }
+
+        $proforma->update([
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Proforma invoice approved successfully. The stamp will now appear on the PDF.');
+    }
+
     public function generatePDF(BillingDocument $proforma)
     {
         $proforma->load(['client', 'items']);
-        
+
         $pdf = PDF::loadView('billing.proformas.pdf', compact('proforma'));
-        
+
         return $pdf->download('proforma-' . $proforma->document_number . '.pdf');
     }
 

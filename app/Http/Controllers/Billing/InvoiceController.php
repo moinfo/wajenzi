@@ -489,14 +489,28 @@ class InvoiceController extends Controller
     /**
      * Void an invoice.
      */
+    public function approve(BillingDocument $invoice)
+    {
+        if ($invoice->approved_at) {
+            return back()->with('error', 'Invoice is already approved.');
+        }
+
+        $invoice->update([
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Invoice approved successfully. The stamp will now appear on the PDF.');
+    }
+
     public function void(BillingDocument $invoice)
     {
         if ($invoice->status === 'paid') {
             return back()->with('error', 'Cannot void a paid invoice.');
         }
-        
+
         $invoice->update(['status' => 'void']);
-        
+
         return back()->with('success', 'Invoice voided successfully.');
     }
 

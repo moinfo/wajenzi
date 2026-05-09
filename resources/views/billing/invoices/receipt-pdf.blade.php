@@ -407,6 +407,11 @@
         </table>
     </div>
 
+    <!-- Official Stamp -->
+    <div style="text-align: right; margin: 10px 0 6px 0;">
+        <img src="{{ public_path('images/invoice-stamp.png') }}" alt="Official Stamp" style="width: 190px;">
+    </div>
+
     <!-- Footer -->
     <div class="footer">
         <strong>Thank you for choosing us</strong><br>

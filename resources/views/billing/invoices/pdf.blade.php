@@ -445,6 +445,12 @@
         </table>
     </div>
 
+    @if($invoice->approved_at)
+    <div style="text-align: right; margin: 6px 0 4px 0;">
+        <img src="{{ public_path('images/invoice-stamp.png') }}" alt="Approved" style="width: 190px;">
+    </div>
+    @endif
+
     <!-- Footer -->
     <div class="footer-bar">
         <table>

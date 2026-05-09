@@ -826,6 +826,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('invoices/{invoice}/receipt', [App\Http\Controllers\Billing\InvoiceController::class, 'generateReceipt'])->name('invoices.receipt');
         Route::post('invoices/{invoice}/send-email', [App\Http\Controllers\Billing\InvoiceController::class, 'sendEmail'])->name('invoices.send-email');
         Route::get('invoices/{invoice}/duplicate', [App\Http\Controllers\Billing\InvoiceController::class, 'duplicate'])->name('invoices.duplicate');
+        Route::post('invoices/{invoice}/approve', [App\Http\Controllers\Billing\InvoiceController::class, 'approve'])->name('invoices.approve');
         Route::post('invoices/{invoice}/void', [App\Http\Controllers\Billing\InvoiceController::class, 'void'])->name('invoices.void');
         Route::post('invoices/{invoice}/send-reminder', [App\Http\Controllers\Billing\InvoiceController::class, 'sendReminder'])->name('invoices.send-reminder');
         Route::post('invoices/{invoice}/apply-late-fee', [App\Http\Controllers\Billing\InvoiceController::class, 'applyLateFee'])->name('invoices.apply-late-fee');
@@ -834,6 +835,7 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('quotations', App\Http\Controllers\Billing\QuotationController::class);
         Route::post('quotations/{quotation}/convert-to-proforma', [App\Http\Controllers\Billing\QuotationController::class, 'convertToProforma'])->name('quotations.convert-to-proforma');
         Route::post('quotations/{quotation}/convert', [App\Http\Controllers\Billing\QuotationController::class, 'convertToInvoice'])->name('quotations.convert');
+        Route::post('quotations/{quotation}/approve', [App\Http\Controllers\Billing\QuotationController::class, 'approve'])->name('quotations.approve');
         Route::get('quotations/{quotation}/pdf', [App\Http\Controllers\Billing\QuotationController::class, 'generatePDF'])->name('quotations.pdf');
         Route::post('quotations/{quotation}/send-email', [App\Http\Controllers\Billing\QuotationController::class, 'sendEmail'])->name('quotations.send-email');
         Route::get('quotations/{quotation}/duplicate', [App\Http\Controllers\Billing\QuotationController::class, 'duplicate'])->name('quotations.duplicate');
@@ -841,6 +843,7 @@ Route::middleware(['auth'])->group(function () {
         // Proforma Invoices
         Route::resource('proformas', App\Http\Controllers\Billing\ProformaController::class);
         Route::post('proformas/{proforma}/convert', [App\Http\Controllers\Billing\ProformaController::class, 'convertToInvoice'])->name('proformas.convert');
+        Route::post('proformas/{proforma}/approve', [App\Http\Controllers\Billing\ProformaController::class, 'approve'])->name('proformas.approve');
         Route::get('proformas/{proforma}/pdf', [App\Http\Controllers\Billing\ProformaController::class, 'generatePDF'])->name('proformas.pdf');
         Route::post('proformas/{proforma}/send-email', [App\Http\Controllers\Billing\ProformaController::class, 'sendEmail'])->name('proformas.send-email');
         Route::get('proformas/{proforma}/duplicate', [App\Http\Controllers\Billing\ProformaController::class, 'duplicate'])->name('proformas.duplicate');
