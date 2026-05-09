@@ -17,12 +17,14 @@
             <div class="m-paper-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h5 style="margin: 0;"><i class="fas fa-list-ol me-2" style="color: var(--m-blue-6);"></i>Bill of Quantities{{ $boq->type ? ' - ' . ucfirst($boq->type) : '' }}</h5>
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <span class="m-badge m-badge-{{ $boq->status === 'APPROVED' ? 'teal' : 'gray' }}">
-                        {{ $boq->status ?? 'Draft' }}
-                    </span>
+                    <span class="m-badge m-badge-teal">Approved</span>
                     <span class="m-fw-700" style="color: var(--m-blue-6);">
                         TZS {{ number_format($boq->total_amount ?? 0, 2) }}
                     </span>
+                    <a href="{{ route('project_boq.pdf', $boq->id) }}" target="_blank"
+                       style="display:inline-flex;align-items:center;gap:0.375rem;padding:0.375rem 0.875rem;background:#1a73e8;color:#fff;border-radius:var(--m-radius);font-size:0.8125rem;text-decoration:none;">
+                        <i class="fas fa-download"></i> Download PDF
+                    </a>
                 </div>
             </div>
             <div style="padding: 0;">
@@ -72,8 +74,8 @@
         <div class="m-paper">
             <div class="m-paper-body" style="text-align: center; padding: 3rem var(--m-lg);">
                 <i class="fas fa-list-ol" style="font-size: 2.5rem; color: var(--m-gray-3); margin-bottom: var(--m-md);"></i>
-                <h3 class="m-title m-title-4" style="margin-bottom: 0.25rem;">No Bill of Quantities</h3>
-                <p class="m-text-sm m-dimmed" style="margin: 0;">No BOQ has been created for this project yet.</p>
+                <h3 class="m-title m-title-4" style="margin-bottom: 0.25rem;">BOQ Not Yet Available</h3>
+                <p class="m-text-sm m-dimmed" style="margin: 0;">The Bill of Quantities is being prepared and will appear here once it has been reviewed and approved by management.</p>
             </div>
         </div>
     @endforelse

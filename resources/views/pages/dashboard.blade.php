@@ -643,6 +643,97 @@
             </div>
             @endif
 
+            <!-- QS: BOQ Plans status (draft/submitted/rejected) -->
+            @if(isset($qsBoqPlans) && $qsBoqPlans->count() > 0)
+            <div class="dashboard-section project-activities-todo">
+                <div class="section-header">
+                    <h2><i class="fa fa-clipboard-check mr-2" style="color:#6610f2;"></i>BOQ Preparation Plans</h2>
+                    <small class="text-muted">Plans awaiting submission or approval</small>
+                </div>
+                <div class="followup-list">
+                    @foreach($qsBoqPlans as $plan)
+                    @php
+                        $planColors = ['draft'=>'#6c757d','submitted'=>'#17a2b8','rejected'=>'#dc3545'];
+                        $pc = $planColors[$plan->status] ?? '#6c757d';
+                    @endphp
+                    <a href="{{ route('project-boq-plans.show', $plan) }}" class="followup-item" style="border-left-color:{{ $pc }};">
+                        <div class="followup-date-badge" style="background:{{ $pc }}; font-size:0.7rem;">
+                            <span style="font-size:0.65rem;text-transform:uppercase;">{{ $plan->status }}</span>
+                        </div>
+                        <div class="followup-content">
+                            <span class="followup-lead-name">{{ $plan->document_number }}</span>
+                            <span class="followup-details">{{ $plan->project->project_name ?? 'N/A' }}</span>
+                            <span class="followup-assignee">
+                                @if($plan->planned_start)
+                                    <i class="fa fa-calendar"></i> {{ $plan->planned_start->format('d M Y') }} – {{ $plan->planned_end?->format('d M Y') }}
+                                @endif
+                            </span>
+                        </div>
+                        <div class="followup-status">
+                            @if($plan->status === 'submitted')
+                                <span class="status-label" style="background:#cff4fc;color:#055160;border-color:#9eeaf9;"><i class="fa fa-clock"></i> Awaiting MD</span>
+                            @elseif($plan->status === 'rejected')
+                                <span class="status-label" style="background:#f8d7da;color:#842029;border-color:#f5c2c7;"><i class="fa fa-times"></i> Rejected</span>
+                            @else
+                                <span class="status-label"><i class="fa fa-pencil"></i> Draft</span>
+                            @endif
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+                <div class="followup-footer">
+                    <a href="{{ route('project-boq-plans.index') }}" class="view-all-btn">
+                        <i class="fa fa-list"></i> View All BOQ Plans
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            <!-- Sales Team: Approved BOQs ready to share with clients -->
+            @if(isset($salesApprovedBoqs) && $salesApprovedBoqs->count() > 0)
+            <div class="dashboard-section project-activities-todo">
+                <div class="section-header">
+                    <h2><i class="fa fa-file-invoice mr-2" style="color:#0d6efd;"></i>Final BOQ Approved — Share with Client</h2>
+                    <small class="text-muted">CEO/MD approved — share the BOQ with the client via the portal or download PDF</small>
+                </div>
+                <div class="followup-list">
+                    @foreach($salesApprovedBoqs as $boq)
+                    <a href="{{ route('project_boq.show', $boq->id) }}" class="followup-item" style="border-left-color:#0d6efd;">
+                        <div class="followup-date-badge" style="background:#0d6efd;">
+                            <span class="day" style="font-size:0.75rem;"><i class="fa fa-check"></i></span>
+                            <span class="month" style="font-size:0.6rem;">BOQ</span>
+                        </div>
+                        <div class="followup-content">
+                            <span class="followup-lead-name">{{ $boq->document_number }}</span>
+                            <span class="followup-details">
+                                {{ $boq->project->project_name ?? 'N/A' }}
+                                @if($boq->project->client)
+                                    &middot; {{ $boq->project->client->first_name }} {{ $boq->project->client->last_name }}
+                                @endif
+                            </span>
+                            <span class="followup-assignee">
+                                TZS {{ number_format($boq->total_amount ?? 0, 0) }}
+                            </span>
+                        </div>
+                        <div class="followup-status">
+                            <a href="{{ route('project_boq.pdf', $boq->id) }}" target="_blank"
+                               class="status-label"
+                               style="background:#e7f1ff;color:#0d6efd;border-color:#b6d4fe;text-decoration:none;"
+                               onclick="event.stopPropagation();">
+                                <i class="fa fa-download"></i> PDF
+                            </a>
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+                <div class="followup-footer">
+                    <a href="{{ route('project_boqs') }}" class="view-all-btn">
+                        <i class="fa fa-list"></i> View All BOQs
+                    </a>
+                </div>
+            </div>
+            @endif
+
             <!-- Invoice Due Dates To-Do List (for Accountants) -->
             @php
                 // Check if user can view invoices

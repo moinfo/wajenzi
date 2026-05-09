@@ -568,6 +568,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/structural-design/{design}/submit', [App\Http\Controllers\ProjectStructuralDesignController::class, 'submit'])->name('structural_design.submit');
     Route::post('/structural-design/{design}/reassign', [App\Http\Controllers\ProjectStructuralDesignController::class, 'reassignEngineer'])->name('structural_design.reassign');
 
+    // BOQ Preparation Plans
+    Route::get('/project-boq-plans', [App\Http\Controllers\ProjectBoqPlanController::class, 'index'])->name('project-boq-plans.index');
+    Route::post('/project-boq-plans', [App\Http\Controllers\ProjectBoqPlanController::class, 'store'])->name('project-boq-plans.store');
+    Route::get('/project-boq-plans/{plan}', [App\Http\Controllers\ProjectBoqPlanController::class, 'show'])->name('project-boq-plans.show');
+    Route::post('/project-boq-plans/{plan}/submit', [App\Http\Controllers\ProjectBoqPlanController::class, 'submit'])->name('project-boq-plans.submit');
+
 // Content Creators
     Route::prefix('content-creator')->name('content_creator.')->group(function () {
         $c = App\Http\Controllers\ContentCreatorController::class;

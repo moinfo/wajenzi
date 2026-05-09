@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
+use App\Models\User;
 
 class ProjectBoq extends Model implements ApprovableModel
 {
@@ -92,6 +93,25 @@ class ProjectBoq extends Model implements ApprovableModel
     {
         $this->status = 'approved';
         $this->save();
+
+        // Update project to reflect BOQ approval
+        $this->project?->update(['status' => 'boq_approved']);
+
+        $link    = "/project_boq/show/{$this->id}";
+        $message = "The BOQ for {$this->document_number} has been approved and is now available for client sharing.";
+
+        // Notify Sales Team to share with client
+        $salesUsers = User::whereHas('roles', fn($q) =>
+            $q->whereIn('name', ['Sales and Marketing', 'Business Development Manager'])
+        )->get();
+        foreach ($salesUsers as $sales) {
+            $sales->notify(new \App\Notifications\SystemActionNotification(
+                'Final BOQ Approved — Ready to Share',
+                $message,
+                $link, null, $this->id
+            ));
+        }
+
         return true;
     }
 }

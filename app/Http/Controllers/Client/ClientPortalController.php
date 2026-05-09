@@ -139,8 +139,10 @@ class ClientPortalController extends Controller
     public function projectBoq($id)
     {
         $project = $this->clientProject($id);
+        // Only show CEO/MD-approved BOQs on the client portal
         $boqs = $project->boqs()
             ->with(['sections.children.items', 'sections.items', 'items'])
+            ->where('status', 'approved')
             ->get();
 
         return view('client.projects.boq', compact('project', 'boqs'));

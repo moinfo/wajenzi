@@ -146,10 +146,12 @@ class DashboardController extends Controller
             );
         }
 
-        // Final design handoff sections — Civil Engineer, Quantity Surveyor, Sales Team
+        // Final design handoff sections — Civil Engineer, QS, Sales Team
         $structuralHandoffs       = collect();
         $qsReadyDesigns           = collect();
+        $qsBoqPlans               = collect();
         $salesApprovedDesigns     = collect();
+        $salesApprovedBoqs        = collect();
 
         if ($user->hasRole('Civil Engineer')) {
             $structuralHandoffs = ProjectStructuralDesign::with(['project.projectType', 'triggeringActivity.schedule.lead', 'stages'])
@@ -165,19 +167,38 @@ class DashboardController extends Controller
         }
 
         if ($user->hasRole('Quantity Surveyor (QS)') || $user->can('View All Project Activities')) {
-            // Approved structural designs → QS prepares BOQ
+            // Approved structural designs → QS prepares BOQ plan
             $qsReadyDesigns = ProjectStructuralDesign::with(['project.projectType', 'assignedEngineer', 'stages'])
                 ->where('status', 'approved')
                 ->orderBy('approved_at', 'desc')
                 ->limit(10)
                 ->get();
+
+            // QS's own BOQ plans pending or in progress
+            $qsBoqPlans = \App\Models\ProjectBoqPlan::with(['project'])
+                ->whereNotIn('status', ['approved'])
+                ->where(function ($q) use ($user) {
+                    $q->where('created_by', $user->id)
+                      ->orWhereHas('project', function($pq) {});
+                })
+                ->orderByRaw("FIELD(status,'submitted','draft','rejected')")
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
         }
 
         if ($user->hasRole(['Sales and Marketing', 'Business Development Manager']) || $user->can('View All Project Activities')) {
-            // Approved structural designs — Sales shares download link with client
+            // Approved structural designs — Sales shares with client
             $salesApprovedDesigns = ProjectStructuralDesign::with(['project.client', 'project.projectType', 'stages'])
                 ->where('status', 'approved')
                 ->orderBy('approved_at', 'desc')
+                ->limit(10)
+                ->get();
+
+            // Approved BOQs — Sales shares with client
+            $salesApprovedBoqs = \App\Models\ProjectBoq::with(['project.client'])
+                ->where('status', 'approved')
+                ->orderBy('updated_at', 'desc')
                 ->limit(10)
                 ->get();
         }
@@ -237,7 +258,9 @@ class DashboardController extends Controller
             'completedActivities' => $completedActivities,
             'structuralHandoffs' => $structuralHandoffs,
             'qsReadyDesigns' => $qsReadyDesigns,
+            'qsBoqPlans' => $qsBoqPlans,
             'salesApprovedDesigns' => $salesApprovedDesigns,
+            'salesApprovedBoqs' => $salesApprovedBoqs,
             'invoiceDueDates' => $invoiceDueDates,
             'overdueInvoicesCount' => $overdueInvoicesCount,
             'todayInvoicesCount' => $todayInvoicesCount,
