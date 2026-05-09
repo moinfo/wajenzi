@@ -8,6 +8,7 @@ use App\Models\Expense;
 use App\Models\Gross;
 use App\Models\ProjectSchedule;
 use App\Models\ProjectScheduleActivity;
+use App\Models\ProjectStructuralDesign;
 use App\Models\TransactionMovement;
 use App\Models\User;
 use App\Notifications\InvoiceDueReminderNotification;
@@ -145,6 +146,37 @@ class DashboardController extends Controller
             );
         }
 
+        // Final design handoff sections — Civil Engineer and Quantity Surveyor
+        $structuralHandoffs = collect();
+        $qsReadyProjects    = collect();
+
+        if ($user->hasRole('Civil Engineer')) {
+            $structuralHandoffs = ProjectStructuralDesign::with(['project.projectType', 'triggeringActivity.schedule.lead', 'stages'])
+                ->where(function ($q) use ($user) {
+                    $q->where('assigned_engineer_id', $user->id)
+                      ->orWhereDoesntHave('assignedEngineer'); // unassigned — show to all Civil Engineers
+                })
+                ->whereNotIn('status', ['approved'])
+                ->orderByRaw("FIELD(status, 'pending', 'in_progress', 'submitted') ASC")
+                ->orderBy('created_at', 'asc')
+                ->limit(10)
+                ->get();
+        }
+
+        if ($user->hasRole('Quantity Surveyor (QS)') || $user->can('View All Project Activities')) {
+            // Projects where the architect's C2 (BOQ Prep) activity is completed → QS can now produce the BOQ
+            $qsReadyProjects = \App\Models\ProjectSchedule::with(['lead', 'client', 'assignedArchitect', 'activities' => function ($q) {
+                    $q->whereIn('activity_code', ['C2', 'C4'])->orderBy('activity_code');
+                }])
+                ->whereIn('status', ['in_progress', 'completed'])
+                ->whereHas('activities', function ($q) {
+                    $q->where('activity_code', 'C2')->where('status', 'completed');
+                })
+                ->orderBy('updated_at', 'desc')
+                ->limit(10)
+                ->get();
+        }
+
         // Get invoice due dates for accountants
         $invoiceDueDates = collect();
         $overdueInvoicesCount = 0;
@@ -198,6 +230,8 @@ class DashboardController extends Controller
             'activeSchedules' => $activeSchedules,
             'overallProgress' => $overallProgress,
             'completedActivities' => $completedActivities,
+            'structuralHandoffs' => $structuralHandoffs,
+            'qsReadyProjects' => $qsReadyProjects,
             'invoiceDueDates' => $invoiceDueDates,
             'overdueInvoicesCount' => $overdueInvoicesCount,
             'todayInvoicesCount' => $todayInvoicesCount,

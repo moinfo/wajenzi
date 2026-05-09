@@ -494,6 +494,118 @@
             </div>
             @endif
 
+            <!-- Civil Engineer: Structural Design Handoffs -->
+            @if(isset($structuralHandoffs) && $structuralHandoffs->count() > 0)
+            <div class="dashboard-section project-activities-todo">
+                <div class="section-header">
+                    <h2><i class="fa fa-drafting-compass mr-2" style="color:#6f42c1;"></i>Structural Design Work</h2>
+                    <small class="text-muted">Design handoffs awaiting your structural analysis and drawings</small>
+                </div>
+                <div class="followup-list">
+                    @foreach($structuralHandoffs as $handoff)
+                    @php
+                        $stagesDone = $handoff->stages->where('status','completed')->count();
+                        $stagesTotal = $handoff->stages->count();
+                        $statusColors = ['pending'=>'#ffc107','in_progress'=>'#17a2b8','submitted'=>'#007bff','rejected'=>'#dc3545'];
+                        $borderColor = $statusColors[$handoff->status] ?? '#6c757d';
+                    @endphp
+                    <a href="{{ route('structural_design.show', $handoff) }}" class="followup-item" style="border-left-color:{{ $borderColor }};">
+                        <div class="followup-date-badge" style="background:{{ $borderColor }}; font-size:0.7rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;">
+                            <span style="font-size:1.1rem; font-weight:700;">{{ $stagesDone }}/{{ $stagesTotal }}</span>
+                            <span>stages</span>
+                        </div>
+                        <div class="followup-content">
+                            <span class="followup-lead-name">{{ $handoff->document_number }}</span>
+                            <span class="followup-details">
+                                {{ $handoff->project->project_name ?? 'N/A' }}
+                                @if($handoff->project->projectType)
+                                    &middot; <span class="badge badge-secondary badge-sm">{{ $handoff->project->projectType->name }}</span>
+                                @endif
+                            </span>
+                            <span class="followup-assignee">
+                                <i class="fa fa-calendar-alt"></i> Received {{ $handoff->created_at->diffForHumans() }}
+                                @if($handoff->triggeringActivity)
+                                    &middot; from B7 ({{ $handoff->triggeringActivity->schedule->display_name }})
+                                @endif
+                            </span>
+                        </div>
+                        <div class="followup-status">
+                            @php $pct = $stagesTotal > 0 ? round(($stagesDone/$stagesTotal)*100) : 0; @endphp
+                            <div style="width:80px;">
+                                <div style="background:#e9ecef;border-radius:4px;height:6px;margin-bottom:4px;">
+                                    <div style="background:{{ $borderColor }};width:{{ $pct }}%;height:6px;border-radius:4px;"></div>
+                                </div>
+                                <span class="status-label" style="background:{{ $borderColor }}1a;color:{{ $borderColor }};border-color:{{ $borderColor }}40;font-size:0.7rem;">
+                                    {{ ucfirst(str_replace('_',' ',$handoff->status)) }}
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+                <div class="followup-footer">
+                    <a href="{{ route('structural_design.index') }}" class="view-all-btn">
+                        <i class="fa fa-list"></i> View All Structural Designs
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            <!-- Quantity Surveyor: Projects Ready for BOQ -->
+            @if(isset($qsReadyProjects) && $qsReadyProjects->count() > 0)
+            <div class="dashboard-section project-activities-todo">
+                <div class="section-header">
+                    <h2><i class="fa fa-clipboard-list mr-2" style="color:#fd7e14;"></i>BOQ Ready — Design Handoffs</h2>
+                    <small class="text-muted">Architect has completed C2 — these projects are ready for BOQ preparation</small>
+                </div>
+                <div class="followup-list">
+                    @foreach($qsReadyProjects as $schedule)
+                    @php
+                        $c2 = $schedule->activities->firstWhere('activity_code','C2');
+                        $c4 = $schedule->activities->firstWhere('activity_code','C4');
+                        $fullyDone = $schedule->status === 'completed' || ($c4 && $c4->status === 'completed');
+                    @endphp
+                    <a href="{{ route('project-schedules.show', $schedule) }}" class="followup-item {{ $fullyDone ? 'completed' : '' }}" style="border-left-color:{{ $fullyDone ? '#28a745' : '#fd7e14' }};">
+                        <div class="followup-date-badge" style="background:{{ $fullyDone ? '#28a745' : '#fd7e14' }};">
+                            <span class="day" style="font-size:1rem;">{{ $fullyDone ? '✓' : 'C2' }}</span>
+                            <span class="month" style="font-size:0.6rem;">{{ $fullyDone ? 'Done' : 'Ready' }}</span>
+                        </div>
+                        <div class="followup-content">
+                            <span class="followup-lead-name">{{ $schedule->display_name }}</span>
+                            <span class="followup-details">
+                                @if($c2 && $c2->completed_at)
+                                    C2 completed {{ $c2->completed_at->format('d M Y') }}
+                                @endif
+                                @if($fullyDone)
+                                    &middot; <strong style="color:#28a745;">All stages done</strong>
+                                @endif
+                            </span>
+                            <span class="followup-assignee">
+                                <i class="fa fa-user-tie"></i> {{ $schedule->assignedArchitect->name ?? 'Unassigned' }}
+                            </span>
+                        </div>
+                        <div class="followup-status">
+                            @if($fullyDone)
+                                <span class="status-label" style="background:#d4edda;color:#155724;border-color:#c3e6cb;">
+                                    <i class="fa fa-check-double"></i> Complete
+                                </span>
+                            @else
+                                <span class="status-label" style="background:#fff3cd;color:#856404;border-color:#ffc107;">
+                                    <i class="fa fa-file-alt"></i> BOQ Needed
+                                </span>
+                            @endif
+                        </div>
+                    </a>
+                    @endforeach
+                </div>
+                <div class="followup-footer">
+                    <a href="{{ route('project-schedules.index') }}" class="view-all-btn">
+                        <i class="fa fa-list"></i> View All Schedules
+                    </a>
+                </div>
+            </div>
+            @endif
+
             <!-- Invoice Due Dates To-Do List (for Accountants) -->
             @php
                 // Check if user can view invoices
