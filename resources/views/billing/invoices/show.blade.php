@@ -53,6 +53,21 @@
                         </div>
                     @endif
 
+                    {{-- Approve Action --}}
+                    @if(!$invoice->approved_at)
+                        <form method="POST" action="{{ route('billing.invoices.approve', $invoice) }}" class="d-inline mr-1">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-success"
+                                    onclick="return confirm('Approve this invoice? The official stamp will appear on the PDF.')">
+                                <i class="fa fa-check-circle"></i> Approve
+                            </button>
+                        </form>
+                    @else
+                        <span class="btn btn-sm btn-success disabled mr-1" title="Approved on {{ $invoice->approved_at->format('d/m/Y') }}">
+                            <i class="fa fa-check-circle"></i> Approved
+                        </span>
+                    @endif
+
                     {{-- More Actions --}}
                     <div class="btn-group">
                         <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-toggle="dropdown">

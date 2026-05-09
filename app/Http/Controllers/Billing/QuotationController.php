@@ -230,12 +230,26 @@ class QuotationController extends Controller
             ->with('success', 'Quotation cancelled successfully.');
     }
 
+    public function approve(BillingDocument $quotation)
+    {
+        if ($quotation->approved_at) {
+            return back()->with('error', 'Quotation is already approved.');
+        }
+
+        $quotation->update([
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Quotation approved successfully. The stamp will now appear on the PDF.');
+    }
+
     public function generatePDF(BillingDocument $quotation)
     {
         $quotation->load(['client', 'items']);
-        
+
         $pdf = PDF::loadView('billing.quotations.pdf', compact('quotation'));
-        
+
         return $pdf->download('quotation-' . $quotation->document_number . '.pdf');
     }
 

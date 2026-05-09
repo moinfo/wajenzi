@@ -48,6 +48,20 @@
                         </div>
                     @endif
 
+                    @if(!$quotation->approved_at)
+                        <form method="POST" action="{{ route('billing.quotations.approve', $quotation) }}" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-success"
+                                    onclick="return confirm('Approve this quotation? The official stamp will appear on the PDF.')">
+                                <i class="fa fa-check-circle"></i> Approve
+                            </button>
+                        </form>
+                    @else
+                        <span class="btn btn-success disabled" title="Approved on {{ $quotation->approved_at->format('d/m/Y') }}">
+                            <i class="fa fa-check-circle"></i> Approved
+                        </span>
+                    @endif
+
                     <div class="btn-group">
                         <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">
                             More Actions
