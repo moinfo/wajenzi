@@ -51,8 +51,32 @@
             <div class="block block-rounded mb-3">
                 <div class="block-header block-header-default">
                     <h3 class="block-title">1. Select Destination</h3>
+                    <div class="block-options">
+                        @can('Add Site Visit Location')
+                        <button type="button" class="btn btn-alt-primary btn-sm"
+                            onclick="loadFormModal('site_visit_location_form', {className: 'SiteVisitLocation'}, 'New Location', 'modal-lg')">
+                            <i class="fa fa-plus me-1"></i> Add Location
+                        </button>
+                        @endcan
+                        @can('Edit Site Visit Location')
+                        <a href="{{ route('hr_settings_site_visit_locations') }}" class="btn btn-alt-secondary btn-sm ms-1">
+                            <i class="fa fa-cog me-1"></i> Manage
+                        </a>
+                        @endcan
+                    </div>
                 </div>
                 <div class="block-content py-3">
+                    @if($locations->isEmpty())
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa fa-map-marker-alt fa-2x mb-2 d-block"></i>
+                        No locations configured yet.
+                        @can('Add Site Visit Location')
+                        <a href="#" onclick="loadFormModal('site_visit_location_form', {className: 'SiteVisitLocation'}, 'New Location', 'modal-lg'); return false;">
+                            Add the first location
+                        </a>
+                        @endcan
+                    </div>
+                    @else
                     <div class="row g-2">
                         @foreach($locations as $loc)
                         <div class="col-sm-6 col-lg-4">
@@ -63,14 +87,26 @@
                                 data-travel="{{ $loc->preset_travel_tzs }}"
                                 data-local="{{ $loc->preset_local_tzs }}"
                                 data-allowance="{{ $loc->preset_allowance_tzs }}">
-                                <div class="fw-semibold fs-sm">{{ $loc->name }}</div>
-                                <div class="text-muted" style="font-size:11px">
-                                    Base: TZS {{ number_format($loc->base_cost_tzs, 0) }}
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="fw-semibold fs-sm">{{ $loc->name }}</div>
+                                        <div class="text-muted" style="font-size:11px">
+                                            Base: TZS {{ number_format($loc->base_cost_tzs, 0) }}
+                                        </div>
+                                    </div>
+                                    @can('Edit Site Visit Location')
+                                    <button type="button" class="btn btn-xs btn-alt-secondary ms-1 flex-shrink-0"
+                                        style="font-size:10px;padding:1px 6px"
+                                        onclick="event.stopPropagation(); loadFormModal('site_visit_location_form', {className: 'SiteVisitLocation', id: {{ $loc->id }}}, 'Edit Location', 'modal-lg')">
+                                        <i class="fa fa-pencil-alt"></i>
+                                    </button>
+                                    @endcan
                                 </div>
                             </div>
                         </div>
                         @endforeach
                     </div>
+                    @endif
                 </div>
             </div>
 
