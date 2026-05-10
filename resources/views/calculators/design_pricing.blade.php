@@ -118,13 +118,12 @@
 
                 <div id="specialFields" style="display:none">
                     <div class="mb-4">
-                        <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Dimensions (metres)</label>
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="number" id="dimL" class="form-control" style="max-width:120px" min="1" value="10" placeholder="Length">
-                            <span class="text-muted">&times;</span>
-                            <input type="number" id="dimW" class="form-control" style="max-width:120px" min="1" value="8" placeholder="Width">
-                            <span class="text-muted">m&sup2;</span>
+                        <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Total Area (m&sup2;)</label>
+                        <div class="input-group" style="max-width:220px">
+                            <input type="number" id="sqmInput" class="form-control" min="1" placeholder="e.g. 50">
+                            <span class="input-group-text">m&sup2;</span>
                         </div>
+                        <div class="form-text">Enter the total floor area of the structure</div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Project Location</label>
@@ -536,16 +535,21 @@
         if (!opt || !opt.value) return;
 
         var rate  = parseFloat(opt.dataset.rate) || 0;
-        var name  = opt.textContent;
-        var l     = parseFloat(gid('dimL').value) || 0;
-        var w     = parseFloat(gid('dimW').value) || 0;
-        var sqm   = l * w;
+        var name  = opt.textContent.trim();
+        var sqm   = parseFloat(gid('sqmInput').value) || 0;
         var tzs   = sqm * rate;
         var loc   = gid('specialLoc').value.trim() || '[Location]';
 
+        if (sqm <= 0) {
+            ap(container, ce('p', { cls: 'text-muted fs-sm', text: 'Enter the area to see the estimated cost.' }));
+            gid('billingActions').style.display = 'none';
+            return;
+        }
+        gid('billingActions').style.display = '';
+
         var lines = [
-            { label: 'Area',               value: sqm.toLocaleString() + ' m²' },
-            { label: 'Rate (' + name + ')', value: 'TZS ' + rate.toLocaleString() + '/m²' }
+            { label: 'Structure type', value: name },
+            { label: 'Area',           value: sqm.toLocaleString() + ' m²' }
         ];
 
         var totalFmt = tzsToDisplayAmt(tzs);
@@ -553,8 +557,8 @@
         ap(container, buildResultCard(lines, totalFmt, sub));
 
         var invText = name + ' design at ' + loc
-            + ', total area ' + sqm.toLocaleString() + ' m² at TZS ' + rate.toLocaleString() + '/m²'
-            + '. Total: TZS ' + Math.round(tzs).toLocaleString() + ' (VAT exclusive).';
+            + ', area ' + sqm.toLocaleString() + ' m²'
+            + '. Total: ' + tzsToDisplayAmt(tzs) + ' (VAT exclusive).';
         ap(container, buildInvoiceBox(invText));
     }
 
@@ -647,9 +651,9 @@
     gid('specialSelect').addEventListener('change', function () {
         gid('specialFields').style.display = this.value ? '' : 'none';
         if (this.value) renderSpecialResult();
-        else clearEl(gid('specialResult'));
+        else { clearEl(gid('specialResult')); gid('billingActions').style.display = 'none'; }
     });
-    ['dimL', 'dimW', 'specialLoc'].forEach(function (id) {
+    ['sqmInput', 'specialLoc'].forEach(function (id) {
         gid(id).addEventListener('input', renderSpecialResult);
     });
 
@@ -737,12 +741,12 @@
             var opt = sel.options[sel.selectedIndex];
             if (!opt || !opt.value) return null;
             var rate = parseFloat(opt.dataset.rate) || 0;
-            var l    = parseFloat(gid('dimL').value) || 0;
-            var w    = parseFloat(gid('dimW').value) || 0;
-            var sqm  = l * w;
+            var sqm  = parseFloat(gid('sqmInput').value) || 0;
+            if (sqm <= 0) return null;
             var usd  = (sqm * rate) / TZS_RATE;
-            return [{ item_name: opt.textContent.trim() + ' Design',
-                description: sqm + ' m² at TZS ' + rate.toLocaleString() + '/m²',
+            var loc2 = gid('specialLoc').value.trim() || '';
+            return [{ item_name: opt.textContent.trim() + ' Design' + (loc2 ? ' at ' + loc2 : ''),
+                description: sqm.toLocaleString() + ' m²',
                 quantity: 1, unit_price: parseFloat(usd.toFixed(2)) }];
 
         } else if (tab === 'airbnb') {
