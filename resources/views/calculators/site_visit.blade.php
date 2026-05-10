@@ -84,13 +84,14 @@
                         <div class="col-sm-6 col-lg-4">
                             <div class="location-card border rounded p-3"
                                 style="cursor:pointer"
+                                onclick="selectCard(this)"
                                 data-id="{{ $loc->id }}"
                                 data-base="{{ $loc->base_cost_tzs }}"
                                 data-travel="{{ $loc->preset_travel_tzs }}"
                                 data-local="{{ $loc->preset_local_tzs }}"
                                 data-allowance="{{ $loc->preset_allowance_tzs }}"
-                                data-food="{{ $loc->preset_food_tzs }}"
-                                data-accommodation="{{ $loc->preset_accommodation_tzs }}">
+                                data-food="{{ $loc->preset_food_tzs ?? 0 }}"
+                                data-accommodation="{{ $loc->preset_accommodation_tzs ?? 0 }}">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <div class="fw-semibold fs-sm">{{ $loc->name }}</div>
@@ -494,19 +495,19 @@
     }
 
     // ── Location card selection ────────────────────────────────────────
-    document.querySelectorAll('.location-card').forEach(function (card) {
-        card.addEventListener('click', function () {
-            document.querySelectorAll('.location-card').forEach(function (c) {
-                c.classList.remove('border-primary', 'border-2', 'bg-primary-subtle');
-            });
-            card.classList.add('border-primary', 'border-2', 'bg-primary-subtle');
-            selectedCard = card;
-            gid('costBlock').style.display = '';
-            updateSymbols();
-            loadPresets(card);
-            renderResult();
+    // Exposed globally so the inline onclick="selectCard(this)" on each card works
+    // even if addEventListener registration fails for any reason.
+    window.selectCard = function (card) {
+        document.querySelectorAll('.location-card').forEach(function (c) {
+            c.classList.remove('border-primary', 'border-2', 'bg-primary-subtle');
         });
-    });
+        card.classList.add('border-primary', 'border-2', 'bg-primary-subtle');
+        selectedCard = card;
+        gid('costBlock').style.display = '';
+        updateSymbols();
+        loadPresets(card);
+        renderResult();
+    };
 
     // ── Day stepper ────────────────────────────────────────────────────
     document.querySelectorAll('.day-adj').forEach(function (btn) {
