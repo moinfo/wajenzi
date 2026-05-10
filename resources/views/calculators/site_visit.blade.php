@@ -149,12 +149,76 @@
                     <div class="block-content py-3" id="resultPanel">
                         <p class="text-muted fs-sm text-center py-4 mb-0">Select a location to see costs</p>
                     </div>
+                    <div class="block-content py-3 border-top" id="billingActions" style="display:none">
+                        <p class="text-muted fs-xs mb-2">Send to billing:</p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-sm btn-alt-info"    onclick="openBillingModal('quote')">
+                                <i class="fa fa-file-alt me-1"></i> Quote
+                            </button>
+                            <button class="btn btn-sm btn-alt-warning" onclick="openBillingModal('proforma')">
+                                <i class="fa fa-file-invoice me-1"></i> Proforma
+                            </button>
+                            <button class="btn btn-sm btn-alt-success" onclick="openBillingModal('invoice')">
+                                <i class="fa fa-file-invoice-dollar me-1"></i> Invoice
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <p class="text-muted text-center mb-0" style="font-size:11px">All amounts VAT exclusive &middot; Converted at prevailing rate</p>
             </div>
         </div>
 
     </div>{{-- /row --}}
+</div>
+
+{{-- ── Send to Billing modal ──────────────────────────────────── --}}
+<div class="modal fade" id="billingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('calculators.to-billing') }}" id="billingForm">
+                @csrf
+                <input type="hidden" name="doc_type"            id="billingDocType">
+                <input type="hidden" name="currency_code"       id="billingCurrency">
+                <input type="hidden" name="exchange_rate"       id="billingRate">
+                <input type="hidden" name="service_description" id="billingDescription">
+                <div id="billingItemsContainer"></div>
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="billingModalTitle">Create Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Client <span class="text-danger">*</span></label>
+                        <select name="client_id" class="form-select" required>
+                            <option value="">&#8212; Select client &#8212;</option>
+                            @foreach($clients as $client)
+                            <option value="{{ $client->id }}">
+                                {{ $client->first_name }} {{ $client->last_name }}
+                                @if($client->company_name) &mdash; {{ $client->company_name }} @endif
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" id="billingNotes"
+                            placeholder="Invoice description"></textarea>
+                    </div>
+                    <div class="border rounded p-3 bg-body-secondary">
+                        <div class="fw-semibold fs-sm mb-2">Line Items Preview</div>
+                        <div id="billingItemsPreview"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="billingSubmitBtn">
+                        <i class="fa fa-paper-plane me-1"></i> Create Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -253,8 +317,10 @@
 
         if (!selectedCard) {
             ap(panel, ce('p', { cls: 'text-muted fs-sm text-center py-4 mb-0', text: 'Select a location to see costs' }));
+            gid('billingActions').style.display = 'none';
             return;
         }
+        gid('billingActions').style.display = '';
 
         var travel    = inputTZS('costTravel');
         var local     = inputTZS('costLocal');
@@ -366,6 +432,75 @@
         updateSymbols();
         if (selectedCard) { loadPresets(selectedCard); renderResult(); }
     });
+
+    // ── Billing modal ──────────────────────────────────────────────────
+    window.openBillingModal = function (docType) {
+        if (!selectedCard) { alert('Please select a location first.'); return; }
+
+        var travel    = inputTZS('costTravel');
+        var local     = inputTZS('costLocal');
+        var allowance = inputTZS('costAllowance');
+        var perDay    = travel + local + allowance;
+        var total     = perDay * days;
+        var locName   = selectedCard.querySelector('.fw-semibold').textContent;
+        var notes     = gid('visitNotes').value.trim();
+        var c         = getCur();
+
+        // All amounts stored in USD for billing (divide TZS by rate)
+        var travelUSD    = travel    / TZS_RATE;
+        var localUSD     = local     / TZS_RATE;
+        var allowanceUSD = allowance / TZS_RATE;
+
+        var items = [
+            { item_name: 'Site Visit — ' + locName + ' (Travel)', quantity: 1,    unit_price: parseFloat(travelUSD.toFixed(4)) },
+            { item_name: 'Local Transport',                        quantity: 1,    unit_price: parseFloat(localUSD.toFixed(4)) },
+            { item_name: 'Daily Allowance — ' + locName,          quantity: days, unit_price: parseFloat(allowanceUSD.toFixed(4)) },
+        ].filter(function (i) { return i.unit_price > 0; });
+
+        if (items.length === 0) { alert('Please enter cost values first.'); return; }
+
+        var invText = 'Site visit to ' + locName + (notes ? ' (' + notes + ')' : '') + ', '
+            + days + ' day' + (days > 1 ? 's' : '') + '. Total: TZS ' + Math.round(total).toLocaleString() + ' (VAT exclusive).';
+
+        gid('billingDocType').value      = docType;
+        gid('billingCurrency').value     = 'USD';
+        gid('billingRate').value         = 1;
+        gid('billingDescription').value  = invText;
+        gid('billingNotes').value        = invText;
+
+        var container = gid('billingItemsContainer');
+        clearEl(container);
+        items.forEach(function (item, idx) {
+            var prefix = 'items[' + idx + ']';
+            Object.keys(item).forEach(function (key) {
+                var inp   = document.createElement('input');
+                inp.type  = 'hidden';
+                inp.name  = prefix + '[' + key + ']';
+                inp.value = item[key] != null ? item[key] : '';
+                container.appendChild(inp);
+            });
+        });
+
+        var preview = gid('billingItemsPreview');
+        clearEl(preview);
+        items.forEach(function (item) {
+            var row   = ce('div', { cls: 'd-flex justify-content-between fs-sm py-1 border-bottom' });
+            var left  = ce('span', { cls: 'text-muted', text: item.item_name + (item.quantity !== 1 ? ' × ' + item.quantity : '') });
+            var right = ce('span', { cls: 'fw-semibold', text: 'TZS ' + Math.round(item.quantity * item.unit_price * TZS_RATE).toLocaleString() });
+            row.appendChild(left); row.appendChild(right);
+            preview.appendChild(row);
+        });
+        var totRow = ce('div', { cls: 'd-flex justify-content-between fw-bold mt-2 pt-1 border-top' });
+        totRow.appendChild(ce('span', { text: 'Total' }));
+        totRow.appendChild(ce('span', { cls: 'text-primary', text: 'TZS ' + Math.round(total).toLocaleString() }));
+        preview.appendChild(totRow);
+
+        var labels = { quote: 'Quotation', proforma: 'Proforma Invoice', invoice: 'Invoice' };
+        gid('billingModalTitle').textContent = 'Create ' + (labels[docType] || docType);
+        gid('billingSubmitBtn').textContent  = 'Create ' + (labels[docType] || docType);
+
+        new bootstrap.Modal(document.getElementById('billingModal')).show();
+    };
 
 })();
 </script>

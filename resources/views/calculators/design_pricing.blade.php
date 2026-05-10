@@ -40,7 +40,14 @@
                         <div class="col-sm-7">
                             <label class="form-label fw-semibold fs-sm mb-1">Project Location</label>
                             <input type="text" id="locationInput" class="form-control form-control-sm"
-                                placeholder="e.g. Kigamboni, Dar es Salaam">
+                                placeholder="e.g. Kigamboni, Dar es Salaam"
+                                list="locationSuggestions" autocomplete="off">
+                            <datalist id="locationSuggestions">
+                                @foreach($locations as $loc)
+                                <option value="{{ $loc }}">
+                                @endforeach
+                            </datalist>
+                            <div class="form-text">Type or choose from configured locations</div>
                         </div>
                     </div>
                 </div>
@@ -116,7 +123,9 @@
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Project Location</label>
-                        <input type="text" id="specialLoc" class="form-control" placeholder="e.g. Mikocheni, Dar es Salaam">
+                        <input type="text" id="specialLoc" class="form-control"
+                            placeholder="e.g. Mikocheni, Dar es Salaam"
+                            list="locationSuggestions" autocomplete="off">
                     </div>
                 </div>
 
@@ -149,7 +158,9 @@
 
                 <div class="mb-4">
                     <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Project Location</label>
-                    <input type="text" id="airbnbLoc" class="form-control" placeholder="e.g. Masaki, Dar es Salaam">
+                    <input type="text" id="airbnbLoc" class="form-control"
+                        placeholder="e.g. Masaki, Dar es Salaam"
+                        list="locationSuggestions" autocomplete="off">
                 </div>
 
                 <div id="airbnbResult"></div>
@@ -167,12 +178,76 @@
                     <div class="block-content py-3" id="sideResult">
                         <p class="text-muted fs-sm text-center py-4 mb-0">Select a package to see pricing</p>
                     </div>
+                    <div class="block-content py-3 border-top" id="billingActions" style="display:none">
+                        <p class="text-muted fs-xs mb-2">Send calculation to billing:</p>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-sm btn-alt-info"    onclick="openBillingModal('quote')">
+                                <i class="fa fa-file-alt me-1"></i> Quote
+                            </button>
+                            <button class="btn btn-sm btn-alt-warning" onclick="openBillingModal('proforma')">
+                                <i class="fa fa-file-invoice me-1"></i> Proforma
+                            </button>
+                            <button class="btn btn-sm btn-alt-success" onclick="openBillingModal('invoice')">
+                                <i class="fa fa-file-invoice-dollar me-1"></i> Invoice
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <p class="text-muted text-center mb-0" style="font-size:11px">All prices VAT exclusive &middot; Converted at prevailing rate</p>
             </div>
         </div>
 
     </div>{{-- /row --}}
+</div>
+
+{{-- ── Send to Billing modal ──────────────────────────────────── --}}
+<div class="modal fade" id="billingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('calculators.to-billing') }}" id="billingForm">
+                @csrf
+                <input type="hidden" name="doc_type"          id="billingDocType">
+                <input type="hidden" name="currency_code"     id="billingCurrency">
+                <input type="hidden" name="exchange_rate"     id="billingRate">
+                <input type="hidden" name="service_description" id="billingDescription">
+                <div id="billingItemsContainer"></div>
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="billingModalTitle">Create Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Client <span class="text-danger">*</span></label>
+                        <select name="client_id" class="form-select" required>
+                            <option value="">&#8212; Select client &#8212;</option>
+                            @foreach($clients as $client)
+                            <option value="{{ $client->id }}">
+                                {{ $client->first_name }} {{ $client->last_name }}
+                                @if($client->company_name) &mdash; {{ $client->company_name }} @endif
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" id="billingNotes"
+                            placeholder="Invoice description will be pre-filled from the calculator"></textarea>
+                    </div>
+                    <div class="border rounded p-3 bg-body-secondary">
+                        <div class="fw-semibold fs-sm mb-2">Line Items Preview</div>
+                        <div id="billingItemsPreview"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="billingSubmitBtn">
+                        <i class="fa fa-paper-plane me-1"></i> Create Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 @endsection
 
@@ -405,8 +480,10 @@
         var calc = calcStd();
         if (!calc) {
             ap(panel, ce('p', { cls: 'text-muted fs-sm text-center py-4 mb-0', text: 'Select a package to see pricing' }));
+            gid('billingActions').style.display = 'none';
             return;
         }
+        gid('billingActions').style.display = '';
 
         var lines = [{ label: calc.pkg.name + ' (' + S.rise + '-rise)', value: fmtUSD(calc.pkg.price_usd) }];
         if (calc.extraF > 0) {
@@ -581,6 +658,117 @@
     renderPkgs();
     renderAddons();
     renderStdResult();
+
+    // ── Billing modal ──────────────────────────────────────────────────
+    // Collect current calculation as line items for billing
+    function getActiveTab() {
+        var btn = document.querySelector('#mainTabs .nav-link.active');
+        return btn ? btn.dataset.tab : 'standard';
+    }
+
+    function buildBillingItems() {
+        var tab   = getActiveTab();
+        var items = [];
+
+        if (tab === 'standard') {
+            var calc = calcStd();
+            if (!calc) return null;
+            var pkg = calc.pkg;
+            items.push({ item_name: pkg.name + ' Package (' + S.rise + '-rise)', quantity: 1, unit_price: pkg.price_usd,
+                description: (pkg.included_services || []).join(', ') });
+            if (calc.extraF > 0) {
+                items.push({ item_name: 'Additional Floors (' + calc.extraF + ' floor' + (calc.extraF > 1 ? 's' : '') + ')',
+                    quantity: calc.extraF, unit_price: calc.cheapPkg.price_usd / 2, description: 'Extra storeys above G+1' });
+            }
+            S.addonIds.forEach(function (id) {
+                var a = ADDONS.filter(function (x) { return x.id === id; })[0];
+                if (a) items.push({ item_name: a.name, quantity: 1, unit_price: S.rise === 'low' ? a.price_low_usd : a.price_high_usd });
+            });
+
+        } else if (tab === 'special') {
+            var sel = gid('specialSelect');
+            var opt = sel.options[sel.selectedIndex];
+            if (!opt || !opt.value) return null;
+            var rate = parseFloat(opt.dataset.rate) || 0;
+            var l = parseFloat(gid('dimL').value) || 0;
+            var w = parseFloat(gid('dimW').value) || 0;
+            var sqm = l * w;
+            var tzs = sqm * rate;
+            var usd = tzs / TZS_RATE;
+            items.push({ item_name: opt.textContent.trim() + ' Design', quantity: sqm,
+                unit_price: parseFloat((usd / sqm).toFixed(4)), description: sqm + ' m² at TZS ' + rate.toLocaleString() + '/m²' });
+
+        } else if (tab === 'airbnb') {
+            if (airbnbUnits > 2) return null;
+            var platPkg  = LOW_PKGS.filter(function (p) { return p.name.toLowerCase().indexOf('platinum') !== -1; })[0] || { price_usd: 580 };
+            var cheapLow = LOW_PKGS[0] || { price_usd: 320 };
+            items.push({ item_name: 'AirBnB Design — PLATINUM Low-Rise (1 unit)', quantity: 1, unit_price: platPkg.price_usd,
+                description: 'Architectural design, BOQ preparation, Fence design, Servant\'s quarter design' });
+            if (airbnbUnits > 1) {
+                items.push({ item_name: 'Additional Units', quantity: airbnbUnits - 1, unit_price: cheapLow.price_usd / 2 });
+            }
+        }
+
+        return items.length > 0 ? items : null;
+    }
+
+    window.openBillingModal = function (docType) {
+        var items = buildBillingItems();
+        if (!items) {
+            alert('Please complete your calculation first.');
+            return;
+        }
+
+        // Set hidden fields
+        gid('billingDocType').value    = docType;
+        gid('billingCurrency').value   = getCur().code;
+        gid('billingRate').value       = getCur().rate;
+
+        // Invoice description from result panel
+        var invEl = gid('sideResult') ? gid('sideResult').querySelector('p.fs-sm') : null;
+        gid('billingDescription').value = invEl ? invEl.textContent : '';
+        gid('billingNotes').value       = invEl ? invEl.textContent : '';
+
+        // Populate hidden item inputs
+        var container = gid('billingItemsContainer');
+        clearEl(container);
+        items.forEach(function (item, idx) {
+            var prefix = 'items[' + idx + ']';
+            Object.keys(item).forEach(function (key) {
+                var inp   = document.createElement('input');
+                inp.type  = 'hidden';
+                inp.name  = prefix + '[' + key + ']';
+                inp.value = item[key] != null ? item[key] : '';
+                container.appendChild(inp);
+            });
+        });
+
+        // Populate preview table
+        var preview = gid('billingItemsPreview');
+        clearEl(preview);
+        var c = getCur();
+        items.forEach(function (item) {
+            var row = ce('div', { cls: 'd-flex justify-content-between fs-sm py-1 border-bottom' });
+            var left = ce('span', { cls: 'text-muted', text: item.item_name + (item.quantity !== 1 ? ' × ' + item.quantity : '') });
+            var right = ce('span', { cls: 'fw-semibold', text: c.symbol + ' ' + Math.round(item.quantity * item.unit_price * c.rate).toLocaleString() });
+            row.appendChild(left);
+            row.appendChild(right);
+            preview.appendChild(row);
+        });
+        var totalUSD = items.reduce(function (s, i) { return s + i.quantity * i.unit_price; }, 0);
+        var totRow = ce('div', { cls: 'd-flex justify-content-between fw-bold mt-2 pt-1 border-top' });
+        totRow.appendChild(ce('span', { text: 'Total' }));
+        totRow.appendChild(ce('span', { cls: 'text-primary', text: c.symbol + ' ' + Math.round(totalUSD * c.rate).toLocaleString() }));
+        preview.appendChild(totRow);
+
+        // Update modal title and button
+        var labels = { quote: 'Quotation', proforma: 'Proforma Invoice', invoice: 'Invoice' };
+        gid('billingModalTitle').textContent = 'Create ' + (labels[docType] || docType);
+        gid('billingSubmitBtn').textContent  = 'Create ' + (labels[docType] || docType);
+
+        var modal = new bootstrap.Modal(document.getElementById('billingModal'));
+        modal.show();
+    };
 
 })();
 </script>

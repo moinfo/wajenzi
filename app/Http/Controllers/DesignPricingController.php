@@ -6,6 +6,8 @@ use App\Models\Currency;
 use App\Models\DesignServiceAddon;
 use App\Models\DesignServicePackage;
 use App\Models\DesignSpecialStructure;
+use App\Models\ProjectClient;
+use App\Models\SiteVisitLocation;
 
 class DesignPricingController extends Controller
 {
@@ -16,12 +18,13 @@ class DesignPricingController extends Controller
         $addons           = DesignServiceAddon::active()->orderBy('sort_order')->get();
         $specialStructures= DesignSpecialStructure::active()->orderBy('sort_order')->get();
         $currencies       = Currency::active()->orderBy('code')->get();
+        $locations        = SiteVisitLocation::active()->orderBy('sort_order')->pluck('name');
+        $clients          = ProjectClient::orderBy('first_name')->orderBy('last_name')->get();
 
-        // TZS rate needed to convert special-structure (TZS) prices to other currencies
         $tzsRate = Currency::where('code', 'TZS')->value('rate_to_usd') ?? 2640;
 
         return view('calculators.design_pricing', compact(
-            'lowPackages', 'highPackages', 'addons', 'specialStructures', 'currencies', 'tzsRate'
+            'lowPackages', 'highPackages', 'addons', 'specialStructures', 'currencies', 'tzsRate', 'locations', 'clients'
         ));
     }
 }

@@ -204,6 +204,7 @@ Route::middleware(['auth'])->group(function () {
     // Calculator routes
     Route::get('/calculators/design-pricing', [App\Http\Controllers\DesignPricingController::class, 'index'])->name('calculators.design-pricing');
     Route::get('/calculators/site-visit',     [App\Http\Controllers\SiteVisitController::class, 'index'])->name('calculators.site-visit');
+    Route::post('/calculators/to-billing',    [App\Http\Controllers\CalculatorBillingController::class, 'store'])->name('calculators.to-billing');
 
     Route::match(['get', 'post'], '/settings/service_types', [App\Http\Controllers\SettingsController::class, 'service_types'])->name('hr_settings_service_types');
     Route::match(['get', 'post'], '/settings/project_statuses', [App\Http\Controllers\SettingsController::class, 'project_statuses'])->name('hr_settings_project_statuses');
