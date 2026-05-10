@@ -711,49 +711,52 @@
     }
 
     function buildBillingItems() {
-        var tab   = getActiveTab();
-        var items = [];
+        var tab = getActiveTab();
 
         if (tab === 'standard') {
             var calc = calcStd();
             if (!calc) return null;
-            var pkg = calc.pkg;
-            items.push({ item_name: pkg.name + ' Package (' + S.rise + '-rise)', quantity: 1, unit_price: pkg.price_usd,
-                description: (pkg.included_services || []).join(', ') });
-            if (calc.extraF > 0) {
-                items.push({ item_name: 'Additional Floors (' + calc.extraF + ' floor' + (calc.extraF > 1 ? 's' : '') + ')',
-                    quantity: calc.extraF, unit_price: calc.cheapPkg.price_usd / 2, description: 'Extra storeys above G+1' });
-            }
+
+            var loc       = gid('locationInput').value.trim() || '';
+            var riseLabel = S.rise === 'high' ? 'G+' + S.floors : 'single storey';
+            var typeLabel = S.rise === 'high' ? 'high-rise' : 'low-rise';
+            var allSvcs   = (calc.pkg.included_services || []).slice();
             S.addonIds.forEach(function (id) {
                 var a = ADDONS.filter(function (x) { return x.id === id; })[0];
-                if (a) items.push({ item_name: a.name, quantity: 1, unit_price: S.rise === 'low' ? a.price_low_usd : a.price_high_usd });
+                if (a) allSvcs.push(a.name);
             });
+
+            var itemName = 'Design of ' + typeLabel + ' building (' + riseLabel + ')'
+                + (loc ? ' at ' + loc : '');
+            var desc = allSvcs.join(', ');
+
+            return [{ item_name: itemName, description: desc, quantity: 1, unit_price: calc.total }];
 
         } else if (tab === 'special') {
             var sel = gid('specialSelect');
             var opt = sel.options[sel.selectedIndex];
             if (!opt || !opt.value) return null;
             var rate = parseFloat(opt.dataset.rate) || 0;
-            var l = parseFloat(gid('dimL').value) || 0;
-            var w = parseFloat(gid('dimW').value) || 0;
-            var sqm = l * w;
-            var tzs = sqm * rate;
-            var usd = tzs / TZS_RATE;
-            items.push({ item_name: opt.textContent.trim() + ' Design', quantity: sqm,
-                unit_price: parseFloat((usd / sqm).toFixed(4)), description: sqm + ' m² at TZS ' + rate.toLocaleString() + '/m²' });
+            var l    = parseFloat(gid('dimL').value) || 0;
+            var w    = parseFloat(gid('dimW').value) || 0;
+            var sqm  = l * w;
+            var usd  = (sqm * rate) / TZS_RATE;
+            return [{ item_name: opt.textContent.trim() + ' Design',
+                description: sqm + ' m² at TZS ' + rate.toLocaleString() + '/m²',
+                quantity: 1, unit_price: parseFloat(usd.toFixed(2)) }];
 
         } else if (tab === 'airbnb') {
             if (airbnbUnits > 2) return null;
             var platPkg  = LOW_PKGS.filter(function (p) { return p.name.toLowerCase().indexOf('platinum') !== -1; })[0] || { price_usd: 580 };
             var cheapLow = LOW_PKGS[0] || { price_usd: 320 };
-            items.push({ item_name: 'AirBnB Design — PLATINUM Low-Rise (1 unit)', quantity: 1, unit_price: platPkg.price_usd,
-                description: 'Architectural design, BOQ preparation, Fence design, Servant\'s quarter design' });
-            if (airbnbUnits > 1) {
-                items.push({ item_name: 'Additional Units', quantity: airbnbUnits - 1, unit_price: cheapLow.price_usd / 2 });
-            }
+            var total    = platPkg.price_usd + (airbnbUnits - 1) * (cheapLow.price_usd / 2);
+            var loc2     = gid('airbnbLoc').value.trim() || '';
+            return [{ item_name: 'AirBnB Design (' + airbnbUnits + ' unit' + (airbnbUnits > 1 ? 's' : '') + ')' + (loc2 ? ' at ' + loc2 : ''),
+                description: 'Architectural design, BOQ preparation, Fence design, Servant\'s quarter design',
+                quantity: 1, unit_price: total }];
         }
 
-        return items.length > 0 ? items : null;
+        return null;
     }
 
     window.openBillingModal = function (docType) {
