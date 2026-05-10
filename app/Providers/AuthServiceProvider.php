@@ -2,10 +2,9 @@
 
 namespace App\Providers;
 
+use App\Auth\SafeSessionGuard;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Auth\SessionGuard;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -27,35 +26,21 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // Override the session guard to handle corrupted remember tokens
+        // Use a named SessionGuard subclass so that the session login key
+        // (login_<guard>_<sha1(static::class)>) is stable across PHP-FPM
+        // workers. Anonymous classes break this because PHP appends a
+        // worker-local counter to the generated class name, so one worker
+        // would authenticate the user under one key and a different worker
+        // would look for the user under a different key on the next request.
         Auth::extend('session', function ($app, $name, array $config) {
             $provider = Auth::createUserProvider($config['provider'] ?? null);
 
-            $guard = new class(
+            $guard = new SafeSessionGuard(
                 $name,
                 $provider,
                 $app['session.store'],
                 $app['request']
-            ) extends SessionGuard {
-                /**
-                 * Get the decrypted recaller cookie for the request.
-                 *
-                 * @return \Illuminate\Auth\Recaller|null
-                 */
-                protected function recaller()
-                {
-                    try {
-                        return parent::recaller();
-                    } catch (\Exception $e) {
-                        // If unserialize fails, clear the cookie and return null
-                        if (strpos($e->getMessage(), 'unserialize') !== false) {
-                            $this->getCookieJar()->queue($this->getCookieJar()->forget($this->getRecallerName()));
-                            return null;
-                        }
-                        throw $e;
-                    }
-                }
-            };
+            );
 
             $guard->setCookieJar($app['cookie']);
             $guard->setDispatcher($app['events']);
