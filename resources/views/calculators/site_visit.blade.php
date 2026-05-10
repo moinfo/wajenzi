@@ -528,15 +528,22 @@
         var locName       = selectedCard.querySelector('.fw-semibold').textContent;
         var notes         = gid('visitNotes').value.trim();
 
-        var items = [
-            { item_name: 'Site Visit — ' + locName + ' (Travel)', quantity: 1,    unit_price: parseFloat((travel    / TZS_RATE).toFixed(4)) },
-            { item_name: 'Local Transport',                        quantity: 1,    unit_price: parseFloat((local     / TZS_RATE).toFixed(4)) },
-            { item_name: 'Daily Allowance — ' + locName,          quantity: days, unit_price: parseFloat((allowance / TZS_RATE).toFixed(4)) },
-            { item_name: 'Food Expenses — ' + locName,            quantity: days, unit_price: parseFloat((food      / TZS_RATE).toFixed(4)) },
-            { item_name: 'Accommodation — ' + locName,            quantity: days, unit_price: parseFloat((accommodation / TZS_RATE).toFixed(4)) },
-        ].filter(function (i) { return i.unit_price > 0; });
+        if (total === 0) { alert('Please enter cost values first.'); return; }
 
-        if (items.length === 0) { alert('Please enter cost values first.'); return; }
+        // Build a description of what's included
+        var components = [];
+        if (travel)        components.push('Travel');
+        if (local)         components.push('Local transport');
+        if (allowance)     components.push('Daily allowance');
+        if (food)          components.push('Food');
+        if (accommodation) components.push('Accommodation');
+
+        var items = [{
+            item_name:   'Site Visit — ' + locName + (notes ? ' (' + notes + ')' : ''),
+            description: components.join(', ') + ' · ' + days + ' day' + (days > 1 ? 's' : ''),
+            quantity:    1,
+            unit_price:  parseFloat((total / TZS_RATE).toFixed(2))
+        }];
 
         var invText = 'Site visit to ' + locName + (notes ? ' (' + notes + ')' : '') + ', '
             + days + ' day' + (days > 1 ? 's' : '') + '. Total: TZS ' + Math.round(total).toLocaleString() + ' (VAT exclusive).';
@@ -564,8 +571,10 @@
         clearEl(preview);
         items.forEach(function (item) {
             var row   = ce('div', { cls: 'd-flex justify-content-between fs-sm py-1 border-bottom' });
-            var left  = ce('span', { cls: 'text-muted', text: item.item_name + (item.quantity !== 1 ? ' × ' + item.quantity : '') });
-            var right = ce('span', { cls: 'fw-semibold', text: 'TZS ' + Math.round(item.quantity * item.unit_price * TZS_RATE).toLocaleString() });
+            var left  = ce('div');
+            left.appendChild(ce('span', { cls: 'text-muted', text: item.item_name }));
+            if (item.description) left.appendChild(ce('div', { cls: 'text-muted', style: 'font-size:10px', text: item.description }));
+            var right = ce('span', { cls: 'fw-semibold', text: 'TZS ' + Math.round(item.unit_price * TZS_RATE).toLocaleString() });
             row.appendChild(left); row.appendChild(right);
             preview.appendChild(row);
         });
