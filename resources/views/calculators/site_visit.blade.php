@@ -330,7 +330,7 @@
         var c = getCur();
         var sym = c.code === 'TZS' ? 'TZS' : c.code;
         ['sym-travel', 'sym-local', 'sym-allowance', 'sym-food', 'sym-accommodation'].forEach(function (id) {
-            gid(id).textContent = sym;
+            var el = gid(id); if (el) el.textContent = sym;
         });
         var rd = gid('rateDisplay');
         if (rd) {
@@ -346,7 +346,8 @@
 
     // ── Get input values (in TZS internally) ──────────────────────────
     function inputTZS(inputId) {
-        var val = parseFloat(gid(inputId).value) || 0;
+        var el  = gid(inputId);
+        var val = el ? (parseFloat(el.value) || 0) : 0;
         var c   = getCur();
         // inputs are shown in display currency, convert back to TZS for calculation
         if (c.code === 'TZS') return val;
@@ -503,7 +504,7 @@
 
     // ── Input / notes changes ─────────────────────────────────────────
     ['costTravel', 'costLocal', 'costAllowance', 'costFood', 'costAccommodation', 'visitNotes'].forEach(function (id) {
-        gid(id).addEventListener('input', renderResult);
+        var el = gid(id); if (el) el.addEventListener('input', renderResult);
     });
 
     // ── Currency change ────────────────────────────────────────────────

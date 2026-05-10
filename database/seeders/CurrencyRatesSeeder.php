@@ -9,33 +9,25 @@ class CurrencyRatesSeeder extends Seeder
 {
     public function run(): void
     {
-        // Update existing TZS (id=1) and USD (id=2)
-        DB::table('currencies')->where('id', 1)->update([
-            'code'        => 'TZS',
-            'rate_to_usd' => 2640,
-            'is_active'   => true,
-        ]);
+        // Wipe and rebuild cleanly to remove any duplicates or incomplete rows
+        DB::table('currencies')->truncate();
 
-        DB::table('currencies')->where('id', 2)->update([
-            'code'        => 'USD',
-            'rate_to_usd' => 1.0,
-            'is_active'   => true,
-        ]);
-
-        // Add additional currencies
         $currencies = [
-            ['name' => 'Euro',            'symbol' => '€',  'code' => 'EUR', 'rate_to_usd' => 0.92,  'is_base' => 'NO', 'is_active' => true],
-            ['name' => 'Kenyan Shilling', 'symbol' => 'KSh','code' => 'KES', 'rate_to_usd' => 129.5, 'is_base' => 'NO', 'is_active' => true],
-            ['name' => 'British Pound',   'symbol' => '£',  'code' => 'GBP', 'rate_to_usd' => 0.79,  'is_base' => 'NO', 'is_active' => true],
+            ['code' => 'EUR', 'name' => 'Euro',                 'symbol' => '€',   'rate_to_usd' => 0.92,   'is_base' => false, 'is_active' => true],
+            ['code' => 'GBP', 'name' => 'British Pound',        'symbol' => '£',   'rate_to_usd' => 0.79,   'is_base' => false, 'is_active' => true],
+            ['code' => 'KES', 'name' => 'Kenyan Shilling',      'symbol' => 'KSh', 'rate_to_usd' => 129.5,  'is_base' => false, 'is_active' => true],
+            ['code' => 'TZS', 'name' => 'Tanzanian Shillings',  'symbol' => 'TZS', 'rate_to_usd' => 2640.0, 'is_base' => true,  'is_active' => true],
+            ['code' => 'USD', 'name' => 'United States Dollar', 'symbol' => '$',   'rate_to_usd' => 1.0,    'is_base' => false, 'is_active' => true],
         ];
 
         foreach ($currencies as $c) {
-            DB::table('currencies')->updateOrInsert(
-                ['code' => $c['code']],
-                array_merge($c, ['created_at' => now(), 'updated_at' => now()])
-            );
+            DB::table('currencies')->insert(array_merge($c, [
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]));
         }
 
-        $this->command->info('Currency rates seeded: TZS, USD, EUR, KES, GBP');
+        $this->command->info('Currencies seeded: EUR, GBP, KES, TZS (2640), USD');
     }
 }
+
