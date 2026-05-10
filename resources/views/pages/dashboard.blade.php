@@ -886,9 +886,9 @@
                     </div>
                 </div>
 
-                <!-- Individual Project Progress -->
+                <!-- Individual Project Progress (latest 5) -->
                 <div class="project-progress-list">
-                    @foreach($activeSchedules as $schedule)
+                    @foreach($activeSchedules->take(5) as $schedule)
                         @php
                             $progressDetails = $schedule->progress_details;
                             $progressClass = $progressDetails['percentage'] >= 75 ? 'success' : ($progressDetails['percentage'] >= 50 ? 'info' : ($progressDetails['percentage'] >= 25 ? 'warning' : 'danger'));
