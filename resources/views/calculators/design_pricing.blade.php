@@ -118,12 +118,14 @@
 
                 <div id="specialFields" style="display:none">
                     <div class="mb-4">
-                        <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Total Area (m&sup2;)</label>
-                        <div class="input-group" style="max-width:220px">
-                            <input type="number" id="sqmInput" class="form-control" min="1" placeholder="e.g. 50">
-                            <span class="input-group-text">m&sup2;</span>
+                        <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Dimensions (metres)</label>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="number" id="dimL" class="form-control" style="max-width:110px" min="0.1" step="0.1" placeholder="Length">
+                            <span class="text-muted fw-semibold">&times;</span>
+                            <input type="number" id="dimW" class="form-control" style="max-width:110px" min="0.1" step="0.1" placeholder="Width">
+                            <span class="text-muted">m</span>
                         </div>
-                        <div class="form-text">Enter the total floor area of the structure</div>
+                        <div class="form-text" id="sqmHint"></div>
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Project Location</label>
@@ -476,17 +478,18 @@
     function calcStd() {
         var pkgs    = getPkgs();
         var pkg     = pkgs.filter(function (p) { return p.id === S.pkgId; })[0];
-        var cheapPkg = pkgs[0];
+        // Use the SILVER package explicitly for the floor surcharge formula (spec: extra × SILVER÷2)
+        var silverPkg = pkgs.filter(function (p) { return p.name.toLowerCase().indexOf('silver') !== -1; })[0] || pkgs[0];
         if (!pkg) return null;
 
         var extraF    = (S.rise === 'high' && S.floors > 1) ? S.floors - 1 : 0;
-        var extraCost = extraF * (cheapPkg.price_usd / 2);
+        var extraCost = extraF * (silverPkg.price_usd / 2);
         var addonCost = S.addonIds.reduce(function (sum, id) {
             var a = ADDONS.filter(function (x) { return x.id === id; })[0];
             return a ? sum + (S.rise === 'low' ? a.price_low_usd : a.price_high_usd) : sum;
         }, 0);
         var total = pkg.price_usd + extraCost + addonCost;
-        return { pkg: pkg, cheapPkg: cheapPkg, extraF: extraF, extraCost: extraCost, addonCost: addonCost, total: total };
+        return { pkg: pkg, silverPkg: silverPkg, extraF: extraF, extraCost: extraCost, addonCost: addonCost, total: total };
     }
 
     function renderStdResult() {
@@ -534,31 +537,36 @@
         var opt = sel.options[sel.selectedIndex];
         if (!opt || !opt.value) return;
 
-        var rate  = parseFloat(opt.dataset.rate) || 0;
-        var name  = opt.textContent.trim();
-        var sqm   = parseFloat(gid('sqmInput').value) || 0;
-        var tzs   = sqm * rate;
-        var loc   = gid('specialLoc').value.trim() || '[Location]';
+        var rate = parseFloat(opt.dataset.rate) || 0;
+        var name = opt.textContent.trim();
+        var l    = parseFloat(gid('dimL').value) || 0;
+        var w    = parseFloat(gid('dimW').value) || 0;
+        var sqm  = l * w;
+        var tzs  = sqm * rate;
+        var loc  = gid('specialLoc').value.trim() || '[Location]';
 
-        if (sqm <= 0) {
-            ap(container, ce('p', { cls: 'text-muted fs-sm', text: 'Enter the area to see the estimated cost.' }));
+        var hint = gid('sqmHint');
+        if (hint) hint.textContent = (l > 0 && w > 0) ? 'Area: ' + sqm.toLocaleString() + ' m²' : '';
+
+        if (l <= 0 || w <= 0) {
+            ap(container, ce('p', { cls: 'text-muted fs-sm', text: 'Enter length and width to see the estimated cost.' }));
             gid('billingActions').style.display = 'none';
             return;
         }
         gid('billingActions').style.display = '';
 
         var lines = [
-            { label: 'Structure type', value: name },
+            { label: 'Length × Width', value: l + ' m × ' + w + ' m' },
             { label: 'Area',           value: sqm.toLocaleString() + ' m²' }
         ];
 
-        var totalFmt = tzsToDisplayAmt(tzs);
-        var sub      = getCur().code === 'TZS' ? null : '≈ TZS ' + Math.round(tzs).toLocaleString();
-        ap(container, buildResultCard(lines, totalFmt, sub));
+        // Special structures are quoted in TZS only (per pricing spec)
+        var totalFmt = 'TZS ' + Math.round(tzs).toLocaleString();
+        ap(container, buildResultCard(lines, totalFmt, null));
 
         var invText = name + ' design at ' + loc
-            + ', area ' + sqm.toLocaleString() + ' m²'
-            + '. Total: ' + tzsToDisplayAmt(tzs) + ' (VAT exclusive).';
+            + ', dimensions ' + l + ' m × ' + w + ' m (' + sqm.toLocaleString() + ' m²)'
+            + '. Total: TZS ' + Math.round(tzs).toLocaleString() + ' (VAT exclusive).';
         ap(container, buildInvoiceBox(invText));
     }
 
@@ -575,20 +583,22 @@
                 cls: 'alert alert-warning text-center fs-sm',
                 text: airbnbUnits + ' units requires CEO/MD approval before pricing can be issued.'
             }));
+            gid('billingActions').style.display = 'none';
             return;
         }
 
-        var platPkg  = LOW_PKGS.filter(function (p) { return p.name.toLowerCase().indexOf('platinum') !== -1; })[0] || { price_usd: 580 };
-        var cheapLow = LOW_PKGS[0] || { price_usd: 320 };
-        var platinum = platPkg.price_usd;
-        var extra    = (airbnbUnits - 1) * (cheapLow.price_usd / 2);
+        var platPkg   = LOW_PKGS.filter(function (p) { return p.name.toLowerCase().indexOf('platinum') !== -1; })[0] || { price_usd: 580 };
+        var silverLow = LOW_PKGS.filter(function (p) { return p.name.toLowerCase().indexOf('silver') !== -1; })[0] || LOW_PKGS[0] || { price_usd: 320 };
+        var platinum  = platPkg.price_usd;
+        var extra     = (airbnbUnits - 1) * (silverLow.price_usd / 2);
         var total    = platinum + extra;
 
         var lines = [{ label: 'PLATINUM Low-Rise base (1 unit)', value: fmtUSD(platinum) }];
         if (airbnbUnits > 1) {
-            lines.push({ label: (airbnbUnits - 1) + ' extra unit(s) × ' + fmtUSD(cheapLow.price_usd / 2), value: '+' + fmtUSD(extra) });
+            lines.push({ label: (airbnbUnits - 1) + ' extra unit(s) × ' + fmtUSD(silverLow.price_usd / 2), value: '+' + fmtUSD(extra) });
         }
 
+        gid('billingActions').style.display = '';
         ap(container, buildResultCard(lines, fmtUSD(total), tzsSub(total)));
 
         var loc     = gid('airbnbLoc').value.trim() || '[Location]';
@@ -653,7 +663,7 @@
         if (this.value) renderSpecialResult();
         else { clearEl(gid('specialResult')); gid('billingActions').style.display = 'none'; }
     });
-    ['sqmInput', 'specialLoc'].forEach(function (id) {
+    ['dimL', 'dimW', 'specialLoc'].forEach(function (id) {
         gid(id).addEventListener('input', renderSpecialResult);
     });
 
@@ -741,19 +751,26 @@
             var opt = sel.options[sel.selectedIndex];
             if (!opt || !opt.value) return null;
             var rate = parseFloat(opt.dataset.rate) || 0;
-            var sqm  = parseFloat(gid('sqmInput').value) || 0;
-            if (sqm <= 0) return null;
-            var usd  = (sqm * rate) / TZS_RATE;
+            var l2   = parseFloat(gid('dimL').value) || 0;
+            var w2   = parseFloat(gid('dimW').value) || 0;
+            if (l2 <= 0 || w2 <= 0) return null;
+            var sqm2 = l2 * w2;
+            var tzs2 = sqm2 * rate;
             var loc2 = gid('specialLoc').value.trim() || '';
-            return [{ item_name: opt.textContent.trim() + ' Design' + (loc2 ? ' at ' + loc2 : ''),
-                description: sqm.toLocaleString() + ' m²',
-                quantity: 1, unit_price: parseFloat(usd.toFixed(2)) }];
+            // Special structures are quoted in TZS only — always use TZS currency
+            return [{
+                item_name:  opt.textContent.trim() + ' Design' + (loc2 ? ' at ' + loc2 : ''),
+                description: l2 + ' m × ' + w2 + ' m (' + sqm2.toLocaleString() + ' m²)',
+                quantity:    1,
+                unit_price:  Math.round(tzs2),
+                _forceTZS:   true
+            }];
 
         } else if (tab === 'airbnb') {
             if (airbnbUnits > 2) return null;
-            var platPkg  = LOW_PKGS.filter(function (p) { return p.name.toLowerCase().indexOf('platinum') !== -1; })[0] || { price_usd: 580 };
-            var cheapLow = LOW_PKGS[0] || { price_usd: 320 };
-            var total    = platPkg.price_usd + (airbnbUnits - 1) * (cheapLow.price_usd / 2);
+            var platPkg2   = LOW_PKGS.filter(function (p) { return p.name.toLowerCase().indexOf('platinum') !== -1; })[0] || { price_usd: 580 };
+            var silverLow2 = LOW_PKGS.filter(function (p) { return p.name.toLowerCase().indexOf('silver') !== -1; })[0] || LOW_PKGS[0] || { price_usd: 320 };
+            var total      = platPkg2.price_usd + (airbnbUnits - 1) * (silverLow2.price_usd / 2);
             var loc2     = gid('airbnbLoc').value.trim() || '';
             return [{ item_name: 'AirBnB Design (' + airbnbUnits + ' unit' + (airbnbUnits > 1 ? 's' : '') + ')' + (loc2 ? ' at ' + loc2 : ''),
                 description: 'Architectural design, BOQ preparation, Fence design, Servant\'s quarter design',
@@ -764,18 +781,25 @@
     }
 
     window.openBillingModal = function (docType) {
-        var items = buildBillingItems();
-        if (!items) {
+        var rawItems = buildBillingItems();
+        if (!rawItems) {
             alert('Please complete your calculation first.');
             return;
         }
 
-        // Convert unit_price (stored in USD) to the selected display currency
-        var c = getCur();
-        items = items.map(function (item) {
-            return Object.assign({}, item, {
-                unit_price: parseFloat((item.unit_price * c.rate).toFixed(2))
-            });
+        // Special structures are TZS-only per spec; others convert to display currency
+        var forceTZS = rawItems.some(function (i) { return i._forceTZS; });
+        var c = forceTZS
+            ? { code: 'TZS', symbol: 'TZS', rate: TZS_RATE }
+            : getCur();
+
+        var items = rawItems.map(function (item) {
+            var price = forceTZS
+                ? Math.round(item.unit_price)
+                : parseFloat((item.unit_price * c.rate).toFixed(2));
+            var clean = Object.assign({}, item, { unit_price: price });
+            delete clean._forceTZS;
+            return clean;
         });
 
         // Set hidden fields
@@ -783,8 +807,8 @@
         gid('billingCurrency').value   = c.code;
         gid('billingRate').value       = c.rate;
 
-        // Invoice description from result panel
-        var invEl = gid('sideResult') ? gid('sideResult').querySelector('p.fs-sm') : null;
+        // Invoice description from inline result box (special/airbnb) or side panel (standard)
+        var invEl = document.querySelector('#specialResult p.fs-sm, #airbnbResult p.fs-sm, #sideResult p.fs-sm');
         gid('billingDescription').value = invEl ? invEl.textContent : '';
         gid('billingNotes').value       = invEl ? invEl.textContent : '';
 
@@ -805,19 +829,20 @@
         // Populate preview table
         var preview = gid('billingItemsPreview');
         clearEl(preview);
-        var c = getCur();
         items.forEach(function (item) {
-            var row = ce('div', { cls: 'd-flex justify-content-between fs-sm py-1 border-bottom' });
-            var left = ce('span', { cls: 'text-muted', text: item.item_name + (item.quantity !== 1 ? ' × ' + item.quantity : '') });
-            var right = ce('span', { cls: 'fw-semibold', text: c.symbol + ' ' + Math.round(item.quantity * item.unit_price * c.rate).toLocaleString() });
+            var row  = ce('div', { cls: 'd-flex justify-content-between fs-sm py-1 border-bottom' });
+            var left = ce('div');
+            left.appendChild(ce('span', { cls: 'text-muted', text: item.item_name }));
+            if (item.description) left.appendChild(ce('div', { cls: 'text-muted', style: 'font-size:10px', text: item.description }));
+            var right = ce('span', { cls: 'fw-semibold', text: c.code + ' ' + Math.round(item.unit_price).toLocaleString() });
             row.appendChild(left);
             row.appendChild(right);
             preview.appendChild(row);
         });
-        var totalUSD = items.reduce(function (s, i) { return s + i.quantity * i.unit_price; }, 0);
+        var totalAmt = items.reduce(function (s, i) { return s + i.quantity * i.unit_price; }, 0);
         var totRow = ce('div', { cls: 'd-flex justify-content-between fw-bold mt-2 pt-1 border-top' });
         totRow.appendChild(ce('span', { text: 'Total' }));
-        totRow.appendChild(ce('span', { cls: 'text-primary', text: c.symbol + ' ' + Math.round(totalUSD * c.rate).toLocaleString() }));
+        totRow.appendChild(ce('span', { cls: 'text-primary', text: c.code + ' ' + Math.round(totalAmt).toLocaleString() }));
         preview.appendChild(totRow);
 
         // Update modal title and button
