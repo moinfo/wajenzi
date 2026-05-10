@@ -181,7 +181,7 @@
 (function () {
     'use strict';
 
-    // ── Server data (safe @json encoding, no user-controlled content) ──
+    // ── Server data (Blade-injected, server-controlled) ──
     var LOW_PKGS  = @json($lowPackages);
     var HIGH_PKGS = @json($highPackages);
     var ADDONS    = @json($addons);
