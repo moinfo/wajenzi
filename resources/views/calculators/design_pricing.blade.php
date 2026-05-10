@@ -523,7 +523,7 @@
         var typeLabel = S.rise === 'high' ? 'high-rise' : 'low-rise';
         var invText   = 'Design of a ' + typeLabel + ' building (' + riseLabel + ') at ' + loc
             + ', comprising: ' + allSvcs.join(', ')
-            + '. Total: ' + fmtUSD(calc.total) + ' (VAT exclusive), converted to TZS at prevailing rate.';
+            + '. Total: ' + fmtUSD(calc.total) + ' (VAT exclusive).';
         ap(panel, buildInvoiceBox(invText));
     }
 
@@ -590,7 +590,7 @@
         var loc     = gid('airbnbLoc').value.trim() || '[Location]';
         var invText = 'Design of AirBnB (' + airbnbUnits + ' unit' + (airbnbUnits > 1 ? 's' : '') + ') at ' + loc
             + ', including: Architectural design, BOQ preparation, Fence design, Servant\'s quarter design.'
-            + ' Total: ' + fmtUSD(total) + ' (VAT exclusive), converted to TZS at prevailing rate.';
+            + ' Total: ' + fmtUSD(total) + ' (VAT exclusive).';
         ap(container, buildInvoiceBox(invText));
     }
 
