@@ -25,11 +25,15 @@ class ProjectScheduleController extends Controller
     {
         $user = auth()->user();
         $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing']);
+        $canSeeAll = $isAdmin || $user->can('View All Schedule Activities');
+
+        $userRoleIds = $user->roles->pluck('id')->toArray();
 
         $schedules = ProjectSchedule::with(['lead', 'assignedArchitect', 'client'])
-            ->when(!$isAdmin, fn($q) => $q->where(function ($q) use ($user) {
+            ->when(!$canSeeAll, fn($q) => $q->where(function ($q) use ($user, $userRoleIds) {
                 $q->where('assigned_architect_id', $user->id)
-                  ->orWhereHas('activities', fn($aq) => $aq->where('assigned_to', $user->id));
+                  ->orWhereHas('activities', fn($aq) => $aq->where('assigned_to', $user->id)
+                      ->orWhereIn('role_id', $userRoleIds));
             }))
             ->when($request->status, fn($q, $status) => $q->where('status', $status))
             ->when($request->architect_id, fn($q, $id) => $q->where('assigned_architect_id', $id))
@@ -49,11 +53,20 @@ class ProjectScheduleController extends Controller
 
         $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'assignments.user']);
 
-        // Filter activities: non-admins only see their assigned activities
-        // The assigned architect of the schedule can see all activities
+        // Determine if user can see all activities on this schedule
+        $canSeeAll = $isAdmin
+            || $projectSchedule->assigned_architect_id === $user->id
+            || $user->can('View All Schedule Activities');
+
         $activities = $projectSchedule->activities;
-        if (!$isAdmin && $projectSchedule->assigned_architect_id !== $user->id) {
-            $activities = $activities->filter(fn($a) => $a->assigned_to === $user->id);
+
+        if (!$canSeeAll) {
+            // Show activities explicitly assigned to user, or belonging to one of the user's roles
+            $userRoleIds = $user->roles->pluck('id')->toArray();
+            $activities = $activities->filter(fn($a) =>
+                $a->assigned_to === $user->id ||
+                ($a->role_id && in_array($a->role_id, $userRoleIds))
+            );
         }
 
         // Group activities by phase
@@ -62,7 +75,7 @@ class ProjectScheduleController extends Controller
         // Users available for assignment (with roles)
         $users = User::with('roles')->orderBy('name')->get();
 
-        return view('project-schedules.show', compact('projectSchedule', 'activitiesByPhase', 'users'));
+        return view('project-schedules.show', compact('projectSchedule', 'activitiesByPhase', 'users', 'isAdmin', 'canSeeAll'));
     }
 
     /**

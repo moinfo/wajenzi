@@ -23,6 +23,12 @@
             <div class="block-header block-header-default">
                 <h3 class="block-title">Activity Templates</h3>
                 <div class="block-options">
+                    @can('Edit Activity Template')
+                    <button type="button" class="btn btn-alt-warning btn-sm me-1"
+                        data-bs-toggle="modal" data-bs-target="#syncRolesModal">
+                        <i class="fa fa-sync-alt"></i> Sync Roles to All Schedules
+                    </button>
+                    @endcan
                     @can('Add Activity Template')
                     <button type="button" class="btn btn-alt-primary btn-sm"
                         onclick="loadFormModal('settings_activity_template_form', {className: 'ProjectActivityTemplate'}, 'New Activity Template', 'modal-lg')">
@@ -93,4 +99,32 @@
         </div>
     </div>
     <!-- END Page Content -->
+
+    <!-- Sync Roles Confirmation Modal -->
+    <div class="modal fade" id="syncRolesModal" tabindex="-1" aria-labelledby="syncRolesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="syncRolesModalLabel">
+                        <i class="fa fa-sync-alt text-warning me-2"></i> Sync Roles to All Schedules
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This will update the <strong>role</strong> on every existing project schedule activity to match the current template configuration, matched by activity code.</p>
+                    <p class="text-muted mb-0">Activities of all statuses (pending, in progress, completed) will be updated. This cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ route('hr_settings_activity_templates_sync_roles') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fa fa-sync-alt me-1"></i> Sync Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END Sync Roles Modal -->
 @endsection

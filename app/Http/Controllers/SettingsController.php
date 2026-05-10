@@ -1663,4 +1663,21 @@ class SettingsController extends Controller
         return view('pages.settings.settings_activity_templates')->with($data);
     }
 
+    public function syncActivityRoles(Request $request)
+    {
+        $templates = ProjectActivityTemplate::whereNotNull('role_id')->get(['activity_code', 'role_id']);
+
+        if ($templates->isEmpty()) {
+            return back()->with('warning', 'No templates have a role assigned. Nothing to sync.');
+        }
+
+        $updatedCount = 0;
+        foreach ($templates as $template) {
+            $updatedCount += \App\Models\ProjectScheduleActivity::where('activity_code', $template->activity_code)
+                ->update(['role_id' => $template->role_id]);
+        }
+
+        return back()->with('success', "Sync complete. {$updatedCount} activity records updated across all project schedules.");
+    }
+
 }
