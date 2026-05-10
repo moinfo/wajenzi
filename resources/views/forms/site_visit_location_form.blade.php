@@ -1,5 +1,5 @@
 <div class="block-content">
-    <form method="post" autocomplete="off">
+    <form method="post" action="{{ route('hr_settings_site_visit_locations') }}" autocomplete="off">
         @csrf
         <div class="row">
             <div class="col-md-6">
