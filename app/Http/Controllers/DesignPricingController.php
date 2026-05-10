@@ -15,7 +15,7 @@ class DesignPricingController extends Controller
         $highPackages     = DesignServicePackage::active()->highRise()->orderBy('sort_order')->get();
         $addons           = DesignServiceAddon::active()->orderBy('sort_order')->get();
         $specialStructures= DesignSpecialStructure::active()->orderBy('sort_order')->get();
-        $currencies       = Currency::active()->orderBy('sort_order')->get();
+        $currencies       = Currency::active()->orderBy('code')->get();
 
         // TZS rate needed to convert special-structure (TZS) prices to other currencies
         $tzsRate = Currency::where('code', 'TZS')->value('rate_to_usd') ?? 2640;

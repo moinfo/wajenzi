@@ -1681,7 +1681,7 @@ class SettingsController extends Controller
     {
         if ($this->handleCrud($request, 'Currency')) return back();
         return view('pages.settings.settings_currencies', [
-            'objects' => \App\Models\Currency::orderBy('sort_order')->orderBy('name')->get(),
+            'objects' => \App\Models\Currency::orderBy('code')->get(),
         ]);
     }
 

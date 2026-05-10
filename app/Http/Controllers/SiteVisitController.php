@@ -10,7 +10,7 @@ class SiteVisitController extends Controller
     public function index()
     {
         $locations  = SiteVisitLocation::active()->orderBy('sort_order')->get();
-        $currencies = Currency::active()->orderBy('sort_order')->get();
+        $currencies = Currency::active()->orderBy('code')->get();
         $tzsRate    = Currency::where('code', 'TZS')->value('rate_to_usd') ?? 2640;
 
         return view('calculators.site_visit', compact('locations', 'currencies', 'tzsRate'));
