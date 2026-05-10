@@ -766,10 +766,18 @@
             return;
         }
 
+        // Convert unit_price (stored in USD) to the selected display currency
+        var c = getCur();
+        items = items.map(function (item) {
+            return Object.assign({}, item, {
+                unit_price: parseFloat((item.unit_price * c.rate).toFixed(2))
+            });
+        });
+
         // Set hidden fields
         gid('billingDocType').value    = docType;
-        gid('billingCurrency').value   = getCur().code;
-        gid('billingRate').value       = getCur().rate;
+        gid('billingCurrency').value   = c.code;
+        gid('billingRate').value       = c.rate;
 
         // Invoice description from result panel
         var invEl = gid('sideResult') ? gid('sideResult').querySelector('p.fs-sm') : null;

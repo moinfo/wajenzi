@@ -538,19 +538,22 @@
         if (food)          components.push('Food');
         if (accommodation) components.push('Accommodation');
 
+        var c             = getCur();
+        var unitPriceCur  = parseFloat(((total / TZS_RATE) * c.rate).toFixed(2));
+
         var items = [{
             item_name:   'Site Visit — ' + (notes || locName),
             description: locName + ' · ' + components.join(', ') + ' · ' + days + ' day' + (days > 1 ? 's' : ''),
             quantity:    1,
-            unit_price:  parseFloat((total / TZS_RATE).toFixed(2))
+            unit_price:  unitPriceCur
         }];
 
         var invText = 'For site visit of a ' + (notes || '[project description]') + ' at ' + locName + '.\n'
-            + days + ' day' + (days > 1 ? 's' : '') + '. Total: TZS ' + Math.round(total).toLocaleString() + ' (VAT exclusive).';
+            + days + ' day' + (days > 1 ? 's' : '') + '. Total: ' + tzsToDisplay(total) + ' (VAT exclusive).';
 
         gid('billingDocType').value      = docType;
-        gid('billingCurrency').value     = 'USD';
-        gid('billingRate').value         = 1;
+        gid('billingCurrency').value     = c.code;
+        gid('billingRate').value         = c.rate;
         gid('billingDescription').value  = invText;
         gid('billingNotes').value        = invText;
 
@@ -574,7 +577,7 @@
             var left  = ce('div');
             left.appendChild(ce('span', { cls: 'text-muted', text: item.item_name }));
             if (item.description) left.appendChild(ce('div', { cls: 'text-muted', style: 'font-size:10px', text: item.description }));
-            var right = ce('span', { cls: 'fw-semibold', text: 'TZS ' + Math.round(item.unit_price * TZS_RATE).toLocaleString() });
+            var right = ce('span', { cls: 'fw-semibold', text: tzsToDisplay(total) });
             row.appendChild(left); row.appendChild(right);
             preview.appendChild(row);
         });
