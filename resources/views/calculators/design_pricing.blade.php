@@ -39,15 +39,15 @@
                         </div>
                         <div class="col-sm-7">
                             <label class="form-label fw-semibold fs-sm mb-1">Project Location</label>
-                            <input type="text" id="locationInput" class="form-control form-control-sm"
-                                placeholder="e.g. Kigamboni, Dar es Salaam"
-                                list="locationSuggestions" autocomplete="off">
-                            <datalist id="locationSuggestions">
+                            <input type="text" id="locationInput" class="form-control form-control-sm mb-1"
+                                placeholder="e.g. Kigamboni, Dar es Salaam" autocomplete="off">
+                            <div class="d-flex flex-wrap gap-1">
                                 @foreach($locations as $loc)
-                                <option value="{{ $loc }}">
+                                <button type="button" class="btn btn-xs btn-alt-secondary loc-chip"
+                                    data-target="locationInput"
+                                    style="font-size:11px;padding:2px 8px">{{ $loc }}</button>
                                 @endforeach
-                            </datalist>
-                            <div class="form-text">Type or choose from configured locations</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -123,9 +123,15 @@
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Project Location</label>
-                        <input type="text" id="specialLoc" class="form-control"
-                            placeholder="e.g. Mikocheni, Dar es Salaam"
-                            list="locationSuggestions" autocomplete="off">
+                        <input type="text" id="specialLoc" class="form-control mb-1"
+                            placeholder="e.g. Mikocheni, Dar es Salaam" autocomplete="off">
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach($locations as $loc)
+                            <button type="button" class="btn btn-xs btn-alt-secondary loc-chip"
+                                data-target="specialLoc"
+                                style="font-size:11px;padding:2px 8px">{{ $loc }}</button>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
 
@@ -158,9 +164,15 @@
 
                 <div class="mb-4">
                     <label class="form-label fw-semibold fs-sm text-muted text-uppercase">Project Location</label>
-                    <input type="text" id="airbnbLoc" class="form-control"
-                        placeholder="e.g. Masaki, Dar es Salaam"
-                        list="locationSuggestions" autocomplete="off">
+                    <input type="text" id="airbnbLoc" class="form-control mb-1"
+                        placeholder="e.g. Masaki, Dar es Salaam" autocomplete="off">
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach($locations as $loc)
+                        <button type="button" class="btn btn-xs btn-alt-secondary loc-chip"
+                            data-target="airbnbLoc"
+                            style="font-size:11px;padding:2px 8px">{{ $loc }}</button>
+                        @endforeach
+                    </div>
                 </div>
 
                 <div id="airbnbResult"></div>
@@ -651,6 +663,20 @@
     }
     gid('currencySelect').addEventListener('change', recalcAll);
     gid('locationInput').addEventListener('input',   recalcAll);
+
+    // ── Location chips ─────────────────────────────────────────────────
+    document.querySelectorAll('.loc-chip').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var inp = gid(btn.dataset.target);
+            inp.value = btn.textContent.trim();
+            inp.dispatchEvent(new Event('input'));
+            // highlight active chip
+            document.querySelectorAll('.loc-chip[data-target="' + btn.dataset.target + '"]').forEach(function (b) {
+                b.classList.toggle('btn-primary', b === btn);
+                b.classList.toggle('btn-alt-secondary', b !== btn);
+            });
+        });
+    });
 
     // ── Init ───────────────────────────────────────────────────────────
     var initPkgs = getPkgs();
