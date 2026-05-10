@@ -181,9 +181,9 @@
                         </div>
 
                         <div class="col-12">
-                            <label class="form-label fw-semibold fs-sm">Additional Notes</label>
+                            <label class="form-label fw-semibold fs-sm">Project Description</label>
                             <input type="text" id="visitNotes" class="form-control form-control-sm"
-                                placeholder="e.g. client name, purpose of visit">
+                                placeholder="e.g. G+1 Residential Building">
                         </div>
                     </div>
 
@@ -439,16 +439,16 @@
         ap(panel, card);
 
         // Invoice description
-        var notes   = gid('visitNotes').value.trim();
-        var invText = 'Site visit to ' + locName
-            + (notes ? ' (' + notes + ')' : '')
-            + ', ' + days + ' day' + (days > 1 ? 's' : '')
-            + '. Travel: ' + tzsToDisplay(travel)
-            + ', Local transport: ' + tzsToDisplay(local)
-            + ', Allowance: ' + tzsToDisplay(allowance)
+        var notes    = gid('visitNotes').value.trim();
+        var heading  = 'For site visit of a ' + (notes || '[project description]') + ' at ' + locName + '.';
+        var breakdown = days + ' day' + (days > 1 ? 's' : '')
+            + (travel        ? '. Travel: '        + tzsToDisplay(travel)        : '')
+            + (local         ? ', Local transport: '+ tzsToDisplay(local)        : '')
+            + (allowance     ? ', Allowance: '     + tzsToDisplay(allowance)     : '')
             + (food          ? ', Food: '          + tzsToDisplay(food)          : '')
             + (accommodation ? ', Accommodation: ' + tzsToDisplay(accommodation) : '')
-            + ' per day. Total: ' + tzsToDisplay(total) + ' (VAT exclusive).';
+            + '. Total: ' + tzsToDisplay(total) + ' (VAT exclusive).';
+        var invText = heading + '\n' + breakdown;
 
         var box = ce('div', {
             cls: 'border rounded p-3 mb-3',
@@ -539,13 +539,13 @@
         if (accommodation) components.push('Accommodation');
 
         var items = [{
-            item_name:   'Site Visit — ' + locName + (notes ? ' (' + notes + ')' : ''),
-            description: components.join(', ') + ' · ' + days + ' day' + (days > 1 ? 's' : ''),
+            item_name:   'Site Visit — ' + (notes || locName),
+            description: locName + ' · ' + components.join(', ') + ' · ' + days + ' day' + (days > 1 ? 's' : ''),
             quantity:    1,
             unit_price:  parseFloat((total / TZS_RATE).toFixed(2))
         }];
 
-        var invText = 'Site visit to ' + locName + (notes ? ' (' + notes + ')' : '') + ', '
+        var invText = 'For site visit of a ' + (notes || '[project description]') + ' at ' + locName + '.\n'
             + days + ' day' + (days > 1 ? 's' : '') + '. Total: TZS ' + Math.round(total).toLocaleString() + ' (VAT exclusive).';
 
         gid('billingDocType').value      = docType;
