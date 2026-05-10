@@ -96,10 +96,15 @@ class CalculatorMenuAndPermissionsSeeder extends Seeder
             $parentId = $parent->id;
         }
 
-        // 2. Calculator sub-menus
+        // 2. All Calculators sub-menus (calculators + their config pages)
         $calcMenus = [
-            ['name' => 'Design Pricing Calculator', 'route' => 'calculators.design-pricing', 'icon' => 'fa fa-drafting-compass', 'order' => 1],
-            ['name' => 'Site Visit Calculator',     'route' => 'calculators.site-visit',     'icon' => 'fa fa-map-marker-alt',   'order' => 2],
+            ['name' => 'Design Pricing Calculator', 'route' => 'calculators.design-pricing',             'icon' => 'fa fa-drafting-compass', 'order' => 1],
+            ['name' => 'Site Visit Calculator',     'route' => 'calculators.site-visit',                 'icon' => 'fa fa-map-marker-alt',   'order' => 2],
+            ['name' => 'Currencies',                'route' => 'hr_settings_currencies',                 'icon' => 'fa fa-coins',            'order' => 10],
+            ['name' => 'Design Packages',           'route' => 'hr_settings_design_packages',            'icon' => 'fa fa-box-open',         'order' => 11],
+            ['name' => 'Design Add-ons',            'route' => 'hr_settings_design_addons',              'icon' => 'fa fa-plus-square',      'order' => 12],
+            ['name' => 'Special Structure Rates',   'route' => 'hr_settings_design_special_structures',  'icon' => 'fa fa-building',         'order' => 13],
+            ['name' => 'Site Visit Locations',      'route' => 'hr_settings_site_visit_locations',       'icon' => 'fa fa-map-pin',          'order' => 14],
         ];
 
         foreach ($calcMenus as $m) {
@@ -118,32 +123,14 @@ class CalculatorMenuAndPermissionsSeeder extends Seeder
             }
         }
 
-        // 3. Settings sub-menus for configuration
+        // 3. Remove those items from Settings if they exist there
         $settingsParent = DB::table('menus')->where('name', 'Settings')->whereNull('parent_id')->first();
         if ($settingsParent) {
-            $settingsMenus = [
-                ['name' => 'Currencies',             'route' => 'hr_settings_currencies',              'icon' => 'fa fa-coins',     'order' => 70],
-                ['name' => 'Design Packages',        'route' => 'hr_settings_design_packages',         'icon' => 'fa fa-box-open',  'order' => 71],
-                ['name' => 'Design Add-ons',         'route' => 'hr_settings_design_addons',           'icon' => 'fa fa-plus-square','order' => 72],
-                ['name' => 'Special Structure Rates','route' => 'hr_settings_design_special_structures','icon' => 'fa fa-building', 'order' => 73],
-                ['name' => 'Site Visit Locations',   'route' => 'hr_settings_site_visit_locations',    'icon' => 'fa fa-map-pin',   'order' => 74],
-            ];
-
-            foreach ($settingsMenus as $m) {
-                $exists = DB::table('menus')->where('name', $m['name'])->where('parent_id', $settingsParent->id)->first();
-                if (!$exists) {
-                    DB::table('menus')->insert([
-                        'name'       => $m['name'],
-                        'route'      => $m['route'],
-                        'icon'       => $m['icon'],
-                        'parent_id'  => $settingsParent->id,
-                        'list_order' => $m['order'],
-                        'status'     => 'ACTIVE',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
+            $toRemoveFromSettings = ['Currencies', 'Design Packages', 'Design Add-ons', 'Special Structure Rates', 'Site Visit Locations'];
+            DB::table('menus')
+                ->where('parent_id', $settingsParent->id)
+                ->whereIn('name', $toRemoveFromSettings)
+                ->delete();
         }
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
