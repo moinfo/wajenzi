@@ -412,23 +412,26 @@
         }
         gid('billingActions').style.display = '';
 
+        // Base cost is a one-time call-out fee (not multiplied by days)
+        var base          = parseFloat(selectedCard.dataset.base) || 0;
         var travel        = inputTZS('costTravel');
         var local         = inputTZS('costLocal');
         var allowance     = inputTZS('costAllowance');
         var food          = inputTZS('costFood');
         var accommodation = inputTZS('costAccommodation');
         var perDay        = travel + local + allowance + food + accommodation;
-        var total         = perDay * days;
+        var total         = base + (perDay * days);
         var locName       = selectedCard.querySelector('.fw-semibold').textContent;
 
         var lines = [
-            { label: 'Travel cost',       value: tzsToDisplay(travel)        },
-            { label: 'Local transport',   value: tzsToDisplay(local)         },
-            { label: 'Daily allowance',   value: tzsToDisplay(allowance)     },
-            { label: 'Food expenses',     value: tzsToDisplay(food)          },
-            { label: 'Accommodation',     value: tzsToDisplay(accommodation) },
-            { label: 'Per-day total',     value: tzsToDisplay(perDay)        },
-            { label: 'Days',              value: days + ' day' + (days > 1 ? 's' : '') }
+            { label: 'Base site visit fee',  value: tzsToDisplay(base)          },
+            { label: 'Travel cost',          value: tzsToDisplay(travel)        },
+            { label: 'Local transport',      value: tzsToDisplay(local)         },
+            { label: 'Daily allowance',      value: tzsToDisplay(allowance)     },
+            { label: 'Food expenses',        value: tzsToDisplay(food)          },
+            { label: 'Accommodation',        value: tzsToDisplay(accommodation) },
+            { label: 'Per-day subtotal',     value: tzsToDisplay(perDay)        },
+            { label: 'Days',                 value: days + ' day' + (days > 1 ? 's' : '') }
         ];
 
         // Result card
@@ -457,12 +460,13 @@
         // Invoice description
         var notes    = gid('visitNotes').value.trim();
         var heading  = 'For site visit of a ' + (notes || '[project description]') + ' at ' + locName + '.';
-        var breakdown = days + ' day' + (days > 1 ? 's' : '')
-            + (travel        ? '. Travel: '        + tzsToDisplay(travel)        : '')
-            + (local         ? ', Local transport: '+ tzsToDisplay(local)        : '')
-            + (allowance     ? ', Allowance: '     + tzsToDisplay(allowance)     : '')
-            + (food          ? ', Food: '          + tzsToDisplay(food)          : '')
-            + (accommodation ? ', Accommodation: ' + tzsToDisplay(accommodation) : '')
+        var breakdown = 'Base fee: ' + tzsToDisplay(base)
+            + (days > 1 ? ', ' + days + ' days' : ', 1 day')
+            + (travel        ? ', Travel: '         + tzsToDisplay(travel)        : '')
+            + (local         ? ', Local transport: ' + tzsToDisplay(local)        : '')
+            + (allowance     ? ', Allowance: '      + tzsToDisplay(allowance)     : '')
+            + (food          ? ', Food: '           + tzsToDisplay(food)          : '')
+            + (accommodation ? ', Accommodation: '  + tzsToDisplay(accommodation) : '')
             + '. Total: ' + tzsToDisplay(total) + ' (VAT exclusive).';
         var invText = heading + '\n' + breakdown;
 
@@ -534,20 +538,19 @@
     window.openBillingModal = function (docType) {
         if (!selectedCard) { alert('Please select a location first.'); return; }
 
+        var base          = parseFloat(selectedCard.dataset.base) || 0;
         var travel        = inputTZS('costTravel');
         var local         = inputTZS('costLocal');
         var allowance     = inputTZS('costAllowance');
         var food          = inputTZS('costFood');
         var accommodation = inputTZS('costAccommodation');
         var perDay        = travel + local + allowance + food + accommodation;
-        var total         = perDay * days;
+        var total         = base + (perDay * days);
         var locName       = selectedCard.querySelector('.fw-semibold').textContent;
         var notes         = gid('visitNotes').value.trim();
 
-        if (total === 0) { alert('Please enter cost values first.'); return; }
-
         // Build a description of what's included
-        var components = [];
+        var components = ['Base fee'];
         if (travel)        components.push('Travel');
         if (local)         components.push('Local transport');
         if (allowance)     components.push('Daily allowance');
@@ -565,7 +568,8 @@
         }];
 
         var invText = 'For site visit of a ' + (notes || '[project description]') + ' at ' + locName + '.\n'
-            + days + ' day' + (days > 1 ? 's' : '') + '. Total: ' + tzsToDisplay(total) + ' (VAT exclusive).';
+            + 'Base fee: ' + tzsToDisplay(base) + ', ' + days + ' day' + (days > 1 ? 's' : '')
+            + '. Total: ' + tzsToDisplay(total) + ' (VAT exclusive).';
 
         gid('billingDocType').value      = docType;
         gid('billingCurrency').value     = c.code;
