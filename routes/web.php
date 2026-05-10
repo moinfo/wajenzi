@@ -193,6 +193,18 @@ Route::middleware(['auth'])->group(function () {
     Route::match(['get', 'post'], '/settings/project_types_settings', [App\Http\Controllers\SettingsController::class, 'project_types_settings'])->name('hr_settings_project_types_settings');
     Route::match(['get', 'post'], '/settings/activity_templates', [App\Http\Controllers\SettingsController::class, 'activity_templates_settings'])->name('hr_settings_activity_templates');
     Route::post('/settings/activity_templates/sync-roles', [App\Http\Controllers\SettingsController::class, 'syncActivityRoles'])->name('hr_settings_activity_templates_sync_roles');
+
+    // Calculator configuration routes
+    Route::match(['get','post'], '/settings/currencies',              [App\Http\Controllers\SettingsController::class, 'currencies'])->name('hr_settings_currencies');
+    Route::match(['get','post'], '/settings/design_packages',         [App\Http\Controllers\SettingsController::class, 'design_packages'])->name('hr_settings_design_packages');
+    Route::match(['get','post'], '/settings/design_addons',           [App\Http\Controllers\SettingsController::class, 'design_addons'])->name('hr_settings_design_addons');
+    Route::match(['get','post'], '/settings/design_special_structures',[App\Http\Controllers\SettingsController::class, 'design_special_structures'])->name('hr_settings_design_special_structures');
+    Route::match(['get','post'], '/settings/site_visit_locations',    [App\Http\Controllers\SettingsController::class, 'site_visit_locations'])->name('hr_settings_site_visit_locations');
+
+    // Calculator routes
+    Route::get('/calculators/design-pricing', [App\Http\Controllers\DesignPricingController::class, 'index'])->name('calculators.design-pricing');
+    Route::get('/calculators/site-visit',     [App\Http\Controllers\SiteVisitController::class, 'index'])->name('calculators.site-visit');
+
     Route::match(['get', 'post'], '/settings/service_types', [App\Http\Controllers\SettingsController::class, 'service_types'])->name('hr_settings_service_types');
     Route::match(['get', 'post'], '/settings/project_statuses', [App\Http\Controllers\SettingsController::class, 'project_statuses'])->name('hr_settings_project_statuses');
     Route::match(['get', 'post'], '/settings/cost_categories', [App\Http\Controllers\SettingsController::class, 'cost_categories'])->name('hr_settings_cost_categories');

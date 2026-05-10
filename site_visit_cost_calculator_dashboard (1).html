@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site Visit Cost Calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #f4f7fa;
+      padding: 30px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      background: #fff;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #0f172a;
+    }
+
+    .subtitle {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #64748b;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 25px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    input, select {
+      padding: 12px;
+      border: 1px solid #dbe2ea;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+    }
+
+    .summary {
+      margin-top: 30px;
+      background: #f8fafc;
+      padding: 25px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .summary h2 {
+      margin-bottom: 20px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .total {
+      font-size: 22px;
+      font-weight: bold;
+      color: #059669;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Site Visit Cost Calculator Dashboard</h1>
+    <p class="subtitle">Sales Personnel Site Visit Pricing Calculator</p>
+
+    <div class="grid">
+      <div class="field">
+        <label for="location">Site Location</label>
+        <select id="location">
+          <option value="">Select Location</option>
+          <option value="150000,100000,10000,50000">Arusha</option>
+          <option value="150000,190000,10000,100000">Bukoba</option>
+          <option value="150000,0,0,0">Dar es Salaam</option>
+          <option value="150000,70000,10000,50000">Dodoma</option>
+          <option value="150000,30000,10000,50000">Morogoro</option>
+          <option value="150000,50000,10000,50000">Tanga</option>
+          <option value="150000,70000,10000,50000">Zanzibar</option>
+          <option value="150000,160000,10000,100000">Mwanza</option>
+          <option value="150000,140000,10000,100000">Songea</option>
+          <option value="150000,100000,10000,50000">Singida</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="staff">Sales Personnel Name</label>
+        <input type="text" id="staff" placeholder="Enter staff name" />
+      </div>
+
+      <div class="field">
+        <label for="clientName">Client Name</label>
+        <input type="text" id="clientName" placeholder="Enter client name" />
+      </div>
+
+      <div class="field">
+        <label for="project">Intended Project</label>
+        <input type="text" id="project" placeholder="Enter intended project" />
+      </div>
+
+      <div class="field">
+        <label for="travelInput">Travel Expenses (TSh)</label>
+        <input type="number" id="travelInput" value="0" />
+      </div>
+
+      <div class="field">
+        <label for="localInput">Local Transport Expenses (TSh)</label>
+        <input type="number" id="localInput" value="0" />
+      </div>
+
+      <div class="field">
+        <label for="allowanceInput">Allowance (TSh)</label>
+        <input type="number" id="allowanceInput" value="0" />
+      </div>
+
+      <div class="field">
+        <label for="foodInput">Food Expenses (TSh)</label>
+        <input type="number" id="foodInput" value="0" />
+      </div>
+
+      <div class="field">
+        <label for="accommodationInput">Accommodation Expenses (TSh)</label>
+        <input type="number" id="accommodationInput" value="0" />
+      </div>
+    </div>
+
+    <button class="btn" onclick="calculateCost()">Calculate Total Site Visit Cost</button>
+
+    <div class="summary">
+      <h2>Cost Summary</h2>
+
+      <div class="result-row">
+        <span>Base Site Visit Cost</span>
+        <span id="base">TSh 0</span>
+      </div>
+
+      <div class="result-row">
+        <span>Travel Expense (Go & Return)</span>
+        <span id="travel">TSh 0</span>
+      </div>
+
+      <div class="result-row">
+        <span>Local Transport</span>
+        <span id="local">TSh 0</span>
+      </div>
+
+      <div class="result-row">
+        <span>Allowance</span>
+        <span id="allowance">TSh 0</span>
+      </div>
+
+      <div class="result-row">
+        <span>Food Expenses</span>
+        <span id="food">TSh 0</span>
+      </div>
+
+      <div class="result-row">
+        <span>Accommodation Expenses</span>
+        <span id="accommodation">TSh 0</span>
+      </div>
+
+      <div class="total" id="total">Total Cost: TSh 0</div>
+
+      <div class="summary" style="margin-top:30px;">
+        <h2>Invoice Description</h2>
+        <p id="invoiceText" style="line-height:1.8; color:#334155;">
+          Site visit Service for Project Assessment at [Location] for [Intended Project]. Total Site Visit Cost: TSh 0.
+        </p>
+        <button class="btn" style="margin-top:20px;" onclick="copyInvoiceText()">Copy Invoice Text</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function formatCurrency(value) {
+      return 'TSh ' + Number(value).toLocaleString();
+    }
+
+    function calculateCost() {
+      const location = document.getElementById('location').value;
+      const travelInput = Number(document.getElementById('travelInput').value || 0);
+      const localInput = Number(document.getElementById('localInput').value || 0);
+      const allowanceInput = Number(document.getElementById('allowanceInput').value || 0);
+      const foodInput = Number(document.getElementById('foodInput').value || 0);
+      const accommodationInput = Number(document.getElementById('accommodationInput').value || 0);
+
+      if (!location) {
+        alert('Please select a site location');
+        return;
+      }
+
+      const values = location.split(',').map(Number);
+      const [base, travel, local, allowance] = values;
+
+      const total = base + travelInput + localInput + allowanceInput + foodInput + accommodationInput;
+
+      document.getElementById('base').innerText = formatCurrency(base);
+      document.getElementById('travel').innerText = formatCurrency(travelInput);
+      document.getElementById('local').innerText = formatCurrency(localInput);
+      document.getElementById('allowance').innerText = formatCurrency(allowanceInput);
+      document.getElementById('food').innerText = formatCurrency(foodInput);
+      document.getElementById('accommodation').innerText = formatCurrency(accommodationInput);
+      document.getElementById('total').innerText = 'Total Cost: ' + formatCurrency(total);
+
+      const selectedLocation = document.getElementById('location').options[document.getElementById('location').selectedIndex].text;
+      const clientName = document.getElementById('clientName').value || 'Client Name';
+      const project = document.getElementById('project').value || 'Project Type';
+
+      document.getElementById('invoiceText').innerText = `Site visit Service for Project Assessment at ${selectedLocation} for ${project}. Total Site Visit Cost: ${formatCurrency(total)}.`;
+    }
+  
+    function copyInvoiceText() {
+      const invoiceText = document.getElementById('invoiceText').innerText;
+      navigator.clipboard.writeText(invoiceText).then(() => {
+        alert('Invoice text copied successfully!');
+      });
+    }
+  </script>
+</body>
+</html>

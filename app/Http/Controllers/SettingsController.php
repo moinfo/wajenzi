@@ -64,6 +64,12 @@ use App\Services\ApprovalService;
 use App\Traits\ClearsPermissionCache;
 use Spatie\Permission\PermissionRegistrar;
 
+// Calculator Models
+use App\Models\DesignServicePackage;
+use App\Models\DesignServiceAddon;
+use App\Models\DesignSpecialStructure;
+use App\Models\SiteVisitLocation;
+
 // BOQ Template Models
 use App\Models\BuildingType;
 use App\Models\BoqItemCategory;
@@ -150,7 +156,13 @@ class SettingsController extends Controller
             ['name'=>'Sub-Activities', 'route'=>'hr_settings_sub_activities', 'icon' => 'si si-puzzle', 'badge' => 0],
             ['name'=>'BOQ Items', 'route'=>'hr_settings_boq_items', 'icon' => 'si si-bag', 'badge' => 0],
             ['name'=>'BOQ Templates', 'route'=>'hr_settings_boq_templates', 'icon' => 'si si-docs', 'badge' => 0],
-            ['name'=>'Activity Templates', 'route'=>'hr_settings_activity_templates', 'icon' => 'si si-calendar', 'badge' => 0],
+            ['name'=>'Activity Templates',       'route'=>'hr_settings_activity_templates',         'icon' => 'si si-calendar',   'badge' => 0],
+            // Calculator Configuration
+            ['name'=>'Currencies',               'route'=>'hr_settings_currencies',                 'icon' => 'fa fa-coins',      'badge' => 0],
+            ['name'=>'Design Packages',          'route'=>'hr_settings_design_packages',            'icon' => 'fa fa-box-open',   'badge' => 0],
+            ['name'=>'Design Add-ons',           'route'=>'hr_settings_design_addons',              'icon' => 'fa fa-plus-square','badge' => 0],
+            ['name'=>'Special Structure Rates',  'route'=>'hr_settings_design_special_structures',  'icon' => 'fa fa-building',   'badge' => 0],
+            ['name'=>'Site Visit Locations',     'route'=>'hr_settings_site_visit_locations',       'icon' => 'fa fa-map-pin',    'badge' => 0],
 //            ['name'=>'Beneficiaries', 'route'=>'beneficiaries', 'icon' => 'si si-settings', 'badge' => 0],
 //            ['name'=>'Mawakala', 'route'=>'wakalas', 'icon' => 'si si-settings', 'badge' => 0],
         ];
@@ -1661,6 +1673,49 @@ class SettingsController extends Controller
             'objects' => ProjectActivityTemplate::with('role')->orderBy('sort_order')->get(),
         ];
         return view('pages.settings.settings_activity_templates')->with($data);
+    }
+
+    // ── Calculator Configuration ─────────────────────────────────────────────
+
+    public function currencies(Request $request)
+    {
+        if ($this->handleCrud($request, 'Currency')) return back();
+        return view('pages.settings.settings_currencies', [
+            'objects' => \App\Models\Currency::orderBy('sort_order')->orderBy('name')->get(),
+        ]);
+    }
+
+    public function design_packages(Request $request)
+    {
+        if ($this->handleCrud($request, 'DesignServicePackage')) return back();
+        return view('pages.settings.settings_design_packages', [
+            'objects' => DesignServicePackage::with([])->orderBy('rise_type')->orderBy('sort_order')->get(),
+            'addons'  => DesignServiceAddon::active()->orderBy('sort_order')->get(),
+        ]);
+    }
+
+    public function design_addons(Request $request)
+    {
+        if ($this->handleCrud($request, 'DesignServiceAddon')) return back();
+        return view('pages.settings.settings_design_addons', [
+            'objects' => DesignServiceAddon::orderBy('sort_order')->get(),
+        ]);
+    }
+
+    public function design_special_structures(Request $request)
+    {
+        if ($this->handleCrud($request, 'DesignSpecialStructure')) return back();
+        return view('pages.settings.settings_design_special_structures', [
+            'objects' => DesignSpecialStructure::orderBy('sort_order')->get(),
+        ]);
+    }
+
+    public function site_visit_locations(Request $request)
+    {
+        if ($this->handleCrud($request, 'SiteVisitLocation')) return back();
+        return view('pages.settings.settings_site_visit_locations', [
+            'objects' => SiteVisitLocation::orderBy('sort_order')->get(),
+        ]);
     }
 
     public function syncActivityRoles(Request $request)

@@ -260,7 +260,10 @@ class AjaxController
                     $charts_accounts = ChartAccount::all();
                     $charts_account_petty_cashs = ChartAccount::where('id',12)->get();
                     $roles = Role::all();
-                    $activity_templates = \App\Models\ProjectActivityTemplate::orderBy('sort_order')->get();
+                    $activity_templates       = \App\Models\ProjectActivityTemplate::orderBy('sort_order')->get();
+                    $design_service_addons    = \App\Models\DesignServiceAddon::active()->orderBy('sort_order')->get();
+                    $design_special_structures= \App\Models\DesignSpecialStructure::active()->orderBy('sort_order')->get();
+                    $site_visit_locations     = \App\Models\SiteVisitLocation::active()->orderBy('sort_order')->get();
                     $process_approval_flows = ProcessApprovalFlow::all();
                     $process_approval_flow_steps = ProcessApprovalFlowStep::all();
 
@@ -350,7 +353,10 @@ class AjaxController
                             'priorities' => $priorities,
                             'quotation_statuses' => $quotation_statuses,
                             'overall_conditions' => $overall_conditions,
-                            'activity_templates' => $activity_templates,
+                            'activity_templates'        => $activity_templates,
+                            'design_service_addons'     => $design_service_addons,
+                            'design_special_structures' => $design_special_structures,
+                            'site_visit_locations'      => $site_visit_locations,
                         ];
                     $object = $request->has('className') ? ucfirst($request->input('className')) : null;
                     $metadata = $request->has('metadata') ? $request->input('metadata') : [];

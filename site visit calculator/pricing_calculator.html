@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Service Pricing Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg-secondary: #f7f7f5;
+    --bg-info: #e6f1fb;
+    --bg-success: #eaf3de;
+    --bg-warning: #faeeda;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6b67;
+    --text-info: #185fa5;
+    --text-success: #3b6d11;
+    --border: rgba(0,0,0,0.12);
+    --border-hover: rgba(0,0,0,0.25);
+    --border-info: #378add;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    --accent: #185fa5;
+    --accent-light: #e6f1fb;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c;
+      --bg-secondary: #2a2a28;
+      --bg-info: #0c2a45;
+      --bg-success: #172504;
+      --bg-warning: #2e1a04;
+      --text-primary: #f0ede6;
+      --text-secondary: #9a9a94;
+      --text-info: #85b7eb;
+      --text-success: #97c459;
+      --border: rgba(255,255,255,0.12);
+      --border-hover: rgba(255,255,255,0.25);
+      --border-info: #378add;
+      --accent: #378add;
+      --accent-light: #0c2a45;
+    }
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; }
+
+  .header {
+    background: var(--accent);
+    color: #fff;
+    border-radius: var(--radius-lg);
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+  }
+  .header h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .header p { font-size: 14px; opacity: 0.8; }
+
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 10px;
+  }
+
+  .tab-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tab {
+    padding: 7px 18px;
+    font-size: 13px;
+    font-family: var(--font);
+    border: 0.5px solid var(--border-hover);
+    border-radius: 20px;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+  }
+  .tab:hover { background: var(--bg-secondary); }
+  .tab.active {
+    background: var(--accent-light);
+    color: var(--text-info);
+    border-color: transparent;
+    font-weight: 500;
+  }
+
+  .main-tabs { margin-bottom: 1.5rem; }
+  .main-tab-content { display: none; }
+  .main-tab-content.active { display: block; }
+
+  .pkg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 500px) { .pkg-grid { grid-template-columns: 1fr; } }
+
+  .pkg-card {
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 12px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    background: var(--bg);
+  }
+  .pkg-card:hover { border-color: var(--border-hover); }
+  .pkg-card.selected { border: 2px solid var(--border-info); }
+
+  .pkg-name { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .pkg-price { font-size: 20px; font-weight: 600; color: var(--text-info); margin-bottom: 8px; }
+  .pkg-items { font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+
+  .addons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 480px) { .addons-grid { grid-template-columns: 1fr; } }
+
+  .addon-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--bg);
+    transition: border-color 0.15s;
+    user-select: none;
+  }
+  .addon-item:hover { border-color: var(--border-hover); }
+  .addon-item.included { opacity: 0.5; cursor: not-allowed; }
+  .addon-item input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; }
+  .addon-price { margin-left: auto; color: var(--text-secondary); font-size: 12px; }
+
+  .floor-ctrl { display: flex; align-items: center; gap: 12px; }
+  .floor-btn {
+    width: 34px; height: 34px;
+    border: 0.5px solid var(--border-hover);
+    border-radius: var(--radius-md);
+    background: transparent;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-primary);
+    font-family: var(--font);
+    transition: background 0.1s;
+  }
+  .floor-btn:hover { background: var(--bg-secondary); }
+  .floor-val { font-size: 22px; font-weight: 600; min-width: 32px; text-align: center; }
+  .floor-hint { font-size: 13px; color: var(--text-secondary); }
+
+  .result-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    margin-top: 1rem;
+  }
+  .result-line {
+    display: flex; justify-content: space-between;
+    font-size: 13px; color: var(--text-secondary);
+    padding: 6px 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .result-line:last-of-type { border-bottom: none; }
+  .result-line span:last-child { font-weight: 500; color: var(--text-primary); }
+  .result-total {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border-hover);
+  }
+  .total-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 2px; }
+  .total-tzs { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .total-usd { font-size: 28px; font-weight: 700; color: var(--text-info); }
+
+  .invoice-box {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    margin-top: 1rem;
+  }
+  .invoice-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .invoice-text { font-size: 13px; line-height: 1.75; color: var(--text-primary); }
+  .copy-btn {
+    margin-top: 10px; padding: 6px 14px;
+    font-size: 12px; font-family: var(--font);
+    border: 0.5px solid var(--border-hover);
+    border-radius: var(--radius-md);
+    background: transparent; cursor: pointer;
+    color: var(--text-primary);
+    transition: background 0.1s;
+  }
+  .copy-btn:hover { background: var(--bg-secondary); }
+  .copy-btn.copied { color: var(--text-success); border-color: var(--text-success); }
+
+  input[type="text"], input[type="number"], select {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: var(--font);
+    border: 0.5px solid var(--border-hover);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: var(--accent); }
+  select { cursor: pointer; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 13px; color: var(--text-secondary); }
+
+  .dim-row { display: flex; gap: 10px; align-items: center; }
+  .dim-row input { width: 100px; }
+  .dim-row span { font-size: 14px; color: var(--text-secondary); }
+
+  .note {
+    font-size: 12px; color: var(--text-secondary);
+    background: var(--bg-warning);
+    border-radius: var(--radius-md);
+    padding: 8px 12px; margin-top: 10px;
+    display: none;
+  }
+  .note.show { display: block; }
+
+  .empty-state {
+    text-align: center; padding: 2rem;
+    color: var(--text-secondary); font-size: 14px;
+  }
+
+  .footer {
+    text-align: center; margin-top: 2rem;
+    font-size: 12px; color: var(--text-secondary);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Design Service Pricing Calculator</h1>
+    <p>Generate accurate invoice amounts for all design service types</p>
+  </div>
+
+  <!-- Main tabs -->
+  <div class="tab-row main-tabs">
+    <button class="tab active" onclick="setMainTab('standard')">Standard building</button>
+    <button class="tab" onclick="setMainTab('special')">Special structures</button>
+    <button class="tab" onclick="setMainTab('airbnb')">AirBnB / multi-unit</button>
+  </div>
+
+  <!-- ===== STANDARD TAB ===== -->
+  <div id="tab-standard" class="main-tab-content active">
+    <div class="card">
+      <div class="section-label">Building type</div>
+      <div class="tab-row" id="riseTabs">
+        <button class="tab active" onclick="setRise('low')">Low-rise (single storey)</button>
+        <button class="tab" onclick="setRise('high')">High-rise (multi storey)</button>
+      </div>
+    </div>
+
+    <div class="card" id="floorsCard" style="display:none">
+      <div class="section-label">Number of storeys above ground</div>
+      <div class="floor-ctrl">
+        <button class="floor-btn" onclick="adjFloor(-1)">−</button>
+        <div class="floor-val" id="floorVal">1</div>
+        <button class="floor-btn" onclick="adjFloor(1)">+</button>
+        <span class="floor-hint" id="floorLabel">= G+1</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Project location</div>
+      <input type="text" id="stdLocation" placeholder="e.g. Kigamboni, Dar es Salaam" oninput="renderStdResult()">
+    </div>
+
+    <div class="card">
+      <div class="section-label">Select package</div>
+      <div class="pkg-grid" id="pkgGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Add-on services (included items are pre-selected)</div>
+      <div class="addons-grid" id="addonList"></div>
+    </div>
+
+    <div id="stdResult"></div>
+  </div>
+
+  <!-- ===== SPECIAL STRUCTURES TAB ===== -->
+  <div id="tab-special" class="main-tab-content">
+    <div class="card">
+      <div class="section-label">Structure type</div>
+      <select id="specialType" onchange="renderSpecialFields()">
+        <option value="">— Select structure type —</option>
+        <option value="warehouse">Warehouse</option>
+        <option value="pool">Swimming pool</option>
+        <option value="pergola">Pergola</option>
+        <option value="playground">Playground</option>
+      </select>
+    </div>
+    <div id="specialFields"></div>
+    <div id="specialResult"></div>
+  </div>
+
+  <!-- ===== AIRBNB TAB ===== -->
+  <div id="tab-airbnb" class="main-tab-content">
+    <div class="card">
+      <div class="section-label">Number of units</div>
+      <div class="floor-ctrl">
+        <button class="floor-btn" onclick="adjUnits(-1)">−</button>
+        <div class="floor-val" id="unitVal">2</div>
+        <button class="floor-btn" onclick="adjUnits(1)">+</button>
+        <span class="floor-hint">units</span>
+      </div>
+      <div class="note" id="unitNote">⚠ More than 2 units — this case must be escalated to the CEO/MD for further calculation and pricing guidelines before invoicing.</div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Project location</div>
+      <input type="text" id="airbnbLocation" placeholder="e.g. Masaki, Dar es Salaam" oninput="renderAirbnb()">
+    </div>
+
+    <div class="card">
+      <div class="section-label">Package — PLATINUM Low-Rise (fixed)</div>
+      <div style="font-size:13px; line-height:1.9; color:var(--text-secondary)">
+        ✓ Architectural design &nbsp;·&nbsp; ✓ BOQ preparation<br>
+        ✓ Fence design &nbsp;·&nbsp; ✓ Servant's quarter design
+      </div>
+    </div>
+
+    <div id="airbnbResult"></div>
+  </div>
+
+  <div class="footer">All prices in USD, VAT exclusive · Converted to TZS at prevailing exchange rate</div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────
+const FX_RATE = 2640; // Update to live rate as needed
+
+const LOW_PKGS = [
+  { id:'silver',   name:'SILVER',   usd:320,  items:['Architectural design'] },
+  { id:'gold',     name:'GOLD',     usd:400,  items:['Architectural design','BOQ preparation'] },
+  { id:'platinum', name:'PLATINUM', usd:580,  items:['Architectural design','BOQ preparation','Fence design',"Servant's quarter design"] }
+];
+const HIGH_PKGS = [
+  { id:'silver',   name:'SILVER',   usd:1000, items:['Architectural design','Structural design'] },
+  { id:'gold',     name:'GOLD',     usd:1200, items:['Architectural design','Structural design','BOQ preparation'] },
+  { id:'platinum', name:'PLATINUM', usd:1400, items:['Architectural design','Structural design','BOQ preparation','Fence design',"Servant's quarter design"] }
+];
+const LOW_ADDONS = [
+  { id:'fence', label:'Fence design',             usd:120 },
+  { id:'boq',   label:'BOQ preparation',          usd:120 },
+  { id:'sq',    label:"Servant's quarter design", usd:150 }
+];
+const HIGH_ADDONS = [
+  { id:'fence', label:'Fence design',             usd:120 },
+  { id:'boq',   label:'BOQ preparation',          usd:240 },
+  { id:'sq',    label:"Servant's quarter design", usd:150 }
+];
+const SPECIAL_RATES = { warehouse:5000, pool:40000, pergola:30000, playground:5000 };
+const SPECIAL_LABELS = { warehouse:'Warehouse', pool:'Swimming pool', pergola:'Pergola', playground:'Playground' };
+
+// ── State ────────────────────────────────────────────────────
+let S = { rise:'low', floors:1, pkg:'silver', addons:[] };
+let airbnbUnits = 2;
+
+// ── Helpers ──────────────────────────────────────────────────
+function fmtUSD(n)  { return '$' + Math.round(n).toLocaleString(); }
+function fmtTZS(n)  { return 'TZS ' + Math.round(n * FX_RATE).toLocaleString(); }
+function getPkgs()  { return S.rise === 'low' ? LOW_PKGS  : HIGH_PKGS;  }
+function getAddons(){ return S.rise === 'low' ? LOW_ADDONS : HIGH_ADDONS; }
+
+function includedAddons(pkgId) {
+  const p = getPkgs().find(x => x.id === pkgId);
+  if (!p) return [];
+  const items = p.items.map(i => i.toLowerCase());
+  const map = { fence:'fence design', boq:'boq', sq:"servant's quarter" };
+  return Object.entries(map)
+    .filter(([,kw]) => items.some(i => i.includes(kw)))
+    .map(([k]) => k);
+}
+
+// ── Tab navigation ───────────────────────────────────────────
+function setMainTab(t) {
+  ['standard','special','airbnb'].forEach(id => {
+    document.getElementById('tab-'+id).classList.toggle('active', id === t);
+  });
+  document.querySelectorAll('.main-tabs .tab').forEach((b,i) => {
+    b.classList.toggle('active', ['standard','special','airbnb'][i] === t);
+  });
+}
+
+// ── Standard: rise ───────────────────────────────────────────
+function setRise(r) {
+  S.rise = r; S.pkg = 'silver'; S.addons = [];
+  document.getElementById('floorsCard').style.display = r === 'high' ? 'block' : 'none';
+  document.querySelectorAll('#riseTabs .tab').forEach((b,i) => {
+    b.classList.toggle('active', ['low','high'][i] === r);
+  });
+  renderPkgs(); renderAddons(); renderStdResult();
+}
+
+function adjFloor(d) {
+  S.floors = Math.max(1, S.floors + d);
+  document.getElementById('floorVal').textContent = S.floors;
+  document.getElementById('floorLabel').textContent = '= G+' + S.floors;
+  renderStdResult();
+}
+
+// ── Standard: packages ───────────────────────────────────────
+function renderPkgs() {
+  document.getElementById('pkgGrid').innerHTML = getPkgs().map(p => `
+    <div class="pkg-card${S.pkg === p.id ? ' selected' : ''}" onclick="selPkg('${p.id}')">
+      <div class="pkg-name">${p.name}</div>
+      <div class="pkg-price">${fmtUSD(p.usd)}</div>
+      <div class="pkg-items">${p.items.map(i => '✓ ' + i).join('<br>')}</div>
+    </div>`).join('');
+}
+
+function selPkg(id) {
+  S.pkg = id; S.addons = [];
+  renderPkgs(); renderAddons(); renderStdResult();
+}
+
+// ── Standard: addons ─────────────────────────────────────────
+function renderAddons() {
+  const included = includedAddons(S.pkg);
+  document.getElementById('addonList').innerHTML = getAddons().map(a => {
+    const isIn = included.includes(a.id);
+    const isChk = isIn || S.addons.includes(a.id);
+    return `
+      <label class="addon-item${isIn ? ' included' : ''}">
+        <input type="checkbox" ${isIn ? 'disabled' : ''} ${isChk ? 'checked' : ''}
+          onchange="toggleAddon('${a.id}', this.checked)">
+        <span>${a.label}</span>
+        <span class="addon-price">${isIn ? 'Included' : '+$' + a.usd}</span>
+      </label>`;
+  }).join('');
+}
+
+function toggleAddon(id, on) {
+  S.addons = on ? [...S.addons, id] : S.addons.filter(x => x !== id);
+  renderStdResult();
+}
+
+// ── Standard: result ─────────────────────────────────────────
+function calcStd() {
+  const pkgs   = getPkgs();
+  const basePkg = pkgs.find(p => p.id === S.pkg);
+  const silPkg  = pkgs.find(p => p.id === 'silver');
+  let base      = basePkg.usd;
+  let extraF    = S.rise === 'high' && S.floors > 1 ? S.floors - 1 : 0;
+  let extraCost = extraF * (silPkg.usd / 2);
+  const addonTotal = S.addons.reduce((sum, id) => {
+    const a = getAddons().find(x => x.id === id); return sum + (a ? a.usd : 0);
+  }, 0);
+  return { basePkg, base, extraF, extraCost, addonTotal, total: base + extraCost + addonTotal, silPkg };
+}
+
+function renderStdResult() {
+  const c   = calcStd();
+  const loc = document.getElementById('stdLocation').value.trim() || '[Location]';
+  const rise = S.rise === 'high' ? `G+${S.floors}` : 'single storey';
+  const type = S.rise === 'high' ? 'high-rise' : 'low-rise';
+  const addonNames = S.addons.map(id => {
+    const a = getAddons().find(x => x.id === id); return a ? a.label : '';
+  }).filter(Boolean);
+  const allServices = [...c.basePkg.items, ...addonNames];
+  const invText = `Design of a ${type} building (${rise}) at ${loc}, comprising: ${allServices.join(', ')}. Total: USD ${Math.round(c.total).toLocaleString()} (VAT exclusive), converted to TZS at prevailing exchange rate.`;
+
+  const lines = [
+    { l: `${c.basePkg.name} package (${S.rise}-rise)`, v: fmtUSD(c.base) }
+  ];
+  if (c.extraF > 0) lines.push({ l: `Extra ${c.extraF} floor(s) × ${fmtUSD(c.silPkg.usd / 2)} each`, v: '+' + fmtUSD(c.extraCost) });
+  S.addons.forEach(id => {
+    const a = getAddons().find(x => x.id === id);
+    if (a) lines.push({ l: a.label, v: '+$' + a.usd });
+  });
+
+  document.getElementById('stdResult').innerHTML = `
+    <div class="result-card">
+      <div class="section-label">Pricing breakdown</div>
+      ${lines.map(b => `<div class="result-line"><span>${b.l}</span><span>${b.v}</span></div>`).join('')}
+      <div class="result-total">
+        <div>
+          <div class="total-label">Total (VAT exclusive)</div>
+          <div class="total-tzs">≈ ${fmtTZS(c.total)}</div>
+        </div>
+        <div class="total-usd">${fmtUSD(c.total)}</div>
+      </div>
+    </div>
+    <div class="invoice-box">
+      <div class="invoice-title">Invoice description</div>
+      <div class="invoice-text" id="stdInvText">${invText}</div>
+      <button class="copy-btn" onclick="copyText('stdInvText', this)">Copy invoice text</button>
+    </div>`;
+}
+
+// ── Special structures ───────────────────────────────────────
+function renderSpecialFields() {
+  const type = document.getElementById('specialType').value;
+  const sf = document.getElementById('specialFields');
+  const sr = document.getElementById('specialResult');
+  if (!type) { sf.innerHTML = ''; sr.innerHTML = ''; return; }
+  sf.innerHTML = `
+    <div class="card">
+      <div class="section-label">Dimensions (metres)</div>
+      <div class="dim-row">
+        <input type="number" id="dimL" min="1" value="10" placeholder="Length" oninput="calcSpecial()">
+        <span>×</span>
+        <input type="number" id="dimW" min="1" value="8"  placeholder="Width"  oninput="calcSpecial()">
+        <span>m²</span>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Project location</label>
+        <input type="text" id="specialLoc" placeholder="e.g. Mikocheni, Dar es Salaam" oninput="calcSpecial()">
+      </div>
+    </div>`;
+  calcSpecial();
+}
+
+function calcSpecial() {
+  const type = document.getElementById('specialType').value;
+  if (!type) return;
+  const l   = parseFloat(document.getElementById('dimL').value) || 0;
+  const w   = parseFloat(document.getElementById('dimW').value) || 0;
+  const sqm = l * w;
+  const tzs = sqm * SPECIAL_RATES[type];
+  const loc = document.getElementById('specialLoc').value.trim() || '[Location]';
+  const label = SPECIAL_LABELS[type];
+  const invText = `${label} design at ${loc}, total area ${sqm.toLocaleString()} m² at TZS ${SPECIAL_RATES[type].toLocaleString()}/m². Total: TZS ${Math.round(tzs).toLocaleString()} (VAT exclusive).`;
+
+  document.getElementById('specialResult').innerHTML = `
+    <div class="result-card">
+      <div class="section-label">Pricing breakdown</div>
+      <div class="result-line"><span>Area</span><span>${sqm.toLocaleString()} m²</span></div>
+      <div class="result-line"><span>Rate (${label})</span><span>TZS ${SPECIAL_RATES[type].toLocaleString()} / m²</span></div>
+      <div class="result-total">
+        <div><div class="total-label">Total (VAT exclusive)</div></div>
+        <div class="total-usd" style="font-size:22px">TZS ${Math.round(tzs).toLocaleString()}</div>
+      </div>
+    </div>
+    <div class="invoice-box">
+      <div class="invoice-title">Invoice description</div>
+      <div class="invoice-text" id="specInvText">${invText}</div>
+      <button class="copy-btn" onclick="copyText('specInvText', this)">Copy invoice text</button>
+    </div>`;
+}
+
+// ── AirBnB ───────────────────────────────────────────────────
+function adjUnits(d) {
+  airbnbUnits = Math.max(1, airbnbUnits + d);
+  document.getElementById('unitVal').textContent = airbnbUnits;
+  renderAirbnb();
+}
+
+function renderAirbnb() {
+  const units = airbnbUnits;
+  const note  = document.getElementById('unitNote');
+  note.classList.toggle('show', units > 2);
+
+  if (units > 2) {
+    document.getElementById('airbnbResult').innerHTML = `
+      <div class="result-card">
+        <div class="empty-state">⚠ ${units} units requires CEO/MD approval before pricing can be issued.</div>
+      </div>`;
+    return;
+  }
+
+  const platinum = 580, silver = 320;
+  const extra = (units - 1) * (silver / 2);
+  const total = platinum + extra;
+  const loc   = document.getElementById('airbnbLocation').value.trim() || '[Location]';
+  const invText = `Design of AirBnB (${units} unit${units > 1 ? 's' : ''}) at ${loc}, including: Architectural design, BOQ preparation, Fence design, Servant's quarter design. Total: USD ${total.toLocaleString()} (VAT exclusive), converted to TZS at prevailing exchange rate.`;
+
+  document.getElementById('airbnbResult').innerHTML = `
+    <div class="result-card">
+      <div class="section-label">Pricing breakdown</div>
+      <div class="result-line"><span>PLATINUM Low-Rise base (1 unit)</span><span>${fmtUSD(platinum)}</span></div>
+      ${units > 1 ? `<div class="result-line"><span>${units-1} additional unit × ${fmtUSD(silver/2)}</span><span>+${fmtUSD(extra)}</span></div>` : ''}
+      <div class="result-total">
+        <div>
+          <div class="total-label">Total (VAT exclusive)</div>
+          <div class="total-tzs">≈ ${fmtTZS(total)}</div>
+        </div>
+        <div class="total-usd">${fmtUSD(total)}</div>
+      </div>
+    </div>
+    <div class="invoice-box">
+      <div class="invoice-title">Invoice description</div>
+      <div class="invoice-text" id="airInvText">${invText}</div>
+      <button class="copy-btn" onclick="copyText('airInvText', this)">Copy invoice text</button>
+    </div>`;
+
+  document.getElementById('airbnbLocation').oninput = renderAirbnb;
+}
+
+// ── Copy ─────────────────────────────────────────────────────
+function copyText(id, btn) {
+  const t = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(t).then(() => {
+    btn.textContent = '✓ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy invoice text'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────
+renderPkgs();
+renderAddons();
+renderStdResult();
+renderAirbnb();
+</script>
+</body>
+</html>
