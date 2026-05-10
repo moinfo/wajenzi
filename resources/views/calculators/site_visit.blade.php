@@ -94,7 +94,7 @@
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <div class="fw-semibold fs-sm">{{ $loc->name }}</div>
-                                        <div class="text-muted" style="font-size:11px">
+                                        <div class="text-muted location-card-base" style="font-size:11px">
                                             Base: TZS {{ number_format($loc->base_cost_tzs, 0) }}
                                         </div>
                                     </div>
@@ -335,13 +335,29 @@
         var rd = gid('rateDisplay');
         if (rd) {
             if (c.code === 'TZS') {
-                rd.textContent = '1 USD = ' + Math.round(TZS_RATE).toLocaleString() + ' TZS';
+                rd.textContent = 'Displaying in TZS';
             } else if (c.code === 'USD') {
-                rd.textContent = 'Displaying in USD (base currency)';
+                rd.textContent = 'Displaying in USD (1 USD = ' + Math.round(TZS_RATE).toLocaleString() + ' TZS)';
             } else {
-                rd.textContent = '1 USD = ' + c.rate.toLocaleString(undefined, {maximumFractionDigits: 4}) + ' ' + c.code;
+                rd.textContent = 'Displaying in ' + c.code + ' (1 USD = ' + c.rate.toLocaleString(undefined, {maximumFractionDigits: 4}) + ' ' + c.code + ')';
             }
         }
+        updateCardSubtitles();
+    }
+
+    function updateCardSubtitles() {
+        var c = getCur();
+        var sym = c.code === 'TZS' ? 'TZS' : c.code;
+        document.querySelectorAll('.location-card').forEach(function (card) {
+            var baseTzs     = parseFloat(card.dataset.base) || 0;
+            var baseDisplay = c.code === 'TZS'
+                ? Math.round(baseTzs)
+                : Math.round((baseTzs / TZS_RATE) * c.rate);
+            var subtitle = card.querySelector('.location-card-base');
+            if (subtitle) {
+                subtitle.textContent = 'Base: ' + sym + ' ' + baseDisplay.toLocaleString();
+            }
+        });
     }
 
     // ── Get input values (in TZS internally) ──────────────────────────
@@ -583,7 +599,7 @@
         });
         var totRow = ce('div', { cls: 'd-flex justify-content-between fw-bold mt-2 pt-1 border-top' });
         totRow.appendChild(ce('span', { text: 'Total' }));
-        totRow.appendChild(ce('span', { cls: 'text-primary', text: 'TZS ' + Math.round(total).toLocaleString() }));
+        totRow.appendChild(ce('span', { cls: 'text-primary', text: tzsToDisplay(total) }));
         preview.appendChild(totRow);
 
         var labels = { quote: 'Quotation', proforma: 'Proforma Invoice', invoice: 'Invoice' };
