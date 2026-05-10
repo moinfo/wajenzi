@@ -68,6 +68,7 @@
                     </div>
                 </div>
                 <div class="block-content py-3">
+                    <p class="fs-sm text-muted mb-3"><i class="fa fa-hand-pointer me-1"></i> Click on a location card below to load preset costs and start calculating.</p>
                     @if($locations->isEmpty())
                     <div class="text-center py-4 text-muted">
                         <i class="fa fa-map-marker-alt fa-2x mb-2 d-block"></i>
