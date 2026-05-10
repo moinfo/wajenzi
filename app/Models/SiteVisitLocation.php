@@ -8,15 +8,18 @@ class SiteVisitLocation extends Model
 {
     protected $fillable = [
         'name', 'base_cost_tzs', 'preset_travel_tzs', 'preset_local_tzs',
-        'preset_allowance_tzs', 'sort_order', 'is_active',
+        'preset_allowance_tzs', 'preset_food_tzs', 'preset_accommodation_tzs',
+        'sort_order', 'is_active',
     ];
 
     protected $casts = [
-        'base_cost_tzs'       => 'float',
-        'preset_travel_tzs'   => 'float',
-        'preset_local_tzs'    => 'float',
-        'preset_allowance_tzs'=> 'float',
-        'is_active'           => 'boolean',
+        'base_cost_tzs'            => 'float',
+        'preset_travel_tzs'        => 'float',
+        'preset_local_tzs'         => 'float',
+        'preset_allowance_tzs'     => 'float',
+        'preset_food_tzs'          => 'float',
+        'preset_accommodation_tzs' => 'float',
+        'is_active'                => 'boolean',
     ];
 
     public function scopeActive($query) { return $query->where('is_active', true); }

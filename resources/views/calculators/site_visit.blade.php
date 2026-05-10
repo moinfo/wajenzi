@@ -88,7 +88,9 @@
                                 data-base="{{ $loc->base_cost_tzs }}"
                                 data-travel="{{ $loc->preset_travel_tzs }}"
                                 data-local="{{ $loc->preset_local_tzs }}"
-                                data-allowance="{{ $loc->preset_allowance_tzs }}">
+                                data-allowance="{{ $loc->preset_allowance_tzs }}"
+                                data-food="{{ $loc->preset_food_tzs }}"
+                                data-accommodation="{{ $loc->preset_accommodation_tzs }}">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <div class="fw-semibold fs-sm">{{ $loc->name }}</div>
@@ -148,6 +150,24 @@
                                 <input type="number" id="costAllowance" class="form-control" min="0" step="1000">
                             </div>
                             <div class="form-text" id="preset-allowance-hint"></div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold fs-sm">Food Expenses</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text" id="sym-food">TZS</span>
+                                <input type="number" id="costFood" class="form-control" min="0" step="1000">
+                            </div>
+                            <div class="form-text" id="preset-food-hint"></div>
+                        </div>
+
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold fs-sm">Accommodation</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text" id="sym-accommodation">TZS</span>
+                                <input type="number" id="costAccommodation" class="form-control" min="0" step="1000">
+                            </div>
+                            <div class="form-text" id="preset-accommodation-hint"></div>
                         </div>
 
                         <div class="col-sm-6">
@@ -309,7 +329,7 @@
     function updateSymbols() {
         var c = getCur();
         var sym = c.code === 'TZS' ? 'TZS' : c.code;
-        ['sym-travel', 'sym-local', 'sym-allowance'].forEach(function (id) {
+        ['sym-travel', 'sym-local', 'sym-allowance', 'sym-food', 'sym-accommodation'].forEach(function (id) {
             gid(id).textContent = sym;
         });
         var rd = gid('rateDisplay');
@@ -341,21 +361,26 @@
 
     // ── Load location presets into inputs ─────────────────────────────
     function loadPresets(card) {
-        var base      = parseFloat(card.dataset.base)      || 0;
-        var travel    = parseFloat(card.dataset.travel)    || 0;
-        var local     = parseFloat(card.dataset.local)     || 0;
-        var allowance = parseFloat(card.dataset.allowance) || 0;
+        var travel        = parseFloat(card.dataset.travel)        || 0;
+        var local         = parseFloat(card.dataset.local)         || 0;
+        var allowance     = parseFloat(card.dataset.allowance)     || 0;
+        var food          = parseFloat(card.dataset.food)          || 0;
+        var accommodation = parseFloat(card.dataset.accommodation) || 0;
 
-        gid('costTravel').value    = displayVal(travel);
-        gid('costLocal').value     = displayVal(local);
-        gid('costAllowance').value = displayVal(allowance);
+        gid('costTravel').value        = displayVal(travel);
+        gid('costLocal').value         = displayVal(local);
+        gid('costAllowance').value     = displayVal(allowance);
+        gid('costFood').value          = displayVal(food);
+        gid('costAccommodation').value = displayVal(accommodation);
 
-        var c = getCur();
+        var c   = getCur();
         var sym = c.code === 'TZS' ? 'TZS' : c.code;
 
-        gid('preset-travel-hint').textContent    = 'Preset: ' + sym + ' ' + displayVal(travel).toLocaleString();
-        gid('preset-local-hint').textContent     = 'Preset: ' + sym + ' ' + displayVal(local).toLocaleString();
-        gid('preset-allowance-hint').textContent = 'Preset: ' + sym + ' ' + displayVal(allowance).toLocaleString();
+        gid('preset-travel-hint').textContent         = 'Preset: ' + sym + ' ' + displayVal(travel).toLocaleString();
+        gid('preset-local-hint').textContent          = 'Preset: ' + sym + ' ' + displayVal(local).toLocaleString();
+        gid('preset-allowance-hint').textContent      = 'Preset: ' + sym + ' ' + displayVal(allowance).toLocaleString();
+        gid('preset-food-hint').textContent           = 'Preset: ' + sym + ' ' + displayVal(food).toLocaleString();
+        gid('preset-accommodation-hint').textContent  = 'Preset: ' + sym + ' ' + displayVal(accommodation).toLocaleString();
     }
 
     // ── Result rendering ───────────────────────────────────────────────
@@ -370,19 +395,23 @@
         }
         gid('billingActions').style.display = '';
 
-        var travel    = inputTZS('costTravel');
-        var local     = inputTZS('costLocal');
-        var allowance = inputTZS('costAllowance');
-        var perDay    = travel + local + allowance;
-        var total     = perDay * days;
-        var locName   = selectedCard.querySelector('.fw-semibold').textContent;
+        var travel        = inputTZS('costTravel');
+        var local         = inputTZS('costLocal');
+        var allowance     = inputTZS('costAllowance');
+        var food          = inputTZS('costFood');
+        var accommodation = inputTZS('costAccommodation');
+        var perDay        = travel + local + allowance + food + accommodation;
+        var total         = perDay * days;
+        var locName       = selectedCard.querySelector('.fw-semibold').textContent;
 
         var lines = [
-            { label: 'Travel cost',    value: tzsToDisplay(travel)    },
-            { label: 'Local transport',value: tzsToDisplay(local)     },
-            { label: 'Daily allowance',value: tzsToDisplay(allowance) },
-            { label: 'Per-day total',  value: tzsToDisplay(perDay)    },
-            { label: 'Days',           value: days + ' day' + (days > 1 ? 's' : '') }
+            { label: 'Travel cost',       value: tzsToDisplay(travel)        },
+            { label: 'Local transport',   value: tzsToDisplay(local)         },
+            { label: 'Daily allowance',   value: tzsToDisplay(allowance)     },
+            { label: 'Food expenses',     value: tzsToDisplay(food)          },
+            { label: 'Accommodation',     value: tzsToDisplay(accommodation) },
+            { label: 'Per-day total',     value: tzsToDisplay(perDay)        },
+            { label: 'Days',              value: days + ' day' + (days > 1 ? 's' : '') }
         ];
 
         // Result card
@@ -416,6 +445,8 @@
             + '. Travel: ' + tzsToDisplay(travel)
             + ', Local transport: ' + tzsToDisplay(local)
             + ', Allowance: ' + tzsToDisplay(allowance)
+            + (food          ? ', Food: '          + tzsToDisplay(food)          : '')
+            + (accommodation ? ', Accommodation: ' + tzsToDisplay(accommodation) : '')
             + ' per day. Total: ' + tzsToDisplay(total) + ' (VAT exclusive).';
 
         var box = ce('div', {
@@ -471,7 +502,7 @@
     });
 
     // ── Input / notes changes ─────────────────────────────────────────
-    ['costTravel', 'costLocal', 'costAllowance', 'visitNotes'].forEach(function (id) {
+    ['costTravel', 'costLocal', 'costAllowance', 'costFood', 'costAccommodation', 'visitNotes'].forEach(function (id) {
         gid(id).addEventListener('input', renderResult);
     });
 
@@ -486,24 +517,22 @@
     window.openBillingModal = function (docType) {
         if (!selectedCard) { alert('Please select a location first.'); return; }
 
-        var travel    = inputTZS('costTravel');
-        var local     = inputTZS('costLocal');
-        var allowance = inputTZS('costAllowance');
-        var perDay    = travel + local + allowance;
-        var total     = perDay * days;
-        var locName   = selectedCard.querySelector('.fw-semibold').textContent;
-        var notes     = gid('visitNotes').value.trim();
-        var c         = getCur();
-
-        // All amounts stored in USD for billing (divide TZS by rate)
-        var travelUSD    = travel    / TZS_RATE;
-        var localUSD     = local     / TZS_RATE;
-        var allowanceUSD = allowance / TZS_RATE;
+        var travel        = inputTZS('costTravel');
+        var local         = inputTZS('costLocal');
+        var allowance     = inputTZS('costAllowance');
+        var food          = inputTZS('costFood');
+        var accommodation = inputTZS('costAccommodation');
+        var perDay        = travel + local + allowance + food + accommodation;
+        var total         = perDay * days;
+        var locName       = selectedCard.querySelector('.fw-semibold').textContent;
+        var notes         = gid('visitNotes').value.trim();
 
         var items = [
-            { item_name: 'Site Visit — ' + locName + ' (Travel)', quantity: 1,    unit_price: parseFloat(travelUSD.toFixed(4)) },
-            { item_name: 'Local Transport',                        quantity: 1,    unit_price: parseFloat(localUSD.toFixed(4)) },
-            { item_name: 'Daily Allowance — ' + locName,          quantity: days, unit_price: parseFloat(allowanceUSD.toFixed(4)) },
+            { item_name: 'Site Visit — ' + locName + ' (Travel)', quantity: 1,    unit_price: parseFloat((travel    / TZS_RATE).toFixed(4)) },
+            { item_name: 'Local Transport',                        quantity: 1,    unit_price: parseFloat((local     / TZS_RATE).toFixed(4)) },
+            { item_name: 'Daily Allowance — ' + locName,          quantity: days, unit_price: parseFloat((allowance / TZS_RATE).toFixed(4)) },
+            { item_name: 'Food Expenses — ' + locName,            quantity: days, unit_price: parseFloat((food      / TZS_RATE).toFixed(4)) },
+            { item_name: 'Accommodation — ' + locName,            quantity: days, unit_price: parseFloat((accommodation / TZS_RATE).toFixed(4)) },
         ].filter(function (i) { return i.unit_price > 0; });
 
         if (items.length === 0) { alert('Please enter cost values first.'); return; }

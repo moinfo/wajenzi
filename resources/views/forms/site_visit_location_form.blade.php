@@ -51,6 +51,18 @@
                     <input type="number" class="form-control" name="preset_allowance_tzs" value="{{ $object->preset_allowance_tzs ?? 0 }}" step="0.01" min="0">
                 </div>
             </div>
+            <div class="col-md-3">
+                <div class="form-group mb-3">
+                    <label>Preset Food (TZS)</label>
+                    <input type="number" class="form-control" name="preset_food_tzs" value="{{ $object->preset_food_tzs ?? 0 }}" step="0.01" min="0">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group mb-3">
+                    <label>Preset Accommodation (TZS)</label>
+                    <input type="number" class="form-control" name="preset_accommodation_tzs" value="{{ $object->preset_accommodation_tzs ?? 0 }}" step="0.01" min="0">
+                </div>
+            </div>
         </div>
         <div class="form-group mb-3">
             @if($object->id ?? null)
