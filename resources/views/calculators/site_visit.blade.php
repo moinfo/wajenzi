@@ -40,7 +40,9 @@
                         <div class="col-sm-7 d-flex align-items-end">
                             <div class="alert alert-info fs-sm py-2 mb-0 flex-grow-1">
                                 <i class="fa fa-info-circle me-1"></i>
-                                Preset costs are stored in TZS and converted to the selected currency.
+                                Preset costs stored in TZS &mdash;
+                                <span id="rateDisplay" class="fw-semibold">1 USD = {{ number_format($tzsRate, 0) }} TZS</span>
+                                <a href="{{ route('hr_settings_currencies') }}" class="ms-1 text-info" title="Configure rates" style="font-size:10px">(configure)</a>
                             </div>
                         </div>
                     </div>
@@ -310,6 +312,16 @@
         ['sym-travel', 'sym-local', 'sym-allowance'].forEach(function (id) {
             gid(id).textContent = sym;
         });
+        var rd = gid('rateDisplay');
+        if (rd) {
+            if (c.code === 'TZS') {
+                rd.textContent = '1 USD = ' + Math.round(TZS_RATE).toLocaleString() + ' TZS';
+            } else if (c.code === 'USD') {
+                rd.textContent = 'Displaying in USD (base currency)';
+            } else {
+                rd.textContent = '1 USD = ' + c.rate.toLocaleString(undefined, {maximumFractionDigits: 4}) + ' ' + c.code;
+            }
+        }
     }
 
     // ── Get input values (in TZS internally) ──────────────────────────
@@ -468,6 +480,7 @@
         updateSymbols();
         if (selectedCard) { loadPresets(selectedCard); renderResult(); }
     });
+    updateSymbols();
 
     // ── Billing modal ──────────────────────────────────────────────────
     window.openBillingModal = function (docType) {

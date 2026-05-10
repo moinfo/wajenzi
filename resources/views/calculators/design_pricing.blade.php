@@ -36,6 +36,11 @@
                                 </option>
                                 @endforeach
                             </select>
+                            <div class="text-muted mt-1" style="font-size:11px">
+                                <i class="fa fa-exchange-alt me-1"></i>
+                                <span id="rateDisplay">Displaying in USD (base currency)</span>
+                                <a href="{{ route('hr_settings_currencies') }}" class="ms-1" title="Configure rates">(configure)</a>
+                            </div>
                         </div>
                         <div class="col-sm-7">
                             <label class="form-label fw-semibold fs-sm mb-1">Project Location</label>
@@ -661,8 +666,21 @@
         else if (tab === 'special' && gid('specialSelect').value) renderSpecialResult();
         else if (tab === 'airbnb') renderAirbnb();
     }
-    gid('currencySelect').addEventListener('change', recalcAll);
+    function updateRateDisplay() {
+        var c  = getCur();
+        var rd = gid('rateDisplay');
+        if (!rd) return;
+        if (c.code === 'USD') {
+            rd.textContent = 'Displaying in USD (base currency)';
+        } else if (c.code === 'TZS') {
+            rd.textContent = '1 USD = ' + Math.round(TZS_RATE).toLocaleString() + ' TZS';
+        } else {
+            rd.textContent = '1 USD = ' + c.rate.toLocaleString(undefined, {maximumFractionDigits: 4}) + ' ' + c.code;
+        }
+    }
+    gid('currencySelect').addEventListener('change', function () { updateRateDisplay(); recalcAll(); });
     gid('locationInput').addEventListener('input',   recalcAll);
+    updateRateDisplay();
 
     // ── Location chips ─────────────────────────────────────────────────
     document.querySelectorAll('.loc-chip').forEach(function (btn) {
