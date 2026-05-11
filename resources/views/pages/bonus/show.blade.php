@@ -92,11 +92,21 @@
         <div class="block-header block-header-default">
             <h3 class="block-title">Task Details</h3>
             <div class="block-options">
-                @if($isAdmin && $task->status === 'pending')
-                    <form action="{{ route('architect-bonus.start', $task->id) }}" method="POST" class="d-inline">
+                @if(!$isAdmin && $task->status === 'pending' && $task->architect_id === auth()->id())
+                    <form action="{{ route('architect-bonus.accept', $task->id) }}" method="POST" class="d-inline"
+                          onsubmit="return confirm('Accept this task? The bonus clock will start from today.')">
                         @csrf
-                        <button type="submit" class="btn btn-sm btn-primary">
-                            <i class="fa fa-play mr-1"></i> Start Task
+                        <button type="submit" class="btn btn-sm btn-success">
+                            <i class="fa fa-check mr-1"></i> Accept Task
+                        </button>
+                    </form>
+                @endif
+                @if($isAdmin && $task->status === 'pending')
+                    <form action="{{ route('architect-bonus.start', $task->id) }}" method="POST" class="d-inline"
+                          onsubmit="return confirm('Force-start this task? This bypasses architect acceptance.')">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-warning">
+                            <i class="fa fa-forward mr-1"></i> Force Start
                         </button>
                     </form>
                 @endif
@@ -156,9 +166,23 @@
                 <div class="col-md-6">
                     <table class="table table-borderless">
                         <tr>
-                            <td class="text-muted" style="width:40%">Start Date</td>
+                            <td class="text-muted" style="width:40%">Planned Start</td>
                             <td>{{ $task->start_date->format('d M Y') }}</td>
                         </tr>
+                        @if($task->accepted_at)
+                        <tr>
+                            <td class="text-muted">Accepted On</td>
+                            <td>
+                                <span class="text-success"><i class="fa fa-check-circle mr-1"></i></span>
+                                {{ $task->accepted_at->format('d M Y, H:i') }}
+                            </td>
+                        </tr>
+                        @elseif($task->status === 'pending')
+                        <tr>
+                            <td class="text-muted">Accepted On</td>
+                            <td><span class="badge badge-warning">Awaiting architect acceptance</span></td>
+                        </tr>
+                        @endif
                         <tr>
                             <td class="text-muted">Scheduled Completion</td>
                             <td>{{ $task->scheduled_completion_date->format('d M Y') }}</td>

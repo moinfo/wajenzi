@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ContentCreatorController extends Controller
 {
@@ -190,6 +191,30 @@ class ContentCreatorController extends Controller
     {
         $task->delete();
         return response()->json(['success' => true]);
+    }
+
+    public function uploadAttachment(Request $request, ContentCreatorTask $task)
+    {
+        $request->validate([
+            'file' => 'required|file|max:51200|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,pdf,ai,psd,svg,zip,sketch',
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store("content-creator/attachments/{$task->id}", 'public');
+
+        $attachments   = $task->attachments ?? [];
+        $attachments[] = [
+            'name'        => $file->getClientOriginalName(),
+            'path'        => $path,
+            'url'         => Storage::url($path),
+            'mime'        => $file->getMimeType(),
+            'uploaded_by' => Auth::id(),
+            'uploaded_at' => now()->toISOString(),
+        ];
+
+        $task->update(['attachments' => $attachments]);
+
+        return response()->json(['success' => true, 'attachments' => $attachments]);
     }
 
     public function setTarget(Request $request)

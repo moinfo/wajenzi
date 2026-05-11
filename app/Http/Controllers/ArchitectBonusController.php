@@ -246,7 +246,33 @@ class ArchitectBonusController extends Controller
     }
 
     /**
-     * Mark task as in_progress (admin only).
+     * Architect accepts their assigned task — starts the bonus clock.
+     */
+    public function accept($id)
+    {
+        $user = Auth::user();
+        $task = ArchitectBonusTask::findOrFail($id);
+
+        if ($task->architect_id !== $user->id) {
+            abort(403);
+        }
+
+        if ($task->status !== 'pending') {
+            return back()->with('error', 'This task cannot be accepted.');
+        }
+
+        $now = now();
+        $task->update([
+            'accepted_at' => $now,
+            'start_date'  => $now->toDateString(),
+            'status'      => 'in_progress',
+        ]);
+
+        return back()->with('success', 'Task accepted! The bonus clock has started from today.');
+    }
+
+    /**
+     * Admin force-starts a pending task (bypasses architect acceptance).
      */
     public function start($id)
     {
@@ -260,9 +286,14 @@ class ArchitectBonusController extends Controller
             return back()->with('error', 'Only pending tasks can be started.');
         }
 
-        $task->update(['status' => 'in_progress']);
+        $now = now();
+        $task->update([
+            'accepted_at' => $task->accepted_at ?? $now,
+            'start_date'  => $task->accepted_at ? $task->start_date : $now->toDateString(),
+            'status'      => 'in_progress',
+        ]);
 
-        return back()->with('success', 'Task marked as in progress.');
+        return back()->with('success', 'Task force-started by admin.');
     }
 
     /**
@@ -360,6 +391,26 @@ class ArchitectBonusController extends Controller
         });
 
         return view('pages.bonus.report', compact('tasks', 'architectSummary', 'month'));
+    }
+
+    /**
+     * Delete a bonus task (admin only, pending tasks only).
+     */
+    public function destroy($id)
+    {
+        if (!$this->isAdmin()) {
+            abort(403);
+        }
+
+        $task = ArchitectBonusTask::findOrFail($id);
+
+        if ($task->status !== 'pending') {
+            return back()->with('error', 'Only pending tasks can be deleted.');
+        }
+
+        $task->delete();
+
+        return redirect()->route('architect-bonus.index')->with('success', 'Bonus task deleted.');
     }
 
     /**

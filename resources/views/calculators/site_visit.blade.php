@@ -463,7 +463,6 @@
         var notes    = gid('visitNotes').value.trim();
         var heading  = 'For site visit of a ' + (notes || '[project description]') + ' at ' + locName + '.';
         var breakdown = 'Base fee: ' + tzsToDisplay(base)
-            + (days > 1 ? ', ' + days + ' days' : ', 1 day')
             + (travel        ? ', Travel: '         + tzsToDisplay(travel)        : '')
             + (local         ? ', Local transport: ' + tzsToDisplay(local)        : '')
             + (allowance     ? ', Allowance: '      + tzsToDisplay(allowance)     : '')
@@ -570,7 +569,7 @@
         }];
 
         var invText = 'For site visit of a ' + (notes || '[project description]') + ' at ' + locName + '.\n'
-            + 'Base fee: ' + tzsToDisplay(base) + ', ' + days + ' day' + (days > 1 ? 's' : '')
+            + 'Base fee: ' + tzsToDisplay(base)
             + '. Total: ' + tzsToDisplay(total) + ' (VAT exclusive).';
 
         gid('billingDocType').value      = docType;

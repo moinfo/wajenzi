@@ -900,6 +900,16 @@
                                 </div>
                             </div>
                         </div>
+                        {{-- Attachments --}}
+                        <div class="mb-3">
+                            <div class="font-weight-bold mb-2" style="font-size:13px;"><i class="fas fa-paperclip mr-1 text-secondary"></i>Attachments</div>
+                            <div id="attachmentList" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;"></div>
+                            <label class="btn btn-sm btn-outline-secondary mb-0" style="cursor:pointer;">
+                                <i class="fas fa-upload mr-1"></i> Attach File
+                                <input type="file" id="attachmentInput" accept="image/*,video/*,.pdf,.ai,.psd,.svg,.zip,.sketch" style="display:none;" onchange="uploadAttachment(this)">
+                            </label>
+                            <span id="attachmentUploading" style="display:none;font-size:12px;color:#64748b;margin-left:8px;"><i class="fas fa-spinner fa-spin mr-1"></i>Uploading…</span>
+                        </div>
                         <div class="mt-3">
                             <div class="font-weight-bold mb-2" style="font-size:13px;"><i class="fas fa-comments mr-1 text-primary"></i>Comments</div>
                             <div class="comment-list" id="commentList"></div>
@@ -971,8 +981,8 @@
                         <label class="font-weight-bold" style="font-size:13px;">Target Posts This Month</label>
                         <input type="number" name="target_posts" class="form-control" min="0" placeholder="e.g. 30" required>
                     </div>
-                    <input type="hidden" name="month" value="{{ $mon }}">
-                    <input type="hidden" name="year" value="{{ $year }}">
+                    <input type="hidden" name="month" value="{{ (int)$mon }}">
+                    <input type="hidden" name="year" value="{{ (int)$year }}">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
@@ -1092,6 +1102,7 @@ $(function () {
 
                 renderBadges(task);
                 renderComments(task.comments || []);
+                renderAttachments(task.attachments || []);
 
                 document.getElementById('approveSection').style.display = task.status === 'in_review' ? '' : 'none';
                 $('#viewTaskModal').modal('show');
@@ -1168,6 +1179,63 @@ $(function () {
             list.appendChild(item);
         });
     }
+
+    // ─── Attachments ──────────────────────────────────────────────
+    function renderAttachments(attachments) {
+        const list = document.getElementById('attachmentList');
+        list.replaceChildren();
+        if (!attachments || !attachments.length) {
+            const empty = document.createElement('span');
+            empty.style.cssText = 'font-size:12px;color:#94a3b8;';
+            empty.textContent = 'No attachments yet.';
+            list.appendChild(empty);
+            return;
+        }
+        attachments.forEach(a => {
+            const isImage = /^image\//.test(a.mime || '');
+            const chip = document.createElement('a');
+            chip.href = a.url;
+            chip.target = '_blank';
+            chip.rel = 'noopener';
+            chip.style.cssText = 'display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:#f1f5f9;border-radius:20px;font-size:11.5px;color:#334155;text-decoration:none;border:1px solid #e2e8f0;max-width:200px;overflow:hidden;';
+            chip.title = a.name;
+            const icon = document.createElement('i');
+            icon.className = isImage ? 'fas fa-image' : 'fas fa-file';
+            icon.style.color = '#64748b';
+            const label = document.createElement('span');
+            label.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            label.textContent = a.name;
+            chip.appendChild(icon);
+            chip.appendChild(label);
+            list.appendChild(chip);
+        });
+    }
+
+    window.uploadAttachment = function (input) {
+        if (!input.files.length || !currentTaskId) return;
+        const file = input.files[0];
+        input.value = '';
+        const uploading = document.getElementById('attachmentUploading');
+        uploading.style.display = 'inline';
+        const form = new FormData();
+        form.append('file', file);
+        fetch(`/content-creator/tasks/${currentTaskId}/attachments`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+            body: form,
+        })
+        .then(r => r.json())
+        .then(res => {
+            uploading.style.display = 'none';
+            if (res.success) {
+                renderAttachments(res.attachments);
+                showToast('File attached!', 'success');
+            } else {
+                showToast(res.message || 'Upload failed.', 'error');
+            }
+        })
+        .catch(() => { uploading.style.display = 'none'; showToast('Upload failed.', 'error'); });
+    };
 
     // ─── Update Progress ──────────────────────────────────────────
     window.updateProgress = function (progress) {
@@ -1289,8 +1357,11 @@ $(function () {
                     $('#setTargetModal').modal('hide');
                     showToast('Target saved!', 'success');
                     setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(res.message || 'Could not save target.', 'error');
                 }
-            });
+            })
+            .catch(() => showToast('Could not save target.', 'error'));
     });
 
     // ─── Crew filter ──────────────────────────────────────────────

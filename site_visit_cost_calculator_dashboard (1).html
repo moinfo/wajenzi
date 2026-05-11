@@ -255,7 +255,7 @@
 
       document.getElementById('invoiceText').innerText = `Site visit Service for Project Assessment at ${selectedLocation} for ${project}. Total Site Visit Cost: ${formatCurrency(total)}.`;
     }
-  
+
     function copyInvoiceText() {
       const invoiceText = document.getElementById('invoiceText').innerText;
       navigator.clipboard.writeText(invoiceText).then(() => {

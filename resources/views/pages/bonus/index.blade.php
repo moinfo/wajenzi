@@ -175,17 +175,41 @@
                                     <span class="badge {{ $statusColors[$task->status] ?? 'badge-secondary' }}">
                                         {{ ucwords(str_replace('_', ' ', $task->status)) }}
                                     </span>
+                                    @if($task->status === 'pending' && !$task->accepted_at)
+                                        <br><small class="text-warning"><i class="fa fa-clock mr-1"></i>Needs acceptance</small>
+                                    @endif
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group">
                                         <a href="{{ route('architect-bonus.show', $task->id) }}" class="btn btn-sm btn-alt-secondary" title="View">
                                             <i class="fa fa-eye"></i>
                                         </a>
+                                        @if(!$isAdmin && $task->status === 'pending' && $task->architect_id === auth()->id())
+                                            <form action="{{ route('architect-bonus.accept', $task->id) }}" method="POST" class="d-inline"
+                                                  onsubmit="return confirm('Accept task {{ $task->task_number }}? The bonus clock will start from today.')">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-success" title="Accept Task">
+                                                    <i class="fa fa-check"></i> Accept
+                                                </button>
+                                            </form>
+                                        @endif
                                         @if($isAdmin && in_array($task->status, ['in_progress', 'completed']))
                                             <a href="{{ route('architect-bonus.score', $task->id) }}" class="btn btn-sm btn-alt-primary" title="Score">
                                                 <i class="fa fa-star"></i>
                                             </a>
                                         @endif
+                                        @can('Delete Bonus Task')
+                                            @if($task->status === 'pending')
+                                                <form action="{{ route('architect-bonus.destroy', $task->id) }}" method="POST" class="d-inline"
+                                                      onsubmit="return confirm('Delete task {{ $task->task_number }}? This cannot be undone.')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-alt-danger" title="Delete">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

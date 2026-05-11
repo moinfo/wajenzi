@@ -191,11 +191,11 @@
                                             @endif
                                             
                                             <div class="btn-group" role="group">
-                                                <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" 
-                                                        data-toggle="dropdown">
+                                                <button type="button" class="btn btn-sm btn-secondary dropdown-toggle"
+                                                        data-toggle="dropdown" data-boundary="viewport">
                                                     <i class="fa fa-ellipsis-h"></i>
                                                 </button>
-                                                <div class="dropdown-menu">
+                                                <div class="dropdown-menu dropdown-menu-right" style="z-index:1050">
                                                     <a class="dropdown-item" href="{{ route('billing.invoices.duplicate', $invoice) }}">
                                                         <i class="fa fa-copy"></i> Duplicate
                                                     </a>

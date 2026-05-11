@@ -89,6 +89,13 @@
                                     <i class="fa fa-ban mr-1"></i> Void Invoice
                                 </a>
                             @endif
+                            @if($invoice->is_editable)
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-danger" href="javascript:void(0)"
+                                   onclick="if(confirm('Delete invoice {{ $invoice->document_number }}? This cannot be undone.')) document.getElementById('deleteInvoiceForm').submit()">
+                                    <i class="fa fa-trash mr-1"></i> Delete Invoice
+                                </a>
+                            @endif
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="{{ route('billing.invoices.index') }}">
                                 <i class="fa fa-list mr-1"></i> Back to List
@@ -849,5 +856,12 @@ function calculateLateFee() {
 }
 </script>
 {{--@endpush--}}
+
+@if($invoice->is_editable)
+<form id="deleteInvoiceForm" method="POST" action="{{ route('billing.invoices.destroy', $invoice) }}" style="display:none">
+    @csrf
+    @method('DELETE')
+</form>
+@endif
 
 @endsection

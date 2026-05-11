@@ -623,6 +623,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/tasks/{task}/progress', [$c, 'updateProgress'])->name('tasks.progress');
         Route::post('/tasks/{task}/comments', [$c, 'addComment'])->name('tasks.comments');
         Route::post('/tasks/{task}/approve', [$c, 'approveTask'])->name('tasks.approve');
+        Route::post('/tasks/{task}/attachments', [$c, 'uploadAttachment'])->name('tasks.attachments');
         Route::post('/targets', [$c, 'setTarget'])->name('targets.set');
         Route::post('/crew/{user}/status', [$c, 'updateCrewStatus'])->name('crew.status');
     });
@@ -671,9 +672,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('architect-bonus/{id}', [App\Http\Controllers\ArchitectBonusController::class, 'show'])->name('architect-bonus.show');
     Route::get('architect-bonus/{id}/score', [App\Http\Controllers\ArchitectBonusController::class, 'score'])->name('architect-bonus.score');
     Route::post('architect-bonus/{id}/score', [App\Http\Controllers\ArchitectBonusController::class, 'updateScore'])->name('architect-bonus.score.update');
+    Route::post('architect-bonus/{id}/accept', [App\Http\Controllers\ArchitectBonusController::class, 'accept'])->name('architect-bonus.accept');
     Route::post('architect-bonus/{id}/start', [App\Http\Controllers\ArchitectBonusController::class, 'start'])->name('architect-bonus.start');
     Route::post('architect-bonus/{id}/paid', [App\Http\Controllers\ArchitectBonusController::class, 'markPaid'])->name('architect-bonus.paid');
     Route::post('architect-bonus/max-units', [App\Http\Controllers\ArchitectBonusController::class, 'getMaxUnits'])->name('architect-bonus.max-units');
+    Route::delete('architect-bonus/{id}', [App\Http\Controllers\ArchitectBonusController::class, 'destroy'])->name('architect-bonus.destroy');
 
 // Project Invoice Routes
     Route::match(['get', 'post'], '/project_invoices', [App\Http\Controllers\ProjectInvoiceController::class, 'index'])->name('project_invoices');
