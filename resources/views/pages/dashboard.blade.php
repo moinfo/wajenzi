@@ -149,16 +149,6 @@
                 <h1 class="welcome-title">Welcome back, {{ Auth::user()->name }}! 👋</h1>
                 <p class="welcome-subtitle">Here's what's happening with your construction projects today</p>
             </div>
-            <div class="welcome-actions">
-                <a href="{{ route('projects') }}" class="action-btn primary">
-                    <i class="fa fa-building"></i>
-                    Projects
-                </a>
-                <a href="{{ route('eSMS') }}" class="action-btn secondary">
-                    <i class="fa fa-envelope"></i>
-                    eSMS
-                </a>
-            </div>
         </div>
 
         <!-- Key Metrics Grid -->
