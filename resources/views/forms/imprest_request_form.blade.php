@@ -1,11 +1,9 @@
 <?php
-use App\Models\PettyCashRefillRequest;
 $document_id = \App\Classes\Utility::getLastId('ImprestRequest')+1;
-$balance = PettyCashRefillRequest::getCurrentBalanceBetweenPettyCashRefillRequestAndImprestRequest();
 ?>
 
 <div class="block-content">
-    <form method="post" enctype="multipart/form-data" autocomplete="off" onsubmit="return validateForm()">
+    <form method="post" enctype="multipart/form-data" autocomplete="off">
         @csrf
         <div class="form-group">
             <label for="example-nf-email" class="control-label required">Expenses Sub Category</label>
@@ -28,11 +26,6 @@ $balance = PettyCashRefillRequest::getCurrentBalanceBetweenPettyCashRefillReques
         <div class="form-group">
             <label for="example-nf-description" class="control-label required">Description</label>
             <textarea type="text" class="form-control" rows="4" id="description" name="description" required>{{ $object->description ?? '' }}</textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="example-nf-amount" class="control-label required">Balance</label>
-            <input type="number" step=".01" class="form-control" id="balance" name="balance" value="{{ $balance }}" readonly>
         </div>
 
         <div class="form-group">
@@ -64,24 +57,6 @@ $balance = PettyCashRefillRequest::getCurrentBalanceBetweenPettyCashRefillReques
     </form>
 </div>
 <script>
-    document.getElementById('amount').addEventListener('keyup', function() {
-        const balance = parseFloat(document.getElementById('balance').value);
-        const amount = parseFloat(this.value);
-        if (amount > balance) {
-            alert('Imprest amount cannot be greater than the balance.');
-        }
-    });
-
-    function validateForm() {
-        const balance = parseFloat(document.getElementById('balance').value);
-        const amount = parseFloat(document.getElementById('amount').value);
-        if (amount > balance) {
-            alert('Imprest amount cannot be greater than the balance.');
-            return false;
-        }
-        return true;
-    }
-
     $("input.amount").each((i, ele) => {
         let clone = $(ele).clone(false);
         clone.attr("type", "text");

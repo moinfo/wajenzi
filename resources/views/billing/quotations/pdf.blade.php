@@ -233,7 +233,7 @@
     <!-- Header -->
     <div class="header">
         <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="{{ config('app.name') }}" style="max-height: 55px; margin-bottom: 5px;">
-        <div class="company-name">WAJENZI PROFESSIONAL CO. LTD</div>
+        <div class="company-name">WAJENZI<br>PROFESSIONAL CO. LTD</div>
         <div class="company-details">
             PSSSF COMMERCIAL COMPLEX, SAM NUJOMA ROAD, DSM-TANZANIA<br>
             P. O. Box 14492, Dar es Salaam Tanzania<br>
@@ -457,7 +457,7 @@
 
     {{-- ==================== PAGE 2: TERMS & CONDITIONS ==================== --}}
     @php
-        $hasTerms = !empty(trim(strip_tags($quotation->terms_conditions ?? '')));
+        $hasTerms = true;
     @endphp
     @if($hasTerms)
     <div class="page-break"></div>
@@ -465,7 +465,7 @@
         <!-- Header repeated for page 2 -->
         <div style="text-align: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #333;">
             <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="Wajenzi Professional" style="max-height: 40px; margin-bottom: 3px;">
-            <div style="font-size: 16px; font-weight: bold;">WAJENZI PROFESSIONAL CO. LTD</div>
+            <div style="font-size: 16px; font-weight: bold;">WAJENZI<br>PROFESSIONAL CO. LTD</div>
         </div>
 
         <h2>Terms & Conditions of the Quotation</h2>

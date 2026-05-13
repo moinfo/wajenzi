@@ -17,6 +17,7 @@
                         <h3 class="block-title">All Petty Cash Refill Request</h3>
                     </div>
                     <div class="block-content">
+                        @can('View Petty Cash Stats')
                         <div class="row m-t-10 mb-3">
                             <div class="col-md-4">
                                 <div class="card text-white bg-info">
@@ -46,6 +47,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endcan
                         <div class="row no-print m-t-10">
                             <div class="class col-md-12">
                                 <div class="class card-box">
