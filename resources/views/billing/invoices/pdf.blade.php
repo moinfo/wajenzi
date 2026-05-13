@@ -471,7 +471,7 @@
 
     {{-- ==================== PAGE 2: TERMS & CONDITIONS ==================== --}}
     @php
-        $hasTerms = true;
+        $hasTerms = !empty(trim(strip_tags($invoice->terms_conditions ?? '')));
     @endphp
     @if($hasTerms)
     <div class="page-break"></div>
