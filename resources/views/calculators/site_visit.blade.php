@@ -386,11 +386,11 @@
         var food          = parseFloat(card.dataset.food)          || 0;
         var accommodation = parseFloat(card.dataset.accommodation) || 0;
 
-        gid('costTravel').value        = displayVal(travel);
-        gid('costLocal').value         = displayVal(local);
-        gid('costAllowance').value     = displayVal(allowance);
-        gid('costFood').value          = displayVal(food);
-        gid('costAccommodation').value = displayVal(accommodation);
+        gid('costTravel').value        = displayVal(travel)        || '';
+        gid('costLocal').value         = displayVal(local)         || '';
+        gid('costAllowance').value     = displayVal(allowance)     || '';
+        gid('costFood').value          = displayVal(food)          || '';
+        gid('costAccommodation').value = displayVal(accommodation) || '';
 
         var c   = getCur();
         var sym = c.code === 'TZS' ? 'TZS' : c.code;
