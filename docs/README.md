@@ -11,8 +11,10 @@ Each file below documents one workflow: trigger, actors, status flow, gates, not
 | [project-approval-workflow.md](project-approval-workflow.md) | Client registration + Project creation — RingleSoft MD approval for both |
 | [project-schedule-workflow.md](project-schedule-workflow.md) | Architect schedule — MD approval, activity execution, B7 structural trigger |
 | [boq-workflow.md](boq-workflow.md) | BOQ Preparation Plan → BOQ — QS prepares after structural design approval |
+| [qs-workflow.md](qs-workflow.md) | QS full role — BOQ Plan → BOQ → procurement oversight, dashboard, downstream |
 | [structural-design-approval-workflow.md](structural-design-approval-workflow.md) | Civil Engineer — 3 stages, work schedule gate, RingleSoft final sign-off |
 | [service-design-approval-workflow.md](service-design-approval-workflow.md) | Service Engineer — 4 MEP stages (Electrical, FADS, ICT, HVAC), work schedule gate |
+| [engineer-workflow.md](engineer-workflow.md) | Site Engineer daily reports — work activities, labor, materials, payments, MD approval |
 
 ### Procurement
 
@@ -46,6 +48,7 @@ Each file below documents one workflow: trigger, actors, status flow, gates, not
 | File | What it covers |
 |---|---|
 | [site-visit-workflow.md](site-visit-workflow.md) | Site Visit (auto-submit), Site Daily Report — RingleSoft MD approval |
+| [qa-workflow.md](qa-workflow.md) | Material Inspection (goods received → stock update) + Labor Inspection (artisan QA → payment unlock) |
 
 ---
 
