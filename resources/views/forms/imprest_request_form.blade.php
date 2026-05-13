@@ -47,7 +47,7 @@ $document_id = \App\Classes\Utility::getLastId('ImprestRequest')+1;
                 <button type="submit" class="btn btn-alt-primary" name="updateItem"><i class="si si-check"></i> Update</button>
             @else
                 <input type="hidden" name="document_id" value="{{$document_id}}">
-                <input type="hidden" name="created_by_id" value="{{Auth::user()->id}}">
+                <input type="hidden" name="create_by_id" value="{{Auth::user()->id}}">
                 <input type="hidden" name="document_number" value="IMPT/{{date('Y')}}/{{$document_id}}">
                 <input type="hidden" name="document_type_id" value="13">
                 <input type="hidden" name="link" value="finance/imprest_management/imprest_requests/{{$document_id}}/13">
