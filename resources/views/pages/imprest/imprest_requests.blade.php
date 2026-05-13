@@ -130,7 +130,9 @@
                                         </td>
 
                                         <td>
-                                            @if($imprest_request->status == 'PENDING')
+                                            @if($imprest_request->status == 'SUBMITTED')
+                                                <div class="badge badge-info">{{ $imprest_request->status}}</div>
+                                            @elseif($imprest_request->status == 'PENDING')
                                                 <div class="badge badge-warning">{{ $imprest_request->status}}</div>
                                             @elseif($imprest_request->status == 'APPROVED')
                                                 <div class="badge badge-primary">{{ $imprest_request->status}}</div>

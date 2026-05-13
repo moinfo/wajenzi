@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
 use RingleSoft\LaravelProcessApproval\Contracts\ApprovableModel;
 use RingleSoft\LaravelProcessApproval\ProcessApproval;
 use RingleSoft\LaravelProcessApproval\Traits\Approvable;
@@ -31,24 +30,61 @@ class ImprestRequest extends Model implements ApprovableModel
         return !empty($this->retirement_file);
     }
 
-    protected static function boot(): void
+    public function enableAutoSubmit(): bool
     {
-        parent::boot();
+        return true;
+    }
 
-        static::created(static function (ImprestRequest $model) {
-            if (!$model->bypassApprovalProcess()) {
-                $model->approvalStatus()->create([
-                    'steps'      => $model->approvalFlowSteps()->map(fn($s) => $s->toApprovalStatusArray()),
-                    'status'     => 'Created',
-                    'creator_id' => Auth::id(),
-                ]);
+    protected static function booted(): void
+    {
+        static::creating(static function (ImprestRequest $model) {
+            if (empty($model->status) || strtoupper($model->status) === 'CREATED') {
+                $model->status = 'SUBMITTED';
+            }
+            if ($model->getKey() !== null) {
+                self::purgeApprovalArtifacts($model->getKey());
             }
         });
+
+        static::created(static function (ImprestRequest $model) {
+            self::purgeApprovalArtifacts($model->getKey(), excludeStatusIds: [
+                optional($model->approvalStatus()->latest('id')->first())->id,
+            ]);
+        });
+
+        static::deleting(static function (ImprestRequest $model) {
+            self::purgeApprovalArtifacts($model->getKey());
+        });
+    }
+
+    private static function purgeApprovalArtifacts(int|string|null $imprestId, array $excludeStatusIds = []): void
+    {
+        if ($imprestId === null) {
+            return;
+        }
+
+        $type = self::class;
+
+        \Illuminate\Support\Facades\DB::table('process_approvals')
+            ->where('approvable_type', $type)
+            ->where('approvable_id', $imprestId)
+            ->delete();
+
+        $statusQuery = \Illuminate\Support\Facades\DB::table('process_approval_statuses')
+            ->where('approvable_type', $type)
+            ->where('approvable_id', $imprestId);
+
+        $excludeStatusIds = array_filter($excludeStatusIds);
+        if (!empty($excludeStatusIds)) {
+            $statusQuery->whereNotIn('id', $excludeStatusIds);
+        }
+
+        $statusQuery->delete();
     }
 
     public function onApprovalCompleted(ProcessApproval|\RingleSoft\LaravelProcessApproval\Models\ProcessApproval $approval): bool
     {
-        $this->status = 'approved';
+        $this->status = 'APPROVED';
         $this->updated_at = now();
         $this->save();
         return true;
