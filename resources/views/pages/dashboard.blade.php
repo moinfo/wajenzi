@@ -2201,100 +2201,121 @@
         }
 
         /* Metrics Grid */
+        /* ── Metric Cards ─────────────────────────────── */
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
+            gap: 1.1rem;
             margin-bottom: 1.5rem;
         }
 
         .metric-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1rem 1.15rem;
-            box-shadow: var(--shadow-sm);
-            border: 1px solid var(--wajenzi-gray-200);
-            transition: all 0.3s ease;
+            background: #fff;
+            border-radius: 16px;
+            padding: 0;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            border: 1px solid #e9ecef;
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
+            overflow: hidden;
+            position: relative;
         }
 
         .metric-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.13);
         }
+
+        /* coloured top accent bar per card type */
+        .metric-card::before {
+            content: '';
+            display: block;
+            height: 4px;
+            width: 100%;
+        }
+        .metric-card.financial::before { background: linear-gradient(90deg,#1565c0,#42a5f5); }
+        .metric-card.projects::before  { background: linear-gradient(90deg,#2e7d32,#66bb6a); }
+        .metric-card.team::before       { background: linear-gradient(90deg,#6a1b9a,#ab47bc); }
+        .metric-card.budget::before     { background: linear-gradient(90deg,#e65100,#ffa726); }
 
         .metric-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.6rem;
+            align-items: flex-start;
+            padding: 1.1rem 1.25rem 0;
         }
 
         .metric-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             color: white;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
-        .metric-card.financial .metric-icon { background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-blue-dark) 100%); }
-        .metric-card.projects .metric-icon { background: linear-gradient(135deg, var(--wajenzi-green) 0%, var(--wajenzi-green-dark) 100%); }
-        .metric-card.team .metric-icon { background: linear-gradient(135deg, var(--wajenzi-purple) 0%, var(--wajenzi-indigo) 100%); }
-        .metric-card.budget .metric-icon { background: linear-gradient(135deg, var(--wajenzi-orange) 0%, var(--wajenzi-red) 100%); }
+        .metric-card.financial .metric-icon { background: linear-gradient(135deg,#1565c0,#42a5f5); }
+        .metric-card.projects .metric-icon  { background: linear-gradient(135deg,#2e7d32,#66bb6a); }
+        .metric-card.team .metric-icon       { background: linear-gradient(135deg,#6a1b9a,#ab47bc); }
+        .metric-card.budget .metric-icon     { background: linear-gradient(135deg,#e65100,#ffa726); }
 
         .metric-trend {
             display: flex;
             align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem 0.75rem;
+            gap: 0.2rem;
+            padding: 0.2rem 0.6rem;
             border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.75rem;
+            font-weight: 700;
         }
-
-        .metric-trend.up {
-            background: rgba(34, 197, 94, 0.1);
-            color: var(--wajenzi-green);
-        }
+        .metric-trend.up   { background: #e8f5e9; color: #2e7d32; }
+        .metric-trend.down { background: #fce4ec; color: #c62828; }
 
         .metric-badge {
-            background: var(--wajenzi-gray-100);
-            color: var(--wajenzi-gray-700);
-            padding: 0.25rem 0.75rem;
+            background: #f1f3f5;
+            color: #495057;
+            padding: 0.2rem 0.65rem;
             border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.78rem;
+            font-weight: 700;
         }
 
         .metric-progress {
-            background: var(--wajenzi-gray-100);
-            color: var(--wajenzi-gray-700);
-            padding: 0.25rem 0.75rem;
+            background: #f1f3f5;
+            color: #495057;
+            padding: 0.2rem 0.65rem;
             border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .metric-content {
+            padding: 0.65rem 1.25rem 1.1rem;
         }
 
         .metric-content h3 {
-            font-size: 0.8rem;
-            color: var(--wajenzi-gray-600);
-            margin: 0 0 0.2rem 0;
-            font-weight: 500;
+            font-size: 0.72rem;
+            color: #868e96;
+            margin: 0 0 0.3rem 0;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
 
         .metric-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--wajenzi-gray-900);
-            margin-bottom: 0.15rem;
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #212529;
+            margin-bottom: 0.2rem;
+            line-height: 1.1;
         }
 
         .metric-period {
-            font-size: 0.75rem;
-            color: var(--wajenzi-gray-600);
+            font-size: 0.74rem;
+            color: #868e96;
             margin: 0;
         }
 
@@ -2307,17 +2328,18 @@
         .breakdown-item {
             display: flex;
             align-items: center;
-            gap: 0.25rem;
-            font-size: 0.875rem;
-            color: var(--wajenzi-gray-600);
+            gap: 0.3rem;
+            font-size: 0.82rem;
+            color: #495057;
+            font-weight: 500;
         }
 
         .progress-bar {
-            background: var(--wajenzi-gray-200);
-            height: 8px;
+            background: #e9ecef;
+            height: 6px;
             border-radius: 4px;
             overflow: hidden;
-            margin: 0.5rem 0;
+            margin: 0.55rem 0;
         }
 
         .progress-fill {
@@ -4586,10 +4608,6 @@
                 padding: 1.5rem;
             }
 
-            .metric-card {
-                padding: 1rem;
-            }
-
             .dashboard-section {
                 padding: 1rem;
             }
@@ -4665,83 +4683,6 @@
             box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
         }
         .action-btn.secondary:hover { transform: translateY(-1px); box-shadow: var(--wd-shadow-hover); }
-
-        /* Metrics — true responsive grid */
-        .metrics-grid {
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-card {
-            background: var(--wd-surface);
-            border: 1px solid var(--wd-border);
-            border-radius: var(--wd-radius);
-            padding: 1.1rem 1.2rem;
-            box-shadow: var(--wd-shadow-1);
-            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-        }
-        .metric-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--wd-shadow-hover);
-            border-color: #DBEAFE;
-        }
-        .metric-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            font-size: 1rem;
-            box-shadow: 0 4px 10px -4px rgba(37, 99, 235, 0.45);
-        }
-        .metric-card.financial .metric-icon { background: linear-gradient(135deg, #2563EB, #1D4ED8); box-shadow: 0 4px 10px -4px rgba(37, 99, 235, 0.5); }
-        .metric-card.projects  .metric-icon { background: linear-gradient(135deg, #22C55E, #16A34A); box-shadow: 0 4px 10px -4px rgba(34, 197, 94, 0.5); }
-        .metric-card.team      .metric-icon { background: linear-gradient(135deg, #7C3AED, #4F46E5); box-shadow: 0 4px 10px -4px rgba(124, 58, 237, 0.5); }
-        .metric-card.budget    .metric-icon { background: linear-gradient(135deg, #F59E0B, #D97706); box-shadow: 0 4px 10px -4px rgba(245, 158, 11, 0.5); }
-        .metric-trend {
-            font-size: 0.72rem;
-            padding: 0.18rem 0.55rem;
-            border-radius: 999px;
-            font-weight: 600;
-        }
-        .metric-trend.up   { background: rgba(34, 197, 94, 0.12); color: var(--wd-success); }
-        .metric-trend.down { background: rgba(220, 38, 38, 0.12); color: var(--wd-danger); }
-        .metric-badge,
-        .metric-progress {
-            font-size: 0.72rem;
-            padding: 0.18rem 0.55rem;
-            border-radius: 999px;
-            background: #F1F5F9;
-            color: var(--wd-ink-2);
-            font-weight: 600;
-        }
-        .metric-content h3 {
-            font-size: 0.78rem;
-            color: var(--wd-mute);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin: 0 0 0.3rem 0;
-        }
-        .metric-value {
-            font-size: clamp(1.2rem, 1.8vw, 1.55rem);
-            font-weight: 700;
-            color: var(--wd-ink);
-            letter-spacing: -0.015em;
-            line-height: 1.1;
-        }
-        .metric-period {
-            font-size: 0.78rem;
-            color: var(--wd-mute);
-        }
-        .progress-bar {
-            background: #E2E8F0;
-            height: 6px;
-            border-radius: 999px;
-            margin: 0.55rem 0 0.4rem 0;
-        }
-        .progress-fill {
-            background: linear-gradient(90deg, #F59E0B, #DC2626);
-            border-radius: 999px;
-        }
 
         /* Dashboard Grid — auto-fit responsive */
         .dashboard-grid {
