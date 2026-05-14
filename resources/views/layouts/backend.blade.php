@@ -71,10 +71,6 @@
             padding: 0.55rem 0;
             border-top: 1px solid rgba(255,255,255,0.06);
         }
-        @media (min-width: 992px) {
-            #page-container.sidebar-o #page-footer,
-            #page-container.sidebar-o .wajenzi-footer { left: 280px !important; }
-        }
 
         .footer-content {
             display: flex;
@@ -106,15 +102,21 @@
         }
 
         /* ── Sidebar width override ──────────────────
-           Codebase framework uses 230px sidebar.
-           Our sidebar is 280px — override everywhere. */
+           Codebase framework assumes 230px sidebar.
+           Our sidebar is 280px — override everywhere.
+           Also covers page-header-modern (our default) which the
+           framework does NOT offset by itself. */
         @media (min-width: 992px) {
-            #page-container.sidebar-o              { padding-left: 280px !important; }
-            #page-container.sidebar-r.sidebar-o    { padding-right: 280px !important; padding-left: 0 !important; }
-            #page-container.page-header-fixed.sidebar-o #page-header,
-            #page-container.page-header-glass.sidebar-o #page-header { left: 280px !important; }
-            #page-container.page-header-fixed.sidebar-r.sidebar-o #page-header,
-            #page-container.page-header-glass.sidebar-r.sidebar-o #page-header { right: 280px !important; left: 0 !important; }
+            #page-container.sidebar-o { padding-left: 280px !important; }
+            #page-container.sidebar-r.sidebar-o { padding-right: 280px !important; padding-left: 0 !important; }
+
+            /* Header left: covers fixed, glass, AND modern variants */
+            #page-container.sidebar-o #page-header { left: 280px !important; }
+            #page-container.sidebar-r.sidebar-o #page-header { right: 280px !important; left: 0 !important; }
+
+            /* Footer left */
+            #page-container.sidebar-o #page-footer,
+            #page-container.sidebar-o .wajenzi-footer { left: 280px !important; }
         }
 
         /* ── Main Layout Structure ──────────────── */
