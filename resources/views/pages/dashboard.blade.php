@@ -785,7 +785,7 @@
             <!-- Pending Approvals -->
             <div class="dashboard-section approvals">
                 <div class="section-header">
-                    <h2>Pending Approvals</h2>
+                    <h2><i class="fa fa-clock"></i>Pending Approvals</h2>
                     <span class="section-count">{{ array_sum(array_column($status_docs, 'count')) }}</span>
                 </div>
                 <div class="approval-list">
@@ -985,7 +985,7 @@
             @if(isset($completedActivities) && $completedActivities->count() > 0)
             <div class="dashboard-section project-activities-todo">
                 <div class="section-header">
-                    <h2><i class="fa fa-check-circle mr-2" style="color:#28a745;"></i>Completed Design Stages</h2>
+                    <h2><i class="fa fa-check-circle"></i>Completed Design Stages</h2>
                     <small class="text-muted">Recent completed milestones across all active projects</small>
                 </div>
                 <div class="followup-list">
@@ -1740,7 +1740,7 @@
             <!-- Project Status -->
             <div class="dashboard-section projects-status">
                 <div class="section-header">
-                    <h2>Project Status</h2>
+                    <h2><i class="fa fa-building"></i>Project Status</h2>
                     <button class="view-all-btn">View All</button>
                 </div>
                 <div class="project-list">
@@ -1797,7 +1797,7 @@
             <!-- Recent Activities -->
             <div class="dashboard-section activities">
                 <div class="section-header">
-                    <h2>Recent Activities</h2>
+                    <h2><i class="fa fa-stream"></i>Recent Activities</h2>
                     <button class="view-all-btn">View All</button>
                 </div>
                 <div class="activity-timeline">
@@ -1846,7 +1846,7 @@
             <!-- Charts Section -->
             <div class="dashboard-section charts">
                 <div class="section-header">
-                    <h2>Financial Analytics</h2>
+                    <h2><i class="fa fa-chart-line"></i>Financial Analytics</h2>
                     <div class="chart-filters">
                         <button class="filter-btn active">Week</button>
                         <button class="filter-btn">Month</button>
@@ -4939,7 +4939,8 @@
             .welcome-actions { width: 100%; }
             .action-btn { flex: 1; justify-content: center; }
             .metrics-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; }
-            .metric-card { padding: 0.9rem 1rem; }
+            .metric-header { padding: 0.9rem 1rem 0; }
+            .metric-content { padding: 0.5rem 1rem 0.9rem; }
             .metric-value { font-size: 1.15rem; }
             .followup-stats-row { grid-template-columns: repeat(2, 1fr); }
             .section-header { flex-wrap: wrap; }
@@ -4961,6 +4962,230 @@
                 animation: none !important;
             }
         }
+
+        /* ── Section Visual Identity ───────────────────────────────────
+           Each dashboard section gets a 3px left accent + tinted header
+           strip to visually separate sections at a glance.
+        ──────────────────────────────────────────────────────────────── */
+        .dashboard-section {
+            border-radius: var(--wd-radius, 14px);
+            border: 1px solid var(--wd-border, #E5E7EB);
+            box-shadow: 0 1px 3px rgba(15,23,42,0.05), 0 1px 2px rgba(15,23,42,0.03);
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.9rem 1.15rem 0.85rem;
+            margin-bottom: 0;
+            border-bottom: 1px solid #F1F5F9;
+            background: #FAFBFC;
+        }
+
+        .section-header h2 {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--wd-ink, #0F172A);
+            margin: 0;
+            letter-spacing: -0.005em;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        .section-header h2 i { font-size: 0.88rem; }
+
+        /* Accent left border per section type */
+        .dashboard-section.approvals              { border-left: 3px solid #3B82F6; }
+        .dashboard-section.followups-todo         { border-left: 3px solid #F59E0B; }
+        .dashboard-section.invoice-due-todo       { border-left: 3px solid #EF4444; }
+        .dashboard-section.project-progress-section { border-left: 3px solid #22C55E; }
+        .dashboard-section.project-activities-todo  { border-left: 3px solid #0EA5E9; }
+        .dashboard-section.followup-calendar      { border-left: 3px solid #8B5CF6; }
+        .dashboard-section.projects-status        { border-left: 3px solid #3B82F6; }
+        .dashboard-section.activities             { border-left: 3px solid #14B8A6; }
+        .dashboard-section.team-performance       { border-left: 3px solid #F59E0B; }
+        .dashboard-section.charts                 { border-left: 3px solid #3B82F6; }
+
+        /* Tinted header strip matching accent */
+        .dashboard-section.approvals              .section-header { background: #EFF6FF; border-bottom-color: #DBEAFE; }
+        .dashboard-section.followups-todo         .section-header { background: #FFFBEB; border-bottom-color: #FDE68A; }
+        .dashboard-section.invoice-due-todo       .section-header { background: #FEF2F2; border-bottom-color: #FECACA; }
+        .dashboard-section.project-progress-section .section-header { background: #F0FDF4; border-bottom-color: #BBF7D0; }
+        .dashboard-section.project-activities-todo  .section-header { background: #F0F9FF; border-bottom-color: #BAE6FD; }
+        .dashboard-section.followup-calendar      .section-header { background: #F5F3FF; border-bottom-color: #DDD6FE; }
+        .dashboard-section.projects-status        .section-header { background: #EFF6FF; border-bottom-color: #DBEAFE; }
+        .dashboard-section.activities             .section-header { background: #F0FDFA; border-bottom-color: #99F6E4; }
+        .dashboard-section.team-performance       .section-header { background: #FFFBEB; border-bottom-color: #FDE68A; }
+        .dashboard-section.charts                 .section-header { background: #EFF6FF; border-bottom-color: #DBEAFE; }
+
+        /* Section icon tint matching accent */
+        .dashboard-section.approvals              .section-header h2 i { color: #3B82F6; }
+        .dashboard-section.followups-todo         .section-header h2 i { color: #F59E0B; }
+        .dashboard-section.invoice-due-todo       .section-header h2 i { color: #EF4444; }
+        .dashboard-section.project-progress-section .section-header h2 i { color: #22C55E; }
+        .dashboard-section.project-activities-todo  .section-header h2 i { color: #0EA5E9; }
+        .dashboard-section.followup-calendar      .section-header h2 i { color: #8B5CF6; }
+        .dashboard-section.projects-status        .section-header h2 i { color: #3B82F6; }
+        .dashboard-section.activities             .section-header h2 i { color: #14B8A6; }
+        .dashboard-section.team-performance       .section-header h2 i { color: #F59E0B; }
+        .dashboard-section.charts                 .section-header h2 i { color: #3B82F6; }
+
+        /* Inner content padding — all direct content children need padding since section has padding:0 */
+        .dashboard-section .approval-list,
+        .dashboard-section .followup-list,
+        .dashboard-section .followup-stats-row,
+        .dashboard-section .inv-stats-grid,
+        .dashboard-section .inv-list,
+        .dashboard-section .project-list,
+        .dashboard-section .project-progress-list,
+        .dashboard-section .department-grid,
+        .dashboard-section .activity-timeline,
+        .dashboard-section .chart-container,
+        .dashboard-section .chart-legend,
+        .dashboard-section .chart-stats,
+        .dashboard-section .no-followups,
+        .dashboard-section .no-invoices,
+        .dashboard-section .calendar-container { padding-left: 1.1rem; padding-right: 1.1rem; }
+        .dashboard-section .calendar-container { padding-top: 0.85rem; padding-bottom: 0.85rem; }
+
+        .dashboard-section .chart-container { padding-top: 0.5rem; }
+        .dashboard-section .followup-stats-row { padding-bottom: 0; padding-top: 0.85rem; }
+        .dashboard-section .approval-list,
+        .dashboard-section .activity-timeline,
+        .dashboard-section .project-list { padding-top: 0.85rem; padding-bottom: 0.85rem; }
+        .dashboard-section .inv-stats-grid { padding-top: 0.85rem; }
+
+        .dashboard-section .followup-footer {
+            padding: 0.65rem 1.1rem 0.85rem;
+            border-top: 1px solid #F1F5F9;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Approval items — tighter, left accent bar on hover */
+        .approval-item {
+            padding: 0.75rem 0.9rem;
+            gap: 0.75rem;
+            border-radius: 10px;
+        }
+        .approval-item:hover {
+            border-color: #BFDBFE;
+            background: #EFF6FF;
+            transform: translateX(2px);
+        }
+        .approval-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            font-size: 1rem;
+            box-shadow: 0 3px 8px -3px rgba(0,0,0,0.22);
+        }
+        .approval-name { font-size: 0.9rem; }
+        .approval-desc { font-size: 0.76rem; }
+        .approval-badge {
+            background: #EF4444;
+            padding: 0.22rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            box-shadow: 0 2px 6px -2px rgba(239,68,68,0.45);
+        }
+
+        /* Section count badge */
+        .section-count {
+            background: var(--wd-brand, #2563EB);
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            box-shadow: 0 2px 6px -2px rgba(37,99,235,0.4);
+        }
+
+        /* Followup stat cards — taller with more visual weight */
+        .followup-stat-card {
+            border-radius: 10px;
+            padding: 0.75rem 0.65rem;
+            gap: 0.55rem;
+        }
+        .followup-stat-card .stat-number { font-size: 1.35rem; font-weight: 800; }
+        .followup-stat-card .stat-label  { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; }
+        .followup-stat-card .stat-icon   { width: 28px; height: 28px; border-radius: 7px; font-size: 0.8rem; }
+
+        /* Invoice stats — softer style matching followup-stat-cards */
+        .inv-stats-grid { gap: 0.6rem; margin-bottom: 0; }
+        .inv-stat {
+            border-radius: 10px;
+            padding: 0.75rem 0.5rem;
+        }
+        .inv-stat-num { font-size: 1.45rem; font-weight: 800; }
+        .inv-stat-lbl { font-size: 0.6rem; letter-spacing: 0.05em; }
+
+        /* View All button — more refined */
+        .followup-footer { display: flex; justify-content: center; }
+        .view-all-btn {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            color: #475569;
+            padding: 0.5rem 1.1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            gap: 0.4rem;
+            letter-spacing: 0.01em;
+        }
+        .view-all-btn:hover {
+            background: var(--wd-brand, #2563EB);
+            color: #fff;
+            border-color: var(--wd-brand, #2563EB);
+            box-shadow: 0 4px 12px -4px rgba(37,99,235,0.45);
+        }
+
+        /* Quick Action — per-button icon color via :nth-child */
+        .quick-actions {
+            border-radius: var(--wd-radius, 14px);
+            border: 1px solid var(--wd-border, #E5E7EB);
+            box-shadow: 0 1px 3px rgba(15,23,42,0.05);
+            padding: 0;
+            overflow: hidden;
+        }
+        .quick-actions h3 {
+            padding: 0.85rem 1.15rem;
+            background: #FAFBFC;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--wd-ink, #0F172A);
+            margin: 0;
+            letter-spacing: -0.005em;
+        }
+        .action-grid { padding: 0.85rem 1.1rem; gap: 0.65rem; }
+        .quick-action-btn {
+            padding: 0.95rem 0.6rem;
+            border-radius: 12px;
+            background: #F8FAFC;
+            border: 1px solid #E5E7EB;
+            font-size: 0.8rem;
+        }
+        .quick-action-btn i { font-size: 1.2rem; }
+        .quick-action-btn:nth-child(1) i { color: #3B82F6; }
+        .quick-action-btn:nth-child(2) i { color: #8B5CF6; }
+        .quick-action-btn:nth-child(3) i { color: #F59E0B; }
+        .quick-action-btn:nth-child(4) i { color: #0EA5E9; }
+        .quick-action-btn:nth-child(5) i { color: #22C55E; }
+        .quick-action-btn:nth-child(6) i { color: #64748B; }
+        .quick-action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px -6px rgba(15,23,42,0.18);
+        }
+        .quick-action-btn:nth-child(1):hover { background: #EFF6FF; border-color: #BFDBFE; color: #1E40AF; }
+        .quick-action-btn:nth-child(2):hover { background: #F5F3FF; border-color: #DDD6FE; color: #5B21B6; }
+        .quick-action-btn:nth-child(3):hover { background: #FFFBEB; border-color: #FDE68A; color: #92400E; }
+        .quick-action-btn:nth-child(4):hover { background: #F0F9FF; border-color: #BAE6FD; color: #0C4A6E; }
+        .quick-action-btn:nth-child(5):hover { background: #F0FDF4; border-color: #BBF7D0; color: #14532D; }
+        .quick-action-btn:nth-child(6):hover { background: #F8FAFC; border-color: #CBD5E1; color: #334155; }
+        .quick-action-btn:hover i { color: inherit; }
     </style>
 
     <!-- Attend Invoice Modal -->

@@ -376,7 +376,7 @@ class DashboardController extends Controller
             'ceoActiveProjects' => $ceoActiveProjects,
         ];
 
-        $this->notify('Welcome to Wajenzi Construction ERP', 'Hello'.' '.$user->name, 'success');
+//        $this->notify('Welcome to Wajenzi Construction ERP', 'Hello'.' '.$user->name, 'success');
 //        $this->notify_toast('success','hello');
         session()->put('success','Item created successfully.');
         return view('pages.dashboard')->with($data);
