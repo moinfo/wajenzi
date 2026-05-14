@@ -234,6 +234,73 @@ class DashboardController extends Controller
                 ->get();
         }
 
+        // CEO / Chief Executive Officer dashboard data
+        $ceoDesignStats        = [];
+        $ceoConstructionStats  = [];
+        $ceoInvoiceDetails     = collect();
+        $ceoPaidThisMonth      = 0;
+        $ceoRevenueBreakdown   = [];
+        $ceoTeamByDept         = collect();
+        $ceoActiveProjects     = collect();
+
+        if ($user->hasAnyRole(['CEO', 'Chief Executive Officer'])) {
+            $ceoDesignStats = [
+                'site_visits'    => \App\Models\ProjectSiteVisit::whereNotIn('status', ['APPROVED'])->count(),
+                'structural'     => \App\Models\ProjectStructuralDesign::whereNotIn('status', ['approved'])->count(),
+                'boq_plans'      => \App\Models\ProjectBoqPlan::whereNotIn('status', ['approved'])->count(),
+                'service_designs'=> \App\Models\ProjectServiceDesign::whereNotIn('status', ['approved'])->count(),
+            ];
+
+            $ceoConstructionStats = [
+                'completed'   => ProjectSchedule::where('status', 'completed')->count(),
+                'in_progress' => ProjectSchedule::where('status', 'in_progress')->count(),
+                'confirmed'   => ProjectSchedule::where('status', 'confirmed')->count(),
+            ];
+
+            $ceoInvoiceDetails = BillingDocument::with(['client', 'project', 'creator'])
+                ->unpaidWithDueDate()
+                ->orderByRaw("CASE WHEN due_date < CURDATE() THEN 0 WHEN due_date = CURDATE() THEN 1 ELSE 2 END")
+                ->orderBy('due_date', 'asc')
+                ->limit(30)
+                ->get();
+
+            $ceoPaidThisMonth = BillingDocument::where('document_type', 'invoice')
+                ->where('status', 'paid')
+                ->whereMonth('paid_at', now()->month)
+                ->whereYear('paid_at', now()->year)
+                ->count();
+
+            $ceoRevenueBreakdown = [
+                'site_visit' => BillingDocument::where('document_type', 'invoice')->where('status', 'paid')
+                    ->whereMonth('paid_at', now()->month)->whereYear('paid_at', now()->year)
+                    ->where(fn($q) => $q->where('title', 'like', '%site visit%')->orWhere('service_description', 'like', '%site visit%'))
+                    ->sum('total_amount'),
+                'drawing' => BillingDocument::where('document_type', 'invoice')->where('status', 'paid')
+                    ->whereMonth('paid_at', now()->month)->whereYear('paid_at', now()->year)
+                    ->where(fn($q) => $q->where('title', 'like', '%design%')->orWhere('title', 'like', '%drawing%')->orWhere('service_description', 'like', '%design%'))
+                    ->sum('total_amount'),
+                'construction' => BillingDocument::where('document_type', 'invoice')->where('status', 'paid')
+                    ->whereMonth('paid_at', now()->month)->whereYear('paid_at', now()->year)
+                    ->where(fn($q) => $q->where('title', 'like', '%construction%')->orWhere('service_description', 'like', '%construction%'))
+                    ->sum('total_amount'),
+                'consultation' => BillingDocument::where('document_type', 'invoice')->where('status', 'paid')
+                    ->whereMonth('paid_at', now()->month)->whereYear('paid_at', now()->year)
+                    ->where(fn($q) => $q->where('title', 'like', '%consult%')->orWhere('service_description', 'like', '%consult%'))
+                    ->sum('total_amount'),
+            ];
+
+            $ceoTeamByDept = User::with(['department', 'roles'])
+                ->where('type', 'STAFF')
+                ->orderBy('name')
+                ->get()
+                ->groupBy(fn($u) => $u->department?->name ?? 'Unassigned');
+
+            $ceoActiveProjects = \App\Models\Project::with(['client'])
+                ->where('status', 'APPROVED')
+                ->orderBy('project_name')
+                ->get();
+        }
+
         // Get invoice due dates for accountants
         $invoiceDueDates = collect();
         $overdueInvoicesCount = 0;
@@ -300,6 +367,13 @@ class DashboardController extends Controller
             'todayInvoicesCount' => $todayInvoicesCount,
             'upcomingInvoicesCount' => $upcomingInvoicesCount,
             'calendarInvoices' => $calendarInvoices,
+            'ceoDesignStats' => $ceoDesignStats,
+            'ceoConstructionStats' => $ceoConstructionStats,
+            'ceoInvoiceDetails' => $ceoInvoiceDetails,
+            'ceoPaidThisMonth' => $ceoPaidThisMonth,
+            'ceoRevenueBreakdown' => $ceoRevenueBreakdown,
+            'ceoTeamByDept' => $ceoTeamByDept,
+            'ceoActiveProjects' => $ceoActiveProjects,
         ];
 
         $this->notify('Welcome to Wajenzi Construction ERP', 'Hello'.' '.$user->name, 'success');

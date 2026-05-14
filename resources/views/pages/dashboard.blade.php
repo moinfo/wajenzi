@@ -235,6 +235,507 @@
             </div>
         </div>
 
+        {{-- ══════════════════════════════════════════════════════════════
+             CEO / Chief Executive Officer Executive Dashboard
+        ══════════════════════════════════════════════════════════════ --}}
+        @if(Auth::user()->hasAnyRole(['CEO', 'Chief Executive Officer']))
+        <div class="ceo-dashboard">
+            <div class="ceo-dashboard-header">
+                <div class="ceo-header-left">
+                    <i class="fa fa-crown ceo-crown-icon"></i>
+                    <div>
+                        <h2 class="ceo-title">Executive Summary</h2>
+                        <p class="ceo-subtitle">{{ now()->format('l, F j Y') }}</p>
+                    </div>
+                </div>
+                <div class="ceo-quick-actions">
+                    <a href="{{ route('reports') }}" class="ceo-action-btn">
+                        <i class="fa fa-chart-bar"></i> View Reports
+                    </a>
+                    <a href="{{ route('hr_settings') }}" class="ceo-action-btn secondary">
+                        <i class="fa fa-cog"></i> Settings
+                    </a>
+                </div>
+            </div>
+
+            <div class="ceo-grid">
+
+                {{-- ── 1. Pending Approvals ──────────────────────────── --}}
+                <div class="ceo-card" id="ceo-approvals-card">
+                    <div class="ceo-card-header" onclick="ceotoggle('ceo-approvals-body')">
+                        <span><i class="fa fa-check-square mr-2"></i>Pending Approvals</span>
+                        <span class="ceo-badge">{{ array_sum(array_column($status_docs, 'count')) }}</span>
+                        <i class="fa fa-chevron-down ceo-toggle-icon" id="ceo-approvals-chevron"></i>
+                    </div>
+                    <div class="ceo-card-body" id="ceo-approvals-body" style="display:none;">
+                        @foreach($status_docs as $doc)
+                            @if($doc['count'] > 0)
+                            <a href="{{ $doc['link'] }}" class="ceo-list-row">
+                                <div class="ceo-dot {{ $doc['color'] }}"></div>
+                                <span class="ceo-row-label">{{ $doc['name'] }}</span>
+                                <span class="ceo-row-count">{{ $doc['count'] }}</span>
+                            </a>
+                            @endif
+                        @endforeach
+                        @if(array_sum(array_column($status_docs, 'count')) === 0)
+                            <div class="ceo-empty"><i class="fa fa-check-circle text-success"></i> All caught up!</div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- ── 2. Project Activities ─────────────────────────── --}}
+                <div class="ceo-card">
+                    <div class="ceo-card-header" onclick="ceotoggle('ceo-activities-body')">
+                        <span><i class="fa fa-drafting-compass mr-2"></i>Project Activities</span>
+                        <i class="fa fa-chevron-down ceo-toggle-icon" id="ceo-activities-chevron"></i>
+                    </div>
+                    <div class="ceo-card-body" id="ceo-activities-body" style="display:none;">
+                        <div class="ceo-sub-section">
+                            <div class="ceo-sub-title"><i class="fa fa-pencil-ruler mr-1"></i>Design Pipeline</div>
+                            <a href="{{ route('project_site_visits') }}" class="ceo-list-row">
+                                <div class="ceo-dot blue"></div>
+                                <span class="ceo-row-label">Site Visits</span>
+                                <span class="ceo-row-count">{{ $ceoDesignStats['site_visits'] ?? 0 }}</span>
+                            </a>
+                            <a href="{{ route('structural_design.index') }}" class="ceo-list-row">
+                                <div class="ceo-dot purple"></div>
+                                <span class="ceo-row-label">Structural Design</span>
+                                <span class="ceo-row-count">{{ $ceoDesignStats['structural'] ?? 0 }}</span>
+                            </a>
+                            <a href="{{ route('project-boq-plans.index') }}" class="ceo-list-row">
+                                <div class="ceo-dot indigo"></div>
+                                <span class="ceo-row-label">BOQ Plans</span>
+                                <span class="ceo-row-count">{{ $ceoDesignStats['boq_plans'] ?? 0 }}</span>
+                            </a>
+                            <a href="{{ route('service_design.index') }}" class="ceo-list-row">
+                                <div class="ceo-dot green"></div>
+                                <span class="ceo-row-label">Service Design</span>
+                                <span class="ceo-row-count">{{ $ceoDesignStats['service_designs'] ?? 0 }}</span>
+                            </a>
+                        </div>
+                        <div class="ceo-sub-section mt-3">
+                            <div class="ceo-sub-title"><i class="fa fa-hard-hat mr-1"></i>Construction Schedules</div>
+                            <div class="ceo-list-row no-link">
+                                <div class="ceo-dot green"></div>
+                                <span class="ceo-row-label">Completed</span>
+                                <span class="ceo-row-count">{{ $ceoConstructionStats['completed'] ?? 0 }}</span>
+                            </div>
+                            <div class="ceo-list-row no-link">
+                                <div class="ceo-dot blue"></div>
+                                <span class="ceo-row-label">In Progress</span>
+                                <span class="ceo-row-count">{{ $ceoConstructionStats['in_progress'] ?? 0 }}</span>
+                            </div>
+                            <div class="ceo-list-row no-link">
+                                <div class="ceo-dot orange"></div>
+                                <span class="ceo-row-label">Confirmed / Pending</span>
+                                <span class="ceo-row-count">{{ $ceoConstructionStats['confirmed'] ?? 0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ── 3. High Priority Invoices ─────────────────────── --}}
+                <div class="ceo-card">
+                    <div class="ceo-card-header">
+                        <span><i class="fa fa-file-invoice-dollar mr-2"></i>Invoices</span>
+                    </div>
+                    <div class="ceo-card-body" id="ceo-invoices-body">
+                        <div class="ceo-inv-stats">
+                            <div class="ceo-inv-stat overdue" onclick="ceotoggle('ceo-inv-detail')">
+                                <span class="ceo-inv-num">{{ \App\Models\BillingDocument::overdueInvoices()->count() }}</span>
+                                <span class="ceo-inv-lbl">Overdue</span>
+                            </div>
+                            <div class="ceo-inv-stat today" onclick="ceotoggle('ceo-inv-detail')">
+                                <span class="ceo-inv-num">{{ \App\Models\BillingDocument::dueToday()->count() }}</span>
+                                <span class="ceo-inv-lbl">Due Today</span>
+                            </div>
+                            <div class="ceo-inv-stat upcoming" onclick="ceotoggle('ceo-inv-detail')">
+                                <span class="ceo-inv-num">{{ \App\Models\BillingDocument::upcomingDue()->count() }}</span>
+                                <span class="ceo-inv-lbl">Upcoming</span>
+                            </div>
+                            <div class="ceo-inv-stat paid" onclick="ceotoggle('ceo-inv-detail')">
+                                <span class="ceo-inv-num">{{ $ceoPaidThisMonth }}</span>
+                                <span class="ceo-inv-lbl">Paid</span>
+                            </div>
+                        </div>
+                        <div id="ceo-inv-detail" style="display:none;">
+                            @forelse($ceoInvoiceDetails as $inv)
+                            @php
+                                $invIsOverdue = $inv->is_overdue;
+                                $invDaysLeft = $inv->due_date ? now()->startOfDay()->diffInDays($inv->due_date->startOfDay(), false) : null;
+                            @endphp
+                            <a href="{{ route('billing.invoices.show', $inv->id) }}" class="ceo-list-row {{ $invIsOverdue ? 'is-overdue' : '' }}">
+                                <div class="ceo-dot {{ $invIsOverdue ? 'red' : ($inv->due_date?->isToday() ? 'orange' : 'blue') }}"></div>
+                                <div class="ceo-inv-info">
+                                    <span class="ceo-row-label">{{ $inv->document_number }}</span>
+                                    <span class="ceo-inv-meta">{{ $inv->client?->name ?? $inv->lead?->name ?? 'No Client' }}
+                                        @if($inv->creator) · {{ $inv->creator->name }}@endif</span>
+                                </div>
+                                <span class="ceo-row-count">
+                                    @if($invIsOverdue)
+                                        <span style="color:#dc3545;font-size:0.7rem;">{{ abs($invDaysLeft) }}d ago</span>
+                                    @elseif($inv->due_date?->isToday())
+                                        <span style="color:#fd7e14;font-size:0.7rem;">Today</span>
+                                    @else
+                                        <span style="font-size:0.7rem;">{{ $inv->due_date?->format('d M') }}</span>
+                                    @endif
+                                </span>
+                            </a>
+                            @empty
+                                <div class="ceo-empty"><i class="fa fa-check-circle text-success"></i> No outstanding invoices</div>
+                            @endforelse
+                            <div class="ceo-card-footer">
+                                <a href="{{ route('billing.invoices.index') }}" class="ceo-view-all">View All Invoices <i class="fa fa-arrow-right"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ── 4. Total Revenue Breakdown ───────────────────── --}}
+                <div class="ceo-card">
+                    <div class="ceo-card-header" onclick="ceotoggle('ceo-revenue-body')">
+                        <span><i class="fa fa-chart-line mr-2"></i>Total Revenue</span>
+                        <span class="ceo-badge">TZS {{ number_format($sales ?? 0, 0) }}</span>
+                        <i class="fa fa-chevron-down ceo-toggle-icon" id="ceo-revenue-chevron"></i>
+                    </div>
+                    <div class="ceo-card-body" id="ceo-revenue-body" style="display:none;">
+                        <p class="ceo-period-note">Paid invoices this month · categorised by description</p>
+                        <div class="ceo-list-row no-link">
+                            <div class="ceo-dot blue"></div>
+                            <span class="ceo-row-label"><i class="fa fa-walking mr-1"></i>Site Visit Income</span>
+                            <span class="ceo-row-count">TZS {{ number_format($ceoRevenueBreakdown['site_visit'] ?? 0, 0) }}</span>
+                        </div>
+                        <div class="ceo-list-row no-link">
+                            <div class="ceo-dot purple"></div>
+                            <span class="ceo-row-label"><i class="fa fa-pencil-ruler mr-1"></i>Drawing / Design</span>
+                            <span class="ceo-row-count">TZS {{ number_format($ceoRevenueBreakdown['drawing'] ?? 0, 0) }}</span>
+                        </div>
+                        <div class="ceo-list-row no-link">
+                            <div class="ceo-dot orange"></div>
+                            <span class="ceo-row-label"><i class="fa fa-hard-hat mr-1"></i>Construction</span>
+                            <span class="ceo-row-count">TZS {{ number_format($ceoRevenueBreakdown['construction'] ?? 0, 0) }}</span>
+                        </div>
+                        <div class="ceo-list-row no-link">
+                            <div class="ceo-dot green"></div>
+                            <span class="ceo-row-label"><i class="fa fa-comments mr-1"></i>Consultation</span>
+                            <span class="ceo-row-count">TZS {{ number_format($ceoRevenueBreakdown['consultation'] ?? 0, 0) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ── 5. Team Members by Department ────────────────── --}}
+                <div class="ceo-card">
+                    <div class="ceo-card-header" onclick="ceotoggle('ceo-team-body')">
+                        <span><i class="fa fa-users mr-2"></i>Team Members</span>
+                        <span class="ceo-badge">{{ $counts->total }}</span>
+                        <i class="fa fa-chevron-down ceo-toggle-icon" id="ceo-team-chevron"></i>
+                    </div>
+                    <div class="ceo-card-body" id="ceo-team-body" style="display:none;">
+                        @foreach($ceoTeamByDept as $dept => $members)
+                        <div class="ceo-dept-group">
+                            <div class="ceo-dept-header" onclick="ceotoggle('ceo-dept-{{ Str::slug($dept) }}')">
+                                <span>{{ $dept }}</span>
+                                <span class="ceo-badge-sm">{{ $members->count() }}</span>
+                            </div>
+                            <div class="ceo-dept-members" id="ceo-dept-{{ Str::slug($dept) }}" style="display:none;">
+                                @foreach($members as $member)
+                                <div class="ceo-member-row">
+                                    <i class="fa fa-user-circle ceo-member-icon"></i>
+                                    <span class="ceo-member-name">{{ $member->name }}</span>
+                                    <span class="ceo-member-role">{{ $member->roles->first()?->name ?? '—' }}</span>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- ── 6. Active Projects ────────────────────────────── --}}
+                <div class="ceo-card">
+                    <div class="ceo-card-header" onclick="ceotoggle('ceo-projects-body')">
+                        <span><i class="fa fa-building mr-2"></i>Active Projects</span>
+                        <span class="ceo-badge">{{ $ceoActiveProjects->count() }}</span>
+                        <i class="fa fa-chevron-down ceo-toggle-icon" id="ceo-projects-chevron"></i>
+                    </div>
+                    <div class="ceo-card-body" id="ceo-projects-body" style="display:none;">
+                        @forelse($ceoActiveProjects as $proj)
+                        <a href="{{ route('project.show', $proj->id) }}" class="ceo-list-row">
+                            <div class="ceo-dot green"></div>
+                            <div class="ceo-inv-info">
+                                <span class="ceo-row-label">{{ $proj->project_name }}</span>
+                                @if($proj->client)
+                                    <span class="ceo-inv-meta">{{ $proj->client->first_name }} {{ $proj->client->last_name }}</span>
+                                @endif
+                            </div>
+                            @if($proj->contract_value)
+                            <span class="ceo-row-count" style="font-size:0.7rem;">TZS {{ number_format($proj->contract_value, 0) }}</span>
+                            @endif
+                        </a>
+                        @empty
+                            <div class="ceo-empty">No active projects</div>
+                        @endforelse
+                        <div class="ceo-card-footer">
+                            <a href="{{ route('projects') }}" class="ceo-view-all">View All Projects <i class="fa fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>{{-- end ceo-grid --}}
+        </div>{{-- end ceo-dashboard --}}
+
+        <style>
+            .ceo-dashboard {
+                margin-bottom: 1.5rem;
+            }
+            .ceo-dashboard-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 1rem;
+                padding: 0.75rem 1rem;
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+                border-radius: 12px;
+                color: #fff;
+            }
+            .ceo-header-left {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+            .ceo-crown-icon {
+                font-size: 1.75rem;
+                color: #ffd700;
+            }
+            .ceo-title {
+                margin: 0;
+                font-size: 1.25rem;
+                font-weight: 700;
+                color: #fff;
+            }
+            .ceo-subtitle {
+                margin: 0;
+                font-size: 0.8rem;
+                color: rgba(255,255,255,0.65);
+            }
+            .ceo-quick-actions {
+                display: flex;
+                gap: 0.5rem;
+            }
+            .ceo-action-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                padding: 0.45rem 0.9rem;
+                background: rgba(255,255,255,0.15);
+                border: 1px solid rgba(255,255,255,0.25);
+                color: #fff;
+                border-radius: 8px;
+                font-size: 0.82rem;
+                text-decoration: none;
+                transition: background 0.2s;
+            }
+            .ceo-action-btn:hover { background: rgba(255,255,255,0.28); color:#fff; text-decoration:none; }
+            .ceo-action-btn.secondary { background: rgba(255,255,255,0.07); }
+
+            .ceo-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 1rem;
+            }
+            .ceo-card {
+                background: #fff;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                overflow: hidden;
+                border: 1px solid #e9ecef;
+            }
+            .ceo-card-header {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.85rem 1rem;
+                background: #f8f9fa;
+                border-bottom: 1px solid #e9ecef;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.9rem;
+                color: #343a40;
+                user-select: none;
+            }
+            .ceo-card-header:hover { background: #e9ecef; }
+            .ceo-toggle-icon {
+                margin-left: auto;
+                font-size: 0.75rem;
+                color: #6c757d;
+                transition: transform 0.25s;
+            }
+            .ceo-toggle-icon.open { transform: rotate(180deg); }
+            .ceo-badge {
+                margin-left: auto;
+                background: #0f3460;
+                color: #fff;
+                font-size: 0.72rem;
+                padding: 0.2rem 0.55rem;
+                border-radius: 20px;
+                font-weight: 600;
+            }
+            .ceo-badge-sm {
+                background: #6c757d;
+                color: #fff;
+                font-size: 0.65rem;
+                padding: 0.1rem 0.4rem;
+                border-radius: 20px;
+                font-weight: 600;
+            }
+            .ceo-card-body {
+                padding: 0.5rem 0;
+            }
+            .ceo-list-row {
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                padding: 0.5rem 1rem;
+                text-decoration: none;
+                color: #343a40;
+                transition: background 0.15s;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .ceo-list-row:last-child { border-bottom: none; }
+            .ceo-list-row:hover:not(.no-link) { background: #f8f9fa; }
+            .ceo-list-row.is-overdue { background: #fff5f5; }
+            .ceo-list-row.no-link { cursor: default; }
+            .ceo-row-label { flex: 1; font-size: 0.85rem; }
+            .ceo-row-count { font-weight: 700; font-size: 0.85rem; color: #495057; white-space: nowrap; }
+            .ceo-inv-info { flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
+            .ceo-inv-meta { font-size: 0.72rem; color: #6c757d; }
+            .ceo-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                flex-shrink: 0;
+            }
+            .ceo-dot.blue   { background: #0d6efd; }
+            .ceo-dot.purple { background: #6f42c1; }
+            .ceo-dot.green  { background: #28a745; }
+            .ceo-dot.orange { background: #fd7e14; }
+            .ceo-dot.red    { background: #dc3545; }
+            .ceo-dot.indigo { background: #3d5a80; }
+
+            .ceo-inv-stats {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.5rem;
+                padding: 0.75rem 1rem;
+            }
+            .ceo-inv-stat {
+                text-align: center;
+                padding: 0.6rem 0.4rem;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: opacity 0.2s;
+            }
+            .ceo-inv-stat:hover { opacity: 0.8; }
+            .ceo-inv-stat.overdue  { background: #fff5f5; }
+            .ceo-inv-stat.today    { background: #fff8ec; }
+            .ceo-inv-stat.upcoming { background: #f0f7ff; }
+            .ceo-inv-stat.paid     { background: #f0fff4; }
+            .ceo-inv-num {
+                display: block;
+                font-size: 1.4rem;
+                font-weight: 700;
+                line-height: 1;
+            }
+            .ceo-inv-stat.overdue  .ceo-inv-num { color: #dc3545; }
+            .ceo-inv-stat.today    .ceo-inv-num { color: #fd7e14; }
+            .ceo-inv-stat.upcoming .ceo-inv-num { color: #0d6efd; }
+            .ceo-inv-stat.paid     .ceo-inv-num { color: #28a745; }
+            .ceo-inv-lbl {
+                display: block;
+                font-size: 0.68rem;
+                color: #6c757d;
+                margin-top: 0.2rem;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+            }
+            .ceo-period-note { font-size: 0.75rem; color: #6c757d; padding: 0.25rem 1rem 0; margin: 0; }
+            .ceo-sub-section { padding: 0 0; }
+            .ceo-sub-title {
+                padding: 0.35rem 1rem;
+                font-size: 0.72rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                font-weight: 700;
+                color: #6c757d;
+                background: #f8f9fa;
+                border-bottom: 1px solid #e9ecef;
+                border-top: 1px solid #e9ecef;
+            }
+            .ceo-empty {
+                padding: 1rem;
+                text-align: center;
+                color: #6c757d;
+                font-size: 0.85rem;
+            }
+            .ceo-card-footer {
+                padding: 0.5rem 1rem;
+                border-top: 1px solid #f0f0f0;
+            }
+            .ceo-view-all {
+                font-size: 0.78rem;
+                color: #0d6efd;
+                text-decoration: none;
+                font-weight: 500;
+            }
+            .ceo-view-all:hover { text-decoration: underline; }
+
+            .ceo-dept-group { border-bottom: 1px solid #f0f0f0; }
+            .ceo-dept-group:last-child { border-bottom: none; }
+            .ceo-dept-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0.55rem 1rem;
+                cursor: pointer;
+                font-weight: 600;
+                font-size: 0.85rem;
+                color: #495057;
+            }
+            .ceo-dept-header:hover { background: #f8f9fa; }
+            .ceo-dept-members { padding: 0.25rem 0 0.25rem 1rem; background: #fafafa; }
+            .ceo-member-row {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.3rem 0;
+            }
+            .ceo-member-icon { color: #6c757d; font-size: 0.85rem; }
+            .ceo-member-name { flex: 1; font-size: 0.82rem; color: #343a40; }
+            .ceo-member-role { font-size: 0.7rem; color: #6c757d; }
+
+            @media (max-width: 768px) {
+                .ceo-grid { grid-template-columns: 1fr; }
+                .ceo-dashboard-header { flex-direction: column; gap: 0.75rem; align-items: flex-start; }
+                .ceo-inv-stats { grid-template-columns: repeat(2, 1fr); }
+            }
+        </style>
+
+        <script>
+            function ceotoggle(id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                var isOpen = el.style.display !== 'none';
+                el.style.display = isOpen ? 'none' : 'block';
+                // rotate corresponding chevron if it exists
+                var chevronId = id.replace('-body', '-chevron').replace('ceo-dept-', 'ceo-dept-chevron-');
+                var chevron = document.getElementById(chevronId);
+                if (chevron) {
+                    chevron.classList.toggle('open', !isOpen);
+                }
+            }
+        </script>
+        @endif
+
         <!-- Main Dashboard Grid -->
         <div class="dashboard-grid">
             <!-- Pending Approvals -->
