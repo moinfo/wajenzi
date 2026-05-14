@@ -152,25 +152,27 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1.25rem 2rem;
+        padding: 0 1.25rem;
         max-width: 100%;
         min-height: 80px;
         box-sizing: border-box;
+        gap: 0;
     }
 
     /* Header Sections */
     .header-left {
         display: flex;
         align-items: center;
-        gap: 1.5rem;
+        gap: 0.75rem;
         flex: 1;
+        min-width: 0;
         height: 100%;
     }
 
     .header-right {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.75rem;
         flex-shrink: 0;
         height: 100%;
     }
@@ -202,16 +204,17 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
 
     /* Sidebar Toggle */
     .sidebar-toggle {
-        background: var(--wajenzi-gray-100);
-        color: var(--wajenzi-gray-700);
-        padding: 0.875rem;
-        border-radius: 12px;
+        background: transparent;
+        color: var(--wajenzi-gray-600);
+        padding: 0.5rem;
+        border-radius: 10px;
         position: relative;
-        min-width: 44px;
-        min-height: 44px;
+        width: 36px;
+        height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
     }
 
     .sidebar-toggle:hover {
@@ -270,13 +273,14 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     .page-title-section {
         display: flex;
         flex-direction: column;
-        gap: 0.125rem;
+        gap: 0.1rem;
         justify-content: center;
-        height: 100%;
+        min-width: 0;
+        flex: 1;
     }
 
     .page-title {
-        font-size: 1.15rem;
+        font-size: 1rem;
         font-weight: 700;
         color: var(--wajenzi-gray-800);
         margin: 0;
@@ -287,10 +291,13 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     }
 
     .page-subtitle {
-        font-size: 0.8125rem;
+        font-size: 0.75rem;
         color: var(--wajenzi-gray-600);
         font-weight: 500;
         line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     /* Notification Button */
@@ -317,9 +324,11 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     .user-btn {
         background: var(--wajenzi-gray-50);
         border: 1px solid var(--wajenzi-gray-200);
-        padding: 0.5rem 1rem;
-        border-radius: 16px;
-        gap: 0.75rem;
+        padding: 0.4rem 0.75rem;
+        border-radius: 14px;
+        gap: 0.55rem;
+        max-width: 260px;
+        overflow: hidden;
     }
 
     .user-btn:hover {
@@ -343,16 +352,24 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     }
 
     .user-name {
-        font-size: 0.875rem;
+        font-size: 0.82rem;
         font-weight: 600;
         color: var(--wajenzi-gray-800);
         line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
     }
 
     .user-role {
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         color: var(--wajenzi-gray-600);
         line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 160px;
     }
 
     /* Dropdowns */
