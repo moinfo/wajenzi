@@ -1,6 +1,6 @@
 
 <div class="block-content">
-    <form method="post" action="{{route('update_password')}}" enctype="multipart/form-data"  autocomplete="off">
+    <form method="post" action="{{route('hr_settings_users')}}" enctype="multipart/form-data"  autocomplete="off">
         @csrf
         <div class="row">
             <div class="col-sm-4">
@@ -17,8 +17,8 @@
             </div>
             <div class="col-sm-4">
                 <div class="form-group">
-                    <label for="example-nf-password">Password</label>
-                    <input type="text" class="form-control" id="input-user-password" name="password" value="123456">
+                    <label for="example-nf-password">Password <small class="text-muted">(leave blank to keep current)</small></label>
+                    <input type="password" class="form-control" id="input-user-password" name="password" value="" placeholder="New password (optional)" autocomplete="new-password">
                 </div>
             </div>
         </div>
