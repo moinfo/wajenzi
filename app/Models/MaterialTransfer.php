@@ -149,8 +149,9 @@ class MaterialTransfer extends Model implements ApprovableModel
             $this->approved_by = auth()->id();
             $this->save();
 
-            // Move stock between projects' BOQ rows.
+            // Move stock between projects — BOQ rows and/or free-stock items.
             foreach ($this->items as $item) {
+                // BOQ source: mark as used
                 if ($item->source_boq_item_id) {
                     $source = ProjectBoqItem::find($item->source_boq_item_id);
                     if ($source) {
@@ -158,10 +159,38 @@ class MaterialTransfer extends Model implements ApprovableModel
                     }
                 }
 
+                // BOQ destination: mark as received
                 if ($item->destination_boq_item_id) {
                     $dest = ProjectBoqItem::find($item->destination_boq_item_id);
                     if ($dest) {
                         $dest->increment('quantity_received', (float) $item->quantity);
+                    }
+                }
+
+                // Free-stock source: deduct from on-hand quantity
+                if ($item->source_stock_item_id) {
+                    $stockSource = ProjectStockItem::find($item->source_stock_item_id);
+                    if ($stockSource) {
+                        $stockSource->decrement('quantity_on_hand', (float) $item->quantity);
+                    }
+                }
+
+                // Free-stock destination: add to existing stock item or create new one
+                if ($item->source_stock_item_id || ($item->destination_stock_item_id === null && !$item->source_boq_item_id && !$item->destination_boq_item_id)) {
+                    $stockSource = $item->source_stock_item_id ? ProjectStockItem::find($item->source_stock_item_id) : null;
+
+                    if ($item->destination_stock_item_id) {
+                        ProjectStockItem::where('id', $item->destination_stock_item_id)
+                            ->increment('quantity_on_hand', (float) $item->quantity);
+                    } elseif ($stockSource) {
+                        // Auto-create or find matching stock item at destination
+                        $destStock = ProjectStockItem::firstOrCreate(
+                            ['project_id' => $this->to_project_id, 'description' => $item->description, 'unit' => $item->unit],
+                            ['created_by_id' => $this->approved_by]
+                        );
+                        $destStock->increment('quantity_on_hand', (float) $item->quantity);
+                        $item->destination_stock_item_id = $destStock->id;
+                        $item->saveQuietly();
                     }
                 }
             }

@@ -135,33 +135,68 @@
 
                             <hr>
 
-                            <h5>Materials to transfer</h5>
-                            @if($sourceItems->isEmpty())
-                                <div class="alert alert-warning">No BOQ items at this source project have available stock to transfer.</div>
+                            <h5 class="d-flex align-items-center justify-content-between">
+                                Materials to transfer
+                                <a href="{{ route('project_stock.index', ['project_id' => $fromProjectId]) }}" target="_blank" class="btn btn-sm btn-alt-secondary">
+                                    <i class="fa fa-boxes mr-1"></i> Manage Site Stock
+                                </a>
+                            </h5>
+
+                            @if($sourceItems->isEmpty() && $sourceStockItems->isEmpty())
+                                <div class="alert alert-warning">
+                                    No BOQ items with available stock and no free-stock items at this source project.
+                                    <a href="{{ route('project_stock.index', ['project_id' => $fromProjectId]) }}">Add free-stock items</a> to enable custom transfers.
+                                </div>
                             @else
+                                {{-- Pass source stock items to JS --}}
+                                <script>
+                                    var sourceStockItems = @json($sourceStockItems->map(fn($s) => [
+                                        'id'          => $s->id,
+                                        'item_code'   => $s->item_code,
+                                        'description' => $s->description,
+                                        'unit'        => $s->unit,
+                                        'available'   => (float)$s->quantity_on_hand,
+                                    ]));
+                                </script>
+
                                 <div class="table-responsive">
                                     <table class="table table-bordered" id="items-table">
                                         <thead>
                                         <tr>
-                                            <th style="width:30%;">Source BOQ Item</th>
+                                            <th style="width:28%;">Source Item</th>
+                                            <th style="width:20%;">Free-Stock Item <small class="text-muted">(if custom)</small></th>
                                             <th>Description</th>
-                                            <th style="width:12%;">Qty</th>
-                                            <th style="width:10%;">Unit</th>
-                                            <th style="width:12%;">Available</th>
-                                            <th style="width:60px;"></th>
+                                            <th style="width:10%;">Qty</th>
+                                            <th style="width:8%;">Unit</th>
+                                            <th style="width:10%;">Available</th>
+                                            <th style="width:50px;"></th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                         <tr class="item-row">
                                             <td>
-                                                <select name="items[0][source_boq_item_id]" class="form-control source-select" data-row="0">
-                                                    <option value="">— Custom (no BOQ link) —</option>
+                                                <select name="items[0][source_boq_item_id]" class="form-control source-select boq-select">
+                                                    <option value="">— Custom / Free-Stock —</option>
                                                     @foreach($sourceItems as $bi)
                                                         <option value="{{ $bi->id }}"
                                                                 data-description="{{ $bi->description }}"
                                                                 data-unit="{{ $bi->unit }}"
                                                                 data-available="{{ max(0, ((float)$bi->quantity_received) - ((float)$bi->quantity_used)) }}">
-                                                            {{ $bi->item_code }} — {{ \Illuminate\Support\Str::limit($bi->description, 40) }}
+                                                            {{ $bi->item_code }} — {{ \Illuminate\Support\Str::limit($bi->description, 35) }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </td>
+                                            <td class="stock-cell">
+                                                <select name="items[0][source_stock_item_id]" class="form-control stock-select">
+                                                    <option value="">— None / New item —</option>
+                                                    @foreach($sourceStockItems as $si)
+                                                        <option value="{{ $si->id }}"
+                                                                data-description="{{ $si->description }}"
+                                                                data-unit="{{ $si->unit }}"
+                                                                data-available="{{ (float)$si->quantity_on_hand }}">
+                                                            {{ $si->item_code }} — {{ \Illuminate\Support\Str::limit($si->description, 30) }}
+                                                            ({{ number_format($si->quantity_on_hand, 2) }} {{ $si->unit }})
                                                         </option>
                                                     @endforeach
                                                 </select>
@@ -196,21 +231,47 @@
         (function () {
             let rowIndex = 1;
 
-            function bindSourceChange(select) {
-                select.addEventListener('change', function () {
-                    const row = this.closest('.item-row');
-                    const opt = this.options[this.selectedIndex];
-                    if (opt.value) {
+            function updateAvailable(row) {
+                const boqSelect   = row.querySelector('.boq-select');
+                const stockSelect = row.querySelector('.stock-select');
+                const avail       = row.querySelector('.available-display');
+
+                if (boqSelect && boqSelect.value) {
+                    // BOQ item selected — hide/disable stock dropdown
+                    row.querySelector('.stock-cell').style.opacity = '0.4';
+                    stockSelect.value = '';
+                    stockSelect.disabled = true;
+                    const opt = boqSelect.options[boqSelect.selectedIndex];
+                    row.querySelector('.description').value = opt.dataset.description || '';
+                    row.querySelector('.unit').value = opt.dataset.unit || '';
+                    avail.textContent = parseFloat(opt.dataset.available || 0).toFixed(2);
+                    avail.style.color = '';
+                } else {
+                    // Custom — enable stock dropdown
+                    row.querySelector('.stock-cell').style.opacity = '1';
+                    stockSelect.disabled = false;
+
+                    if (stockSelect && stockSelect.value) {
+                        const opt = stockSelect.options[stockSelect.selectedIndex];
                         row.querySelector('.description').value = opt.dataset.description || '';
                         row.querySelector('.unit').value = opt.dataset.unit || '';
-                        row.querySelector('.available-display').textContent = parseFloat(opt.dataset.available || 0).toFixed(2);
+                        const qty = parseFloat(opt.dataset.available || 0);
+                        avail.textContent = qty.toFixed(2) + ' (free-stock)';
+                        avail.style.color = qty > 0 ? '#28a745' : '#dc3545';
                     } else {
-                        row.querySelector('.available-display').textContent = '—';
+                        avail.textContent = '— new item';
+                        avail.style.color = '#6c757d';
                     }
-                });
+                }
             }
 
-            document.querySelectorAll('.source-select').forEach(bindSourceChange);
+            function bindRow(row) {
+                row.querySelector('.boq-select')?.addEventListener('change', () => updateAvailable(row));
+                row.querySelector('.stock-select')?.addEventListener('change', () => updateAvailable(row));
+                updateAvailable(row);
+            }
+
+            document.querySelectorAll('.item-row').forEach(bindRow);
 
             document.getElementById('add-row')?.addEventListener('click', function () {
                 const tbody = document.querySelector('#items-table tbody');
@@ -218,12 +279,13 @@
                 const clone = first.cloneNode(true);
                 clone.querySelectorAll('input, select').forEach(el => {
                     el.name = el.name.replace(/items\[\d+\]/, 'items[' + rowIndex + ']');
-                    if (el.tagName === 'SELECT') el.selectedIndex = 0;
+                    if (el.tagName === 'SELECT') { el.selectedIndex = 0; el.disabled = false; }
                     else el.value = '';
                 });
                 clone.querySelector('.available-display').textContent = '—';
+                clone.querySelector('.stock-cell').style.opacity = '1';
                 tbody.appendChild(clone);
-                bindSourceChange(clone.querySelector('.source-select'));
+                bindRow(clone);
                 rowIndex++;
             });
 

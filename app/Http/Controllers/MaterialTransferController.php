@@ -8,6 +8,7 @@ use App\Models\MaterialTransferItem;
 use App\Models\Project;
 use App\Models\ProjectBoqItem;
 use App\Models\ProjectMaterialRequest;
+use App\Models\ProjectStockItem;
 use App\Services\ApprovalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,10 +44,18 @@ class MaterialTransferController extends Controller
                 ->values()
             : collect();
 
+        $sourceStockItems = $fromProjectId
+            ? ProjectStockItem::where('project_id', $fromProjectId)
+                ->where('quantity_on_hand', '>', 0)
+                ->orderBy('description')
+                ->get()
+            : collect();
+
         return view('pages.procurement.material_transfer_create', [
-            'projects' => Project::orderBy('project_name')->get(),
-            'fromProjectId' => $fromProjectId,
-            'sourceItems' => $sourceItems,
+            'projects'              => Project::orderBy('project_name')->get(),
+            'fromProjectId'         => $fromProjectId,
+            'sourceItems'           => $sourceItems,
+            'sourceStockItems'      => $sourceStockItems,
             'expensesSubCategories' => ExpensesSubCategory::orderBy('name')->get(),
             'pendingMaterialRequests' => ProjectMaterialRequest::whereRaw("UPPER(status) NOT IN ('APPROVED','COMPLETED','REJECTED')")
                 ->orWhereNull('status')
@@ -77,17 +86,23 @@ class MaterialTransferController extends Controller
             'items.*.unit' => 'required|string|max:50',
         ]);
 
-        // Stock check on source: cannot transfer more than available at source.
+        // Stock check on source: cannot transfer more than available.
         foreach ($request->items as $i => $itemData) {
-            if (empty($itemData['source_boq_item_id'])) {
-                continue;
-            }
-            $source = ProjectBoqItem::find($itemData['source_boq_item_id']);
-            $available = max(0, ((float)$source->quantity_received) - ((float)$source->quantity_used));
-            if ((float)$itemData['quantity'] > $available) {
-                return back()->withErrors([
-                    "items.{$i}.quantity" => "Item {$source->item_code}: only {$available} {$source->unit} available at source.",
-                ])->withInput();
+            if (!empty($itemData['source_boq_item_id'])) {
+                $source = ProjectBoqItem::find($itemData['source_boq_item_id']);
+                $available = max(0, ((float)$source->quantity_received) - ((float)$source->quantity_used));
+                if ((float)$itemData['quantity'] > $available) {
+                    return back()->withErrors([
+                        "items.{$i}.quantity" => "BOQ item {$source->item_code}: only {$available} {$source->unit} available.",
+                    ])->withInput();
+                }
+            } elseif (!empty($itemData['source_stock_item_id'])) {
+                $stock = ProjectStockItem::find($itemData['source_stock_item_id']);
+                if ($stock && (float)$itemData['quantity'] > (float)$stock->quantity_on_hand) {
+                    return back()->withErrors([
+                        "items.{$i}.quantity" => "Stock item \"{$stock->description}\": only {$stock->quantity_on_hand} {$stock->unit} on hand.",
+                    ])->withInput();
+                }
             }
         }
 
@@ -109,19 +124,24 @@ class MaterialTransferController extends Controller
             ]);
 
             foreach ($request->items as $i => $itemData) {
-                $source = !empty($itemData['source_boq_item_id'])
+                $boqSource = !empty($itemData['source_boq_item_id'])
                     ? ProjectBoqItem::find($itemData['source_boq_item_id'])
                     : null;
 
+                $stockSource = !empty($itemData['source_stock_item_id'])
+                    ? ProjectStockItem::find($itemData['source_stock_item_id'])
+                    : null;
+
                 MaterialTransferItem::create([
-                    'material_transfer_id' => $transfer->id,
-                    'source_boq_item_id' => $source?->id,
+                    'material_transfer_id'    => $transfer->id,
+                    'source_boq_item_id'      => $boqSource?->id,
+                    'source_stock_item_id'    => $stockSource?->id,
                     'destination_boq_item_id' => $itemData['destination_boq_item_id'] ?? null,
-                    'description' => $itemData['description'],
-                    'quantity' => $itemData['quantity'],
-                    'unit' => $itemData['unit'],
-                    'specification' => $source?->specification,
-                    'sort_order' => $i,
+                    'description'             => $itemData['description'],
+                    'quantity'                => $itemData['quantity'],
+                    'unit'                    => $itemData['unit'],
+                    'specification'           => $boqSource?->specification ?? $stockSource?->notes,
+                    'sort_order'              => $i,
                 ]);
             }
         });

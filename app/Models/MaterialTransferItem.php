@@ -15,7 +15,9 @@ class MaterialTransferItem extends Model
     protected $fillable = [
         'material_transfer_id',
         'source_boq_item_id',
+        'source_stock_item_id',
         'destination_boq_item_id',
+        'destination_stock_item_id',
         'description',
         'quantity',
         'unit',
@@ -40,5 +42,15 @@ class MaterialTransferItem extends Model
     public function destinationBoqItem(): BelongsTo
     {
         return $this->belongsTo(ProjectBoqItem::class, 'destination_boq_item_id');
+    }
+
+    public function sourceStockItem(): BelongsTo
+    {
+        return $this->belongsTo(ProjectStockItem::class, 'source_stock_item_id');
+    }
+
+    public function destinationStockItem(): BelongsTo
+    {
+        return $this->belongsTo(ProjectStockItem::class, 'destination_stock_item_id');
     }
 }

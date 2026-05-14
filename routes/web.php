@@ -746,6 +746,21 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/material_transfer/{id}/delete', [App\Http\Controllers\MaterialTransferController::class, 'destroy'])->name('material_transfer.delete');
     Route::match(['get', 'post'], '/material_transfer/{id}/{document_type_id}', [App\Http\Controllers\MaterialTransferController::class, 'show'])->name('material_transfer');
 
+    // Free-stock (non-BOQ) inventory per project
+    Route::get('/project-stock', [App\Http\Controllers\ProjectStockItemController::class, 'index'])->name('project_stock.index');
+    Route::post('/project-stock', [App\Http\Controllers\ProjectStockItemController::class, 'store'])->name('project_stock.store');
+    Route::post('/project-stock/{id}/update', [App\Http\Controllers\ProjectStockItemController::class, 'update'])->name('project_stock.update');
+    Route::post('/project-stock/{id}/delete', [App\Http\Controllers\ProjectStockItemController::class, 'destroy'])->name('project_stock.delete');
+    Route::get('/project-stock/for-project', [App\Http\Controllers\ProjectStockItemController::class, 'forProject'])->name('project_stock.for_project');
+
+    // Stock receipts (non-BOQ goods received)
+    Route::get('/project-stock-receipts', [App\Http\Controllers\ProjectStockReceiptController::class, 'index'])->name('project_stock_receipts.index');
+    Route::get('/project-stock-receipts/create', [App\Http\Controllers\ProjectStockReceiptController::class, 'create'])->name('project_stock_receipts.create');
+    Route::post('/project-stock-receipts', [App\Http\Controllers\ProjectStockReceiptController::class, 'store'])->name('project_stock_receipts.store');
+    Route::get('/project-stock-receipts/{id}', [App\Http\Controllers\ProjectStockReceiptController::class, 'show'])->name('project_stock_receipts.show');
+    Route::post('/project-stock-receipts/{id}/delete', [App\Http\Controllers\ProjectStockReceiptController::class, 'destroy'])->name('project_stock_receipts.delete');
+    Route::get('/project-stock-receipts/stock-items', [App\Http\Controllers\ProjectStockReceiptController::class, 'stockItemsForProject'])->name('project_stock_receipts.stock_items');
+
     Route::post('/quotation_comparison/{comparison}/submit', [App\Http\Controllers\QuotationComparisonController::class, 'submit'])->name('quotation_comparison.submit');
     Route::post('/quotation_comparison/{comparison}/approve', [App\Http\Controllers\QuotationComparisonController::class, 'approve'])->name('quotation_comparison.approve');
     Route::post('/quotation_comparison/{comparison}/reject', [App\Http\Controllers\QuotationComparisonController::class, 'reject'])->name('quotation_comparison.reject');
