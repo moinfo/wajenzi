@@ -59,98 +59,78 @@
             --wajenzi-gray-900: #0F172A;
         }
 
-        /* Footer Styles */
+        /* ── Footer ─────────────────────────────────── */
         .wajenzi-footer {
-            background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green) 100%);
-            color: white;
+            background: #0F172A;
+            color: rgba(255,255,255,0.55);
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            z-index: 1020;
-            padding: 0.75rem 0;
-            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 1019; /* below sidebar (1000) and header (1030) */
+            padding: 0.55rem 0;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        @media (min-width: 992px) {
+            #page-container.sidebar-o #page-footer,
+            #page-container.sidebar-o .wajenzi-footer { left: 280px !important; }
         }
 
         .footer-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            max-width: 1200px;
-            margin: 0 auto;
             padding: 0 2rem;
-            height: 100%;
         }
-
 
         .footer-copyright p,
         .footer-credits p {
             margin: 0;
-            font-size: 0.875rem;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
         }
 
-        .footer-copyright strong {
-            color: white;
-            font-weight: 600;
-        }
-
-        .text-wajenzi-green {
-            color: var(--wajenzi-green);
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
+        .footer-copyright strong { color: rgba(255,255,255,0.85); font-weight: 600; }
 
         .developer-link {
-            color: var(--wajenzi-blue-primary);
+            color: rgba(255,255,255,0.75);
             text-decoration: none;
             font-weight: 600;
             transition: color 0.2s ease;
         }
+        .developer-link:hover { color: #fff; }
 
-        .developer-link:hover {
-            color: var(--wajenzi-green);
-        }
-
-        /* Responsive Design */
         @media (max-width: 768px) {
-            .wajenzi-footer {
-                padding: 0.5rem 0;
-            }
-
-            .footer-content {
-                flex-direction: column;
-                gap: 0.25rem;
-                text-align: center;
-                padding: 0 1rem;
-            }
-
-            .footer-copyright p,
-            .footer-credits p {
-                font-size: 0.75rem;
-            }
+            .footer-content { flex-direction: column; gap: 0.2rem; text-align: center; padding: 0 1rem; }
+            .footer-copyright p, .footer-credits p { font-size: 0.72rem; }
         }
 
-        /* Main Layout Structure */
+        /* ── Sidebar width override ──────────────────
+           Codebase framework uses 230px sidebar.
+           Our sidebar is 280px — override everywhere. */
+        @media (min-width: 992px) {
+            #page-container.sidebar-o              { padding-left: 280px !important; }
+            #page-container.sidebar-r.sidebar-o    { padding-right: 280px !important; padding-left: 0 !important; }
+            #page-container.page-header-fixed.sidebar-o #page-header,
+            #page-container.page-header-glass.sidebar-o #page-header { left: 280px !important; }
+            #page-container.page-header-fixed.sidebar-r.sidebar-o #page-header,
+            #page-container.page-header-glass.sidebar-r.sidebar-o #page-header { right: 280px !important; left: 0 !important; }
+        }
+
+        /* ── Main Layout Structure ──────────────── */
         .wajenzi-main {
-            margin-top: 80px; /* Space for fixed header */
-            margin-left: 0;
+            margin-top: 80px;
             min-height: calc(100vh - 80px);
-            background: linear-gradient(135deg, var(--wajenzi-gray-50) 0%, #f0f9ff 50%, #e0f2fe 100%);
-            transition: margin-left 0.3s ease;
+            background: var(--wajenzi-gray-50);
             width: 100%;
             display: block;
             box-sizing: border-box;
             padding: 0;
-            padding-bottom: 60px;
-            overflow-y: auto; /* Enable scrolling */
+            padding-bottom: 50px;
+            overflow-y: auto;
             position: relative;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         /* Hide scrollbar for Chrome, Safari and Opera */
@@ -181,20 +161,19 @@
             margin: 0 !important;
         }
 
-        /* Ensure full width for main container */
+        /* Ensure full width for main container — do NOT override margin-left;
+           let the framework's padding-left on #page-container handle sidebar offset */
         #main-container {
             display: block !important;
             padding: 0 !important;
             box-sizing: border-box !important;
-            margin-top: 80px !important; /* Space for fixed header */
-            margin-left: 0 !important;
-            overflow-y: auto !important; /* Enable scrolling */
+            margin-top: 80px !important;
+            overflow-y: auto !important;
             height: calc(100vh - 80px) !important;
             width: 100% !important;
-            transition: margin-left 0.3s ease !important;
-            background: linear-gradient(135deg, var(--wajenzi-gray-50) 0%, #f0f9ff 50%, #e0f2fe 100%);
-            scrollbar-width: none !important; /* Firefox */
-            -ms-overflow-style: none !important; /* IE and Edge */
+            background: var(--wajenzi-gray-50);
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
         }
 
         /* Hide scrollbar for Chrome, Safari and Opera */
@@ -211,7 +190,7 @@
 
         /* Page Container Adjustments */
         #page-container {
-            background: linear-gradient(180deg, #ffffff 0%, var(--wajenzi-gray-50) 100%);
+            background: var(--wajenzi-gray-50);
             position: relative;
             min-height: 100vh;
         }
@@ -416,11 +395,10 @@
         @media (max-width: 991.98px) {
             .wajenzi-main,
             #main-container {
-                margin-left: 0 !important;
                 margin-top: 80px !important;
                 width: 100% !important;
                 padding: 0;
-                padding-bottom: 80px;
+                padding-bottom: 50px;
                 display: block;
                 overflow-y: auto !important;
                 height: calc(100vh - 80px);

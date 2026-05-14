@@ -139,12 +139,12 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         border-bottom: 1px solid var(--wajenzi-gray-200);
         position: fixed !important;
         top: 0 !important;
-        left: 0 !important;
         right: 0 !important;
         z-index: 1030 !important;
         box-shadow: var(--shadow-sm);
         backdrop-filter: blur(8px);
-        width: 100% !important;
+        /* left is handled by the codebase framework's padding-left on #page-container
+           (see backend.blade.php sidebar-o override) — do NOT set left: 0 !important here */
     }
 
     .content-header {
@@ -276,11 +276,14 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
     }
 
     .page-title {
-        font-size: 1.5rem;
+        font-size: 1.15rem;
         font-weight: 700;
         color: var(--wajenzi-gray-800);
         margin: 0;
         line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .page-subtitle {
