@@ -149,14 +149,15 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
 
     .content-header {
         height: 100%;
-        display: flex;
+        display: flex !important;
         justify-content: space-between;
         align-items: center;
-        padding: 0 1.25rem;
-        max-width: 100%;
+        padding: 0 1.25rem !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
         min-height: 80px;
         box-sizing: border-box;
-        gap: 0;
     }
 
     /* Header Sections */
