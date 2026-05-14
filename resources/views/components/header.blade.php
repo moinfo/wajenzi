@@ -140,11 +140,12 @@ $count_notification_unread = \App\Models\Notification::getUnreadNotificationsCou
         position: fixed !important;
         top: 0 !important;
         right: 0 !important;
+        width: auto !important;
         z-index: 1030 !important;
         box-shadow: var(--shadow-sm);
         backdrop-filter: blur(8px);
-        /* left is handled by the codebase framework's padding-left on #page-container
-           (see backend.blade.php sidebar-o override) — do NOT set left: 0 !important here */
+        /* left is handled by the codebase framework via #page-container.sidebar-o override in backend.blade.php
+           width: auto lets left+right define the width, preventing codebase's width:100% from over-widening */
     }
 
     .content-header {

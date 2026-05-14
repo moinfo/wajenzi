@@ -312,6 +312,19 @@
                 @endforeach
             </ul>
         </div>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-inner">
+                <div class="footer-icon">
+                    <i class="fa fa-building"></i>
+                </div>
+                <div class="footer-text">
+                    <span class="footer-app-name">Wajenzi ERP</span>
+                    <span class="footer-version">Construction Management &copy; {{ date('Y') }}</span>
+                </div>
+            </div>
+        </div>
     </div>
 </nav>
 
@@ -469,7 +482,68 @@
     /* Navigation Menu */
     .sidebar-menu {
         flex: 1;
+        min-height: 0;
         overflow-y: auto;
+        padding-bottom: 0.5rem;
+        position: relative;
+    }
+
+    .sidebar-menu::after {
+        content: '';
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 2rem;
+        display: block;
+        background: linear-gradient(to bottom, transparent, rgba(248, 250, 252, 0.9));
+        pointer-events: none;
+    }
+
+    .sidebar-footer {
+        flex-shrink: 0;
+        background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green-dark) 100%);
+        padding: 0.875rem 1.25rem;
+    }
+
+    .sidebar-footer-inner {
+        display: flex;
+        align-items: center;
+        gap: 0.625rem;
+    }
+
+    .footer-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .footer-icon i {
+        font-size: 0.75rem;
+        color: white;
+    }
+
+    .footer-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .footer-app-name {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: white;
+        line-height: 1.2;
+    }
+
+    .footer-version {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.7);
+        line-height: 1.2;
     }
 
     .menu-header {
@@ -484,7 +558,7 @@
 
     .nav-list {
         list-style: none;
-        padding: 0;
+        padding: 0 0 1rem 0;
         margin: 0;
     }
 
