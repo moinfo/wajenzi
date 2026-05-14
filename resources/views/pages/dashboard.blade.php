@@ -2111,6 +2111,7 @@
             margin: 0 0 0.4rem 0;
             line-height: 1.2;
             letter-spacing: -0.01em;
+            color: #fff;
             text-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
         .dw-subtitle {
