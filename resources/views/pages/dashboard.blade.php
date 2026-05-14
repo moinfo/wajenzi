@@ -145,11 +145,55 @@
     <div class="wajenzi-dashboard">
         <!-- Welcome Header -->
         <div class="dashboard-welcome">
-            <div class="welcome-content">
-                <h1 class="welcome-title">Welcome back, {{ Auth::user()->name }}! 👋</h1>
-                <p class="welcome-subtitle">Here's what's happening with your construction projects today</p>
+            {{-- decorative shapes --}}
+            <div class="dw-shape dw-shape-1"></div>
+            <div class="dw-shape dw-shape-2"></div>
+            <div class="dw-shape dw-shape-3"></div>
+
+            <div class="dw-left">
+                <div class="dw-greeting-row">
+                    <span class="dw-greeting-icon" id="dw-time-icon">☀️</span>
+                    <span class="dw-greeting-text" id="dw-greeting">Good morning</span>
+                </div>
+                <h1 class="dw-name">{{ Auth::user()->name }}</h1>
+                <p class="dw-subtitle">Here's what's happening with your construction projects today</p>
+            </div>
+
+            <div class="dw-right">
+                <div class="dw-date-card">
+                    <div class="dw-date-day" id="dw-day"></div>
+                    <div class="dw-date-month" id="dw-month-year"></div>
+                    <div class="dw-date-time" id="dw-time"></div>
+                </div>
+                <div class="dw-role-badge">
+                    <i class="fa fa-id-badge mr-1"></i>
+                    {{ Auth::user()->roles->first()?->name ?? 'User' }}
+                </div>
             </div>
         </div>
+
+        <script>
+        (function() {
+            function updateWelcomeClock() {
+                var now = new Date();
+                var h = now.getHours();
+                var greeting = h < 12 ? 'Good morning' : (h < 17 ? 'Good afternoon' : 'Good evening');
+                var icon = h < 12 ? '☀️' : (h < 17 ? '🌤️' : '🌙');
+                var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+                var mins = now.getMinutes().toString().padStart(2,'0');
+                var timeStr = (h % 12 || 12) + ':' + mins + ' ' + (h < 12 ? 'AM' : 'PM');
+
+                document.getElementById('dw-greeting').textContent = greeting;
+                document.getElementById('dw-time-icon').textContent = icon;
+                document.getElementById('dw-day').textContent = days[now.getDay()] + ', ' + now.getDate();
+                document.getElementById('dw-month-year').textContent = months[now.getMonth()] + ' ' + now.getFullYear();
+                document.getElementById('dw-time').textContent = timeStr;
+            }
+            updateWelcomeClock();
+            setInterval(updateWelcomeClock, 30000);
+        })();
+        </script>
 
         <!-- Key Metrics Grid -->
         <div class="metrics-grid">
@@ -2001,53 +2045,122 @@
         }
 
         /* Welcome Header */
+        /* ── Welcome Banner ─────────────────────────────── */
         .dashboard-welcome {
-            background: linear-gradient(135deg, var(--wajenzi-blue-primary) 0%, var(--wajenzi-green) 100%);
+            background: linear-gradient(135deg, #1565c0 0%, #0277bd 40%, #00897b 100%);
             border-radius: 20px;
-            padding: 2rem;
+            padding: 2rem 2.5rem;
             margin-bottom: 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            color: white;
+            color: #fff;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 8px 32px rgba(21,101,192,0.25);
+            min-height: 130px;
         }
 
-        .dashboard-welcome::before {
-            content: '';
+        /* geometric decoration shapes */
+        .dw-shape {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="40" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="80" r="1" fill="rgba(255,255,255,0.1)"/></svg>');
-            animation: float 20s linear infinite;
+            border-radius: 50%;
+            opacity: 0.08;
+            pointer-events: none;
+        }
+        .dw-shape-1 {
+            width: 220px; height: 220px;
+            background: #fff;
+            top: -70px; right: 120px;
+        }
+        .dw-shape-2 {
+            width: 140px; height: 140px;
+            background: #fff;
+            bottom: -50px; right: 60px;
+            opacity: 0.06;
+        }
+        .dw-shape-3 {
+            width: 80px; height: 80px;
+            background: #fff;
+            top: 20px; left: 48%;
+            opacity: 0.05;
         }
 
-        @keyframes float {
-            0% { transform: translateY(0px) translateX(0px); }
-            33% { transform: translateY(-10px) translateX(10px); }
-            66% { transform: translateY(5px) translateX(-5px); }
-            100% { transform: translateY(0px) translateX(0px); }
-        }
-
-        .welcome-content {
+        /* left side */
+        .dw-left {
             position: relative;
             z-index: 1;
+            flex: 1;
+        }
+        .dw-greeting-row {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.35rem;
+        }
+        .dw-greeting-icon { font-size: 1.25rem; line-height: 1; }
+        .dw-greeting-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+            opacity: 0.85;
+            letter-spacing: 0.02em;
+        }
+        .dw-name {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin: 0 0 0.4rem 0;
+            line-height: 1.2;
+            letter-spacing: -0.01em;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .dw-subtitle {
+            font-size: 0.92rem;
+            opacity: 0.78;
+            margin: 0;
         }
 
-        .welcome-title {
-            font-size: 2rem;
+        /* right side */
+        .dw-right {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.75rem;
+        }
+        .dw-date-card {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            backdrop-filter: blur(6px);
+            border-radius: 12px;
+            padding: 0.6rem 1.1rem;
+            text-align: center;
+            min-width: 130px;
+        }
+        .dw-date-day {
+            font-size: 1rem;
             font-weight: 700;
-            margin: 0 0 0.5rem 0;
             line-height: 1.2;
         }
-
-        .welcome-subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            margin: 0;
+        .dw-date-month {
+            font-size: 0.78rem;
+            opacity: 0.8;
+        }
+        .dw-date-time {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-top: 0.2rem;
+            letter-spacing: 0.04em;
+        }
+        .dw-role-badge {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
         }
 
         .welcome-actions {
@@ -4445,12 +4558,14 @@
             .dashboard-welcome {
                 flex-direction: column;
                 text-align: center;
-                gap: 1.5rem;
+                gap: 1.25rem;
+                min-height: unset;
             }
 
-            .welcome-title {
-                font-size: 1.5rem;
-            }
+            .dw-right { align-items: center; }
+
+            .dw-name { font-size: 1.3rem; }
+            .dw-date-card { min-width: unset; }
 
             .metrics-grid {
                 grid-template-columns: 1fr;
@@ -4525,34 +4640,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Welcome Header — calmer, no animated bg */
-        .dashboard-welcome {
-            background: linear-gradient(120deg, #1E40AF 0%, #2563EB 55%, #16A34A 130%);
-            border-radius: var(--wd-radius);
-            padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1.25rem, 3vw, 2rem);
-            margin-bottom: 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1.25rem;
-            color: #fff;
-            box-shadow: var(--wd-shadow-2);
-            overflow: hidden;
-            position: relative;
-        }
-        .dashboard-welcome::before { display: none; } /* drop animated dots */
-        .welcome-title {
-            font-size: clamp(1.35rem, 2.2vw, 1.85rem);
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            line-height: 1.15;
-            margin: 0 0 0.35rem 0;
-        }
-        .welcome-subtitle {
-            font-size: 0.95rem;
-            opacity: 0.92;
-            margin: 0;
-        }
         .welcome-actions { gap: 0.6rem; flex-wrap: wrap; }
         .action-btn {
             padding: 0.6rem 1.1rem;
@@ -4905,6 +4992,8 @@
                 align-items: flex-start;
                 gap: 1rem;
             }
+            .dw-right { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
+            .dw-name { font-size: 1.3rem; }
             .welcome-actions { width: 100%; }
             .action-btn { flex: 1; justify-content: center; }
             .metrics-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; }
