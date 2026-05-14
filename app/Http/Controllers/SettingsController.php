@@ -57,6 +57,7 @@ use App\Models\Supplier;
 use App\Models\System;
 use App\Models\SystemSetting;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use App\Models\UserGroup;
 use App\Models\UsersPermission;
 use App\Models\Wakala;
@@ -1733,6 +1734,15 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', "Sync complete. {$updatedCount} activity records updated across all project schedules.");
+    }
+
+    public function changeUserPassword(Request $request, $id)
+    {
+        $request->validate(['password' => 'required|string|min:4']);
+        $user = User::findOrFail($id);
+        $user->password = Hash::make($request->input('password'));
+        $user->save();
+        return response()->json(['success' => true]);
     }
 
 }
