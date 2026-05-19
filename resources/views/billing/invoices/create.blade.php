@@ -258,9 +258,23 @@
                                 </div>
                             </div>
 
-                            <!-- Title -->
+                            <!-- Title + Type -->
                             <div class="row">
-                                <div class="col-md-12">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>Invoice Type <span class="text-danger">*</span></label>
+                                        <select name="invoice_type" class="form-control" required>
+                                            <option value="">-- Select Type --</option>
+                                            <option value="Site Visit"       {{ old('invoice_type') == 'Site Visit'       ? 'selected' : '' }}>Site Visit</option>
+                                            <option value="Design"           {{ old('invoice_type') == 'Design'           ? 'selected' : '' }}>Design</option>
+                                            <option value="BOQ"              {{ old('invoice_type') == 'BOQ'              ? 'selected' : '' }}>BOQ Preparation</option>
+                                            <option value="Supervision"      {{ old('invoice_type') == 'Supervision'      ? 'selected' : '' }}>Supervision</option>
+                                            <option value="Topography"       {{ old('invoice_type') == 'Topography'       ? 'selected' : '' }}>Topography</option>
+                                            <option value="Other"            {{ old('invoice_type') == 'Other'            ? 'selected' : '' }}>Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
                                     <div class="form-group">
                                         <label>Invoice Title</label>
                                         <input type="text" name="title" class="form-control"

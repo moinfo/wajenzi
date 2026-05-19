@@ -417,15 +417,18 @@
 
 </div>{{-- /body-pad --}}
 
-{{-- ==================== PAGE 2: TERMS & CONDITIONS ==================== --}}
-@php $hasTerms = !empty(trim(strip_tags($invoice->terms_conditions ?? ''))); @endphp
-@if($hasTerms)
-<div class="page-break"></div>
+{{-- ==================== PAGE 2 ==================== --}}
+@php
+    $isSiteVisit = $invoice->invoice_type === 'Site Visit';
+    $hasTerms    = !empty(trim(strip_tags($invoice->terms_conditions ?? '')));
+    $showPage2   = $isSiteVisit || $hasTerms;
+@endphp
 
-{{-- Teal accent bar --}}
+@if($showPage2)
+<div class="page-break"></div>
 <div class="hdr-accent"></div>
 
-{{-- Compact header for T&C page --}}
+{{-- Shared compact header --}}
 <div class="tc-hdr-band">
     <table>
         <tr>
@@ -444,50 +447,125 @@
     </table>
 </div>
 
-{{-- T&C title --}}
-<div class="tc-title-band">
-    <div class="tc-title">Terms &amp; Conditions of the Invoice</div>
-</div>
+@if($isSiteVisit)
+    {{-- ── Site Visit: simple payment page ─────────────────────────────────── --}}
 
-<div class="tc-body">
-    @if($invoice->terms_conditions)
-        {!! $invoice->terms_conditions !!}
-    @else
-        <div class="tc-clause">
-            <strong>1. Payment Terms</strong>
-            <p>Payment shall be made according to the schedule outlined in the invoice. A deposit of 60% of the total project cost is required before commencement of work. The remaining 40% balance is due upon completion and delivery of the project. Late payments may attract a penalty of 2% per month on the outstanding balance.</p>
+    {{-- Title band --}}
+    <div class="tc-title-band">
+        <div class="tc-title">Payment Information</div>
+    </div>
+
+    <div style="padding: 30px 30px 20px;">
+
+        {{-- Bank details box --}}
+        <div style="background: #fefce8; border: 1px solid #fde68a; border-radius: 5px; padding: 16px 20px; margin-bottom: 24px;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: #92400e; font-weight: 700; margin-bottom: 10px;">
+                Bank Details
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #374151;">
+                <tr>
+                    <td style="width: 50%; vertical-align: top; line-height: 1.9;">
+                        <strong>Bank:</strong> CRDB Bank<br>
+                        <strong>Account Number:</strong> 0150884401500<br>
+                        <strong>Account Name:</strong> WAJENZI PROFESSIONAL COMPANY LTD
+                    </td>
+                    <td style="width: 30%; vertical-align: top; line-height: 1.9;">
+                        <strong>Currency:</strong> {{ $invoice->currency_code }}<br>
+                        <strong>Reference:</strong> {{ $invoice->document_number }}<br>
+                        @if($invoice->due_date && $invoice->balance_amount > 0)
+                            <strong>Due:</strong> {{ $invoice->due_date->format('d M Y') }}
+                        @endif
+                    </td>
+                    <td style="width: 20%; vertical-align: top; text-align: right;">
+                        @if($invoice->balance_amount > 0)
+                            <div style="font-size: 9px; text-transform: uppercase; letter-spacing: .5px; color: #92400e; font-weight: 700;">Amount Due</div>
+                            <div style="font-size: 14px; font-weight: 900; color: #1a2332; margin-top: 2px;">
+                                {{ $invoice->currency_code }} {{ number_format($invoice->balance_amount, 2) }}
+                            </div>
+                        @endif
+                    </td>
+                </tr>
+            </table>
         </div>
-        <div class="tc-clause">
-            <strong>2. Project Deliverables, Changes &amp; Revisions</strong>
-            <p><strong>2D Design Stage:</strong> Initial concept designs will be presented based on the client's brief. Up to two (2) rounds of revisions are included. Additional revisions will be charged at 10% of the design fee per revision.</p>
-            <p><strong>3D Design Stage:</strong> 3D visualization commences only after approval of the final 2D design. Up to two (2) rounds of revisions included. Final renders delivered upon full payment.</p>
+
+        {{-- Reminder text --}}
+        <div style="background: #f8f9fa; border-radius: 5px; padding: 16px 20px; font-size: 11px; color: #374151; line-height: 1.8; margin-bottom: 20px;">
+            <p style="margin: 0 0 10px;">
+                Please arrange payment for the outstanding amount at your earliest convenience.
+                The original invoice is attached for your reference.
+            </p>
+            <p style="margin: 0;">
+                If you have already made this payment, please disregard this reminder and
+                contact us with your payment reference.
+            </p>
         </div>
-        <div class="tc-clause">
-            <strong>3. Validity</strong>
-            <p>This invoice is valid for seven (7) days from the date of issue. After this period, prices may be subject to review and adjustment without prior notice.</p>
+
+        <div style="font-size: 11px; color: #555; line-height: 1.7; margin-bottom: 30px;">
+            If you have any questions regarding this invoice or need to discuss payment
+            arrangements, please don't hesitate to contact us.
         </div>
-        <div class="tc-clause">
-            <strong>4. Taxes &amp; Statutory Deductions</strong>
-            <p>All prices quoted are exclusive of applicable taxes unless otherwise stated. VAT at 18% will be applied where applicable. Withholding tax and other statutory deductions shall be borne by the respective party per Tanzanian law.</p>
+
+        {{-- Divider + thank you --}}
+        <div style="border-top: 1px solid #e5e7eb; padding-top: 24px; text-align: center;">
+            <div style="font-size: 14px; font-weight: 700; color: #1a2332; margin-bottom: 6px;">
+                Thank you for choosing us
+            </div>
+            <div style="font-size: 11px; color: #6b7280; line-height: 1.6;">
+                Best regards,<br>
+                <strong style="color: #1a2332;">WAJENZI PROFESSIONAL CO. LTD</strong> Accounts Team
+            </div>
         </div>
-        <div class="tc-clause">
-            <strong>5. Ownership of Work</strong>
-            <p>All intellectual property rights remain the sole property of Wajenzi Professional Company Ltd until full payment is received. Upon receipt of full payment, ownership of final deliverables is transferred to the client.</p>
-        </div>
-        <div class="tc-clause">
-            <strong>6. Cancellation Policy</strong>
-            <p>Cancellation before commencement — 80% refund of deposit. Cancellation after commencement but before 50% completion — 40% refund. Cancellation after 50% completion — no refund. All cancellation requests must be in writing.</p>
-        </div>
-        <div class="tc-clause">
-            <strong>7. Dispute Resolution</strong>
-            <p>Both parties shall first attempt to resolve disputes amicably. If unresolved within 14 days, the matter shall be referred to mediation then arbitration per the laws of the United Republic of Tanzania. Venue: Dar es Salaam.</p>
-        </div>
-        <div class="tc-clause">
-            <strong>8. Agreement</strong>
-            <p>By making payment or confirming acceptance, the client acknowledges they have read, understood, and agreed to all terms and conditions stated herein.</p>
-        </div>
-    @endif
-</div>
+
+    </div>
+
+@else
+    {{-- ── Design / other: Terms & Conditions ──────────────────────────────── --}}
+
+    <div class="tc-title-band">
+        <div class="tc-title">Terms &amp; Conditions of the Invoice</div>
+    </div>
+
+    <div class="tc-body">
+        @if($invoice->terms_conditions)
+            {!! $invoice->terms_conditions !!}
+        @else
+            <div class="tc-clause">
+                <strong>1. Payment Terms</strong>
+                <p>Payment shall be made according to the schedule outlined in the invoice. A deposit of 60% of the total project cost is required before commencement of work. The remaining 40% balance is due upon completion and delivery of the project. Late payments may attract a penalty of 2% per month on the outstanding balance.</p>
+            </div>
+            <div class="tc-clause">
+                <strong>2. Project Deliverables, Changes &amp; Revisions</strong>
+                <p><strong>2D Design Stage:</strong> Initial concept designs will be presented based on the client's brief. Up to two (2) rounds of revisions are included. Additional revisions will be charged at 10% of the design fee per revision.</p>
+                <p><strong>3D Design Stage:</strong> 3D visualization commences only after approval of the final 2D design. Up to two (2) rounds of revisions included. Final renders delivered upon full payment.</p>
+            </div>
+            <div class="tc-clause">
+                <strong>3. Validity</strong>
+                <p>This invoice is valid for seven (7) days from the date of issue. After this period, prices may be subject to review and adjustment without prior notice.</p>
+            </div>
+            <div class="tc-clause">
+                <strong>4. Taxes &amp; Statutory Deductions</strong>
+                <p>All prices quoted are exclusive of applicable taxes unless otherwise stated. VAT at 18% will be applied where applicable. Withholding tax and other statutory deductions shall be borne by the respective party per Tanzanian law.</p>
+            </div>
+            <div class="tc-clause">
+                <strong>5. Ownership of Work</strong>
+                <p>All intellectual property rights remain the sole property of Wajenzi Professional Company Ltd until full payment is received. Upon receipt of full payment, ownership of final deliverables is transferred to the client.</p>
+            </div>
+            <div class="tc-clause">
+                <strong>6. Cancellation Policy</strong>
+                <p>Cancellation before commencement — 80% refund of deposit. Cancellation after commencement but before 50% completion — 40% refund. Cancellation after 50% completion — no refund. All cancellation requests must be in writing.</p>
+            </div>
+            <div class="tc-clause">
+                <strong>7. Dispute Resolution</strong>
+                <p>Both parties shall first attempt to resolve disputes amicably. If unresolved within 14 days, the matter shall be referred to mediation then arbitration per the laws of the United Republic of Tanzania. Venue: Dar es Salaam.</p>
+            </div>
+            <div class="tc-clause">
+                <strong>8. Agreement</strong>
+                <p>By making payment or confirming acceptance, the client acknowledges they have read, understood, and agreed to all terms and conditions stated herein.</p>
+            </div>
+        @endif
+    </div>
+
+@endif
 
 <div class="tc-footer">
     <table>

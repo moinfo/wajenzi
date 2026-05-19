@@ -895,6 +895,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('invoices/{invoice}/void', [App\Http\Controllers\Billing\InvoiceController::class, 'void'])->name('invoices.void');
         Route::post('invoices/{invoice}/send-reminder', [App\Http\Controllers\Billing\InvoiceController::class, 'sendReminder'])->name('invoices.send-reminder');
         Route::post('invoices/{invoice}/apply-late-fee', [App\Http\Controllers\Billing\InvoiceController::class, 'applyLateFee'])->name('invoices.apply-late-fee');
+        Route::patch('invoices/{invoice}/type', [App\Http\Controllers\Billing\InvoiceController::class, 'updateType'])->name('invoices.update-type');
         
         // Quotations
         Route::resource('quotations', App\Http\Controllers\Billing\QuotationController::class);

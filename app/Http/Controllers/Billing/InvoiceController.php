@@ -26,26 +26,30 @@ class InvoiceController extends Controller
      */
     public function index(Request $request)
     {
-        $invoices = BillingDocument::with(['client', 'creator'])
-            ->where('document_type', 'invoice')
-            ->when($request->status, function ($query, $status) {
-                return $query->where('status', $status);
-            })
-            ->when($request->client_id, function ($query, $clientId) {
-                return $query->where('client_id', $clientId);
-            })
-            ->when($request->from_date, function ($query, $fromDate) {
-                return $query->where('issue_date', '>=', $fromDate);
-            })
-            ->when($request->to_date, function ($query, $toDate) {
-                return $query->where('issue_date', '<=', $toDate);
-            })
+        $baseQuery = BillingDocument::where('document_type', 'invoice')
+            ->when($request->status, fn($q, $s) => $q->where('status', $s))
+            ->when($request->client_id, fn($q, $id) => $q->where('client_id', $id))
+            ->when($request->from_date, fn($q, $d) => $q->where('issue_date', '>=', $d))
+            ->when($request->to_date, fn($q, $d) => $q->where('issue_date', '<=', $d))
+            ->when($request->invoice_type, fn($q, $t) => $q->where('invoice_type', $t));
+
+        // Clone before selectRaw so the stats SELECT doesn't leak into the invoice query
+        $stats = (clone $baseQuery)->selectRaw(
+            'COUNT(*) as total_count,
+             SUM(total_amount) as total_amount,
+             SUM(paid_amount) as paid_amount,
+             SUM(total_amount - paid_amount) as balance_amount,
+             SUM(CASE WHEN status = "overdue" THEN 1 ELSE 0 END) as overdue_count'
+        )->first();
+
+        $invoices = (clone $baseQuery)
+            ->with(['client', 'creator'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
         $clients = BillingClient::active()->customers()->get();
-        
-        return view('billing.invoices.index', compact('invoices', 'clients'));
+
+        return view('billing.invoices.index', compact('invoices', 'clients', 'stats'));
     }
 
     /**
@@ -99,6 +103,7 @@ class InvoiceController extends Controller
             $invoice->document_type = 'invoice';
             $invoice->document_number = $invoice->generateDocumentNumber('invoice');
             $invoice->title = $request->title;
+            $invoice->invoice_type = $request->invoice_type;
             $invoice->client_id = $request->client_id;
             $invoice->project_id = $request->project_id;
             $invoice->lead_id = $request->lead_id;
@@ -223,7 +228,7 @@ class InvoiceController extends Controller
         try {
             // Update invoice
             $invoice->update($request->only([
-                'title', 'service_description', 'client_id', 'project_id', 'lead_id', 'issue_date', 'due_date',
+                'title', 'invoice_type', 'service_description', 'client_id', 'project_id', 'lead_id', 'issue_date', 'due_date',
                 'payment_terms', 'custom_payment_days', 'currency_code',
                 'exchange_rate', 'discount_type', 'discount_value',
                 'shipping_amount', 'notes', 'terms_conditions',
@@ -501,6 +506,17 @@ class InvoiceController extends Controller
         ]);
 
         return back()->with('success', 'Invoice approved successfully. The stamp will now appear on the PDF.');
+    }
+
+    public function updateType(Request $request, BillingDocument $invoice)
+    {
+        $request->validate([
+            'invoice_type' => 'nullable|in:Site Visit,Design,BOQ,Supervision,Topography,Other',
+        ]);
+
+        $invoice->update(['invoice_type' => $request->invoice_type ?: null]);
+
+        return response()->json(['success' => true, 'invoice_type' => $invoice->invoice_type]);
     }
 
     public function void(BillingDocument $invoice)
