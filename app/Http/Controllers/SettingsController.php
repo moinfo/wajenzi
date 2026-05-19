@@ -497,8 +497,28 @@ class SettingsController extends Controller
         if($this->handleCrud($request, 'ImprestRequest')) {
             return back();
         }
+
+        $user = auth()->user();
+
+        // Roles that should see every imprest request:
+        //  - System Administrator (always)
+        //  - Any role configured as an approver in the Ringlesoft flow for ImprestRequest
+        $approverRoleIds = ProcessApprovalFlowStep::query()
+            ->whereHas('process_approval_flow', fn ($q) => $q->where('approvable_type', ImprestRequest::class))
+            ->pluck('role_id')
+            ->all();
+
+        $userRoleIds = $user->roles->pluck('id')->all();
+        $canSeeAll = $user->hasRole('System Administrator')
+            || !empty(array_intersect($userRoleIds, $approverRoleIds));
+
+        $query = ImprestRequest::query();
+        if (!$canSeeAll) {
+            $query->where('create_by_id', $user->id);
+        }
+
         $data = [
-            'imprest_requests' => ImprestRequest::all()
+            'imprest_requests' => $query->orderByDesc('id')->get(),
         ];
         return view('pages.imprest.imprest_requests')->with($data);
     }

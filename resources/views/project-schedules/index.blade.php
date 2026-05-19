@@ -45,6 +45,8 @@
                                 <th>End Date</th>
                                 <th>Progress</th>
                                 <th>Status</th>
+                                <th class="text-center">Approval Flow</th>
+                                <th class="text-center">Approval Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -90,6 +92,38 @@
                                             {{ ucwords(str_replace('_', ' ', $schedule->status)) }}
                                         </span>
                                     </td>
+                                    <td class="text-center">
+                                        <x-ringlesoft-approval-status-summary :model="$schedule" />
+                                    </td>
+                                    <td class="text-center">
+                                        @php
+                                            $approvalStatus = $schedule->approvalStatus?->status ?? 'Pending';
+                                            $apStatusClass = [
+                                                'Created'   => 'secondary',
+                                                'Pending'   => 'warning',
+                                                'Submitted' => 'info',
+                                                'Returned'  => 'warning',
+                                                'Approved'  => 'success',
+                                                'Rejected'  => 'danger',
+                                                'Discarded' => 'dark',
+                                                'Overridden'=> 'success',
+                                            ][$approvalStatus] ?? 'secondary';
+
+                                            $apStatusIcon = [
+                                                'Created'   => '<i class="fas fa-pencil-alt"></i>',
+                                                'Pending'   => '<i class="fas fa-clock"></i>',
+                                                'Submitted' => '<i class="fas fa-paper-plane"></i>',
+                                                'Returned'  => '<i class="fas fa-undo"></i>',
+                                                'Approved'  => '<i class="fas fa-check"></i>',
+                                                'Rejected'  => '<i class="fas fa-times"></i>',
+                                                'Discarded' => '<i class="fas fa-trash"></i>',
+                                                'Overridden'=> '<i class="fas fa-check-double"></i>',
+                                            ][$approvalStatus] ?? '<i class="fas fa-question-circle"></i>';
+                                        @endphp
+                                        <span class="badge badge-{{ $apStatusClass }} badge-pill" style="font-size: 0.9em; padding: 6px 10px;">
+                                            {!! $apStatusIcon !!} {{ $approvalStatus }}
+                                        </span>
+                                    </td>
                                     <td>
                                         <a href="{{ route('project-schedules.show', $schedule) }}" class="btn btn-sm btn-primary">
                                             <i class="fa fa-eye"></i>
@@ -112,7 +146,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">No schedules found.</td>
+                                    <td colspan="10" class="text-center">No schedules found.</td>
                                 </tr>
                             @endforelse
                         </tbody>

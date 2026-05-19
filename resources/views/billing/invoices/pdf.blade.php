@@ -469,11 +469,7 @@
         </table>
     </div>
 
-    {{-- ==================== PAGE 2: TERMS & CONDITIONS ==================== --}}
-    @php
-        $hasTerms = !empty(trim(strip_tags($invoice->terms_conditions ?? '')));
-    @endphp
-    @if($hasTerms)
+    {{-- ==================== PAGE 2: PAYMENT INFORMATION + TERMS & CONDITIONS ==================== --}}
     <div class="page-break"></div>
     <div class="tc-page">
         <!-- Header repeated for page 2 -->
@@ -482,9 +478,17 @@
             <div style="font-size: 16px; font-weight: bold;">WAJENZI<br>PROFESSIONAL CO. LTD</div>
         </div>
 
+        <!-- Payment Information Reminder Box -->
+        <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 12px 15px; margin-bottom: 20px; font-size: 10px; line-height: 1.6;">
+            <div style="font-weight: bold; font-size: 12px; margin-bottom: 8px;">Payment Information:</div>
+            <p style="margin: 0 0 6px 0;"><strong>Please arrange payment for the outstanding amount at your earliest convenience. The original invoice is attached for your reference.</strong></p>
+            <p style="margin: 0 0 6px 0;"><strong>If you have already made this payment, please disregard this reminder and contact us with your payment reference.</strong></p>
+            <p style="margin: 0;"><strong>If you have any questions regarding this invoice or need to discuss payment arrangements, please don't hesitate to contact us.</strong></p>
+        </div>
+
         <h2>Terms & Conditions of the Invoice</h2>
 
-        @if($invoice->terms_conditions)
+        @if(!empty(trim(strip_tags($invoice->terms_conditions ?? ''))))
             {{-- Custom T&C from invoice --}}
             {!! $invoice->terms_conditions !!}
         @else
@@ -555,6 +559,5 @@
             </table>
         </div>
     </div>
-    @endif
 </body>
 </html>

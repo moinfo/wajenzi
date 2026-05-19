@@ -566,6 +566,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('project-schedules/{projectSchedule}/submit', [App\Http\Controllers\ProjectScheduleController::class, 'submit'])->name('project-schedules.submit');
     Route::post('project-schedules/activity/{activity}/start', [App\Http\Controllers\ProjectScheduleController::class, 'startActivity'])->name('project-schedules.activity.start');
     Route::post('project-schedules/activity/{activity}/complete', [App\Http\Controllers\ProjectScheduleController::class, 'completeActivity'])->name('project-schedules.activity.complete');
+    Route::post('project-schedules/activity/{activity}/attachments', [App\Http\Controllers\ProjectScheduleController::class, 'addActivityAttachments'])->name('project-schedules.activity.attachments.add');
+    Route::delete('project-schedules/activity/attachments/{attachment}', [App\Http\Controllers\ProjectScheduleController::class, 'removeActivityAttachment'])->name('project-schedules.activity.attachments.remove');
     Route::patch('project-schedules/activity/{activity}/days', [App\Http\Controllers\ProjectScheduleController::class, 'updateActivityDays'])->name('project-schedules.activity.update-days');
     Route::delete('project-schedules/activity/{activity}', [App\Http\Controllers\ProjectScheduleController::class, 'removeActivity'])->name('project-schedules.activity.remove');
     Route::patch('project-schedules/activity/{activity}/assign', [App\Http\Controllers\ProjectScheduleController::class, 'assignActivity'])->name('project-schedules.activity.assign');

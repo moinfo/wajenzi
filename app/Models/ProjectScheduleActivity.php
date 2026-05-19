@@ -31,8 +31,6 @@ class ProjectScheduleActivity extends Model implements ApprovableModel
         'completed_by',
         'notes',
         'completion_notes',
-        'attachment_path',
-        'attachment_name',
         'sort_order',
         'requires_approval',
         'approval_notes',
@@ -106,6 +104,14 @@ class ProjectScheduleActivity extends Model implements ApprovableModel
     public function completedByUser()
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    /**
+     * Get the attachments uploaded for this activity
+     */
+    public function attachments()
+    {
+        return $this->hasMany(ProjectScheduleActivityAttachment::class, 'activity_id')->latest('id');
     }
 
     /**

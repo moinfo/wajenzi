@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\ProjectAssignment;
 use App\Models\ProjectSchedule;
 use App\Models\ProjectScheduleActivity;
+use App\Models\ProjectScheduleActivityAttachment;
 use App\Models\Role;
 use App\Models\User;
 use App\Notifications\ActivityReassignedNotification;
@@ -15,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectScheduleController extends Controller
 {
@@ -27,13 +29,14 @@ class ProjectScheduleController extends Controller
         $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing']);
         $canSeeAll = $isAdmin || $user->can('View All Schedule Activities');
 
-        $userRoleIds = $user->roles->pluck('id')->toArray();
-
-        $schedules = ProjectSchedule::with(['lead', 'assignedArchitect', 'client'])
-            ->when(!$canSeeAll, fn($q) => $q->where(function ($q) use ($user, $userRoleIds) {
+        // Schedule visibility is per-person, not per-role: only show schedules where the user is the
+        // assigned architect or has at least one activity explicitly assigned to them. The role_id
+        // check is intentionally NOT applied here — every schedule contains generic role-tagged
+        // activities (e.g. "Architect"), which would otherwise expose every schedule to every architect.
+        $schedules = ProjectSchedule::with(['lead', 'assignedArchitect', 'client', 'approvalStatus'])
+            ->when(!$canSeeAll, fn($q) => $q->where(function ($q) use ($user) {
                 $q->where('assigned_architect_id', $user->id)
-                  ->orWhereHas('activities', fn($aq) => $aq->where('assigned_to', $user->id)
-                      ->orWhereIn('role_id', $userRoleIds));
+                  ->orWhereHas('activities', fn($aq) => $aq->where('assigned_to', $user->id));
             }))
             ->when($request->status, fn($q, $status) => $q->where('status', $status))
             ->when($request->architect_id, fn($q, $id) => $q->where('assigned_architect_id', $id))
@@ -49,24 +52,19 @@ class ProjectScheduleController extends Controller
     public function show(ProjectSchedule $projectSchedule)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing']);
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Chief Executive Officer', 'General Manager']);
 
-        $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'assignments.user']);
+        $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'activities.attachments.uploader', 'assignments.user']);
 
-        // Determine if user can see all activities on this schedule
-        $canSeeAll = $isAdmin
-            || $projectSchedule->assigned_architect_id === $user->id
-            || $user->can('View All Schedule Activities');
+        // Admins / overseers see everything; everyone else (including the assigned architect)
+        // sees only the activities whose template role matches one of their roles.
+        $canSeeAll = $isAdmin || $user->can('View All Schedule Activities');
 
         $activities = $projectSchedule->activities;
 
         if (!$canSeeAll) {
-            // Show activities explicitly assigned to user, or belonging to one of the user's roles
             $userRoleIds = $user->roles->pluck('id')->toArray();
-            $activities = $activities->filter(fn($a) =>
-                $a->assigned_to === $user->id ||
-                ($a->role_id && in_array($a->role_id, $userRoleIds))
-            );
+            $activities = $activities->filter(fn ($a) => $a->role_id && in_array($a->role_id, $userRoleIds, true));
         }
 
         // Group activities by phase
@@ -173,26 +171,31 @@ class ProjectScheduleController extends Controller
             return back()->with('error', 'Cannot submit a schedule with no activities.');
         }
 
-        // Enter RingleSoft approval queue and mark as pending
+        $user = auth()->user();
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director']);
+        $isAssignedArchitect = $projectSchedule->assigned_architect_id === $user->id;
+
+        if (!$isAdmin && !$isAssignedArchitect) {
+            return back()->with('error', 'Only the assigned architect can submit this schedule for approval.');
+        }
+
+        // The Ringlesoft approval trait restricts submit() to the original creator_id.
+        // Schedules are typically created by Sales/BDM but submitted by the assigned architect,
+        // so align creator_id with the current submitter before delegating to the package.
+        if ($projectSchedule->approvalStatus && $projectSchedule->approvalStatus->creator_id !== $user->id) {
+            $projectSchedule->approvalStatus->update(['creator_id' => $user->id]);
+            $projectSchedule->setRelation('approvalStatus', $projectSchedule->approvalStatus->fresh());
+        }
+
+        // Enter RingleSoft approval queue and mark as pending.
+        // ApprovalNotificationListener (wired in EventServiceProvider) handles notifying
+        // approvers for the current step and every subsequent step in the configured flow.
         $projectSchedule->submit();
         $projectSchedule->update(['status' => 'pending_confirmation']);
 
-        // Notify all Managing Directors
-        $mdUsers = User::role('Managing Director')->get();
-        $leadNumber = $projectSchedule->lead->lead_number ?? $projectSchedule->lead->name ?? 'N/A';
-        foreach ($mdUsers as $md) {
-            $this->sendScheduleNotification(
-                $md,
-                'Schedule Pending Approval',
-                "Project schedule for {$leadNumber} has been submitted and requires your approval.",
-                "/project-schedules/{$projectSchedule->id}",
-                $projectSchedule->id
-            );
-        }
-
         return redirect()
             ->route('project-schedules.show', $projectSchedule)
-            ->with('success', 'Schedule submitted for approval. The Managing Director will be notified.');
+            ->with('success', 'Schedule submitted for approval. Approvers will be notified.');
     }
 
     /**
@@ -204,12 +207,20 @@ class ProjectScheduleController extends Controller
             return back()->with('error', 'Schedule must be approved by the Managing Director before activities can begin.');
         }
 
-        if (!$activity->canStart()) {
-            return back()->with('error', 'Cannot start this activity. Predecessor is not completed.');
-        }
-
         if ($activity->status !== 'pending') {
             return back()->with('error', 'Activity is already started or completed.');
+        }
+
+        // Predecessor not yet completed — allow with a warning so teams can work in parallel
+        // or move forward when an earlier-stage activity (e.g. client review) is held up by another role.
+        $outOfSequence = !$activity->canStart();
+        if ($outOfSequence) {
+            $predecessor = $activity->predecessor_code ? $activity->predecessor() : null;
+            $predLabel   = $predecessor
+                ? "{$predecessor->activity_code} ({$predecessor->name}) is " . str_replace('_', ' ', $predecessor->status)
+                : "predecessor {$activity->predecessor_code} not found";
+            Log::info("Out-of-sequence start: activity {$activity->activity_code} (#{$activity->id}) " .
+                "started by user " . auth()->id() . " while {$predLabel}.");
         }
 
         $activity->markAsStarted(auth()->id());
@@ -239,7 +250,11 @@ class ProjectScheduleController extends Controller
             );
         }
 
-        return back()->with('success', 'Activity marked as started.');
+        $message = $outOfSequence
+            ? 'Activity marked as started (started out of sequence — predecessor was not yet completed).'
+            : 'Activity marked as started.';
+
+        return back()->with('success', $message);
     }
 
     /**
@@ -253,17 +268,9 @@ class ProjectScheduleController extends Controller
 
         $request->validate([
             'completion_notes' => 'nullable|string|max:1000',
-            'attachment' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip,dwg|max:51200',
+            'attachments'   => 'nullable|array|max:10',
+            'attachments.*' => 'file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip,dwg|max:51200',
         ]);
-
-        // Handle file upload
-        $attachmentPath = null;
-        $attachmentName = null;
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $attachmentName = $file->getClientOriginalName();
-            $attachmentPath = $file->store('activity-attachments/' . $activity->project_schedule_id, 'public');
-        }
 
         // Update activity with completion data
         $activity->update([
@@ -271,9 +278,10 @@ class ProjectScheduleController extends Controller
             'completed_at' => now(),
             'completed_by' => auth()->id(),
             'completion_notes' => $request->completion_notes,
-            'attachment_path' => $attachmentPath,
-            'attachment_name' => $attachmentName,
         ]);
+
+        // Store any uploaded attachments
+        $this->storeActivityAttachments($activity, $request->file('attachments', []));
 
         // Check if all activities are completed
         $schedule = $activity->schedule;
@@ -303,6 +311,67 @@ class ProjectScheduleController extends Controller
         }
 
         return back()->with('success', 'Activity marked as completed.');
+    }
+
+    /**
+     * Add additional attachments to an activity (any status)
+     */
+    public function addActivityAttachments(Request $request, ProjectScheduleActivity $activity)
+    {
+        $request->validate([
+            'attachments'   => 'required|array|min:1|max:10',
+            'attachments.*' => 'file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png,zip,dwg|max:51200',
+        ]);
+
+        $count = $this->storeActivityAttachments($activity, $request->file('attachments', []));
+
+        return back()->with('success', "Uploaded {$count} attachment" . ($count === 1 ? '' : 's') . " for {$activity->activity_code}.");
+    }
+
+    /**
+     * Remove a single attachment from an activity
+     */
+    public function removeActivityAttachment(ProjectScheduleActivityAttachment $attachment)
+    {
+        $activity = $attachment->activity;
+
+        $isUploader = $attachment->uploaded_by === auth()->id();
+        $isPrivileged = auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']);
+
+        if (!$isUploader && !$isPrivileged) {
+            return back()->with('error', 'You can only remove attachments you uploaded.');
+        }
+
+        if ($attachment->path && Storage::disk('public')->exists($attachment->path)) {
+            Storage::disk('public')->delete($attachment->path);
+        }
+
+        $name = $attachment->name;
+        $attachment->delete();
+
+        return back()->with('success', "Removed attachment '{$name}' from {$activity->activity_code}.");
+    }
+
+    /**
+     * Store uploaded files as attachment rows for an activity.
+     */
+    protected function storeActivityAttachments(ProjectScheduleActivity $activity, array $files): int
+    {
+        $count = 0;
+        foreach ($files as $file) {
+            if (!$file) continue;
+            $path = $file->store('activity-attachments/' . $activity->project_schedule_id, 'public');
+            ProjectScheduleActivityAttachment::create([
+                'activity_id' => $activity->id,
+                'path'        => $path,
+                'name'        => $file->getClientOriginalName(),
+                'mime_type'   => $file->getClientMimeType(),
+                'size_bytes'  => $file->getSize(),
+                'uploaded_by' => auth()->id(),
+            ]);
+            $count++;
+        }
+        return $count;
     }
 
     /**
@@ -563,8 +632,8 @@ class ProjectScheduleController extends Controller
     {
         $schedule = $activity->schedule;
 
-        if ($schedule->isConfirmed()) {
-            return back()->with('error', 'Cannot remove activities from a confirmed schedule.');
+        if ($schedule->status !== 'draft') {
+            return back()->with('error', 'Activities can only be removed while the schedule is still a draft.');
         }
 
         // Check if other activities depend on this one

@@ -32,7 +32,11 @@
                         </a>
                     @endif
                 @endif
-                @if($projectSchedule->status === 'draft')
+                @php
+                    $canSubmitForApproval = auth()->user()->hasAnyRole(['System Administrator', 'Managing Director'])
+                        || $projectSchedule->assigned_architect_id === auth()->id();
+                @endphp
+                @if($projectSchedule->status === 'draft' && $canSubmitForApproval)
                     <form action="{{ route('project-schedules.submit', $projectSchedule) }}" method="POST" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-success"
@@ -41,8 +45,12 @@
                         </button>
                     </form>
                 @elseif($projectSchedule->isPendingApproval())
+                    @php
+                        $nextStep = method_exists($projectSchedule, 'nextApprovalStep') ? $projectSchedule->nextApprovalStep() : null;
+                        $nextRoleName = $nextStep && $nextStep->role ? $nextStep->role->name : 'Approver';
+                    @endphp
                     <span class="badge badge-warning badge-lg px-3 py-2">
-                        <i class="fa fa-clock-o mr-1"></i> Awaiting MD Approval
+                        <i class="fa fa-clock-o mr-1"></i> Awaiting {{ $nextRoleName }} Approval
                     </span>
                 @endif
             </div>
@@ -332,12 +340,12 @@
                                                     <i class="fa fa-user-tie mr-1"></i>{{ $projectSchedule->assignedArchitect->name ?? 'N/A' }}
                                                 </span>
                                             @endif
-                                            @if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
+                                            @can('Assign Project Activities')
                                             <button type="button" class="btn btn-xs btn-outline-primary ml-1" title="Reassign"
                                                     data-toggle="modal" data-target="#assignModal{{ $activity->id }}">
                                                 <i class="fa fa-exchange-alt"></i>
                                             </button>
-                                            @endif
+                                            @endcan
                                         </td>
                                         <td>{{ $activity->start_date->format('d/m/Y') }}</td>
                                         <td>{{ $activity->end_date->format('d/m/Y') }}</td>
@@ -372,11 +380,28 @@
                                         </td>
                                         <td>
                                             @if($projectSchedule->isConfirmed())
-                                                @if($activity->status === 'pending' && $activity->canStart())
-                                                    <form action="{{ route('project-schedules.activity.start', $activity) }}" method="POST" class="d-inline">
+                                                @if($activity->status === 'pending')
+                                                    @php
+                                                        $canStart    = $activity->canStart();
+                                                        $predecessor = $activity->predecessor_code ? $activity->predecessor() : null;
+                                                        $predLabel   = $predecessor
+                                                            ? "{$predecessor->activity_code}: {$predecessor->name}"
+                                                            : $activity->predecessor_code;
+                                                        $confirmMsg  = $canStart
+                                                            ? ''
+                                                            : "Predecessor activity {$predLabel} is not yet completed. Start " .
+                                                              "{$activity->activity_code} anyway? (You may be working out of sequence.)";
+                                                    @endphp
+                                                    <form action="{{ route('project-schedules.activity.start', $activity) }}" method="POST" class="d-inline"
+                                                          @if(!$canStart)
+                                                              data-confirm-message="{{ $confirmMsg }}"
+                                                              onsubmit="return confirm(this.dataset.confirmMessage);"
+                                                          @endif>
                                                         @csrf
-                                                        <button type="submit" class="btn btn-xs btn-primary" title="Start Activity">
-                                                            <i class="fa fa-play"></i>
+                                                        <button type="submit"
+                                                                class="btn btn-xs {{ $canStart ? 'btn-primary' : 'btn-warning' }}"
+                                                                title="{{ $canStart ? 'Start Work' : 'Start Work (predecessor not completed)' }}">
+                                                            <i class="fa {{ $canStart ? 'fa-play' : 'fa-exclamation-triangle' }} mr-1"></i>Start Work
                                                         </button>
                                                     </form>
                                                 @endif
@@ -390,11 +415,18 @@
                                                     <span class="text-success" title="Completed {{ $activity->completed_at ? $activity->completed_at->format('d/m/Y H:i') : '' }}">
                                                         <i class="fa fa-check-circle"></i>
                                                     </span>
-                                                    @if($activity->attachment_path)
-                                                        <a href="{{ Storage::url($activity->attachment_path) }}" target="_blank"
-                                                           class="btn btn-xs btn-outline-info ml-1" title="View Attachment: {{ $activity->attachment_name }}">
+                                                    @if($activity->attachments->count())
+                                                        <button type="button" class="btn btn-xs btn-outline-info ml-1"
+                                                                title="{{ $activity->attachments->count() }} attachment(s)"
+                                                                data-toggle="modal" data-target="#viewNotesModal{{ $activity->id }}">
+                                                            <i class="fa fa-paperclip"></i> {{ $activity->attachments->count() }}
+                                                        </button>
+                                                    @else
+                                                        <button type="button" class="btn btn-xs btn-outline-info ml-1"
+                                                                title="Add attachment"
+                                                                data-toggle="modal" data-target="#viewNotesModal{{ $activity->id }}">
                                                             <i class="fa fa-paperclip"></i>
-                                                        </a>
+                                                        </button>
                                                     @endif
                                                     @if($activity->completion_notes)
                                                         <button type="button" class="btn btn-xs btn-outline-secondary ml-1" title="View Notes"
@@ -403,8 +435,8 @@
                                                         </button>
                                                     @endif
                                                 @endif
-                                            @else
-                                                {{-- Edit and Remove buttons before confirmation --}}
+                                            @elseif($projectSchedule->status === 'draft')
+                                                {{-- Remove allowed only while still a draft (before submission for approval). --}}
                                                 <form action="{{ route('project-schedules.activity.remove', $activity) }}" method="POST" class="d-inline"
                                                       onsubmit="return confirm('Are you sure you want to remove this activity? Activities depending on this will also be affected.')">
                                                     @csrf
@@ -537,15 +569,15 @@
                     </div>
 
                     <div class="form-group mb-0">
-                        <label for="attachment{{ $activity->id }}">
-                            <i class="fa fa-paperclip text-info mr-1"></i>Attachment
+                        <label for="attachments{{ $activity->id }}">
+                            <i class="fa fa-paperclip text-info mr-1"></i>Attachments <small class="text-muted">(you can pick more than one)</small>
                         </label>
                         <div class="custom-file">
-                            <input type="file" name="attachment" id="attachment{{ $activity->id }}"
+                            <input type="file" name="attachments[]" id="attachments{{ $activity->id }}" multiple
                                    class="custom-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip,.dwg">
-                            <label class="custom-file-label" for="attachment{{ $activity->id }}">Choose file...</label>
+                            <label class="custom-file-label" for="attachments{{ $activity->id }}">Choose files...</label>
                         </div>
-                        <small class="text-muted">Optional: PDF, DOC, XLS, Images, ZIP, DWG (max 10MB)</small>
+                        <small class="text-muted">Optional: PDF, DOC, XLS, Images, ZIP, DWG. Up to 10 files, 50MB each.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -560,14 +592,14 @@
 </div>
 @endforeach
 
-{{-- View Notes Modals --}}
-@foreach($projectSchedule->activities->where('status', 'completed')->whereNotNull('completion_notes') as $activity)
+{{-- View Notes / Attachments Modals (for completed activities) --}}
+@foreach($projectSchedule->activities->where('status', 'completed') as $activity)
 <div class="modal fade" id="viewNotesModal{{ $activity->id }}" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">
-                    <i class="fa fa-sticky-note mr-2"></i>Completion Notes
+                    <i class="fa fa-paperclip mr-2"></i>Notes &amp; Attachments
                 </h5>
                 <button type="button" class="close text-white" data-dismiss="modal">
                     <span>&times;</span>
@@ -585,18 +617,61 @@
                     </small>
                 </div>
 
-                <div class="p-3 bg-light rounded">
-                    {!! nl2br(e($activity->completion_notes)) !!}
-                </div>
-
-                @if($activity->attachment_path)
-                <div class="mt-3">
-                    <strong><i class="fa fa-paperclip mr-1"></i>Attachment:</strong>
-                    <a href="{{ Storage::url($activity->attachment_path) }}" target="_blank" class="btn btn-sm btn-outline-primary ml-2">
-                        <i class="fa fa-download mr-1"></i>{{ $activity->attachment_name }}
-                    </a>
-                </div>
+                @if($activity->completion_notes)
+                    <h6 class="text-muted mb-2"><i class="fa fa-sticky-note mr-1"></i>Completion Notes</h6>
+                    <div class="p-3 bg-light rounded mb-3">
+                        {!! nl2br(e($activity->completion_notes)) !!}
+                    </div>
                 @endif
+
+                <h6 class="text-muted mb-2">
+                    <i class="fa fa-paperclip mr-1"></i>Attachments
+                    <span class="badge badge-secondary">{{ $activity->attachments->count() }}</span>
+                </h6>
+                @if($activity->attachments->count())
+                    <ul class="list-group mb-3">
+                        @foreach($activity->attachments as $att)
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>
+                                    <a href="{{ Storage::url($att->path) }}" target="_blank">
+                                        <i class="fa fa-download mr-1"></i>{{ $att->name }}
+                                    </a>
+                                    @if($att->uploader)
+                                        <small class="text-muted ml-2">
+                                            by {{ $att->uploader->name }}, {{ $att->created_at->format('d/m/Y H:i') }}
+                                        </small>
+                                    @endif
+                                </span>
+                                @if($att->uploaded_by === auth()->id() || auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
+                                    <form action="{{ route('project-schedules.activity.attachments.remove', $att) }}" method="POST" class="d-inline"
+                                          onsubmit="return confirm('Remove this attachment?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
+                                            <i class="fa fa-times"></i>
+                                        </button>
+                                    </form>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="text-muted small">No attachments yet.</p>
+                @endif
+
+                <form action="{{ route('project-schedules.activity.attachments.add', $activity) }}" method="POST" enctype="multipart/form-data" class="mt-3 pt-3 border-top">
+                    @csrf
+                    <label class="text-muted mb-1"><strong>Add more attachments</strong></label>
+                    <div class="custom-file mb-2">
+                        <input type="file" name="attachments[]" id="addAttachments{{ $activity->id }}" multiple
+                               class="custom-file-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip,.dwg">
+                        <label class="custom-file-label" for="addAttachments{{ $activity->id }}">Choose files...</label>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fa fa-upload mr-1"></i>Upload
+                    </button>
+                    <small class="text-muted ml-2">PDF, DOC, XLS, Images, ZIP, DWG. Up to 10 files, 50MB each.</small>
+                </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -607,7 +682,7 @@
 @endforeach
 
 {{-- Bulk Action Floating Bar --}}
-@if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
+@can('Assign Project Activities')
 <div id="bulkActionBar" class="d-none"
      style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1050;
             background:#2c3e50;color:#fff;padding:12px 20px;border-radius:10px;
@@ -654,10 +729,10 @@
         </div>
     </div>
 </div>
-@endif
+@endcan
 
 {{-- Reassign Activity Modals --}}
-@if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
+@can('Assign Project Activities')
 @foreach($projectSchedule->activities as $activity)
 @php
     $currentAssignee = $activity->assigned_to ?? $projectSchedule->assigned_architect_id;
@@ -721,7 +796,7 @@
     </div>
 </div>
 @endforeach
-@endif
+@endcan
 
 <script>
 // ── File input label ──────────────────────────────────────────────────────────
