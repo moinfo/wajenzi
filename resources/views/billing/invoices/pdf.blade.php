@@ -4,297 +4,347 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Invoice {{ $invoice->document_number }}</title>
     <style>
-        @page { margin: 20px 30px; }
+        @page { margin: 0 0 20px 0; }
         body {
             font-family: Arial, sans-serif;
             font-size: 11px;
-            line-height: 1.4;
-            margin: 0;
-            padding: 0;
-            color: #333;
+            line-height: 1.45;
+            margin: 0; padding: 0;
+            color: #1a2332;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #333;
-        }
-        .company-name {
-            font-size: 22px;
-            font-weight: bold;
-            color: #333;
-            margin-top: 5px;
-        }
-        .company-details {
-            font-size: 10px;
-            color: #555;
-            margin-top: 3px;
-            line-height: 1.5;
-        }
-        .doc-details-table {
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .doc-details-table td {
-            vertical-align: top;
-        }
-        .doc-title {
-            font-size: 26px;
-            font-weight: bold;
-            color: #333;
-        }
-        .doc-number {
-            font-size: 13px;
-            font-weight: bold;
-            color: #555;
-            margin-top: 3px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 4px 14px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-top: 8px;
-        }
-        .status-paid { background-color: #28a745; color: white; }
-        .status-pending { background-color: #f0c030; color: #333; }
-        .status-overdue { background-color: #dc3545; color: white; }
-        .status-draft { background-color: #6c757d; color: white; }
-        .status-sent { background-color: #17a2b8; color: white; }
-        .status-viewed { background-color: #007bff; color: white; }
-        .info-label {
-            font-weight: bold;
-            color: #555;
-            font-size: 10px;
-            padding: 2px 0;
-        }
-        .info-value {
-            font-size: 11px;
-            padding: 2px 0 2px 10px;
-        }
-        .two-boxes {
-            width: 100%;
-            margin-bottom: 15px;
-        }
-        .two-boxes td {
-            vertical-align: top;
-            width: 48%;
-        }
-        .bill-to-box {
-            background-color: #f0f0f0;
-            padding: 12px 15px;
-            border-radius: 5px;
-        }
-        .bill-to-box .box-title {
-            font-size: 12px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-        .invoice-for-label {
-            font-size: 13px;
-            font-weight: bold;
-            color: #333;
-            text-transform: uppercase;
-        }
-        .invoice-for-title {
-            display: inline;
-            font-size: 12px;
-        }
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        .items-table th {
-            background-color: #333;
-            color: white;
-            padding: 8px 6px;
-            text-align: left;
-            font-weight: bold;
-            font-size: 10px;
-        }
-        .items-table td {
-            padding: 7px 6px;
-            border-bottom: 1px solid #ddd;
-            font-size: 10px;
-        }
-        .items-table .text-right { text-align: right; }
-        .items-table .text-center { text-align: center; }
-        .item-description {
-            color: #666;
-            font-size: 9px;
-            margin-top: 2px;
-        }
-        .totals-table {
-            width: 250px;
-            margin-left: auto;
-            margin-bottom: 15px;
-        }
-        .totals-table td {
-            padding: 4px 8px;
-            font-size: 11px;
-        }
-        .totals-table .total-row {
-            background-color: #f0c030;
-            color: #333;
-            font-weight: bold;
-            font-size: 13px;
-        }
-        .totals-table .paid-row {
-            background-color: #28a745;
-            color: white;
-            font-weight: bold;
-        }
-        .totals-table .balance-row {
-            background-color: #17a2b8;
-            color: white;
-            font-weight: bold;
-        }
-        .payment-instructions {
-            background-color: #fef9e7;
-            border: 1px solid #f0c030;
-            padding: 12px 15px;
-            margin-bottom: 12px;
-            border-radius: 5px;
-            font-size: 11px;
-        }
-        .payment-info-box {
-            background-color: #fef9e7;
-            border: 1px solid #f0c030;
-            padding: 12px 15px;
-            margin-bottom: 12px;
-            border-radius: 5px;
-            font-size: 11px;
-        }
-        .payment-info-box .title {
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 6px;
-            color: #333;
-        }
-        .footer-bar {
-            border-top: 2px solid #333;
-            padding-top: 10px;
-            margin-top: 15px;
-            font-size: 9px;
-            color: #555;
-        }
-        .footer-bar table { width: 100%; }
-        .footer-bar td { vertical-align: top; }
 
-        /* Page 2: Terms & Conditions */
-        .page-break { page-break-before: always; }
-        .tc-page { font-size: 10px; line-height: 1.6; }
-        .tc-page h2 {
-            text-align: center;
-            font-size: 16px;
-            margin-bottom: 15px;
-            color: #333;
-            text-transform: uppercase;
-            border-bottom: 2px solid #333;
-            padding-bottom: 8px;
-        }
-        .tc-page h3 {
-            font-size: 11px;
-            margin: 10px 0 4px 0;
-            color: #333;
-        }
-        .tc-page p {
-            margin: 3px 0 8px 0;
-            text-align: justify;
-        }
-        .service-desc ol, .service-desc ul {
-            margin: 2px 0 2px 0;
-            padding-left: 20px;
-            list-style-position: outside;
-        }
+        /* ── Header ─────────────────────── */
+        .hdr-accent   { background: #1BC5BD; height: 5px; width: 100%; font-size: 0; }
+        .hdr-wrap     { padding: 14px 30px 12px; border-bottom: 1px solid #e0e0e0; }
+        .hdr-table    { width: 100%; border-collapse: collapse; }
+        .hdr-logo-td  { width: 80px; vertical-align: middle; }
+        .hdr-mid-td   { text-align: center; vertical-align: middle; padding: 0 10px; }
+        .hdr-co-name  { font-size: 18px; font-weight: 900; color: #1a2332; letter-spacing: .5px; line-height: 1.15; }
+        .hdr-co-sub   { font-size: 9px; color: #6b7280; margin-top: 3px; line-height: 1.6; }
+        .hdr-contact-td { width: 180px; text-align: right; vertical-align: middle; font-size: 9px; color: #6b7280; line-height: 1.7; }
+
+        /* ── Invoice title band ─────────── */
+        .title-band   { background: #1a2332; padding: 16px 30px; }
+        .title-band table { width: 100%; border-collapse: collapse; }
+        .title-main   { font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: 2px; line-height: 1; }
+        .title-num    { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+        .title-meta td { padding: 2px 0; font-size: 10px; }
+        .title-meta .lbl { color: #9ca3af; padding-right: 12px; text-align: right; }
+        .title-meta .val { color: #ffffff; font-weight: 700; }
+        .title-meta .val-red { color: #f87171; font-weight: 700; }
+
+        /* ── Status badge ───────────────── */
+        .badge        { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 9px; font-weight: 700; text-transform: uppercase; margin-top: 6px; }
+        .badge-paid   { background: #dcfce7; color: #15803d; }
+        .badge-sent   { background: #cffafe; color: #0e7490; }
+        .badge-viewed { background: #dbeafe; color: #1d4ed8; }
+        .badge-pending{ background: #fef9c3; color: #854d0e; }
+        .badge-overdue{ background: #fee2e2; color: #991b1b; }
+        .badge-draft  { background: #f3f4f6; color: #374151; }
+        .badge-void   { background: #f3f4f6; color: #6b7280; }
+
+        /* ── Body content ───────────────── */
+        .body-pad { padding: 20px 30px; }
+
+        /* ── Bill To / Invoice For ──────── */
+        .section-label { font-size: 8.5px; text-transform: uppercase; letter-spacing: .9px; color: #9ca3af; font-weight: 700; margin-bottom: 5px; }
+        .bill-to-box { background: #f8f9fa; border-left: 3px solid #1BC5BD; padding: 10px 12px; }
+        .client-name { font-size: 13px; font-weight: 800; color: #1a2332; }
+        .client-detail { font-size: 10px; color: #555; margin-top: 2px; line-height: 1.6; }
+        .inv-for-title { font-size: 12px; font-weight: 800; color: #1a2332; margin-bottom: 4px; }
+
+        /* ── Service description ─────────── */
+        .service-desc { font-size: 10px; color: #374151; line-height: 1.5; }
+        .service-desc ol, .service-desc ul { margin: 2px 0; padding-left: 16px; }
         .service-desc ol { list-style-type: decimal; }
         .service-desc ul { list-style-type: disc; }
-        .service-desc li {
-            margin-bottom: 1px;
-            padding-left: 2px;
-            line-height: 1.4;
-            font-size: 10px;
+        .service-desc li { margin-bottom: 1px; padding-left: 2px; font-size: 10px; }
+        .service-desc li ol, .service-desc li ul { margin: 1px 0; padding-left: 14px; }
+        .service-desc p { margin: 1px 0; }
+
+        /* ── Divider ────────────────────── */
+        .divider { border: none; border-top: 1px solid #e5e7eb; margin: 14px 0; }
+
+        /* ── Items table ────────────────── */
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+        .items-table thead tr { background: #1a2332; }
+        .items-table th {
+            color: #ffffff; padding: 9px 8px;
+            font-size: 9.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .5px;
         }
-        .service-desc li ol, .service-desc li ul {
-            margin: 1px 0 1px 0;
-            padding-left: 16px;
-        }
-        .service-desc p {
-            margin: 2px 0;
-        }
-        .tc-page ol {
-            margin: 3px 0 8px 0;
-            padding-left: 18px;
-        }
-        .tc-page ol li {
-            margin-bottom: 4px;
-        }
+        .items-table tbody tr:nth-child(even) { background: #f8f9fa; }
+        .items-table td { padding: 9px 8px; border-bottom: 1px solid #e5e7eb; font-size: 10px; vertical-align: top; }
+        .items-table tbody tr:last-child td { border-bottom: 2px solid #1a2332; }
+        .item-name { font-weight: 700; color: #1a2332; font-size: 11px; }
+        .item-desc { color: #9ca3af; font-size: 9px; margin-top: 2px; }
+        .tr { text-align: right; }
+        .tc { text-align: center; }
+
+        /* ── Totals ─────────────────────── */
+        .totals-outer { width: 100%; border-collapse: collapse; margin-top: 0; }
+        .totals-outer .notes-td { vertical-align: top; padding: 12px 0; }
+        .totals-outer .totals-td { vertical-align: top; padding: 12px 0; width: 260px; }
+        .totals-inner { width: 100%; border-collapse: collapse; }
+        .totals-inner td { padding: 4px 8px; font-size: 11px; }
+        .totals-inner .t-lbl { color: #6b7280; }
+        .totals-inner .t-val { text-align: right; font-weight: 600; color: #1a2332; }
+        .total-main { background: #1a2332; }
+        .total-main td { padding: 10px 8px; font-size: 14px; font-weight: 900; color: #ffffff; }
+        .paid-row td { background: #f0fdf4; color: #15803d; font-weight: 700; padding: 5px 8px; font-size: 11px; }
+        .balance-row td { background: #1BC5BD; color: #ffffff; font-weight: 700; padding: 7px 8px; font-size: 12px; }
+
+        /* ── Payment box ────────────────── */
+        .payment-box { border: 1px solid #fde68a; background: #fefce8; border-radius: 5px; padding: 12px 15px; }
+        .payment-box-title { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: #92400e; font-weight: 700; margin-bottom: 8px; }
+        .payment-box table { width: 100%; border-collapse: collapse; font-size: 10px; }
+        .payment-box td { padding: 2px 0; vertical-align: top; color: #374151; line-height: 1.7; }
+
+        /* ── Stamp ──────────────────────── */
+        .stamp-wrap { text-align: right; margin: 8px 0 4px; }
+
+        /* ── Footer ─────────────────────── */
+        .footer-band { background: #1a2332; margin-top: 16px; padding: 10px 30px; }
+        .footer-band table { width: 100%; border-collapse: collapse; }
+        .footer-band td { color: #9ca3af; font-size: 9px; vertical-align: middle; line-height: 1.7; }
+
+        /* ── Page 2 ─────────────────────── */
+        .page-break { page-break-before: always; }
+        .tc-hdr-band { background: #1a2332; padding: 10px 30px; }
+        .tc-hdr-band table { width: 100%; border-collapse: collapse; }
+        .tc-hdr-band td { vertical-align: middle; }
+        .tc-hdr-co { font-size: 13px; font-weight: 900; color: #ffffff; }
+        .tc-hdr-sub { font-size: 9px; color: #9ca3af; margin-top: 1px; }
+        .tc-title-band { background: #f8f9fa; border-bottom: 2px solid #1BC5BD; padding: 12px 30px; text-align: center; }
+        .tc-title { font-size: 15px; font-weight: 900; color: #1a2332; text-transform: uppercase; letter-spacing: 1px; }
+        .tc-body { padding: 16px 30px; font-size: 10px; line-height: 1.6; color: #374151; }
+        .tc-body h1, .tc-body h2 { font-size: 11px; font-weight: 700; color: #1a2332; margin: 12px 0 4px; }
+        .tc-body h3 { font-size: 10.5px; font-weight: 700; color: #374151; margin: 8px 0 3px; }
+        .tc-body p { margin: 2px 0 6px; text-align: justify; }
+        .tc-body ul, .tc-body ol { padding-left: 16px; margin: 3px 0 7px; }
+        .tc-body li { margin-bottom: 3px; }
+        .tc-body strong { color: #1a2332; }
+        .tc-clause { border-left: 2px solid #1BC5BD; padding-left: 8px; margin-bottom: 10px; }
+        .tc-footer { border-top: 1px solid #e5e7eb; padding: 8px 30px; margin-top: 10px; }
+        .tc-footer table { width: 100%; border-collapse: collapse; font-size: 8.5px; color: #9ca3af; }
     </style>
 </head>
 <body>
-    {{-- ==================== PAGE 1: INVOICE ==================== --}}
 
-    <!-- Header -->
-    <div class="header">
-        <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="{{ config('app.name') }}" style="max-height: 55px; margin-bottom: 5px;">
-        <div class="company-name">WAJENZI<br>PROFESSIONAL CO. LTD</div>
-        <div class="company-details">
-            PSSSF COMMERCIAL COMPLEX, SAM NUJOMA ROAD, DSM-TANZANIA<br>
-            P. O. Box 14492, Dar es Salaam Tanzania<br>
-            Phone: +255 793 444 400 | Email: billing@wajenziprofessional.co.tz | TIN: 154-867-805
-        </div>
-    </div>
+{{-- ==================== PAGE 1 ==================== --}}
 
-    <!-- Invoice Details: Title + Meta -->
-    <table class="doc-details-table">
+{{-- Teal accent bar --}}
+<div class="hdr-accent"></div>
+
+{{-- Company header --}}
+<div class="hdr-wrap">
+    <table class="hdr-table">
         <tr>
-            <td width="50%">
-                <div class="doc-title">INVOICE</div>
-                <div class="doc-number">{{ $invoice->document_number }}</div>
-                <div>
-                    <span class="status-badge status-{{ $invoice->status }}">
-                        {{ ucfirst(str_replace('_', ' ', $invoice->status)) }}
-                    </span>
+            <td class="hdr-logo-td">
+                <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="Logo" style="height: 60px;">
+            </td>
+            <td class="hdr-mid-td">
+                <div class="hdr-co-name">WAJENZI PROFESSIONAL CO. LTD</div>
+                <div class="hdr-co-sub">
+                    PSSSF COMMERCIAL COMPLEX, SAM NUJOMA ROAD, DAR ES SALAAM, TANZANIA<br>
+                    P.O. Box 14492, Dar es Salaam &nbsp;|&nbsp; TIN: 154-867-805
                 </div>
             </td>
-            <td width="50%" style="text-align: right;">
-                <table style="margin-left: auto;">
+            <td class="hdr-contact-td">
+                +255 793 444 400<br>
+                billing@wajenziprofessional.co.tz
+            </td>
+        </tr>
+    </table>
+</div>
+
+{{-- Invoice title band --}}
+<div class="title-band">
+    <table>
+        <tr>
+            <td style="vertical-align: bottom; width: 55%;">
+                <div class="title-main">INVOICE</div>
+                <div class="title-num">{{ $invoice->document_number }}</div>
+                @php
+                    $statusMap = [
+                        'paid'    => 'badge-paid',
+                        'sent'    => 'badge-sent',
+                        'viewed'  => 'badge-viewed',
+                        'pending' => 'badge-pending',
+                        'overdue' => 'badge-overdue',
+                        'draft'   => 'badge-draft',
+                        'void'    => 'badge-void',
+                    ];
+                    $badgeClass = $statusMap[$invoice->status] ?? 'badge-draft';
+                @endphp
+                <span class="badge {{ $badgeClass }}">{{ ucfirst(str_replace('_', ' ', $invoice->status)) }}</span>
+            </td>
+            <td style="vertical-align: middle; text-align: right;">
+                <table class="title-meta" style="margin-left: auto;">
                     @if($invoice->reference_number)
                         <tr>
-                            <td class="info-label">Reference:</td>
-                            <td class="info-value">{{ $invoice->reference_number }}</td>
+                            <td class="lbl">Reference:</td>
+                            <td class="val">{{ $invoice->reference_number }}</td>
                         </tr>
                     @endif
                     <tr>
-                        <td class="info-label">Issue Date:</td>
-                        <td class="info-value">{{ $invoice->issue_date->format('d/m/Y') }}</td>
+                        <td class="lbl">Issue Date:</td>
+                        <td class="val">{{ $invoice->issue_date->format('d M Y') }}</td>
                     </tr>
                     @if($invoice->due_date)
                         <tr>
-                            <td class="info-label">Due Date:</td>
-                            <td class="info-value">
-                                {{ $invoice->due_date->format('d/m/Y') }}
-                                @if($invoice->is_overdue)
-                                    <span style="color: #dc3545; font-weight: bold;">(OVERDUE)</span>
-                                @endif
+                            <td class="lbl">Due Date:</td>
+                            <td class="{{ $invoice->is_overdue ? 'val-red' : 'val' }}">
+                                {{ $invoice->due_date->format('d M Y') }}
+                                @if($invoice->is_overdue) &nbsp;&#9888; OVERDUE @endif
                             </td>
                         </tr>
                     @endif
                     @if($invoice->po_number)
                         <tr>
-                            <td class="info-label">PO Number:</td>
-                            <td class="info-value">{{ $invoice->po_number }}</td>
+                            <td class="lbl">PO Number:</td>
+                            <td class="val">{{ $invoice->po_number }}</td>
                         </tr>
                     @endif
                     @if($invoice->sales_person)
                         <tr>
-                            <td class="info-label">Sales Person:</td>
-                            <td class="info-value">{{ $invoice->sales_person }}</td>
+                            <td class="lbl">Sales Person:</td>
+                            <td class="val">{{ $invoice->sales_person }}</td>
+                        </tr>
+                    @endif
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="body-pad">
+
+    {{-- Bill To + Invoice For --}}
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 14px;">
+        <tr>
+            <td style="width: 40%; vertical-align: top; padding-right: 16px;">
+                <div class="section-label">Bill To</div>
+                <div class="bill-to-box">
+                    <div class="client-name">{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</div>
+                    <div class="client-detail">
+                        @if($invoice->client->address){{ $invoice->client->address }}<br>@endif
+                        @if($invoice->client->phone_number)<strong>Phone:</strong> {{ $invoice->client->phone_number }}<br>@endif
+                        @if($invoice->client->email)<strong>Email:</strong> {{ $invoice->client->email }}<br>@endif
+                        @if($invoice->client->identification_number)<strong>ID:</strong> {{ $invoice->client->identification_number }}@endif
+                    </div>
+                </div>
+            </td>
+            <td style="vertical-align: top; padding-left: 8px;">
+                @if($invoice->title || $invoice->service_description)
+                    <div class="section-label">Invoice For</div>
+                    @if($invoice->title)
+                        <div class="inv-for-title">{{ $invoice->title }}</div>
+                    @endif
+                    @if($invoice->service_description)
+                        <div style="margin-top: 4px; font-size: 10px; color: #555;">
+                            <strong style="font-size: 10px;">Service Includes:</strong>
+                            <div class="service-desc" style="margin-top: 3px;">
+                                {!! str_replace(['&nbsp;', "\xC2\xA0"], ' ', $invoice->service_description) !!}
+                            </div>
+                        </div>
+                    @endif
+                @endif
+            </td>
+        </tr>
+    </table>
+
+    {{-- Items table --}}
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th style="width: 38%; text-align: left;">Item / Description</th>
+                <th style="width: 8%;" class="tc">Qty</th>
+                <th style="width: 8%;" class="tc">Unit</th>
+                <th style="width: 17%;" class="tr">Unit Price</th>
+                <th style="width: 11%;" class="tr">Tax</th>
+                <th style="width: 18%;" class="tr">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($invoice->items as $item)
+                <tr>
+                    <td>
+                        <div class="item-name">{{ $item->item_name }}</div>
+                        @if($item->description)
+                            <div class="item-desc">{{ $item->description }}</div>
+                        @endif
+                    </td>
+                    <td class="tc">{{ number_format($item->quantity, 2) }}</td>
+                    <td class="tc" style="color: #9ca3af;">{{ $item->unit_of_measure ?? '—' }}</td>
+                    <td class="tr">{{ $invoice->currency_code }} {{ number_format($item->unit_price, 2) }}</td>
+                    <td class="tr" style="color: #6b7280;">
+                        @if($item->tax_percentage > 0)
+                            {{ $item->tax_percentage }}%<br>
+                            <span style="font-size: 9px;">{{ number_format($item->tax_amount, 2) }}</span>
+                        @else
+                            <span style="color: #d1d5db;">—</span>
+                        @endif
+                    </td>
+                    <td class="tr" style="font-weight: 700;">{{ $invoice->currency_code }} {{ number_format($item->line_total, 2) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    {{-- Totals --}}
+    <table class="totals-outer">
+        <tr>
+            <td class="notes-td">
+                @if($invoice->notes)
+                    <div class="section-label">Notes</div>
+                    <div style="font-size: 10px; color: #555; max-width: 300px; line-height: 1.6;">{{ $invoice->notes }}</div>
+                @endif
+            </td>
+            <td class="totals-td">
+                <table class="totals-inner">
+                    <tr>
+                        <td class="t-lbl">Subtotal</td>
+                        <td class="t-val">{{ $invoice->currency_code }} {{ number_format($invoice->subtotal_amount, 2) }}</td>
+                    </tr>
+                    @if($invoice->discount_amount > 0)
+                        <tr>
+                            <td class="t-lbl">Discount</td>
+                            <td class="t-val" style="color: #16a34a;">−{{ $invoice->currency_code }} {{ number_format($invoice->discount_amount, 2) }}</td>
+                        </tr>
+                    @endif
+                    @if($invoice->tax_amount > 0)
+                        <tr>
+                            <td class="t-lbl">Tax</td>
+                            <td class="t-val">{{ $invoice->currency_code }} {{ number_format($invoice->tax_amount, 2) }}</td>
+                        </tr>
+                    @endif
+                    @if($invoice->shipping_amount > 0)
+                        <tr>
+                            <td class="t-lbl">Shipping</td>
+                            <td class="t-val">{{ $invoice->currency_code }} {{ number_format($invoice->shipping_amount, 2) }}</td>
+                        </tr>
+                    @endif
+                </table>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 2px;">
+                    <tr class="total-main">
+                        <td style="font-size: 14px; font-weight: 900; color: #fff; padding: 9px 8px;">TOTAL</td>
+                        <td style="font-size: 14px; font-weight: 900; color: #fff; padding: 9px 8px; text-align: right; white-space: nowrap;">
+                            {{ $invoice->currency_code }} {{ number_format($invoice->total_amount, 2) }}
+                        </td>
+                    </tr>
+                    @if($invoice->paid_amount > 0)
+                        <tr>
+                            <td style="background: #f0fdf4; color: #15803d; font-weight: 700; padding: 5px 8px; font-size: 11px;">Paid</td>
+                            <td style="background: #f0fdf4; color: #15803d; font-weight: 700; padding: 5px 8px; text-align: right; font-size: 11px; white-space: nowrap;">
+                                −{{ $invoice->currency_code }} {{ number_format($invoice->paid_amount, 2) }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="background: #1BC5BD; color: #fff; font-weight: 900; padding: 8px 8px; font-size: 12px;">BALANCE DUE</td>
+                            <td style="background: #1BC5BD; color: #fff; font-weight: 900; padding: 8px 8px; text-align: right; font-size: 12px; white-space: nowrap;">
+                                {{ $invoice->currency_code }} {{ number_format($invoice->balance_amount, 2) }}
+                            </td>
                         </tr>
                     @endif
                 </table>
@@ -302,262 +352,152 @@
         </tr>
     </table>
 
-    <!-- Bill To + Invoice For -->
-    <table class="two-boxes">
-        <tr>
-            <td style="padding-right: 10px; width: 42%;">
-                <div class="bill-to-box">
-                    <div class="box-title">Bill To:</div>
-                    <strong>{{ $invoice->client->first_name }} {{ $invoice->client->last_name }}</strong><br>
-                    @if($invoice->client->address)
-                        {{ $invoice->client->address }}<br>
-                    @endif
-                    @if($invoice->client->phone_number)
-                        <strong>Phone:</strong> {{ $invoice->client->phone_number }}<br>
-                    @endif
-                    @if($invoice->client->email)
-                        <strong>Email:</strong> {{ $invoice->client->email }}
-                    @endif
-                </div>
-            </td>
-            <td style="padding-left: 10px; vertical-align: top;">
-                <span class="invoice-for-label">INVOICE FOR :</span>
-                @if($invoice->title)
-                    <span class="invoice-for-title">{{ $invoice->title }}</span>
-                @endif
-                @if($invoice->service_description)
-                    <div style="margin-top: 6px; font-size: 10px;">
-                        <strong style="font-size: 11px;">Service Includes:</strong>
-                        <div class="service-desc" style="padding: 2px 0 0 4px; font-size: 10px;">
-                            {!! str_replace(['&nbsp;', "\xC2\xA0"], ' ', $invoice->service_description) !!}
-                        </div>
-                    </div>
-                @endif
-            </td>
-        </tr>
-    </table>
-
-    <!-- Items Table -->
-    <table class="items-table">
-        <thead>
-            <tr>
-                <th width="38%">Item / Description</th>
-                <th width="8%" class="text-center">Qty</th>
-                <th width="8%" class="text-center">Unit</th>
-                <th width="16%" class="text-right">Unit Price</th>
-                <th width="12%" class="text-right">Tax</th>
-                <th width="18%" class="text-right">Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($invoice->items as $item)
+    {{-- Payment box (instructions + bank details combined) --}}
+    <div style="page-break-inside: avoid;">
+        <div class="payment-box" style="margin-top: 14px;">
+            <div class="payment-box-title">Payment Information</div>
+            <table>
                 <tr>
-                    <td>
-                        <strong>{{ $item->item_name }}</strong>
-                        @if($item->description)
-                            <div class="item-description">{{ $item->description }}</div>
+                    <td style="width: 50%; vertical-align: top;">
+                        <strong>Bank:</strong> CRDB Bank<br>
+                        <strong>Account Number:</strong> 0150884401500<br>
+                        <strong>Account Name:</strong> WAJENZI PROFESSIONAL COMPANY LTD
+                    </td>
+                    <td style="width: 25%; vertical-align: top;">
+                        <strong>Currency:</strong> {{ $invoice->currency_code }}<br>
+                        <strong>Reference:</strong> {{ $invoice->document_number }}<br>
+                        @if($invoice->due_date && $invoice->balance_amount > 0)
+                            <strong>Due:</strong> {{ $invoice->due_date->format('d M Y') }}
                         @endif
                     </td>
-                    <td class="text-center">{{ number_format($item->quantity, 2) }}</td>
-                    <td class="text-center">{{ $item->unit_of_measure ?? '-' }}</td>
-                    <td class="text-right">{{ $invoice->currency_code }} {{ number_format($item->unit_price, 2) }}</td>
-                    <td class="text-right">
-                        @if($item->tax_percentage > 0)
-                            {{ $item->tax_percentage }}%<br>
-                            <small>{{ $invoice->currency_code }} {{ number_format($item->tax_amount, 2) }}</small>
-                        @else
-                            -
+                    <td style="width: 25%; vertical-align: top; text-align: right; color: #92400e; font-size: 10px;">
+                        @if($invoice->balance_amount > 0)
+                            <strong>Amount Due</strong><br>
+                            <span style="font-size: 13px; font-weight: 900; color: #1a2332;">
+                                {{ $invoice->currency_code }} {{ number_format($invoice->balance_amount, 2) }}
+                            </span>
                         @endif
                     </td>
-                    <td class="text-right">{{ $invoice->currency_code }} {{ number_format($item->line_total, 2) }}</td>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <!-- Totals -->
-    <table class="totals-table">
-        <tr>
-            <td><strong>Subtotal:</strong></td>
-            <td class="text-right" style="text-align:right;">{{ $invoice->currency_code }} {{ number_format($invoice->subtotal_amount, 2) }}</td>
-        </tr>
-        @if($invoice->discount_amount > 0)
-            <tr>
-                <td><strong>Discount:</strong></td>
-                <td style="text-align:right; color: #28a745;">-{{ $invoice->currency_code }} {{ number_format($invoice->discount_amount, 2) }}</td>
-            </tr>
-        @endif
-        @if($invoice->tax_amount > 0)
-            <tr>
-                <td><strong>Tax:</strong></td>
-                <td style="text-align:right;">{{ $invoice->currency_code }} {{ number_format($invoice->tax_amount, 2) }}</td>
-            </tr>
-        @endif
-        @if($invoice->shipping_amount > 0)
-            <tr>
-                <td><strong>Shipping:</strong></td>
-                <td style="text-align:right;">{{ $invoice->currency_code }} {{ number_format($invoice->shipping_amount, 2) }}</td>
-            </tr>
-        @endif
-        <tr class="total-row">
-            <td><strong>TOTAL:</strong></td>
-            <td style="text-align:right;"><strong>{{ $invoice->currency_code }} {{ number_format($invoice->total_amount, 2) }}</strong></td>
-        </tr>
-        @if($invoice->paid_amount > 0)
-            <tr class="paid-row">
-                <td><strong>PAID:</strong></td>
-                <td style="text-align:right;"><strong>{{ $invoice->currency_code }} {{ number_format($invoice->paid_amount, 2) }}</strong></td>
-            </tr>
-            <tr class="balance-row">
-                <td><strong>BALANCE:</strong></td>
-                <td style="text-align:right;"><strong>{{ $invoice->currency_code }} {{ number_format($invoice->balance_amount, 2) }}</strong></td>
-            </tr>
-        @endif
-    </table>
-
-    <!-- Payment Instructions -->
-    @if($invoice->balance_amount > 0)
-        <div class="payment-instructions">
-            <strong>Payment Instructions</strong><br>
-            Amount Due: <strong>{{ $invoice->currency_code }} {{ number_format($invoice->balance_amount, 2) }}</strong><br>
-            @if($invoice->due_date)
-                Due Date: <strong>{{ $invoice->due_date->format('d/m/Y') }}</strong><br>
-            @endif
-            Please reference invoice number <strong>{{ $invoice->document_number }}</strong> when making payment.
-        </div>
-    @endif
-
-    <!-- Payment Information (Bank Details) -->
-    <div class="payment-info-box">
-        <div class="title">Payment Information</div>
-        <table style="width: 100%; font-size: 10px;">
-            <tr>
-                <td width="50%">
-                    <strong>Bank:</strong> CRDB Bank<br>
-                    <strong>Account Number:</strong> 0150884401500<br>
-                    <strong>Account Name:</strong> WAJENZI PROFESSIONAL COMPANY LTD
-                </td>
-                <td width="50%">
-                    <strong>Currency:</strong> {{ $invoice->currency_code }}<br>
-                    <strong>Reference:</strong> {{ $invoice->document_number }}
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    @if($invoice->approved_at)
-    <div style="text-align: right; margin: 6px 0 4px 0;">
-        <img src="{{ public_path('images/invoice-stamp.png') }}" alt="Approved" style="width: 190px;">
-    </div>
-    @endif
-
-    <!-- Footer -->
-    <div class="footer-bar">
-        <table>
-            <tr>
-                <td width="75%" style="vertical-align: bottom;">
-                    Email: info@wajenziprofessional.co.tz<br>
-                    Instagram : wajenziprofessionaltz<br>
-                    PSSSF Commercial Complex, Ground Floor, Sam Nujoma Road, Dar es salaam | +255 793 444 400
-                </td>
-                <td width="25%" style="text-align: right; vertical-align: bottom;">
-                    @if(file_exists(public_path('media/logo/instagram-qr.png')))
-                        <img src="{{ public_path('media/logo/instagram-qr.png') }}" alt="Instagram QR" style="width: 65px; height: 65px;">
-                    @endif
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    {{-- ==================== PAGE 2: PAYMENT INFORMATION + TERMS & CONDITIONS ==================== --}}
-    <div class="page-break"></div>
-    <div class="tc-page">
-        <!-- Header repeated for page 2 -->
-        <div style="text-align: center; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #333;">
-            <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="Wajenzi Professional" style="max-height: 40px; margin-bottom: 3px;">
-            <div style="font-size: 16px; font-weight: bold;">WAJENZI<br>PROFESSIONAL CO. LTD</div>
+            </table>
         </div>
 
-        <!-- Payment Information Reminder Box -->
-        <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 5px; padding: 12px 15px; margin-bottom: 20px; font-size: 10px; line-height: 1.6;">
-            <div style="font-weight: bold; font-size: 12px; margin-bottom: 8px;">Payment Information:</div>
-            <p style="margin: 0 0 6px 0;"><strong>Please arrange payment for the outstanding amount at your earliest convenience. The original invoice is attached for your reference.</strong></p>
-            <p style="margin: 0 0 6px 0;"><strong>If you have already made this payment, please disregard this reminder and contact us with your payment reference.</strong></p>
-            <p style="margin: 0;"><strong>If you have any questions regarding this invoice or need to discuss payment arrangements, please don't hesitate to contact us.</strong></p>
+        {{-- Stamp with date overlay --}}
+        <div style="text-align: right; margin: 10px 0 4px;">
+            <div style="position: relative; width: 210px; height: 140px; display: inline-block;">
+                <img src="{{ public_path('images/invoice-stamp.png') }}"
+                     alt="Stamp"
+                     style="position: absolute; top: 0; left: 0; width: 210px; height: 140px;">
+                <div style="position: absolute; top: 34px; left: 0; width: 210px; text-align: center;">
+                    <span style="color: #cc0000; font-size: 16px; font-weight: 900; letter-spacing: 1.5px;">
+                        {{ strtoupper($invoice->issue_date->format('d M Y')) }}
+                    </span>
+                </div>
+            </div>
         </div>
 
-        <h2>Terms & Conditions of the Invoice</h2>
-
-        @if(!empty(trim(strip_tags($invoice->terms_conditions ?? ''))))
-            {{-- Custom T&C from invoice --}}
-            {!! $invoice->terms_conditions !!}
-        @else
-            {{-- Default T&C --}}
-            <h3>1. Payment Terms</h3>
-            <p>
-                Payment shall be made according to the schedule outlined in the invoice. A deposit of 60% of the total project cost is required before commencement of work. The remaining 40% balance is due upon completion and delivery of the project. Late payments may attract a penalty of 2% per month on the outstanding balance. All payments should be made via bank transfer to the account details provided in the invoice.
-            </p>
-
-            <h3>2. Project Deliverables, Changes & Revisions</h3>
-            <p><strong>2D Design Stage:</strong></p>
-            <ol>
-                <li>Initial concept designs will be presented based on the client's brief.</li>
-                <li>Up to two (2) rounds of revisions are included in the quoted price.</li>
-                <li>Additional revisions beyond the included rounds will be charged at 10% of the design fee per revision.</li>
-                <li>Major scope changes requested after approval of the concept design will be treated as new work and quoted separately.</li>
-            </ol>
-            <p><strong>3D Design Stage:</strong></p>
-            <ol>
-                <li>3D visualization will commence only after approval of the final 2D design.</li>
-                <li>Up to two (2) rounds of revisions on 3D renders are included.</li>
-                <li>Changes to the approved 2D design during the 3D phase will incur additional charges.</li>
-                <li>Final high-resolution renders will be delivered upon full payment.</li>
-            </ol>
-
-            <h3>3. Validity</h3>
-            <p>
-                This quotation/invoice is valid for seven (7) days from the date of issue. After this period, prices may be subject to review and adjustment without prior notice. To secure the quoted rates, the client must confirm acceptance and make the required deposit within the validity period.
-            </p>
-
-            <h3>4. Taxes & Statutory Deductions</h3>
-            <p>
-                All prices quoted are exclusive of applicable taxes unless otherwise stated. Value Added Tax (VAT) at the prevailing rate of 18% will be applied where applicable. Withholding tax and any other statutory deductions as required by Tanzanian law shall be borne by the respective party as per the law. Tax invoices and receipts will be provided for all payments received.
-            </p>
-
-            <h3>5. Ownership of Work</h3>
-            <p>
-                All intellectual property rights, including but not limited to designs, drawings, 3D models, and related documentation, remain the sole property of Wajenzi Professional Company Ltd until full payment has been received. Upon receipt of full payment, ownership of the final deliverables will be transferred to the client. The company reserves the right to use completed projects for portfolio and marketing purposes unless otherwise agreed in writing.
-            </p>
-
-            <h3>6. Cancellation Policy</h3>
-            <p>
-                In the event of project cancellation by the client, the following terms apply: Cancellation before commencement of work &mdash; 80% refund of the deposit. Cancellation after commencement but before 50% completion &mdash; 40% refund of the deposit. Cancellation after 50% completion &mdash; no refund will be issued. All cancellation requests must be submitted in writing. Work completed up to the point of cancellation remains the property of Wajenzi Professional Company Ltd.
-            </p>
-
-            <h3>7. Dispute Resolution</h3>
-            <p>
-                In the event of any dispute arising from this agreement, both parties shall first attempt to resolve the matter amicably through negotiation. If the dispute cannot be resolved through negotiation within fourteen (14) days, the matter shall be referred to mediation. If mediation fails, the dispute shall be submitted to arbitration in accordance with the laws of the United Republic of Tanzania. The venue for any legal proceedings shall be Dar es Salaam, Tanzania.
-            </p>
-
-            <h3>8. Agreement</h3>
-            <p>
-                By making payment or confirming acceptance of this invoice/quotation, the client acknowledges that they have read, understood, and agreed to all the terms and conditions stated herein. This document, together with any annexures or addenda, constitutes the entire agreement between the parties. No verbal agreements or representations shall be binding unless confirmed in writing by both parties.
-            </p>
-        @endif
-
-        <!-- Footer for T&C page -->
-        <div style="border-top: 2px solid #333; padding-top: 8px; margin-top: 20px; font-size: 9px; color: #555;">
-            <table style="width: 100%;">
+        {{-- Footer --}}
+        <div class="footer-band">
+            <table>
                 <tr>
-                    <td>
-                        <strong>WAJENZI PROFESSIONAL CO. LTD</strong> | Email: billing@wajenziprofessional.co.tz | Phone: +255 793 444 400
+                    <td style="vertical-align: middle;">
+                        <span style="color: #ffffff; font-weight: 700; font-size: 10px;">WAJENZI PROFESSIONAL CO. LTD</span><br>
+                        info@wajenziprofessional.co.tz &nbsp;|&nbsp; +255 793 444 400 &nbsp;|&nbsp; Instagram: wajenziprofessionaltz<br>
+                        PSSSF Commercial Complex, Ground Floor, Sam Nujoma Road, Dar es Salaam
                     </td>
-                    <td style="text-align: right; color: #999; font-size: 8px;">
-                        Page 2 of 2
+                    <td style="text-align: right; vertical-align: middle; width: 75px;">
+                        @if(file_exists(public_path('media/logo/instagram-qr.png')))
+                            <img src="{{ public_path('media/logo/instagram-qr.png') }}" alt="QR" style="width: 55px; height: 55px;">
+                        @endif
                     </td>
                 </tr>
             </table>
         </div>
     </div>
+
+</div>{{-- /body-pad --}}
+
+{{-- ==================== PAGE 2: TERMS & CONDITIONS ==================== --}}
+@php $hasTerms = !empty(trim(strip_tags($invoice->terms_conditions ?? ''))); @endphp
+@if($hasTerms)
+<div class="page-break"></div>
+
+{{-- Teal accent bar --}}
+<div class="hdr-accent"></div>
+
+{{-- Compact header for T&C page --}}
+<div class="tc-hdr-band">
+    <table>
+        <tr>
+            <td style="width: 50px; vertical-align: middle;">
+                <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="Logo" style="height: 36px; filter: brightness(0) invert(1); opacity: .9;">
+            </td>
+            <td style="vertical-align: middle; padding-left: 12px;">
+                <div class="tc-hdr-co">WAJENZI PROFESSIONAL CO. LTD</div>
+                <div class="tc-hdr-sub">billing@wajenziprofessional.co.tz &nbsp;|&nbsp; +255 793 444 400</div>
+            </td>
+            <td style="text-align: right; vertical-align: middle; font-size: 9px; color: #6b7280;">
+                Ref: {{ $invoice->document_number }}<br>
+                {{ $invoice->issue_date->format('d M Y') }}
+            </td>
+        </tr>
+    </table>
+</div>
+
+{{-- T&C title --}}
+<div class="tc-title-band">
+    <div class="tc-title">Terms &amp; Conditions of the Invoice</div>
+</div>
+
+<div class="tc-body">
+    @if($invoice->terms_conditions)
+        {!! $invoice->terms_conditions !!}
+    @else
+        <div class="tc-clause">
+            <strong>1. Payment Terms</strong>
+            <p>Payment shall be made according to the schedule outlined in the invoice. A deposit of 60% of the total project cost is required before commencement of work. The remaining 40% balance is due upon completion and delivery of the project. Late payments may attract a penalty of 2% per month on the outstanding balance.</p>
+        </div>
+        <div class="tc-clause">
+            <strong>2. Project Deliverables, Changes &amp; Revisions</strong>
+            <p><strong>2D Design Stage:</strong> Initial concept designs will be presented based on the client's brief. Up to two (2) rounds of revisions are included. Additional revisions will be charged at 10% of the design fee per revision.</p>
+            <p><strong>3D Design Stage:</strong> 3D visualization commences only after approval of the final 2D design. Up to two (2) rounds of revisions included. Final renders delivered upon full payment.</p>
+        </div>
+        <div class="tc-clause">
+            <strong>3. Validity</strong>
+            <p>This invoice is valid for seven (7) days from the date of issue. After this period, prices may be subject to review and adjustment without prior notice.</p>
+        </div>
+        <div class="tc-clause">
+            <strong>4. Taxes &amp; Statutory Deductions</strong>
+            <p>All prices quoted are exclusive of applicable taxes unless otherwise stated. VAT at 18% will be applied where applicable. Withholding tax and other statutory deductions shall be borne by the respective party per Tanzanian law.</p>
+        </div>
+        <div class="tc-clause">
+            <strong>5. Ownership of Work</strong>
+            <p>All intellectual property rights remain the sole property of Wajenzi Professional Company Ltd until full payment is received. Upon receipt of full payment, ownership of final deliverables is transferred to the client.</p>
+        </div>
+        <div class="tc-clause">
+            <strong>6. Cancellation Policy</strong>
+            <p>Cancellation before commencement — 80% refund of deposit. Cancellation after commencement but before 50% completion — 40% refund. Cancellation after 50% completion — no refund. All cancellation requests must be in writing.</p>
+        </div>
+        <div class="tc-clause">
+            <strong>7. Dispute Resolution</strong>
+            <p>Both parties shall first attempt to resolve disputes amicably. If unresolved within 14 days, the matter shall be referred to mediation then arbitration per the laws of the United Republic of Tanzania. Venue: Dar es Salaam.</p>
+        </div>
+        <div class="tc-clause">
+            <strong>8. Agreement</strong>
+            <p>By making payment or confirming acceptance, the client acknowledges they have read, understood, and agreed to all terms and conditions stated herein.</p>
+        </div>
+    @endif
+</div>
+
+<div class="tc-footer">
+    <table>
+        <tr>
+            <td><strong style="color: #1a2332;">WAJENZI PROFESSIONAL CO. LTD</strong> &nbsp;|&nbsp; billing@wajenziprofessional.co.tz &nbsp;|&nbsp; +255 793 444 400</td>
+            <td style="text-align: right; font-size: 8px; color: #9ca3af;">Page 2 of 2</td>
+        </tr>
+    </table>
+</div>
+
+@endif
 </body>
 </html>
