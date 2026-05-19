@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\StatutoryPayment;
+use App\Services\ApprovalService;
 use Illuminate\Http\Request;
 
 class StatutoryPaymentController extends Controller
 {
+    protected $approvalService;
+
+    public function __construct(ApprovalService $approvalService)
+    {
+        $this->approvalService = $approvalService;
+    }
 
 
     public function statutory_payments(Request $request){

@@ -42,8 +42,8 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
             </select>
         </div>
         <div class="form-group">
-            <label for="example-nf-email" class="control-label required">Asset</label>
-            <select name="asset_id" id="asset_id" class="form-control" required>
+            <label for="example-nf-email" class="control-label">Asset</label>
+            <select name="asset_id" id="asset_id" class="form-control">
                 <option value="">Select Asset</option>
                 @foreach ($assets as $asset)
                     <option value="{{ $asset->id }}" {{ ( $asset->id == $object->asset_id) ? 'selected' : '' }}> {{ $asset->name }} </option>
@@ -52,9 +52,13 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
         </div>
         <div class="form-group">
             <label for="example-nf-cost">Asset Property</label>
-            <select name="asset_property_id" id="asset_property_id" class="form-control" required>
-                <option></option>
-
+            <select name="asset_property_id" id="asset_property_id" class="form-control">
+                <option value="">Select Asset Property</option>
+                @if(!empty($asset_properties ?? null))
+                    @foreach ($asset_properties as $asset_property)
+                        <option value="{{ $asset_property->id }}" {{ ( $asset_property->id == ($object->asset_property_id ?? null)) ? 'selected' : '' }}>{{ $asset_property->name }}</option>
+                    @endforeach
+                @endif
             </select>
         </div>
         <div class="form-group" >
@@ -122,17 +126,24 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
                 $("#billing_cycle").empty();
                 $("#amount").empty();
                 for (var i = 0; i < len; i++) {
-                    var id = response[i]['id'];
                     var price = response[i]['price'];
                     var billing_cycle = response[i]['billing_cycle'];
                     var billing_cycle_name = response[i]['billing_cycle_name'];
-                    var month_add = response[i]['billing_cycle'];
-                    var newDate = moment(startdate, "YYYY-MM-DD").add(month_add, 'months').format('YYYY-MM-DD');
-                    // alert(month_add);
+                    var month_add = parseInt(response[i]['billing_cycle'], 10) || 0;
 
-                    $("#amount").append("<option value='" + price + "'>" + price + "</option>");
-                    $("#billing_cycle").append("<option value='" + billing_cycle + "'>" + billing_cycle_name + "</option>");
-                    $('#input-due_date').val(newDate);
+                    $("#amount").append("<option value='" + price + "' selected>" + price + "</option>");
+                    $("#billing_cycle").append("<option value='" + billing_cycle + "' selected>" + billing_cycle_name + "</option>");
+
+                    if (startdate) {
+                        var d = new Date(startdate);
+                        if (!isNaN(d.getTime())) {
+                            d.setMonth(d.getMonth() + month_add);
+                            var yyyy = d.getFullYear();
+                            var mm = String(d.getMonth() + 1).padStart(2, '0');
+                            var dd = String(d.getDate()).padStart(2, '0');
+                            $('#input-due_date').val(yyyy + '-' + mm + '-' + dd);
+                        }
+                    }
                 }
             }
         });
@@ -156,6 +167,7 @@ $document_id = \App\Classes\Utility::getLastId('StatutoryPayment')+1;
             success: function (response) {
                 var len = response.length;
                 $("#asset_property_id").empty();
+                $("#asset_property_id").append("<option value=''>Select Asset Property</option>");
                 for (var i = 0; i < len; i++) {
                     var id = response[i]['id'];
                     var name = response[i]['name'];
