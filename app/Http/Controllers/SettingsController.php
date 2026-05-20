@@ -724,8 +724,31 @@ class SettingsController extends Controller
         if($this->handleCrud($request, 'AdvanceSalary')) {
             return back();
         }
+
+        $user = auth()->user();
+
+        // Roles that should see every advance salary request:
+        //  - System Administrator (always)
+        //  - Any role configured as an approver in the Ringlesoft flow for AdvanceSalary
+        $approverRoleIds = ProcessApprovalFlowStep::query()
+            ->whereHas('process_approval_flow', fn ($q) => $q->where('approvable_type', AdvanceSalary::class))
+            ->pluck('role_id')
+            ->all();
+
+        $userRoleIds = $user->roles->pluck('id')->all();
+        $canSeeAll = $user->hasRole('System Administrator')
+            || !empty(array_intersect($userRoleIds, $approverRoleIds));
+
+        $query = AdvanceSalary::query();
+        if (!$canSeeAll) {
+            $query->where(function ($q) use ($user) {
+                $q->where('staff_id', $user->id)
+                  ->orWhere('create_by_id', $user->id);
+            });
+        }
+
         $data = [
-            'advance_salaries' => AdvanceSalary::all()
+            'advance_salaries' => $query->orderByDesc('id')->get()
         ];
         return view('pages.settings.settings_advance_salaries')->with($data);
     }

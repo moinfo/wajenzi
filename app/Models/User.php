@@ -22,7 +22,7 @@ class User extends Authenticatable
         'gender',
         'password',
         'employee_number',
-        'employee_type',
+        'type',
         'employment_type',
         'recruitment_date',
         'employment_date',
