@@ -37,9 +37,12 @@ class ApprovalNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        // Using database channel for in-app notifications
-        // Add 'mail' to also send email notifications
-        return ['database'];
+        // Send in-app bell notification, and email if the user has an address on file.
+        $channels = ['database'];
+        if (!empty($notifiable->email)) {
+            $channels[] = 'mail';
+        }
+        return $channels;
     }
 
     /**

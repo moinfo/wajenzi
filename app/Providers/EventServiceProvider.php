@@ -7,9 +7,13 @@ use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use App\Listeners\ApprovalNotificationListener;
+use App\Listeners\ApprovalOutcomeListener;
 use RingleSoft\LaravelProcessApproval\Events\ApprovalNotificationEvent;
 use RingleSoft\LaravelProcessApproval\Events\ProcessSubmittedEvent;
 use RingleSoft\LaravelProcessApproval\Events\ProcessApprovedEvent;
+use RingleSoft\LaravelProcessApproval\Events\ProcessApprovalCompletedEvent;
+use RingleSoft\LaravelProcessApproval\Events\ProcessRejectedEvent;
+use RingleSoft\LaravelProcessApproval\Events\ProcessReturnedEvent;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -34,6 +38,17 @@ class EventServiceProvider extends ServiceProvider
         ],
         ProcessApprovedEvent::class => [
             ApprovalNotificationListener::class . '@handleApproved',
+        ],
+
+        // Events for notifying the document creator/submitter of their request's outcome
+        ProcessApprovalCompletedEvent::class => [
+            ApprovalOutcomeListener::class . '@handleCompleted',
+        ],
+        ProcessRejectedEvent::class => [
+            ApprovalOutcomeListener::class . '@handleRejected',
+        ],
+        ProcessReturnedEvent::class => [
+            ApprovalOutcomeListener::class . '@handleReturned',
         ],
     ];
 

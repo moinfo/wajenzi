@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Listeners\Concerns\BuildsApprovalLinks;
 use App\Models\Approval;
 use App\Models\AssignUserGroup;
 use App\Models\Expense;
@@ -9,12 +10,14 @@ use App\Models\Expense;
 use App\Models\Notification;
 use App\Models\StatutoryPayment;
 use App\Models\User;
+use App\Support\ResolvesApprovableCreator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
 
 class ApprovalController extends Controller
 {
+    use BuildsApprovalLinks, ResolvesApprovableCreator;
     /**
      * Display a listing of the resource.
      *
@@ -25,78 +28,161 @@ class ApprovalController extends Controller
 
     }
 
-    public function approvals(Request $request) {
-        if($request->approveItem){
-            $class_name =  $request->approveItem;
-            $class_object = 'App\Models\\' . $class_name;
-           $approve =  Approval::create([
-                'approval_document_types_id' => $request->approval_document_types_id,
-                'user_id' => $request->user_id,
-                'document_id' => $request->document_id,
-                'approval_level_id' => $request->approval_level_id,
-                'user_group_id' => $request->user_group_id,
-                'approval_date' => $request->approval_date,
-                'comments' => $request->comments,
-                'status' => 'APPROVED']);
+    public function approvals(Request $request)
+    {
+        if ($request->approveItem) {
+            return $this->handleApprove($request);
+        }
+        return $this->handleReject($request);
+    }
 
-           if($approve){
-               $this->notify($class_name .'Approved Successfully', 'Approved!', 'success');
-               if(Approval::getNextApproval($request->document_id,$request->document_type_id)) {
-                   $next_user_group_id = Approval::getNextApproval($request->document_id,$request->document_type_id)->user_group_id;
-                   $next_user_id = AssignUserGroup::getUserId($next_user_group_id)->user_id;
-                   $user = User::find($next_user_id);
+    protected function handleApprove(Request $request)
+    {
+        $class_name   = $request->approveItem;
+        $class_object = 'App\Models\\' . $class_name;
+        $documentId   = $request->document_id;
+        $docTypeId    = $request->document_type_id;
 
-                   $details = [
-                       'staff_id' => $next_user_id,
-                       'title' => $class_name. ' '. 'Waiting for Approval',
-                       'body' => 'A new '.$class_name.' '.$request->document_number.' has been created and submitted. You are required to review and approve the created '. $class_name,
-                       'link' => $request->link,
-                       'document_id' => $request->document_id,
-                       'document_type_id' => $request->document_type_id
-                   ];
+        $approve = Approval::create([
+            'approval_document_types_id' => $request->approval_document_types_id,
+            'user_id'            => $request->user_id,
+            'document_id'        => $documentId,
+            'approval_level_id'  => $request->approval_level_id,
+            'user_group_id'      => $request->user_group_id,
+            'approval_date'      => $request->approval_date,
+            'comments'           => $request->comments,
+            'status'             => 'APPROVED',
+        ]);
 
-                   $user->notify(new \App\Notifications\ApprovalNotification($details));
-               }
-               if (Approval::isApprovalCompleted($request->document_id,$request->document_type_id)){
-                   $class_object::where('id', $request->document_id)->update(['status' => 'APPROVED']);
-               }else{
-                   $class_object::where('id', $request->document_id)->update(['status' => 'PENDING']);
-               }
-           }else{
-               $this->notify('Failed to Approve '.$class_name, 'Failed', 'error');
-              // redirect('settings/statutory_payments');
-           }
+        if (!$approve) {
+            $this->notify('Failed to Approve ' . $class_name, 'Failed', 'error');
+            return Redirect::back();
+        }
 
-        }else{
-            $class_name =  $request->rejectItem;
-            $class_object = 'App\Models\\' . $class_name;
-            $reject = Approval::create([
-                'approval_document_types_id' => $request->approval_document_types_id,
-                'user_id' => $request->user_id,
-                'document_id' => $request->document_id,
-                'approval_level_id' => $request->approval_level_id,
-                'user_group_id' => $request->user_group_id,
-                'approval_date' => $request->approval_date,
-                'comments' => $request->comments,
-                'status' => 'REJECTED']);
-            if ($reject == true){
-                $this->notify($class_name .'Rejected Successfully', 'Rejected!', 'success');
-                $class_object::where('id', $request->document_id)->update(['status' => 'REJECTED']);
+        $this->notify($class_name . 'Approved Successfully', 'Approved!', 'success');
 
-            }else{
-                $this->notify('Failed to Reject '.$class_name, 'Failed', 'error');
-            }
+        $isCompleted = Approval::isApprovalCompleted($documentId, $docTypeId);
+        $class_object::where('id', $documentId)->update(['status' => $isCompleted ? 'APPROVED' : 'PENDING']);
 
-
+        if ($isCompleted) {
+            // Final approval — notify the creator
+            $this->notifyCreatorOutcome($class_name, $documentId, $docTypeId, 'approved', $request->comments);
+        } else {
+            // More steps remain — notify every user in the next approval group
+            $this->notifyNextApprovers($class_name, $request, $documentId, $docTypeId);
         }
 
         return Redirect::back();
-//        $statutory_payments = StatutoryPayment::all();
-//        $data = [
-//            'statutory_payments' => $statutory_payments
-//        ];
-//        return view('pages.settings.settings_statutory_payments')->with($data);
+    }
 
+    protected function handleReject(Request $request)
+    {
+        $class_name   = $request->rejectItem;
+        $class_object = 'App\Models\\' . $class_name;
+        $documentId   = $request->document_id;
+        $docTypeId    = $request->document_type_id;
+
+        $reject = Approval::create([
+            'approval_document_types_id' => $request->approval_document_types_id,
+            'user_id'            => $request->user_id,
+            'document_id'        => $documentId,
+            'approval_level_id'  => $request->approval_level_id,
+            'user_group_id'      => $request->user_group_id,
+            'approval_date'      => $request->approval_date,
+            'comments'           => $request->comments,
+            'status'             => 'REJECTED',
+        ]);
+
+        if (!$reject) {
+            $this->notify('Failed to Reject ' . $class_name, 'Failed', 'error');
+            return Redirect::back();
+        }
+
+        $this->notify($class_name . 'Rejected Successfully', 'Rejected!', 'success');
+        $class_object::where('id', $documentId)->update(['status' => 'REJECTED']);
+
+        // Notify the creator that their submission was rejected
+        $this->notifyCreatorOutcome($class_name, $documentId, $docTypeId, 'rejected', $request->comments);
+
+        return Redirect::back();
+    }
+
+    /**
+     * Notify every user in the next approval group (legacy AssignUserGroup path).
+     */
+    protected function notifyNextApprovers(string $class_name, Request $request, $documentId, $docTypeId): void
+    {
+        $next = Approval::getNextApproval($documentId, $docTypeId);
+        if (!$next) {
+            return;
+        }
+        $users = AssignUserGroup::getUsersInGroup($next->user_group_id);
+        if ($users->isEmpty()) {
+            \Log::warning("No approver assigned for {$class_name} document_type_id={$docTypeId}, group_id={$next->user_group_id}");
+            return;
+        }
+        foreach ($users as $user) {
+            $details = [
+                'staff_id'         => $user->id,
+                'title'            => $class_name . ' Waiting for Approval',
+                'body'             => 'A new ' . $class_name . ' ' . $request->document_number . ' has been created and submitted. You are required to review and approve the created ' . $class_name,
+                'link'             => $request->link,
+                'document_id'      => $documentId,
+                'document_type_id' => $docTypeId,
+            ];
+            $user->notify(new \App\Notifications\ApprovalNotification($details));
+            // Realtime broadcast (channel keyed by staff_id)
+            event(new \App\Events\Approved($details));
+        }
+    }
+
+    /**
+     * Notify the document creator when their submission reaches a terminal outcome.
+     * Uses the same probe order as the RingleSoft ApprovalOutcomeListener so behaviour
+     * is consistent across the two approval systems.
+     */
+    protected function notifyCreatorOutcome(string $class_name, $documentId, $docTypeId, string $outcome, ?string $comment): void
+    {
+        $class_object = 'App\Models\\' . $class_name;
+        if (!class_exists($class_object)) {
+            return;
+        }
+        $approvable = $class_object::find($documentId);
+        if (!$approvable) {
+            return;
+        }
+        $creatorId = $this->resolveCreatorId($approvable);
+        if (!$creatorId) {
+            return;
+        }
+        $creator = User::find($creatorId);
+        if (!$creator) {
+            return;
+        }
+
+        $link = $this->getLinkForDocumentType($class_name, $documentId, (int) $docTypeId);
+        $human = trim(preg_replace('/(?<!^)([A-Z])/', ' $1', $class_name));
+
+        if ($outcome === 'approved') {
+            $title = "{$human} Approved";
+            $body  = "Your {$human} submission has been fully approved.";
+        } else {
+            $title = "{$human} Rejected";
+            $body  = "Your {$human} submission has been rejected.";
+            if ($comment) {
+                $body .= " Reason: {$comment}";
+            }
+        }
+
+        $creator->notify(new \App\Notifications\ApprovalNotification([
+            'staff_id'         => $creator->id,
+            'link'             => $link,
+            'title'            => $title,
+            'body'             => $body,
+            'outcome'          => $outcome,
+            'document_id'      => (string) $documentId,
+            'document_type_id' => (string) $docTypeId,
+        ]));
     }
 
     /**

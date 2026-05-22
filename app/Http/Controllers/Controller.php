@@ -71,23 +71,25 @@ class Controller extends BaseController
                         $nextApproval = Approval::getNextApproval($request->document_id,$request->document_type_id);
                         if($nextApproval) {
                             $next_user_group_id = $nextApproval->user_group_id;
-                            $assignment = AssignUserGroup::getUserId($next_user_group_id);
-                            $user = $assignment ? User::find($assignment->user_id) : null;
+                            $users = AssignUserGroup::getUsersInGroup($next_user_group_id);
 
-                            if ($user) {
-                                $details = [
-                                    'staff_id' => $assignment->user_id,
-                                    'title' => $class_name. ' '. 'Waiting for Approval',
-                                    'body' => 'A new '.$class_name.' '.$request->document_number.' has been created and submitted. You are required to review and approve the created '. $class_name,
-                                    'link' => $request->link,
-                                    'document_id' => $request->document_id,
-                                    'document_type_id' => $request->document_type_id
-                                ];
-                                $user->notify(new \App\Notifications\ApprovalNotification($details));
-
-                                event(new \App\Events\Approved($details));
-                            } else {
+                            if ($users->isEmpty()) {
                                 \Log::warning("No approver assigned for {$class_name} document_type_id={$request->document_type_id}, group_id={$next_user_group_id}");
+                            } else {
+                                foreach ($users as $user) {
+                                    $details = [
+                                        'staff_id' => $user->id,
+                                        'title' => $class_name. ' '. 'Waiting for Approval',
+                                        'body' => 'A new '.$class_name.' '.$request->document_number.' has been created and submitted. You are required to review and approve the created '. $class_name,
+                                        'link' => $request->link,
+                                        'document_id' => $request->document_id,
+                                        'document_type_id' => $request->document_type_id
+                                    ];
+                                    $user->notify(new \App\Notifications\ApprovalNotification($details));
+
+                                    // Realtime broadcast fires per-recipient (channel is keyed by staff_id)
+                                    event(new \App\Events\Approved($details));
+                                }
                             }
                         }
                     }
