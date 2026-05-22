@@ -87,10 +87,20 @@ class Controller extends BaseController
                                         'document_id' => $request->document_id,
                                         'document_type_id' => $request->document_type_id
                                     ];
-                                    $user->notify(new \App\Notifications\ApprovalNotification($details));
+                                    // Notify each user defensively — a single channel failure (e.g. SMTP auth)
+                                    // must not abort the document submission or block other recipients.
+                                    try {
+                                        $user->notify(new \App\Notifications\ApprovalNotification($details));
+                                    } catch (\Throwable $e) {
+                                        \Log::warning("ApprovalNotification failed for user {$user->id}: " . $e->getMessage());
+                                    }
 
                                     // Realtime broadcast fires per-recipient (channel is keyed by staff_id)
-                                    event(new \App\Events\Approved($details));
+                                    try {
+                                        event(new \App\Events\Approved($details));
+                                    } catch (\Throwable $e) {
+                                        \Log::warning("Approved broadcast failed for user {$user->id}: " . $e->getMessage());
+                                    }
                                 }
                             }
                         }

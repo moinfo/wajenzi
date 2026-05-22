@@ -134,9 +134,16 @@ class ApprovalController extends Controller
                 'document_id'      => $documentId,
                 'document_type_id' => $docTypeId,
             ];
-            $user->notify(new \App\Notifications\ApprovalNotification($details));
-            // Realtime broadcast (channel keyed by staff_id)
-            event(new \App\Events\Approved($details));
+            try {
+                $user->notify(new \App\Notifications\ApprovalNotification($details));
+            } catch (\Throwable $e) {
+                \Log::warning("ApprovalNotification failed for user {$user->id}: " . $e->getMessage());
+            }
+            try {
+                event(new \App\Events\Approved($details));
+            } catch (\Throwable $e) {
+                \Log::warning("Approved broadcast failed for user {$user->id}: " . $e->getMessage());
+            }
         }
     }
 
@@ -178,15 +185,19 @@ class ApprovalController extends Controller
             }
         }
 
-        $creator->notify(new \App\Notifications\ApprovalNotification([
-            'staff_id'         => $creator->id,
-            'link'             => $link,
-            'title'            => $title,
-            'body'             => $body,
-            'outcome'          => $outcome,
-            'document_id'      => (string) $documentId,
-            'document_type_id' => (string) $docTypeId,
-        ]));
+        try {
+            $creator->notify(new \App\Notifications\ApprovalNotification([
+                'staff_id'         => $creator->id,
+                'link'             => $link,
+                'title'            => $title,
+                'body'             => $body,
+                'outcome'          => $outcome,
+                'document_id'      => (string) $documentId,
+                'document_type_id' => (string) $docTypeId,
+            ]));
+        } catch (\Throwable $e) {
+            \Log::warning("ApprovalNotification (outcome={$outcome}) failed for creator {$creator->id}: " . $e->getMessage());
+        }
     }
 
     /**

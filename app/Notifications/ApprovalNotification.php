@@ -37,12 +37,37 @@ class ApprovalNotification extends Notification implements ShouldQueue
      */
     public function via($notifiable)
     {
-        // Send in-app bell notification, and email if the user has an address on file.
+        // Always deliver the in-app bell notification.
+        // Only attempt email if the user has an address AND SMTP is actually configured —
+        // otherwise we'd crash the submission with "530 5.7.0 Authentication required"
+        // when the inline queue (sync) executes the mail channel.
         $channels = ['database'];
-        if (!empty($notifiable->email)) {
+        if (!empty($notifiable->email) && self::isMailConfigured()) {
             $channels[] = 'mail';
         }
         return $channels;
+    }
+
+    /**
+     * Heuristic: is the configured mailer actually usable, or is it the default
+     * placeholder that will fail with SMTP 530?
+     */
+    protected static function isMailConfigured(): bool
+    {
+        $mailer = config('mail.default');
+        if (in_array($mailer, ['log', 'array', null], true)) {
+            // 'log' is fine — emails are written to laravel.log — but treat as "skip"
+            // here only if explicitly disabled by an empty mailer. We let 'log' through.
+            return $mailer === 'log';
+        }
+        if ($mailer === 'smtp') {
+            $host = config('mail.mailers.smtp.host');
+            $user = config('mail.mailers.smtp.username');
+            // Require both host and a non-empty username for SMTP.
+            return !empty($host) && !empty($user);
+        }
+        // ses / mailgun / postmark / etc. — assume configured if they're picked explicitly.
+        return true;
     }
 
     /**
