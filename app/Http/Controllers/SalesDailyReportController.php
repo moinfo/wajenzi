@@ -25,15 +25,41 @@ class SalesDailyReportController extends Controller
             return back();
         }
 
-        $query = SalesDailyReport::with(['preparedBy.department', 'leadFollowups', 'salesActivities', 'clientConcerns']);
+        $query = $this->filteredReportsQuery($request)
+            ->with(['preparedBy.department', 'leadFollowups', 'salesActivities', 'clientConcerns']);
 
-        // Apply filters
+        $reports = $query->orderBy('report_date', 'desc')->paginate(15)->appends($request->query());
+
+        $summary = $this->buildSummary($request);
+        $users = User::all();
+
+        $data = [
+            'reports' => $reports,
+            'users' => $users,
+            'object' => new SalesDailyReport(),
+            'client_sources' => ClientSource::all(),
+            'departments' => Department::all(),
+            'clients' => ProjectClient::all(),
+            'leads' => Lead::active()->get(),
+            'summary' => $summary,
+        ];
+
+        return view('pages.sales.sales_daily_reports')->with($data);
+    }
+
+    /**
+     * Shared filter builder for the index view and the summary exports.
+     */
+    private function filteredReportsQuery(Request $request)
+    {
+        $query = SalesDailyReport::query();
+
         if ($request->start_date) {
             try {
                 $startDate = \Carbon\Carbon::createFromFormat('d/m/Y', $request->start_date)->format('Y-m-d');
                 $query->whereDate('report_date', '>=', $startDate);
             } catch (\Exception $e) {
-                // Handle invalid date format gracefully
+                // Ignore malformed date
             }
         }
 
@@ -42,7 +68,7 @@ class SalesDailyReportController extends Controller
                 $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $request->end_date)->format('Y-m-d');
                 $query->whereDate('report_date', '<=', $endDate);
             } catch (\Exception $e) {
-                // Handle invalid date format gracefully
+                // Ignore malformed date
             }
         }
 
@@ -54,20 +80,78 @@ class SalesDailyReportController extends Controller
             $query->where('prepared_by', $request->user_id);
         }
 
-        $reports = $query->orderBy('report_date', 'desc')->paginate(15);
-        $users = User::all();
+        return $query;
+    }
 
-        $data = [
-            'reports' => $reports,
-            'users' => $users,
-            'object' => new SalesDailyReport(),
-            'client_sources' => ClientSource::all(),
-            'departments' => Department::all(),
-            'clients' => ProjectClient::all(),
-            'leads' => Lead::active()->get()
+    /**
+     * Build summary KPIs + per-user invoice breakdown for the filtered range.
+     */
+    private function buildSummary(Request $request): array
+    {
+        $reportIds = $this->filteredReportsQuery($request)->pluck('id');
+
+        $activities = SalesReportActivity::whereIn('sales_daily_report_id', $reportIds)->get();
+
+        $byUser = SalesReportActivity::whereIn('sales_report_activities.sales_daily_report_id', $reportIds)
+            ->join('sales_daily_reports', 'sales_daily_reports.id', '=', 'sales_report_activities.sales_daily_report_id')
+            ->join('users', 'users.id', '=', 'sales_daily_reports.prepared_by')
+            ->selectRaw('users.id as user_id, users.name as user_name,
+                COUNT(sales_report_activities.id) as invoice_count,
+                COALESCE(SUM(sales_report_activities.invoice_sum), 0) as invoice_total,
+                COALESCE(SUM(CASE WHEN sales_report_activities.status = "paid" THEN sales_report_activities.invoice_sum ELSE 0 END), 0) as paid_total,
+                COALESCE(SUM(CASE WHEN sales_report_activities.status = "not_paid" THEN sales_report_activities.invoice_sum ELSE 0 END), 0) as unpaid_total')
+            ->groupBy('users.id', 'users.name')
+            ->orderByDesc('invoice_total')
+            ->get();
+
+        return [
+            'reports_count'   => $reportIds->count(),
+            'invoices_count'  => $activities->count(),
+            'invoices_total'  => (float) $activities->sum('invoice_sum'),
+            'paid_total'      => (float) $activities->where('status', 'paid')->sum('invoice_sum'),
+            'unpaid_total'    => (float) $activities->where('status', 'not_paid')->sum('invoice_sum'),
+            'partial_total'   => (float) $activities->where('status', 'partial')->sum('invoice_sum'),
+            'payments_total'  => (float) $activities->sum('payment_amount'),
+            'followups_count' => SalesLeadFollowup::whereIn('sales_daily_report_id', $reportIds)->count(),
+            'concerns_count'  => SalesClientConcern::whereIn('sales_daily_report_id', $reportIds)->count(),
+            'by_user'         => $byUser,
+            'filters'         => [
+                'start_date' => $request->start_date,
+                'end_date'   => $request->end_date,
+                'status'     => $request->status,
+                'user_id'    => $request->user_id,
+            ],
         ];
+    }
 
-        return view('pages.sales.sales_daily_reports')->with($data);
+    /**
+     * Download summary as an Excel-compatible file (HTML table with .xls extension).
+     */
+    public function summaryExcel(Request $request)
+    {
+        $summary = $this->buildSummary($request);
+        $filename = 'sales_summary_' . now()->format('Ymd_His') . '.xls';
+
+        $html = view('pages.sales.exports.sales_summary_excel', compact('summary'))->render();
+
+        return response($html, 200, [
+            'Content-Type'        => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /**
+     * Download summary as a PDF (DomPDF).
+     */
+    public function summaryPdf(Request $request)
+    {
+        $summary = $this->buildSummary($request);
+        $filename = 'sales_summary_' . now()->format('Ymd_His') . '.pdf';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pages.sales.exports.sales_summary_pdf', compact('summary'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf->download($filename);
     }
 
     public function create()

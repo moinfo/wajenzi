@@ -546,6 +546,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sales_daily_report/approve/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'approve'])->name('sales_daily_report.approve');
     Route::post('/sales_daily_report/reject/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'reject'])->name('sales_daily_report.reject');
     Route::get('/sales_daily_report/export/{id}', [App\Http\Controllers\SalesDailyReportController::class, 'exportPDF'])->name('sales_daily_report.export');
+    Route::get('/sales_daily_reports/summary/excel', [App\Http\Controllers\SalesDailyReportController::class, 'summaryExcel'])->name('sales_daily_reports.summary.excel');
+    Route::get('/sales_daily_reports/summary/pdf', [App\Http\Controllers\SalesDailyReportController::class, 'summaryPdf'])->name('sales_daily_reports.summary.pdf');
 
     // Lead Management Routes
     Route::resource('leads', App\Http\Controllers\LeadController::class);
