@@ -290,6 +290,25 @@ class KpiController extends Controller
             'rejection_reason'         => 'required_if:action,reject,return|nullable|string|max:2000',
         ]);
 
+        // When forwarding, require a rate on every row at the stage's owning column.
+        // Save Draft is exempt — the reviewer might leave and come back.
+        if ($data['action'] === 'approve') {
+            $missing = [];
+            $columnName = $stage === 'supervisor' ? 'supervisor_rate' : 'overall_rate';
+            $columnLabel = $stage === 'supervisor' ? 'Supervisor' : 'Overall';
+            foreach ($performance->ratings as $rating) {
+                $value = $data['ratings'][$rating->id][$columnName] ?? null;
+                if ($value === null || $value === '') {
+                    $missing[] = $rating->kpa_snapshot;
+                }
+            }
+            if (!empty($missing)) {
+                return back()
+                    ->withInput()
+                    ->with('error', "Please fill the {$columnLabel} rate on all KPIs before approving. " . count($missing) . ' row(s) are blank.');
+            }
+        }
+
         DB::transaction(function () use ($performance, $data, $stage) {
             foreach ($data['ratings'] as $ratingId => $values) {
                 KpiReviewRating::where('id', $ratingId)

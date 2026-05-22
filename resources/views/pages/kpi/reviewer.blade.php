@@ -70,9 +70,9 @@
                             <th>KPA</th>
                             <th>Measure</th>
                             <th style="width:60px; text-align:center;">Wt</th>
-                            <th style="width:60px; text-align:center;">Self</th>
-                            <th style="width:95px; text-align:center;">Supervisor</th>
-                            <th style="width:90px; text-align:center;">Overall</th>
+                            <th style="width:60px; text-align:center;">Self<br><small style="font-weight:400; text-transform:none; color:#94a3b8;">0–100</small></th>
+                            <th style="width:95px; text-align:center;">Supervisor<br><small style="font-weight:400; text-transform:none; color:#94a3b8;">0–100</small></th>
+                            <th style="width:90px; text-align:center;">Overall<br><small style="font-weight:400; text-transform:none; color:#94a3b8;">0–100</small></th>
                             <th>Comment</th>
                         </tr>
                     </thead>
@@ -88,14 +88,22 @@
                                 <td style="text-align:center; font-weight:700;">{{ rtrim(rtrim(number_format($rating->weight_snapshot, 2), '0'), '.') }}%</td>
                                 <td style="text-align:center;" class="self-shown">{{ $rating->self_rate !== null ? rtrim(rtrim(number_format($rating->self_rate, 1), '0'), '.') . '%' : '—' }}</td>
                                 <td style="text-align:center;">
-                                    <input type="number" name="ratings[{{ $rating->id }}][supervisor_rate]"
+                                    <input type="number"
+                                           class="sup-rate"
+                                           data-rating-id="{{ $rating->id }}"
+                                           name="ratings[{{ $rating->id }}][supervisor_rate]"
                                            min="0" max="100" step="0.1"
+                                           placeholder="0–100"
                                            value="{{ old('ratings.' . $rating->id . '.supervisor_rate', $rating->supervisor_rate) }}"
                                            {{ $editSupervisorRate ? '' : 'disabled' }}>
                                 </td>
                                 <td style="text-align:center;">
-                                    <input type="number" class="overall" name="ratings[{{ $rating->id }}][overall_rate]"
+                                    <input type="number"
+                                           class="overall ovr-rate"
+                                           data-rating-id="{{ $rating->id }}"
+                                           name="ratings[{{ $rating->id }}][overall_rate]"
                                            min="0" max="100" step="0.1"
+                                           placeholder="0–100"
                                            value="{{ old('ratings.' . $rating->id . '.overall_rate', $rating->overall_rate ?? $rating->supervisor_rate) }}"
                                            {{ $editOverallRate ? '' : 'disabled' }}>
                                 </td>
@@ -185,6 +193,40 @@
 </div>
 
 <script>
+// When supervisor types in their rate, mirror it to the Overall column so they
+// don't need to type the same number twice. The supervisor (or MD/CEO) can
+// still override Overall manually after the auto-fill.
+document.querySelectorAll('.sup-rate').forEach(function (el) {
+    el.addEventListener('input', function () {
+        const id = el.dataset.ratingId;
+        const ovr = document.querySelector('.ovr-rate[data-rating-id="' + id + '"]');
+        if (!ovr || ovr.disabled) return;
+        // Only mirror if Overall is still empty — don't clobber manual overrides
+        if (ovr.value === '' || ovr.dataset.autofilled === '1') {
+            ovr.value = el.value;
+            ovr.dataset.autofilled = '1';
+        }
+    });
+});
+// Mark Overall as user-touched the moment they type into it directly
+document.querySelectorAll('.ovr-rate').forEach(function (el) {
+    el.addEventListener('input', function () { el.dataset.autofilled = '0'; });
+});
+
+// Before forwarding to the next stage, require Supervisor rate on every row
+// (Approve button only). Save Draft is exempt so reviewers can leave mid-flight.
+document.getElementById('kpiReviewForm').addEventListener('submit', function (e) {
+    const action = e.submitter && e.submitter.value;
+    if (action !== 'approve') return;
+    const blanks = Array.from(document.querySelectorAll('.sup-rate'))
+        .filter(el => !el.disabled && (el.value === '' || el.value === null));
+    if (blanks.length === 0) return;
+    e.preventDefault();
+    blanks.forEach(el => el.style.background = '#fee2e2');
+    blanks[0].focus();
+    alert('Please fill the Supervisor rate on every KPI before approving. ' + blanks.length + ' row(s) are blank.');
+});
+
 function promptAction(act) {
     const reason = prompt(
         act === 'reject'
