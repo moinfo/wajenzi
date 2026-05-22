@@ -26,7 +26,7 @@ class ProjectScheduleController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing']);
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Sales and Marketing', 'Sales Manager']);
         $canSeeAll = $isAdmin || $user->can('View All Schedule Activities');
 
         // Schedule visibility is per-person, not per-role: only show schedules where the user is the
@@ -52,7 +52,7 @@ class ProjectScheduleController extends Controller
     public function show(ProjectSchedule $projectSchedule)
     {
         $user = auth()->user();
-        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Chief Executive Officer', 'General Manager']);
+        $isAdmin = $user->hasAnyRole(['System Administrator', 'Managing Director', 'Chief Executive Officer', 'General Manager', 'Sales Manager']);
 
         $projectSchedule->load(['lead.client', 'assignedArchitect', 'activities.assignedUser', 'activities.role', 'activities.attachments.uploader', 'assignments.user']);
 
