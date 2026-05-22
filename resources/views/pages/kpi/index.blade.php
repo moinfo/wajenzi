@@ -67,6 +67,37 @@
         @endif
     </div>
 
+    @if($tab === 'all' && $topPerformers->isNotEmpty())
+        <div style="background:linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%); border-radius:12px; border:1px solid #fde68a; box-shadow:0 1px 4px rgba(0,0,0,.06); padding:18px 22px; margin-bottom:18px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <span style="font-size:22px;">🏆</span>
+                <div>
+                    <h3 style="margin:0; font-size:15px; font-weight:800; color:#854d0e;">Top Performers — {{ now()->format('F Y') }}</h3>
+                    <p style="margin:2px 0 0; font-size:12px; color:#92400e;">Ranked by overall score across all finalised reviews this month.</p>
+                </div>
+            </div>
+            <div style="display:grid; grid-template-columns:repeat({{ min($topPerformers->count(), 5) }}, 1fr); gap:10px;">
+                @foreach($topPerformers as $i => $p)
+                    @php
+                        $rankIcon = $i === 0 ? '🥇' : ($i === 1 ? '🥈' : ($i === 2 ? '🥉' : '⭐'));
+                        $rankBg   = $i === 0 ? '#fef3c7' : '#fff';
+                        $rankBorder = $i === 0 ? '#f59e0b' : '#fde68a';
+                    @endphp
+                    <a href="{{ route('performance.show', $p) }}"
+                       style="background:{{ $rankBg }}; border:1.5px solid {{ $rankBorder }}; border-radius:10px; padding:12px; text-decoration:none; color:inherit; transition:transform .15s;">
+                        <div style="font-size:18px; line-height:1;">{{ $rankIcon }}</div>
+                        <div style="font-weight:800; color:#1a2332; font-size:13px; margin-top:6px;">{{ $p->employee->name }}</div>
+                        <div style="font-size:10.5px; color:#92400e; font-weight:600; margin-top:2px;">{{ $p->template->name }}</div>
+                        <div style="font-size:18px; font-weight:800; color:#16a34a; margin-top:6px; font-variant-numeric:tabular-nums;">
+                            {{ number_format($p->total_overall_score, 1) }}%
+                        </div>
+                        <div style="font-size:10px; color:#64748b; margin-top:1px;">{{ $p->grade_label }}</div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     <div class="kpi-card">
         <table class="kpi-table">
             <thead>
@@ -103,6 +134,10 @@
                         <td style="text-align:right; padding-right:14px;">
                             <a href="{{ route('performance.show', $r) }}"
                                style="background:#e8f8f7; color:#1BC5BD; border:1px solid #c5edeb; padding:5px 10px; border-radius:7px; font-size:12px; text-decoration:none; font-weight:600;">View</a>
+                            <a href="{{ route('performance.pdf', $r) }}" target="_blank"
+                               style="background:#f3f4f6; color:#475569; border:1px solid #e0e2e7; padding:5px 8px; border-radius:7px; font-size:12px; text-decoration:none; font-weight:600; margin-left:4px;" title="Download PDF">
+                                <i class="fa fa-file-pdf"></i>
+                            </a>
                             @if($r->employee_id === auth()->id() && in_array($r->status, ['draft','returned']))
                                 <a href="{{ route('performance.self', $r) }}"
                                    style="background:#e8f0fe; color:#4285f4; border:1px solid #c5d8fc; padding:5px 10px; border-radius:7px; font-size:12px; text-decoration:none; font-weight:600; margin-left:4px;">Fill</a>

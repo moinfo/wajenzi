@@ -9,6 +9,7 @@ use App\Models\KpiTemplate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use PDF;
 use Spatie\Permission\Models\Role;
 
 /**
@@ -62,13 +63,58 @@ class KpiController extends Controller
         }
 
         $reviews = $query->paginate(20)->withQueryString();
+
+        // Build the "Top Performers" board for the All tab (HR/Admin view only).
+        // Picks completed reviews in the current period_start month and ranks by
+        // total_overall_score. Empty if no reviews are finalised yet this month.
+        $topPerformers = collect();
+        if ($tab === 'all' && $this->canSeeAllReviews($user)) {
+            $topPerformers = $this->topPerformersForCurrentMonth();
+        }
+
         return view('pages.kpi.index', [
-            'reviews'     => $reviews,
-            'tab'         => $tab,
-            'canSeeAll'   => $this->canSeeAllReviews($user),
+            'reviews'       => $reviews,
+            'tab'           => $tab,
+            'canSeeAll'     => $this->canSeeAllReviews($user),
             'awaitingCount' => $this->awaitingCountFor($user),
             'myOpenCount'   => KpiReview::where('employee_id', $user->id)->whereNotIn('status', ['completed', 'rejected'])->count(),
+            'topPerformers' => $topPerformers,
         ]);
+    }
+
+    /**
+     * Top 5 finalised reviews for the current calendar month, ranked by overall score.
+     */
+    protected function topPerformersForCurrentMonth(): \Illuminate\Support\Collection
+    {
+        return KpiReview::with(['employee', 'template'])
+            ->whereNotNull('total_overall_score')
+            ->where('status', 'completed')
+            ->whereBetween('period_start', [now()->startOfMonth(), now()->endOfMonth()])
+            ->orderByDesc('total_overall_score')
+            ->limit(5)
+            ->get();
+    }
+
+    /**
+     * Stream the review as a printable PDF in the same layout as the company's
+     * Word-doc KPI form. Visible to the employee, their supervisor, and HR/Admin.
+     */
+    public function pdf(KpiReview $performance)
+    {
+        $this->authorizeView($performance);
+        $performance->load(['template.sections.items', 'employee.department', 'supervisor', 'ratings']);
+
+        $grouped = $this->groupRatingsBySection($performance);
+
+        $pdf = PDF::loadView('pages.kpi.pdf', [
+            'review'         => $performance,
+            'groupedRatings' => $grouped,
+        ])->setPaper('a4', 'portrait');
+
+        $filename = "KPI-{$performance->employee->name}-{$performance->period_label}.pdf";
+        $filename = str_replace([' ', '/'], ['_', '-'], $filename);
+        return $pdf->stream($filename);
     }
 
     /**

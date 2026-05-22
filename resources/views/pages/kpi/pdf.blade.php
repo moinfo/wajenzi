@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>KPI {{ $review->employee->name }} {{ $review->period_label }}</title>
+    <style>
+        @page { margin: 30px 32px; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #1a2332; }
+
+        .doc-title { text-align: center; font-size: 13px; font-weight: bold; margin: 0 0 6px; letter-spacing: 1px; }
+        .period { text-align: center; font-size: 11px; font-weight: bold; color: #374151; margin: 0 0 12px; letter-spacing: .5px; }
+
+        /* Header table — employee info */
+        .hdr-tbl { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .hdr-tbl td { border: 1px solid #1a2332; padding: 5px 7px; font-size: 9px; vertical-align: top; }
+        .hdr-tbl .label { background: #f1f5f9; font-weight: bold; width: 22%; }
+        .hdr-tbl .value { width: 28%; }
+
+        /* Rating scale box */
+        .rating-scale { border: 1px solid #1a2332; padding: 7px 10px; margin-bottom: 8px; background: #fafbfc; font-size: 8.5px; }
+        .rating-scale strong { display: block; margin-bottom: 3px; font-size: 9.5px; }
+        .rating-scale span { display: inline-block; min-width: 31%; padding: 1px 0; }
+
+        .note { font-size: 8.5px; color: #475569; padding: 5px 0; margin-bottom: 8px; line-height: 1.4; }
+        .note strong { color: #1a2332; }
+
+        /* Section header */
+        .section-bar { background: #1a2332; color: #fff; padding: 5px 10px; font-weight: bold; font-size: 10px; margin: 10px 0 0; letter-spacing: .3px; }
+
+        /* KPI table */
+        .kpi-tbl { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+        .kpi-tbl th { background: #e5e7eb; padding: 4px 5px; font-size: 8px; font-weight: bold; text-align: left; border: 1px solid #94a3b8; text-transform: uppercase; letter-spacing: .2px; }
+        .kpi-tbl td { padding: 4px 5px; font-size: 8.5px; border: 1px solid #cbd5e1; vertical-align: top; }
+        .kpi-tbl .col-sn { width: 4%; text-align: center; }
+        .kpi-tbl .col-kpa { width: 14%; font-weight: bold; }
+        .kpi-tbl .col-resp { width: 18%; }
+        .kpi-tbl .col-measure { width: 18%; }
+        .kpi-tbl .col-target { width: 18%; }
+        .kpi-tbl .col-weight { width: 5%; text-align: center; font-weight: bold; }
+        .kpi-tbl .col-rate { width: 5%; text-align: center; font-variant-numeric: tabular-nums; }
+        .kpi-tbl .col-rate.self { color: #1d4ed8; font-weight: bold; }
+        .kpi-tbl .col-rate.sup  { color: #92400e; font-weight: bold; }
+        .kpi-tbl .col-rate.ovr  { color: #166534; font-weight: bold; }
+        .kpi-tbl .col-cmt { width: 13%; }
+        .kpi-tbl .total-row td { background: #1a2332; color: #fff; font-weight: bold; }
+
+        /* Footer free-text sections */
+        .footer-tbl { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .footer-tbl td { border: 1px solid #1a2332; padding: 6px 8px; vertical-align: top; }
+        .footer-tbl .lbl { background: #f1f5f9; font-weight: bold; font-size: 8.5px; width: 26%; text-transform: uppercase; letter-spacing: .3px; }
+        .footer-tbl .val { font-size: 9px; line-height: 1.45; min-height: 30px; white-space: pre-wrap; }
+
+        /* Signature block */
+        .signatures { margin-top: 14px; width: 100%; border-collapse: collapse; }
+        .signatures td { width: 33.33%; padding: 12px 8px 4px; font-size: 9px; vertical-align: bottom; border-top: 1px solid #1a2332; }
+        .signatures .sig-label { font-weight: bold; }
+        .signatures .sig-name { color: #475569; margin-top: 2px; }
+        .signatures .sig-line { border-bottom: 1px dotted #94a3b8; min-height: 14px; margin-top: 14px; }
+
+        .grade-band { float: right; padding: 3px 11px; border-radius: 14px; font-size: 9.5px; font-weight: bold; }
+        .grade-band.excellent { background: #dcfce7; color: #166534; }
+        .grade-band.very-good { background: #d1fae5; color: #047857; }
+        .grade-band.good      { background: #dbeafe; color: #1d4ed8; }
+        .grade-band.average   { background: #fef9c3; color: #854d0e; }
+        .grade-band.poor      { background: #fee2e2; color: #b91c1c; }
+        .grade-band.ungraded  { background: #f1f5f9; color: #475569; }
+    </style>
+</head>
+<body>
+
+    {{-- Document title --}}
+    <h1 class="doc-title">OPEN PERFORMANCE REVIEW FORM</h1>
+    <div class="period">PERFORMANCE REVIEW FOR {{ strtoupper($review->period_label) }}</div>
+
+    {{-- Header: employee/supervisor info --}}
+    <table class="hdr-tbl">
+        <tr>
+            <td class="label">Name of Employee</td>
+            <td class="value">{{ strtoupper($review->employee->name ?? '—') }}</td>
+            <td class="label">Position / Role</td>
+            <td class="value">{{ strtoupper($review->employee->designation ?? $review->template->role->name ?? '—') }}</td>
+        </tr>
+        <tr>
+            <td class="label">Employment Date</td>
+            <td class="value">{{ $review->employee->employment_date ? \Carbon\Carbon::parse($review->employee->employment_date)->format('d/m/Y') : '—' }}</td>
+            <td class="label">Department</td>
+            <td class="value">{{ $review->employee->department->name ?? '—' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Name of Supervisor</td>
+            <td class="value">{{ strtoupper($review->supervisor->name ?? '—') }}</td>
+            <td class="label">Date of Review</td>
+            <td class="value">{{ $review->updated_at->format('d/m/Y') }}</td>
+        </tr>
+        <tr>
+            <td class="label">Review Number</td>
+            <td class="value">{{ $review->review_number }}</td>
+            <td class="label">Status</td>
+            <td class="value">{{ ucfirst(str_replace('_', ' ', $review->status)) }}</td>
+        </tr>
+    </table>
+
+    {{-- Rating scale legend --}}
+    <div class="rating-scale">
+        <strong>Rating:</strong>
+        <span>90% – 100% = Excellent performance</span>
+        <span>80% – 89% = Very good performance</span>
+        <span>70% – 79% = Good performance</span>
+        <span>60% – 69% = Average performance</span>
+        <span>50% – 59% = Poor performance</span>
+        <span>49% and below = Ungraded performance</span>
+    </div>
+
+    <div class="note">
+        <strong>Note:</strong> Employee marks are only for self-assessment.
+        Review form format may change from time to time due to the nature of the performance required.
+        Forms shall be filled and returned to HR within 2 working days.
+        Non-return of forms within the required time may lead to poor performance.
+    </div>
+
+    {{-- KPI sections: Section A (General Performance) + Section B (Departmental Objectives) --}}
+    @foreach($groupedRatings as $code => $bundle)
+        @php $section = $bundle['section']; $ratings = $bundle['ratings']; @endphp
+        @if($ratings->isEmpty()) @continue @endif
+
+        <div class="section-bar">
+            Section {{ $section->code }} — {{ strtoupper($section->title) }} ({{ rtrim(rtrim(number_format($section->weight_total, 2), '0'), '.') }}%)
+        </div>
+
+        <table class="kpi-tbl">
+            <thead>
+                <tr>
+                    <th class="col-sn">S/N</th>
+                    <th class="col-kpa">KPA</th>
+                    <th class="col-measure">KPI / Measure</th>
+                    <th class="col-target">Target</th>
+                    <th class="col-weight">Wt %</th>
+                    <th class="col-rate">Self %</th>
+                    <th class="col-rate">Sup %</th>
+                    <th class="col-rate">Overall %</th>
+                    <th class="col-cmt">Comment</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($ratings as $i => $rating)
+                    <tr>
+                        <td class="col-sn">{{ $i + 1 }}</td>
+                        <td class="col-kpa">{{ $rating->kpa_snapshot }}</td>
+                        <td class="col-measure">{{ $rating->measure_snapshot }}</td>
+                        <td class="col-target">{{ $rating->target_snapshot ?? '—' }}</td>
+                        <td class="col-weight">{{ rtrim(rtrim(number_format($rating->weight_snapshot, 2), '0'), '.') }}</td>
+                        <td class="col-rate self">{{ $rating->self_rate !== null ? rtrim(rtrim(number_format($rating->self_rate, 1), '0'), '.') : '—' }}</td>
+                        <td class="col-rate sup">{{ $rating->supervisor_rate !== null ? rtrim(rtrim(number_format($rating->supervisor_rate, 1), '0'), '.') : '—' }}</td>
+                        <td class="col-rate ovr">{{ $rating->overall_rate !== null ? rtrim(rtrim(number_format($rating->overall_rate, 1), '0'), '.') : '—' }}</td>
+                        <td class="col-cmt">{{ $rating->comment ?? '' }}</td>
+                    </tr>
+                @endforeach
+                <tr class="total-row">
+                    <td colspan="4" style="text-align:right;">Section {{ $section->code }} Total</td>
+                    <td class="col-weight">{{ rtrim(rtrim(number_format($ratings->sum('weight_snapshot'), 2), '0'), '.') }}</td>
+                    <td class="col-rate">—</td>
+                    <td class="col-rate">—</td>
+                    <td class="col-rate">—</td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    @endforeach
+
+    {{-- Total / Grade row --}}
+    @php
+        $grade = $review->grade_label ?? 'Ungraded';
+        $gradeClass = strtolower(str_replace(' ', '-', $grade));
+    @endphp
+    <table class="kpi-tbl" style="margin-top:6px;">
+        <tr>
+            <td class="col-sn"></td>
+            <td colspan="3" style="text-align:right; font-weight:bold; background:#1a2332; color:#fff;">GRAND TOTAL (out of 100%)</td>
+            <td class="col-weight" style="background:#1a2332; color:#fff;">100</td>
+            <td class="col-rate self" style="background:#dbeafe;">
+                {{ $review->total_self_score !== null ? rtrim(rtrim(number_format($review->total_self_score, 2), '0'), '.') : '—' }}
+            </td>
+            <td class="col-rate sup" style="background:#fef3c7;">
+                {{ $review->total_supervisor_score !== null ? rtrim(rtrim(number_format($review->total_supervisor_score, 2), '0'), '.') : '—' }}
+            </td>
+            <td class="col-rate ovr" style="background:#dcfce7;">
+                {{ $review->total_overall_score !== null ? rtrim(rtrim(number_format($review->total_overall_score, 2), '0'), '.') : '—' }}
+            </td>
+            <td style="background:#1a2332; color:#fff; text-align:center; font-weight:bold;">
+                <span class="grade-band {{ $gradeClass }}">{{ $grade }}</span>
+            </td>
+        </tr>
+    </table>
+
+    {{-- Footer free-text sections --}}
+    <table class="footer-tbl">
+        <tr>
+            <td class="lbl">Achievements during review period</td>
+            <td class="val">{{ $review->achievements ?? '' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Areas of improvement</td>
+            <td class="val">{{ $review->areas_of_improvement ?? '' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Training and development needs</td>
+            <td class="val">{{ $review->training_needs ?? '' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Employee's comments</td>
+            <td class="val">{{ $review->employee_comments ?? '' }}</td>
+        </tr>
+        <tr>
+            <td class="lbl">Supervisor's comments</td>
+            <td class="val">{{ $review->supervisor_comments ?? '' }}</td>
+        </tr>
+        @if($review->md_comments)
+            <tr>
+                <td class="lbl">Managing Director's comments</td>
+                <td class="val">{{ $review->md_comments }}</td>
+            </tr>
+        @endif
+        @if($review->ceo_comments)
+            <tr>
+                <td class="lbl">CEO's comments</td>
+                <td class="val">{{ $review->ceo_comments }}</td>
+            </tr>
+        @endif
+    </table>
+
+    {{-- Signatures --}}
+    <table class="signatures">
+        <tr>
+            <td>
+                <div class="sig-label">Employee</div>
+                <div class="sig-name">{{ strtoupper($review->employee->name ?? '—') }}</div>
+                <div class="sig-line"></div>
+                <div style="font-size:8px; color:#94a3b8;">Signature &amp; Date</div>
+            </td>
+            <td>
+                <div class="sig-label">Supervisor</div>
+                <div class="sig-name">{{ strtoupper($review->supervisor->name ?? '—') }}</div>
+                <div class="sig-line"></div>
+                <div style="font-size:8px; color:#94a3b8;">Signature &amp; Date</div>
+            </td>
+            <td>
+                <div class="sig-label">HR / Approver</div>
+                <div class="sig-name">&nbsp;</div>
+                <div class="sig-line"></div>
+                <div style="font-size:8px; color:#94a3b8;">Signature &amp; Date</div>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

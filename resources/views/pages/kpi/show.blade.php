@@ -132,21 +132,23 @@
         if ($stage === 'md'  && $u->hasRole('Managing Director')) $canReview = true;
         if ($stage === 'ceo' && $u->hasAnyRole(['CEO','Chief Executive Officer'])) $canReview = true;
     @endphp
-    @if($canFill || $canReview)
-        <div style="display:flex; justify-content:flex-end; gap:10px;">
-            @if($canFill)
-                <a href="{{ route('performance.self', $review) }}"
-                   style="background:#4285f4; color:#fff; padding:9px 20px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;">
-                    <i class="fa fa-edit"></i> Fill Self-Assessment
-                </a>
-            @endif
-            @if($canReview)
-                <a href="{{ route('performance.review', $review) }}"
-                   style="background:#f59e0b; color:#fff; padding:9px 20px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;">
-                    <i class="fa fa-clipboard-check"></i> Open {{ ucfirst($stage) }} Review
-                </a>
-            @endif
-        </div>
-    @endif
+    <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <a href="{{ route('performance.pdf', $review) }}" target="_blank"
+           style="background:#fff; color:#1a2332; border:1.5px solid #1a2332; padding:9px 20px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;">
+            <i class="fa fa-file-pdf"></i> Download PDF
+        </a>
+        @if($canFill)
+            <a href="{{ route('performance.self', $review) }}"
+               style="background:#4285f4; color:#fff; padding:9px 20px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;">
+                <i class="fa fa-edit"></i> Fill Self-Assessment
+            </a>
+        @endif
+        @if($canReview)
+            <a href="{{ route('performance.review', $review) }}"
+               style="background:#f59e0b; color:#fff; padding:9px 20px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;">
+                <i class="fa fa-clipboard-check"></i> Open {{ ucfirst($stage) }} Review
+            </a>
+        @endif
+    </div>
 </div>
 @endsection

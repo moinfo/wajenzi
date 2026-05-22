@@ -683,6 +683,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get   ('performance/create',           [App\Http\Controllers\KpiController::class, 'create'])     ->name('performance.create');
     Route::post  ('performance',                  [App\Http\Controllers\KpiController::class, 'store'])      ->name('performance.store');
     Route::get   ('performance/{performance}',    [App\Http\Controllers\KpiController::class, 'show'])       ->name('performance.show');
+    Route::get   ('performance/{performance}/pdf',[App\Http\Controllers\KpiController::class, 'pdf'])        ->name('performance.pdf');
     Route::get   ('performance/{performance}/self',[App\Http\Controllers\KpiController::class, 'selfAssess']) ->name('performance.self');
     Route::patch ('performance/{performance}/self',[App\Http\Controllers\KpiController::class, 'updateSelf']) ->name('performance.self.update');
     Route::post  ('performance/{performance}/submit',[App\Http\Controllers\KpiController::class, 'submitForReview'])->name('performance.submit');
