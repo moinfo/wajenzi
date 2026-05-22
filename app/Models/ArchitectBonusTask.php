@@ -11,7 +11,8 @@ class ArchitectBonusTask extends Model
 
     protected $fillable = [
         'task_number', 'project_name', 'architect_id', 'project_budget',
-        'lead_id', 'project_schedule_id', 'start_date', 'accepted_at',
+        'lead_id', 'project_schedule_id', 'auto_synced', 'last_synced_at',
+        'start_date', 'accepted_at',
         'scheduled_completion_date', 'actual_completion_date', 'max_units',
         'design_quality_score', 'client_revisions', 'schedule_performance',
         'client_approval_efficiency', 'performance_score', 'final_units',
@@ -24,6 +25,8 @@ class ArchitectBonusTask extends Model
         'scheduled_completion_date' => 'date',
         'actual_completion_date' => 'date',
         'scored_at' => 'datetime',
+        'last_synced_at' => 'datetime',
+        'auto_synced' => 'boolean',
         'project_budget' => 'decimal:2',
         'bonus_amount' => 'decimal:2',
     ];

@@ -90,6 +90,15 @@ class ProjectSchedule extends Model implements ApprovableModel
     }
 
     /**
+     * The bonus task this schedule generates for its assigned architect.
+     * Created automatically by BonusScheduleSyncService when the schedule is approved.
+     */
+    public function bonusTask()
+    {
+        return $this->hasOne(ArchitectBonusTask::class, 'project_schedule_id');
+    }
+
+    /**
      * Get assignments
      */
     public function assignments()
@@ -130,6 +139,10 @@ class ProjectSchedule extends Model implements ApprovableModel
                 ));
             }
         }
+
+        // Auto-create the architect bonus task for this schedule. Best-effort —
+        // a sync failure must not roll back the approval itself.
+        app(\App\Services\BonusScheduleSyncService::class)->createFromSchedule($this->fresh('activities'));
 
         return true;
     }

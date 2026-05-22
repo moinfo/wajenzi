@@ -671,6 +671,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('architect-bonus/create', [App\Http\Controllers\ArchitectBonusController::class, 'create'])->name('architect-bonus.create');
     Route::post('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'store'])->name('architect-bonus.store');
     Route::get('architect-bonus/report', [App\Http\Controllers\ArchitectBonusController::class, 'report'])->name('architect-bonus.report');
+    Route::get('architect-bonus/backfill-suggestions', [App\Http\Controllers\ArchitectBonusController::class, 'backfillSuggestions'])->name('architect-bonus.backfill-suggestions');
+    Route::post('architect-bonus/{id}/link-schedule', [App\Http\Controllers\ArchitectBonusController::class, 'linkSchedule'])->name('architect-bonus.link-schedule');
     Route::get('architect-bonus/weights', [App\Http\Controllers\ArchitectBonusController::class, 'weights'])->name('architect-bonus.weights');
     Route::post('architect-bonus/weights', [App\Http\Controllers\ArchitectBonusController::class, 'updateWeights'])->name('architect-bonus.weights.update');
     Route::put('architect-bonus/tier/{id}', [App\Http\Controllers\ArchitectBonusController::class, 'updateTier'])->name('architect-bonus.tier.update');

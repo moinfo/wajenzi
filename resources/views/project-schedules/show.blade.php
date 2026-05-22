@@ -99,6 +99,16 @@
                         {{ $projectSchedule->lead->lead_number ?? 'Lead' }} - {{ $projectSchedule->lead->name ?? '' }}
                     @endif
                 </small>
+                @php $bonusTask = $projectSchedule->bonusTask; @endphp
+                @if($bonusTask)
+                    <div class="mt-1">
+                        <a href="{{ url('/architect-bonus/' . $bonusTask->id) }}"
+                           style="background:#fef9c3; color:#854d0e; border:1px solid #fde047; padding:3px 10px; border-radius:12px; font-size:11px; font-weight:600; text-decoration:none;">
+                            <i class="fa fa-trophy"></i> Architect Bonus: {{ $bonusTask->task_number }}
+                            ({{ ucfirst($bonusTask->status) }})
+                        </a>
+                    </div>
+                @endif
             </div>
             <div>
                 @if(auth()->user()->hasAnyRole(['System Administrator', 'Managing Director']))

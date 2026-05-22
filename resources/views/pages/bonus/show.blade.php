@@ -155,6 +155,23 @@
                             </td>
                         </tr>
                         @endif
+                        @if($task->project_schedule_id)
+                        <tr>
+                            <td class="text-muted">Linked Schedule</td>
+                            <td>
+                                <a href="{{ url('/project-schedules/' . $task->project_schedule_id) }}"
+                                   style="background:#e0f7f6; color:#0d9488; padding:3px 9px; border-radius:12px; font-size:11px; font-weight:600; text-decoration:none;">
+                                    <i class="fa fa-calendar-alt"></i> Schedule #{{ $task->project_schedule_id }}
+                                </a>
+                                @if($task->auto_synced)
+                                    <span style="background:#dbeafe; color:#1d4ed8; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:600; margin-left:6px;"
+                                          title="Dates and revisions are kept in sync with the schedule automatically.">
+                                        <i class="fa fa-sync"></i> Auto-synced
+                                    </span>
+                                @endif
+                            </td>
+                        </tr>
+                        @endif
                         @if($task->notes)
                         <tr>
                             <td class="text-muted">Notes</td>

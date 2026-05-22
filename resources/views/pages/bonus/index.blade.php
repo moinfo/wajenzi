@@ -71,6 +71,10 @@
             <h3 class="block-title">Bonus Tasks <small class="text-muted">({{ $tasks->total() }})</small></h3>
             @if($isAdmin)
             <div class="block-options">
+                <a href="{{ route('architect-bonus.backfill-suggestions') }}" class="btn btn-outline-secondary btn-sm mr-2"
+                   title="Link existing bonus tasks to their project schedules">
+                    <i class="fa fa-link mr-1"></i> Backfill Schedule Links
+                </a>
                 <a href="{{ route('architect-bonus.create') }}" class="btn btn-success btn-sm">
                     <i class="fa fa-plus mr-1"></i> New Task
                 </a>

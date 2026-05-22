@@ -47,6 +47,25 @@ class ProjectScheduleActivity extends Model implements ApprovableModel
     ];
 
     /**
+     * When an activity transitions to "completed" — by any path (controller, model
+     * method, or RingleSoft approval) — sync the parent schedule's bonus task.
+     *
+     * NOTE: This hook fires on Eloquent model events ($activity->save() or
+     * $activity->update([...])). Query-builder mass updates such as
+     * `ProjectScheduleActivity::where(...)->update(['status' => 'completed'])`
+     * BYPASS Eloquent events and will NOT trigger the bonus sync. If you need
+     * to flip status in bulk, iterate the models and save individually.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (ProjectScheduleActivity $activity) {
+            if ($activity->wasChanged('status') && $activity->status === 'completed') {
+                app(\App\Services\BonusScheduleSyncService::class)->syncFromActivity($activity);
+            }
+        });
+    }
+
+    /**
      * Skip the approval engine for activities that don't require CEO/MD sign-off.
      */
     public function bypassApprovalProcess(): bool

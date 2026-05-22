@@ -394,6 +394,97 @@ class ArchitectBonusController extends Controller
     }
 
     /**
+     * Suggest project_schedule matches for bonus tasks that are not yet linked.
+     *
+     * For each unlinked bonus task, finds candidate schedules with the same architect
+     * and ranks them by name similarity (Levenshtein-based). Admin picks the best
+     * match (or none) and submits via linkSchedule().
+     */
+    public function backfillSuggestions(Request $request)
+    {
+        if (!$this->isAdmin()) {
+            abort(403);
+        }
+
+        $unlinked = ArchitectBonusTask::whereNull('project_schedule_id')
+            ->with('architect')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $suggestions = $unlinked->map(function ($task) {
+            $candidates = \App\Models\ProjectSchedule::where('assigned_architect_id', $task->architect_id)
+                ->whereDoesntHave('bonusTask') // schedule isn't already taken
+                ->with(['lead', 'client'])
+                ->get()
+                ->map(function ($s) use ($task) {
+                    $scheduleName = $s->lead->name ?? trim(($s->client->first_name ?? '') . ' ' . ($s->client->last_name ?? '')) ?: ('Schedule #' . $s->id);
+                    return (object) [
+                        'id'         => $s->id,
+                        'name'       => $scheduleName,
+                        'start_date' => optional($s->start_date)->format('d M Y'),
+                        'status'     => $s->status,
+                        'similarity' => $this->nameSimilarity($task->project_name, $scheduleName),
+                    ];
+                })
+                ->sortByDesc('similarity')
+                ->values();
+
+            return (object) [
+                'task'       => $task,
+                'candidates' => $candidates,
+            ];
+        });
+
+        return view('pages.bonus.backfill_suggestions', [
+            'suggestions' => $suggestions,
+        ]);
+    }
+
+    /**
+     * Link an unlinked bonus task to a chosen project_schedule. Marks it auto_synced
+     * so future activity completions will continue to update it.
+     */
+    public function linkSchedule(Request $request, $id)
+    {
+        if (!$this->isAdmin()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'project_schedule_id' => 'required|exists:project_schedules,id',
+        ]);
+
+        $task = ArchitectBonusTask::findOrFail($id);
+        if ($task->project_schedule_id) {
+            return back()->with('error', 'This bonus task is already linked to a schedule.');
+        }
+
+        // Reject if another bonus task already claims the schedule.
+        $taken = ArchitectBonusTask::where('project_schedule_id', $request->project_schedule_id)->exists();
+        if ($taken) {
+            return back()->with('error', 'That schedule is already linked to another bonus task.');
+        }
+
+        $task->update([
+            'project_schedule_id' => $request->project_schedule_id,
+            'auto_synced'         => true,
+            'last_synced_at'      => now(),
+        ]);
+
+        return back()->with('success', "Bonus {$task->task_number} linked to schedule #{$request->project_schedule_id}.");
+    }
+
+    /**
+     * Crude similarity 0..1 between two project names. Uses similar_text() so we
+     * stay tolerant of word order, casing, and minor punctuation differences.
+     */
+    protected function nameSimilarity(string $a, string $b): float
+    {
+        similar_text(strtolower(trim($a)), strtolower(trim($b)), $percent);
+        return round($percent / 100, 3);
+    }
+
+    /**
      * Delete a bonus task (admin only, pending tasks only).
      */
     public function destroy($id)
