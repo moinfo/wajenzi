@@ -108,7 +108,8 @@ class ApprovalController extends Controller
     }
 
     /**
-     * Notify every user in the next approval group (legacy AssignUserGroup path).
+     * Notify every user authorised for the next approval stage.
+     * Prefers Spatie roles (al.role_id), falls back to user_groups for legacy rows.
      */
     protected function notifyNextApprovers(string $class_name, Request $request, $documentId, $docTypeId): void
     {
@@ -116,9 +117,12 @@ class ApprovalController extends Controller
         if (!$next) {
             return;
         }
-        $users = AssignUserGroup::getUsersInGroup($next->user_group_id);
+        $users = Approval::getApproversFor($next);
         if ($users->isEmpty()) {
-            \Log::warning("No approver assigned for {$class_name} document_type_id={$docTypeId}, group_id={$next->user_group_id}");
+            $route = $next->role_id
+                ? "role_id={$next->role_id}"
+                : "group_id=" . ($next->user_group_id ?? 'null');
+            \Log::warning("No approver assigned for {$class_name} document_type_id={$docTypeId}, {$route}");
             return;
         }
         foreach ($users as $user) {

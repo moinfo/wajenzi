@@ -27,8 +27,7 @@
                                 <th>Date</th>
                                 <th>Approval Document Type</th>
                                 <th>Order</th>
-                                {{--                                <th>User Group</th>--}}
-                                {{--                                <th>User Group Keyword</th>--}}
+                                <th>Approver</th>
                                 <th>Description</th>
                                 <th>Status</th>
                                 <th class="text-center" style="width: 100px;">Actions</th>
@@ -43,8 +42,19 @@
                                     <td>{{ $value->updated_at }}</td>
                                     <td>{{ $value->approvalDocumentType->name ?? null}}</td>
                                     <td>{{ $value->order }}</td>
-                                    {{--                                    <td>{{ $value->userGroup->name}}</td>--}}
-                                    {{--                                    <td>{{ $value->userGroup->keyword}}</td>--}}
+                                    <td>
+                                        @if($value->role)
+                                            <span class="badge badge-success" style="font-size: 11px;">
+                                                <i class="fa fa-shield-alt"></i> {{ $value->role->name }}
+                                            </span>
+                                        @elseif($value->user_group_id && $value->userGroup)
+                                            <span class="badge badge-warning" style="font-size: 11px;" title="Legacy user group — edit and pick a Role">
+                                                <i class="fa fa-exclamation-triangle"></i> {{ $value->userGroup->name }} (legacy)
+                                            </span>
+                                        @else
+                                            <span class="badge badge-danger" style="font-size: 11px;">Not set</span>
+                                        @endif
+                                    </td>
                                     <td>{{ \Str::limit($value->description, 100) }}</td>
                                     <td>{{ $value->action }}</td>
                                     <td class="text-center" >

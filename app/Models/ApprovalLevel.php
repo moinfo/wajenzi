@@ -9,9 +9,14 @@ class ApprovalLevel extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'approval_document_types_id', 'user_group_id', 'description',
-        'action','order'
+        'approval_document_types_id', 'user_group_id', 'role_id', 'description',
+        'action', 'order'
     ];
+
+    public function role(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\Spatie\Permission\Models\Role::class, 'role_id');
+    }
 
 
     public static function getUsersApprovals($approval_document_types_id)

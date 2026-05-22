@@ -69,6 +69,7 @@ class AjaxController
                     $kassim_supplier = Supplier::where('is_transferred','YES')->get();
                     $assets = Asset::all();
                     $user_groups = UserGroup::all();
+                    $roles = \Spatie\Permission\Models\Role::orderBy('name')->get();
                     $approval_document_types = ApprovalDocumentType::all();
                     $categories = Category::all();
                     $sub_categories = SubCategory::all();
@@ -318,6 +319,7 @@ class AjaxController
                             'billing_cycles' => $billing_cycles,
                             'stock_types' => $stock_types,
                             'user_groups' => $user_groups,
+                            'roles' => $roles,
                             'payment_types' => $payment_types,
                             'categories' => $categories,
                             'status' => $status,

@@ -70,11 +70,13 @@ class Controller extends BaseController
                     if($request->document_id != null){
                         $nextApproval = Approval::getNextApproval($request->document_id,$request->document_type_id);
                         if($nextApproval) {
-                            $next_user_group_id = $nextApproval->user_group_id;
-                            $users = AssignUserGroup::getUsersInGroup($next_user_group_id);
+                            $users = Approval::getApproversFor($nextApproval);
 
                             if ($users->isEmpty()) {
-                                \Log::warning("No approver assigned for {$class_name} document_type_id={$request->document_type_id}, group_id={$next_user_group_id}");
+                                $route = $nextApproval->role_id
+                                    ? "role_id={$nextApproval->role_id}"
+                                    : "group_id=" . ($nextApproval->user_group_id ?? 'null');
+                                \Log::warning("No approver assigned for {$class_name} document_type_id={$request->document_type_id}, {$route}");
                             } else {
                                 foreach ($users as $user) {
                                     $details = [

@@ -52,13 +52,25 @@ class Approval extends Model
     }
 
 
-    static function getApprovalStages($document_id,$document_type_id)
+    static function getApprovalStages($document_id, $document_type_id)
     {
-        $query = DB::SELECT("SELECT *, al.id AS order_id, al.`order` as `order`, al.`approval_document_types_id` AS document_id,
-       al.`user_group_id` AS `user_group_id`, ug.name AS user_group_name FROM approval_levels al
-        LEFT JOIN approvals a ON (a.approval_level_id=al.id AND a.`document_id` = '$document_id')
-        LEFT JOIN user_groups ug ON (ug.id = al.`user_group_id`) WHERE al.order > 0 AND al.approval_document_types_id  = '$document_type_id'");
-        return $query;
+        return DB::select(
+            "SELECT al.*, al.id AS order_id, al.`order` AS `order`,
+                    al.`approval_document_types_id` AS document_id,
+                    al.`user_group_id` AS `user_group_id`,
+                    al.`role_id` AS `role_id`,
+                    ug.name AS user_group_name,
+                    r.name AS role_name,
+                    a.status AS status,
+                    a.comments AS comments
+             FROM approval_levels al
+             LEFT JOIN approvals a    ON (a.approval_level_id = al.id AND a.document_id = ?)
+             LEFT JOIN user_groups ug ON (ug.id = al.user_group_id)
+             LEFT JOIN roles r        ON (r.id = al.role_id)
+             WHERE al.`order` > 0 AND al.approval_document_types_id = ?
+             ORDER BY al.`order` ASC",
+            [$document_id, $document_type_id]
+        );
     }
 
     static function getNextApproval($document_id,$document_type_id)
@@ -86,6 +98,30 @@ class Approval extends Model
             }
         }
         return false;
+    }
+
+    /**
+     * Resolve the users authorised to act on a given approval stage.
+     *
+     * Preference order:
+     *   1. Spatie role (al.role_id) — new system, role-based.
+     *   2. Legacy user_group (al.user_group_id + assign_user_groups) — fallback for
+     *      approval_levels rows not yet migrated to a Spatie role.
+     *
+     * @param  object  $stage  A stage row from getApprovalStages().
+     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     */
+    public static function getApproversFor($stage)
+    {
+        if (!empty($stage->role_id)) {
+            return User::whereHas('roles', function ($q) use ($stage) {
+                $q->where('id', $stage->role_id);
+            })->get();
+        }
+        if (!empty($stage->user_group_id)) {
+            return AssignUserGroup::getUsersInGroup($stage->user_group_id);
+        }
+        return User::query()->whereKey([])->get();
     }
 }
 
