@@ -241,14 +241,16 @@ class KpiController extends Controller
                 'You have no supervisor assigned. Please contact HR before submitting.');
         }
 
-        $performance->update([
-            'status'             => 'self_submitted',
-            'self_submitted_at'  => now(),
-        ]);
         try {
-            $performance->submit('Submitted self-assessment for supervisor review.');
+            // RingleSoft signature: submit(?Authenticatable $user = null) — NOT a comment string
+            $performance->submit($request->user());
+            $performance->update([
+                'status'            => 'self_submitted',
+                'self_submitted_at' => now(),
+            ]);
         } catch (\Throwable $e) {
-            \Log::warning("KPI submit() failed for review {$performance->id}: " . $e->getMessage());
+            \Log::error("KPI submit() failed for review {$performance->id}: " . $e->getMessage());
+            return back()->with('error', 'Failed to submit for review: ' . $e->getMessage());
         }
         return redirect()->route('performance.show', $performance)
             ->with('success', "Submitted to your supervisor.");
@@ -325,7 +327,7 @@ class KpiController extends Controller
     protected function approveStage(KpiReview $performance, string $stage)
     {
         try {
-            $performance->approve("Approved at {$stage} stage.");
+            $performance->approve("Approved at {$stage} stage.", auth()->user());
         } catch (\Throwable $e) {
             return back()->with('error', 'Approval failed: ' . $e->getMessage());
         }
@@ -348,7 +350,7 @@ class KpiController extends Controller
     protected function rejectReview(KpiReview $performance, ?string $reason)
     {
         try {
-            $performance->reject($reason ?? 'Rejected.');
+            $performance->reject($reason ?? 'Rejected.', auth()->user());
         } catch (\Throwable $e) {
             return back()->with('error', 'Reject failed: ' . $e->getMessage());
         }
@@ -360,7 +362,7 @@ class KpiController extends Controller
     protected function returnReview(KpiReview $performance, ?string $reason)
     {
         try {
-            $performance->return($reason ?? 'Returned for changes.');
+            $performance->return($reason ?? 'Returned for changes.', auth()->user());
         } catch (\Throwable $e) {
             return back()->with('error', 'Return failed: ' . $e->getMessage());
         }

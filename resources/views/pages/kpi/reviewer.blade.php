@@ -29,8 +29,10 @@
     @php
         $stageLabel = ['supervisor' => 'Supervisor', 'md' => 'Managing Director', 'ceo' => 'CEO'][$stage] ?? ucfirst($stage);
         $stageColor = ['supervisor' => '#f59e0b', 'md' => '#8b5cf6', 'ceo' => '#16a34a'][$stage] ?? '#1BC5BD';
+        // Supervisor sets both their rate AND the agreed overall rate.
+        // MD/CEO can override the overall rate if they disagree, otherwise it stays as-is.
         $editSupervisorRate = $stage === 'supervisor';
-        $editOverallRate    = in_array($stage, ['md', 'ceo'], true);
+        $editOverallRate    = in_array($stage, ['supervisor', 'md', 'ceo'], true);
         $editSupervisorComments = $stage === 'supervisor';
         $editMdComments         = $stage === 'md';
         $editCeoComments        = $stage === 'ceo';
@@ -40,11 +42,11 @@
         <i class="fa fa-clipboard-check"></i>
         You are reviewing as <strong>{{ $stageLabel }}</strong>.
         @if($stage === 'supervisor')
-            Rate the employee on each KPI and add comments. When done, approve to forward to the Managing Director.
+            Rate the employee in the <strong>Supervisor</strong> column, set the agreed <strong>Overall</strong> rate, and add your comments. When done, approve to forward to the Managing Director.
         @elseif($stage === 'md')
-            Set the <strong>Overall</strong> rate per KPI (final official score). Approve to forward to the CEO.
+            Review the supervisor's ratings. You may override the <strong>Overall</strong> rate if you disagree. Approve to forward to the CEO.
         @else
-            Confirm the overall ratings and approve to finalise this review.
+            Confirm the overall ratings (override if needed) and approve to finalise this review.
         @endif
     </div>
 
