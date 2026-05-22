@@ -1,6 +1,91 @@
 @extends('layouts.backend')
 
 @section('content')
+<style>
+/* === Activity table polish === */
+.activity-table { font-size: 12.5px; }
+.activity-table thead th {
+    background: #1a2332 !important; color: #fff !important;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    padding: 11px 10px; border: none; vertical-align: middle;
+}
+.activity-table tbody td { padding: 11px 10px; vertical-align: middle; border-top: 1px solid #f0f2f5; }
+.activity-table tbody tr:hover { background: #fafbfd; }
+.activity-table .act-code { font-weight: 800; color: #1a2332; font-size: 13px; }
+.activity-table .act-name { font-weight: 600; color: #1a2332; }
+.activity-table .act-after { color: #94a3b8; font-size: 10.5px; margin-top: 2px; }
+.activity-table .act-discipline { color: #475569; font-size: 11.5px; }
+
+/* Role pill — always visible, color-coded by role family */
+.role-pill {
+    display: inline-block;
+    padding: 3px 11px;
+    border-radius: 20px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+.role-pill.role-architect   { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+.role-pill.role-engineer    { background: #dcfce7; color: #166534; border-color: #86efac; }
+.role-pill.role-client      { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.role-pill.role-quantity    { background: #fce7f3; color: #9d174d; border-color: #f9a8d4; }
+.role-pill.role-supervisor  { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+.role-pill.role-manager     { background: #e0f2fe; color: #075985; border-color: #7dd3fc; }
+.role-pill.role-director    { background: #1a2332; color: #fff; border-color: #1a2332; }
+.role-pill.role-default     { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+.role-pill.role-empty {
+    background: transparent; color: #cbd5e1; border-style: dashed; border-color: #e2e8f0;
+    font-weight: 600; font-style: italic; text-transform: none; letter-spacing: 0;
+}
+
+/* Assignee pill */
+.assignee-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px 4px 4px;
+    border-radius: 20px;
+    background: #f1f5f9; color: #1a2332;
+    font-size: 11.5px; font-weight: 600;
+    border: 1px solid #e2e8f0;
+    max-width: 100%;
+}
+.assignee-pill.is-architect { background: #1a2332; color: #fff; border-color: #1a2332; }
+.assignee-pill .avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #cbd5e1; color: #1a2332;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800; flex-shrink: 0;
+}
+.assignee-pill.is-architect .avatar { background: #1BC5BD; color: #fff; }
+.assignee-pill .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reassign-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 6px;
+    background: #f1f5f9; color: #1a2332; border: 1px solid #e2e8f0;
+    margin-left: 4px; cursor: pointer; transition: all .15s;
+}
+.reassign-btn:hover { background: #1BC5BD; color: #fff; border-color: #1BC5BD; }
+
+/* Status badge */
+.act-status {
+    display: inline-block; padding: 4px 10px; border-radius: 20px;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+}
+.act-status.s-pending     { background: #f1f5f9; color: #64748b; }
+.act-status.s-in_progress { background: #dbeafe; color: #1d4ed8; }
+.act-status.s-completed   { background: #dcfce7; color: #166534; }
+.act-status.s-skipped     { background: #fef3c7; color: #92400e; }
+.act-status.s-overdue     { background: #fee2e2; color: #b91c1c; margin-left: 4px; }
+
+/* Phase header */
+.phase-block { border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); border: 1px solid #eef0f3; background: #fff; }
+.phase-header { background: linear-gradient(90deg, #1a2332 0%, #2d3e54 100%); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; }
+.phase-header .phase-title { color: #fff; font-weight: 700; font-size: 14px; margin: 0; letter-spacing: .3px; }
+.phase-header .phase-progress { background: rgba(255,255,255,.18); color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: .3px; }
+</style>
+
 <div class="container-fluid">
     <div class="content">
         <!-- Header -->
@@ -266,21 +351,43 @@
         @endif
 
         <!-- Activities by Phase -->
+        @php
+            // Map a role name to a CSS class. Keep this here so it lives next to where the badge is rendered.
+            $roleClassFor = function ($roleName) {
+                if (!$roleName) return 'role-empty';
+                $n = strtolower($roleName);
+                if (str_contains($n, 'architect'))    return 'role-architect';
+                if (str_contains($n, 'engineer'))     return 'role-engineer';
+                if (str_contains($n, 'client'))       return 'role-client';
+                if (str_contains($n, 'quantity'))     return 'role-quantity';
+                if (str_contains($n, 'supervisor'))   return 'role-supervisor';
+                if (str_contains($n, 'manager'))      return 'role-manager';
+                if (str_contains($n, 'managing director') ||
+                    $n === 'ceo' ||
+                    str_contains($n, 'chief executive')) return 'role-director';
+                return 'role-default';
+            };
+            $initialsOf = function ($name) {
+                if (!$name) return '?';
+                $parts = preg_split('/\s+/', trim($name));
+                $first = mb_substr($parts[0] ?? '', 0, 1);
+                $last  = count($parts) > 1 ? mb_substr(end($parts), 0, 1) : '';
+                return strtoupper($first . $last);
+            };
+        @endphp
         @forelse($activitiesByPhase as $phase => $activities)
-            <div class="block block-themed mb-4">
-                <div class="block-header bg-primary">
-                    <h3 class="block-title">{{ $phase }}</h3>
-                    <div class="block-options">
-                        @php
-                            $completed = $activities->where('status', 'completed')->count();
-                            $total = $activities->count();
-                        @endphp
-                        <span class="badge badge-light">{{ $completed }}/{{ $total }} Completed</span>
-                    </div>
+            <div class="phase-block mb-4">
+                <div class="phase-header">
+                    <h3 class="phase-title">{{ $phase }}</h3>
+                    @php
+                        $completed = $activities->where('status', 'completed')->count();
+                        $total = $activities->count();
+                    @endphp
+                    <span class="phase-progress">{{ $completed }}/{{ $total }} Completed</span>
                 </div>
-                <div class="block-content">
+                <div class="block-content p-0">
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover">
+                        <table class="table table-sm table-hover activity-table mb-0">
                             <thead>
                                 <tr>
                                     @if(auth()->user()->hasAnyRole(['Managing Director', 'CEO', 'Chief Executive Officer', 'System Administrator']))
@@ -309,42 +416,43 @@
                                                    data-name="{{ $activity->activity_code }}: {{ $activity->name }}">
                                         </td>
                                         @endif
-                                        <td><strong>{{ $activity->activity_code }}</strong></td>
+                                        <td><span class="act-code">{{ $activity->activity_code }}</span></td>
                                         <td>
-                                            {{ $activity->name }}
+                                            <div class="act-name">{{ $activity->name }}</div>
                                             @if($activity->predecessor_code)
-                                                <br><small class="text-muted">After: {{ $activity->predecessor_code }}</small>
+                                                <div class="act-after">After: {{ $activity->predecessor_code }}</div>
                                             @endif
                                         </td>
-                                        <td><small>{{ $activity->discipline }}</small></td>
+                                        <td><span class="act-discipline">{{ $activity->discipline }}</span></td>
                                         <td>
-                                            @if($activity->role)
-                                                <span class="badge badge-outline-primary">{{ $activity->role->name }}</span>
-                                            @else
-                                                <small class="text-muted">-</small>
-                                            @endif
+                                            @php $roleName = $activity->role ? $activity->role->name : null; @endphp
+                                            <span class="role-pill {{ $roleClassFor($roleName) }}">
+                                                {{ $roleName ?: 'Not set' }}
+                                            </span>
                                         </td>
                                         <td>
-                                            @if($activity->assignedUser)
-                                                @if($activity->assigned_to == $projectSchedule->assigned_architect_id)
-                                                    <span class="badge badge-secondary">
-                                                        <i class="fa fa-user-tie mr-1"></i>{{ $activity->assignedUser->name }}
-                                                    </span>
-                                                @else
-                                                    <span class="badge badge-info">
-                                                        <i class="fa fa-user mr-1"></i>{{ $activity->assignedUser->name }}
-                                                    </span>
-                                                @endif
-                                            @else
-                                                <span class="badge badge-secondary">
-                                                    <i class="fa fa-user-tie mr-1"></i>{{ $projectSchedule->assignedArchitect->name ?? 'N/A' }}
-                                                </span>
-                                            @endif
+                                            @php
+                                                $architectName = $projectSchedule->assignedArchitect->name ?? null;
+                                                if ($activity->assignedUser) {
+                                                    $assigneeName = $activity->assignedUser->name;
+                                                    $isArchitect  = $activity->assigned_to == $projectSchedule->assigned_architect_id;
+                                                } elseif ($architectName) {
+                                                    $assigneeName = $architectName;
+                                                    $isArchitect  = true;
+                                                } else {
+                                                    $assigneeName = 'Unassigned';
+                                                    $isArchitect  = false;
+                                                }
+                                            @endphp
+                                            <span class="assignee-pill {{ $isArchitect ? 'is-architect' : '' }}" title="{{ $assigneeName }}">
+                                                <span class="avatar">{{ $initialsOf($assigneeName) }}</span>
+                                                <span class="name">{{ $assigneeName }}</span>
+                                            </span>
                                             @can('Assign Project Activities')
-                                            <button type="button" class="btn btn-xs btn-outline-primary ml-1" title="Reassign"
-                                                    data-toggle="modal" data-target="#assignModal{{ $activity->id }}">
-                                                <i class="fa fa-exchange-alt"></i>
-                                            </button>
+                                                <button type="button" class="reassign-btn" title="Reassign"
+                                                        data-toggle="modal" data-target="#assignModal{{ $activity->id }}">
+                                                    <i class="fa fa-exchange-alt"></i>
+                                                </button>
                                             @endcan
                                         </td>
                                         <td>{{ $activity->start_date->format('d/m/Y') }}</td>
@@ -363,19 +471,11 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @php
-                                                $activityStatusColors = [
-                                                    'pending' => 'secondary',
-                                                    'in_progress' => 'primary',
-                                                    'completed' => 'success',
-                                                    'skipped' => 'warning',
-                                                ];
-                                            @endphp
-                                            <span class="badge badge-{{ $activityStatusColors[$activity->status] ?? 'secondary' }}">
+                                            <span class="act-status s-{{ $activity->status }}">
                                                 {{ ucwords(str_replace('_', ' ', $activity->status)) }}
                                             </span>
                                             @if($activity->isOverdue())
-                                                <span class="badge badge-danger">Overdue</span>
+                                                <span class="act-status s-overdue">Overdue</span>
                                             @endif
                                         </td>
                                         <td>
