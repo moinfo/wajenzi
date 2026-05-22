@@ -222,7 +222,7 @@ class AjaxController
                     $start_date = date('Y-m-d');
                     $todayTargets = SupplierTarget::getTodayTargets($start_date);
                     $project_clients = ProjectClient::where('status','APPROVED')->get();
-                    $projects = Project::where('status','APPROVED')->get();
+                    $projects = Project::with('client')->orderBy('project_name')->get();
                     $project_types = ProjectType::all();
 
                     // Procurement workflow data

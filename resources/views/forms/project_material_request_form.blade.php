@@ -14,8 +14,12 @@
                     <select name="project_id" id="input-project-mr" class="form-control select2" required>
                         <option value="">Select Project</option>
                         @foreach ($projects as $project)
+                            @php
+                                $projectLabel = $project->project_name ?: ('Project #' . $project->id);
+                                $clientLabel  = $project->client?->full_name;
+                            @endphp
                             <option value="{{ $project->id }}" {{ ($project->id == $selected_project_id) ? 'selected' : '' }}>
-                                {{ $project->project_name ?? $project->name }}
+                                {{ $projectLabel }}@if($clientLabel && trim($clientLabel) !== trim($projectLabel)) — {{ $clientLabel }}@endif
                             </option>
                         @endforeach
                     </select>
