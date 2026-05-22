@@ -23,6 +23,95 @@
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="block block-rounded">
+                <div class="block-content block-content-full text-center">
+                    <div class="font-size-sm text-muted text-uppercase">Reports</div>
+                    <div class="font-size-h3 font-w700 text-primary">{{ number_format($summary['reports_count']) }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="block block-rounded">
+                <div class="block-content block-content-full text-center">
+                    <div class="font-size-sm text-muted text-uppercase">Invoices Written</div>
+                    <div class="font-size-h3 font-w700 text-info">{{ number_format($summary['invoices_count']) }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="block block-rounded">
+                <div class="block-content block-content-full text-center">
+                    <div class="font-size-sm text-muted text-uppercase">Invoice Total</div>
+                    <div class="font-size-h3 font-w700 text-success">{{ number_format($summary['invoices_total'], 2) }}</div>
+                    <div class="font-size-sm text-muted">
+                        Paid: {{ number_format($summary['paid_total'], 2) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="block block-rounded">
+                <div class="block-content block-content-full text-center">
+                    <div class="font-size-sm text-muted text-uppercase">Unpaid Total</div>
+                    <div class="font-size-h3 font-w700 text-danger">{{ number_format($summary['unpaid_total'], 2) }}</div>
+                    <div class="font-size-sm text-muted">
+                        Partial: {{ number_format($summary['partial_total'], 2) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Download summary + invoices by preparer -->
+    <div class="block block-rounded">
+        <div class="block-header">
+            <h3 class="block-title">Invoices Written — by Preparer</h3>
+            <div class="block-options">
+                <a href="{{ route('sales_daily_reports.summary.excel', request()->query()) }}" class="btn btn-sm btn-success">
+                    <i class="fa fa-file-excel"></i> Download Excel
+                </a>
+                <a href="{{ route('sales_daily_reports.summary.pdf', request()->query()) }}" class="btn btn-sm btn-danger" target="_blank">
+                    <i class="fa fa-file-pdf"></i> Download PDF
+                </a>
+            </div>
+        </div>
+        <div class="block-content">
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-striped table-vcenter">
+                    <thead class="thead-light">
+                        <tr>
+                            <th style="width:40px;">#</th>
+                            <th>Prepared By</th>
+                            <th class="text-right">Invoices Count</th>
+                            <th class="text-right">Invoice Total</th>
+                            <th class="text-right">Paid</th>
+                            <th class="text-right">Unpaid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($summary['by_user'] as $i => $row)
+                            <tr>
+                                <td>{{ $i + 1 }}</td>
+                                <td>{{ $row->user_name }}</td>
+                                <td class="text-right">{{ number_format($row->invoice_count) }}</td>
+                                <td class="text-right">{{ number_format($row->invoice_total, 2) }}</td>
+                                <td class="text-right text-success">{{ number_format($row->paid_total, 2) }}</td>
+                                <td class="text-right text-danger">{{ number_format($row->unpaid_total, 2) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No invoices in the current filter range.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Filters -->
     <div class="block block-rounded">
         <div class="block-header">
