@@ -667,6 +667,17 @@ Route::middleware(['auth'])->group(function () {
     });
 
 // Architect Bonus Scheme
+    // Performance / KPI routes
+    Route::get   ('performance',                  [App\Http\Controllers\KpiController::class, 'index'])      ->name('performance.index');
+    Route::get   ('performance/create',           [App\Http\Controllers\KpiController::class, 'create'])     ->name('performance.create');
+    Route::post  ('performance',                  [App\Http\Controllers\KpiController::class, 'store'])      ->name('performance.store');
+    Route::get   ('performance/{performance}',    [App\Http\Controllers\KpiController::class, 'show'])       ->name('performance.show');
+    Route::get   ('performance/{performance}/self',[App\Http\Controllers\KpiController::class, 'selfAssess']) ->name('performance.self');
+    Route::patch ('performance/{performance}/self',[App\Http\Controllers\KpiController::class, 'updateSelf']) ->name('performance.self.update');
+    Route::post  ('performance/{performance}/submit',[App\Http\Controllers\KpiController::class, 'submitForReview'])->name('performance.submit');
+    Route::get   ('performance/{performance}/review',[App\Http\Controllers\KpiController::class, 'reviewerForm'])  ->name('performance.review');
+    Route::patch ('performance/{performance}/review',[App\Http\Controllers\KpiController::class, 'updateReviewer'])->name('performance.review.update');
+
     Route::get('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'index'])->name('architect-bonus.index');
     Route::get('architect-bonus/create', [App\Http\Controllers\ArchitectBonusController::class, 'create'])->name('architect-bonus.create');
     Route::post('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'store'])->name('architect-bonus.store');
