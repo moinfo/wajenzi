@@ -75,6 +75,8 @@ class AjaxController
                     $sub_categories = SubCategory::all();
                     $supervisors_and_drivers = Supervisor::all();
                     $supervisors = Supervisor::where('employee_id',1)->get();
+                    // Active staff list used as the supervisor (line manager) picker on the staff form
+                    $all_users = User::where('status', 'ACTIVE')->where('type', 'STAFF')->orderBy('name')->get(['id','name']);
                     $items = Item::all();
                     $banks = Bank::all();
                     $efds = Efd::all();
@@ -320,6 +322,7 @@ class AjaxController
                             'stock_types' => $stock_types,
                             'user_groups' => $user_groups,
                             'roles' => $roles,
+                            'all_users' => $all_users,
                             'payment_types' => $payment_types,
                             'categories' => $categories,
                             'status' => $status,

@@ -95,10 +95,14 @@
                                 </div>
                                 <div class="form-group row">
                                     <div class="col-12">
-                                        <label for="mega-bio">Supervisor</label>
-                                        <select class="form-control" id="mega-marital_status" name="marital_status">
-                                            @foreach($supervisors as $supervisor)
-                                                <option value="{{$supervisor->id}}">{{$supervisor->name}}</option>
+                                        <label for="mega-supervisor_id">Supervisor (line manager)</label>
+                                        <select class="form-control" id="mega-supervisor_id" name="supervisor_id">
+                                            <option value="">— None —</option>
+                                            @foreach($all_users ?? collect() as $u)
+                                                <option value="{{ $u->id }}"
+                                                        @if(isset($object) && $object->supervisor_id == $u->id) selected @endif>
+                                                    {{ $u->name }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>

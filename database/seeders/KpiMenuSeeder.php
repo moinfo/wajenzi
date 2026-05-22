@@ -51,10 +51,11 @@ class KpiMenuSeeder extends Seeder
 
         // Submenus
         $submenus = [
-            ['name' => 'My Performance Reviews',     'route' => 'performance.index',    'icon' => 'fa fa-user-edit',     'order' => 1, 'roles' => $employeeRoleIds],
-            ['name' => 'Awaiting Performance Review','route' => 'performance.index',    'icon' => 'fa fa-clipboard-check','order' => 2, 'roles' => $reviewerRoleIds],
-            ['name' => 'All Performance Reviews',    'route' => 'performance.index',    'icon' => 'fa fa-list',          'order' => 3, 'roles' => $adminHrRoleIds],
-            ['name' => 'Manage KPI Templates',       'route' => 'performance.index',    'icon' => 'fa fa-cog',           'order' => 4, 'roles' => $adminOnlyRoleIds],
+            ['name' => 'My Performance Reviews',     'route' => 'performance.index',                 'icon' => 'fa fa-user-edit',     'order' => 1, 'roles' => $employeeRoleIds],
+            ['name' => 'Awaiting Performance Review','route' => 'performance.index',                 'icon' => 'fa fa-clipboard-check','order' => 2, 'roles' => $reviewerRoleIds],
+            ['name' => 'All Performance Reviews',    'route' => 'performance.index',                 'icon' => 'fa fa-list',          'order' => 3, 'roles' => $adminHrRoleIds],
+            ['name' => 'Supervisor Assignments',     'route' => 'supervisor_assignments.index',      'icon' => 'fa fa-sitemap',       'order' => 4, 'roles' => $adminHrRoleIds],
+            ['name' => 'Manage KPI Templates',       'route' => 'performance.index',                 'icon' => 'fa fa-cog',           'order' => 5, 'roles' => $adminOnlyRoleIds],
         ];
 
         foreach ($submenus as $m) {

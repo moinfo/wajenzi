@@ -667,6 +667,12 @@ Route::middleware(['auth'])->group(function () {
     });
 
 // Architect Bonus Scheme
+    // Supervisor assignment (HR/Admin only)
+    Route::get   ('settings/supervisor-assignments', [App\Http\Controllers\SupervisorAssignmentController::class, 'index'])
+        ->name('supervisor_assignments.index');
+    Route::patch ('settings/supervisor-assignments', [App\Http\Controllers\SupervisorAssignmentController::class, 'update'])
+        ->name('supervisor_assignments.update');
+
     // Performance / KPI routes
     Route::get   ('performance',                  [App\Http\Controllers\KpiController::class, 'index'])      ->name('performance.index');
     Route::get   ('performance/create',           [App\Http\Controllers\KpiController::class, 'create'])     ->name('performance.create');
