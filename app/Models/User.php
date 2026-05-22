@@ -37,6 +37,7 @@ class User extends Authenticatable
         'file',
         'contract',
         'department_id',
+        'supervisor_id',
         'user_device_id',
         'attendance_type_id',
         'attendance_status',
@@ -65,6 +66,31 @@ class User extends Authenticatable
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    /**
+     * The user's direct line manager. Used by the KPI / performance-review module
+     * as the first approver of a self-assessment.
+     */
+    public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'supervisor_id');
+    }
+
+    /**
+     * Users who report to this user (the inverse of supervisor()).
+     */
+    public function subordinates(): HasMany
+    {
+        return $this->hasMany(User::class, 'supervisor_id');
+    }
+
+    /**
+     * KPI / performance reviews for this user as the appraisee.
+     */
+    public function kpiReviews(): HasMany
+    {
+        return $this->hasMany(\App\Models\KpiReview::class, 'employee_id');
     }
 
     public function position(): BelongsTo
