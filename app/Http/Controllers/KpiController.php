@@ -518,6 +518,88 @@ class KpiController extends Controller
         }
     }
 
+    // ---------------------------------------------------------------------
+    // Template administration (System Admin only)
+    // ---------------------------------------------------------------------
+
+    public function templatesIndex()
+    {
+        $this->authorizeTemplates();
+        $templates = KpiTemplate::with(['role', 'sections.items'])->get()->map(function ($t) {
+            $items = $t->sections->flatMap->items;
+            return (object) [
+                'id'          => $t->id,
+                'code'        => $t->code,
+                'name'        => $t->name,
+                'role'        => $t->role->name ?? '—',
+                'frequency'   => $t->frequency,
+                'is_active'   => $t->is_active,
+                'item_count'  => $items->count(),
+                'total_weight'=> (float) $items->sum('weight'),
+            ];
+        });
+        return view('pages.kpi.templates_index', compact('templates'));
+    }
+
+    public function templateShow(KpiTemplate $template)
+    {
+        $this->authorizeTemplates();
+        $template->load(['role', 'sections.items']);
+        return view('pages.kpi.templates_show', compact('template'));
+    }
+
+    public function templateStoreItem(Request $request, KpiTemplate $template)
+    {
+        $this->authorizeTemplates();
+        $data = $request->validate([
+            'kpi_template_section_id' => 'required|exists:kpi_template_sections,id',
+            'kpa'                     => 'required|string|max:255',
+            'measure'                 => 'required|string|max:2000',
+            'target'                  => 'nullable|string|max:1000',
+            'weight'                  => 'required|numeric|min:0|max:100',
+            'measurement_method'      => 'nullable|string|max:255',
+        ]);
+        $data['kpi_template_id'] = $template->id;
+        $data['sort_order'] = ($template->items()->max('sort_order') ?? 0) + 1;
+        KpiItem::create($data);
+        return back()->with('success', 'KPI item added.');
+    }
+
+    public function templateUpdateItem(Request $request, KpiTemplate $template, KpiItem $item)
+    {
+        $this->authorizeTemplates();
+        if ($item->kpi_template_id !== $template->id) {
+            abort(404);
+        }
+        $data = $request->validate([
+            'kpa'                => 'required|string|max:255',
+            'measure'            => 'required|string|max:2000',
+            'target'             => 'nullable|string|max:1000',
+            'weight'             => 'required|numeric|min:0|max:100',
+            'measurement_method' => 'nullable|string|max:255',
+            'is_active'          => 'sometimes|boolean',
+        ]);
+        $item->update($data);
+        return back()->with('success', 'KPI item updated.');
+    }
+
+    public function templateDeleteItem(KpiTemplate $template, KpiItem $item)
+    {
+        $this->authorizeTemplates();
+        if ($item->kpi_template_id !== $template->id) {
+            abort(404);
+        }
+        $item->delete();
+        return back()->with('success', 'KPI item deleted.');
+    }
+
+    protected function authorizeTemplates(): void
+    {
+        if (!auth()->user()->hasRole('System Administrator')) {
+            abort(403, 'Only System Administrators can manage KPI templates.');
+        }
+    }
+
     protected function authorizeReviewer(KpiReview $performance): void
     {
         $user = auth()->user();

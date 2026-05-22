@@ -675,6 +675,11 @@ Route::middleware(['auth'])->group(function () {
 
     // Performance / KPI routes
     Route::get   ('performance',                  [App\Http\Controllers\KpiController::class, 'index'])      ->name('performance.index');
+    Route::get   ('performance/templates',        [App\Http\Controllers\KpiController::class, 'templatesIndex'])->name('performance.templates');
+    Route::get   ('performance/templates/{template}', [App\Http\Controllers\KpiController::class, 'templateShow'])->name('performance.templates.show');
+    Route::post  ('performance/templates/{template}/items', [App\Http\Controllers\KpiController::class, 'templateStoreItem'])->name('performance.templates.items.store');
+    Route::patch ('performance/templates/{template}/items/{item}', [App\Http\Controllers\KpiController::class, 'templateUpdateItem'])->name('performance.templates.items.update');
+    Route::delete('performance/templates/{template}/items/{item}', [App\Http\Controllers\KpiController::class, 'templateDeleteItem'])->name('performance.templates.items.destroy');
     Route::get   ('performance/create',           [App\Http\Controllers\KpiController::class, 'create'])     ->name('performance.create');
     Route::post  ('performance',                  [App\Http\Controllers\KpiController::class, 'store'])      ->name('performance.store');
     Route::get   ('performance/{performance}',    [App\Http\Controllers\KpiController::class, 'show'])       ->name('performance.show');
