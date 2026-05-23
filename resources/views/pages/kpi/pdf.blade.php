@@ -4,8 +4,22 @@
     <meta charset="utf-8">
     <title>KPI {{ $review->employee->name }} {{ $review->period_label }}</title>
     <style>
-        @page { margin: 30px 32px; }
+        @page { margin: 24px 28px; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #1a2332; }
+
+        /* Teal accent bar at the very top of every page */
+        .hdr-accent { height: 4px; background: #1BC5BD; margin: -8px -28px 8px; }
+
+        /* Company letterhead */
+        .letterhead { width: 100%; border-collapse: collapse; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #1a2332; }
+        .letterhead td { vertical-align: middle; }
+        .letterhead .logo-td { width: 80px; }
+        .letterhead .logo-td img { height: 60px; }
+        .letterhead .co-td { padding-left: 12px; }
+        .letterhead .co-name { font-size: 13px; font-weight: bold; color: #1a2332; letter-spacing: .4px; }
+        .letterhead .co-addr { font-size: 8.5px; color: #475569; margin-top: 2px; line-height: 1.4; }
+        .letterhead .contact-td { text-align: right; font-size: 8.5px; color: #475569; line-height: 1.45; }
+        .letterhead .contact-td strong { color: #1a2332; }
 
         .doc-title { text-align: center; font-size: 13px; font-weight: bold; margin: 0 0 6px; letter-spacing: 1px; }
         .period { text-align: center; font-size: 11px; font-weight: bold; color: #374151; margin: 0 0 12px; letter-spacing: .5px; }
@@ -51,11 +65,16 @@
         .footer-tbl .val { font-size: 9px; line-height: 1.45; min-height: 30px; white-space: pre-wrap; }
 
         /* Signature block */
-        .signatures { margin-top: 14px; width: 100%; border-collapse: collapse; }
-        .signatures td { width: 33.33%; padding: 12px 8px 4px; font-size: 9px; vertical-align: bottom; border-top: 1px solid #1a2332; }
-        .signatures .sig-label { font-weight: bold; }
-        .signatures .sig-name { color: #475569; margin-top: 2px; }
-        .signatures .sig-line { border-bottom: 1px dotted #94a3b8; min-height: 14px; margin-top: 14px; }
+        .sig-block { margin-top: 14px; }
+        .sig-block .sig-title { font-size: 9.5px; font-weight: bold; color: #1a2332; text-transform: uppercase; letter-spacing: .4px; padding: 6px 8px; background: #1a2332; color: #fff; border-radius: 0; }
+        .sig-grid { width: 100%; border-collapse: collapse; margin-top: 6px; }
+        .sig-grid td { width: 25%; border: 1px solid #cbd5e1; padding: 8px 10px; vertical-align: bottom; height: 86px; background: #fafbfc; }
+        .sig-grid .role-label { font-size: 8px; font-weight: bold; color: #475569; text-transform: uppercase; letter-spacing: .4px; }
+        .sig-grid .sig-img-wrap { height: 38px; text-align: center; margin-top: 4px; }
+        .sig-grid .sig-img { max-height: 38px; max-width: 95%; }
+        .sig-grid .sig-name { font-size: 9px; font-weight: bold; color: #1a2332; margin-top: 4px; padding-top: 3px; border-top: 1px solid #94a3b8; }
+        .sig-grid .sig-date { font-size: 8px; color: #64748b; margin-top: 1px; }
+        .sig-grid .sig-pending { font-size: 8px; color: #cbd5e1; font-style: italic; margin-top: 22px; }
 
         .grade-band { float: right; padding: 3px 11px; border-radius: 14px; font-size: 9.5px; font-weight: bold; }
         .grade-band.excellent { background: #dcfce7; color: #166534; }
@@ -67,6 +86,32 @@
     </style>
 </head>
 <body>
+
+    {{-- Teal accent stripe --}}
+    <div class="hdr-accent"></div>
+
+    {{-- Company letterhead --}}
+    <table class="letterhead">
+        <tr>
+            <td class="logo-td">
+                @if(file_exists(public_path('media/logo/wajenzilogo.png')))
+                    <img src="{{ public_path('media/logo/wajenzilogo.png') }}" alt="Wajenzi">
+                @endif
+            </td>
+            <td class="co-td">
+                <div class="co-name">WAJENZI PROFESSIONAL CO. LTD</div>
+                <div class="co-addr">
+                    PSSSF Commercial Complex, Sam Nujoma Road, Dar es Salaam, Tanzania<br>
+                    P.O. Box 14492, Dar es Salaam &nbsp;|&nbsp; TIN: 154-867-805
+                </div>
+            </td>
+            <td class="contact-td">
+                <strong>+255 793 444 400</strong><br>
+                hr@wajenziprofessional.co.tz<br>
+                www.wajenziprofessional.co.tz
+            </td>
+        </tr>
+    </table>
 
     {{-- Document title --}}
     <h1 class="doc-title">OPEN PERFORMANCE REVIEW FORM</h1>
@@ -228,29 +273,68 @@
         @endif
     </table>
 
-    {{-- Signatures --}}
-    <table class="signatures">
-        <tr>
-            <td>
-                <div class="sig-label">Employee</div>
-                <div class="sig-name">{{ strtoupper($review->employee->name ?? '—') }}</div>
-                <div class="sig-line"></div>
-                <div style="font-size:8px; color:#94a3b8;">Signature &amp; Date</div>
-            </td>
-            <td>
-                <div class="sig-label">Supervisor</div>
-                <div class="sig-name">{{ strtoupper($review->supervisor->name ?? '—') }}</div>
-                <div class="sig-line"></div>
-                <div style="font-size:8px; color:#94a3b8;">Signature &amp; Date</div>
-            </td>
-            <td>
-                <div class="sig-label">HR / Approver</div>
-                <div class="sig-name">&nbsp;</div>
-                <div class="sig-line"></div>
-                <div style="font-size:8px; color:#94a3b8;">Signature &amp; Date</div>
-            </td>
-        </tr>
-    </table>
+    {{-- Signatures: pull each stage's actor + their stored signature image (User.file).
+         A signature is rendered ONLY when that lifecycle stage has been completed —
+         pending stages show "Awaiting" so unsigned reviews don't look misleading. --}}
+    @php
+        // Resolve each role's actor & signature
+        $mdActor  = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'Managing Director'))->first();
+        $ceoActor = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['CEO', 'Chief Executive Officer']))->first();
+
+        $signers = [
+            [
+                'role'  => 'Employee',
+                'user'  => $review->employee,
+                'when'  => $review->self_submitted_at,
+            ],
+            [
+                'role'  => 'Supervisor',
+                'user'  => $review->supervisor,
+                'when'  => $review->supervisor_reviewed_at,
+            ],
+            [
+                'role'  => 'Managing Director',
+                'user'  => $mdActor,
+                'when'  => $review->md_reviewed_at,
+            ],
+            [
+                'role'  => 'CEO',
+                'user'  => $ceoActor,
+                'when'  => $review->completed_at,
+            ],
+        ];
+    @endphp
+
+    <div class="sig-block">
+        <div class="sig-title">Signatures</div>
+        <table class="sig-grid">
+            <tr>
+                @foreach($signers as $s)
+                    @php
+                        $sigPath = optional($s['user'])->file;
+                        // dompdf reads files from disk; convert /storage/uploads/... to absolute path
+                        $sigAbs  = $sigPath ? public_path(ltrim($sigPath, '/')) : null;
+                        $hasSig  = $s['when'] && $sigAbs && file_exists($sigAbs);
+                    @endphp
+                    <td>
+                        <div class="role-label">{{ $s['role'] }}</div>
+                        <div class="sig-img-wrap">
+                            @if($hasSig)
+                                <img src="{{ $sigAbs }}" class="sig-img" alt="signature">
+                            @elseif($s['when'])
+                                {{-- Stage was approved but no signature uploaded yet — keep the role/name/date but skip image --}}
+                                <span style="font-size:8px; color:#16a34a; font-weight:bold;">✓ Approved</span>
+                            @else
+                                <div class="sig-pending">Awaiting…</div>
+                            @endif
+                        </div>
+                        <div class="sig-name">{{ $s['user'] ? strtoupper($s['user']->name) : '—' }}</div>
+                        <div class="sig-date">{{ $s['when'] ? $s['when']->format('d M Y') : '—' }}</div>
+                    </td>
+                @endforeach
+            </tr>
+        </table>
+    </div>
 
 </body>
 </html>
