@@ -26,7 +26,22 @@
 
     <div class="alert" style="background:#dbeafe; color:#1d4ed8; border-radius:10px; padding:12px 16px; border:none; margin-bottom:18px;">
         <i class="fa fa-info-circle"></i>
-        Rate yourself on each KPI between <strong>0 and 100</strong>. Save as draft any time; once submitted you can't change it.
+        Rate yourself on each KPI between <strong>0 and 100</strong>
+        (where 100 = perfect, 50 = average, 0 = not met).
+        Save as draft any time; if you submit by mistake you can recall it from the show page <em>before</em> your supervisor starts reviewing.
+    </div>
+
+    {{-- Sticky running-total card — JS keeps it in sync as the user types. --}}
+    <div id="kpi-live-total"
+         style="position:sticky; top:10px; z-index:10; background:#fff; border:2px solid #1BC5BD; border-radius:12px; padding:12px 18px; margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,.06); display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <div style="font-size:11px; color:#8a92a6; font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Your Live Self Score</div>
+            <div style="font-size:11.5px; color:#475569; margin-top:2px;">Updates as you type. Final score = Σ (your rate ÷ 100) × weight</div>
+        </div>
+        <div style="text-align:right;">
+            <div id="kpi-total-score" style="font-size:26px; font-weight:800; color:#1BC5BD; line-height:1; font-variant-numeric:tabular-nums;">0.0%</div>
+            <div id="kpi-total-grade" style="font-size:11px; color:#8a92a6; margin-top:3px;">Out of 100</div>
+        </div>
     </div>
 
     <form method="POST" action="{{ route('performance.self.update', $review) }}">
@@ -60,11 +75,18 @@
                                 <td class="col-kpa">{{ $rating->kpa_snapshot }}</td>
                                 <td>{{ $rating->measure_snapshot }}</td>
                                 <td class="col-target">{{ $rating->target_snapshot ?? '—' }}</td>
-                                <td style="text-align:center; font-weight:700;">{{ rtrim(rtrim(number_format($rating->weight_snapshot, 2), '0'), '.') }}%</td>
+                                <td style="text-align:center; font-weight:700;">
+                                    {{ rtrim(rtrim(number_format($rating->weight_snapshot, 2), '0'), '.') }}%
+                                </td>
                                 <td style="text-align:center;">
-                                    <input type="number" name="ratings[{{ $rating->id }}][self_rate]"
+                                    <input type="number"
+                                           class="kpi-self-input"
+                                           data-weight="{{ $rating->weight_snapshot }}"
+                                           name="ratings[{{ $rating->id }}][self_rate]"
                                            min="0" max="100" step="0.1"
+                                           placeholder="0–100"
                                            value="{{ old('ratings.' . $rating->id . '.self_rate', $rating->self_rate) }}">
+                                    <div class="kpi-weighted-hint" style="font-size:10px; color:#1BC5BD; font-weight:700; margin-top:3px; height:12px;">—</div>
                                 </td>
                                 <td>
                                     <textarea name="ratings[{{ $rating->id }}][comment]" rows="1"
@@ -108,10 +130,57 @@
             </button>
             <button type="submit" name="action" value="submit"
                     style="background:#1BC5BD; color:#fff; padding:10px 24px; border-radius:8px; font-weight:700; font-size:13px; border:none;"
-                    onclick="return confirm('Submit this self-assessment to your supervisor? You will not be able to edit it after.')">
+                    onclick="return confirm('Submit this self-assessment to your supervisor? You can recall it before they start reviewing, but not after.')">
                 <i class="fa fa-paper-plane"></i> Submit to Supervisor
             </button>
         </div>
     </form>
 </div>
+
+<script>
+(function () {
+    const inputs   = document.querySelectorAll('.kpi-self-input');
+    const totalEl  = document.getElementById('kpi-total-score');
+    const gradeEl  = document.getElementById('kpi-total-grade');
+
+    /**
+     * Format the per-row hint based on the user's input.
+     * Silently clamps rate to 0..100; treats 0 as a deliberate rating (still shown);
+     * shows "—" only when the field is blank or non-numeric.
+     */
+    function formatHint(rate, weight) {
+        if (!Number.isFinite(rate)) return '—';
+        const clamped = Math.max(0, Math.min(100, rate));
+        const contribution = (clamped / 100) * (weight || 0);
+        return '→ ' + contribution.toFixed(1) + '% (out of ' + weight + '%)';
+    }
+
+    function gradeFor(score) {
+        if (score >= 90) return 'Excellent';
+        if (score >= 80) return 'Very Good';
+        if (score >= 70) return 'Good';
+        if (score >= 60) return 'Average';
+        if (score >= 50) return 'Poor';
+        return 'Ungraded';
+    }
+
+    function recalc() {
+        let total = 0;
+        inputs.forEach(el => {
+            const weight = parseFloat(el.dataset.weight) || 0;
+            const rate   = parseFloat(el.value);
+            const hintEl = el.parentElement.querySelector('.kpi-weighted-hint');
+            if (hintEl) hintEl.textContent = formatHint(rate, weight);
+            if (!isNaN(rate) && rate >= 0 && rate <= 100) {
+                total += (rate / 100) * weight;
+            }
+        });
+        totalEl.textContent = total.toFixed(1) + '%';
+        gradeEl.textContent = gradeFor(total) + ' (out of 100)';
+    }
+
+    inputs.forEach(el => el.addEventListener('input', recalc));
+    recalc(); // initial render of any pre-filled values
+}());
+</script>
 @endsection

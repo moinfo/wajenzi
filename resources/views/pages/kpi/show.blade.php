@@ -132,11 +132,27 @@
         if ($stage === 'md'  && $u->hasRole('Managing Director')) $canReview = true;
         if ($stage === 'ceo' && $u->hasAnyRole(['CEO','Chief Executive Officer'])) $canReview = true;
     @endphp
+    @php
+        // Recall: only the employee, only when supervisor hasn't started reviewing yet
+        $canRecall = $review->employee_id === auth()->id()
+            && $review->status === 'self_submitted'
+            && !$review->supervisor_reviewed_at;
+    @endphp
     <div style="display:flex; justify-content:flex-end; gap:10px;">
         <a href="{{ route('performance.pdf', $review) }}" target="_blank"
            style="background:#fff; color:#1a2332; border:1.5px solid #1a2332; padding:9px 20px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;">
             <i class="fa fa-file-pdf"></i> Download PDF
         </a>
+        @if($canRecall)
+            <form method="POST" action="{{ route('performance.recall', $review) }}" style="display:inline;"
+                  onsubmit="return confirm('Recall this submission for editing? Your supervisor will lose visibility until you resubmit.');">
+                @csrf
+                <button type="submit"
+                        style="background:#fff; color:#9a3412; border:1.5px solid #f97316; padding:9px 20px; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;">
+                    <i class="fa fa-undo"></i> Recall &amp; Edit
+                </button>
+            </form>
+        @endif
         @if($canFill)
             <a href="{{ route('performance.self', $review) }}"
                style="background:#4285f4; color:#fff; padding:9px 20px; border-radius:8px; text-decoration:none; font-weight:700; font-size:13px;">

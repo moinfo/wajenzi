@@ -565,6 +565,44 @@ class KpiController extends Controller
     }
 
     /**
+     * Employee recalls their own submission BEFORE the supervisor starts.
+     *
+     * Models the real-world "oops, I clicked submit too fast and noticed a
+     * mistake" case. Reverts status to draft so the self-assessment form
+     * unlocks again. Only allowed:
+     *   - by the employee themselves (not anyone else)
+     *   - when status is self_submitted (not after the supervisor has rated)
+     *   - when no supervisor_reviewed_at exists yet (supervisor hasn't acted)
+     *
+     * The supervisor's "Return for Changes" still exists for cases where the
+     * supervisor has already started reviewing.
+     */
+    public function recall(Request $request, KpiReview $performance)
+    {
+        if ($performance->employee_id !== $request->user()->id) {
+            abort(403, 'Only the submitter can recall their own review.');
+        }
+        if ($performance->status !== 'self_submitted') {
+            return back()->with('error', 'Only submissions awaiting the supervisor can be recalled.');
+        }
+        if ($performance->supervisor_reviewed_at) {
+            return back()->with('error',
+                'Your supervisor has already started reviewing. Ask them to "Return for Changes" instead.');
+        }
+
+        // Walk RingleSoft's state back too so the approval engine matches our model
+        try {
+            $performance->discard('Recalled by employee for correction.', $request->user());
+        } catch (\Throwable $e) {
+            \Log::warning("KPI recall: RingleSoft discard failed for review {$performance->id}: " . $e->getMessage());
+        }
+        $performance->update(['status' => 'draft', 'self_submitted_at' => null]);
+
+        return redirect()->route('performance.self', $performance)
+            ->with('success', 'Submission recalled. You can edit and re-submit.');
+    }
+
+    /**
      * Destroy a KPI review. Permission-gated and confirms via the UI.
      *
      * Cascade FKs on kpi_review_ratings and kpi_review_attachments mean

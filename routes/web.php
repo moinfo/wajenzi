@@ -687,6 +687,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get   ('performance/{performance}/self',[App\Http\Controllers\KpiController::class, 'selfAssess']) ->name('performance.self');
     Route::patch ('performance/{performance}/self',[App\Http\Controllers\KpiController::class, 'updateSelf']) ->name('performance.self.update');
     Route::post  ('performance/{performance}/submit',[App\Http\Controllers\KpiController::class, 'submitForReview'])->name('performance.submit');
+    Route::post  ('performance/{performance}/recall',[App\Http\Controllers\KpiController::class, 'recall'])         ->name('performance.recall');
     Route::get   ('performance/{performance}/review',[App\Http\Controllers\KpiController::class, 'reviewerForm'])  ->name('performance.review');
     Route::patch ('performance/{performance}/review',[App\Http\Controllers\KpiController::class, 'updateReviewer'])->name('performance.review.update');
     Route::delete('performance/{performance}',    [App\Http\Controllers\KpiController::class, 'destroy'])     ->name('performance.destroy');
