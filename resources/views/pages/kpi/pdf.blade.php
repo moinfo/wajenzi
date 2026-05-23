@@ -38,11 +38,21 @@
         .note { font-size: 8.5px; color: #475569; padding: 5px 0; margin-bottom: 8px; line-height: 1.4; }
         .note strong { color: #1a2332; }
 
-        /* Section header */
-        .section-bar { background: #1a2332; color: #fff; padding: 5px 10px; font-weight: bold; font-size: 10px; margin: 10px 0 0; letter-spacing: .3px; }
+        /* Section header — kept as the first row of <thead> so it can NEVER orphan
+           and AUTOMATICALLY repeats on every page-slice when a table wraps. */
+        .kpi-tbl .section-row {
+            background: #1a2332; color: #fff;
+            padding: 7px 10px; font-size: 10px; font-weight: bold;
+            text-align: left; text-transform: none; letter-spacing: .3px;
+            border: 1px solid #1a2332;
+        }
+        /* Kept for backwards-compat with anything that still uses a free-standing bar */
+        .section-bar { background: #1a2332; color: #fff; padding: 5px 10px; font-weight: bold; font-size: 10px; margin: 10px 0 0; letter-spacing: .3px; page-break-after: avoid; }
 
-        /* KPI table */
-        .kpi-tbl { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+        /* KPI table — repeats header on every page slice + avoids breaking inside a row */
+        .kpi-tbl { width: 100%; border-collapse: collapse; margin-bottom: 4px; page-break-inside: auto; }
+        .kpi-tbl thead { display: table-header-group; }  /* repeat <thead> across page breaks */
+        .kpi-tbl tr    { page-break-inside: avoid; }     /* never split a single row */
         .kpi-tbl th { background: #e5e7eb; padding: 4px 5px; font-size: 8px; font-weight: bold; text-align: left; border: 1px solid #94a3b8; text-transform: uppercase; letter-spacing: .2px; }
         .kpi-tbl td { padding: 4px 5px; font-size: 8.5px; border: 1px solid #cbd5e1; vertical-align: top; }
         .kpi-tbl .col-sn { width: 4%; text-align: center; }
@@ -63,9 +73,10 @@
         .footer-tbl td { border: 1px solid #1a2332; padding: 6px 8px; vertical-align: top; }
         .footer-tbl .lbl { background: #f1f5f9; font-weight: bold; font-size: 8.5px; width: 26%; text-transform: uppercase; letter-spacing: .3px; }
         .footer-tbl .val { font-size: 9px; line-height: 1.45; min-height: 30px; white-space: pre-wrap; }
+        .footer-tbl tr { page-break-inside: avoid; }  /* each free-text row stays on one page */
 
-        /* Signature block */
-        .sig-block { margin-top: 14px; }
+        /* Signature block — never split */
+        .sig-block { margin-top: 14px; page-break-inside: avoid; }
         .sig-block .sig-title { font-size: 9.5px; font-weight: bold; color: #1a2332; text-transform: uppercase; letter-spacing: .4px; padding: 6px 8px; background: #1a2332; color: #fff; border-radius: 0; }
         .sig-grid { width: 100%; border-collapse: collapse; margin-top: 6px; }
         .sig-grid td { width: 25%; border: 1px solid #cbd5e1; padding: 8px 10px; vertical-align: bottom; height: 86px; background: #fafbfc; }
@@ -163,17 +174,23 @@
         Non-return of forms within the required time may lead to poor performance.
     </div>
 
-    {{-- KPI sections: Section A (General Performance) + Section B (Departmental Objectives) --}}
+    {{-- KPI sections: Section A (General Performance) + Section B (Departmental Objectives)
+
+         Section title is the FIRST row in <thead> so dompdf:
+           (a) never orphans the dark bar at the bottom of a page, and
+           (b) automatically repeats both bar + column headers on every page slice. --}}
     @foreach($groupedRatings as $code => $bundle)
         @php $section = $bundle['section']; $ratings = $bundle['ratings']; @endphp
         @if($ratings->isEmpty()) @continue @endif
 
-        <div class="section-bar">
-            Section {{ $section->code }} — {{ strtoupper($section->title) }} ({{ rtrim(rtrim(number_format($section->weight_total, 2), '0'), '.') }}%)
-        </div>
-
         <table class="kpi-tbl">
             <thead>
+                <tr>
+                    <th colspan="9" class="section-row">
+                        Section {{ $section->code }} — {{ strtoupper($section->title) }}
+                        ({{ rtrim(rtrim(number_format($section->weight_total, 2), '0'), '.') }}%)
+                    </th>
+                </tr>
                 <tr>
                     <th class="col-sn">S/N</th>
                     <th class="col-kpa">KPA</th>
