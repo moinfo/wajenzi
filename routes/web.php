@@ -689,6 +689,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post  ('performance/{performance}/submit',[App\Http\Controllers\KpiController::class, 'submitForReview'])->name('performance.submit');
     Route::get   ('performance/{performance}/review',[App\Http\Controllers\KpiController::class, 'reviewerForm'])  ->name('performance.review');
     Route::patch ('performance/{performance}/review',[App\Http\Controllers\KpiController::class, 'updateReviewer'])->name('performance.review.update');
+    Route::delete('performance/{performance}',    [App\Http\Controllers\KpiController::class, 'destroy'])     ->name('performance.destroy');
 
     Route::get('architect-bonus', [App\Http\Controllers\ArchitectBonusController::class, 'index'])->name('architect-bonus.index');
     Route::get('architect-bonus/create', [App\Http\Controllers\ArchitectBonusController::class, 'create'])->name('architect-bonus.create');

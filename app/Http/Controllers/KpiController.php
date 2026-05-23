@@ -564,6 +564,35 @@ class KpiController extends Controller
         }
     }
 
+    /**
+     * Destroy a KPI review. Permission-gated and confirms via the UI.
+     *
+     * Cascade FKs on kpi_review_ratings and kpi_review_attachments mean
+     * deleting the parent automatically wipes both — no manual loop needed.
+     *
+     * Safety policy: completed (= signed off by CEO) reviews are an audit
+     * record and shouldn't be silently removed; force=1 is required to
+     * delete them, surfaced as a separate "confirm twice" UX in the view.
+     */
+    public function destroy(Request $request, KpiReview $performance)
+    {
+        if (!$request->user()->can('Delete Performance Reviews')) {
+            abort(403, 'You do not have permission to delete performance reviews.');
+        }
+
+        if ($performance->status === 'completed' && !$request->boolean('force')) {
+            return back()->with('error',
+                'This review is already completed and serves as an audit record. ' .
+                'Tick "Force delete completed review" to remove it.');
+        }
+
+        $label = $performance->review_number . ' (' . ($performance->employee->name ?? 'unknown') . ')';
+        $performance->delete();
+
+        return redirect()->route('performance.index', ['tab' => $request->query('back_tab', 'all')])
+            ->with('success', "Review {$label} deleted.");
+    }
+
     // ---------------------------------------------------------------------
     // Template administration (System Admin only)
     // ---------------------------------------------------------------------

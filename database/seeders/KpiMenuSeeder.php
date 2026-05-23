@@ -64,6 +64,14 @@ class KpiMenuSeeder extends Seeder
             $this->command->info("  └─ {$m['name']} (ID: {$id})");
         }
 
+        // Destructive permission — attached only to the most senior roles by default.
+        // Admins can broaden via /settings/roles_permissions if needed.
+        $deleteRoleIds = DB::table('roles')->whereIn('name', [
+            'System Administrator', 'Managing Director', 'CEO', 'Chief Executive Officer',
+        ])->pluck('id')->toArray();
+        $this->createPermission('Delete Performance Reviews', $deleteRoleIds);
+        $this->command->info("  + Permission: Delete Performance Reviews (granted to " . count($deleteRoleIds) . " role(s))");
+
         $this->command->info("\nPerformance / KPI menu created successfully!");
     }
 

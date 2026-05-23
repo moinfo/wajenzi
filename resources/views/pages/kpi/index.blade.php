@@ -158,6 +158,27 @@
                                 <a href="{{ route('performance.review', $r) }}"
                                    style="background:#fef9c3; color:#854d0e; border:1px solid #fde047; padding:5px 10px; border-radius:7px; font-size:12px; text-decoration:none; font-weight:600; margin-left:4px;">Review</a>
                             @endif
+                            {{-- Delete: only shows on the All tab to anyone with the dedicated permission.
+                                 Completed reviews require force=1 (extra confirm) to discourage erasing audit records. --}}
+                            @if($tab === 'all' && auth()->user()->can('Delete Performance Reviews'))
+                                @php $isCompleted = $r->status === 'completed'; @endphp
+                                <form method="POST" action="{{ route('performance.destroy', $r) }}" style="display:inline; margin-left:4px;"
+                                      onsubmit="return confirm(@js($isCompleted
+                                        ? 'This review is COMPLETED (audit record). Delete it permanently? Cascades to all ratings + attachments.'
+                                        : 'Delete review ' . $r->review_number . '? This cascades to all ratings and attachments.'));">
+                                    @csrf
+                                    @method('DELETE')
+                                    <input type="hidden" name="back_tab" value="{{ $tab }}">
+                                    @if($isCompleted)
+                                        <input type="hidden" name="force" value="1">
+                                    @endif
+                                    <button type="submit"
+                                            title="{{ $isCompleted ? 'Force-delete completed review' : 'Delete review' }}"
+                                            style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:5px 8px; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer;">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </form>
+                            @endif
                         </td>
                     </tr>
                 @empty
