@@ -292,11 +292,32 @@
 
     {{-- Signatures: pull each stage's actor + their stored signature image (User.file).
          A signature is rendered ONLY when that lifecycle stage has been completed —
-         pending stages show "Awaiting" so unsigned reviews don't look misleading. --}}
+         pending stages show "Awaiting" so unsigned reviews don't look misleading.
+
+         Approver resolution:
+           1. Prefer the actual approver from process_approvals (the person who
+              clicked Approve at that step).
+           2. Otherwise fall back to "expected approver" by role, EXCLUDING the
+              employee and supervisor of this review so an employee who happens
+              to also hold the MD/CEO role doesn't end up as their own signer. --}}
     @php
-        // Resolve each role's actor & signature
-        $mdActor  = \App\Models\User::whereHas('roles', fn($q) => $q->where('name', 'Managing Director'))->first();
-        $ceoActor = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['CEO', 'Chief Executive Officer']))->first();
+        // Real approvers from the RingleSoft history, keyed by step order (1=sup, 2=MD, 3=CEO).
+        $approvalsByStep = $review->approvals
+            ->loadMissing(['user', 'processApprovalFlowStep'])
+            ->filter(fn ($a) => strcasecmp($a->approval_action ?? '', 'Approved') === 0)
+            ->groupBy(fn ($a) => optional($a->processApprovalFlowStep)->order);
+
+        $excludedIds = array_filter([$review->employee_id, $review->supervisor_id]);
+
+        $resolveByRole = function (array $roleNames) use ($excludedIds) {
+            return \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', $roleNames))
+                ->whereNotIn('id', $excludedIds ?: [0])
+                ->orderBy('id')
+                ->first();
+        };
+
+        $mdActor  = optional($approvalsByStep->get(2))->first()?->user ?? $resolveByRole(['Managing Director']);
+        $ceoActor = optional($approvalsByStep->get(3))->first()?->user ?? $resolveByRole(['CEO', 'Chief Executive Officer']);
 
         $signers = [
             [
