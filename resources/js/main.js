@@ -46,28 +46,33 @@ class Utility {
     }
 
     static callClassMethod(className, id, method, params, callback, errorCallback) {
-        // var url = {!! route('admin_ajax') !!}
         var url = '/ajax/class';
         $.ajax({
             type: 'POST',
             url: url,
+            dataType: 'json',
             data: { _token: csrf_token, className: className, id: id, method: method, params: params},
             success: function (result) {
                 callback(result);
             },
-            onFailure: function (er) {
-                errorCallback(er);
+            error: function (xhr) {
+                var payload = xhr.responseJSON || {success: false, message: xhr.statusText || 'Request failed'};
+                errorCallback(payload);
             }
         });
     }
 
     static deleteModelObject(className, id, callback, error_callback, verbose = true) {
         this.callClassMethod(className, id, 'delete', null, function (res) {
-            if(verbose) { Swal.fire('Deleted', 'Deleted', 'success'); }
-            callback(true);
+            var ok = res && res.success === true;
+            if(verbose) {
+                if(ok) { Swal.fire('Deleted', 'Deleted', 'success'); }
+                else { Swal.fire('Failed to delete', (res && res.message) || 'Failed', 'error'); }
+            }
+            callback(ok);
         }, function (err) {
-            if(verbose) { Swal.fire('Failed to delete', 'Failed', 'error'); }
-            error_callback(err);
+            if(verbose) { Swal.fire('Failed to delete', (err && err.message) || 'Failed', 'error'); }
+            if (error_callback) { error_callback(err); }
             callback(false);
         });
     }
