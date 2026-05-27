@@ -155,6 +155,39 @@ class KpiTemplateSeeder extends Seeder
             ],
 
             [
+                'code' => 'civil_engineer', 'name' => 'Civil Engineer Performance Review', 'role_name' => 'Civil Engineer',
+                'section_b_title' => 'Departmental Objectives', 'section_b_weight' => 70,
+                'section_b_items' => [
+                    // KRA 1 — Ensure Timely Project Completion (10%)
+                    ['kpa' => 'Ensure Timely Project Completion',                 'measure' => 'Daily develop and maintain detailed project schedules',                                          'target' => '98% schedules maintained',                                'weight' => 3.34],
+                    ['kpa' => 'Ensure Timely Project Completion',                 'measure' => 'Regularly monitor progress and adjust timelines as necessary',                                    'target' => 'Timelines adjusted in real time',                          'weight' => 3.33],
+                    ['kpa' => 'Ensure Timely Project Completion',                 'measure' => 'Reduce project delays and submit daily reports',                                                  'target' => '98% delay reduction; daily reports submitted',             'weight' => 3.33],
+                    // KRA 2 — Monitor and Control Project Costs (10%)
+                    ['kpa' => 'Monitor and Control Project Costs',                'measure' => 'Continuously monitor site expenses and ensure cost-effective resource management',                'target' => 'Site expenses within approved budget',                     'weight' => 2.5],
+                    ['kpa' => 'Monitor and Control Project Costs',                'measure' => 'Implement cost-tracking systems and regular budget reviews',                                      'target' => 'Monthly budget review meetings held',                      'weight' => 2.5],
+                    ['kpa' => 'Monitor and Control Project Costs',                'measure' => 'Identify cost-saving opportunities',                                                              'target' => '90% cost-saving opportunities identified and actioned',    'weight' => 2.5],
+                    ['kpa' => 'Monitor and Control Project Costs',                'measure' => 'Collaborate with Procurement to reduce materials wastage and equipment downtime',                'target' => '95% wastage reduction; 80% downtime reduction',            'weight' => 2.5],
+                    // KRA 3 — Maintain Quality Standards and Regulatory Compliance (10%)
+                    ['kpa' => 'Maintain Quality Standards and Regulatory Compliance', 'measure' => 'Conduct regular site inspections, enforce quality control, ensure adherence to CRB and ERB codes', 'target' => '100% compliance with CRB/ERB codes',                  'weight' => 10],
+                    // KRA 4 — Uphold Health and Safety Standards (10%)
+                    ['kpa' => 'Uphold Health and Safety Standards',               'measure' => 'Enforce safety protocols and conduct regular safety audits under OSHA policy',                   'target' => 'Zero safety violations; monthly audits completed',         'weight' => 3.34],
+                    ['kpa' => 'Uphold Health and Safety Standards',               'measure' => 'Train all site members on safety regulations and ensure PPE use',                                 'target' => '100% trained; 100% PPE compliance',                        'weight' => 3.33],
+                    ['kpa' => 'Uphold Health and Safety Standards',               'measure' => 'Report safety concerns, perform risk assessments, and mark hazardous areas',                      'target' => 'All hazards reported and clearly marked',                  'weight' => 3.33],
+                    // KRA 5 — Address On-Site Challenges Quickly (10%)
+                    ['kpa' => 'Address On-Site Challenges Quickly',               'measure' => 'Proactively identify site problems and resolve them to avoid delays',                             'target' => '90% issues resolved without delay',                        'weight' => 3.34],
+                    ['kpa' => 'Address On-Site Challenges Quickly',               'measure' => 'Develop contingency plans for common issues (weather, material shortages)',                       'target' => 'Contingency plans documented per project',                 'weight' => 3.33],
+                    ['kpa' => 'Address On-Site Challenges Quickly',               'measure' => 'Resolve technical issues within 24–48 hours',                                                     'target' => '90% technical issues resolved within 24–48h',              'weight' => 3.33],
+                    // KRA 6 — Supervise Subcontractors and Site Supervisors Team (10%)
+                    ['kpa' => 'Supervise Subcontractors and Site Supervisors Team','measure' => 'Oversee subcontractors and the site team to ensure quality work on time',                       'target' => 'On-time, on-spec deliverables',                            'weight' => 3.34],
+                    ['kpa' => 'Supervise Subcontractors and Site Supervisors Team','measure' => 'Support the site team and ensure annual team performance',                                       'target' => '85% team performance annually',                            'weight' => 3.33],
+                    ['kpa' => 'Supervise Subcontractors and Site Supervisors Team','measure' => 'Conduct regular performance reviews for supervisors/subcontractors and set clear roles',         'target' => 'Reviews completed; roles documented',                      'weight' => 3.33],
+                    // KRA 7 — Efficient Resource Management (10%)
+                    ['kpa' => 'Efficient Resource Management',                    'measure' => 'Ensure optimal utilisation of materials, labour, and equipment',                                  'target' => 'Resource utilisation ≥95%',                                'weight' => 5],
+                    ['kpa' => 'Efficient Resource Management',                    'measure' => 'Coordinate with procurement to ensure materials are delivered on time',                           'target' => '100% materials on-site before need',                       'weight' => 5],
+                ],
+            ],
+
+            [
                 'code' => 'sales', 'name' => 'Sales and Customer Performance Review', 'role_name' => 'Sales and Marketing',
                 'section_b_title' => 'Departmental Objectives', 'section_b_weight' => 70,
                 'section_b_items' => [
