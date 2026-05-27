@@ -163,6 +163,21 @@
                                 </td>
                                 <td class="text-center">
                                     <div class="btn-group">
+                                        @if($lead->phone)
+                                            <a href="https://wa.me/{{ preg_replace('/\D/', '', $lead->phone) }}" target="_blank"
+                                               class="btn btn-sm btn-alt-success" title="Chat on WhatsApp">
+                                                <i class="fab fa-whatsapp"></i>
+                                            </a>
+                                            <a href="tel:{{ $lead->phone }}" class="btn btn-sm btn-alt-secondary" title="Call {{ $lead->phone }}">
+                                                <i class="fa fa-phone"></i>
+                                            </a>
+                                        @endif
+                                        <button type="button" class="btn btn-sm btn-alt-info" title="Log Call / Follow-up"
+                                                data-action="{{ route('leads.followup.store', $lead->id) }}"
+                                                data-lead="{{ $lead->name }}"
+                                                onclick="openLogCall(this)">
+                                            <i class="fa fa-phone-volume"></i>
+                                        </button>
                                         <a href="{{ route('leads.show', $lead->id) }}" class="btn btn-sm btn-alt-secondary" title="View">
                                             <i class="fa fa-eye"></i>
                                         </a>
@@ -212,6 +227,53 @@
         </div>
     </div>
 </div>
+
+{{-- Shared Log Call / Follow-up modal — reused for every row; its form action
+     is rewritten per lead via openLogCall(). Posts to leads.followup.store so
+     logged calls land in the lead's existing Follow-up History. --}}
+<div class="modal fade" id="logCallModal" tabindex="-1" aria-labelledby="logCallModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" id="logCallForm" action="">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logCallModalLabel">
+                        <i class="fa fa-phone-volume text-info mr-1"></i> Log Call / Follow-up
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted mb-3" style="font-size:13px;">
+                        Lead: <strong id="logCallLeadName"></strong>
+                    </p>
+                    <div class="form-group mb-3">
+                        <label class="font-w600">Call / Follow-up Date <span class="text-danger">*</span></label>
+                        <input type="date" name="followup_date" id="logCallDate" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-w600">Call Remarks <span class="text-danger">*</span></label>
+                        <input type="text" name="details_discussion" class="form-control"
+                               placeholder="What was discussed on the call?" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-w600">Outcome / Result</label>
+                        <input type="text" name="outcome" class="form-control"
+                               placeholder="e.g. Interested, No answer, Call back later">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="font-w600">Next Action</label>
+                        <input type="text" name="next_step" class="form-control"
+                               placeholder="What should be done next?">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-alt-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success"><i class="fa fa-save mr-1"></i> Save Call Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('js_after')
@@ -230,5 +292,21 @@
             }, 500);
         });
     })();
+
+    // Log Call / Follow-up: point the shared modal's form at the clicked lead,
+    // default the date to today, then open it (Bootstrap 5 → jQuery fallback).
+    function openLogCall(btn) {
+        var form = document.getElementById('logCallForm');
+        form.action = btn.dataset.action;
+        document.getElementById('logCallLeadName').textContent = btn.dataset.lead || '';
+        document.getElementById('logCallDate').value = new Date().toISOString().slice(0, 10);
+
+        var modalEl = document.getElementById('logCallModal');
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl)).show();
+        } else if (typeof $ !== 'undefined' && $.fn.modal) {
+            $(modalEl).modal('show');
+        }
+    }
 </script>
 @endsection
