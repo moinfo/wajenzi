@@ -18,6 +18,10 @@
 .tpl-btn-save:hover { background:#159e97; }
 .tpl-btn-del { background:transparent; color:#dc2626; border:none; cursor:pointer; padding:5px 8px; }
 .tpl-btn-del:hover { background:#fee2e2; border-radius:6px; }
+.tpl-save-all { display:flex; justify-content:flex-end; align-items:center; gap:12px; padding:12px 18px; background:#f8fafc; border-top:1px solid #eef0f3; }
+.tpl-save-all .hint { font-size:11.5px; color:#94a3b8; margin-right:auto; }
+.tpl-btn-save-all { background:#1BC5BD; color:#fff; border:none; padding:9px 20px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; }
+.tpl-btn-save-all:hover { background:#159e97; }
 .tpl-add-row { background:#f8fafc; padding:12px 18px; }
 .tpl-add-row form { display:grid; grid-template-columns:1.2fr 2fr 1.5fr 80px 80px; gap:8px; align-items:start; }
 .tpl-add-row input, .tpl-add-row textarea { border:1.5px solid #cbd5e1; border-radius:6px; padding:6px 9px; font-size:12.5px; width:100%; }
@@ -138,42 +142,51 @@
                     <p style="margin:0; font-size:13px;">No KPI items yet. Add one below.</p>
                 </div>
             @else
-                <table class="tpl-tbl">
-                    <thead>
-                        <tr>
-                            <th style="width:160px;">KPA</th>
-                            <th>Measure</th>
-                            <th style="width:200px;">Target</th>
-                            <th style="width:80px; text-align:center;">Weight</th>
-                            <th style="width:110px; text-align:center;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($section->items as $item)
+                <form method="POST" action="{{ route('performance.templates.items.bulk', $template->id) }}">
+                    @csrf @method('PATCH')
+                    <table class="tpl-tbl">
+                        <thead>
                             <tr>
-                                <form method="POST" action="{{ route('performance.templates.items.update', [$template->id, $item->id]) }}" id="form-item-{{ $item->id }}">
-                                    @csrf @method('PATCH')
-                                    <td><input type="text" name="kpa" value="{{ $item->kpa }}" form="form-item-{{ $item->id }}"></td>
-                                    <td><textarea name="measure" rows="2" form="form-item-{{ $item->id }}">{{ $item->measure }}</textarea></td>
-                                    <td><textarea name="target" rows="2" form="form-item-{{ $item->id }}">{{ $item->target }}</textarea></td>
-                                    <td><input type="number" name="weight" step="0.01" min="0" max="100" value="{{ $item->weight }}" form="form-item-{{ $item->id }}"></td>
-                                </form>
-                                <td style="text-align:center; white-space:nowrap;">
-                                    <button type="submit" class="tpl-btn-save" form="form-item-{{ $item->id }}" title="Save changes">
-                                        <i class="fa fa-save"></i>
-                                    </button>
-                                    <form method="POST" action="{{ route('performance.templates.items.destroy', [$template->id, $item->id]) }}" style="display:inline;"
-                                          onsubmit="return confirm('Delete this KPI item? Historical reviews keep their snapshot.');">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="tpl-btn-del" title="Delete item">
+                                <th style="width:160px;">KPA</th>
+                                <th>Measure</th>
+                                <th style="width:200px;">Target</th>
+                                <th style="width:80px; text-align:center;">Weight</th>
+                                <th style="width:70px; text-align:center;">Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($section->items as $item)
+                                <tr>
+                                    <td><input type="text" name="items[{{ $item->id }}][kpa]" value="{{ $item->kpa }}" required></td>
+                                    <td><textarea name="items[{{ $item->id }}][measure]" rows="2" required>{{ $item->measure }}</textarea></td>
+                                    <td><textarea name="items[{{ $item->id }}][target]" rows="2">{{ $item->target }}</textarea></td>
+                                    <td><input type="number" name="items[{{ $item->id }}][weight]" step="0.01" min="0" max="100" value="{{ $item->weight }}" required></td>
+                                    <td style="text-align:center;">
+                                        {{-- Targets the separate delete form below via form="", so it
+                                             does NOT submit this bulk-save form. --}}
+                                        <button type="submit" form="del-form-{{ $item->id }}" class="tpl-btn-del" title="Delete item"
+                                                onclick="return confirm('Delete this KPI item? Historical reviews keep their snapshot.');">
                                             <i class="fa fa-trash"></i>
                                         </button>
-                                    </form>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    <div class="tpl-save-all">
+                        <span class="hint">Edit any cells above, then save the whole section in one click.</span>
+                        <button type="submit" class="tpl-btn-save-all"><i class="fa fa-save"></i> Save All Changes</button>
+                    </div>
+                </form>
+
+                {{-- Per-row delete forms live OUTSIDE the bulk form — HTML forbids
+                     nested forms, so the trash buttons reach them via form="". --}}
+                @foreach($section->items as $item)
+                    <form id="del-form-{{ $item->id }}" method="POST"
+                          action="{{ route('performance.templates.items.destroy', [$template->id, $item->id]) }}" style="display:none;">
+                        @csrf @method('DELETE')
+                    </form>
+                @endforeach
             @endif
 
             <div class="tpl-add-row">

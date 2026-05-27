@@ -680,7 +680,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get   ('performance/templates/{template}', [App\Http\Controllers\KpiController::class, 'templateShow'])->name('performance.templates.show');
     Route::patch ('performance/templates/{template}', [App\Http\Controllers\KpiController::class, 'templateUpdate'])->name('performance.templates.update');
     Route::post  ('performance/templates/{template}/items', [App\Http\Controllers\KpiController::class, 'templateStoreItem'])->name('performance.templates.items.store');
-    Route::patch ('performance/templates/{template}/items/{item}', [App\Http\Controllers\KpiController::class, 'templateUpdateItem'])->name('performance.templates.items.update');
+    Route::patch ('performance/templates/{template}/items', [App\Http\Controllers\KpiController::class, 'templateUpdateItems'])->name('performance.templates.items.bulk');
     Route::delete('performance/templates/{template}/items/{item}', [App\Http\Controllers\KpiController::class, 'templateDeleteItem'])->name('performance.templates.items.destroy');
     Route::get   ('performance/create',           [App\Http\Controllers\KpiController::class, 'create'])     ->name('performance.create');
     Route::post  ('performance',                  [App\Http\Controllers\KpiController::class, 'store'])      ->name('performance.store');
