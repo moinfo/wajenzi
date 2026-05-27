@@ -127,6 +127,18 @@ use App\Http\Controllers\Api\V1\SiteSupervisorAssignmentApiController;
 // Public routes (no authentication required)
 Route::post('auth/login', [AuthController::class, 'login']);
 
+// Public landing/website content (CMS) — shown on the pre-login landing screen.
+Route::prefix('public')->group(function () {
+    Route::get('portfolio', [\App\Http\Controllers\Api\V1\Public\LandingPortfolioController::class, 'index']);
+    Route::get('portfolio/{id}', [\App\Http\Controllers\Api\V1\Public\LandingPortfolioController::class, 'show']);
+    Route::post('portfolio/{id}/like', [\App\Http\Controllers\Api\V1\Public\LandingPortfolioController::class, 'toggleLike']);
+    Route::get('awards', [\App\Http\Controllers\Api\V1\Public\LandingAwardController::class, 'index']);
+    Route::get('services', [\App\Http\Controllers\Api\V1\Public\LandingServiceController::class, 'index']);
+    Route::get('posters', [\App\Http\Controllers\Api\V1\Public\LandingPosterController::class, 'index']);
+    Route::get('stats', [\App\Http\Controllers\Api\V1\Public\LandingStatController::class, 'index']);
+    Route::get('about', [\App\Http\Controllers\Api\V1\Public\LandingAboutController::class, 'index']);
+});
+
 // Protected routes (require Sanctum authentication)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);

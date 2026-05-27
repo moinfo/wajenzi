@@ -1506,7 +1506,7 @@ class MainDrawer extends ConsumerWidget {
                   end: Alignment.bottomRight,
                   colors: isDarkMode
                       ? [const Color(0xFF0D3B34), const Color(0xFF0A2E28)]
-                      : [const Color(0xFF1ABC9C), const Color(0xFF16A085)],
+                      : [const Color(0xFF193340), const Color(0xFF122833)],
                 ),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(24),
@@ -1547,7 +1547,7 @@ class MainDrawer extends ConsumerWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isDarkMode
-                            ? const Color(0xFF1ABC9C).withValues(alpha: 0.2)
+                            ? const Color(0xFF193340).withValues(alpha: 0.2)
                             : Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -1556,7 +1556,7 @@ class MainDrawer extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 11,
                           color: isDarkMode
-                              ? const Color(0xFF1ABC9C)
+                              ? const Color(0xFF193340)
                               : Colors.white,
                           fontWeight: FontWeight.w500,
                         ),
@@ -1811,8 +1811,8 @@ class MainDrawer extends ConsumerWidget {
                 isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
                 size: 20,
                 color: isDarkMode
-                    ? const Color(0xFF1ABC9C)
-                    : const Color(0xFFF39C12),
+                    ? const Color(0xFF193340)
+                    : const Color(0xFFFECC04),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1841,9 +1841,9 @@ class MainDrawer extends ConsumerWidget {
                 value: isDarkMode,
                 onChanged: (v) =>
                     ref.read(settingsProvider.notifier).setDarkMode(v),
-                activeThumbColor: const Color(0xFF1ABC9C),
+                activeThumbColor: const Color(0xFF193340),
                 activeTrackColor: const Color(
-                  0xFF1ABC9C,
+                  0xFF193340,
                 ).withValues(alpha: 0.4),
               ),
             ],
@@ -1863,7 +1863,7 @@ class MainDrawer extends ConsumerWidget {
               Icon(
                 Icons.translate_rounded,
                 size: 20,
-                color: const Color(0xFF3498DB),
+                color: const Color(0xFF3BA154),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1887,7 +1887,7 @@ class MainDrawer extends ConsumerWidget {
                   vertical: 0,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3498DB).withValues(alpha: 0.12),
+                  color: const Color(0xFF3BA154).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -1895,7 +1895,7 @@ class MainDrawer extends ConsumerWidget {
                     value: language,
                     icon: const Icon(
                       Icons.arrow_drop_down_rounded,
-                      color: Color(0xFF3498DB),
+                      color: Color(0xFF3BA154),
                     ),
                     dropdownColor: isDarkMode
                         ? const Color(0xFF1F2A44)
@@ -1922,7 +1922,7 @@ class MainDrawer extends ConsumerWidget {
                                 AppLanguage.arabic => 'AR',
                               },
                               style: const TextStyle(
-                                color: Color(0xFF3498DB),
+                                color: Color(0xFF3BA154),
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -2072,7 +2072,7 @@ class _DrawerProfileAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final backgroundColor = isDarkMode
-        ? const Color(0xFF1ABC9C).withValues(alpha: 0.3)
+        ? const Color(0xFF193340).withValues(alpha: 0.3)
         : Colors.white.withValues(alpha: 0.2);
 
     return Container(

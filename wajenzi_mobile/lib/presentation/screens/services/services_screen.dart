@@ -1,6 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/services/external_launcher_service.dart';
+import '../../../data/models/landing_service_model.dart';
+import '../../providers/services_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
@@ -78,7 +82,84 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
     }
   }
 
-  List<_ServiceItem> get _services => [
+  // Live services from the portal CMS, falling back to bundled content while
+  // loading or if nothing has been published. See [servicesProvider].
+  List<_ServiceItem> get _services {
+    final models = ref.watch(servicesProvider).valueOrNull;
+    if (models == null || models.isEmpty) return _fallbackServices;
+    return models
+        .asMap()
+        .entries
+        .map((e) => _serviceFromModel(e.value, e.key))
+        .toList();
+  }
+
+  static const List<Color> _serviceAccents = [
+    Color(0xFF3BA154), // green
+    Color(0xFF9B59B6), // purple
+    Color(0xFFFECC04), // yellow
+    Color(0xFF193340), // dark blue
+    Color(0xFFE74C3C), // red
+    Color(0xFF2E8043), // green dark
+  ];
+  static const List<IconData> _serviceIcons = [
+    Icons.construction_rounded,
+    Icons.architecture_rounded,
+    Icons.calculate_rounded,
+    Icons.account_balance_rounded,
+    Icons.chair_rounded,
+    Icons.support_agent_rounded,
+  ];
+
+  _ServiceItem _serviceFromModel(LandingServiceModel m, int index) {
+    return _ServiceItem(
+      id: m.id.toString(),
+      title: m.title,
+      shortDescription: m.shortDescription ?? '',
+      fullDescription: m.fullDescription ?? m.shortDescription ?? '',
+      image: AppConfig.resolvePortalMediaUrl(m.image) ?? '',
+      icon: _serviceIcons[index % _serviceIcons.length],
+      color: _serviceAccents[index % _serviceAccents.length],
+      features: m.features,
+    );
+  }
+
+  /// Service image — network (CMS) when a URL, asset for bundled fallback,
+  /// else a branded gradient placeholder with the service icon.
+  Widget _serviceImage(_ServiceItem service, double iconSize) {
+    Widget fallback() => Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [service.color.withValues(alpha: 0.7), service.color],
+        ),
+      ),
+      child: Icon(
+        service.icon,
+        size: iconSize,
+        color: Colors.white.withValues(alpha: 0.5),
+      ),
+    );
+    final src = service.image;
+    if (src.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: src,
+        fit: BoxFit.cover,
+        placeholder: (_, _) =>
+            Container(color: service.color.withValues(alpha: 0.15)),
+        errorWidget: (_, _, _) => fallback(),
+      );
+    }
+    if (src.isEmpty) return fallback();
+    return Image.asset(
+      src,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => fallback(),
+    );
+  }
+
+  List<_ServiceItem> get _fallbackServices => [
     _ServiceItem(
       id: 'construction',
       title: _tr(
@@ -101,7 +182,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
       ),
       image: 'assets/images/construction_01.png',
       icon: Icons.construction_rounded,
-      color: const Color(0xFF3498DB),
+      color: const Color(0xFF3BA154),
       features: _isSwahili
           ? [
               'Ujenzi wa Makazi',
@@ -163,7 +244,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           : 'Our detailed BOQ estimates give you a complete picture of your project costs. We itemize all materials, labor, and expenses so you can plan and budget accurately.',
       image: 'assets/images/bill _of_quanties_01.png',
       icon: Icons.calculate_rounded,
-      color: const Color(0xFFF39C12),
+      color: const Color(0xFFFECC04),
       features: _isSwahili
           ? [
               'Makadirio ya Gharama',
@@ -194,7 +275,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           : 'Our structural engineers perform thorough analysis and design to ensure your building can safely withstand all loads and environmental conditions.',
       image: 'assets/images/structure_01.jpg',
       icon: Icons.account_balance_rounded,
-      color: const Color(0xFF1ABC9C),
+      color: const Color(0xFF193340),
       features: _isSwahili
           ? [
               'Uchambuzi wa Miundo',
@@ -345,7 +426,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF1ABC9C), Color(0xFF3498DB)],
+                  colors: [Color(0xFF193340), Color(0xFF3BA154)],
                 ),
               ),
               child: const Center(
@@ -386,7 +467,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1ABC9C),
+                  color: const Color(0xFF193340),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -449,7 +530,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                 width: 4,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1ABC9C),
+                  color: const Color(0xFF193340),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -465,7 +546,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                       ar: 'ما الذي نقوم به',
                     ),
                     style: const TextStyle(
-                      color: Color(0xFF1ABC9C),
+                      color: Color(0xFF193340),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -538,27 +619,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                   child: SizedBox(
                     height: 120,
                     width: double.infinity,
-                    child: Image.asset(
-                      service.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              service.color.withValues(alpha: 0.7),
-                              service.color,
-                            ],
-                          ),
-                        ),
-                        child: Icon(
-                          service.icon,
-                          size: 50,
-                          color: Colors.white.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
+                    child: _serviceImage(service, 50),
                   ),
                 ),
                 // Label overlay at bottom
@@ -709,25 +770,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                       child: SizedBox(
                         height: 180,
                         width: double.infinity,
-                        child: Image.asset(
-                          service.image,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  service.color.withValues(alpha: 0.7),
-                                  service.color,
-                                ],
-                              ),
-                            ),
-                            child: Icon(
-                              service.icon,
-                              size: 80,
-                              color: Colors.white.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ),
+                        child: _serviceImage(service, 80),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -930,12 +973,12 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           end: Alignment.bottomRight,
           colors: _isDarkMode
               ? [const Color(0xFF0F3460), const Color(0xFF16213E)]
-              : [const Color(0xFF1ABC9C), const Color(0xFF16A085)],
+              : [const Color(0xFF193340), const Color(0xFF122833)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+            color: const Color(0xFF193340).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -1019,11 +1062,11 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
         color: _cardBgColor,
         borderRadius: BorderRadius.circular(20),
         border: _isDarkMode
-            ? Border.all(color: const Color(0xFF3498DB).withValues(alpha: 0.3))
+            ? Border.all(color: const Color(0xFF3BA154).withValues(alpha: 0.3))
             : null,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3498DB).withValues(alpha: 0.1),
+            color: const Color(0xFF3BA154).withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -1033,7 +1076,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
         children: [
           Icon(
             Icons.chat_bubble_outline_rounded,
-            color: const Color(0xFF3498DB),
+            color: const Color(0xFF3BA154),
             size: 48,
           ),
           const SizedBox(height: 16),
@@ -1082,8 +1125,8 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF1ABC9C),
-                    side: const BorderSide(color: Color(0xFF1ABC9C)),
+                    foregroundColor: const Color(0xFF193340),
+                    side: const BorderSide(color: Color(0xFF193340)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),

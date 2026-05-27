@@ -137,7 +137,7 @@ class _Body extends StatelessWidget {
                     ar: 'قادمة',
                   ),
                   icon: Icons.calendar_today_rounded,
-                  color: const Color(0xFF2980B9),
+                  color: const Color(0xFF2E8043),
                   bgColor: const Color(0xFFEBF5FB),
                 ),
                 const SizedBox(width: 8),

@@ -137,7 +137,7 @@ class _Body extends StatelessWidget {
                     ar: 'قادمة',
                   ),
                   icon: Icons.calendar_today_rounded,
-                  color: const Color(0xFF2980B9),
+                  color: const Color(0xFF2E8043),
                   bgColor: const Color(0xFFEBF5FB),
                 ),
                 const SizedBox(width: 8),
@@ -279,7 +279,7 @@ class _FollowupCard extends StatelessWidget {
         return const Color(0xFF27AE60);
       case 'pending':
       default:
-        return const Color(0xFF2980B9);
+        return const Color(0xFF2E8043);
     }
   }
 

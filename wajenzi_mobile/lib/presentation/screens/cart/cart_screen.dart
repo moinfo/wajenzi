@@ -132,13 +132,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: const Color(0xFF1ABC9C).withValues(alpha: 0.1),
+              color: const Color(0xFF193340).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.shopping_cart_outlined,
               size: 60,
-              color: Color(0xFF1ABC9C),
+              color: Color(0xFF193340),
             ),
           ),
           const SizedBox(height: 24),
@@ -179,7 +179,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1ABC9C),
+              backgroundColor: const Color(0xFF193340),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               shape: RoundedRectangleBorder(
@@ -204,7 +204,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 width: 4,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1ABC9C),
+                  color: const Color(0xFF193340),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -415,7 +415,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         color: _cardBgColor,
         borderRadius: BorderRadius.circular(16),
         border: _isDarkMode
-            ? Border.all(color: const Color(0xFF1ABC9C).withValues(alpha: 0.2))
+            ? Border.all(color: const Color(0xFF193340).withValues(alpha: 0.2))
             : null,
         boxShadow: [
           BoxShadow(
@@ -441,7 +441,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                 errorBuilder: (_, _, _) => Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                      colors: [Color(0xFF193340), Color(0xFF122833)],
                     ),
                   ),
                   child: const Icon(
@@ -474,7 +474,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                   Text(
                     item.category,
                     style: const TextStyle(
-                      color: Color(0xFF1ABC9C),
+                      color: Color(0xFF193340),
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
@@ -486,13 +486,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1ABC9C).withValues(alpha: 0.1),
+                      color: const Color(0xFF193340).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       _getFormattedPrice(item.priceTZS, item.priceUSD),
                       style: const TextStyle(
-                        color: Color(0xFF1ABC9C),
+                        color: Color(0xFF193340),
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),

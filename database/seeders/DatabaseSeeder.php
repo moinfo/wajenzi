@@ -25,7 +25,14 @@ class DatabaseSeeder extends Seeder
             AddSystemCreditAndInventoryMenuSeeder::class,
             DeductionSettingsSeeder::class,
             DeductionsSeeder::class,
-            AddVatPaymentMenuSeeder::class
+            AddVatPaymentMenuSeeder::class,
+            LandingCmsMenuSeeder::class,
+            LandingPortfolioSeeder::class,
+            LandingAwardsSeeder::class,
+            LandingServicesSeeder::class,
+            LandingStatsSeeder::class,
+            LandingPostersSeeder::class,
+            LandingAboutSeeder::class,
         ]);
     }
 }

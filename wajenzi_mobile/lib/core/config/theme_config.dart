@@ -1,37 +1,42 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Wajenzi Brand Colors
-  static const Color primary = Color(0xFF1ABC9C);      // Teal/Cyan - labels, accents
-  static const Color primaryDark = Color(0xFF16A085);
-  static const Color primaryLight = Color(0xFF48C9B0);
+  // ── Official Wajenzi brand palette ──────────────────────────────────
+  static const Color brandBlue = Color(0xFF193340); // Dark blue (primary)
+  static const Color brandGreen = Color(0xFF3BA154); // Green (accent/success)
+  static const Color brandYellow = Color(0xFFFECC04); // Yellow (highlight)
 
-  // Gradient Colors (for buttons and backgrounds)
-  static const Color gradientStart = Color(0xFF3498DB);  // Blue
-  static const Color gradientEnd = Color(0xFF2ECC71);    // Green
+  // Primary = brand dark blue (app bars, buttons, chrome)
+  static const Color primary = brandBlue;
+  static const Color primaryDark = Color(0xFF122833);
+  static const Color primaryLight = Color(0xFF2A4A5A);
 
-  // Secondary Colors
-  static const Color secondary = Color(0xFF3498DB);     // Blue
-  static const Color secondaryDark = Color(0xFF2980B9);
-  static const Color secondaryLight = Color(0xFF5DADE2);
+  // Gradient Colors (brand dark-blue → green)
+  static const Color gradientStart = brandBlue;
+  static const Color gradientEnd = brandGreen;
+
+  // Secondary = brand green (accents, secondary actions)
+  static const Color secondary = brandGreen;
+  static const Color secondaryDark = Color(0xFF2E8043);
+  static const Color secondaryLight = Color(0xFF5BC077);
 
   // Neutral Colors
   static const Color background = Color(0xFFF8F9FA);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color error = Color(0xFFE74C3C);
-  static const Color success = Color(0xFF2ECC71);
-  static const Color warning = Color(0xFFF39C12);
-  static const Color info = Color(0xFF3498DB);
+  static const Color success = brandGreen;
+  static const Color warning = brandYellow;
+  static const Color info = brandBlue;
 
   // Text Colors
-  static const Color textPrimary = Color(0xFF2C3E50);
+  static const Color textPrimary = brandBlue;
   static const Color textSecondary = Color(0xFF7F8C8D);
   static const Color textHint = Color(0xFFBDC3C7);
 
   // Status Colors
   static const Color draft = Color(0xFF95A5A6);
-  static const Color pending = Color(0xFFF39C12);
-  static const Color approved = Color(0xFF2ECC71);
+  static const Color pending = brandYellow;
+  static const Color approved = brandGreen;
   static const Color rejected = Color(0xFFE74C3C);
 
   // Gradient
@@ -42,7 +47,7 @@ class AppColors {
   );
 
   static const LinearGradient backgroundGradient = LinearGradient(
-    colors: [Color(0xFF4A90D9), Color(0xFF1ABC9C)],
+    colors: [brandBlue, brandGreen],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -148,7 +153,7 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
-        backgroundColor: Color(0xFF1A1A2E),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
       cardTheme: CardThemeData(

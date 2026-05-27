@@ -279,7 +279,7 @@ class _MaterialInventoryScreenState
                                       : 'Total Items',
                                   value: '${stats['total'] ?? totalCount}',
                                   icon: Icons.inventory_2,
-                                  color: const Color(0xFF3498DB),
+                                  color: const Color(0xFF3BA154),
                                   isDarkMode: isDarkMode,
                                 ),
                               ),
@@ -326,7 +326,7 @@ class _MaterialInventoryScreenState
                                   title: isSwahili ? 'Jumla' : 'Total',
                                   value: '$totalCount',
                                   icon: Icons.inventory_2,
-                                  color: const Color(0xFF3498DB),
+                                  color: const Color(0xFF3BA154),
                                   isDarkMode: isDarkMode,
                                 ),
                               ),
@@ -993,12 +993,12 @@ class _InventoryCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3498DB).withValues(alpha: 0.1),
+                      color: const Color(0xFF3BA154).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
                       Icons.inventory_2,
-                      color: Color(0xFF3498DB),
+                      color: Color(0xFF3BA154),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1291,12 +1291,12 @@ class _ProjectCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3498DB).withValues(alpha: 0.1),
+                  color: const Color(0xFF3BA154).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.warehouse_rounded,
-                  color: Color(0xFF3498DB),
+                  color: Color(0xFF3BA154),
                 ),
               ),
               const SizedBox(width: 12),
@@ -2509,7 +2509,7 @@ class _StockMovementsSheetState extends ConsumerState<_StockMovementsSheet> {
                           type == 'issued' || type == 'transfer' ? '-' : '+';
                       final color = switch (type) {
                         'issued' => const Color(0xFFF59E0B),
-                        'adjustment' => const Color(0xFF3498DB),
+                        'adjustment' => const Color(0xFF3BA154),
                         'returned' => const Color(0xFF6366F1),
                         'transfer' => const Color(0xFF6B7280),
                         _ => const Color(0xFF27AE60),

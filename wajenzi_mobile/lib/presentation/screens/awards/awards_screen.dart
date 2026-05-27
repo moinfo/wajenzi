@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/services/external_launcher_service.dart';
+import '../../../data/models/landing_award_model.dart';
+import '../../providers/awards_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
@@ -42,7 +46,9 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
   void _startAutoScroll() {
     _featuredTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (_featuredController.hasClients) {
-        final nextPage = (_currentFeaturedPage + 1) % _awards.length;
+        final count = _awardsCount;
+        if (count == 0) return;
+        final nextPage = (_currentFeaturedPage + 1) % count;
         _featuredController.animateToPage(
           nextPage,
           duration: const Duration(milliseconds: 500),
@@ -91,7 +97,82 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
     }
   }
 
-  List<_Award> get _awards => [
+  // Live awards from the portal CMS, falling back to bundled content while
+  // loading or if nothing has been published. See [awardsProvider].
+  List<_Award> get _awards {
+    final models = ref.watch(awardsProvider).valueOrNull;
+    if (models == null || models.isEmpty) return _fallbackAwards;
+    return models
+        .asMap()
+        .entries
+        .map((e) => _awardFromModel(e.value, e.key))
+        .toList();
+  }
+
+  // Count usable outside build (e.g. the auto-scroll timer) — uses read().
+  int get _awardsCount {
+    final models = ref.read(awardsProvider).valueOrNull;
+    return (models == null || models.isEmpty)
+        ? _fallbackAwards.length
+        : models.length;
+  }
+
+  static const List<Color> _awardAccents = [
+    Color(0xFF193340), // brand dark blue
+    Color(0xFF3BA154), // brand green
+    Color(0xFF9B59B6), // purple
+    Color(0xFF2E8043), // green dark
+  ];
+  static const List<IconData> _awardIcons = [
+    Icons.emoji_events_rounded,
+    Icons.workspace_premium_rounded,
+    Icons.eco_rounded,
+    Icons.lightbulb_rounded,
+  ];
+
+  _Award _awardFromModel(LandingAwardModel m, int index) {
+    return _Award(
+      year: m.year ?? '',
+      title: m.title,
+      subtitle: m.subtitle ?? '',
+      organization: m.organization ?? '',
+      description: m.description ?? '',
+      image: AppConfig.resolvePortalMediaUrl(m.image) ?? '',
+      color: _awardAccents[index % _awardAccents.length],
+      icon: _awardIcons[index % _awardIcons.length],
+    );
+  }
+
+  /// Award image — network (CMS) when a URL, asset for bundled fallback,
+  /// else a branded gradient placeholder with the award icon.
+  Widget _awardImage(_Award award, double iconSize) {
+    Widget fallback() => Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [award.color.withValues(alpha: 0.7), award.color],
+        ),
+      ),
+      child: Icon(award.icon, size: iconSize, color: Colors.white38),
+    );
+    final src = award.image;
+    if (src.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: src,
+        fit: BoxFit.cover,
+        placeholder: (_, _) =>
+            Container(color: award.color.withValues(alpha: 0.15)),
+        errorWidget: (_, _, _) => fallback(),
+      );
+    }
+    if (src.isEmpty) return fallback();
+    return Image.asset(
+      src,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => fallback(),
+    );
+  }
+
+  List<_Award> get _fallbackAwards => [
     _Award(
       year: '2024',
       title: _isSwahili
@@ -107,7 +188,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
           ? 'Kutambuliwa kwa ubora katika miradi ya ujenzi wa makazi, kutoa ubora wa kipekee, ubunifu, na kuridhika kwa wateja.'
           : 'Recognized for excellence in residential construction projects, delivering exceptional quality, innovation, and client satisfaction.',
       image: 'assets/images/awards/BQ6A3834.jpeg',
-      color: const Color(0xFF1ABC9C),
+      color: const Color(0xFF193340),
       icon: Icons.emoji_events_rounded,
     ),
     _Award(
@@ -137,7 +218,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
         ar: 'مُنحت تقديرًا لإظهار حرفة متميزة وابتكار تقني وإدارة مشاريع عالية المستوى عبر عدة مشاريع إنشائية.',
       ),
       image: 'assets/images/awards/BQ6A3837.jpeg',
-      color: const Color(0xFF3498DB),
+      color: const Color(0xFF3BA154),
       icon: Icons.workspace_premium_rounded,
     ),
     _Award(
@@ -273,7 +354,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFFD4AF37), Color(0xFFF39C12)],
+                  colors: [Color(0xFFD4AF37), Color(0xFFFECC04)],
                 ),
               ),
               child: const Center(
@@ -312,7 +393,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1ABC9C),
+                  color: const Color(0xFF193340),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -384,12 +465,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+          colors: [Color(0xFF193340), Color(0xFF122833)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+            color: const Color(0xFF193340).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -466,7 +547,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 width: 4,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1ABC9C),
+                  color: const Color(0xFF193340),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -482,7 +563,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                       ar: 'إنجازاتنا',
                     ),
                     style: const TextStyle(
-                      color: Color(0xFF1ABC9C),
+                      color: Color(0xFF193340),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -535,7 +616,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                 height: 8,
                 decoration: BoxDecoration(
                   color: _currentFeaturedPage == index
-                      ? const Color(0xFF1ABC9C)
+                      ? const Color(0xFF193340)
                       : (_isDarkMode ? Colors.white24 : Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(4),
                 ),
@@ -579,25 +660,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                   child: SizedBox(
                     height: 140,
                     width: double.infinity,
-                    child: Image.asset(
-                      award.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              award.color.withValues(alpha: 0.7),
-                              award.color,
-                            ],
-                          ),
-                        ),
-                        child: Icon(
-                          award.icon,
-                          size: 60,
-                          color: Colors.white38,
-                        ),
-                      ),
-                    ),
+                    child: _awardImage(award, 60),
                   ),
                 ),
                 // Year badge
@@ -764,15 +827,25 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
               minScale: 0.5,
               maxScale: 4.0,
               child: Center(
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const Icon(
-                    Icons.broken_image_rounded,
-                    color: Colors.white54,
-                    size: 80,
-                  ),
-                ),
+                child: imagePath.startsWith('http')
+                    ? CachedNetworkImage(
+                        imageUrl: imagePath,
+                        fit: BoxFit.contain,
+                        errorWidget: (_, _, _) => const Icon(
+                          Icons.broken_image_rounded,
+                          color: Colors.white54,
+                          size: 80,
+                        ),
+                      )
+                    : Image.asset(
+                        imagePath,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => const Icon(
+                          Icons.broken_image_rounded,
+                          color: Colors.white54,
+                          size: 80,
+                        ),
+                      ),
               ),
             ),
             // Close button
@@ -852,7 +925,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
             width: 4,
             height: 30,
             decoration: BoxDecoration(
-              color: const Color(0xFF3498DB),
+              color: const Color(0xFF3BA154),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -868,7 +941,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                   ar: 'رحلتنا',
                 ),
                 style: const TextStyle(
-                  color: Color(0xFF3498DB),
+                  color: Color(0xFF3BA154),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 1,
@@ -1077,25 +1150,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
                       child: SizedBox(
                         height: 200,
                         width: double.infinity,
-                        child: Image.asset(
-                          award.image,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  award.color.withValues(alpha: 0.7),
-                                  award.color,
-                                ],
-                              ),
-                            ),
-                            child: Icon(
-                              award.icon,
-                              size: 80,
-                              color: Colors.white38,
-                            ),
-                          ),
-                        ),
+                        child: _awardImage(award, 80),
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -1297,12 +1352,12 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
           end: Alignment.bottomRight,
           colors: _isDarkMode
               ? [const Color(0xFF0F3460), const Color(0xFF16213E)]
-              : [const Color(0xFF2C3E50), const Color(0xFF1ABC9C)],
+              : [const Color(0xFF2C3E50), const Color(0xFF193340)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+            color: const Color(0xFF193340).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),

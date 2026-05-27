@@ -63,10 +63,10 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: const Color(0xFF1ABC9C).withValues(alpha: 0.1),
+              color: const Color(0xFF193340).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+                color: const Color(0xFF193340).withValues(alpha: 0.3),
               ),
             ),
             child: ClipRRect(
@@ -78,7 +78,7 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
                   fit: BoxFit.contain,
                   errorBuilder: (_, _, _) => const Icon(
                     Icons.business,
-                    color: Color(0xFF1ABC9C),
+                    color: Color(0xFF193340),
                     size: 24,
                   ),
                 ),
@@ -95,7 +95,7 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
                 const Text(
                   'Wajenzi Professionals',
                   style: TextStyle(
-                    color: Color(0xFF1ABC9C),
+                    color: Color(0xFF193340),
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -126,8 +126,8 @@ class LandingTopBar extends StatelessWidget implements PreferredSizeWidget {
             isDarkMode ? Icons.dark_mode : Icons.light_mode,
             size: 20,
             color: isDarkMode
-                ? const Color(0xFF1ABC9C)
-                : const Color(0xFFF39C12),
+                ? const Color(0xFF193340)
+                : const Color(0xFFFECC04),
           ),
         ),
         const SizedBox(width: 8),

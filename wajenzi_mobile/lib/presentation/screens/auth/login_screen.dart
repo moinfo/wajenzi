@@ -160,9 +160,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const Color(0xFF415A77),
           ]
         : [
-            const Color(0xFF3498DB),
-            const Color(0xFF1ABC9C),
-            const Color(0xFF2ECC71),
+            const Color(0xFF3BA154),
+            const Color(0xFF193340),
+            const Color(0xFF3BA154),
           ];
 
     final cardColor = isDark
@@ -177,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         : Colors.white; // White inputs on tinted card
     final inputBorderColor = isDark
         ? const Color(0xFF415A77)
-        : const Color(0xFF1ABC9C).withValues(alpha: 0.4);
+        : const Color(0xFF193340).withValues(alpha: 0.4);
     final inputHintColor = isDark
         ? const Color(0xFF778DA9)
         : Colors.grey.shade400;
@@ -224,7 +224,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      const Color(0xFF2ECC71).withValues(alpha: 0.2),
+                      const Color(0xFF3BA154).withValues(alpha: 0.2),
                       Colors.transparent,
                     ],
                   ),
@@ -401,7 +401,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                       0xFF4CC9F0,
                                     ).withValues(alpha: 0.5)
                                   : const Color(
-                                      0xFF1ABC9C,
+                                      0xFF193340,
                                     ).withValues(alpha: 0.4),
                               blurRadius: isDark ? 40 : 30,
                               spreadRadius: isDark ? 8 : 5,
@@ -640,7 +640,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   child: Text(
                                     t['forgotPassword']!,
                                     style: const TextStyle(
-                                      color: Color(0xFF1ABC9C),
+                                      color: Color(0xFF193340),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -660,12 +660,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                               ? [
                                                   const Color(0xFF4361EE),
                                                   const Color(0xFF4CC9F0),
-                                                  const Color(0xFF2ECC71),
+                                                  const Color(0xFF3BA154),
                                                 ]
                                               : [
-                                                  const Color(0xFF3498DB),
-                                                  const Color(0xFF1ABC9C),
-                                                  const Color(0xFF2ECC71),
+                                                  const Color(0xFF3BA154),
+                                                  const Color(0xFF193340),
+                                                  const Color(0xFF3BA154),
                                                 ],
                                         ),
                                   color: _isLoading
@@ -682,7 +682,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                     0xFF4CC9F0,
                                                   ).withValues(alpha: 0.4)
                                                 : const Color(
-                                                    0xFF1ABC9C,
+                                                    0xFF193340,
                                                   ).withValues(alpha: 0.4),
                                             blurRadius: 20,
                                             offset: const Offset(0, 10),
@@ -837,7 +837,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               icon,
               color: isDarkMode
                   ? const Color(0xFF4CC9F0)
-                  : const Color(0xFF1ABC9C),
+                  : const Color(0xFF193340),
               size: 22,
             ),
           ),

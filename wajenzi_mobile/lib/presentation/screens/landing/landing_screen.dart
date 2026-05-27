@@ -1,7 +1,14 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/services/external_launcher_service.dart';
+import '../../../data/models/landing_poster_model.dart';
+import '../../../data/models/landing_project_model.dart';
+import '../../providers/home_content_provider.dart';
+import '../../providers/portfolio_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/curved_bottom_nav.dart';
 import '../../widgets/landing_top_bar.dart';
@@ -22,7 +29,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
   bool get _isFrench => _language == AppLanguage.french;
   bool get _isArabic => _language == AppLanguage.arabic;
 
-  List<ProjectShowcase> get _projects => [
+  // Fallback content shown only when the portal CMS has no published
+  // portfolio yet (or the API is unreachable). Live data comes from
+  // [portfolioProvider]; see _resolveProjects() in build().
+  List<ProjectShowcase> get _fallbackProjects => [
     ProjectShowcase(
       image: 'assets/images/post/Screenshot 2026-01-21 at 14.50.10.png',
       title: _tr(
@@ -199,6 +209,99 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
     ),
   ];
 
+  /// Resolves live portfolio from the portal CMS, falling back to the bundled
+  /// content while loading or if nothing has been published yet.
+  List<ProjectShowcase> _resolveProjects(
+    AsyncValue<List<LandingProjectModel>> state,
+  ) {
+    final models = state.valueOrNull;
+    if (models == null || models.isEmpty) return _fallbackProjects;
+    return models.map(_showcaseFromModel).toList();
+  }
+
+  ProjectShowcase _showcaseFromModel(LandingProjectModel m) {
+    return ProjectShowcase(
+      id: m.id,
+      image: AppConfig.resolvePortalMediaUrl(m.image) ?? '',
+      title: m.title,
+      priceTZS: (m.priceTzs ?? 0).toString(),
+      priceUSD: (m.priceUsd ?? 0).toString(),
+      features: m.amenities,
+      category: m.category ?? '',
+      likes: m.likesCount,
+      liked: m.liked,
+      timeAgo: _relativeTime(m.createdAt),
+      description: m.description ?? '',
+      isFeatured: m.isFeatured,
+      youtubeUrl: m.youtubeUrl,
+      model3dUrl: m.model3dUrl,
+    );
+  }
+
+  String _relativeTime(DateTime? date) {
+    if (date == null) return '';
+    final days = DateTime.now().difference(date).inDays;
+    if (days <= 0) {
+      return _tr(en: 'Today', sw: 'Leo', fr: "Aujourd'hui", ar: 'اليوم');
+    }
+    if (days == 1) {
+      return _tr(en: '1 day ago', sw: 'siku 1 iliyopita', fr: 'il y a 1 jour', ar: 'منذ يوم');
+    }
+    if (days < 7) {
+      return _tr(
+        en: '$days days ago',
+        sw: 'siku $days zilizopita',
+        fr: 'il y a $days jours',
+        ar: 'منذ $days أيام',
+      );
+    }
+    final weeks = (days / 7).floor();
+    return _tr(
+      en: weeks == 1 ? '1 week ago' : '$weeks weeks ago',
+      sw: 'wiki $weeks zilizopita',
+      fr: 'il y a $weeks semaine${weeks > 1 ? 's' : ''}',
+      ar: 'منذ $weeks أسابيع',
+    );
+  }
+
+  static const List<IconData> _statIcons = [
+    Icons.folder_special_rounded,
+    Icons.engineering_rounded,
+    Icons.verified_rounded,
+    Icons.star_rounded,
+  ];
+  static const List<Color> _statColors = [
+    Color(0xFF193340),
+    Color(0xFF3BA154),
+    Color(0xFF3BA154),
+    Color(0xFFFECC04),
+  ];
+
+  /// Live hero stats from the portal CMS, falling back to bundled values.
+  List<_StatData> _resolveStats() {
+    final models = ref.watch(statsProvider).valueOrNull;
+    if (models == null || models.isEmpty) {
+      return [
+        _StatData(_statIcons[0], '120+', _isSwahili ? 'Miradi ya Kipekee' : 'Flagship Projects', _statColors[0]),
+        _StatData(_statIcons[1], '50+', _isSwahili ? 'Wataalamu' : 'Experts', _statColors[1]),
+        _StatData(_statIcons[2], '200+', _isSwahili ? 'Imekamilika' : 'Completed', _statColors[2]),
+        _StatData(_statIcons[3], '4.9', _isSwahili ? 'Ukadiriaji' : 'Rating', _statColors[3]),
+      ];
+    }
+    return models
+        .asMap()
+        .entries
+        .map(
+          (e) => _StatData(
+            _statIcons[e.key % _statIcons.length],
+            e.value.value,
+            e.value.label,
+            _statColors[e.key % _statColors.length],
+          ),
+        )
+        .toList();
+  }
+
   Color get _bgColor =>
       _isDarkMode ? const Color(0xFF0F0F1A) : const Color(0xFFF0F4F8);
 
@@ -295,6 +398,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final portfolioState = ref.watch(portfolioProvider);
+    final projects = _resolveProjects(portfolioState);
     return Scaffold(
       backgroundColor: _bgColor,
       extendBody: true,
@@ -315,10 +420,10 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1ABC9C).withValues(alpha: 0.1),
+                    color: const Color(0xFF193340).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: const Color(0xFF1ABC9C).withValues(alpha: 0.3),
+                      color: const Color(0xFF193340).withValues(alpha: 0.3),
                     ),
                   ),
                   child: ClipRRect(
@@ -330,7 +435,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         fit: BoxFit.contain,
                         errorBuilder: (_, _, _) => const Icon(
                           Icons.business,
-                          color: Color(0xFF1ABC9C),
+                          color: Color(0xFF193340),
                           size: 24,
                         ),
                       ),
@@ -346,7 +451,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       const Text(
                         'Wajenzi Professionals',
                         style: TextStyle(
-                          color: Color(0xFF1ABC9C),
+                          color: Color(0xFF193340),
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -475,8 +580,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       : Icons.light_mode_rounded,
                   size: 20,
                   color: _isDarkMode
-                      ? const Color(0xFF1ABC9C)
-                      : const Color(0xFFF39C12),
+                      ? const Color(0xFF193340)
+                      : const Color(0xFFFECC04),
                 ),
               ),
               const SizedBox(width: 8),
@@ -492,12 +597,17 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
             ],
           ),
 
+          // ── Home banner (CMS posters) ────────────────────────────────
+          SliverToBoxAdapter(
+            child: _PosterBanner(isDarkMode: _isDarkMode),
+          ),
+
           // ── Hero stats banner ────────────────────────────────────────
           SliverToBoxAdapter(
             child: _HeroStats(
               isDarkMode: _isDarkMode,
-              isSwahili: _isSwahili,
               surfaceColor: _surfaceColor,
+              stats: _resolveStats(),
             ),
           ),
 
@@ -512,7 +622,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                     height: 22,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF1ABC9C), Color(0xFF3498DB)],
+                        colors: [Color(0xFF193340), Color(0xFF3BA154)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -541,12 +651,12 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                         ),
                         Text(
                           _isSwahili
-                              ? '${_projects.length} miradi iliyochaguliwa'
+                              ? '${projects.length} miradi iliyochaguliwa'
                               : _isFrench
-                              ? '${_projects.length} projets en vedette'
+                              ? '${projects.length} projets en vedette'
                               : _isArabic
-                              ? '${_projects.length} مشاريع مميزة'
-                              : '${_projects.length} featured projects',
+                              ? '${projects.length} مشاريع مميزة'
+                              : '${projects.length} featured projects',
                           style: TextStyle(
                             fontSize: 12,
                             color: _isDarkMode
@@ -566,9 +676,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
           SliverList(
             delegate: SliverChildBuilderDelegate(
               (context, index) => _ProjectCard(
-                project: _projects[index],
+                project: projects[index],
                 index: index,
-                total: _projects.length,
+                total: projects.length,
                 isDarkMode: _isDarkMode,
                 isSwahili: _isSwahili,
                 callLabel: _tr(
@@ -577,15 +687,20 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                   fr: 'Appeler',
                   ar: 'اتصال',
                 ),
-                onWhatsApp: () => _launchWhatsApp(_projects[index].title),
+                onWhatsApp: () => _launchWhatsApp(projects[index].title),
                 onCall: _launchPhone,
+                onLike: projects[index].id != null
+                    ? () => ref
+                          .read(portfolioProvider.notifier)
+                          .toggleLike(projects[index].id!)
+                    : null,
                 onImageTap: () => _showImageModal(
                   context,
-                  _projects[index].image,
-                  _projects[index].title,
+                  projects[index].image,
+                  projects[index].title,
                 ),
               ),
-              childCount: _projects.length,
+              childCount: projects.length,
             ),
           ),
 
@@ -598,14 +713,14 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                 gradient: LinearGradient(
                   colors: _isDarkMode
                       ? [const Color(0xFF0D3B34), const Color(0xFF0A2A40)]
-                      : [const Color(0xFF1ABC9C), const Color(0xFF2980B9)],
+                      : [const Color(0xFF193340), const Color(0xFF2E8043)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1ABC9C).withValues(alpha: 0.25),
+                    color: const Color(0xFF193340).withValues(alpha: 0.25),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                   ),
@@ -696,7 +811,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF1ABC9C),
+                        foregroundColor: const Color(0xFF193340),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -828,14 +943,22 @@ class _LandingScreenState extends ConsumerState<LandingScreen> {
 
 // ─── Hero Stats ───────────────────────────────────────────────────────────────
 
+class _StatData {
+  final IconData icon;
+  final String value;
+  final String label;
+  final Color color;
+  const _StatData(this.icon, this.value, this.label, this.color);
+}
+
 class _HeroStats extends StatelessWidget {
   final bool isDarkMode;
-  final bool isSwahili;
   final Color surfaceColor;
+  final List<_StatData> stats;
   const _HeroStats({
     required this.isDarkMode,
-    required this.isSwahili,
     required this.surfaceColor,
+    required this.stats,
   });
 
   @override
@@ -861,37 +984,16 @@ class _HeroStats extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _StatItem(
-            icon: Icons.folder_special_rounded,
-            value: '120+',
-            label: isSwahili ? 'Miradi ya Kipekee' : 'Flagship Projects',
-            color: const Color(0xFF1ABC9C),
-            isDarkMode: isDarkMode,
-          ),
-          _Divider(isDarkMode: isDarkMode),
-          _StatItem(
-            icon: Icons.engineering_rounded,
-            value: '50+',
-            label: isSwahili ? 'Wataalamu' : 'Experts',
-            color: const Color(0xFF3498DB),
-            isDarkMode: isDarkMode,
-          ),
-          _Divider(isDarkMode: isDarkMode),
-          _StatItem(
-            icon: Icons.verified_rounded,
-            value: '200+',
-            label: isSwahili ? 'Imekamilika' : 'Completed',
-            color: const Color(0xFF2ECC71),
-            isDarkMode: isDarkMode,
-          ),
-          _Divider(isDarkMode: isDarkMode),
-          _StatItem(
-            icon: Icons.star_rounded,
-            value: '4.9',
-            label: isSwahili ? 'Ukadiriaji' : 'Rating',
-            color: const Color(0xFFF39C12),
-            isDarkMode: isDarkMode,
-          ),
+          for (int i = 0; i < stats.length; i++) ...[
+            if (i > 0) _Divider(isDarkMode: isDarkMode),
+            _StatItem(
+              icon: stats[i].icon,
+              value: stats[i].value,
+              label: stats[i].label,
+              color: stats[i].color,
+              isDarkMode: isDarkMode,
+            ),
+          ],
         ],
       ),
     );
@@ -969,6 +1071,7 @@ class _ProjectCard extends StatelessWidget {
   final VoidCallback onWhatsApp;
   final VoidCallback onCall;
   final VoidCallback onImageTap;
+  final VoidCallback? onLike;
 
   const _ProjectCard({
     required this.project,
@@ -980,20 +1083,21 @@ class _ProjectCard extends StatelessWidget {
     required this.onWhatsApp,
     required this.onCall,
     required this.onImageTap,
+    this.onLike,
   });
 
   Color get _catColor {
     switch (project.category.toUpperCase()) {
       case 'COMPLETED':
-        return const Color(0xFF2ECC71);
+        return const Color(0xFF3BA154);
       case 'IN PROGRESS':
-        return const Color(0xFFF39C12);
+        return const Color(0xFFFECC04);
       case '3D DESIGN':
-        return const Color(0xFF3498DB);
+        return const Color(0xFF193340); // brand dark blue (distinct from green "Completed")
       case 'DESIGN':
         return const Color(0xFF9B59B6);
       default:
-        return const Color(0xFF1ABC9C);
+        return const Color(0xFF3BA154);
     }
   }
 
@@ -1017,6 +1121,31 @@ class _ProjectCard extends StatelessWidget {
     if (n >= 1e9) return '${(n / 1e9).toStringAsFixed(1)}B';
     if (n >= 1e6) return '${(n / 1e6).toStringAsFixed(0)}M';
     return price;
+  }
+
+  /// Cover image — network (CMS-managed) when the path is a URL, otherwise a
+  /// bundled asset (fallback content).
+  Widget _buildImage(Color catColor) {
+    final placeholder = _PlaceholderImage(
+      title: project.title,
+      color: catColor,
+      icon: _catIcon,
+    );
+    final src = project.image;
+    if (src.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: src,
+        fit: BoxFit.cover,
+        placeholder: (_, _) => Container(color: catColor.withValues(alpha: 0.08)),
+        errorWidget: (_, _, _) => placeholder,
+      );
+    }
+    if (src.isEmpty) return placeholder;
+    return Image.asset(
+      src,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => placeholder,
+    );
   }
 
   @override
@@ -1164,12 +1293,12 @@ class _ProjectCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                        color: const Color(0xFFFECC04).withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.star_rounded,
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFFECC04),
                         size: 16,
                       ),
                     ),
@@ -1185,15 +1314,7 @@ class _ProjectCard extends StatelessWidget {
                   onTap: onImageTap,
                   child: AspectRatio(
                     aspectRatio: 16 / 10,
-                    child: Image.asset(
-                      project.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _PlaceholderImage(
-                        title: project.title,
-                        color: catColor,
-                        icon: _catIcon,
-                      ),
-                    ),
+                    child: _buildImage(catColor),
                   ),
                 ),
                 // Subtle bottom fade connecting image to panel
@@ -1295,13 +1416,13 @@ class _ProjectCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF1ABC9C), Color(0xFF16A085)],
+                            colors: [Color(0xFF193340), Color(0xFF122833)],
                           ),
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(
-                                0xFF1ABC9C,
+                                0xFF193340,
                               ).withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
@@ -1329,38 +1450,46 @@ class _ProjectCard extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      // Likes
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE74C3C).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
+                      // Likes (tappable when the project is CMS-managed)
+                      GestureDetector(
+                        onTap: onLike,
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
                             color: const Color(
                               0xFFE74C3C,
-                            ).withValues(alpha: 0.2),
+                            ).withValues(alpha: project.liked ? 0.18 : 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(
+                                0xFFE74C3C,
+                              ).withValues(alpha: 0.2),
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.favorite_rounded,
-                              color: Color(0xFFE74C3C),
-                              size: 14,
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              '${project.likes}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 12,
-                                color: Color(0xFFE74C3C),
+                          child: Row(
+                            children: [
+                              Icon(
+                                project.liked
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                color: const Color(0xFFE74C3C),
+                                size: 14,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 5),
+                              Text(
+                                '${project.likes}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  color: Color(0xFFE74C3C),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -1399,7 +1528,7 @@ class _ProjectCard extends StatelessWidget {
                             color: isDarkMode
                                 ? Colors.white.withValues(alpha: 0.1)
                                 : const Color(
-                                    0xFF1ABC9C,
+                                    0xFF193340,
                                   ).withValues(alpha: 0.3),
                           ),
                         ),
@@ -1409,7 +1538,7 @@ class _ProjectCard extends StatelessWidget {
                             const Icon(
                               Icons.check_circle_rounded,
                               size: 12,
-                              color: Color(0xFF1ABC9C),
+                              color: Color(0xFF193340),
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -1484,13 +1613,13 @@ class _ProjectCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF3498DB), Color(0xFF2980B9)],
+                              colors: [Color(0xFF3BA154), Color(0xFF2E8043)],
                             ),
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
                                 color: const Color(
-                                  0xFF3498DB,
+                                  0xFF3BA154,
                                 ).withValues(alpha: 0.35),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
@@ -1614,6 +1743,7 @@ class _StatBadge extends StatelessWidget {
 // ─── Data Model ───────────────────────────────────────────────────────────────
 
 class ProjectShowcase {
+  final int? id; // null for bundled fallback entries (no like action)
   final String image;
   final String title;
   final String priceTZS;
@@ -1621,11 +1751,15 @@ class ProjectShowcase {
   final List<String> features;
   final String category;
   final int likes;
+  final bool liked;
   final String timeAgo;
   final String description;
   final bool isFeatured;
+  final String? youtubeUrl;
+  final String? model3dUrl;
 
   ProjectShowcase({
+    this.id,
     required this.image,
     required this.title,
     required this.priceTZS,
@@ -1633,8 +1767,149 @@ class ProjectShowcase {
     required this.features,
     required this.category,
     required this.likes,
+    this.liked = false,
     required this.timeAgo,
     required this.description,
     this.isFeatured = false,
+    this.youtubeUrl,
+    this.model3dUrl,
   });
+}
+
+// ─── Poster banner (CMS-managed home banners) ─────────────────────────────────
+
+class _PosterBanner extends ConsumerWidget {
+  final bool isDarkMode;
+  const _PosterBanner({required this.isDarkMode});
+
+  Future<void> _open(String? url) async {
+    if (url == null || url.isEmpty) return;
+    final normalized = AppConfig.normalizeExternalUrl(url) ?? url;
+    final uri = Uri.tryParse(normalized);
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final posters = ref.watch(postersProvider).valueOrNull ?? const [];
+    if (posters.isEmpty) return const SizedBox.shrink();
+
+    final single = posters.length == 1;
+    final width = MediaQuery.of(context).size.width;
+
+    return Container(
+      height: 170,
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: single
+            ? const NeverScrollableScrollPhysics()
+            : const BouncingScrollPhysics(),
+        itemCount: posters.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 12),
+        itemBuilder: (context, i) {
+          final p = posters[i];
+          return SizedBox(
+            width: single ? width - 32 : width * 0.82,
+            child: _PosterCard(poster: p, onTap: () => _open(p.tapUrl)),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PosterCard extends StatelessWidget {
+  final LandingPosterModel poster;
+  final VoidCallback onTap;
+  const _PosterCard({required this.poster, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = AppConfig.resolvePortalMediaUrl(poster.image) ?? '';
+    final hasText =
+        (poster.title?.isNotEmpty ?? false) ||
+        (poster.subtitle?.isNotEmpty ?? false);
+
+    return GestureDetector(
+      onTap: poster.tapUrl == null ? null : onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl.isNotEmpty)
+              CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                placeholder: (_, _) =>
+                    Container(color: const Color(0xFF193340)),
+                errorWidget: (_, _, _) =>
+                    Container(color: const Color(0xFF193340)),
+              )
+            else
+              Container(color: const Color(0xFF193340)),
+            if (hasText)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.65),
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (poster.title?.isNotEmpty ?? false)
+                        Text(
+                          poster.title!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      if (poster.subtitle?.isNotEmpty ?? false)
+                        Text(
+                          poster.subtitle!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            if (poster.hasVideo)
+              const Positioned(
+                top: 10,
+                right: 10,
+                child: Icon(
+                  Icons.play_circle_fill_rounded,
+                  color: Colors.white,
+                  size: 34,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
