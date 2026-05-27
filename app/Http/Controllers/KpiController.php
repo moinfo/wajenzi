@@ -651,7 +651,91 @@ class KpiController extends Controller
                 'total_weight'=> (float) $items->sum('weight'),
             ];
         });
-        return view('pages.kpi.templates_index', compact('templates'));
+
+        // Roles that don't yet own a template — the only valid targets for a new
+        // one, since KpiTemplate::forRoleId() matches a single template per role.
+        $usedRoleIds   = KpiTemplate::whereNotNull('role_id')->pluck('role_id');
+        $availableRoles = Role::whereNotIn('id', $usedRoleIds)->orderBy('name')->get();
+
+        return view('pages.kpi.templates_index', compact('templates', 'availableRoles'));
+    }
+
+    /**
+     * Create a KPI template for a department/role that doesn't have one yet.
+     * Mirrors the seeder's shape: a shared Section A (30%, pre-filled with the
+     * common items) plus an empty Section B (70%) for departmental KPIs.
+     */
+    public function templateStore(Request $request)
+    {
+        $this->authorizeTemplates();
+
+        $data = $request->validate([
+            'name'      => 'required|string|max:120',
+            // One template per role — block roles that already own one.
+            'role_id'   => 'required|exists:roles,id|unique:kpi_templates,role_id',
+            'frequency' => 'required|in:monthly,quarterly,biannual,annual',
+        ]);
+
+        $code = $this->makeTemplateCode($data['name']);
+
+        $template = DB::transaction(function () use ($data, $code) {
+            $template = KpiTemplate::create([
+                'code'      => $code,
+                'name'      => $data['name'],
+                'role_id'   => $data['role_id'],
+                'frequency' => $data['frequency'],
+                'is_active' => true,
+            ]);
+
+            // Section A — shared "General Performance" (30%), pre-filled with the 14 common items.
+            $sectionA = $template->sections()->create([
+                'code' => 'A', 'title' => 'General Performance',
+                'weight_total' => 30, 'sort_order' => 1, 'is_common' => true,
+            ]);
+            $order = 1;
+            foreach (KpiTemplate::COMMON_SECTION_A_ITEMS as $i) {
+                $sectionA->items()->create([
+                    'kpi_template_id' => $template->id,
+                    'kpa'             => $i['kpa'],
+                    'measure'         => $i['measure'],
+                    'target'          => $i['target'],
+                    'weight'          => $i['weight'],
+                    'sort_order'      => $order++,
+                    'is_active'       => true,
+                ]);
+            }
+
+            // Section B — role-specific "Departmental Objectives" (70%), left empty to fill in.
+            $template->sections()->create([
+                'code' => 'B', 'title' => 'Departmental Objectives',
+                'weight_total' => 70, 'sort_order' => 2, 'is_common' => false,
+            ]);
+
+            return $template;
+        });
+
+        return redirect()->route('performance.templates.show', $template->id)
+            ->with('success', 'Template created. Section A is pre-filled — now add the departmental KPIs in Section B (should total 70%).');
+    }
+
+    /**
+     * Build a unique, URL/code-safe identifier for a new template from its name.
+     *
+     * The `code` column is `string(60) unique` and is used as a stable, human-
+     * readable key (e.g. 'architect', 'quantity-surveyor'). This is YOUR call:
+     * decide how to slugify the name and how to guarantee uniqueness against
+     * existing rows. See the insight in chat for the trade-offs to weigh.
+     */
+    protected function makeTemplateCode(string $name): string
+    {
+        $base = \Illuminate\Support\Str::slug($name) ?: 'template';
+        $base = substr($base, 0, 55);              // leave room for a '-NN' suffix
+        $code = $base;
+        $n = 2;
+        while (KpiTemplate::where('code', $code)->exists()) {
+            $code = $base . '-' . $n++;
+        }
+        return $code;
     }
 
     public function templateShow(KpiTemplate $template)
@@ -659,6 +743,26 @@ class KpiController extends Controller
         $this->authorizeTemplates();
         $template->load(['role', 'sections.items']);
         return view('pages.kpi.templates_show', compact('template'));
+    }
+
+    /**
+     * Update a template's editable metadata (name, frequency, description, active
+     * flag). The `code` and `role_id` are intentionally NOT editable here — code
+     * is the stable seeder/lookup key, and reassigning a role is a heavier
+     * operation with its own one-template-per-role guard.
+     */
+    public function templateUpdate(Request $request, KpiTemplate $template)
+    {
+        $this->authorizeTemplates();
+        $data = $request->validate([
+            'name'        => 'required|string|max:120',
+            'frequency'   => 'required|in:monthly,quarterly,biannual,annual',
+            'description' => 'nullable|string|max:2000',
+        ]);
+        // Unchecked checkbox sends nothing, so coerce explicitly rather than rely on the payload.
+        $data['is_active'] = $request->boolean('is_active');
+        $template->update($data);
+        return back()->with('success', 'Template details updated.');
     }
 
     public function templateStoreItem(Request $request, KpiTemplate $template)

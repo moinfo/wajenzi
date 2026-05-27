@@ -15,27 +15,7 @@ use Illuminate\Support\Facades\DB;
  */
 class KpiTemplateSeeder extends Seeder
 {
-    /**
-     * 14 common Section A items (30% total) — applied to every template.
-     */
-    private const SECTION_A_ITEMS = [
-        ['kpa' => 'Administration',                'measure' => 'Ability to measure effectiveness in Planning',                     'target' => '90% of plans are realistic, timely, and successfully followed', 'weight' => 2],
-        ['kpa' => 'Administration',                'measure' => 'Ability to organize your duties / Works',                          'target' => 'Minimal missed deadlines, smooth task flow',                    'weight' => 2],
-        ['kpa' => 'Attendance',                    'measure' => 'Attendance (HR-filled from attendance forms)',                     'target' => '0% unapproved absences (100% compliance)',                       'weight' => 5],
-        ['kpa' => 'Attendance',                    'measure' => 'Punctuality — reports to duty/meetings on time',                   'target' => '95% on-time reporting',                                          'weight' => 5],
-        ['kpa' => 'Communication',                 'measure' => 'Interpersonal Communication — use of good language with seniors/peers', 'target' => 'No complaints received from peers or managers',         'weight' => 2],
-        ['kpa' => 'Communication',                 'measure' => 'Written Communication Skills (letters, emails, other)',            'target' => '98% accuracy and timely delivery of written communication',     'weight' => 2],
-        ['kpa' => 'Flexibility',                   'measure' => 'Flexibility in Working Hours',                                     'target' => '95% positive attitude — works outside normal hours when needed','weight' => 1],
-        ['kpa' => 'Flexibility',                   'measure' => 'Adaptability in Duties — additional tasks / support other teams', 'target' => 'Voluntarily supports other teams when necessary',               'weight' => 1],
-        ['kpa' => 'Teamwork',                      'measure' => 'Teamwork & Cooperative Spirit — gets along with fellow employees','target' => 'Collaboration and respect',                                      'weight' => 2],
-        ['kpa' => 'Teamwork',                      'measure' => 'Participation in Weekly Progressive Meetings',                     'target' => '98% attends and contributes actively',                          'weight' => 1],
-        ['kpa' => 'Integrity & Accountability',    'measure' => 'Proper use of company property (equipment, tools, vehicles)',     'target' => 'No reports of misuse or loss',                                  'weight' => 2],
-        ['kpa' => 'Integrity & Accountability',    'measure' => 'Honesty & Transparency — accepts responsibility for action',      'target' => 'Demonstrates honesty and transparency',                         'weight' => 1],
-        ['kpa' => 'Decision Making & Problem Solving', 'measure' => 'Analyse problems and make practical decisions',                'target' => '95% able to resolve issues with minimal escalation',            'weight' => 2],
-        ['kpa' => 'Personal Appearance',           'measure' => 'Neatness and personal hygiene appropriate to position',            'target' => '95% neatness and personal hygiene',                             'weight' => 2],
-    ];
-
-    public function run(): void
+     public function run(): void
     {
         foreach ($this->templates() as $tpl) {
             $this->seedTemplate($tpl);
@@ -212,7 +192,7 @@ class KpiTemplateSeeder extends Seeder
         $sectionAId = DB::table('kpi_template_sections')
             ->where('kpi_template_id', $templateId)->where('code', 'A')->value('id');
 
-        $this->seedItems($templateId, $sectionAId, self::SECTION_A_ITEMS);
+        $this->seedItems($templateId, $sectionAId, \App\Models\KpiTemplate::COMMON_SECTION_A_ITEMS);
 
         // Section B — role-specific
         DB::table('kpi_template_sections')->updateOrInsert(

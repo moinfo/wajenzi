@@ -22,15 +22,30 @@
 .tpl-add-row form { display:grid; grid-template-columns:1.2fr 2fr 1.5fr 80px 80px; gap:8px; align-items:start; }
 .tpl-add-row input, .tpl-add-row textarea { border:1.5px solid #cbd5e1; border-radius:6px; padding:6px 9px; font-size:12.5px; width:100%; }
 .tpl-add-row button { background:#1BC5BD; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-weight:600; font-size:12px; cursor:pointer; }
+.tpl-edit-btn { background:#f3f4f6; color:#475569; padding:7px 13px; border-radius:8px; border:none; font-weight:600; font-size:13px; cursor:pointer; }
+.tpl-edit-btn:hover { background:#e5e7eb; }
+.tpl-edit-panel { margin-top:16px; padding-top:16px; border-top:1px solid #f1f5f9; }
+.tpl-edit-panel form { display:grid; grid-template-columns:2fr 1fr; gap:12px 16px; align-items:start; }
+.tpl-edit-panel .full { grid-column:1 / -1; }
+.tpl-edit-panel label { display:block; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
+.tpl-edit-panel input[type=text], .tpl-edit-panel select, .tpl-edit-panel textarea { width:100%; border:1.5px solid #cbd5e1; border-radius:6px; padding:7px 9px; font-size:13px; }
+.tpl-edit-panel textarea { resize:vertical; min-height:38px; }
+.tpl-edit-panel .checkbox-row { display:flex; align-items:center; gap:8px; }
+.tpl-edit-panel .checkbox-row label { margin:0; text-transform:none; letter-spacing:0; font-size:13px; color:#1a2332; }
+.tpl-edit-panel button[type=submit] { background:#1BC5BD; color:#fff; border:none; padding:8px 18px; border-radius:6px; font-weight:600; font-size:13px; cursor:pointer; }
 </style>
 
 <div class="container-fluid" style="padding:24px 28px;">
 
+    @php $editHasErrors = $errors->hasAny(['name', 'frequency', 'description']); @endphp
     <div class="tpl-header">
         <div class="d-flex justify-content-between align-items-start">
             <div>
                 <h2 style="font-size:20px; font-weight:800; color:#1a2332; margin:0;">
                     {{ $template->name }}
+                    @unless($template->is_active)
+                        <span style="background:#f1f5f9; color:#64748b; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:700; margin-left:8px;">Inactive</span>
+                    @endunless
                 </h2>
                 <div style="font-size:13px; color:#8a92a6; margin-top:4px;">
                     <i class="fa fa-shield-alt"></i> Role: <strong>{{ $template->role->name ?? '—' }}</strong>
@@ -39,13 +54,59 @@
                     &nbsp;&middot;&nbsp;
                     <i class="fa fa-code"></i> Code: <code>{{ $template->code }}</code>
                 </div>
+                @if($template->description)
+                    <p style="font-size:13px; color:#64748b; margin:8px 0 0;">{{ $template->description }}</p>
+                @endif
             </div>
-            <a href="{{ route('performance.templates') }}"
-               style="background:#f3f4f6; color:#475569; padding:7px 13px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
-                <i class="fa fa-arrow-left"></i> All Templates
-            </a>
+            <div style="display:flex; gap:10px;">
+                <button type="button" class="tpl-edit-btn" onclick="toggleEditDetails()">
+                    <i class="fa fa-pen"></i> Edit Details
+                </button>
+                <a href="{{ route('performance.templates') }}"
+                   style="background:#f3f4f6; color:#475569; padding:7px 13px; border-radius:8px; text-decoration:none; font-weight:600; font-size:13px;">
+                    <i class="fa fa-arrow-left"></i> All Templates
+                </a>
+            </div>
+        </div>
+
+        <div class="tpl-edit-panel" id="editDetailsPanel" style="display:{{ $editHasErrors ? 'block' : 'none' }};">
+            <form method="POST" action="{{ route('performance.templates.update', $template->id) }}">
+                @csrf @method('PATCH')
+                <div>
+                    <label>Template Name</label>
+                    <input type="text" name="name" value="{{ old('name', $template->name) }}" required>
+                </div>
+                <div>
+                    <label>Frequency</label>
+                    <select name="frequency" required>
+                        @foreach(['monthly','quarterly','biannual','annual'] as $freq)
+                            <option value="{{ $freq }}" {{ old('frequency', $template->frequency) === $freq ? 'selected' : '' }}>
+                                {{ ucfirst($freq) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="full">
+                    <label>Description <span style="font-weight:400; text-transform:none;">(optional)</span></label>
+                    <textarea name="description" rows="2" placeholder="Internal note about this template…">{{ old('description', $template->description) }}</textarea>
+                </div>
+                <div class="full checkbox-row">
+                    <input type="checkbox" name="is_active" value="1" id="is_active" {{ old('is_active', $template->is_active) ? 'checked' : '' }}>
+                    <label for="is_active">Active — employees in this role can start reviews from this template</label>
+                </div>
+                <div class="full">
+                    <button type="submit"><i class="fa fa-save"></i> Save Details</button>
+                </div>
+            </form>
         </div>
     </div>
+
+    <script>
+        function toggleEditDetails() {
+            var p = document.getElementById('editDetailsPanel');
+            p.style.display = p.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
 
     @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
     @if(session('error'))<div class="alert alert-danger">{{ session('error') }}</div>@endif

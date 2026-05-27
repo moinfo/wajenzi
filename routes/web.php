@@ -676,7 +676,9 @@ Route::middleware(['auth'])->group(function () {
     // Performance / KPI routes
     Route::get   ('performance',                  [App\Http\Controllers\KpiController::class, 'index'])      ->name('performance.index');
     Route::get   ('performance/templates',        [App\Http\Controllers\KpiController::class, 'templatesIndex'])->name('performance.templates');
+    Route::post  ('performance/templates',        [App\Http\Controllers\KpiController::class, 'templateStore'])->name('performance.templates.store');
     Route::get   ('performance/templates/{template}', [App\Http\Controllers\KpiController::class, 'templateShow'])->name('performance.templates.show');
+    Route::patch ('performance/templates/{template}', [App\Http\Controllers\KpiController::class, 'templateUpdate'])->name('performance.templates.update');
     Route::post  ('performance/templates/{template}/items', [App\Http\Controllers\KpiController::class, 'templateStoreItem'])->name('performance.templates.items.store');
     Route::patch ('performance/templates/{template}/items/{item}', [App\Http\Controllers\KpiController::class, 'templateUpdateItem'])->name('performance.templates.items.update');
     Route::delete('performance/templates/{template}/items/{item}', [App\Http\Controllers\KpiController::class, 'templateDeleteItem'])->name('performance.templates.items.destroy');
