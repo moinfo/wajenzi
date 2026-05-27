@@ -5,6 +5,11 @@
     <div class="content">
         <div class="content-heading">Purchase Orders
             <div class="float-right">
+                @can('Site Cost Report')
+                <a href="{{ route('purchase_orders.site_report') }}" class="btn btn-rounded btn-outline-success min-width-100 mb-10">
+                    <i class="si si-doc"></i> Site Cost Report
+                </a>
+                @endcan
                 <a href="{{ route('procurement_dashboard') }}" class="btn btn-rounded btn-outline-info min-width-100 mb-10">
                     <i class="si si-graph"></i> Dashboard
                 </a>

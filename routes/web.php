@@ -798,6 +798,9 @@ Route::middleware(['auth'])->group(function () {
 
 // Procurement - Purchase Orders Routes
     Route::match(['get', 'post'], '/purchase_orders', [App\Http\Controllers\PurchaseController::class, 'purchaseOrders'])->name('purchase_orders');
+    // Site Cost Report — per-site material/labour/overhead/drawing rollup + CSV export
+    Route::get('/purchase_orders/site-report', [App\Http\Controllers\SiteReportController::class, 'index'])->name('purchase_orders.site_report');
+    Route::get('/purchase_orders/site-report/export', [App\Http\Controllers\SiteReportController::class, 'export'])->name('purchase_orders.site_report.export');
     // Specific routes must come before the wildcard {document_type_id} route
     Route::get('/purchase_order/{id}/record_delivery', [App\Http\Controllers\PurchaseController::class, 'recordDelivery'])->name('purchase_order.record_delivery');
     Route::post('/purchase_order/{id}/store_delivery', [App\Http\Controllers\PurchaseController::class, 'storeDelivery'])->name('purchase_order.store_delivery');

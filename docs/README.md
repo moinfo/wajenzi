@@ -42,6 +42,7 @@ Each file below documents one workflow: trigger, actors, status flow, gates, not
 | File | What it covers |
 |---|---|
 | [finance-workflows.md](finance-workflows.md) | Imprest (with retirement), Petty Cash Refill, Expense, VAT Payment, Statutory Payment |
+| [site-cost-report.md](site-cost-report.md) | Per-site cost report — Material (approved POs) + Labour (contracts) + Overhead + Drawing, CSV export |
 
 ### Site Management
 
