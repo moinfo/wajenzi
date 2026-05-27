@@ -31,7 +31,17 @@ class InvoiceController extends Controller
             ->when($request->client_id, fn($q, $id) => $q->where('client_id', $id))
             ->when($request->from_date, fn($q, $d) => $q->where('issue_date', '>=', $d))
             ->when($request->to_date, fn($q, $d) => $q->where('issue_date', '<=', $d))
-            ->when($request->invoice_type, fn($q, $t) => $q->where('invoice_type', $t));
+            ->when($request->invoice_type, fn($q, $t) => $q->where('invoice_type', $t))
+            ->when($request->search, function ($q, $term) {
+                // Match invoice number or the client's name.
+                $q->where(function ($qq) use ($term) {
+                    $qq->where('document_number', 'like', "%{$term}%")
+                       ->orWhereHas('client', fn($cq) => $cq
+                            ->where('first_name', 'like', "%{$term}%")
+                            ->orWhere('last_name', 'like', "%{$term}%")
+                            ->orWhereRaw("CONCAT(first_name, ' ', last_name) like ?", ["%{$term}%"]));
+                });
+            });
 
         // Clone before selectRaw so the stats SELECT doesn't leak into the invoice query
         $stats = (clone $baseQuery)->selectRaw(
