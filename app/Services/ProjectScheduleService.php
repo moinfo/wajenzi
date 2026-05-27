@@ -250,11 +250,14 @@ class ProjectScheduleService
                 ];
             }
 
-            // Update schedule dates
-            $lastActivity = $schedule->activities()->orderBy('end_date', 'desc')->first();
+            // Update schedule dates. Use max('end_date') rather than
+            // activities()->orderBy('end_date','desc')->first(): the activities()
+            // relationship already applies orderBy('sort_order'), so a chained
+            // orderBy only adds a SECONDARY sort and first() would return the
+            // earliest activity (collapsing the schedule's end_date to its start).
             $schedule->update([
                 'start_date' => $newStartDate,
-                'end_date' => $lastActivity?->end_date,
+                'end_date'   => $schedule->activities()->max('end_date'),
             ]);
 
             DB::commit();
