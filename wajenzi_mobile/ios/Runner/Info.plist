@@ -49,6 +49,34 @@
 	<array>
 		<string>whatsapp</string>
 		<string>https</string>
+		<string>tel</string>
+		<string>mailto</string>
+	</array>
+	<!-- Permission usage strings — required for App Store review. Each plugin
+	     that touches a sensitive API needs a non-empty justification or the
+	     app crashes at runtime and Apple's static analysis rejects the build. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Wajenzi Professionals uses the camera so you can capture site photos for daily reports, attach evidence to inspections, scan documents, and upload profile pictures.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Wajenzi Professionals needs access to your photo library so you can attach existing photos to project documents, BOQ items, site reports, and portfolio entries.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Wajenzi Professionals saves generated reports and downloaded receipts to your photo library when you choose to export them.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Wajenzi Professionals uses the microphone when you record short video updates for site reports or content-creator tasks.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Wajenzi Professionals uses your location to verify site-visit check-ins, stamp daily reports with the correct project site, and pre-fill addresses on new leads.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Wajenzi Professionals can read a contact you select so you can quickly add a new lead, client, or WhatsApp marketing contact without re-typing their details.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Wajenzi Professionals reads and writes documents you pick from your Files app so you can attach drawings, contracts, and engineering designs to projects.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Wajenzi Professionals can use Face ID to unlock the app quickly without re-entering your password.</string>
+	<!-- Push notifications used by firebase_messaging — APS environment is
+	     set by the Push Notifications capability in Xcode (entitlements file). -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>fetch</string>
 	</array>
 </dict>
 </plist>
