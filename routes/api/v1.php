@@ -122,6 +122,8 @@ use App\Http\Controllers\Api\V1\WhatsAppMarketingApiController;
 use App\Http\Controllers\Api\V1\ContentCreatorApiController;
 use App\Http\Controllers\Api\V1\StructuralDesignApiController;
 use App\Http\Controllers\Api\V1\ServiceDesignApiController;
+use App\Http\Controllers\Api\V1\MaterialTransferController;
+use App\Http\Controllers\Api\V1\FinanceDashboardApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -916,6 +918,23 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{id}/submit', [MaterialRequestController::class, 'submit']);
         Route::post('{id}/approve', [MaterialRequestController::class, 'approve']);
         Route::post('{id}/reject', [MaterialRequestController::class, 'reject']);
+    });
+
+    // Material Transfers — inter-site movement of BOQ + free-stock items.
+    Route::prefix('material-transfers')->group(function () {
+        Route::get('reference-data', [MaterialTransferController::class, 'referenceData']);
+        Route::get('/', [MaterialTransferController::class, 'index']);
+        Route::post('/', [MaterialTransferController::class, 'store']);
+        Route::get('{id}', [MaterialTransferController::class, 'show']);
+        Route::delete('{id}', [MaterialTransferController::class, 'destroy']);
+        Route::post('{id}/approve', [MaterialTransferController::class, 'approve']);
+        Route::post('{id}/reject', [MaterialTransferController::class, 'reject']);
+    });
+
+    // Finance — parent landing dashboard + expenditure dashboard.
+    Route::prefix('finance')->group(function () {
+        Route::get('dashboard', [FinanceDashboardApiController::class, 'index']);
+        Route::get('expenditure-dashboard', [FinanceDashboardApiController::class, 'expenditureDashboard']);
     });
 
     // Billing Documents
