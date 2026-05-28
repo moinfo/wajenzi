@@ -1096,4 +1096,77 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{id}/recall', [KpiApiController::class, 'recall']);
         Route::patch('{id}/review', [KpiApiController::class, 'updateReviewer']);
     });
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Landing CMS — mobile admin (write side). Public read endpoints live
+    // outside the auth group at /api/v1/public/{portfolio,awards,...}.
+    // ──────────────────────────────────────────────────────────────────────
+    Route::prefix('landing-admin')->group(function () {
+        // Portfolio
+        Route::get('portfolio', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'index']);
+        Route::post('portfolio', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'store']);
+        Route::post('portfolio/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'reorder']);
+        Route::get('portfolio/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'show']);
+        Route::post('portfolio/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'update']); // multipart-friendly
+        Route::put('portfolio/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'update']);
+        Route::delete('portfolio/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'destroy']);
+        Route::delete('portfolio/images/{imageId}', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'deleteImage']);
+        Route::post('portfolio/images/{imageId}/primary', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'setPrimaryImage']);
+
+        // Awards
+        Route::get('awards', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'index']);
+        Route::post('awards', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'store']);
+        Route::post('awards/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'reorder']);
+        Route::get('awards/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'show']);
+        Route::post('awards/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'update']);
+        Route::put('awards/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'update']);
+        Route::delete('awards/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingAwardAdminController::class, 'destroy']);
+
+        // Services
+        Route::get('services', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'index']);
+        Route::post('services', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'store']);
+        Route::post('services/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'reorder']);
+        Route::get('services/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'show']);
+        Route::post('services/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'update']);
+        Route::put('services/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'update']);
+        Route::delete('services/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingServiceAdminController::class, 'destroy']);
+
+        // Posters (Home Banners)
+        Route::get('posters', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'index']);
+        Route::post('posters', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'store']);
+        Route::post('posters/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'reorder']);
+        Route::get('posters/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'show']);
+        Route::post('posters/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'update']);
+        Route::put('posters/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'update']);
+        Route::delete('posters/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingPosterAdminController::class, 'destroy']);
+
+        // Stats (Hero Stats)
+        Route::get('stats', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'index']);
+        Route::post('stats', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'store']);
+        Route::post('stats/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'reorder']);
+        Route::get('stats/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'show']);
+        Route::put('stats/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'update']);
+        Route::delete('stats/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingStatAdminController::class, 'destroy']);
+
+        // About (singleton)
+        Route::get('about', [\App\Http\Controllers\Api\V1\Landing\LandingAboutAdminController::class, 'index']);
+        Route::put('about', [\App\Http\Controllers\Api\V1\Landing\LandingAboutAdminController::class, 'update']);
+
+        // Core Values
+        Route::get('values', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'index']);
+        Route::post('values', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'store']);
+        Route::post('values/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'reorder']);
+        Route::get('values/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'show']);
+        Route::put('values/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'update']);
+        Route::delete('values/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingValueAdminController::class, 'destroy']);
+
+        // Team
+        Route::get('team', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'index']);
+        Route::post('team', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'store']);
+        Route::post('team/reorder', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'reorder']);
+        Route::get('team/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'show']);
+        Route::post('team/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'update']);
+        Route::put('team/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'update']);
+        Route::delete('team/{id}', [\App\Http\Controllers\Api\V1\Landing\LandingTeamAdminController::class, 'destroy']);
+    });
 });
