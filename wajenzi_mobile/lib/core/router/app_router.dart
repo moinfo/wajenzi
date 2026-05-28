@@ -2053,18 +2053,6 @@ class MainDrawer extends ConsumerWidget {
         return ListView(
           padding: EdgeInsets.zero,
           children: [
-            // Always-available entry point for the KPI / Performance feature.
-            _DrawerItem(
-              icon: Icons.assessment_rounded,
-              label: switch (currentLanguage) {
-                AppLanguage.swahili => 'Utendaji Wangu',
-                AppLanguage.french => 'Ma Performance',
-                AppLanguage.arabic => 'أدائي',
-                AppLanguage.english => 'My Performance',
-              },
-              isDarkMode: isDarkMode,
-              onTap: () => _navigateFromDrawer(context, '/performance'),
-            ),
             ...menus.map<Widget>((m) {
             final menu = m as Map<String, dynamic>;
             final name = menu['name'] as String? ?? '';
@@ -2960,10 +2948,48 @@ String? _resolveMenuDestination({String? route, String? url}) {
 
 /// Maps FontAwesome class names to Material Icons
 IconData _mapFaIcon(String faClass) {
-  // Mapping of FA icon classes to Material Icons
+  // Normalise FontAwesome family prefixes (fas/fab/far/fa-solid/fa-brands/fa-regular)
+  // → the canonical "fa <icon>" form the map uses.
+  final normalized = faClass.trim().replaceAllMapped(
+    RegExp(r'^(fas|fab|far|fa-solid|fa-brands|fa-regular)\b'),
+    (_) => 'fa',
+  );
+
   const map = <String, IconData>{
-    'fa fa-home': Icons.home_rounded,
+    // ── SimpleLine ("si si-*") — used widely in the web sidebar ─────────
     'si si-users': Icons.person_rounded,
+    'si si-graph': Icons.show_chart_rounded,
+    'si si-info': Icons.info_outline_rounded,
+    'si si-picture': Icons.image_rounded,
+    'si si-star': Icons.star_rounded,
+    'si si-trophy': Icons.emoji_events_rounded,
+    'si si-wrench': Icons.build_rounded,
+    'si si-globe': Icons.public_rounded,
+    'si si-settings': Icons.settings_rounded,
+    'si si-home': Icons.home_rounded,
+    'si si-people': Icons.groups_rounded,
+    'si si-briefcase': Icons.work_rounded,
+    'si si-doc': Icons.description_rounded,
+    'si si-calendar': Icons.calendar_today_rounded,
+    'si si-bell': Icons.notifications_rounded,
+    'si si-envelope': Icons.email_rounded,
+    'si si-chart': Icons.bar_chart_rounded,
+    'si si-bag': Icons.shopping_bag_rounded,
+    'si si-basket': Icons.shopping_basket_rounded,
+    'si si-tag': Icons.label_rounded,
+    'si si-energy': Icons.flash_on_rounded,
+    'si si-grid': Icons.dashboard_rounded,
+    'si si-credit-card': Icons.credit_card_rounded,
+    'si si-pin': Icons.location_on_rounded,
+    'si si-map': Icons.map_rounded,
+    'si si-target': Icons.gps_fixed_rounded,
+    'si si-rocket': Icons.rocket_launch_rounded,
+    'si si-bulb': Icons.lightbulb_rounded,
+    'si si-camera': Icons.camera_alt_rounded,
+    'si si-eye': Icons.visibility_rounded,
+
+    // ── FontAwesome ("fa fa-*") ─────────────────────────────────────────
+    'fa fa-home': Icons.home_rounded,
     'fa fa-university': Icons.account_balance_rounded,
     'fa fa-flag': Icons.business_rounded,
     'fa fa-balance-scale': Icons.balance_rounded,
@@ -3025,9 +3051,47 @@ IconData _mapFaIcon(String faClass) {
     'fa fa-puzzle-piece': Icons.extension_rounded,
     'fa fa-file-text': Icons.article_rounded,
     'fa fa-user-tie': Icons.person_rounded,
+    'fa fa-trophy': Icons.emoji_events_rounded,
+    'fa fa-medal': Icons.military_tech_rounded,
+    'fa fa-star': Icons.star_rounded,
+    'fa fa-map-marked-alt': Icons.location_on_rounded,
+    'fa fa-map-marker-alt': Icons.location_on_rounded,
+    'fa fa-map': Icons.map_rounded,
+    'fa fa-whatsapp': Icons.chat_rounded,
+    'fa fa-video': Icons.videocam_rounded,
+    'fa fa-image': Icons.image_rounded,
+    'fa fa-picture': Icons.image_rounded,
+    'fa fa-globe': Icons.public_rounded,
+    'fa fa-bullhorn': Icons.campaign_rounded,
+    'fa fa-pen-nib': Icons.edit_rounded,
+    'fa fa-pen': Icons.edit_rounded,
+    'fa fa-pencil': Icons.edit_rounded,
+    'fa fa-cogs': Icons.settings_rounded,
+    'fa fa-tools': Icons.build_rounded,
+    'fa fa-receipt': Icons.receipt_rounded,
+    'fa fa-info-circle': Icons.info_outline_rounded,
+    'fa fa-question-circle': Icons.help_outline_rounded,
+    'fa fa-bookmark-o': Icons.bookmark_outline_rounded,
+    'fa fa-bar-chart': Icons.bar_chart_rounded,
+    'fa fa-pie-chart': Icons.pie_chart_rounded,
+    'fa fa-money': Icons.payments_rounded,
+    'fa fa-coins': Icons.savings_rounded,
+    'fa fa-wallet': Icons.account_balance_wallet_rounded,
+    'fa fa-handshake': Icons.handshake_rounded,
+    'fa fa-id-badge': Icons.badge_rounded,
+    'fa fa-id-card': Icons.badge_rounded,
+    'fa fa-tasks': Icons.task_alt_rounded,
+    'fa fa-cube': Icons.view_in_ar_rounded,
+    'fa fa-cubes': Icons.dataset_rounded,
+    'fa fa-th-large': Icons.dashboard_rounded,
+    'fa fa-th-list': Icons.list_rounded,
   };
 
-  return map[faClass] ?? Icons.circle_outlined;
+  final mapped = map[normalized] ?? map[faClass];
+  if (mapped != null) return mapped;
+  // Last-resort: a faint outlined dot is uglier than a tasteful generic
+  // "list-item" glyph, so default to chevron_right for unknown server icons.
+  return Icons.chevron_right_rounded;
 }
 
 class _ExpandableDrawerItem extends StatefulWidget {

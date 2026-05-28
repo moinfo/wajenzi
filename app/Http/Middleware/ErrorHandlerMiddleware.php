@@ -19,8 +19,14 @@ class ErrorHandlerMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        // Convert PHP errors to exceptions
+        // Convert PHP errors to exceptions, but ignore deprecation/strict
+        // notices — PHP 8.4+ flagged a lot of vendor signatures (e.g. RingleSoft's
+        // Approvable trait) as deprecated, and escalating those to exceptions
+        // breaks unrelated requests until the packages catch up.
         set_error_handler(function ($severity, $message, $file, $line) {
+            if (($severity & (E_DEPRECATED | E_USER_DEPRECATED | E_STRICT)) !== 0) {
+                return true; // silently swallow — they're warnings, not errors
+            }
             throw new \ErrorException($message, 0, $severity, $file, $line);
         });
 
