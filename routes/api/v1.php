@@ -1118,41 +1118,45 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ───────────────────────────────────────────────────────────────────
     // Cluster A: Calculators + Design / Site-visit catalog settings
+    // Catalog settings are admin-only (writes AND reads scoped to admins);
+    // calculator compute endpoints below remain open to all auth users.
     // ───────────────────────────────────────────────────────────────────
-    Route::prefix('currencies')->group(function () {
-        Route::get('/', [CurrencyApiController::class, 'index']);
-        Route::post('/', [CurrencyApiController::class, 'store']);
-        Route::get('{id}', [CurrencyApiController::class, 'show']);
-        Route::put('{id}', [CurrencyApiController::class, 'update']);
-        Route::delete('{id}', [CurrencyApiController::class, 'destroy']);
-    });
-    Route::prefix('design-service-packages')->group(function () {
-        Route::get('/', [DesignServicePackageApiController::class, 'index']);
-        Route::post('/', [DesignServicePackageApiController::class, 'store']);
-        Route::get('{id}', [DesignServicePackageApiController::class, 'show']);
-        Route::put('{id}', [DesignServicePackageApiController::class, 'update']);
-        Route::delete('{id}', [DesignServicePackageApiController::class, 'destroy']);
-    });
-    Route::prefix('design-service-addons')->group(function () {
-        Route::get('/', [DesignServiceAddonApiController::class, 'index']);
-        Route::post('/', [DesignServiceAddonApiController::class, 'store']);
-        Route::get('{id}', [DesignServiceAddonApiController::class, 'show']);
-        Route::put('{id}', [DesignServiceAddonApiController::class, 'update']);
-        Route::delete('{id}', [DesignServiceAddonApiController::class, 'destroy']);
-    });
-    Route::prefix('design-special-structures')->group(function () {
-        Route::get('/', [DesignSpecialStructureApiController::class, 'index']);
-        Route::post('/', [DesignSpecialStructureApiController::class, 'store']);
-        Route::get('{id}', [DesignSpecialStructureApiController::class, 'show']);
-        Route::put('{id}', [DesignSpecialStructureApiController::class, 'update']);
-        Route::delete('{id}', [DesignSpecialStructureApiController::class, 'destroy']);
-    });
-    Route::prefix('site-visit-locations')->group(function () {
-        Route::get('/', [SiteVisitLocationApiController::class, 'index']);
-        Route::post('/', [SiteVisitLocationApiController::class, 'store']);
-        Route::get('{id}', [SiteVisitLocationApiController::class, 'show']);
-        Route::put('{id}', [SiteVisitLocationApiController::class, 'update']);
-        Route::delete('{id}', [SiteVisitLocationApiController::class, 'destroy']);
+    Route::middleware('role:System Administrator|Admin')->group(function () {
+        Route::prefix('currencies')->group(function () {
+            Route::get('/', [CurrencyApiController::class, 'index']);
+            Route::post('/', [CurrencyApiController::class, 'store']);
+            Route::get('{id}', [CurrencyApiController::class, 'show']);
+            Route::put('{id}', [CurrencyApiController::class, 'update']);
+            Route::delete('{id}', [CurrencyApiController::class, 'destroy']);
+        });
+        Route::prefix('design-service-packages')->group(function () {
+            Route::get('/', [DesignServicePackageApiController::class, 'index']);
+            Route::post('/', [DesignServicePackageApiController::class, 'store']);
+            Route::get('{id}', [DesignServicePackageApiController::class, 'show']);
+            Route::put('{id}', [DesignServicePackageApiController::class, 'update']);
+            Route::delete('{id}', [DesignServicePackageApiController::class, 'destroy']);
+        });
+        Route::prefix('design-service-addons')->group(function () {
+            Route::get('/', [DesignServiceAddonApiController::class, 'index']);
+            Route::post('/', [DesignServiceAddonApiController::class, 'store']);
+            Route::get('{id}', [DesignServiceAddonApiController::class, 'show']);
+            Route::put('{id}', [DesignServiceAddonApiController::class, 'update']);
+            Route::delete('{id}', [DesignServiceAddonApiController::class, 'destroy']);
+        });
+        Route::prefix('design-special-structures')->group(function () {
+            Route::get('/', [DesignSpecialStructureApiController::class, 'index']);
+            Route::post('/', [DesignSpecialStructureApiController::class, 'store']);
+            Route::get('{id}', [DesignSpecialStructureApiController::class, 'show']);
+            Route::put('{id}', [DesignSpecialStructureApiController::class, 'update']);
+            Route::delete('{id}', [DesignSpecialStructureApiController::class, 'destroy']);
+        });
+        Route::prefix('site-visit-locations')->group(function () {
+            Route::get('/', [SiteVisitLocationApiController::class, 'index']);
+            Route::post('/', [SiteVisitLocationApiController::class, 'store']);
+            Route::get('{id}', [SiteVisitLocationApiController::class, 'show']);
+            Route::put('{id}', [SiteVisitLocationApiController::class, 'update']);
+            Route::delete('{id}', [SiteVisitLocationApiController::class, 'destroy']);
+        });
     });
     Route::prefix('calculators')->group(function () {
         Route::get('design-pricing',           [DesignPricingCalculatorApiController::class, 'index']);
@@ -1248,8 +1252,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ──────────────────────────────────────────────────────────────────────
     // Landing CMS — mobile admin (write side). Public read endpoints live
     // outside the auth group at /api/v1/public/{portfolio,awards,...}.
+    // Admin-role only — landing CMS is internal-staff content management.
     // ──────────────────────────────────────────────────────────────────────
-    Route::prefix('landing-admin')->group(function () {
+    Route::prefix('landing-admin')->middleware('role:System Administrator|Admin')->group(function () {
         // Portfolio
         Route::get('portfolio', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'index']);
         Route::post('portfolio', [\App\Http\Controllers\Api\V1\Landing\LandingPortfolioAdminController::class, 'store']);

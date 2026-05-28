@@ -139,6 +139,35 @@ import '../../presentation/screens/kpi/kpi_detail_screen.dart';
 import '../../presentation/screens/kpi/kpi_self_assess_screen.dart';
 import '../../presentation/screens/kpi/kpi_reviewer_screen.dart';
 import '../../presentation/screens/web/portal_webview_screen.dart';
+// ── Native-mobile-screens fan-out (Clusters A–E) ────────────────────────
+// Cluster A: Calculators & Design Catalogs
+import '../../presentation/screens/calculators/currencies_screen.dart';
+import '../../presentation/screens/calculators/design_packages_screen.dart';
+import '../../presentation/screens/calculators/design_addons_screen.dart';
+import '../../presentation/screens/calculators/special_structures_screen.dart';
+import '../../presentation/screens/calculators/site_visit_locations_screen.dart';
+import '../../presentation/screens/calculators/design_pricing_calculator_screen.dart';
+import '../../presentation/screens/calculators/site_visit_calculator_screen.dart';
+// Cluster B: Marketing trio
+import '../../presentation/screens/marketing/field_marketing_screen.dart';
+import '../../presentation/screens/marketing/whatsapp_marketing_screen.dart';
+import '../../presentation/screens/marketing/content_creator_screen.dart';
+// Cluster C: Engineering Design
+import '../../presentation/screens/engineering/structural_design_screen.dart';
+import '../../presentation/screens/engineering/service_design_screen.dart';
+// Cluster D: Website Content CMS (mobile admin)
+import '../../presentation/screens/landing_admin/awards_admin_screen.dart';
+import '../../presentation/screens/landing_admin/services_admin_screen.dart';
+import '../../presentation/screens/landing_admin/posters_admin_screen.dart';
+import '../../presentation/screens/landing_admin/stats_admin_screen.dart';
+import '../../presentation/screens/landing_admin/values_admin_screen.dart';
+import '../../presentation/screens/landing_admin/portfolio_admin_screen.dart';
+import '../../presentation/screens/landing_admin/about_admin_screen.dart';
+import '../../presentation/screens/landing_admin/team_admin_screen.dart';
+// Cluster E: Finance & Procurement leftovers
+import '../../presentation/screens/finance/finance_dashboard_screen.dart';
+import '../../presentation/screens/finance/expenditure_dashboard_screen.dart';
+import '../../presentation/screens/procurement/material_transfers_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
 final rootScaffoldKeyProvider = Provider<GlobalKey<ScaffoldState>>((ref) {
@@ -1355,6 +1384,128 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => KpiReviewerScreen(
               reviewId: int.parse(state.pathParameters['id']!),
             ),
+          ),
+          // ── Cluster A: Calculators & design catalogs ────────────────
+          GoRoute(
+            path: '/settings/currencies',
+            name: 'settings-currencies',
+            builder: (context, state) => const CurrenciesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/design-packages',
+            name: 'settings-design-packages',
+            builder: (context, state) => const DesignPackagesScreen(),
+          ),
+          GoRoute(
+            path: '/settings/design-addons',
+            name: 'settings-design-addons',
+            builder: (context, state) => const DesignAddonsScreen(),
+          ),
+          GoRoute(
+            path: '/settings/design-special-structures',
+            name: 'settings-design-special-structures',
+            builder: (context, state) => const SpecialStructuresScreen(),
+          ),
+          GoRoute(
+            path: '/settings/site-visit-locations',
+            name: 'settings-site-visit-locations',
+            builder: (context, state) => const SiteVisitLocationsScreen(),
+          ),
+          GoRoute(
+            path: '/calculators/design-pricing',
+            name: 'calculators-design-pricing',
+            builder: (context, state) =>
+                const DesignPricingCalculatorScreen(),
+          ),
+          GoRoute(
+            path: '/calculators/site-visit',
+            name: 'calculators-site-visit',
+            builder: (context, state) => const SiteVisitCalculatorScreen(),
+          ),
+          // ── Cluster B: Marketing trio ───────────────────────────────
+          GoRoute(
+            path: '/field-marketing',
+            name: 'field-marketing',
+            builder: (context, state) => const FieldMarketingScreen(),
+          ),
+          GoRoute(
+            path: '/whatsapp-marketing',
+            name: 'whatsapp-marketing',
+            builder: (context, state) => const WhatsAppMarketingScreen(),
+          ),
+          GoRoute(
+            path: '/content-creator',
+            name: 'content-creator',
+            builder: (context, state) => const ContentCreatorScreen(),
+          ),
+          // ── Cluster C: Engineering Design ───────────────────────────
+          GoRoute(
+            path: '/structural-design',
+            name: 'structural-design',
+            builder: (context, state) => const StructuralDesignScreen(),
+          ),
+          GoRoute(
+            path: '/service-design',
+            name: 'service-design',
+            builder: (context, state) => const ServiceDesignScreen(),
+          ),
+          // ── Cluster D: Website Content CMS admin ────────────────────
+          GoRoute(
+            path: '/landing-admin/portfolio',
+            name: 'landing-admin-portfolio',
+            builder: (context, state) => const PortfolioAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/awards',
+            name: 'landing-admin-awards',
+            builder: (context, state) => const AwardsAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/services',
+            name: 'landing-admin-services',
+            builder: (context, state) => const ServicesAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/posters',
+            name: 'landing-admin-posters',
+            builder: (context, state) => const PostersAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/stats',
+            name: 'landing-admin-stats',
+            builder: (context, state) => const StatsAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/about',
+            name: 'landing-admin-about',
+            builder: (context, state) => const AboutAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/values',
+            name: 'landing-admin-values',
+            builder: (context, state) => const ValuesAdminScreen(),
+          ),
+          GoRoute(
+            path: '/landing-admin/team',
+            name: 'landing-admin-team',
+            builder: (context, state) => const TeamAdminScreen(),
+          ),
+          // ── Cluster E: Finance & Procurement leftovers ──────────────
+          GoRoute(
+            path: '/finance',
+            name: 'finance',
+            builder: (context, state) => const FinanceDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/finance/expenditure-dashboard',
+            name: 'finance-expenditure-dashboard',
+            builder: (context, state) =>
+                const ExpenditureDashboardScreen(),
+          ),
+          GoRoute(
+            path: '/material-transfers',
+            name: 'material-transfers',
+            builder: (context, state) => const MaterialTransfersScreen(),
           ),
         ],
       ),
@@ -2686,6 +2837,73 @@ String? _mapWebRoute(String webRoute) {
     'messages': '/messages',
     'requests.approval': '/attendance',
     'inspections.approval': '/attendance',
+    // ── Cluster A: Calculators & design catalogs ───────────────────────
+    'hr_settings_currencies': '/settings/currencies',
+    'settings/currencies': '/settings/currencies',
+    'currencies': '/settings/currencies',
+    'hr_settings_design_packages': '/settings/design-packages',
+    'settings/design_packages': '/settings/design-packages',
+    'settings/design-packages': '/settings/design-packages',
+    'hr_settings_design_addons': '/settings/design-addons',
+    'settings/design_addons': '/settings/design-addons',
+    'settings/design-addons': '/settings/design-addons',
+    'hr_settings_design_special_structures':
+        '/settings/design-special-structures',
+    'settings/design_special_structures': '/settings/design-special-structures',
+    'settings/design-special-structures': '/settings/design-special-structures',
+    'hr_settings_site_visit_locations': '/settings/site-visit-locations',
+    'settings/site_visit_locations': '/settings/site-visit-locations',
+    'settings/site-visit-locations': '/settings/site-visit-locations',
+    'calculators.design-pricing': '/calculators/design-pricing',
+    'calculators/design-pricing': '/calculators/design-pricing',
+    'calculators.design_pricing': '/calculators/design-pricing',
+    'calculators.site-visit': '/calculators/site-visit',
+    'calculators/site-visit': '/calculators/site-visit',
+    'calculators.site_visit': '/calculators/site-visit',
+    // ── Cluster B: Marketing trio ──────────────────────────────────────
+    'field_marketing.index': '/field-marketing',
+    'field_marketing': '/field-marketing',
+    'field-marketing': '/field-marketing',
+    'whatsapp_marketing.index': '/whatsapp-marketing',
+    'whatsapp_marketing': '/whatsapp-marketing',
+    'whatsapp-marketing': '/whatsapp-marketing',
+    'content_creator.index': '/content-creator',
+    'content_creator': '/content-creator',
+    'content-creator': '/content-creator',
+    // ── Cluster C: Engineering Design ──────────────────────────────────
+    'structural_design': '/structural-design',
+    'structural-design': '/structural-design',
+    'structural_design.index': '/structural-design',
+    'structural_design_index': '/structural-design',
+    'service_design': '/service-design',
+    'service-design': '/service-design',
+    'service_design.index': '/service-design',
+    'service_design_index': '/service-design',
+    // ── Cluster D: Website Content CMS admin ───────────────────────────
+    'landing_portfolio': '/landing-admin/portfolio',
+    'landing_awards': '/landing-admin/awards',
+    'landing_services': '/landing-admin/services',
+    'landing_posters': '/landing-admin/posters',
+    'landing_stats': '/landing-admin/stats',
+    'landing_about': '/landing-admin/about',
+    'landing_values': '/landing-admin/values',
+    'landing_team': '/landing-admin/team',
+    // ── Cluster E: Finance & Procurement leftovers ─────────────────────
+    'finance': '/finance',
+    'finance.dashboard': '/finance',
+    'finance/dashboard': '/finance',
+    'finance_dashboard': '/finance',
+    'finance.expenditure_dashboard': '/finance/expenditure-dashboard',
+    'finance/expenditure_dashboard': '/finance/expenditure-dashboard',
+    'finance/expenditure-dashboard': '/finance/expenditure-dashboard',
+    'expenditure_dashboard': '/finance/expenditure-dashboard',
+    'expenditure-dashboard': '/finance/expenditure-dashboard',
+    'material_transfers': '/material-transfers',
+    'material-transfers': '/material-transfers',
+    'material_transfer': '/material-transfers',
+    'material-transfer': '/material-transfers',
+    'procurement/material_transfers': '/material-transfers',
+    'procurement/material-transfers': '/material-transfers',
   };
   return map[webRoute];
 }
