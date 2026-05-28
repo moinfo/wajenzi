@@ -133,6 +133,11 @@ import '../../presentation/screens/staff/leave_requests_screen.dart';
 import '../../presentation/screens/staff/leave_types_screen.dart';
 import '../../presentation/screens/notifications/notifications_screen.dart';
 import '../../presentation/screens/messages/messages_screen.dart';
+import '../../presentation/screens/kpi/kpi_list_screen.dart';
+import '../../presentation/screens/kpi/kpi_create_screen.dart';
+import '../../presentation/screens/kpi/kpi_detail_screen.dart';
+import '../../presentation/screens/kpi/kpi_self_assess_screen.dart';
+import '../../presentation/screens/kpi/kpi_reviewer_screen.dart';
 import '../../presentation/screens/web/portal_webview_screen.dart';
 import '../../presentation/widgets/curved_internal_nav.dart';
 
@@ -1319,6 +1324,38 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'settings-sub-activities',
             builder: (context, state) => const SettingsSubActivitiesScreen(),
           ),
+          // ── KPI / Performance ─────────────────────────────────────────
+          GoRoute(
+            path: '/performance',
+            name: 'performance',
+            builder: (context, state) => const KpiListScreen(),
+          ),
+          GoRoute(
+            path: '/performance/create',
+            name: 'performance-create',
+            builder: (context, state) => const KpiCreateScreen(),
+          ),
+          GoRoute(
+            path: '/performance/:id',
+            name: 'performance-detail',
+            builder: (context, state) => KpiDetailScreen(
+              reviewId: int.parse(state.pathParameters['id']!),
+            ),
+          ),
+          GoRoute(
+            path: '/performance/:id/self',
+            name: 'performance-self',
+            builder: (context, state) => KpiSelfAssessScreen(
+              reviewId: int.parse(state.pathParameters['id']!),
+            ),
+          ),
+          GoRoute(
+            path: '/performance/:id/review',
+            name: 'performance-review',
+            builder: (context, state) => KpiReviewerScreen(
+              reviewId: int.parse(state.pathParameters['id']!),
+            ),
+          ),
         ],
       ),
     ],
@@ -2015,7 +2052,20 @@ class MainDrawer extends ConsumerWidget {
       data: (menus) {
         return ListView(
           padding: EdgeInsets.zero,
-          children: menus.map<Widget>((m) {
+          children: [
+            // Always-available entry point for the KPI / Performance feature.
+            _DrawerItem(
+              icon: Icons.assessment_rounded,
+              label: switch (currentLanguage) {
+                AppLanguage.swahili => 'Utendaji Wangu',
+                AppLanguage.french => 'Ma Performance',
+                AppLanguage.arabic => 'أدائي',
+                AppLanguage.english => 'My Performance',
+              },
+              isDarkMode: isDarkMode,
+              onTap: () => _navigateFromDrawer(context, '/performance'),
+            ),
+            ...menus.map<Widget>((m) {
             final menu = m as Map<String, dynamic>;
             final name = menu['name'] as String? ?? '';
             final route = menu['route'] as String? ?? '';
@@ -2051,7 +2101,8 @@ class MainDrawer extends ConsumerWidget {
                     url: childUrl,
                   ),
             );
-          }).toList(),
+          }),
+          ],
         );
       },
     );
@@ -2630,6 +2681,17 @@ String? _mapWebRoute(String webRoute) {
     'architect_bonus': '/architect-bonus',
     'architect-bonus/report': '/architect-bonus/report',
     'architect_bonus_report': '/architect-bonus/report',
+    'performance': '/performance',
+    'performances': '/performance',
+    'performance.index': '/performance',
+    'performance_review': '/performance',
+    'performance_reviews': '/performance',
+    'performance-reviews': '/performance',
+    'kpi': '/performance',
+    'kpis': '/performance',
+    'kpi_review': '/performance',
+    'kpi_reviews': '/performance',
+    'my_performance': '/performance',
     'eSMS': '/messages',
     'esms': '/messages',
     'bulk_sms': '/messages',

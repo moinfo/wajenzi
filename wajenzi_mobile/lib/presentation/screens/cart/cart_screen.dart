@@ -390,14 +390,14 @@ class _CartScreenState extends ConsumerState<CartScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF25D366),
+                    backgroundColor: const Color(0xFF3BA154),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 4,
-                    shadowColor: const Color(0xFF25D366).withValues(alpha: 0.5),
+                    shadowColor: const Color(0xFF3BA154).withValues(alpha: 0.5),
                   ),
                 ),
               ),

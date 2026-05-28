@@ -864,12 +864,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF25D366),
+                            color: const Color(0xFF3BA154),
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
                                 color: const Color(
-                                  0xFF25D366,
+                                  0xFF3BA154,
                                 ).withValues(alpha: 0.4),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
@@ -1227,12 +1227,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF25D366),
+                          color: const Color(0xFF3BA154),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
                               color: const Color(
-                                0xFF25D366,
+                                0xFF3BA154,
                               ).withValues(alpha: 0.4),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
@@ -1545,7 +1545,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF25D366),
+                        backgroundColor: const Color(0xFF3BA154),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -1553,7 +1553,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         ),
                         elevation: 4,
                         shadowColor: const Color(
-                          0xFF25D366,
+                          0xFF3BA154,
                         ).withValues(alpha: 0.5),
                       ),
                     ),
@@ -1610,7 +1610,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         'items': _isSwahili
             ? ['Uundaji wa Dhana', 'Muundo wa Kina', 'Makadirio ya Gharama']
             : ['Concept Development', 'Detailed Design', 'Cost Estimation'],
-        'color': const Color(0xFF9B59B6),
+        'color': const Color(0xFF27505F),
       },
       {
         'number': '3',

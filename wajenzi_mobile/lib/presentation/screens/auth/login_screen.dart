@@ -160,15 +160,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const Color(0xFF415A77),
           ]
         : [
-            const Color(0xFF3BA154),
             const Color(0xFF193340),
-            const Color(0xFF3BA154),
+            const Color(0xFF245C46),
+            const Color(0xFF2E8043),
           ];
 
     final cardColor = isDark
-        ? const Color(0xFF1B263B).withValues(alpha: 0.95)
-        : const Color(0xFFE8F8F5); // Light mint card
-    final textColor = isDark ? Colors.white : const Color(0xFF2C3E50);
+        ? const Color(0xFF13242C).withValues(alpha: 0.96)
+        : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF193340);
     final subtextColor = isDark
         ? const Color(0xFF778DA9)
         : Colors.grey.shade500;
@@ -437,15 +437,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       // App name with shimmer-like effect
                       ShaderMask(
                         shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Colors.white, Color(0xFF80DEEA)],
+                          colors: [Colors.white, Color(0xFFFECC04)],
                         ).createShader(bounds),
-                        child: const Text(
+                        child: Text(
                           'WAJENZI',
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w800,
+                          style: AppType.display(
+                            40,
+                            weight: FontWeight.w800,
                             color: Colors.white,
-                            letterSpacing: 6,
+                            letterSpacing: 8,
                           ),
                         ),
                       ),
@@ -494,11 +494,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             children: [
                               Text(
                                 t['welcome']!,
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
+                                style: AppType.display(26, color: textColor),
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 6),
@@ -664,8 +660,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                                 ]
                                               : [
                                                   const Color(0xFF3BA154),
-                                                  const Color(0xFF193340),
-                                                  const Color(0xFF3BA154),
+                                                  const Color(0xFF2E8043),
                                                 ],
                                         ),
                                   color: _isLoading
@@ -757,7 +752,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'v1.0.0',
+                            'v2.0.0',
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.6),
                               fontSize: 12,

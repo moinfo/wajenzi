@@ -574,7 +574,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 fr: 'Nous aspirons à établir de nouvelles références dans le secteur de la construction grâce à l\'innovation continue, au développement professionnel et à un engagement constant envers la qualité, en créant des bâtiments durables qui apportent une contribution positive aux communautés servies.',
                 ar: 'نطمح إلى وضع معايير جديدة في قطاع البناء من خلال الابتكار المستمر والتطوير المهني والالتزام الثابت بالجودة، وإنشاء مبانٍ تصمد أمام الزمن وتسهم إيجابًا في المجتمعات التي نخدمها.',
               ),
-        'gradientColors': const [Color(0xFF9B59B6), Color(0xFF8E44AD)],
+        'gradientColors': const [Color(0xFF27505F), Color(0xFF8E44AD)],
       },
     ];
 
@@ -779,7 +779,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
   // Icon/color palette used to decorate CMS-supplied core values (which carry
   // only title + description), cycled by index.
   static const List<Color> _valueAccents = [
-    Color(0xFF9B59B6),
+    Color(0xFF27505F),
     Color(0xFFFECC04),
     Color(0xFF193340),
     Color(0xFF3BA154),
@@ -824,7 +824,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           ar: 'الدعاء',
         ),
         icon: Icons.self_improvement_rounded,
-        color: const Color(0xFF9B59B6),
+        color: const Color(0xFF27505F),
         description: _isSwahili
             ? 'Tunaamini katika nguvu ya maombi na imani kuongoza matendo yetu, kuunganisha timu yetu, na kuhamasisha ubora katika juhudi zetu zote.'
             : _tr(

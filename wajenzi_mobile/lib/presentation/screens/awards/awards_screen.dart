@@ -120,7 +120,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
   static const List<Color> _awardAccents = [
     Color(0xFF193340), // brand dark blue
     Color(0xFF3BA154), // brand green
-    Color(0xFF9B59B6), // purple
+    Color(0xFF27505F), // purple
     Color(0xFF2E8043), // green dark
   ];
   static const List<IconData> _awardIcons = [
@@ -278,7 +278,7 @@ class _AwardsScreenState extends ConsumerState<AwardsScreen> {
         ar: 'تم تكريمنا لتطبيق تقنيات بناء مبتكرة وممارسات بناء مستدامة في المشاريع السكنية.',
       ),
       image: 'assets/images/awards/BQ6A3837_2.jpeg',
-      color: const Color(0xFF9B59B6),
+      color: const Color(0xFF27505F),
       icon: Icons.lightbulb_rounded,
     ),
   ];

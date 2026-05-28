@@ -109,6 +109,7 @@ use App\Http\Controllers\Api\V1\LoanApiController;
 use App\Http\Controllers\Api\V1\SalarySlipApiController;
 use App\Http\Controllers\Api\V1\SiteApiController;
 use App\Http\Controllers\Api\V1\SiteSupervisorAssignmentApiController;
+use App\Http\Controllers\Api\V1\KpiApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -1082,5 +1083,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('purchases/{id}/deliveries', [PurchaseApiController::class, 'storeDelivery']);
         Route::get('inspections', [MaterialInspectionController::class, 'index']);
         Route::get('inspections/{id}', [MaterialInspectionController::class, 'show']);
+    });
+
+    // Performance / KPI reviews (mirrors web KpiController)
+    Route::prefix('performance')->group(function () {
+        Route::get('/', [KpiApiController::class, 'index']);
+        Route::get('create-info', [KpiApiController::class, 'createInfo']);
+        Route::post('/', [KpiApiController::class, 'store']);
+        Route::get('{id}', [KpiApiController::class, 'show']);
+        Route::patch('{id}/self', [KpiApiController::class, 'updateSelf']);
+        Route::post('{id}/submit', [KpiApiController::class, 'submit']);
+        Route::post('{id}/recall', [KpiApiController::class, 'recall']);
+        Route::patch('{id}/review', [KpiApiController::class, 'updateReviewer']);
     });
 });

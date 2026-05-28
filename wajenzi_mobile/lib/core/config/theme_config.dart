@@ -1,4 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+/// Brand typography. Body = Plus Jakarta Sans (refined grotesque),
+/// display/headings = Sora (geometric, architectural). Distinctive, on-theme.
+class AppType {
+  static TextStyle display(
+    double size, {
+    FontWeight weight = FontWeight.w800,
+    Color? color,
+    double letterSpacing = -0.5,
+    double? height,
+  }) =>
+      GoogleFonts.sora(
+        fontSize: size,
+        fontWeight: weight,
+        color: color,
+        letterSpacing: letterSpacing,
+        height: height,
+      );
+
+  static TextTheme body(TextTheme base) =>
+      GoogleFonts.plusJakartaSansTextTheme(base);
+}
 
 class AppColors {
   // ── Official Wajenzi brand palette ──────────────────────────────────
@@ -116,7 +139,7 @@ class AppTheme {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      textTheme: const TextTheme(
+      textTheme: AppType.body(const TextTheme(
         headlineLarge: TextStyle(
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
@@ -131,7 +154,7 @@ class AppTheme {
         ),
         bodyLarge: TextStyle(color: AppColors.textPrimary),
         bodyMedium: TextStyle(color: AppColors.textSecondary),
-      ),
+      )),
     );
   }
 
@@ -210,13 +233,13 @@ class AppTheme {
         collapsedTextColor: Color(0xFFE8E8F0),
       ),
       popupMenuTheme: const PopupMenuThemeData(color: surfaceVariant),
-      textTheme: const TextTheme(
+      textTheme: AppType.body(const TextTheme(
         headlineLarge: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE8E8F0)),
         headlineMedium: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFE8E8F0)),
         titleLarge: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFFE8E8F0)),
         bodyLarge: TextStyle(color: Color(0xFFE8E8F0)),
         bodyMedium: TextStyle(color: Color(0xFFB0B0C8)),
-      ),
+      )),
     );
   }
 }

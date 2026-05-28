@@ -96,7 +96,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
 
   static const List<Color> _serviceAccents = [
     Color(0xFF3BA154), // green
-    Color(0xFF9B59B6), // purple
+    Color(0xFF27505F), // purple
     Color(0xFFFECC04), // yellow
     Color(0xFF193340), // dark blue
     Color(0xFFE74C3C), // red
@@ -213,7 +213,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
           : 'Our architects blend creativity with functionality to create stunning and practical spaces. Every design is optimized for your lifestyle, budget, and environmental impact.',
       image: 'assets/images/NEW_1 - Photo.jpg',
       icon: Icons.architecture_rounded,
-      color: const Color(0xFF9B59B6),
+      color: const Color(0xFF27505F),
       features: _isSwahili
           ? [
               'Miundo ya 2D & 3D',
@@ -1148,7 +1148,7 @@ class _ServicesScreenState extends ConsumerState<ServicesScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF25D366),
+                    backgroundColor: const Color(0xFF3BA154),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
