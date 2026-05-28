@@ -1128,9 +1128,9 @@ class _CampaignFormSheetState extends ConsumerState<_CampaignFormSheet> {
       text: widget.campaign?['budget']?.toString() ?? '');
   late final _notesCtrl =
       TextEditingController(text: widget.campaign?['notes']?.toString() ?? '');
-  DateTime _start = _parseDate(widget.campaign?['start_date']?.toString()) ??
-      DateTime.now();
-  DateTime? _end =
+  late DateTime _start =
+      _parseDate(widget.campaign?['start_date']?.toString()) ?? DateTime.now();
+  late DateTime? _end =
       _parseDate(widget.campaign?['end_date']?.toString());
   bool _saving = false;
 

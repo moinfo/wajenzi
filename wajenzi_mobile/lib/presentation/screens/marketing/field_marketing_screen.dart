@@ -738,7 +738,7 @@ class _SessionFormSheetState extends ConsumerState<_SessionFormSheet> {
       TextEditingController(text: widget.session?['area']?.toString() ?? '');
   late final _notesCtrl =
       TextEditingController(text: widget.session?['notes']?.toString() ?? '');
-  DateTime _date = _parseDate(widget.session?['date']?.toString());
+  late DateTime _date = _parseDate(widget.session?['date']?.toString());
   int? _officerId;
   List<Map<String, dynamic>> _officers = const [];
   bool _isFieldOfficer = false;

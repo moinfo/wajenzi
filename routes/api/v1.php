@@ -1223,6 +1223,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('tasks/{id}/approve', [ContentCreatorApiController::class, 'approveTask']);
         Route::post('tasks/{id}/comments', [ContentCreatorApiController::class, 'addComment']);
         Route::post('targets', [ContentCreatorApiController::class, 'setTarget']);
+    });
+
     // Engineering Design — Structural Design (mirrors ProjectStructuralDesignController)
     Route::prefix('structural-designs')->group(function () {
         Route::get('reference-data', [StructuralDesignApiController::class, 'referenceData']);
@@ -1249,6 +1251,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{id}/schedule', [ServiceDesignApiController::class, 'submitSchedule']);
         Route::post('{id}/stages/{stageId}', [ServiceDesignApiController::class, 'updateStage']);
         Route::post('{id}/stages/{stageId}/submit', [ServiceDesignApiController::class, 'submitStage']);
+    });
+
     // ──────────────────────────────────────────────────────────────────────
     // Landing CMS — mobile admin (write side). Public read endpoints live
     // outside the auth group at /api/v1/public/{portfolio,awards,...}.
