@@ -110,6 +110,9 @@ use App\Http\Controllers\Api\V1\SalarySlipApiController;
 use App\Http\Controllers\Api\V1\SiteApiController;
 use App\Http\Controllers\Api\V1\SiteSupervisorAssignmentApiController;
 use App\Http\Controllers\Api\V1\KpiApiController;
+use App\Http\Controllers\Api\V1\FieldMarketingApiController;
+use App\Http\Controllers\Api\V1\WhatsAppMarketingApiController;
+use App\Http\Controllers\Api\V1\ContentCreatorApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -1095,5 +1098,53 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{id}/submit', [KpiApiController::class, 'submit']);
         Route::post('{id}/recall', [KpiApiController::class, 'recall']);
         Route::patch('{id}/review', [KpiApiController::class, 'updateReviewer']);
+    });
+
+    // Field Marketing (mirrors web FieldMarketingController)
+    Route::prefix('field-marketing')->group(function () {
+        Route::get('reference-data', [FieldMarketingApiController::class, 'referenceData']);
+        Route::get('stats', [FieldMarketingApiController::class, 'stats']);
+        Route::get('/', [FieldMarketingApiController::class, 'index']);
+        Route::post('sessions', [FieldMarketingApiController::class, 'storeSession']);
+        Route::get('sessions/{id}', [FieldMarketingApiController::class, 'showSession']);
+        Route::put('sessions/{id}', [FieldMarketingApiController::class, 'updateSession']);
+        Route::delete('sessions/{id}', [FieldMarketingApiController::class, 'destroySession']);
+        Route::post('sessions/{id}/visits', [FieldMarketingApiController::class, 'storeVisit']);
+        Route::put('visits/{id}', [FieldMarketingApiController::class, 'updateVisit']);
+        Route::delete('visits/{id}', [FieldMarketingApiController::class, 'destroyVisit']);
+        Route::post('targets', [FieldMarketingApiController::class, 'storeTarget']);
+    });
+
+    // WhatsApp Marketing (mirrors web WhatsAppMarketingController)
+    Route::prefix('whatsapp-marketing')->group(function () {
+        Route::get('reference-data', [WhatsAppMarketingApiController::class, 'referenceData']);
+        Route::get('/', [WhatsAppMarketingApiController::class, 'index']);
+        Route::get('campaigns', [WhatsAppMarketingApiController::class, 'indexCampaigns']);
+        Route::post('campaigns', [WhatsAppMarketingApiController::class, 'storeCampaign']);
+        Route::put('campaigns/{id}', [WhatsAppMarketingApiController::class, 'updateCampaign']);
+        Route::patch('campaigns/{id}/close', [WhatsAppMarketingApiController::class, 'closeCampaign']);
+        Route::delete('campaigns/{id}', [WhatsAppMarketingApiController::class, 'destroyCampaign']);
+        Route::post('contacts', [WhatsAppMarketingApiController::class, 'storeContact']);
+        Route::get('contacts/{id}', [WhatsAppMarketingApiController::class, 'showContact']);
+        Route::put('contacts/{id}', [WhatsAppMarketingApiController::class, 'updateContact']);
+        Route::patch('contacts/{id}/stage', [WhatsAppMarketingApiController::class, 'updateContactStage']);
+        Route::delete('contacts/{id}', [WhatsAppMarketingApiController::class, 'destroyContact']);
+        Route::get('contacts/{id}/calls', [WhatsAppMarketingApiController::class, 'indexCalls']);
+        Route::post('contacts/{id}/calls', [WhatsAppMarketingApiController::class, 'storeCall']);
+    });
+
+    // Content Creator (mirrors web ContentCreatorController)
+    Route::prefix('content-creator')->group(function () {
+        Route::get('reference-data', [ContentCreatorApiController::class, 'referenceData']);
+        Route::get('board', [ContentCreatorApiController::class, 'board']);
+        Route::get('/', [ContentCreatorApiController::class, 'index']);
+        Route::post('tasks', [ContentCreatorApiController::class, 'storeTask']);
+        Route::get('tasks/{id}', [ContentCreatorApiController::class, 'showTask']);
+        Route::put('tasks/{id}', [ContentCreatorApiController::class, 'updateTask']);
+        Route::delete('tasks/{id}', [ContentCreatorApiController::class, 'destroyTask']);
+        Route::post('tasks/{id}/progress', [ContentCreatorApiController::class, 'updateProgress']);
+        Route::post('tasks/{id}/approve', [ContentCreatorApiController::class, 'approveTask']);
+        Route::post('tasks/{id}/comments', [ContentCreatorApiController::class, 'addComment']);
+        Route::post('targets', [ContentCreatorApiController::class, 'setTarget']);
     });
 });
